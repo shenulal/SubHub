@@ -42,7 +42,7 @@ export default async function DashboardLayout({
     <ClientProviders>
       <SidebarWrapper
         defaultOpen={defaultOpen}
-        role={role as "ADMIN" | "MEMBER" | "VIEWER" | null}
+        role={role as "ADMIN" | "APPROVER" | "MEMBER" | "VIEWER" | null}
         user={user}
       >
         {children}

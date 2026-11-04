@@ -53,8 +53,8 @@ export async function requireAuth() {
 }
 
 // 기존 UserRole 타입 유지 (하위 호환성)
-export type UserRole = "ADMIN" | "MEMBER" | "VIEWER";
-export type TenantRole = "ADMIN" | "MEMBER" | "VIEWER";
+export type UserRole = "ADMIN" | "APPROVER" | "MEMBER" | "VIEWER";
+export type TenantRole = "ADMIN" | "APPROVER" | "MEMBER" | "VIEWER";
 
 /**
  * 특정 역할 필수

@@ -17,7 +17,7 @@ import { UserCheck, UserMinus, UserPlus, Users, UserX } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useMemo, useState } from "react";
 
-type Role = "ADMIN" | "MEMBER" | "VIEWER" | null | undefined;
+type Role = "ADMIN" | "APPROVER" | "MEMBER" | "VIEWER" | null | undefined;
 
 interface UserPageClientProps {
   role?: Role;

@@ -3,8 +3,13 @@
 import {
   Bell,
   Building2,
+  CheckSquare,
+  FolderTree,
+  ListPlus,
   LucideIcon,
+  Mail,
   Monitor,
+  ShieldCheck,
   User,
   Users,
   Wallet,
@@ -63,6 +68,39 @@ const settingsMenuConfig = [
     labelKey: "settings.sidebar.notifications.title",
     descriptionKey: "settings.sidebar.notifications.description",
     href: "/settings/notifications",
+  },
+  {
+    icon: CheckSquare,
+    labelKey: "settings.sidebar.approvals.title",
+    descriptionKey: "settings.sidebar.approvals.description",
+    href: "/settings/approvals",
+    adminOnly: true,
+  },
+  {
+    icon: FolderTree,
+    labelKey: "settings.sidebar.taxonomy.title",
+    descriptionKey: "settings.sidebar.taxonomy.description",
+    href: "/settings/taxonomy",
+    adminOnly: true,
+  },
+  {
+    icon: ListPlus,
+    labelKey: "settings.sidebar.customFields.title",
+    descriptionKey: "settings.sidebar.customFields.description",
+    href: "/settings/custom-fields",
+    adminOnly: true,
+  },
+  {
+    icon: Mail,
+    labelKey: "settings.sidebar.mailboxes.title",
+    descriptionKey: "settings.sidebar.mailboxes.description",
+    href: "/settings/mailboxes",
+  },
+  {
+    icon: ShieldCheck,
+    labelKey: "settings.sidebar.privacy.title",
+    descriptionKey: "settings.sidebar.privacy.description",
+    href: "/settings/privacy",
   },
 ];
 

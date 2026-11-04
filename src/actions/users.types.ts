@@ -21,7 +21,7 @@ export interface GetUsersParams {
  */
 export const updateUserSchema = z.object({
   name: z.string().min(1, "이름은 필수입니다").optional(),
-  role: z.enum(["ADMIN", "MEMBER", "VIEWER"]).optional(),
+  role: z.enum(["ADMIN", "APPROVER", "MEMBER", "VIEWER"]).optional(),
   status: z.enum(["ACTIVE", "INACTIVE", "TERMINATED"]).optional(),
   department: z.string().optional(),
   jobTitle: z.string().optional(),

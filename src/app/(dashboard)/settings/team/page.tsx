@@ -40,7 +40,7 @@ interface InviteFormProps {
 
 async function InviteForm({ teams }: InviteFormProps) {
   const t = await getTranslations("teamMembers.inviteForm");
-  const roles: UserRole[] = ["ADMIN", "MEMBER", "VIEWER"];
+  const roles: UserRole[] = ["ADMIN", "APPROVER", "MEMBER", "VIEWER"];
 
   const handleSubmit = async (formData: FormData) => {
     "use server";

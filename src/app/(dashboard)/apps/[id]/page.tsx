@@ -13,7 +13,7 @@ export default async function AppDetailPage({ params }: AppDetailPageProps) {
   return (
     <AppDetailClient
       id={id}
-      role={role as "ADMIN" | "MEMBER" | "VIEWER" | null}
+      role={role as "ADMIN" | "APPROVER" | "MEMBER" | "VIEWER" | null}
     />
   );
 }

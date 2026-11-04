@@ -239,7 +239,8 @@
       "admin": "Admin",
       "member": "Member",
       "viewer": "Viewer",
-      "unknown": "Not set"
+      "unknown": "Not set",
+      "approver": "Approver"
     },
     "sidebar": {
       "profile": {
@@ -265,6 +266,26 @@
       "notifications": {
         "title": "Notifications",
         "description": "Configure notification delivery"
+      },
+      "approvals": {
+        "title": "Approval policies",
+        "description": "Rules, thresholds and approver chains"
+      },
+      "taxonomy": {
+        "title": "Categories & tags",
+        "description": "Manage categories, subcategories and tags"
+      },
+      "customFields": {
+        "title": "Custom fields",
+        "description": "Cost centre, contract ID, renewal owner"
+      },
+      "mailboxes": {
+        "title": "Email receipts",
+        "description": "Connect Gmail or Outlook to detect charges"
+      },
+      "privacy": {
+        "title": "Privacy & data",
+        "description": "Export or delete your data"
       }
     },
     "organization": {
@@ -695,8 +716,8 @@
   },
   "sidebar": {
     "brand": {
-      "title": "SMP",
-      "subtitle": "Service Management Platform"
+      "title": "SubHub",
+      "subtitle": "Subscription Hub"
     },
     "group": {
       "main": "Main",
@@ -737,7 +758,8 @@
         "suggestionsDescription": "Payment-based subscription suggestions",
         "calendar": "Renewal calendar",
         "calendarDescription": "Manage subscription renewal schedule",
-        "new": "Register Subscription"
+        "new": "Register Subscription",
+        "pipeline": "Renewal pipeline"
       },
       "apps": {
         "root": "Apps",
@@ -781,7 +803,14 @@
         "offboardedDescription": "Manage offboarded user accounts",
         "sync": "Org & User Sync",
         "syncDescription": "Sync organization data with external systems"
-      }
+      },
+      "approvals": {
+        "root": "Approvals",
+        "inbox": "Approval inbox",
+        "new": "New request",
+        "policies": "Approval policies"
+      },
+      "notifications": "Notifications"
     },
     "user": {
       "fallbackName": "User"
@@ -1291,7 +1320,9 @@
       "active": "Active",
       "pending": "Pending",
       "expired": "Expired",
-      "cancelled": "Cancelled"
+      "cancelled": "Cancelled",
+      "paused": "Paused",
+      "archived": "Archived"
     },
     "billingCycle": {
       "monthly": "Monthly",
@@ -2644,7 +2675,8 @@
       "role": {
         "admin": "Admin",
         "member": "Member",
-        "viewer": "Viewer"
+        "viewer": "Viewer",
+        "approver": "Approver"
       },
       "filter": {
         "status": "Status",
@@ -2976,13 +3008,15 @@
       "roleDescriptions": {
         "admin": "Can access all features.",
         "member": "Can access most features.",
-        "viewer": "Read-only access only."
+        "viewer": "Read-only access only.",
+        "approver": "Approver"
       },
       "error": "Failed to create invitation",
       "roles": {
         "admin": "Admin",
         "member": "Member",
-        "viewer": "Viewer"
+        "viewer": "Viewer",
+        "approver": "Approver"
       }
     },
     "memberCard": {
@@ -2994,7 +3028,8 @@
       "roles": {
         "admin": "Admin",
         "member": "Member",
-        "viewer": "Viewer"
+        "viewer": "Viewer",
+        "approver": "Approver"
       },
       "status": {
         "active": "Active",
@@ -3016,7 +3051,8 @@
       "roles": {
         "admin": "Admin",
         "member": "Member",
-        "viewer": "Viewer"
+        "viewer": "Viewer",
+        "approver": "Approver"
       },
       "status": {
         "pending": "Pending",
@@ -4000,7 +4036,8 @@
     "role": {
       "admin": "Admin",
       "member": "Member",
-      "viewer": "Viewer"
+      "viewer": "Viewer",
+      "approver": "Approver"
     },
     "kpi": {
       "total": "Total Users",

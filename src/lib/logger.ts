@@ -68,6 +68,6 @@ export const logger = pino({
     censor: "[REDACTED]",
   },
   base: {
-    service: process.env.SERVICE_NAME || "saaslens",
+    service: process.env.SERVICE_NAME || "subhub",
   },
 });

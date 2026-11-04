@@ -17,9 +17,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "SaaS Management Platform",
+  title: {
+    default: "SubHub",
+    template: "%s | SubHub",
+  },
   description:
-    "기업용 SaaS 통합 관리 플랫폼 - 앱 인벤토리, 구독 관리, 비용 최적화",
+    "SubHub — track subscriptions, route approvals, get renewal reminders and see spend in one place.",
 };
 
 export default async function RootLayout({

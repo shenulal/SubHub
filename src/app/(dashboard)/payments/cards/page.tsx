@@ -17,7 +17,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function CardsPage() {
-  const { role } = await requireRole(["ADMIN", "MEMBER"]);
+  const { role } = await requireRole(["ADMIN", "APPROVER", "MEMBER"]);
 
   const [cards, teamsResult, usersResult] = await Promise.all([
     getCorporateCards(),

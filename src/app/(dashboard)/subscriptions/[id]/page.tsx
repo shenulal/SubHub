@@ -38,7 +38,7 @@ export default async function SubscriptionDetailPage({
   return (
     <SubscriptionDetailClient
       id={id}
-      role={role as "ADMIN" | "MEMBER" | "VIEWER" | null}
+      role={role as "ADMIN" | "APPROVER" | "MEMBER" | "VIEWER" | null}
     />
   );
 }

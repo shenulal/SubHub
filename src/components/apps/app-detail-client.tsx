@@ -13,7 +13,7 @@ import { useTranslations } from "next-intl";
 
 interface AppDetailClientProps {
   id: string;
-  role?: "ADMIN" | "MEMBER" | "VIEWER" | null;
+  role?: "ADMIN" | "APPROVER" | "MEMBER" | "VIEWER" | null;
 }
 
 export function AppDetailClient({ id, role }: AppDetailClientProps) {

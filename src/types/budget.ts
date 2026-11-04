@@ -4,7 +4,15 @@
 /**
  * 지원하는 통화 단위
  */
-export type Currency = "USD" | "KRW" | "EUR" | "JPY" | "GBP";
+export type Currency =
+  | "USD"
+  | "AED"
+  | "SAR"
+  | "EUR"
+  | "GBP"
+  | "KRW"
+  | "JPY"
+  | "INR";
 
 /**
  * 통화 정보 (표시용)
@@ -20,12 +28,21 @@ export interface CurrencyInfo {
  * 지원하는 통화 목록
  */
 export const CURRENCIES: CurrencyInfo[] = [
-  { code: "KRW", symbol: "₩", name: "한국 원", locale: "ko-KR" },
   { code: "USD", symbol: "$", name: "US Dollar", locale: "en-US" },
+  { code: "AED", symbol: "AED", name: "UAE Dirham", locale: "en-AE" },
+  { code: "SAR", symbol: "SAR", name: "Saudi Riyal", locale: "en-SA" },
   { code: "EUR", symbol: "€", name: "Euro", locale: "de-DE" },
-  { code: "JPY", symbol: "¥", name: "Japanese Yen", locale: "ja-JP" },
   { code: "GBP", symbol: "£", name: "British Pound", locale: "en-GB" },
+  { code: "KRW", symbol: "₩", name: "Korean Won", locale: "ko-KR" },
+  { code: "JPY", symbol: "¥", name: "Japanese Yen", locale: "ja-JP" },
+  { code: "INR", symbol: "₹", name: "Indian Rupee", locale: "en-IN" },
 ];
+
+/** Currencies with no minor units in everyday display */
+export const ZERO_DECIMAL_CURRENCIES: ReadonlySet<string> = new Set([
+  "KRW",
+  "JPY",
+]);
 
 /**
  * 예산 설정 인터페이스
@@ -43,7 +60,7 @@ export interface BudgetSettings {
  * 기본 예산 설정
  */
 export const DEFAULT_BUDGET_SETTINGS: BudgetSettings = {
-  currency: "KRW",
+  currency: "USD",
   monthlyBudget: null,
   alertThreshold: 80,
 };
@@ -56,12 +73,12 @@ export function formatCurrencyAmount(
   currency: Currency
 ): string {
   const currencyInfo = CURRENCIES.find((c) => c.code === currency);
-  const locale = currencyInfo?.locale || "ko-KR";
+  const locale = currencyInfo?.locale || "en-US";
 
   return new Intl.NumberFormat(locale, {
     style: "currency",
     currency,
-    maximumFractionDigits: currency === "KRW" || currency === "JPY" ? 0 : 2,
+    maximumFractionDigits: ZERO_DECIMAL_CURRENCIES.has(currency) ? 0 : 2,
   }).format(amount);
 }
 

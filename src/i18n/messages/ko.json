@@ -238,7 +238,8 @@
       "admin": "관리자",
       "member": "멤버",
       "viewer": "뷰어",
-      "unknown": "미설정"
+      "unknown": "미설정",
+      "approver": "승인자"
     },
     "sidebar": {
       "profile": {
@@ -264,6 +265,26 @@
       "notifications": {
         "title": "알림",
         "description": "알림 수신 방법을 설정합니다"
+      },
+      "approvals": {
+        "title": "승인 정책",
+        "description": "규칙, 임계값, 승인자 체인"
+      },
+      "taxonomy": {
+        "title": "카테고리 및 태그",
+        "description": "카테고리, 하위 카테고리, 태그 관리"
+      },
+      "customFields": {
+        "title": "사용자 정의 필드",
+        "description": "코스트 센터, 계약 ID, 갱신 담당자"
+      },
+      "mailboxes": {
+        "title": "이메일 영수증",
+        "description": "Gmail/Outlook 연결로 결제 감지"
+      },
+      "privacy": {
+        "title": "개인정보 및 데이터",
+        "description": "내 데이터 내보내기 및 삭제"
       }
     },
     "organization": {
@@ -694,8 +715,8 @@
   },
   "sidebar": {
     "brand": {
-      "title": "SMP",
-      "subtitle": "서비스 관리 플랫폼"
+      "title": "SubHub",
+      "subtitle": "구독 관리 허브"
     },
     "group": {
       "main": "메인",
@@ -736,7 +757,8 @@
         "suggestionsDescription": "결제 내역 기반 구독 추천",
         "calendar": "갱신 캘린더",
         "calendarDescription": "구독 갱신 일정 관리",
-        "new": "구독 등록"
+        "new": "구독 등록",
+        "pipeline": "갱신 파이프라인"
       },
       "apps": {
         "root": "앱",
@@ -780,7 +802,14 @@
         "offboardedDescription": "퇴사자 미회수 계정 관리",
         "sync": "조직 및 사용자 연동",
         "syncDescription": "외부 시스템과 조직 데이터 동기화"
-      }
+      },
+      "approvals": {
+        "root": "승인",
+        "inbox": "승인 대기함",
+        "new": "새 요청",
+        "policies": "승인 정책"
+      },
+      "notifications": "알림"
     },
     "user": {
       "fallbackName": "사용자"
@@ -1290,7 +1319,9 @@
       "active": "활성",
       "pending": "대기 중",
       "expired": "만료",
-      "cancelled": "취소됨"
+      "cancelled": "취소됨",
+      "paused": "일시중지",
+      "archived": "보관됨"
     },
     "billingCycle": {
       "monthly": "월간",
@@ -2643,7 +2674,8 @@
       "role": {
         "admin": "관리자",
         "member": "멤버",
-        "viewer": "뷰어"
+        "viewer": "뷰어",
+        "approver": "승인자"
       },
       "filter": {
         "status": "Status",
@@ -2975,13 +3007,15 @@
       "roleDescriptions": {
         "admin": "모든 기능에 접근할 수 있습니다.",
         "member": "대부분의 기능에 접근할 수 있습니다.",
-        "viewer": "읽기 전용 접근만 가능합니다."
+        "viewer": "읽기 전용 접근만 가능합니다.",
+        "approver": "승인자"
       },
       "error": "초대 생성에 실패했습니다",
       "roles": {
         "admin": "관리자",
         "member": "멤버",
-        "viewer": "뷰어"
+        "viewer": "뷰어",
+        "approver": "승인자"
       }
     },
     "memberCard": {
@@ -2993,7 +3027,8 @@
       "roles": {
         "admin": "관리자",
         "member": "멤버",
-        "viewer": "뷰어"
+        "viewer": "뷰어",
+        "approver": "승인자"
       },
       "status": {
         "active": "활성",
@@ -3015,7 +3050,8 @@
       "roles": {
         "admin": "관리자",
         "member": "멤버",
-        "viewer": "뷰어"
+        "viewer": "뷰어",
+        "approver": "승인자"
       },
       "status": {
         "pending": "대기 중",
@@ -4011,7 +4047,8 @@
     "role": {
       "admin": "관리자",
       "member": "팀원",
-      "viewer": "뷰어"
+      "viewer": "뷰어",
+      "approver": "승인자"
     },
     "kpi": {
       "total": "총 사용자",

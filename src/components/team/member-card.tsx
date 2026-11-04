@@ -53,6 +53,7 @@ interface MemberCardProps {
 const roleIcons: Record<UserRole, typeof Shield> = {
   SUPER_ADMIN: Shield,
   ADMIN: Shield,
+  APPROVER: Shield,
   MEMBER: User,
   VIEWER: Eye,
 };

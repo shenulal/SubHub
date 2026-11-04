@@ -1,25 +1,21 @@
 {
-  "name": "saaslens",
-  "version": "0.1.0",
+  "name": "subhub",
+  "version": "1.0.0",
   "private": true,
-  "description": "Open-source SaaS subscription management platform. Discover unused subscriptions, match payments to apps, and manage users, seats, and costs.",
+  "description": "SubHub — subscription management platform: tracking, approvals, reminders, insights, taxonomy and vendor catalog.",
   "license": "MIT",
-  "author": "Wondermove-Inc",
+  "author": "HelloPixels",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/Wondermove-Inc/saaslens.git"
+    "url": "https://github.com/hellopixels/subhub"
   },
-  "homepage": "https://github.com/Wondermove-Inc/saaslens#readme",
-  "bugs": {
-    "url": "https://github.com/Wondermove-Inc/saaslens/issues"
-  },
+  "homepage": "https://hellopixels.ae",
   "keywords": [
-    "saas",
     "subscription-management",
+    "saas",
+    "approvals",
     "nextjs",
-    "typescript",
-    "prisma",
-    "oss"
+    "prisma"
   ],
   "scripts": {
     "dev": "next dev --turbopack",
@@ -44,7 +40,8 @@
     "seed:super-admin": "npx tsx prisma/seeds/seed-super-admin.ts",
     "storybook": "cd packages/ui-registry && npm run storybook",
     "storybook:build": "cd packages/ui-registry && npm run storybook:build",
-    "prepare": "husky"
+    "prepare": "husky",
+    "db:backfill-defaults": "npx tsx scripts/backfill-organization-defaults.ts"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.63",
@@ -156,7 +153,7 @@
     "*.{json,md}": "prettier --write"
   },
   "prisma": {
-    "seed": "bun prisma/seed.ts"
+    "seed": "npx tsx prisma/seed.ts"
   },
   "engines": {
     "node": ">=20.0.0"

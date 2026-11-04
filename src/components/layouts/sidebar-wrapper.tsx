@@ -13,7 +13,7 @@ import { useAiPanelStore } from "@/lib/ai/ai-panel-store";
 interface SidebarWrapperProps {
   children: React.ReactNode;
   defaultOpen?: boolean;
-  role?: "ADMIN" | "MEMBER" | "VIEWER" | null;
+  role?: "ADMIN" | "APPROVER" | "MEMBER" | "VIEWER" | null;
   user?: {
     name: string | null;
     email: string;

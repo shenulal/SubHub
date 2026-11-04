@@ -47,7 +47,7 @@ export interface UserCSVRow {
 }
 
 // 유효한 사용자 역할
-const VALID_USER_ROLES = ["ADMIN", "MEMBER", "VIEWER"] as const;
+const VALID_USER_ROLES = ["ADMIN", "APPROVER", "MEMBER", "VIEWER"] as const;
 
 export interface ValidationError {
   row: number;

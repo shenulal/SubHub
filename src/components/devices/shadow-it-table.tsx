@@ -15,7 +15,7 @@ import type { ShadowITAppSummary } from "@/lib/services/fleetdm";
 import { AlertTriangle, CheckCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-type Role = "ADMIN" | "MEMBER" | "VIEWER" | null | undefined;
+type Role = "ADMIN" | "APPROVER" | "MEMBER" | "VIEWER" | null | undefined;
 
 interface ShadowITTableProps {
   shadowITApps: ShadowITAppSummary[];

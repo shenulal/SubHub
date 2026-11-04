@@ -2,8 +2,11 @@
 
 import {
   BarChart3,
+  Bell,
   Building2,
+  CheckSquare,
   CreditCard,
+  KanbanSquare,
   LayoutDashboard,
   Link as LinkIcon,
   LogOut,
@@ -106,6 +109,16 @@ const menuConfig: MenuSectionConfig[] = [
         href: "/subscriptions",
       },
       {
+        icon: KanbanSquare,
+        labelKey: "sidebar.menu.subscriptions.pipeline",
+        href: "/subscriptions/pipeline",
+      },
+      {
+        icon: CheckSquare,
+        labelKey: "sidebar.menu.approvals.root",
+        href: "/approvals",
+      },
+      {
         icon: Receipt,
         labelKey: "sidebar.menu.payments.root",
         href: "/payments",
@@ -121,6 +134,11 @@ const menuConfig: MenuSectionConfig[] = [
     groupKey: "sidebar.group.system",
     color: "#64748B",
     items: [
+      {
+        icon: Bell,
+        labelKey: "sidebar.menu.notifications",
+        href: "/notifications",
+      },
       {
         icon: LinkIcon,
         labelKey: "sidebar.menu.integrations",
@@ -138,7 +156,7 @@ const menuConfig: MenuSectionConfig[] = [
 // AppSidebar props 타입 정의
 interface AppSidebarProps {
   variant?: "sidebar" | "floating" | "inset";
-  role?: "ADMIN" | "MEMBER" | "VIEWER" | null;
+  role?: "ADMIN" | "APPROVER" | "MEMBER" | "VIEWER" | null;
   user?: {
     name: string | null;
     email: string;
@@ -225,7 +243,7 @@ export function AppSidebar({
               <Link href="/dashboard" className="flex items-center">
                 <Image
                   src="/logo.svg"
-                  alt="saaslens"
+                  alt="SubHub"
                   width={170}
                   height={28}
                   priority

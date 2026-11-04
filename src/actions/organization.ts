@@ -6,6 +6,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { withLogging } from "@/lib/logging";
+import { ensureOrganizationDefaults } from "@/lib/masters/organization-defaults";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -94,6 +95,9 @@ async function _createOrganization(formData: FormData) {
         role: "ADMIN", // 조직 생성자는 ADMIN
       },
     });
+
+    // SubHub: seed roles, categories, payment methods, billing cycles, tax rate
+    await ensureOrganizationDefaults(org.id, { db: tx });
   });
 
   revalidatePath("/");

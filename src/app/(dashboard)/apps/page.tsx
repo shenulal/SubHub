@@ -6,5 +6,9 @@ export default async function AppsPage() {
   const session = await getCachedSession();
   const role = session?.user?.role ?? null;
 
-  return <AppsPageClient role={role as "ADMIN" | "MEMBER" | "VIEWER" | null} />;
+  return (
+    <AppsPageClient
+      role={role as "ADMIN" | "APPROVER" | "MEMBER" | "VIEWER" | null}
+    />
+  );
 }

@@ -25,7 +25,7 @@ export interface InvitationWithInviter extends Invitation {
 
 const inviteSchema = z.object({
   email: z.string().email("유효한 이메일을 입력하세요"),
-  role: z.enum(["ADMIN", "MEMBER", "VIEWER"]),
+  role: z.enum(["ADMIN", "APPROVER", "MEMBER", "VIEWER"]),
   teamId: z.string().optional(),
 });
 

@@ -2,7 +2,9 @@ import { applyRequestSubmitPolyfill } from "@/test-utils/request-submit-polyfill
 import * as matchers from "@testing-library/jest-dom/matchers";
 import { cleanup } from "@testing-library/react";
 import { afterEach, expect, vi } from "vitest";
-import koMessages from "./src/i18n/messages/ko.json";
+import { getAllMessages } from "./src/i18n/messages";
+
+const koMessages = getAllMessages("ko");
 
 // jest-dom matchers 확장
 expect.extend(matchers);

@@ -17,6 +17,42 @@
     {
       "path": "/api/cron/auto-renewal",
       "schedule": "0 1 * * *"
+    },
+    {
+      "path": "/api/cron/renewal-alerts",
+      "schedule": "0 6 * * *"
+    },
+    {
+      "path": "/api/cron/subscription-reminders",
+      "schedule": "15 6 * * *"
+    },
+    {
+      "path": "/api/cron/trial-alerts",
+      "schedule": "30 6 * * *"
+    },
+    {
+      "path": "/api/cron/notice-period-alerts",
+      "schedule": "45 6 * * *"
+    },
+    {
+      "path": "/api/cron/price-change-scan",
+      "schedule": "0 7 * * *"
+    },
+    {
+      "path": "/api/cron/approval-reminders",
+      "schedule": "0 8 * * *"
+    },
+    {
+      "path": "/api/cron/receipt-scan",
+      "schedule": "0 */6 * * *"
+    },
+    {
+      "path": "/api/cron/exchange-rates",
+      "schedule": "0 2 * * *"
+    },
+    {
+      "path": "/api/cron/weekly-digest",
+      "schedule": "0 7 * * 1"
     }
   ]
 }

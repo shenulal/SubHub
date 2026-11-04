@@ -1,6 +1,6 @@
 import { AccessControlProvider } from "@refinedev/core";
 
-type Role = "ADMIN" | "MEMBER" | "VIEWER";
+type Role = "ADMIN" | "APPROVER" | "MEMBER" | "VIEWER";
 type Action =
   | "list"
   | "show"
@@ -8,14 +8,24 @@ type Action =
   | "edit"
   | "delete"
   | "invite"
-  | "sync";
+  | "sync"
+  | "approve"
+  | "export";
 type Resource =
   | "apps"
   | "subscriptions"
   | "users"
   | "integrations"
   | "payments"
-  | "audit-logs";
+  | "audit-logs"
+  | "approvals"
+  | "approval-policies"
+  | "categories"
+  | "tags"
+  | "custom-fields"
+  | "saved-views"
+  | "notifications"
+  | "attachments";
 
 /**
  * 리소스별 권한 매트릭스
@@ -33,27 +43,75 @@ type Resource =
 const PERMISSION_MATRIX: Record<Role, Record<Resource, Action[]>> = {
   ADMIN: {
     apps: ["list", "show", "create", "edit", "delete"],
-    subscriptions: ["list", "show", "create", "edit", "delete"],
+    subscriptions: ["list", "show", "create", "edit", "delete", "export"],
     users: ["list", "show", "create", "edit", "delete", "invite"],
     integrations: ["list", "show", "create", "edit", "delete", "sync"],
     payments: ["list", "show", "create", "edit", "delete"],
-    "audit-logs": ["list", "show"],
+    "audit-logs": ["list", "show", "export"],
+    approvals: [
+      "list",
+      "show",
+      "create",
+      "edit",
+      "delete",
+      "approve",
+      "export",
+    ],
+    "approval-policies": ["list", "show", "create", "edit", "delete"],
+    categories: ["list", "show", "create", "edit", "delete"],
+    tags: ["list", "show", "create", "edit", "delete"],
+    "custom-fields": ["list", "show", "create", "edit", "delete"],
+    "saved-views": ["list", "show", "create", "edit", "delete"],
+    notifications: ["list", "show", "edit", "delete"],
+    attachments: ["list", "show", "create", "delete"],
   },
-  MEMBER: {
+  APPROVER: {
     apps: ["list", "show", "create"],
-    subscriptions: ["list", "show", "create"],
+    subscriptions: ["list", "show", "create", "edit", "export"],
     users: ["list", "show"],
     integrations: ["list", "show"],
     payments: ["list", "show"],
-    "audit-logs": ["list", "show"], // 본인 활동만 (필터는 서버에서)
+    "audit-logs": ["list", "show"],
+    approvals: ["list", "show", "create", "approve", "export"],
+    "approval-policies": ["list", "show"],
+    categories: ["list", "show"],
+    tags: ["list", "show", "create"],
+    "custom-fields": ["list", "show"],
+    "saved-views": ["list", "show", "create", "edit", "delete"],
+    notifications: ["list", "show", "edit", "delete"],
+    attachments: ["list", "show", "create"],
+  },
+  MEMBER: {
+    apps: ["list", "show", "create"],
+    subscriptions: ["list", "show", "create", "edit"],
+    users: ["list", "show"],
+    integrations: ["list", "show"],
+    payments: ["list", "show"],
+    "audit-logs": ["list", "show"], // own activity only (filtered server-side)
+    approvals: ["list", "show", "create"], // own requests only
+    "approval-policies": ["list", "show"],
+    categories: ["list", "show"],
+    tags: ["list", "show", "create"],
+    "custom-fields": ["list", "show"],
+    "saved-views": ["list", "show", "create", "edit", "delete"],
+    notifications: ["list", "show", "edit", "delete"],
+    attachments: ["list", "show", "create"],
   },
   VIEWER: {
     apps: ["list", "show"],
     subscriptions: ["list", "show"],
     users: ["list", "show"],
     integrations: ["list", "show"],
-    payments: [], // 접근 불가
-    "audit-logs": [], // 접근 불가
+    payments: [],
+    "audit-logs": [],
+    approvals: ["list", "show"],
+    "approval-policies": ["list", "show"],
+    categories: ["list", "show"],
+    tags: ["list", "show"],
+    "custom-fields": ["list", "show"],
+    "saved-views": ["list", "show", "create", "edit", "delete"],
+    notifications: ["list", "show", "edit"],
+    attachments: ["list", "show"],
   },
 };
 
@@ -79,6 +137,19 @@ function normalizeResource(resource: string | undefined): Resource | null {
     "audit-log": "audit-logs",
     auditLogs: "audit-logs",
     auditLog: "audit-logs",
+    approval: "approvals",
+    "approval-request": "approvals",
+    approvalRequests: "approvals",
+    "approval-policy": "approval-policies",
+    approvalPolicies: "approval-policies",
+    category: "categories",
+    tag: "tags",
+    "custom-field": "custom-fields",
+    customFields: "custom-fields",
+    "saved-view": "saved-views",
+    savedViews: "saved-views",
+    notification: "notifications",
+    attachment: "attachments",
   };
 
   return resourceMap[resource] ?? null;
@@ -152,7 +223,7 @@ export const accessControlProvider: AccessControlProvider = {
           ? { can: true }
           : { can: false, reason: "VIEWER는 읽기만 가능합니다." };
       }
-      if (role === "MEMBER") {
+      if (role === "MEMBER" || role === "APPROVER") {
         if (action === "delete") {
           return { can: false, reason: "MEMBER는 삭제 권한이 없습니다." };
         }
@@ -177,6 +248,14 @@ export const accessControlProvider: AccessControlProvider = {
       integrations: "연동",
       payments: "결제",
       "audit-logs": "감사 로그",
+      approvals: "승인 요청",
+      "approval-policies": "승인 정책",
+      categories: "카테고리",
+      tags: "태그",
+      "custom-fields": "사용자 정의 필드",
+      "saved-views": "저장된 보기",
+      notifications: "알림",
+      attachments: "첨부 파일",
     }[normalizedResource];
 
     const actionLabel = {
@@ -187,6 +266,8 @@ export const accessControlProvider: AccessControlProvider = {
       delete: "삭제",
       invite: "초대",
       sync: "동기화",
+      approve: "승인",
+      export: "내보내기",
     }[action as Action];
 
     return {

@@ -9,6 +9,8 @@ export function getStatusLabels(
     EXPIRED: t("subscriptions.status.expired"),
     CANCELLED: t("subscriptions.status.cancelled"),
     PENDING: t("subscriptions.status.pending"),
+    PAUSED: t("subscriptions.status.paused"),
+    ARCHIVED: t("subscriptions.status.archived"),
   };
 }
 
@@ -20,6 +22,8 @@ export const statusVariants: Record<
   EXPIRED: "destructive",
   CANCELLED: "destructive",
   PENDING: "outline",
+  PAUSED: "secondary",
+  ARCHIVED: "outline",
 };
 
 export function getBillingCycleLabels(

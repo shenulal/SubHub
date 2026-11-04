@@ -11,7 +11,7 @@ import Link from "next/link";
 
 interface SubscriptionDetailClientProps {
   id: string;
-  role?: "ADMIN" | "MEMBER" | "VIEWER" | null;
+  role?: "ADMIN" | "APPROVER" | "MEMBER" | "VIEWER" | null;
 }
 
 export function SubscriptionDetailClient({

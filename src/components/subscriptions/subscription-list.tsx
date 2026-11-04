@@ -78,6 +78,8 @@ const statusConfig: Record<
     variant: "secondary",
     className: "border-0 bg-info-muted text-info-muted-foreground",
   },
+  PAUSED: { variant: "secondary" },
+  ARCHIVED: { variant: "outline" },
 };
 
 function formatCurrency(amount: number, currency: string): string {
@@ -117,6 +119,8 @@ export function SubscriptionList({
     EXPIRED: t("subscriptions.status.expired"),
     CANCELLED: t("subscriptions.status.cancelled"),
     PENDING: t("subscriptions.status.pending"),
+    PAUSED: t("subscriptions.status.paused"),
+    ARCHIVED: t("subscriptions.status.archived"),
   };
 
   const billingCycleLabels: Record<BillingCycle, string> = {
@@ -161,6 +165,8 @@ export function SubscriptionList({
       EXPIRED: 0,
       CANCELLED: 0,
       PENDING: 0,
+      PAUSED: 0,
+      ARCHIVED: 0,
     };
     filteredBySearch.forEach((s) => {
       counts[s.status]++;

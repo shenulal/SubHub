@@ -50,7 +50,7 @@ import { DevicesUsersAlert } from "./devices-users-alert";
 import { FleetDMInstallGuide } from "./fleetdm-install-guide";
 import { ShadowITTable } from "./shadow-it-table";
 
-type Role = "ADMIN" | "MEMBER" | "VIEWER" | null | undefined;
+type Role = "ADMIN" | "APPROVER" | "MEMBER" | "VIEWER" | null | undefined;
 
 interface DevicesPageClientProps {
   role?: Role;

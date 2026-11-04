@@ -17,7 +17,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function PaymentsPage() {
   const t = await getTranslations("payments.page");
-  const { organizationId } = await requireRole(["ADMIN", "MEMBER"]);
+  const { organizationId } = await requireRole(["ADMIN", "APPROVER", "MEMBER"]);
 
   // 매칭용 앱 목록 조회 (teams 포함 - 구독 등록 Dialog에서 사용)
   const appsRaw = await prisma.app.findMany({

@@ -37,7 +37,7 @@ type SortOption = "created-desc" | "created-asc" | "updated-desc" | "type-asc";
 
 interface IntegrationsPageClientProps {
   canManage: boolean;
-  role?: "ADMIN" | "MEMBER" | "VIEWER";
+  role?: "ADMIN" | "APPROVER" | "MEMBER" | "VIEWER";
 }
 
 const sortOptionToSorter = (sort: SortOption) => {

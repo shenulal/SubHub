@@ -41,6 +41,7 @@ const roleVariants: Record<
 > = {
   SUPER_ADMIN: "default",
   ADMIN: "default",
+  APPROVER: "default",
   MEMBER: "secondary",
   VIEWER: "outline",
 };
@@ -80,6 +81,7 @@ export function UserDetailClient({ id }: UserDetailClientProps) {
   const roleLabels: Record<UserRole, string> = {
     SUPER_ADMIN: "Super Admin",
     ADMIN: t("users.role.admin"),
+    APPROVER: t("users.role.approver"),
     MEMBER: t("users.role.member"),
     VIEWER: t("users.role.viewer"),
   };

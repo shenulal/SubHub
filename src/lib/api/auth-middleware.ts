@@ -7,6 +7,8 @@
  */
 
 import { auth } from "@/lib/auth";
+import type { PermissionKey } from "@/lib/rbac/permissions";
+import { getUserPermissionSet, hasAll, hasAny } from "@/lib/rbac/service";
 import { NextRequest, NextResponse } from "next/server";
 
 // 인증된 세션 타입
@@ -29,7 +31,7 @@ export type AuthenticatedHandler = (
 ) => Promise<NextResponse>;
 
 // 역할 타입
-export type Role = "SUPER_ADMIN" | "ADMIN" | "MEMBER" | "VIEWER";
+export type Role = "SUPER_ADMIN" | "ADMIN" | "APPROVER" | "MEMBER" | "VIEWER";
 
 // 미들웨어 옵션
 export interface ApiAuthOptions {
@@ -39,6 +41,10 @@ export interface ApiAuthOptions {
   allowRoles?: Role[];
   /** VIEWER 차단 여부 (기본: false) */
   blockViewer?: boolean;
+  /** SubHub RBAC: required permission key(s) (checked after role options) */
+  permission?: PermissionKey | PermissionKey[];
+  /** "all" (default) or "any" of the listed permissions */
+  permissionMode?: "all" | "any";
 }
 
 import { logger } from "@/lib/logger";
@@ -100,6 +106,24 @@ export function withApiAuth(
         { error: "읽기 전용 사용자는 이 작업을 수행할 수 없습니다" },
         { status: 403 }
       );
+    }
+
+    // SubHub RBAC: permission check
+    if (options.permission) {
+      const permissionSet = await getUserPermissionSet(
+        session.user.id,
+        session.user.organizationId ?? null
+      );
+      const allowed =
+        (options.permissionMode ?? "all") === "all"
+          ? hasAll(permissionSet, options.permission)
+          : hasAny(permissionSet, options.permission);
+      if (!allowed) {
+        return NextResponse.json(
+          { success: false, error: "Forbidden: missing permission" },
+          { status: 403 }
+        );
+      }
     }
 
     // 인증 컨텍스트 로깅

@@ -99,7 +99,7 @@ export async function checkUrlSafety(
     try {
       const requestBody: SafeBrowsingRequest = {
         client: {
-          clientId: "saaslens",
+          clientId: "subhub",
           clientVersion: "1.0.0",
         },
         threatInfo: {

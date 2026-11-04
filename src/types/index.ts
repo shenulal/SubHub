@@ -52,6 +52,6 @@ export interface UserSession {
   email: string;
   name?: string;
   image?: string;
-  role: "ADMIN" | "MEMBER" | "VIEWER";
+  role: "ADMIN" | "APPROVER" | "MEMBER" | "VIEWER";
   organizationId: string;
 }

@@ -9,7 +9,9 @@ export default async function UsersPage() {
 
   return (
     <OrgLayout>
-      <UserPageClient role={role as "ADMIN" | "MEMBER" | "VIEWER" | null} />
+      <UserPageClient
+        role={role as "ADMIN" | "APPROVER" | "MEMBER" | "VIEWER" | null}
+      />
     </OrgLayout>
   );
 }

@@ -91,13 +91,13 @@ export function InviteMemberForm() {
                   <SelectValue placeholder={t("rolePlaceholder")} />
                 </SelectTrigger>
                 <SelectContent>
-                  {(["ADMIN", "MEMBER", "VIEWER"] as UserRole[]).map(
-                    (value) => (
-                      <SelectItem key={value} value={value}>
-                        {getRoleLabel(value)}
-                      </SelectItem>
-                    )
-                  )}
+                  {(
+                    ["ADMIN", "APPROVER", "MEMBER", "VIEWER"] as UserRole[]
+                  ).map((value) => (
+                    <SelectItem key={value} value={value}>
+                      {getRoleLabel(value)}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
               <p className="text-muted-foreground text-sm">

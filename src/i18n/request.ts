@@ -1,7 +1,9 @@
+import type { AbstractIntlMessages } from "next-intl";
 import { getRequestConfig } from "next-intl/server";
 import { cookies } from "next/headers";
 
 import { defaultLocale, locales, type Locale } from "@/i18n/config";
+import { getAllMessages } from "@/i18n/messages";
 
 export default getRequestConfig(async ({ requestLocale }) => {
   const resolvedLocale = await requestLocale;
@@ -16,6 +18,6 @@ export default getRequestConfig(async ({ requestLocale }) => {
 
   return {
     locale,
-    messages: (await import(`./messages/${locale}.json`)).default,
+    messages: getAllMessages(locale as Locale) as AbstractIntlMessages,
   };
 });

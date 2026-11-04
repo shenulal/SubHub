@@ -127,14 +127,14 @@ describe("logger", () => {
 
     it("should include service in base fields", () => {
       const t = createTestLogger({
-        base: { service: "saaslens" },
+        base: { service: "subhub" },
       });
 
       t.logger.info({ name: "test" }, "hello");
       t.flush();
 
       const parsed = t.getParsed();
-      expect(parsed.service).toBe("saaslens");
+      expect(parsed.service).toBe("subhub");
       expect(parsed.name).toBe("test");
       expect(parsed.msg).toBe("hello");
     });

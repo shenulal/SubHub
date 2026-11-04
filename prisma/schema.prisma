@@ -83,98 +83,141 @@ model OtpToken {
 }
 
 model Organization {
-  id                       String                 @id @default(cuid())
+  id                       String                  @id @default(cuid())
   name                     String
-  domain                   String?                @unique
-  logoUrl                  String?                @map("logo_url")
-  settings                 Json                   @default("{}")
-  createdAt                DateTime               @default(now()) @map("created_at")
-  updatedAt                DateTime               @updatedAt @map("updated_at")
-  googleCustomerId         String?                @unique @map("google_customer_id")
-  googlePrimaryDomain      String?                @map("google_primary_domain")
-  inactiveThresholdMinutes Int                    @default(30) @map("inactive_threshold_minutes")
-  extensionAutoDeployed                 Boolean   @default(false) @map("extension_auto_deployed")
-  apps                   App[]
-  auditLogs              AuditLog[]
-  cardTransactions       CardTransaction[]
-  corporateCards         CorporateCard[]
-  devices                Device[]
-  extensionApiTokens     ExtensionApiToken[]
-  extensionBlacklists    ExtensionBlacklist[]
-  extensionBlockLogs     ExtensionBlockLog[]
-  extensionBrowsingLogs  ExtensionBrowsingLog[]
-  extensionBuilds        ExtensionBuild[]
-  extensionConfigs       ExtensionConfig[]
-  extensionDevices       ExtensionDevice[]
-  extensionLoginEvents   ExtensionLoginEvent[]
-  extensionUsages        ExtensionUsage[]
-  extensionWhitelists    ExtensionWhitelist[]
-  integrations           Integration[]
-  invitations            Invitation[]
-  merchantPatterns       MerchantPattern[]
-  nonSaaSVendors         NonSaaSVendor[]
-  paymentRecords         PaymentRecord[]
-  reportSchedules        ReportSchedule[]
-  saasDomainScanHistory  SaaSDomainScanHistory[]
-  subscriptions          Subscription[]
-  syncHistories          SyncHistory[]
-  teams                  Team[]
-  users                  User[]
-  vendorInferenceLogs    VendorInferenceLog[]
-  csvMappingProfiles     CsvMappingProfile[]
+  domain                   String?                 @unique
+  logoUrl                  String?                 @map("logo_url")
+  settings                 Json                    @default("{}")
+  createdAt                DateTime                @default(now()) @map("created_at")
+  updatedAt                DateTime                @updatedAt @map("updated_at")
+  googleCustomerId         String?                 @unique @map("google_customer_id")
+  googlePrimaryDomain      String?                 @map("google_primary_domain")
+  inactiveThresholdMinutes Int                     @default(30) @map("inactive_threshold_minutes")
+  extensionAutoDeployed    Boolean                 @default(false) @map("extension_auto_deployed")
+  apps                     App[]
+  auditLogs                AuditLog[]
+  cardTransactions         CardTransaction[]
+  corporateCards           CorporateCard[]
+  devices                  Device[]
+  extensionApiTokens       ExtensionApiToken[]
+  extensionBlacklists      ExtensionBlacklist[]
+  extensionBlockLogs       ExtensionBlockLog[]
+  extensionBrowsingLogs    ExtensionBrowsingLog[]
+  extensionBuilds          ExtensionBuild[]
+  extensionConfigs         ExtensionConfig[]
+  extensionDevices         ExtensionDevice[]
+  extensionLoginEvents     ExtensionLoginEvent[]
+  extensionUsages          ExtensionUsage[]
+  extensionWhitelists      ExtensionWhitelist[]
+  integrations             Integration[]
+  invitations              Invitation[]
+  merchantPatterns         MerchantPattern[]
+  nonSaaSVendors           NonSaaSVendor[]
+  paymentRecords           PaymentRecord[]
+  reportSchedules          ReportSchedule[]
+  saasDomainScanHistory    SaaSDomainScanHistory[]
+  subscriptions            Subscription[]
+  syncHistories            SyncHistory[]
+  teams                    Team[]
+  users                    User[]
+  vendorInferenceLogs      VendorInferenceLog[]
+  csvMappingProfiles       CsvMappingProfile[]
+  categories               Category[]
+  tags                     Tag[]
+  customFieldDefinitions   CustomFieldDefinition[]
+  approvalPolicies         ApprovalPolicy[]
+  approvalRequests         ApprovalRequest[]
+  notifications            Notification[]
+  savedViews               SavedView[]
+  attachments              Attachment[]
+  subscriptionComments     SubscriptionComment[]
+  priceChangeEvents        PriceChangeEvent[]
+  reminderDispatches       ReminderDispatch[]
+  mailboxConnections       MailboxConnection[]
+  receiptSuggestions       ReceiptSuggestion[]
+  onboardingProgress       OnboardingProgress[]
+  dataExportRequests       DataExportRequest[]
+  roles                    Role[]
+  settingsEntries          OrganizationSetting[]
+  taxRates                 TaxRate[]
+  costCenters              CostCenter[]
+  paymentMethods           PaymentMethodOption[]
+  billingCycleConfigs      BillingCycleConfig[]
+  notificationTemplates    NotificationTemplate[]
 
   @@map("organizations")
 }
 
 model User {
-  id                      String                 @id @default(cuid())
-  email                   String                 @unique
-  emailVerified           DateTime?              @map("email_verified")
-  name                    String?
-  image                   String?
-  avatarUrl               String?                @map("avatar_url")
-  role                    UserRole               @default(MEMBER)
-  status                  UserStatus             @default(ACTIVE)
-  lastLoginAt             DateTime?              @map("last_login_at")
-  employeeId              String?                @map("employee_id")
-  department              String?
-  jobTitle                String?                @map("job_title")
-  terminatedAt            DateTime?              @map("terminated_at")
-  passwordHash                        String?   @map("password_hash")
-  organizationId          String?                @map("organization_id")
-  teamId                  String?                @map("team_id")
-  managerId               String?                @map("manager_id")
-  isGoogleAdmin           Boolean                @default(false) @map("is_google_admin")
-  createdAt               DateTime               @default(now()) @map("created_at")
-  updatedAt               DateTime               @updatedAt @map("updated_at")
-  preferences             Json                   @default("{}")
-  accounts                   Account[]
-  ownedApps                  App[]                  @relation("AppOwner")
-  auditLogs                  AuditLog[]
-  assignedCardTransactions   CardTransaction[]      @relation("CardTransactionAssignment")
-  assignedCorporateCards     CorporateCard[]        @relation("CorporateCardAssignment")
-  devices                    Device[]
-  extensionBlockLogs         ExtensionBlockLog[]
-  extensionBrowsingLogs      ExtensionBrowsingLog[]
-  extensionDevices           ExtensionDevice[]
-  extensionLoginEvents       ExtensionLoginEvent[]
-  extensionUsages            ExtensionUsage[]
-  invitedInvitations         Invitation[]           @relation("InvitedBy")
-  assignedPaymentRecords     PaymentRecord[]        @relation("PaymentRecordAssignment")
-  createdSchedules           ReportSchedule[]
-  sessions                   Session[]
-  syncHistories              SyncHistory[]
-  subscriptionAssignments    SubscriptionUser[]     @relation("SubscriptionAssignments")
-  appAccesses                UserAppAccess[]
-  manager                    User?                  @relation("ManagerRelation", fields: [managerId], references: [id])
-  directReports           User[]                 @relation("ManagerRelation")
-  organization            Organization?          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  team                    Team?                  @relation(fields: [teamId], references: [id])
+  id                       String                   @id @default(cuid())
+  email                    String                   @unique
+  emailVerified            DateTime?                @map("email_verified")
+  name                     String?
+  image                    String?
+  avatarUrl                String?                  @map("avatar_url")
+  role                     UserRole                 @default(MEMBER)
+  roleId                   String?                  @map("role_id")
+  status                   UserStatus               @default(ACTIVE)
+  lastLoginAt              DateTime?                @map("last_login_at")
+  employeeId               String?                  @map("employee_id")
+  department               String?
+  jobTitle                 String?                  @map("job_title")
+  terminatedAt             DateTime?                @map("terminated_at")
+  passwordHash             String?                  @map("password_hash")
+  organizationId           String?                  @map("organization_id")
+  teamId                   String?                  @map("team_id")
+  managerId                String?                  @map("manager_id")
+  isGoogleAdmin            Boolean                  @default(false) @map("is_google_admin")
+  createdAt                DateTime                 @default(now()) @map("created_at")
+  updatedAt                DateTime                 @updatedAt @map("updated_at")
+  preferences              Json                     @default("{}")
+  accounts                 Account[]
+  ownedApps                App[]                    @relation("AppOwner")
+  auditLogs                AuditLog[]
+  assignedCardTransactions CardTransaction[]        @relation("CardTransactionAssignment")
+  assignedCorporateCards   CorporateCard[]          @relation("CorporateCardAssignment")
+  devices                  Device[]
+  extensionBlockLogs       ExtensionBlockLog[]
+  extensionBrowsingLogs    ExtensionBrowsingLog[]
+  extensionDevices         ExtensionDevice[]
+  extensionLoginEvents     ExtensionLoginEvent[]
+  extensionUsages          ExtensionUsage[]
+  invitedInvitations       Invitation[]             @relation("InvitedBy")
+  assignedPaymentRecords   PaymentRecord[]          @relation("PaymentRecordAssignment")
+  createdSchedules         ReportSchedule[]
+  sessions                 Session[]
+  syncHistories            SyncHistory[]
+  subscriptionAssignments  SubscriptionUser[]       @relation("SubscriptionAssignments")
+  appAccesses              UserAppAccess[]
+  approverOfTeams          Team[]                   @relation("TeamApprover")
+  ownedSubscriptions       Subscription[]           @relation("SubscriptionOwner")
+  approvalRequests         ApprovalRequest[]        @relation("ApprovalRequester")
+  approvalSteps            ApprovalStep[]           @relation("ApprovalStepApprover")
+  approvalEvents           ApprovalEvent[]          @relation("ApprovalEventActor")
+  policyApproverSteps      ApprovalPolicyStep[]     @relation("PolicyStepApprover")
+  notifications            Notification[]
+  notificationPreferences  NotificationPreference[]
+  deviceTokens             DeviceToken[]
+  savedViews               SavedView[]
+  attachments              Attachment[]             @relation("AttachmentUploader")
+  subscriptionComments     SubscriptionComment[]    @relation("CommentAuthor")
+  mailboxConnections       MailboxConnection[]
+  receiptSuggestions       ReceiptSuggestion[]
+  onboardingProgress       OnboardingProgress[]
+  dataExportRequests       DataExportRequest[]
+  customRole               Role?                    @relation(fields: [roleId], references: [id])
+  ownedCostCenters         CostCenter[]             @relation("CostCenterOwner")
+  settingsUpdates          OrganizationSetting[]    @relation("SettingUpdatedBy")
+  manager                  User?                    @relation("ManagerRelation", fields: [managerId], references: [id])
+  directReports            User[]                   @relation("ManagerRelation")
+  organization             Organization?            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  team                     Team?                    @relation(fields: [teamId], references: [id])
 
   @@unique([organizationId, email])
   @@index([organizationId])
   @@index([status])
   @@index([teamId])
+  @@index([roleId])
   @@index([managerId])
   @@map("users")
 }
@@ -202,24 +245,34 @@ model Invitation {
 }
 
 model SaaSCatalog {
-  id                    String                  @id @default(cuid())
-  name                  String                  @unique
-  slug                  String                  @unique
-  category              String
-  description           String?
-  logoUrl               String?                 @map("logo_url")
-  website               String?
-  vendorName            String?                 @map("vendor_name")
-  isVerified            Boolean                 @default(false) @map("is_verified")
-  pricingModel          String?                 @map("pricing_model") // PER_SEAT, FLAT_RATE, USAGE_BASED, FREEMIUM
-  basePricePerSeat      Decimal?                @map("base_price_per_seat")
-  basePriceCurrency     String?                 @default("USD") @map("base_price_currency")
-  createdAt             DateTime                @default(now()) @map("created_at")
-  updatedAt             DateTime                @updatedAt @map("updated_at")
-  apps                  App[]
-  domainScanHistory     SaaSDomainScanHistory[]
-  patterns              SaaSPattern[]
-  vendorInferenceLogs   VendorInferenceLog[]
+  id                  String                  @id @default(cuid())
+  name                String                  @unique
+  slug                String                  @unique
+  category            String
+  description         String?
+  logoUrl             String?                 @map("logo_url")
+  website             String?
+  vendorName          String?                 @map("vendor_name")
+  isVerified          Boolean                 @default(false) @map("is_verified")
+  pricingModel        String?                 @map("pricing_model") // PER_SEAT, FLAT_RATE, USAGE_BASED, FREEMIUM
+  basePricePerSeat    Decimal?                @map("base_price_per_seat")
+  basePriceCurrency   String?                 @default("USD") @map("base_price_currency")
+  subcategory         String?
+  aliases             String[]                @default([])
+  cancellationUrl     String?                 @map("cancellation_url")
+  billingPortalUrl    String?                 @map("billing_portal_url")
+  cancellationSteps   Json?                   @map("cancellation_steps")
+  noticePeriodDays    Int?                    @map("notice_period_days")
+  countryCode         String?                 @map("country_code")
+  isActive            Boolean                 @default(true) @map("is_active")
+  createdAt           DateTime                @default(now()) @map("created_at")
+  updatedAt           DateTime                @updatedAt @map("updated_at")
+  apps                App[]
+  domainScanHistory   SaaSDomainScanHistory[]
+  patterns            SaaSPattern[]
+  receiptSuggestions  ReceiptSuggestion[]
+  approvalRequests    ApprovalRequest[]
+  vendorInferenceLogs VendorInferenceLog[]
 
   @@index([category])
   @@index([pricingModel])
@@ -249,6 +302,9 @@ model App {
   customLogoUrl       String?              @map("custom_logo_url")
   customWebsite       String?              @map("custom_website")
   category            String?
+  categoryId          String?              @map("category_id")
+  cancellationUrl     String?              @map("cancellation_url")
+  cancellationNotes   String?              @map("cancellation_notes")
   ownerId             String?              @map("owner_id")
   organizationId      String               @map("organization_id")
   notes               String?
@@ -259,6 +315,7 @@ model App {
   updatedAt           DateTime             @updatedAt @map("updated_at")
   teams               AppTeam[]
   catalog             SaaSCatalog?         @relation(fields: [catalogId], references: [id])
+  categoryRef         Category?            @relation(fields: [categoryId], references: [id])
   organization        Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   owner               User?                @relation("AppOwner", fields: [ownerId], references: [id])
   cardTransactions    CardTransaction[]
@@ -321,40 +378,75 @@ model SubscriptionTeam {
 }
 
 model Subscription {
-  id             String             @id @default(cuid())
-  appId          String             @map("app_id")
-  organizationId String             @map("organization_id")
-  teamId         String?            @map("team_id")
-  status         SubscriptionStatus @default(ACTIVE)
-  billingCycle   BillingCycle       @default(MONTHLY) @map("billing_cycle")
-  billingType    BillingType        @default(FLAT_RATE) @map("billing_type")
-  amount         Decimal            @db.Decimal(10, 2)
-  perSeatPrice   Decimal?           @db.Decimal(10, 2) @map("per_seat_price")
-  currency       String             @default("KRW")
-  totalLicenses  Int?               @map("total_licenses")
-  usedLicenses   Int?               @map("used_licenses")
-  startDate      DateTime           @map("start_date")
-  endDate        DateTime?          @map("end_date")
-  renewalDate    DateTime?          @map("renewal_date")
-  autoRenewal    Boolean            @default(true) @map("auto_renewal")
-  renewalAlert30 Boolean            @default(true) @map("renewal_alert_30")
-  renewalAlert60 Boolean            @default(false) @map("renewal_alert_60")
-  renewalAlert90 Boolean            @default(false) @map("renewal_alert_90")
-  contractUrl    String?            @map("contract_url")
-  notes          String?
-  createdAt      DateTime           @default(now()) @map("created_at")
-  updatedAt      DateTime           @updatedAt @map("updated_at")
-  cardTransactions  CardTransaction[]
-  paymentRecords    PaymentRecord[]
-  renewalAlerts     RenewalAlert[]
-  assignedUsers     SubscriptionUser[]
-  subscriptionTeams SubscriptionTeam[]
-  app               App                @relation(fields: [appId], references: [id], onDelete: Cascade)
-  organization      Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  team              Team?              @relation(fields: [teamId], references: [id])
+  id                   String                @id @default(cuid())
+  appId                String                @map("app_id")
+  organizationId       String                @map("organization_id")
+  teamId               String?               @map("team_id")
+  status               SubscriptionStatus    @default(ACTIVE)
+  billingCycle         BillingCycle          @default(MONTHLY) @map("billing_cycle")
+  billingType          BillingType           @default(FLAT_RATE) @map("billing_type")
+  amount               Decimal               @db.Decimal(10, 2)
+  perSeatPrice         Decimal?              @map("per_seat_price") @db.Decimal(10, 2)
+  currency             String                @default("USD")
+  totalLicenses        Int?                  @map("total_licenses")
+  usedLicenses         Int?                  @map("used_licenses")
+  startDate            DateTime              @map("start_date")
+  endDate              DateTime?             @map("end_date")
+  renewalDate          DateTime?             @map("renewal_date")
+  autoRenewal          Boolean               @default(true) @map("auto_renewal")
+  renewalAlert30       Boolean               @default(true) @map("renewal_alert_30")
+  renewalAlert60       Boolean               @default(false) @map("renewal_alert_60")
+  renewalAlert90       Boolean               @default(false) @map("renewal_alert_90")
+  contractUrl          String?               @map("contract_url")
+  notes                String?
+  categoryId           String?               @map("category_id")
+  paymentMethodId      String?               @map("payment_method_id")
+  costCenterId         String?               @map("cost_center_id")
+  taxRateId            String?               @map("tax_rate_id")
+  isTrial              Boolean               @default(false) @map("is_trial")
+  trialEndsAt          DateTime?             @map("trial_ends_at")
+  noticePeriodDays     Int?                  @map("notice_period_days")
+  cancellationDeadline DateTime?             @map("cancellation_deadline")
+  reminderLeadDays     Int[]                 @default([7, 3, 1]) @map("reminder_lead_days")
+  isPersonal           Boolean               @default(false) @map("is_personal")
+  ownerId              String?               @map("owner_id")
+  pausedAt             DateTime?             @map("paused_at")
+  archivedAt           DateTime?             @map("archived_at")
+  lastDetectedAmount   Decimal?              @map("last_detected_amount") @db.Decimal(10, 2)
+  cancellationUrl      String?               @map("cancellation_url")
+  cancellationNotes    String?               @map("cancellation_notes")
+  createdAt            DateTime              @default(now()) @map("created_at")
+  updatedAt            DateTime              @updatedAt @map("updated_at")
+  cardTransactions     CardTransaction[]
+  paymentRecords       PaymentRecord[]
+  renewalAlerts        RenewalAlert[]
+  assignedUsers        SubscriptionUser[]
+  subscriptionTeams    SubscriptionTeam[]
+  app                  App                   @relation(fields: [appId], references: [id], onDelete: Cascade)
+  category             Category?             @relation(fields: [categoryId], references: [id])
+  owner                User?                 @relation("SubscriptionOwner", fields: [ownerId], references: [id])
+  paymentMethod        PaymentMethodOption?  @relation(fields: [paymentMethodId], references: [id])
+  costCenter           CostCenter?           @relation(fields: [costCenterId], references: [id])
+  taxRate              TaxRate?              @relation(fields: [taxRateId], references: [id])
+  tags                 SubscriptionTag[]
+  customFieldValues    CustomFieldValue[]
+  attachments          Attachment[]
+  comments             SubscriptionComment[]
+  priceChangeEvents    PriceChangeEvent[]
+  reminderDispatches   ReminderDispatch[]
+  approvalRequest      ApprovalRequest?
+  organization         Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  team                 Team?                 @relation(fields: [teamId], references: [id])
 
   @@unique([appId, organizationId])
   @@index([organizationId])
+  @@index([categoryId])
+  @@index([ownerId])
+  @@index([status])
+  @@index([trialEndsAt])
+  @@index([cancellationDeadline])
+  @@index([costCenterId])
+  @@index([paymentMethodId])
   @@index([renewalDate])
   @@index([teamId])
   @@map("subscriptions")
@@ -735,27 +827,29 @@ model OsDefaultApp {
 }
 
 model Team {
-  id                String          @id @default(cuid())
+  id                String             @id @default(cuid())
   name              String
   description       String?
-  googleOrgUnitId   String?         @unique @map("google_org_unit_id")
-  googleOrgUnitPath String?         @map("google_org_unit_path")
-  parentId          String?         @map("parent_id")
-  organizationId    String          @map("organization_id")
-  externalId        String?         @map("external_id")
-  source            TeamSource      @default(MANUAL)
-  createdAt         DateTime        @default(now()) @map("created_at")
-  updatedAt         DateTime        @updatedAt @map("updated_at")
-  apps                  AppTeam[]
-  cardTransactions      CardTransaction[]
-  corporateCards        CorporateCard[]
-  invitations           Invitation[]
-  paymentRecords        PaymentRecord[]
-  subscriptions         Subscription[]
-  subscriptionTeams     SubscriptionTeam[]
-  organization          Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  parent            Team?           @relation("TeamHierarchy", fields: [parentId], references: [id])
-  children          Team[]          @relation("TeamHierarchy")
+  googleOrgUnitId   String?            @unique @map("google_org_unit_id")
+  googleOrgUnitPath String?            @map("google_org_unit_path")
+  parentId          String?            @map("parent_id")
+  organizationId    String             @map("organization_id")
+  externalId        String?            @map("external_id")
+  source            TeamSource         @default(MANUAL)
+  approverId        String?            @map("approver_id")
+  createdAt         DateTime           @default(now()) @map("created_at")
+  updatedAt         DateTime           @updatedAt @map("updated_at")
+  apps              AppTeam[]
+  cardTransactions  CardTransaction[]
+  corporateCards    CorporateCard[]
+  invitations       Invitation[]
+  paymentRecords    PaymentRecord[]
+  subscriptions     Subscription[]
+  subscriptionTeams SubscriptionTeam[]
+  organization      Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  parent            Team?              @relation("TeamHierarchy", fields: [parentId], references: [id])
+  approver          User?              @relation("TeamApprover", fields: [approverId], references: [id])
+  children          Team[]             @relation("TeamHierarchy")
   members           User[]
 
   @@unique([organizationId, googleOrgUnitPath])
@@ -863,21 +957,21 @@ model ExtensionUsage {
 }
 
 model ExtensionDevice {
-  id                   String                @id @default(cuid())
-  organizationId       String                @map("organization_id")
-  deviceKey            String                @unique @map("device_key")
-  browserInfo          String?               @map("browser_info")
-  osInfo               String?               @map("os_info")
-  extensionVersion     String?               @map("extension_version")
-  status               ExtensionDeviceStatus @default(PENDING)
-  lastSeenAt           DateTime?             @map("last_seen_at")
-  userId               String?               @map("user_id")
-  onboardingCompletedAt DateTime?            @map("onboarding_completed_at")
-  onboardingEmail      String?               @map("onboarding_email")
-  createdAt            DateTime              @default(now()) @map("created_at")
-  updatedAt            DateTime              @updatedAt @map("updated_at")
-  organization         Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  user                 User?                 @relation(fields: [userId], references: [id])
+  id                    String                @id @default(cuid())
+  organizationId        String                @map("organization_id")
+  deviceKey             String                @unique @map("device_key")
+  browserInfo           String?               @map("browser_info")
+  osInfo                String?               @map("os_info")
+  extensionVersion      String?               @map("extension_version")
+  status                ExtensionDeviceStatus @default(PENDING)
+  lastSeenAt            DateTime?             @map("last_seen_at")
+  userId                String?               @map("user_id")
+  onboardingCompletedAt DateTime?             @map("onboarding_completed_at")
+  onboardingEmail       String?               @map("onboarding_email")
+  createdAt             DateTime              @default(now()) @map("created_at")
+  updatedAt             DateTime              @updatedAt @map("updated_at")
+  organization          Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user                  User?                 @relation(fields: [userId], references: [id])
 
   @@index([organizationId])
   @@index([userId])
@@ -973,17 +1067,17 @@ model ExtensionBlockLog {
 
 // 도메인 SaaS 스캔 히스토리 - 검토 대기 앱 리스트용
 model SaaSDomainScanHistory {
-  id             String       @id @default(cuid())
-  organizationId String       @map("organization_id")
-  domain         String       // 메인 도메인 (google.com)
-  isSaaS         Boolean      @map("is_saas")
-  serviceName    String?      @map("service_name")
+  id             String   @id @default(cuid())
+  organizationId String   @map("organization_id")
+  domain         String // 메인 도메인 (google.com)
+  isSaaS         Boolean  @map("is_saas")
+  serviceName    String?  @map("service_name")
   category       String?
   confidence     Float?
-  catalogId      String?      @map("catalog_id")
+  catalogId      String?  @map("catalog_id")
   website        String?
   reasoning      String?
-  scannedAt      DateTime     @default(now()) @map("scanned_at")
+  scannedAt      DateTime @default(now()) @map("scanned_at")
 
   // 악성 URL 검사 관련 필드
   isMalicious           Boolean   @default(false) @map("is_malicious")
@@ -1014,6 +1108,7 @@ enum TeamSource {
 enum UserRole {
   SUPER_ADMIN
   ADMIN
+  APPROVER
   MEMBER
   VIEWER
 }
@@ -1057,6 +1152,8 @@ enum SubscriptionStatus {
   EXPIRED
   CANCELLED
   PENDING
+  PAUSED
+  ARCHIVED
 }
 
 enum BillingCycle {
@@ -1227,27 +1324,27 @@ enum ExtensionBuildStatus {
 }
 
 model SyncHistory {
-  id              String         @id @default(cuid())
-  organizationId  String         @map("organization_id")
+  id              String     @id @default(cuid())
+  organizationId  String     @map("organization_id")
   type            SyncType
   status          SyncStatus
-  corporateCardId String?        @map("corporate_card_id")
-  fileName        String?        @map("file_name")
-  totalRecords    Int            @default(0) @map("total_records")
-  successCount    Int            @default(0) @map("success_count")
-  failedCount     Int            @default(0) @map("failed_count")
-  matchedCount    Int            @default(0) @map("matched_count")
-  unmatchedCount  Int            @default(0) @map("unmatched_count")
-  errorMessage    String?        @map("error_message")
-  errorDetails    Json?          @map("error_details")
-  startedAt       DateTime       @default(now()) @map("started_at")
-  completedAt     DateTime?      @map("completed_at")
-  triggeredBy     String         @map("triggered_by")
-  userId          String?        @map("user_id")
+  corporateCardId String?    @map("corporate_card_id")
+  fileName        String?    @map("file_name")
+  totalRecords    Int        @default(0) @map("total_records")
+  successCount    Int        @default(0) @map("success_count")
+  failedCount     Int        @default(0) @map("failed_count")
+  matchedCount    Int        @default(0) @map("matched_count")
+  unmatchedCount  Int        @default(0) @map("unmatched_count")
+  errorMessage    String?    @map("error_message")
+  errorDetails    Json?      @map("error_details")
+  startedAt       DateTime   @default(now()) @map("started_at")
+  completedAt     DateTime?  @map("completed_at")
+  triggeredBy     String     @map("triggered_by")
+  userId          String?    @map("user_id")
 
-  organization    Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  corporateCard   CorporateCard? @relation(fields: [corporateCardId], references: [id])
-  user            User?          @relation(fields: [userId], references: [id])
+  organization  Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  corporateCard CorporateCard? @relation(fields: [corporateCardId], references: [id])
+  user          User?          @relation(fields: [userId], references: [id])
 
   @@index([organizationId])
   @@index([corporateCardId])
@@ -1285,4 +1382,823 @@ model CsvMappingProfile {
 
   @@index([organizationId])
   @@map("csv_mapping_profiles")
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// SubHub additions — taxonomy, approvals, notifications, documents,
+// receipts, multi-currency, saved views, onboarding, privacy
+// ═══════════════════════════════════════════════════════════════════
+
+// ─── Taxonomy ──────────────────────────────────────────────────────
+
+/// Two-level category tree (Category → Subcategory). parentId null = top level.
+model Category {
+  id               String            @id @default(cuid())
+  organizationId   String            @map("organization_id")
+  name             String
+  slug             String
+  parentId         String?           @map("parent_id")
+  icon             String?
+  color            String?
+  sortOrder        Int               @default(0) @map("sort_order")
+  isDefault        Boolean           @default(false) @map("is_default")
+  budgetMonthly    Decimal?          @map("budget_monthly") @db.Decimal(12, 2)
+  isArchived       Boolean           @default(false) @map("is_archived")
+  createdAt        DateTime          @default(now()) @map("created_at")
+  updatedAt        DateTime          @updatedAt @map("updated_at")
+  organization     Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  parent           Category?         @relation("CategoryHierarchy", fields: [parentId], references: [id])
+  children         Category[]        @relation("CategoryHierarchy")
+  subscriptions    Subscription[]
+  apps             App[]
+  approvalRequests ApprovalRequest[]
+
+  @@unique([organizationId, parentId, slug])
+  @@index([organizationId])
+  @@index([parentId])
+  @@map("categories")
+}
+
+model Tag {
+  id             String            @id @default(cuid())
+  organizationId String            @map("organization_id")
+  name           String
+  color          String?
+  createdAt      DateTime          @default(now()) @map("created_at")
+  updatedAt      DateTime          @updatedAt @map("updated_at")
+  organization   Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  subscriptions  SubscriptionTag[]
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
+  @@map("tags")
+}
+
+model SubscriptionTag {
+  subscriptionId String       @map("subscription_id")
+  tagId          String       @map("tag_id")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  tag            Tag          @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([subscriptionId, tagId])
+  @@index([tagId])
+  @@map("subscription_tags")
+}
+
+enum CustomFieldType {
+  TEXT
+  NUMBER
+  DATE
+  SELECT
+}
+
+model CustomFieldDefinition {
+  id             String             @id @default(cuid())
+  organizationId String             @map("organization_id")
+  key            String
+  label          String
+  fieldType      CustomFieldType    @default(TEXT) @map("field_type")
+  options        Json?
+  isRequired     Boolean            @default(false) @map("is_required")
+  sortOrder      Int                @default(0) @map("sort_order")
+  isArchived     Boolean            @default(false) @map("is_archived")
+  createdAt      DateTime           @default(now()) @map("created_at")
+  updatedAt      DateTime           @updatedAt @map("updated_at")
+  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  values         CustomFieldValue[]
+
+  @@unique([organizationId, key])
+  @@index([organizationId])
+  @@map("custom_field_definitions")
+}
+
+model CustomFieldValue {
+  id             String                @id @default(cuid())
+  subscriptionId String                @map("subscription_id")
+  fieldId        String                @map("field_id")
+  value          String
+  createdAt      DateTime              @default(now()) @map("created_at")
+  updatedAt      DateTime              @updatedAt @map("updated_at")
+  subscription   Subscription          @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  field          CustomFieldDefinition @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+
+  @@unique([subscriptionId, fieldId])
+  @@index([fieldId])
+  @@map("custom_field_values")
+}
+
+// ─── Subscription context ─────────────────────────────────────────
+
+enum AttachmentKind {
+  CONTRACT
+  INVOICE
+  ORDER_FORM
+  OTHER
+}
+
+model Attachment {
+  id             String         @id @default(cuid())
+  organizationId String         @map("organization_id")
+  subscriptionId String         @map("subscription_id")
+  uploadedById   String?        @map("uploaded_by_id")
+  kind           AttachmentKind @default(OTHER)
+  fileName       String         @map("file_name")
+  mimeType       String         @map("mime_type")
+  sizeBytes      Int            @map("size_bytes")
+  storageKey     String         @map("storage_key")
+  url            String?
+  createdAt      DateTime       @default(now()) @map("created_at")
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  subscription   Subscription   @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  uploadedBy     User?          @relation("AttachmentUploader", fields: [uploadedById], references: [id])
+
+  @@index([organizationId])
+  @@index([subscriptionId])
+  @@map("attachments")
+}
+
+model SubscriptionComment {
+  id             String       @id @default(cuid())
+  organizationId String       @map("organization_id")
+  subscriptionId String       @map("subscription_id")
+  authorId       String?      @map("author_id")
+  body           String
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+  author         User?        @relation("CommentAuthor", fields: [authorId], references: [id])
+
+  @@index([subscriptionId])
+  @@map("subscription_comments")
+}
+
+enum PriceChangeSource {
+  CARD_TRANSACTION
+  PAYMENT_RECORD
+  EMAIL_RECEIPT
+  MANUAL
+}
+
+model PriceChangeEvent {
+  id               String            @id @default(cuid())
+  organizationId   String            @map("organization_id")
+  subscriptionId   String            @map("subscription_id")
+  previousAmount   Decimal           @map("previous_amount") @db.Decimal(10, 2)
+  newAmount        Decimal           @map("new_amount") @db.Decimal(10, 2)
+  currency         String
+  changePercent    Decimal           @map("change_percent") @db.Decimal(8, 2)
+  source           PriceChangeSource
+  sourceRecordId   String?           @map("source_record_id")
+  detectedAt       DateTime          @default(now()) @map("detected_at")
+  acknowledgedAt   DateTime?         @map("acknowledged_at")
+  acknowledgedById String?           @map("acknowledged_by_id")
+  organization     Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  subscription     Subscription      @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@unique([subscriptionId, source, sourceRecordId])
+  @@index([organizationId, acknowledgedAt])
+  @@map("price_change_events")
+}
+
+/// Reminder sends for the configurable lead-time reminders (1/3/7/14/30 days),
+/// trial endings and notice-period windows. One row per (subscription, kind, due date).
+enum ReminderKind {
+  RENEWAL
+  TRIAL_ENDING
+  NOTICE_PERIOD
+}
+
+model ReminderDispatch {
+  id             String       @id @default(cuid())
+  organizationId String       @map("organization_id")
+  subscriptionId String       @map("subscription_id")
+  kind           ReminderKind
+  leadDays       Int          @map("lead_days")
+  targetDate     DateTime     @map("target_date")
+  sentAt         DateTime     @default(now()) @map("sent_at")
+  recipientCount Int          @default(0) @map("recipient_count")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  subscription   Subscription @relation(fields: [subscriptionId], references: [id], onDelete: Cascade)
+
+  @@unique([subscriptionId, kind, leadDays, targetDate])
+  @@index([organizationId])
+  @@map("reminder_dispatches")
+}
+
+// ─── Approvals ────────────────────────────────────────────────────
+
+enum ApprovalRequestStatus {
+  PENDING
+  INFO_REQUESTED
+  APPROVED
+  REJECTED
+  CANCELLED
+}
+
+enum ApprovalStepStatus {
+  WAITING
+  PENDING
+  APPROVED
+  REJECTED
+  INFO_REQUESTED
+  SKIPPED
+}
+
+enum ApprovalApproverType {
+  USER
+  MANAGER
+  TEAM_APPROVER
+  ROLE
+}
+
+enum ApprovalEventType {
+  SUBMITTED
+  APPROVED
+  REJECTED
+  INFO_REQUESTED
+  INFO_PROVIDED
+  COMMENTED
+  REMINDED
+  ESCALATED
+  CANCELLED
+  SUBSCRIPTION_CREATED
+}
+
+model ApprovalPolicy {
+  id                    String               @id @default(cuid())
+  organizationId        String               @map("organization_id")
+  name                  String
+  description           String?
+  isActive              Boolean              @default(true) @map("is_active")
+  priority              Int                  @default(0)
+  appliesToAll          Boolean              @default(false) @map("applies_to_all")
+  costThreshold         Decimal?             @map("cost_threshold") @db.Decimal(12, 2)
+  costThresholdCurrency String               @default("USD") @map("cost_threshold_currency")
+  categoryIds           String[]             @default([]) @map("category_ids")
+  reminderAfterDays     Int?                 @map("reminder_after_days")
+  escalationAfterDays   Int?                 @map("escalation_after_days")
+  createdAt             DateTime             @default(now()) @map("created_at")
+  updatedAt             DateTime             @updatedAt @map("updated_at")
+  organization          Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  steps                 ApprovalPolicyStep[]
+  requests              ApprovalRequest[]
+
+  @@index([organizationId, isActive, priority])
+  @@map("approval_policies")
+}
+
+model ApprovalPolicyStep {
+  id             String               @id @default(cuid())
+  policyId       String               @map("policy_id")
+  stepOrder      Int                  @map("step_order")
+  label          String
+  approverType   ApprovalApproverType @map("approver_type")
+  approverUserId String?              @map("approver_user_id")
+  approverRole   UserRole?            @map("approver_role")
+  policy         ApprovalPolicy       @relation(fields: [policyId], references: [id], onDelete: Cascade)
+  approverUser   User?                @relation("PolicyStepApprover", fields: [approverUserId], references: [id])
+
+  @@unique([policyId, stepOrder])
+  @@map("approval_policy_steps")
+}
+
+model ApprovalRequest {
+  id             String                @id @default(cuid())
+  organizationId String                @map("organization_id")
+  requesterId    String                @map("requester_id")
+  policyId       String?               @map("policy_id")
+  catalogId      String?               @map("catalog_id")
+  categoryId     String?               @map("category_id")
+  subscriptionId String?               @unique @map("subscription_id")
+  costCenterId   String?               @map("cost_center_id")
+  serviceName    String                @map("service_name")
+  vendorWebsite  String?               @map("vendor_website")
+  amount         Decimal               @db.Decimal(12, 2)
+  currency       String                @default("USD")
+  billingCycle   BillingCycle          @default(MONTHLY) @map("billing_cycle")
+  monthlyAmount  Decimal               @map("monthly_amount") @db.Decimal(12, 2)
+  seats          Int?
+  justification  String
+  status         ApprovalRequestStatus @default(PENDING)
+  currentStep    Int                   @default(1) @map("current_step")
+  submittedAt    DateTime              @default(now()) @map("submitted_at")
+  decidedAt      DateTime?             @map("decided_at")
+  lastReminderAt DateTime?             @map("last_reminder_at")
+  escalatedAt    DateTime?             @map("escalated_at")
+  metadata       Json?
+  createdAt      DateTime              @default(now()) @map("created_at")
+  updatedAt      DateTime              @updatedAt @map("updated_at")
+  organization   Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  requester      User                  @relation("ApprovalRequester", fields: [requesterId], references: [id])
+  policy         ApprovalPolicy?       @relation(fields: [policyId], references: [id])
+  catalog        SaaSCatalog?          @relation(fields: [catalogId], references: [id])
+  category       Category?             @relation(fields: [categoryId], references: [id])
+  costCenter     CostCenter?           @relation(fields: [costCenterId], references: [id])
+  subscription   Subscription?         @relation(fields: [subscriptionId], references: [id])
+  steps          ApprovalStep[]
+  events         ApprovalEvent[]
+
+  @@index([organizationId, status])
+  @@index([requesterId])
+  @@index([submittedAt])
+  @@map("approval_requests")
+}
+
+model ApprovalStep {
+  id         String             @id @default(cuid())
+  requestId  String             @map("request_id")
+  stepOrder  Int                @map("step_order")
+  label      String
+  approverId String             @map("approver_id")
+  status     ApprovalStepStatus @default(WAITING)
+  comment    String?
+  dueAt      DateTime?          @map("due_at")
+  decidedAt  DateTime?          @map("decided_at")
+  createdAt  DateTime           @default(now()) @map("created_at")
+  updatedAt  DateTime           @updatedAt @map("updated_at")
+  request    ApprovalRequest    @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  approver   User               @relation("ApprovalStepApprover", fields: [approverId], references: [id])
+
+  @@unique([requestId, stepOrder])
+  @@index([approverId, status])
+  @@map("approval_steps")
+}
+
+model ApprovalEvent {
+  id        String            @id @default(cuid())
+  requestId String            @map("request_id")
+  actorId   String?           @map("actor_id")
+  type      ApprovalEventType
+  comment   String?
+  metadata  Json?
+  createdAt DateTime          @default(now()) @map("created_at")
+  request   ApprovalRequest   @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  actor     User?             @relation("ApprovalEventActor", fields: [actorId], references: [id])
+
+  @@index([requestId, createdAt])
+  @@map("approval_events")
+}
+
+// ─── Notifications ────────────────────────────────────────────────
+
+enum NotificationChannel {
+  IN_APP
+  EMAIL
+  PUSH
+}
+
+enum NotificationEventType {
+  RENEWAL_REMINDER
+  TRIAL_ENDING
+  PRICE_CHANGE
+  NOTICE_PERIOD
+  APPROVAL_REQUESTED
+  APPROVAL_DECIDED
+  APPROVAL_INFO_REQUESTED
+  APPROVAL_ESCALATED
+  APPROVER_RENEWAL
+  OFFBOARDING
+  SHADOW_IT
+  COST_ANOMALY
+  PENDING_REVIEW
+  RECEIPT_SUGGESTION
+  DIGEST
+  SYSTEM
+}
+
+/// Persistent per-user in-app notification (the unified notification centre).
+model Notification {
+  id             String                @id @default(cuid())
+  organizationId String                @map("organization_id")
+  userId         String                @map("user_id")
+  type           NotificationEventType
+  title          String
+  body           String?
+  link           String?
+  dedupeKey      String?               @map("dedupe_key")
+  metadata       Json?
+  readAt         DateTime?             @map("read_at")
+  createdAt      DateTime              @default(now()) @map("created_at")
+  organization   Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, dedupeKey])
+  @@index([userId, readAt, createdAt])
+  @@index([organizationId])
+  @@map("notifications")
+}
+
+model NotificationPreference {
+  id        String                @id @default(cuid())
+  userId    String                @map("user_id")
+  eventType NotificationEventType @map("event_type")
+  channel   NotificationChannel
+  enabled   Boolean               @default(true)
+  updatedAt DateTime              @updatedAt @map("updated_at")
+  user      User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, eventType, channel])
+  @@map("notification_preferences")
+}
+
+enum DevicePlatformType {
+  IOS
+  ANDROID
+  WEB
+}
+
+/// Push tokens registered by mobile/web clients (push delivery readiness).
+model DeviceToken {
+  id         String             @id @default(cuid())
+  userId     String             @map("user_id")
+  platform   DevicePlatformType
+  token      String             @unique
+  deviceName String?            @map("device_name")
+  lastSeenAt DateTime           @default(now()) @map("last_seen_at")
+  createdAt  DateTime           @default(now()) @map("created_at")
+  user       User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("device_tokens")
+}
+
+// ─── Discovery ────────────────────────────────────────────────────
+
+model SavedView {
+  id             String       @id @default(cuid())
+  organizationId String       @map("organization_id")
+  userId         String       @map("user_id")
+  entity         String       @default("subscriptions")
+  name           String
+  filters        Json
+  sort           Json?
+  isShared       Boolean      @default(false) @map("is_shared")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, entity, name])
+  @@index([organizationId, entity])
+  @@map("saved_views")
+}
+
+// ─── Email receipt detection ──────────────────────────────────────
+
+enum MailboxProvider {
+  GMAIL
+  OUTLOOK
+}
+
+enum MailboxStatus {
+  ACTIVE
+  ERROR
+  REVOKED
+}
+
+model MailboxConnection {
+  id             String              @id @default(cuid())
+  organizationId String              @map("organization_id")
+  userId         String              @map("user_id")
+  provider       MailboxProvider
+  email          String
+  accessToken    String              @map("access_token")
+  refreshToken   String?             @map("refresh_token")
+  expiresAt      DateTime?           @map("expires_at")
+  status         MailboxStatus       @default(ACTIVE)
+  lastScannedAt  DateTime?           @map("last_scanned_at")
+  cursor         String?
+  errorMessage   String?             @map("error_message")
+  createdAt      DateTime            @default(now()) @map("created_at")
+  updatedAt      DateTime            @updatedAt @map("updated_at")
+  organization   Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  suggestions    ReceiptSuggestion[]
+
+  @@unique([userId, provider, email])
+  @@index([organizationId])
+  @@map("mailbox_connections")
+}
+
+enum ReceiptSuggestionStatus {
+  NEW
+  ACCEPTED
+  DISMISSED
+  DUPLICATE
+}
+
+model ReceiptSuggestion {
+  id                    String                  @id @default(cuid())
+  organizationId        String                  @map("organization_id")
+  userId                String                  @map("user_id")
+  mailboxId             String                  @map("mailbox_id")
+  messageId             String                  @map("message_id")
+  vendorName            String                  @map("vendor_name")
+  senderEmail           String?                 @map("sender_email")
+  subject               String?
+  amount                Decimal?                @db.Decimal(12, 2)
+  currency              String?
+  billingCycle          BillingCycle?           @map("billing_cycle")
+  chargedAt             DateTime?               @map("charged_at")
+  nextRenewalAt         DateTime?               @map("next_renewal_at")
+  confidence            Float                   @default(0.5)
+  snippet               String?
+  matchedCatalogId      String?                 @map("matched_catalog_id")
+  matchedSubscriptionId String?                 @map("matched_subscription_id")
+  status                ReceiptSuggestionStatus @default(NEW)
+  createdAt             DateTime                @default(now()) @map("created_at")
+  updatedAt             DateTime                @updatedAt @map("updated_at")
+  organization          Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user                  User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mailbox               MailboxConnection       @relation(fields: [mailboxId], references: [id], onDelete: Cascade)
+  matchedCatalog        SaaSCatalog?            @relation(fields: [matchedCatalogId], references: [id])
+
+  @@unique([mailboxId, messageId])
+  @@index([organizationId, status])
+  @@map("receipt_suggestions")
+}
+
+// ─── Multi-currency ───────────────────────────────────────────────
+
+model ExchangeRate {
+  id            String   @id @default(cuid())
+  baseCurrency  String   @map("base_currency")
+  quoteCurrency String   @map("quote_currency")
+  rate          Decimal  @db.Decimal(18, 8)
+  asOf          DateTime @map("as_of")
+  source        String   @default("manual")
+  provider      String?
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@unique([baseCurrency, quoteCurrency, asOf])
+  @@index([baseCurrency, quoteCurrency])
+  @@map("exchange_rates")
+}
+
+// ─── Onboarding & privacy ─────────────────────────────────────────
+
+model OnboardingProgress {
+  id             String       @id @default(cuid())
+  organizationId String       @map("organization_id")
+  userId         String       @map("user_id")
+  steps          Json         @default("{}")
+  dismissedAt    DateTime?    @map("dismissed_at")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, organizationId])
+  @@map("onboarding_progress")
+}
+
+enum DataExportStatus {
+  PENDING
+  READY
+  FAILED
+  EXPIRED
+}
+
+model DataExportRequest {
+  id             String           @id @default(cuid())
+  organizationId String           @map("organization_id")
+  userId         String           @map("user_id")
+  status         DataExportStatus @default(PENDING)
+  format         String           @default("JSON")
+  storageKey     String?          @map("storage_key")
+  fileUrl        String?          @map("file_url")
+  sizeBytes      Int?             @map("size_bytes")
+  requestedAt    DateTime         @default(now()) @map("requested_at")
+  completedAt    DateTime?        @map("completed_at")
+  expiresAt      DateTime?        @map("expires_at")
+  errorMessage   String?          @map("error_message")
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("data_export_requests")
+}
+
+// ═══════════════════════════════════════════════════════════════════
+// SubHub platform layer — RBAC, configurable settings, master data
+// ═══════════════════════════════════════════════════════════════════
+
+// ─── RBAC ─────────────────────────────────────────────────────────
+
+/// Organisation role. System roles (ADMIN/APPROVER/MEMBER/VIEWER) are seeded per
+/// organisation and mirror the legacy UserRole enum; custom roles are admin-defined.
+model Role {
+  id             String           @id @default(cuid())
+  organizationId String           @map("organization_id")
+  key            String
+  name           String
+  description    String?
+  isSystem       Boolean          @default(false) @map("is_system")
+  isDefault      Boolean          @default(false) @map("is_default")
+  legacyRole     UserRole?        @map("legacy_role")
+  createdAt      DateTime         @default(now()) @map("created_at")
+  updatedAt      DateTime         @updatedAt @map("updated_at")
+  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  permissions    RolePermission[]
+  users          User[]
+
+  @@unique([organizationId, key])
+  @@index([organizationId])
+  @@map("roles")
+}
+
+/// Global permission catalogue (resource:action), seeded from src/lib/rbac/permissions.ts
+model Permission {
+  id          String           @id @default(cuid())
+  key         String           @unique
+  resource    String
+  action      String
+  group       String
+  description String?
+  roles       RolePermission[]
+
+  @@index([resource])
+  @@map("permissions")
+}
+
+model RolePermission {
+  roleId       String     @map("role_id")
+  permissionId String     @map("permission_id")
+  createdAt    DateTime   @default(now()) @map("created_at")
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@index([permissionId])
+  @@map("role_permissions")
+}
+
+// ─── Configurable settings ────────────────────────────────────────
+
+/// Typed key/value settings per organisation. Keys, defaults and validation live in
+/// src/lib/settings/registry.ts; this table only stores overrides.
+model OrganizationSetting {
+  id             String       @id @default(cuid())
+  organizationId String       @map("organization_id")
+  key            String
+  value          Json
+  updatedById    String?      @map("updated_by_id")
+  createdAt      DateTime     @default(now()) @map("created_at")
+  updatedAt      DateTime     @updatedAt @map("updated_at")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  updatedBy      User?        @relation("SettingUpdatedBy", fields: [updatedById], references: [id])
+
+  @@unique([organizationId, key])
+  @@index([organizationId])
+  @@map("organization_settings")
+}
+
+/// Platform-wide settings managed by SUPER_ADMIN (fallbacks for organisation settings).
+model SystemSetting {
+  id        String   @id @default(cuid())
+  key       String   @unique
+  value     Json
+  updatedAt DateTime @updatedAt @map("updated_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@map("system_settings")
+}
+
+/// Per-organisation override of notification copy (subject/body templates with {{placeholders}}).
+model NotificationTemplate {
+  id             String                @id @default(cuid())
+  organizationId String                @map("organization_id")
+  eventType      NotificationEventType @map("event_type")
+  channel        NotificationChannel
+  locale         String                @default("en")
+  subject        String?
+  body           String
+  isActive       Boolean               @default(true) @map("is_active")
+  createdAt      DateTime              @default(now()) @map("created_at")
+  updatedAt      DateTime              @updatedAt @map("updated_at")
+  organization   Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, eventType, channel, locale])
+  @@map("notification_templates")
+}
+
+// ─── Master data (global) ─────────────────────────────────────────
+
+/// ISO 4217 currency master (global, seeded).
+model Currency {
+  code          String    @id
+  name          String
+  symbol        String
+  decimalDigits Int       @default(2) @map("decimal_digits")
+  numericCode   String?   @map("numeric_code")
+  isActive      Boolean   @default(true) @map("is_active")
+  sortOrder     Int       @default(100) @map("sort_order")
+  countries     Country[]
+
+  @@map("currencies")
+}
+
+/// ISO 3166 country master (global, seeded) with default currency and VAT.
+model Country {
+  code                  String    @id
+  name                  String
+  region                String?
+  currencyCode          String?   @map("currency_code")
+  defaultTaxRatePercent Decimal?  @map("default_tax_rate_percent") @db.Decimal(5, 2)
+  phonePrefix           String?   @map("phone_prefix")
+  isActive              Boolean   @default(true) @map("is_active")
+  currency              Currency? @relation(fields: [currencyCode], references: [code])
+
+  @@map("countries")
+}
+
+// ─── Master data (per organisation) ───────────────────────────────
+
+model TaxRate {
+  id             String         @id @default(cuid())
+  organizationId String         @map("organization_id")
+  name           String
+  countryCode    String?        @map("country_code")
+  ratePercent    Decimal        @map("rate_percent") @db.Decimal(5, 2)
+  isDefault      Boolean        @default(false) @map("is_default")
+  isActive       Boolean        @default(true) @map("is_active")
+  validFrom      DateTime?      @map("valid_from")
+  validTo        DateTime?      @map("valid_to")
+  createdAt      DateTime       @default(now()) @map("created_at")
+  updatedAt      DateTime       @updatedAt @map("updated_at")
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  subscriptions  Subscription[]
+
+  @@unique([organizationId, name])
+  @@map("tax_rates")
+}
+
+/// Cost centre / budget owner dimension for analytics (distinct from Team hierarchy).
+model CostCenter {
+  id               String            @id @default(cuid())
+  organizationId   String            @map("organization_id")
+  code             String
+  name             String
+  description      String?
+  ownerId          String?           @map("owner_id")
+  teamId           String?           @map("team_id")
+  budgetMonthly    Decimal?          @map("budget_monthly") @db.Decimal(12, 2)
+  budgetCurrency   String?           @map("budget_currency")
+  isActive         Boolean           @default(true) @map("is_active")
+  createdAt        DateTime          @default(now()) @map("created_at")
+  updatedAt        DateTime          @updatedAt @map("updated_at")
+  organization     Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  owner            User?             @relation("CostCenterOwner", fields: [ownerId], references: [id])
+  subscriptions    Subscription[]
+  approvalRequests ApprovalRequest[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId, isActive])
+  @@map("cost_centers")
+}
+
+enum PaymentMethodKind {
+  CARD
+  BANK
+  INVOICE
+  WALLET
+  OTHER
+}
+
+/// Configurable payment methods (seeded defaults, admin-editable, optionally linked to a corporate card).
+model PaymentMethodOption {
+  id              String            @id @default(cuid())
+  organizationId  String            @map("organization_id")
+  code            String
+  name            String
+  kind            PaymentMethodKind @default(OTHER)
+  corporateCardId String?           @map("corporate_card_id")
+  isActive        Boolean           @default(true) @map("is_active")
+  isDefault       Boolean           @default(false) @map("is_default")
+  sortOrder       Int               @default(0) @map("sort_order")
+  createdAt       DateTime          @default(now()) @map("created_at")
+  updatedAt       DateTime          @updatedAt @map("updated_at")
+  organization    Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  subscriptions   Subscription[]
+
+  @@unique([organizationId, code])
+  @@map("payment_method_options")
+}
+
+/// Per-organisation configuration of billing cycles: label, months per cycle (for
+/// monthly/annual normalisation) and whether the cycle is offered in forms.
+model BillingCycleConfig {
+  id             String       @id @default(cuid())
+  organizationId String       @map("organization_id")
+  cycle          BillingCycle
+  label          String
+  months         Int
+  isEnabled      Boolean      @default(true) @map("is_enabled")
+  sortOrder      Int          @default(0) @map("sort_order")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, cycle])
+  @@map("billing_cycle_configs")
 }
