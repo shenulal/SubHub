@@ -60,8 +60,8 @@ export function AppHeader() {
         {/* 알림 벨 */}
         <NotificationBell />
 
-        {/* 테마 토글 - 임시 숨김 (light mode 강제) */}
-        {false && <ThemeToggle />}
+        {/* 테마 토글 (7.4 dark mode) */}
+        <ThemeToggle />
 
         {/* 언어 */}
         <DropdownMenu>

@@ -46,12 +46,12 @@ export function escapeCSVValue(value: unknown): string {
  */
 export function formatCurrency(
   amount: number,
-  currency: string = "KRW"
+  currency: string = DEFAULT_BASE_CURRENCY
 ): string {
   const formatter = new Intl.NumberFormat("ko-KR", {
     style: "currency",
     currency,
-    maximumFractionDigits: currency === "KRW" ? 0 : 2,
+    maximumFractionDigits: currencyDecimals(currency),
   });
   return formatter.format(amount);
 }
@@ -137,3 +137,4 @@ export function downloadCSV(csvContent: string, filename: string): void {
   document.body.removeChild(link);
   URL.revokeObjectURL(url);
 }
+import { currencyDecimals, DEFAULT_BASE_CURRENCY } from "@/lib/fx/convert";

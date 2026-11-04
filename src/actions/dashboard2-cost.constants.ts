@@ -8,7 +8,8 @@ export interface BudgetSettings {
 }
 
 export const DEFAULT_BUDGET_SETTINGS: BudgetSettings = {
-  currency: "KRW",
+  currency: DEFAULT_BASE_CURRENCY,
   monthlyBudget: null,
   alertThreshold: 80,
 };
+import { DEFAULT_BASE_CURRENCY } from "@/lib/fx/convert";

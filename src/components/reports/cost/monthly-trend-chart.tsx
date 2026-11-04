@@ -24,6 +24,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useBaseCurrency } from "@/hooks/use-base-currency";
+import { formatMoney } from "@/lib/fx/convert";
 import type { MonthlyCostTrend } from "@/types/cost-analytics";
 import { BarChart3, LineChart as LineChartIcon } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
@@ -73,12 +75,8 @@ function generateMonthOptions(locale: string): MonthOption[] {
 }
 
 // 금액 포맷
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat("ko-KR", {
-    style: "currency",
-    currency: "KRW",
-    maximumFractionDigits: 0,
-  }).format(value);
+function formatCurrency(value: number, currency: string): string {
+  return formatMoney(value, currency, "ko", 0);
 }
 
 // 축 금액 포맷 (간략화)
@@ -105,6 +103,7 @@ export function MonthlyTrendChart({
 }: MonthlyTrendChartProps) {
   const t = useTranslations("reports.cost.trend");
   const locale = useLocale();
+  const { baseCurrency } = useBaseCurrency();
   const monthOptions = generateMonthOptions(locale);
 
   // 기본 기간: 최근 6개월
@@ -271,7 +270,7 @@ export function MonthlyTrendChart({
                           {chartConfig.cost.label}
                         </span>
                         <span className="font-mono font-medium tabular-nums">
-                          {formatCurrency(Number(value))}
+                          {formatCurrency(Number(value), baseCurrency)}
                         </span>
                       </div>
                     )}
@@ -300,7 +299,7 @@ export function MonthlyTrendChart({
                   <div className="flex items-center justify-between text-sm">
                     <span>{formatMonth(trend.month, locale)}</span>
                     <span className="font-medium">
-                      {formatCurrency(trend.saasCost)}
+                      {formatCurrency(trend.saasCost, baseCurrency)}
                     </span>
                   </div>
                   <div className="bg-secondary h-2 w-full overflow-hidden rounded-full">

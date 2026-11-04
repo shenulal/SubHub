@@ -1,142 +1,171 @@
-// src/components/subscriptions/subscription-detail.tsx
 "use client";
 
-import {
-  type NotificationField,
-  updateNotificationSettings,
-} from "@/actions/notification-settings";
-import {
-  deleteSubscription,
-  getLinkedPayments,
-  type LinkedPayment,
-} from "@/actions/subscriptions";
+/**
+ * Subscription detail: KPI strip, status/taxonomy chips, price-change banner
+ * and the tabbed body (Overview / Documents / Activity / Cancellation).
+ */
 import { KpiCard, KpiCardsGrid } from "@/components/common/kpi-card";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { cn } from "@/lib/utils";
 import type { SubscriptionDetail as SubscriptionDetailType } from "@/types/subscription";
-import {
-  Calendar,
-  CircleDollarSign,
-  ExternalLink,
-  Pencil,
-  RefreshCw,
-  Trash2,
-  Users,
-} from "lucide-react";
+import type { AppCancellationOverride, CatalogItemDto } from "@/types/taxonomy";
+import { Calendar, CircleDollarSign, RefreshCw, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
-import { NotificationSettings } from "./notification-settings";
-import { SubscriptionDetailAppCard } from "./subscription-detail-app-card";
-import { SubscriptionDetailPayments } from "./subscription-detail-payments";
-import { SubscriptionDetailSeatCard } from "./subscription-detail-seat-card";
-import { getBillingCycleLabels } from "./subscription-detail.constants";
+import { useSearchParams } from "next/navigation";
+import { useState } from "react";
+import { PriceChangeAlerts } from "./price-change-alerts";
+import { SubscriptionActivity } from "./subscription-activity";
+import { SubscriptionAttachments } from "./subscription-attachments";
+import { SubscriptionComments } from "./subscription-comments";
+import { SubscriptionDetailCancellation } from "./subscription-detail-cancellation";
+import { SubscriptionDetailOverview } from "./subscription-detail-overview";
+import {
+  getBillingCycleLabels,
+  getStatusLabels,
+  statusToneClasses,
+} from "./subscription-detail.constants";
 import {
   formatCurrency,
   formatDate,
   getDaysUntilRenewal,
 } from "./subscription-detail.utils";
+import { SubscriptionStatusActions } from "./subscription-status-actions";
 
-interface SubscriptionDetailProps {
+export interface DocumentPolicy {
+  maxSizeMb: number;
+  allowedMimeTypes: string[];
+}
+
+export interface SubscriptionDetailProps {
   subscription: SubscriptionDetailType;
   hideHeader?: boolean;
+  documentPolicy?: DocumentPolicy;
+  /** Days before the cancellation deadline during which the window is "open". */
+  noticeWindowDays?: number;
+  catalog?: CatalogItemDto | null;
+  appOverride?: AppCancellationOverride | null;
 }
+
+const TABS = ["overview", "documents", "activity", "cancellation"] as const;
+type Tab = (typeof TABS)[number];
+const DEFAULT_NOTICE_WINDOW_DAYS = 7;
+const LICENSE_WARN_PERCENT = 80;
+
+const DEFAULT_DOCUMENT_POLICY: DocumentPolicy = {
+  maxSizeMb: 15,
+  allowedMimeTypes: ["application/pdf"],
+};
 
 export function SubscriptionDetail({
   subscription,
   hideHeader = false,
+  documentPolicy = DEFAULT_DOCUMENT_POLICY,
+  noticeWindowDays = DEFAULT_NOTICE_WINDOW_DAYS,
+  catalog = null,
+  appOverride = null,
 }: SubscriptionDetailProps) {
   const t = useTranslations();
-  const router = useRouter();
-  const [isPending, startTransition] = useTransition();
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [isNotificationUpdating, setIsNotificationUpdating] = useState(false);
+  const tl = useTranslations("lifecycle");
+  const searchParams = useSearchParams();
+  const requestedTab = searchParams?.get("tab");
+  const [activityToken, setActivityToken] = useState(0);
+  const initialTab: Tab = TABS.includes(requestedTab as Tab)
+    ? (requestedTab as Tab)
+    : "overview";
 
   const billingCycleLabels = getBillingCycleLabels(t);
-
-  // 알림 설정 상태
-  const [alertSettings, setAlertSettings] = useState({
-    renewalAlert30: subscription.renewalAlert30,
-    renewalAlert60: subscription.renewalAlert60,
-    renewalAlert90: subscription.renewalAlert90,
-  });
-
-  // 연결된 결제 내역 상태
-  const [linkedPayments, setLinkedPayments] = useState<LinkedPayment[]>([]);
-  const [isLoadingPayments, setIsLoadingPayments] = useState(true);
-
-  // 연결된 결제 내역 로드
-  useEffect(() => {
-    const loadPayments = async () => {
-      setIsLoadingPayments(true);
-      const result = await getLinkedPayments(subscription.id);
-      if (result.success && result.data) {
-        setLinkedPayments(result.data);
-      }
-      setIsLoadingPayments(false);
-    };
-    loadPayments();
-  }, [subscription.id]);
-
-  const handleDelete = () => {
-    startTransition(async () => {
-      const result = await deleteSubscription(subscription.id);
-      if (result.success) {
-        router.push("/subscriptions");
-      }
-    });
-  };
-
-  const handleNotificationChange = async (
-    field: NotificationField,
-    value: boolean
-  ) => {
-    setIsNotificationUpdating(true);
-    // Optimistic update
-    setAlertSettings((prev) => ({ ...prev, [field]: value }));
-
-    const result = await updateNotificationSettings(
-      subscription.id,
-      field,
-      value
-    );
-
-    if (!result.success) {
-      // Rollback on error
-      setAlertSettings((prev) => ({ ...prev, [field]: !value }));
-    }
-
-    setIsNotificationUpdating(false);
-  };
-
+  const statusLabels = getStatusLabels(t);
   const daysUntilRenewal = getDaysUntilRenewal(subscription.renewalDate);
   const licenseUsagePercent = subscription.totalLicenses
     ? ((subscription.usedLicenses ?? 0) / subscription.totalLicenses) * 100
     : 0;
 
+  const bump = () => setActivityToken((n) => n + 1);
+
   return (
     <div className="space-y-6">
-      {/* 상단 KPI 카드 */}
+      {!hideHeader && (
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold">
+              {t("subscriptions.detail.title", {
+                appName: subscription.appName,
+              })}
+            </h1>
+            <p className="text-muted-foreground">
+              {t("subscriptions.detail.subtitle")}
+            </p>
+          </div>
+          <SubscriptionStatusActions
+            subscriptionId={subscription.id}
+            appName={subscription.appName}
+            status={subscription.status}
+            onChanged={bump}
+          />
+        </div>
+      )}
+
+      {/* Status strip: status + taxonomy chips */}
+      <div className="flex flex-wrap items-center gap-2">
+        <Badge
+          variant="outline"
+          className={cn("font-medium", statusToneClasses[subscription.status])}
+        >
+          {statusLabels[subscription.status]}
+        </Badge>
+        {subscription.isTrial && (
+          <Badge
+            variant="outline"
+            className="border-violet-500/30 bg-violet-500/10 text-violet-700 dark:text-violet-300"
+          >
+            {subscription.trialEndsAt
+              ? tl("badges.trialEnds", {
+                  date: formatDate(subscription.trialEndsAt),
+                })
+              : tl("badges.trial")}
+          </Badge>
+        )}
+        {subscription.isPersonal && (
+          <Badge variant="secondary">{tl("badges.personal")}</Badge>
+        )}
+        {subscription.status === "PAUSED" && subscription.pausedAt && (
+          <span className="text-muted-foreground text-xs">
+            {tl("badges.pausedSince", {
+              date: formatDate(subscription.pausedAt),
+            })}
+          </span>
+        )}
+        {subscription.status === "ARCHIVED" && subscription.archivedAt && (
+          <span className="text-muted-foreground text-xs">
+            {tl("badges.archivedOn", {
+              date: formatDate(subscription.archivedAt),
+            })}
+          </span>
+        )}
+        {subscription.category && (
+          <Badge
+            variant="outline"
+            style={
+              subscription.category.color
+                ? { borderColor: subscription.category.color }
+                : undefined
+            }
+          >
+            {subscription.category.parentName
+              ? `${subscription.category.parentName} / ${subscription.category.name}`
+              : subscription.category.name}
+          </Badge>
+        )}
+        {subscription.tags?.map((tag) => (
+          <Badge key={tag.id} variant="secondary" className="font-normal">
+            {tag.name}
+          </Badge>
+        ))}
+      </div>
+
+      <PriceChangeAlerts subscriptionId={subscription.id} />
+
       <KpiCardsGrid columns={4}>
         <KpiCard
           title={t("subscriptions.detail.kpi.amount")}
@@ -156,7 +185,10 @@ export function SubscriptionDetail({
             subscription.totalLicenses
               ? {
                   value: Math.round(licenseUsagePercent),
-                  type: licenseUsagePercent > 80 ? "decrease" : "neutral",
+                  type:
+                    licenseUsagePercent > LICENSE_WARN_PERCENT
+                      ? "decrease"
+                      : "neutral",
                 }
               : undefined
           }
@@ -190,285 +222,60 @@ export function SubscriptionDetail({
         />
       </KpiCardsGrid>
 
-      {/* 2컬럼 레이아웃 (좌: 메인 콘텐츠 / 우: 메타데이터) */}
-      <div className="grid gap-6 lg:grid-cols-[1fr_400px]">
-        {/* 좌측: 상세 정보 */}
-        <div className="space-y-6">
-          {/* 헤더 with 액션 버튼 (hideHeader가 false일 때만 표시) */}
-          {!hideHeader && (
-            <div className="flex items-center justify-between">
-              <div>
-                <h1 className="text-2xl font-bold">
-                  {t("subscriptions.detail.title", {
-                    appName: subscription.appName,
-                  })}
-                </h1>
-                <p className="text-muted-foreground">
-                  {t("subscriptions.detail.subtitle")}
-                </p>
-              </div>
-              <div className="flex gap-2">
-                <Button variant="outline" asChild>
-                  <Link href={`/subscriptions/${subscription.id}/edit`}>
-                    <Pencil className="mr-2 h-4 w-4" />
-                    {t("subscriptions.actions.edit")}
-                  </Link>
-                </Button>
-                <AlertDialog
-                  open={deleteDialogOpen}
-                  onOpenChange={setDeleteDialogOpen}
-                >
-                  <AlertDialogTrigger asChild>
-                    <Button variant="destructive">
-                      <Trash2 className="mr-2 h-4 w-4" />
-                      {t("subscriptions.actions.delete")}
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>
-                        {t("subscriptions.delete.title")}
-                      </AlertDialogTitle>
-                      <AlertDialogDescription>
-                        {t("subscriptions.delete.description", {
-                          appName: subscription.appName,
-                        })}
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>
-                        {t("subscriptions.delete.cancelled")}
-                      </AlertDialogCancel>
-                      <AlertDialogAction
-                        onClick={handleDelete}
-                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                        disabled={isPending}
-                      >
-                        {isPending
-                          ? t("subscriptions.actions.deleting")
-                          : t("subscriptions.delete.confirm")}
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </div>
-            </div>
-          )}
+      <Tabs defaultValue={initialTab} className="space-y-6">
+        <TabsList>
+          {TABS.map((tab) => (
+            <TabsTrigger key={tab} value={tab}>
+              {tl(`tabs.${tab}`)}
+            </TabsTrigger>
+          ))}
+        </TabsList>
 
-          {/* 기간 정보 카드 */}
-          <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
-            <CardHeader>
-              <CardTitle>{t("subscriptions.detail.period.title")}</CardTitle>
-              <CardDescription>
-                {t("subscriptions.detail.period.description")}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid gap-4 sm:grid-cols-3">
-                <div>
-                  <dt className="text-muted-foreground text-sm font-medium">
-                    {t("subscriptions.detail.period.startDate")}
-                  </dt>
-                  <dd className="mt-1 font-medium">
-                    {formatDate(subscription.startDate)}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground text-sm font-medium">
-                    {t("subscriptions.detail.period.endDate")}
-                  </dt>
-                  <dd className="mt-1 font-medium">
-                    {formatDate(subscription.endDate)}
-                  </dd>
-                </div>
-                <div>
-                  <dt className="text-muted-foreground text-sm font-medium">
-                    {t("subscriptions.detail.period.renewalDate")}
-                  </dt>
-                  <dd className="mt-1 font-medium">
-                    {formatDate(subscription.renewalDate)}
-                    {daysUntilRenewal !== null && daysUntilRenewal <= 30 && (
-                      <Badge
-                        variant={
-                          daysUntilRenewal <= 7 ? "destructive" : "outline"
-                        }
-                        className="ml-2"
-                      >
-                        {t("subscriptions.detail.period.daysLeft", {
-                          days: daysUntilRenewal,
-                        })}
-                      </Badge>
-                    )}
-                  </dd>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* 연결된 결제 내역 카드 */}
-          <SubscriptionDetailPayments
-            linkedPayments={linkedPayments}
-            isLoading={isLoadingPayments}
+        <TabsContent value="overview">
+          <SubscriptionDetailOverview
+            subscription={subscription}
+            noticeWindowDays={noticeWindowDays}
           />
+        </TabsContent>
 
-          {/* 추가 정보 카드 */}
-          <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
-            <CardHeader>
-              <CardTitle>
-                {t("subscriptions.detail.additional.title")}
-              </CardTitle>
-              <CardDescription>
-                {t("subscriptions.detail.additional.description")}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground">
-                  {t("subscriptions.detail.additional.contract")}
-                </span>
-                {subscription.contractUrl ? (
-                  <Button variant="link" asChild className="h-auto p-0">
-                    <a
-                      href={subscription.contractUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                    >
-                      {t("subscriptions.detail.additional.viewContract")}
-                      <ExternalLink className="ml-1 h-3 w-3" />
-                    </a>
-                  </Button>
-                ) : (
-                  <span className="text-muted-foreground">-</span>
-                )}
-              </div>
-              {subscription.notes && (
-                <>
-                  <Separator />
-                  <div>
-                    <span className="text-muted-foreground text-sm">
-                      {t("subscriptions.detail.additional.notes")}
-                    </span>
-                    <p className="mt-1 text-sm whitespace-pre-wrap">
-                      {subscription.notes}
-                    </p>
-                  </div>
-                </>
-              )}
-            </CardContent>
-          </Card>
+        <TabsContent value="documents" className="space-y-6">
+          <SubscriptionAttachments
+            subscriptionId={subscription.id}
+            maxSizeMb={documentPolicy.maxSizeMb}
+            allowedMimeTypes={documentPolicy.allowedMimeTypes}
+          />
+        </TabsContent>
 
-          {/* 메타데이터 */}
-          <div className="text-muted-foreground text-xs">
-            {t("subscriptions.detail.metadata.createdAt", {
-              date: formatDate(subscription.createdAt),
-            })}{" "}
-            |{" "}
-            {t("subscriptions.detail.metadata.updatedAt", {
-              date: formatDate(subscription.updatedAt),
-            })}
+        <TabsContent value="activity">
+          <div className="grid gap-6 lg:grid-cols-[1fr_400px]">
+            <SubscriptionActivity
+              subscriptionId={subscription.id}
+              refreshToken={activityToken}
+            />
+            <SubscriptionComments
+              subscriptionId={subscription.id}
+              onPosted={bump}
+            />
           </div>
-        </div>
+        </TabsContent>
 
-        {/* 우측: 앱 정보 및 상태 */}
-        <div className="space-y-6">
-          {/* 앱 로고 및 상태 카드 */}
-          <SubscriptionDetailAppCard
-            appName={subscription.appName}
-            appLogoUrl={subscription.appLogoUrl}
-            status={subscription.status}
-            billingCycle={subscription.billingCycle}
-            amount={subscription.amount}
-            currency={subscription.currency}
-          />
-
-          {/* 배정 정보 카드 */}
-          <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
-            <CardHeader>
-              <CardTitle>
-                {t("subscriptions.detail.assignment.title")}
-              </CardTitle>
-              <CardDescription>
-                {t("subscriptions.detail.assignment.description")}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-muted-foreground text-sm">
-                  {t("subscriptions.detail.assignment.team")}
-                </span>
-                {subscription.teams && subscription.teams.length > 0 ? (
-                  <div className="flex flex-wrap justify-end gap-1">
-                    {subscription.teams.map((team) => (
-                      <Badge key={team.id} variant="secondary">
-                        {team.name}
-                      </Badge>
-                    ))}
-                  </div>
-                ) : (
-                  <span className="font-medium">
-                    {subscription.teamName ?? "-"}
-                  </span>
-                )}
-              </div>
-              <Separator />
-              <div>
-                <span className="text-muted-foreground text-sm">
-                  {t("subscriptions.detail.assignment.assignedUsers")}
-                </span>
-                {subscription.assignedUsers &&
-                subscription.assignedUsers.length > 0 ? (
-                  <div className="mt-2 space-y-2">
-                    {subscription.assignedUsers.map((user) => (
-                      <div
-                        key={user.id}
-                        className="flex items-center gap-2 text-sm"
-                      >
-                        <div className="bg-muted flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium">
-                          {(user.name ?? user.email).charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <span className="font-medium">
-                            {user.name ?? user.email}
-                          </span>
-                          {user.name && (
-                            <span className="text-muted-foreground ml-1">
-                              ({user.email})
-                            </span>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className="text-muted-foreground mt-1 text-sm">
-                    {t("subscriptions.detail.assignment.noUsers")}
-                  </p>
-                )}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Seat/라이선스 사용량 카드 */}
-          <SubscriptionDetailSeatCard
+        <TabsContent value="cancellation">
+          <SubscriptionDetailCancellation
             subscriptionId={subscription.id}
-            totalLicenses={subscription.totalLicenses}
-            usedLicenses={subscription.usedLicenses}
-            billingType={subscription.billingType}
-            perSeatPrice={subscription.perSeatPrice}
-            currency={subscription.currency}
+            appId={subscription.appId}
+            catalog={catalog}
+            appOverride={
+              appOverride ?? {
+                cancellationUrl: subscription.app?.cancellationUrl ?? null,
+                cancellationNotes: subscription.app?.cancellationNotes ?? null,
+              }
+            }
+            noticePeriodDays={subscription.noticePeriodDays}
+            cancellationUrl={subscription.cancellationUrl}
+            cancellationNotes={subscription.cancellationNotes}
           />
-
-          {/* 알림 설정 */}
-          <NotificationSettings
-            subscriptionId={subscription.id}
-            renewalAlert30={alertSettings.renewalAlert30}
-            renewalAlert60={alertSettings.renewalAlert60}
-            renewalAlert90={alertSettings.renewalAlert90}
-            onChange={handleNotificationChange}
-            disabled={isNotificationUpdating}
-          />
-        </div>
-      </div>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

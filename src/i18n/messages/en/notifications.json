@@ -1,1 +1,191 @@
-{}
+{
+  "notifications": {
+    "bell": {
+      "label": "Notifications",
+      "labelWithCount": "Notifications, {count} unread",
+      "title": "Notifications",
+      "markAllRead": "Mark all read",
+      "empty": "You're all caught up.",
+      "viewAll": "View all notifications"
+    },
+    "centre": {
+      "title": "Notifications",
+      "filters": "Filter notifications",
+      "all": "All",
+      "unread": "unread",
+      "unreadOnly": "Unread only",
+      "markAllRead": "Mark all as read",
+      "empty": "Nothing here yet. Renewals, approvals, price changes and security alerts will show up in this list.",
+      "emptyUnread": "No unread notifications.",
+      "error": "We couldn't load your notifications. Please refresh.",
+      "loadMore": "Load older",
+      "loading": "Loading…"
+    },
+    "groups": {
+      "renewals": "Renewals",
+      "approvals": "Approvals",
+      "priceChanges": "Price changes",
+      "security": "Security",
+      "other": "Updates"
+    },
+    "channels": {
+      "IN_APP": "In-app",
+      "EMAIL": "Email",
+      "PUSH": "Push"
+    },
+    "events": {
+      "RENEWAL_REMINDER": {
+        "label": "Renewal reminders",
+        "help": "Sent before a subscription renews, on the lead days configured for that subscription (or your personal default)."
+      },
+      "TRIAL_ENDING": {
+        "label": "Trial endings",
+        "help": "A heads-up before a trial converts into a paid plan."
+      },
+      "NOTICE_PERIOD": {
+        "label": "Cancellation deadlines",
+        "help": "Reminds you before the notice-period cut-off so a cancellation still counts."
+      },
+      "APPROVER_RENEWAL": {
+        "label": "Renewals you approved",
+        "help": "A copy of renewal reminders for subscriptions you approved, when the organisation enables it."
+      },
+      "APPROVAL_REQUESTED": {
+        "label": "New approval requests",
+        "help": "When a request lands in your approval queue."
+      },
+      "APPROVAL_DECIDED": {
+        "label": "Decisions on my requests",
+        "help": "When one of your requests is approved or rejected."
+      },
+      "APPROVAL_INFO_REQUESTED": {
+        "label": "Information requested",
+        "help": "When an approver asks you for more detail."
+      },
+      "APPROVAL_ESCALATED": {
+        "label": "Escalations",
+        "help": "When a request waits too long and is escalated to you."
+      },
+      "PRICE_CHANGE": {
+        "label": "Price changes",
+        "help": "A detected charge differs from the recorded subscription amount."
+      },
+      "COST_ANOMALY": {
+        "label": "Cost anomalies",
+        "help": "Month-over-month spend on an app rose above the organisation threshold."
+      },
+      "RECEIPT_SUGGESTION": {
+        "label": "Receipt matches",
+        "help": "A receipt in a connected mailbox looks like a subscription charge."
+      },
+      "OFFBOARDING": {
+        "label": "Unrevoked access",
+        "help": "A terminated member still has access to apps."
+      },
+      "SHADOW_IT": {
+        "label": "Unapproved apps",
+        "help": "An app was detected that is not in your approved catalogue."
+      },
+      "PENDING_REVIEW": {
+        "label": "Apps awaiting review",
+        "help": "Discovered apps that need a decision."
+      },
+      "DIGEST": {
+        "label": "Weekly digest",
+        "help": "A weekly summary email of approvals, renewals and spend."
+      },
+      "SYSTEM": {
+        "label": "System notices",
+        "help": "Account and platform messages."
+      }
+    },
+    "preferences": {
+      "saving": "Saving…",
+      "grid": {
+        "title": "What to notify me about",
+        "description": "Choose a channel for each event. Channels are limited to those your organisation has enabled.",
+        "event": "Event",
+        "helpFor": "What are {event}?",
+        "toggleLabel": "{event} via {channel}"
+      },
+      "digest": {
+        "title": "Weekly digest",
+        "description": "One email a week with pending approvals, upcoming renewals, price changes and trial endings.",
+        "unavailable": "Email is not enabled for your organisation.",
+        "help": "The digest is scheduled by your organisation; you can opt out here."
+      },
+      "leadDays": {
+        "title": "My default reminder lead times",
+        "description": "Used for your subscriptions when none is set on the subscription itself. Organisation default: {defaults} days.",
+        "help": "Pick how many days before a renewal you want to be reminded. Options are set by your organisation.",
+        "option": "{days}d"
+      },
+      "toast": {
+        "leadDaysSaved": "Reminder lead times saved",
+        "failed": "Could not save your preferences"
+      }
+    },
+    "orgDefaults": {
+      "title": "Organisation defaults",
+      "description": "Applies to every member. Members can still switch individual channels off.",
+      "saving": "Saving",
+      "digest": {
+        "title": "Weekly digest schedule",
+        "help": "When the digest email goes out, in the organisation time zone.",
+        "enabled": "Send weekly digest",
+        "weekday": "Day",
+        "time": "Time"
+      },
+      "quiet": {
+        "title": "Quiet hours",
+        "help": "Email and push are held and released when quiet hours end. In-app notifications are always delivered.",
+        "start": "Start",
+        "end": "End",
+        "hint": "Leave both empty to disable quiet hours."
+      },
+      "cost": {
+        "title": "Cost anomaly alerts",
+        "help": "Alerts admins when an app's monthly card spend rises above the threshold compared with the previous month.",
+        "enabled": "Alert on cost increases",
+        "threshold": "Threshold"
+      },
+      "scans": {
+        "title": "Security scans & approvers",
+        "help": "Toggle the daily scans that alert admins, and whether approvers are copied on renewals of subscriptions they approved.",
+        "offboarding": "Alert on unrevoked access of terminated members",
+        "shadowIT": "Alert on unapproved apps",
+        "copyApprovers": "Copy approvers on renewal reminders"
+      },
+      "weekdays": {
+        "0": "Sunday",
+        "1": "Monday",
+        "2": "Tuesday",
+        "3": "Wednesday",
+        "4": "Thursday",
+        "5": "Friday",
+        "6": "Saturday"
+      },
+      "toast": {
+        "saved": "Organisation defaults saved",
+        "failed": "Could not save organisation defaults"
+      }
+    },
+    "onboarding": {
+      "title": "Get set up",
+      "progress": "{completed} of {total} steps done",
+      "dismiss": "Hide checklist",
+      "steps": {
+        "firstSubscription": "Add your first subscription",
+        "reminderLeadDays": "Choose renewal reminder lead times",
+        "inviteTeammate": "Invite a teammate",
+        "approvalPolicy": "Create an approval policy",
+        "connectIntegration": "Connect a mailbox or integration",
+        "baseCurrency": "Set your base currency"
+      }
+    },
+    "help": {
+      "ariaLabel": "Help",
+      "learnMore": "Learn more"
+    }
+  }
+}

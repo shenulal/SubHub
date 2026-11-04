@@ -9,6 +9,7 @@
 
 import { decryptJson } from "@/lib/crypto";
 import { prisma } from "@/lib/db";
+import { getBaseCurrency } from "@/lib/fx/base-currency";
 import { logger } from "@/lib/logger";
 import { withLogging } from "@/lib/logging";
 import {
@@ -280,7 +281,7 @@ async function saveTransaction(
       memo: item.useDiv || null,
       storeBizNo: item.storeBizNo || null,
       amount: parseFloat(item.useAmt) || null,
-      currency: "KRW",
+      currency: await getBaseCurrency(card.organizationId),
     });
     matchedAppId = llmMatch.appId;
     matchConfidence = llmMatch.confidence;

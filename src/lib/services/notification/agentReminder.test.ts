@@ -3,11 +3,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock Resend
 vi.mock("resend", () => ({
-  Resend: vi.fn().mockImplementation(() => ({
-    emails: {
+  Resend: class {
+    emails = {
       send: vi.fn().mockResolvedValue({ data: { id: "test-message-id" } }),
-    },
-  })),
+    };
+  },
 }));
 
 // Set environment variables before importing the module

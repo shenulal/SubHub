@@ -2,6 +2,7 @@
 import { SettingsSidebar } from "@/components/settings/settings-sidebar";
 import { Card } from "@/components/ui/card";
 import { requireOrganization } from "@/lib/auth/require-auth";
+import { can } from "@/lib/rbac/service";
 
 interface SettingsLayoutProps {
   children: React.ReactNode;
@@ -10,9 +11,11 @@ interface SettingsLayoutProps {
 export default async function SettingsLayout({
   children,
 }: SettingsLayoutProps) {
-  const { role } = await requireOrganization();
+  await requireOrganization();
 
-  const isAdmin = role === "ADMIN";
+  // Sidebar gating is permission-based (settings:manage); every page and action
+  // re-checks with requirePermission so this is presentation only.
+  const isAdmin = await can("settings:manage");
 
   return (
     <div className="space-y-4">

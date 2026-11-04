@@ -98,7 +98,7 @@ export function calculateMonthlyPerSeatPrice(sub: {
  */
 export function formatPerSeatPrice(
   price: number | null,
-  currency: string = "KRW"
+  currency: string = DEFAULT_BASE_CURRENCY
 ): string {
   if (price === null) return "";
   const formatted = new Intl.NumberFormat(undefined, {
@@ -107,3 +107,4 @@ export function formatPerSeatPrice(
   }).format(price);
   return `${formatted}/Seat`;
 }
+import { DEFAULT_BASE_CURRENCY } from "@/lib/fx/convert";

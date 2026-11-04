@@ -2,6 +2,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock 설정 (import 전에 선언)
+vi.mock("@/lib/fx/base-currency", () => ({
+  getBaseCurrency: vi.fn().mockResolvedValue("KRW"),
+}));
+
 vi.mock("@/lib/db", () => ({
   prisma: {
     corporateCard: {

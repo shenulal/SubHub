@@ -5,6 +5,7 @@ import { PrismaClient } from "@prisma/client";
 import { seedCountries } from "./seeds/countries";
 import { seedCurrencies } from "./seeds/currencies";
 import { seedPermissionCatalog } from "./seeds/permissions";
+import { seedSaasCatalog } from "./seeds/saas-catalog";
 
 const prisma = new PrismaClient();
 
@@ -12,8 +13,9 @@ async function main() {
   const currencies = await seedCurrencies(prisma);
   const countries = await seedCountries(prisma);
   const permissions = await seedPermissionCatalog(prisma);
+  const catalog = await seedSaasCatalog(prisma);
   console.log(
-    `[seed] currencies=${currencies} countries=${countries} permissions=${permissions}`
+    `[seed] currencies=${currencies} countries=${countries} permissions=${permissions} catalog=${catalog}`
   );
 }
 

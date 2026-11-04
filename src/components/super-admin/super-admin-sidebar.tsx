@@ -8,6 +8,7 @@ import {
   Building2,
   LayoutDashboard,
   LogOut,
+  Settings,
   Shield,
   Users,
 } from "lucide-react";
@@ -35,6 +36,11 @@ const navItems = [
     href: "/super-admin/extension-builds",
     label: "Extension 빌드",
     icon: Box,
+  },
+  {
+    href: "/super-admin/settings",
+    label: "Platform settings",
+    icon: Settings,
   },
 ];
 

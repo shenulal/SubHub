@@ -4,11 +4,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 // Mock Resend
 const mockSend = vi.fn();
 vi.mock("resend", () => ({
-  Resend: vi.fn().mockImplementation(() => ({
-    emails: {
-      send: mockSend,
-    },
-  })),
+  Resend: class {
+    emails = { send: mockSend };
+  },
 }));
 
 // Set environment variable

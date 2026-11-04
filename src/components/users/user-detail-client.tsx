@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { formatMoney } from "@/lib/fx/convert";
 import type { UserDetail, UserSubscriptionSummary } from "@/types/user";
 import type { UserRole, UserStatus } from "@prisma/client";
 import { useCan, useGetIdentity, useShow } from "@refinedev/core";
@@ -259,8 +260,10 @@ export function UserDetailClient({ id }: UserDetailClientProps) {
                 <div className="bg-purple-gray rounded-sm p-3 text-center">
                   <CreditCard className="text-muted-foreground mx-auto h-4 w-4" />
                   <div className="mt-1 text-2xl font-bold tabular-nums">
-                    {subscriptionSummary.currency === "KRW" ? "₩" : "$"}
-                    {subscriptionSummary.monthlyAmount.toLocaleString()}
+                    {formatMoney(
+                      subscriptionSummary.monthlyAmount,
+                      subscriptionSummary.currency
+                    )}
                   </div>
                   <div className="text-muted-foreground text-xs">
                     {t("users.detail.monthlyCost")}

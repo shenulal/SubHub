@@ -1,1 +1,191 @@
-{}
+{
+  "notifications": {
+    "bell": {
+      "label": "알림",
+      "labelWithCount": "알림, 읽지 않음 {count}건",
+      "title": "알림",
+      "markAllRead": "모두 읽음",
+      "empty": "새 알림이 없습니다.",
+      "viewAll": "모든 알림 보기"
+    },
+    "centre": {
+      "title": "알림",
+      "filters": "알림 필터",
+      "all": "전체",
+      "unread": "읽지 않음",
+      "unreadOnly": "읽지 않은 알림만",
+      "markAllRead": "모두 읽음으로 표시",
+      "empty": "아직 알림이 없습니다. 갱신, 승인, 가격 변동, 보안 알림이 여기에 표시됩니다.",
+      "emptyUnread": "읽지 않은 알림이 없습니다.",
+      "error": "알림을 불러오지 못했습니다. 새로고침해 주세요.",
+      "loadMore": "이전 알림 더 보기",
+      "loading": "불러오는 중…"
+    },
+    "groups": {
+      "renewals": "갱신",
+      "approvals": "승인",
+      "priceChanges": "가격 변동",
+      "security": "보안",
+      "other": "업데이트"
+    },
+    "channels": {
+      "IN_APP": "인앱",
+      "EMAIL": "이메일",
+      "PUSH": "푸시"
+    },
+    "events": {
+      "RENEWAL_REMINDER": {
+        "label": "Renewal reminders",
+        "help": "Sent before a subscription renews, on the lead days configured for that subscription (or your personal default)."
+      },
+      "TRIAL_ENDING": {
+        "label": "Trial endings",
+        "help": "A heads-up before a trial converts into a paid plan."
+      },
+      "NOTICE_PERIOD": {
+        "label": "Cancellation deadlines",
+        "help": "Reminds you before the notice-period cut-off so a cancellation still counts."
+      },
+      "APPROVER_RENEWAL": {
+        "label": "Renewals you approved",
+        "help": "A copy of renewal reminders for subscriptions you approved, when the organisation enables it."
+      },
+      "APPROVAL_REQUESTED": {
+        "label": "New approval requests",
+        "help": "When a request lands in your approval queue."
+      },
+      "APPROVAL_DECIDED": {
+        "label": "Decisions on my requests",
+        "help": "When one of your requests is approved or rejected."
+      },
+      "APPROVAL_INFO_REQUESTED": {
+        "label": "Information requested",
+        "help": "When an approver asks you for more detail."
+      },
+      "APPROVAL_ESCALATED": {
+        "label": "Escalations",
+        "help": "When a request waits too long and is escalated to you."
+      },
+      "PRICE_CHANGE": {
+        "label": "Price changes",
+        "help": "A detected charge differs from the recorded subscription amount."
+      },
+      "COST_ANOMALY": {
+        "label": "Cost anomalies",
+        "help": "Month-over-month spend on an app rose above the organisation threshold."
+      },
+      "RECEIPT_SUGGESTION": {
+        "label": "Receipt matches",
+        "help": "A receipt in a connected mailbox looks like a subscription charge."
+      },
+      "OFFBOARDING": {
+        "label": "Unrevoked access",
+        "help": "A terminated member still has access to apps."
+      },
+      "SHADOW_IT": {
+        "label": "Unapproved apps",
+        "help": "An app was detected that is not in your approved catalogue."
+      },
+      "PENDING_REVIEW": {
+        "label": "Apps awaiting review",
+        "help": "Discovered apps that need a decision."
+      },
+      "DIGEST": {
+        "label": "Weekly digest",
+        "help": "A weekly summary email of approvals, renewals and spend."
+      },
+      "SYSTEM": {
+        "label": "System notices",
+        "help": "Account and platform messages."
+      }
+    },
+    "preferences": {
+      "saving": "Saving…",
+      "grid": {
+        "title": "What to notify me about",
+        "description": "Choose a channel for each event. Channels are limited to those your organisation has enabled.",
+        "event": "Event",
+        "helpFor": "What are {event}?",
+        "toggleLabel": "{event} via {channel}"
+      },
+      "digest": {
+        "title": "Weekly digest",
+        "description": "One email a week with pending approvals, upcoming renewals, price changes and trial endings.",
+        "unavailable": "Email is not enabled for your organisation.",
+        "help": "The digest is scheduled by your organisation; you can opt out here."
+      },
+      "leadDays": {
+        "title": "My default reminder lead times",
+        "description": "Used for your subscriptions when none is set on the subscription itself. Organisation default: {defaults} days.",
+        "help": "Pick how many days before a renewal you want to be reminded. Options are set by your organisation.",
+        "option": "{days}d"
+      },
+      "toast": {
+        "leadDaysSaved": "Reminder lead times saved",
+        "failed": "Could not save your preferences"
+      }
+    },
+    "orgDefaults": {
+      "title": "Organisation defaults",
+      "description": "Applies to every member. Members can still switch individual channels off.",
+      "saving": "Saving",
+      "digest": {
+        "title": "Weekly digest schedule",
+        "help": "When the digest email goes out, in the organisation time zone.",
+        "enabled": "Send weekly digest",
+        "weekday": "Day",
+        "time": "Time"
+      },
+      "quiet": {
+        "title": "Quiet hours",
+        "help": "Email and push are held and released when quiet hours end. In-app notifications are always delivered.",
+        "start": "Start",
+        "end": "End",
+        "hint": "Leave both empty to disable quiet hours."
+      },
+      "cost": {
+        "title": "Cost anomaly alerts",
+        "help": "Alerts admins when an app's monthly card spend rises above the threshold compared with the previous month.",
+        "enabled": "Alert on cost increases",
+        "threshold": "Threshold"
+      },
+      "scans": {
+        "title": "Security scans & approvers",
+        "help": "Toggle the daily scans that alert admins, and whether approvers are copied on renewals of subscriptions they approved.",
+        "offboarding": "Alert on unrevoked access of terminated members",
+        "shadowIT": "Alert on unapproved apps",
+        "copyApprovers": "Copy approvers on renewal reminders"
+      },
+      "weekdays": {
+        "0": "Sunday",
+        "1": "Monday",
+        "2": "Tuesday",
+        "3": "Wednesday",
+        "4": "Thursday",
+        "5": "Friday",
+        "6": "Saturday"
+      },
+      "toast": {
+        "saved": "Organisation defaults saved",
+        "failed": "Could not save organisation defaults"
+      }
+    },
+    "onboarding": {
+      "title": "시작하기",
+      "progress": "{total}단계 중 {completed}단계 완료",
+      "dismiss": "체크리스트 숨기기",
+      "steps": {
+        "firstSubscription": "첫 구독 추가",
+        "reminderLeadDays": "갱신 알림 시점 선택",
+        "inviteTeammate": "팀원 초대",
+        "approvalPolicy": "승인 정책 만들기",
+        "connectIntegration": "메일함 또는 연동 연결",
+        "baseCurrency": "기준 통화 설정"
+      }
+    },
+    "help": {
+      "ariaLabel": "도움말",
+      "learnMore": "더 알아보기"
+    }
+  }
+}

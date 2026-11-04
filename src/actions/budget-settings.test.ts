@@ -5,10 +5,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 // Mock modules before imports
 vi.mock("@/lib/db", () => ({
   prisma: {
-    organization: {
-      findUnique: vi.fn(),
-      update: vi.fn(),
-    },
+    auditLog: { create: vi.fn() },
     cardTransaction: {
       aggregate: vi.fn(),
     },
@@ -19,17 +16,29 @@ vi.mock("@/lib/auth/require-auth", () => ({
   requireOrganization: vi.fn(),
 }));
 
-vi.mock("@/lib/auth", () => ({
-  auth: vi.fn(),
-}));
+vi.mock("@/lib/rbac/service", async () => {
+  const actual =
+    await vi.importActual<typeof import("@/lib/rbac/service")>(
+      "@/lib/rbac/service"
+    );
+  return { ...actual, requirePermission: vi.fn() };
+});
+
+vi.mock("@/lib/settings/service", async () => {
+  const actual = await vi.importActual<typeof import("@/lib/settings/service")>(
+    "@/lib/settings/service"
+  );
+  return { ...actual, getSettings: vi.fn(), setOrganizationSettings: vi.fn() };
+});
 
 vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
 }));
 
-import { auth } from "@/lib/auth";
 import { requireOrganization } from "@/lib/auth/require-auth";
 import { prisma } from "@/lib/db";
+import { ForbiddenError, requirePermission } from "@/lib/rbac/service";
+import { getSettings, setOrganizationSettings } from "@/lib/settings/service";
 import { DEFAULT_BUDGET_SETTINGS } from "@/types/budget";
 import {
   getBudgetSettings,
@@ -37,236 +46,117 @@ import {
   updateBudgetSettings,
 } from "./budget-settings";
 
+function stubSettings(overrides: Partial<Record<string, unknown>> = {}) {
+  vi.mocked(getSettings).mockResolvedValue({
+    "finance.baseCurrency": DEFAULT_BUDGET_SETTINGS.currency,
+    "finance.monthlyBudget": DEFAULT_BUDGET_SETTINGS.monthlyBudget,
+    "finance.budgetAlertThresholdPercent":
+      DEFAULT_BUDGET_SETTINGS.alertThreshold,
+    ...overrides,
+  } as any);
+}
+
 describe("budget-settings", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   describe("getBudgetSettings", () => {
-    it("should return default settings when organization has no budget settings", async () => {
+    it("should return registry defaults when nothing is overridden", async () => {
       vi.mocked(requireOrganization).mockResolvedValue({
         organizationId: "org-1",
         userId: "user-1",
         role: "ADMIN",
       } as any);
-
-      vi.mocked(prisma.organization.findUnique).mockResolvedValue({
-        id: "org-1",
-        name: "Test Org",
-        domain: null,
-        logoUrl: null,
-        settings: {},
-        googleCustomerId: null,
-        googlePrimaryDomain: null,
-        inactiveThresholdMinutes: 30,
-        extensionAutoDeployed: false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
+      stubSettings();
 
       const result = await getBudgetSettings();
 
       expect(result).toEqual(DEFAULT_BUDGET_SETTINGS);
+      expect(getSettings).toHaveBeenCalledWith("org-1", expect.any(Array));
     });
 
-    it("should return saved budget settings when they exist", async () => {
+    it("should map registry values to budget settings", async () => {
       vi.mocked(requireOrganization).mockResolvedValue({
         organizationId: "org-1",
         userId: "user-1",
         role: "ADMIN",
       } as any);
+      stubSettings({
+        "finance.baseCurrency": "USD",
+        "finance.monthlyBudget": 5000,
+        "finance.budgetAlertThresholdPercent": 90,
+      });
 
-      const savedSettings = {
+      const result = await getBudgetSettings();
+
+      expect(result).toEqual({
         currency: "USD",
-        monthlyBudget: 10000,
+        monthlyBudget: 5000,
         alertThreshold: 90,
-      };
-
-      vi.mocked(prisma.organization.findUnique).mockResolvedValue({
-        id: "org-1",
-        name: "Test Org",
-        domain: null,
-        logoUrl: null,
-        settings: { budget: savedSettings },
-        googleCustomerId: null,
-        googlePrimaryDomain: null,
-        inactiveThresholdMinutes: 30,
-        extensionAutoDeployed: false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
       });
-
-      const result = await getBudgetSettings();
-
-      expect(result).toEqual(savedSettings);
-    });
-
-    it("should merge with default settings for partial budget settings", async () => {
-      vi.mocked(requireOrganization).mockResolvedValue({
-        organizationId: "org-1",
-        userId: "user-1",
-        role: "ADMIN",
-      } as any);
-
-      vi.mocked(prisma.organization.findUnique).mockResolvedValue({
-        id: "org-1",
-        name: "Test Org",
-        domain: null,
-        logoUrl: null,
-        settings: { budget: { currency: "EUR" } },
-        googleCustomerId: null,
-        googlePrimaryDomain: null,
-        inactiveThresholdMinutes: 30,
-        extensionAutoDeployed: false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
-
-      const result = await getBudgetSettings();
-
-      expect(result.currency).toBe("EUR");
-      expect(result.monthlyBudget).toBe(DEFAULT_BUDGET_SETTINGS.monthlyBudget);
-      expect(result.alertThreshold).toBe(
-        DEFAULT_BUDGET_SETTINGS.alertThreshold
-      );
     });
   });
 
   describe("updateBudgetSettings", () => {
-    it("should update budget settings successfully for admin", async () => {
-      vi.mocked(auth).mockResolvedValue({
-        user: {
-          id: "user-1",
-          organizationId: "org-1",
-          role: "ADMIN",
-          email: "admin@test.com",
-        },
-        expires: new Date().toISOString(),
+    it("should write merged values through the registry and audit them", async () => {
+      vi.mocked(requirePermission).mockResolvedValue({
+        organizationId: "org-1",
+        userId: "user-1",
       } as any);
-
-      vi.mocked(prisma.organization.findUnique).mockResolvedValue({
-        id: "org-1",
-        name: "Test Org",
-        domain: null,
-        logoUrl: null,
-        settings: {},
-        googleCustomerId: null,
-        googlePrimaryDomain: null,
-        inactiveThresholdMinutes: 30,
-        extensionAutoDeployed: false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
+      stubSettings({
+        "finance.baseCurrency": "AED",
+        "finance.monthlyBudget": 1000,
       });
+      vi.mocked(setOrganizationSettings).mockResolvedValue([]);
 
-      vi.mocked(prisma.organization.update).mockResolvedValue({
-        id: "org-1",
-        name: "Test Org",
-        domain: null,
-        logoUrl: null,
-        settings: {
-          budget: { currency: "USD", monthlyBudget: 5000, alertThreshold: 80 },
-        },
-        googleCustomerId: null,
-        googlePrimaryDomain: null,
-        inactiveThresholdMinutes: 30,
-        extensionAutoDeployed: false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
-
-      const result = await updateBudgetSettings({
-        currency: "USD",
-        monthlyBudget: 5000,
-      });
+      const result = await updateBudgetSettings({ monthlyBudget: 2500 });
 
       expect(result.success).toBe(true);
-      expect(prisma.organization.update).toHaveBeenCalledWith(
+      expect(requirePermission).toHaveBeenCalledWith("budgets:manage");
+      expect(setOrganizationSettings).toHaveBeenCalledWith(
+        "org-1",
+        {
+          "finance.baseCurrency": "AED",
+          "finance.monthlyBudget": 2500,
+          "finance.budgetAlertThresholdPercent":
+            DEFAULT_BUDGET_SETTINGS.alertThreshold,
+        },
+        "user-1"
+      );
+      expect(prisma.auditLog.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { id: "org-1" },
+          data: expect.objectContaining({ action: "UPDATE_SETTINGS" }),
         })
       );
     });
 
-    it("should fail for non-admin users", async () => {
-      vi.mocked(auth).mockResolvedValue({
-        user: {
-          id: "user-1",
-          organizationId: "org-1",
-          role: "MEMBER",
-          email: "member@test.com",
-        },
-        expires: new Date().toISOString(),
-      } as any);
+    it("should fail for users without budgets:manage", async () => {
+      vi.mocked(requirePermission).mockRejectedValue(
+        new ForbiddenError("budgets:manage")
+      );
 
-      const result = await updateBudgetSettings({
-        monthlyBudget: 5000,
-      });
+      const result = await updateBudgetSettings({ monthlyBudget: 1 });
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("관리자 권한이 필요합니다");
+      expect(result.message).toBeTruthy();
+      expect(setOrganizationSettings).not.toHaveBeenCalled();
     });
 
-    it("should preserve existing settings when updating", async () => {
-      vi.mocked(auth).mockResolvedValue({
-        user: {
-          id: "user-1",
-          organizationId: "org-1",
-          role: "ADMIN",
-          email: "admin@test.com",
-        },
-        expires: new Date().toISOString(),
+    it("should allow clearing the budget (auto mode)", async () => {
+      vi.mocked(requirePermission).mockResolvedValue({
+        organizationId: "org-1",
+        userId: "user-1",
       } as any);
+      stubSettings({ "finance.monthlyBudget": 1000 });
+      vi.mocked(setOrganizationSettings).mockResolvedValue([]);
 
-      vi.mocked(prisma.organization.findUnique).mockResolvedValue({
-        id: "org-1",
-        name: "Test Org",
-        domain: null,
-        logoUrl: null,
-        settings: {
-          notifications: { emailEnabled: true },
-          budget: {
-            currency: "KRW",
-            monthlyBudget: 1000000,
-            alertThreshold: 80,
-          },
-        },
-        googleCustomerId: null,
-        googlePrimaryDomain: null,
-        inactiveThresholdMinutes: 30,
-        extensionAutoDeployed: false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
+      await updateBudgetSettings({ monthlyBudget: null });
 
-      vi.mocked(prisma.organization.update).mockResolvedValue({
-        id: "org-1",
-        name: "Test Org",
-        domain: null,
-        logoUrl: null,
-        settings: {},
-        googleCustomerId: null,
-        googlePrimaryDomain: null,
-        inactiveThresholdMinutes: 30,
-        extensionAutoDeployed: false,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
-
-      await updateBudgetSettings({ alertThreshold: 90 });
-
-      expect(prisma.organization.update).toHaveBeenCalledWith(
-        expect.objectContaining({
-          data: expect.objectContaining({
-            settings: expect.objectContaining({
-              notifications: { emailEnabled: true },
-              budget: expect.objectContaining({
-                currency: "KRW",
-                monthlyBudget: 1000000,
-                alertThreshold: 90,
-              }),
-            }),
-          }),
-        })
+      expect(setOrganizationSettings).toHaveBeenCalledWith(
+        "org-1",
+        expect.objectContaining({ "finance.monthlyBudget": null }),
+        "user-1"
       );
     });
   });

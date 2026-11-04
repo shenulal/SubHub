@@ -7,6 +7,10 @@ import {
 } from "./unified-payment";
 
 // Prisma mock
+vi.mock("@/lib/fx/base-currency", () => ({
+  getBaseCurrency: vi.fn().mockResolvedValue("KRW"),
+}));
+
 vi.mock("@/lib/db", () => ({
   prisma: {
     cardTransaction: {

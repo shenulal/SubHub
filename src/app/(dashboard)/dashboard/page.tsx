@@ -19,30 +19,51 @@ import {
 } from "@/actions/dashboard";
 import { getSeatWidgetData } from "@/actions/dashboard2-seat";
 import { getDepartmentInsights } from "@/actions/department-insights";
+import { getDashboardOverview } from "@/actions/discovery/dashboard-overview";
+import { getSubscriptionFilterOptions } from "@/actions/discovery/list";
+import { getWorkspaceScope } from "@/actions/discovery/scope";
 import { hasPaymentData } from "@/actions/payments";
 import { getSeatWasteAnalysis } from "@/actions/seat-waste-analysis";
 import { getSuggestionCount } from "@/actions/subscriptions/subscription-suggestions";
 import { getUnusedApps } from "@/actions/unused-apps";
 import { NewDashboardClient } from "@/components/dashboard";
 import { requireOrganization } from "@/lib/auth/require-auth";
+import { requirePermissionOrRedirect } from "@/lib/rbac/service";
+import type { Metadata } from "next";
 
 import { transformToDashboardV3Data } from "./transforms";
 
+export const metadata: Metadata = { title: "Dashboard" };
+
+const TOP_APPS_LIMIT = 10;
+const TREND_MONTHS = 12;
+
 export default async function DashboardPage() {
+  await requirePermissionOrRedirect("reports:read", "/subscriptions");
   const { role, userId, teamId } = await requireOrganization();
   const isMember = role === "MEMBER";
+  const { scope } = await getWorkspaceScope();
 
-  // Batch 1: Core data fetching with Promise.all
-  const [stats, costStatsRes, topAppsRes, monthlyTrendRes, anomaliesRes] =
-    await Promise.all([
-      getDashboardStats(),
-      getCostStatistics({}),
-      getTopCostApps({ limit: 10 }),
-      getMonthlyCostTrend({ months: 12 }),
-      getCostAnomalies(),
-    ]);
+  // Batch 1: overview (base currency, scope-aware) + legacy core data.
+  const [
+    overviewRes,
+    filterOptionsRes,
+    stats,
+    costStatsRes,
+    topAppsRes,
+    monthlyTrendRes,
+    anomaliesRes,
+  ] = await Promise.all([
+    getDashboardOverview(scope),
+    getSubscriptionFilterOptions(),
+    getDashboardStats(),
+    getCostStatistics({}),
+    getTopCostApps({ limit: TOP_APPS_LIMIT }),
+    getMonthlyCostTrend({ months: TREND_MONTHS }),
+    getCostAnomalies(),
+  ]);
 
-  // Batch 2: Additional data + seat analytics + unused apps + department insights
+  // Batch 2: widgets kept from the previous dashboard (4.3 cost trend, seats, departments).
   const [
     renewals,
     terminatedCount,
@@ -60,12 +81,10 @@ export default async function DashboardPage() {
     _pendingOnboardingCount,
     suggestionCountRes,
   ] = await Promise.all([
-    // MEMBER: 팀 갱신 예정만, ADMIN: 전체
     getUpcomingRenewals(isMember ? { teamId } : {}),
     getTerminatedUsersCount(),
     getAppsWithoutSubscriptions(),
     getAppsByCategory(),
-    // MEMBER: 본인 활동만, ADMIN: 전체
     getRecentActivity(isMember ? { userId } : {}),
     getSeatWasteAnalysis(),
     getUnusedApps(),
@@ -79,15 +98,14 @@ export default async function DashboardPage() {
     getSuggestionCount(),
   ]);
 
-  // Extract data from ActionState responses
   const costStats = costStatsRes.success
     ? (costStatsRes.data?.statistics ?? null)
     : null;
-  const topApps = topAppsRes.success ? topAppsRes.data?.apps || [] : [];
+  const topApps = topAppsRes.success ? (topAppsRes.data?.apps ?? []) : [];
   const monthlyTrend = monthlyTrendRes.success
-    ? monthlyTrendRes.data?.trends || []
+    ? (monthlyTrendRes.data?.trends ?? [])
     : [];
-  const anomalyData = anomaliesRes.success ? anomaliesRes.data || null : null;
+  const anomalyData = anomaliesRes.success ? (anomaliesRes.data ?? null) : null;
   const seatWasteData = seatWasteAnalysisRes.success
     ? (seatWasteAnalysisRes.data ?? null)
     : null;
@@ -101,7 +119,6 @@ export default async function DashboardPage() {
     ? (suggestionCountRes.data?.count ?? 0)
     : 0;
 
-  // Transform data to DashboardV3Data
   const dashboardData = transformToDashboardV3Data(
     stats,
     costStats,
@@ -117,10 +134,17 @@ export default async function DashboardPage() {
     terminatedSubAssignmentCount
   );
 
+  const filterOptions = filterOptionsRes.success
+    ? filterOptionsRes.data
+    : undefined;
+
   return (
     <div className="flex flex-1 flex-col">
       <NewDashboardClient
         data={dashboardData}
+        overview={overviewRes.success ? (overviewRes.data ?? null) : null}
+        owners={filterOptions?.owners ?? []}
+        teams={filterOptions?.teams ?? []}
         categoryData={categoryData}
         recentActivities={recentActivities}
         seatWidgetData={seatWidgetData}

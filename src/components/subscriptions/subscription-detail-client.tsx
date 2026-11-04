@@ -1,27 +1,37 @@
-// src/components/subscriptions/subscription-detail-client.tsx
 "use client";
 
 import { PageHeader } from "@/components/common/page-header";
-import { SubscriptionDetail } from "@/components/subscriptions/subscription-detail";
+import {
+  SubscriptionDetail,
+  type DocumentPolicy,
+} from "@/components/subscriptions/subscription-detail";
+import { SubscriptionStatusActions } from "@/components/subscriptions/subscription-status-actions";
 import { Button } from "@/components/ui/button";
 import type { SubscriptionDetail as SubscriptionDetailType } from "@/types/subscription";
+import type { AppCancellationOverride, CatalogItemDto } from "@/types/taxonomy";
 import { useShow } from "@refinedev/core";
-import { ArrowLeft, Pencil, Trash2 } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
 interface SubscriptionDetailClientProps {
   id: string;
+  /** @deprecated permission gating now uses `<Can>`; kept for compatibility. */
   role?: "ADMIN" | "APPROVER" | "MEMBER" | "VIEWER" | null;
+  documentPolicy?: DocumentPolicy;
+  noticeWindowDays?: number;
+  catalog?: CatalogItemDto | null;
+  appOverride?: AppCancellationOverride | null;
 }
 
 export function SubscriptionDetailClient({
   id,
-  role,
+  documentPolicy,
+  noticeWindowDays,
+  catalog,
+  appOverride,
 }: SubscriptionDetailClientProps) {
-  const canEdit = role === "ADMIN";
-  const canDelete = role === "ADMIN";
   const {
-    query: { data, isLoading },
+    query: { data, isLoading, refetch },
   } = useShow<SubscriptionDetailType>({
     resource: "subscriptions",
     id,
@@ -55,32 +65,22 @@ export function SubscriptionDetailClient({
 
   return (
     <div className="space-y-6">
-      <PageHeader
-        title={`${appName} 구독`}
-        description="구독 정보를 확인하고 관리하세요"
-        showBack
-        backHref="/subscriptions"
-        actions={[
-          {
-            label: "수정",
-            icon: Pencil,
-            href: `/subscriptions/${id}/edit`,
-            variant: "outline",
-            disabled: !canEdit,
-          },
-          ...(canDelete
-            ? [
-                {
-                  label: "삭제",
-                  icon: Trash2,
-                  variant: "destructive" as const,
-                  // onClick 핸들러는 SubscriptionDetail 내부에서 처리
-                },
-              ]
-            : []),
-        ]}
+      <PageHeader title={`${appName} 구독`} showBack backHref="/subscriptions">
+        <SubscriptionStatusActions
+          subscriptionId={id}
+          appName={appName}
+          status={subscription.status}
+          onChanged={() => void refetch?.()}
+        />
+      </PageHeader>
+      <SubscriptionDetail
+        subscription={subscription}
+        hideHeader
+        documentPolicy={documentPolicy}
+        noticeWindowDays={noticeWindowDays}
+        catalog={catalog}
+        appOverride={appOverride}
       />
-      <SubscriptionDetail subscription={subscription} hideHeader />
     </div>
   );
 }

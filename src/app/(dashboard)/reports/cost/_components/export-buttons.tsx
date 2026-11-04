@@ -9,6 +9,7 @@ import {
 } from "@/actions/cost-analytics";
 import type { ReportExportConfig } from "@/components/reports/export";
 import { ReportExportButton } from "@/components/reports/export";
+import { DEFAULT_BASE_CURRENCY } from "@/lib/fx/convert";
 import {
   createBarChartImage,
   createLineChartImage,
@@ -94,14 +95,15 @@ type TranslateFn = (key: any, params?: any) => string;
 
 function buildSummaryRows(t: TranslateFn, stats: CostStatistics | null) {
   if (!stats) return [];
+  const currency = stats.currency || DEFAULT_BASE_CURRENCY;
   return [
     {
       label: t("summary.totalCost"),
-      value: formatCurrency(stats.totalCost, "KRW"),
+      value: formatCurrency(stats.totalCost, currency),
     },
     {
       label: t("summary.monthlyAverage"),
-      value: formatCurrency(stats.monthlyAverage, "KRW"),
+      value: formatCurrency(stats.monthlyAverage, currency),
     },
     { label: t("summary.vsLastMonth"), value: `${stats.costChange}%` },
     {
@@ -121,13 +123,14 @@ function buildCSVConfig(
   anomalyData: CostAnomaly[],
   dateStr: string
 ): ReportExportConfig["csv"] {
+  const currency = stats?.currency ?? DEFAULT_BASE_CURRENCY;
   const summaryRows = buildSummaryRows(t, stats);
   const trendColumns: CSVColumn<MonthlyCostTrend>[] = [
     { key: "displayLabel", header: t("trend.month") },
     {
       key: "totalCost",
       header: t("trend.cost"),
-      formatter: (v) => formatCurrency(v as number, "KRW"),
+      formatter: (v) => formatCurrency(v as number, currency),
     },
     { key: "transactionCount", header: t("trend.transactionCount") },
   ];
@@ -136,7 +139,7 @@ function buildCSVConfig(
     {
       key: "totalCost",
       header: t("app.cost"),
-      formatter: (v) => formatCurrency(v as number, "KRW"),
+      formatter: (v) => formatCurrency(v as number, currency),
     },
     {
       key: "percentage",
@@ -150,12 +153,12 @@ function buildCSVConfig(
     {
       key: "previousCost",
       header: t("anomaly.previousCost"),
-      formatter: (v) => formatCurrency(v as number, "KRW"),
+      formatter: (v) => formatCurrency(v as number, currency),
     },
     {
       key: "currentCost",
       header: t("anomaly.currentCost"),
-      formatter: (v) => formatCurrency(v as number, "KRW"),
+      formatter: (v) => formatCurrency(v as number, currency),
     },
     { key: "changeRate", header: t("anomaly.changeRate") },
     { key: "severity", header: t("anomaly.severity") },
@@ -288,6 +291,7 @@ function buildPDFConfig(
   anomalyData: CostAnomaly[],
   dateStr: string
 ): ReportExportConfig["pdf"] {
+  const currency = stats?.currency ?? DEFAULT_BASE_CURRENCY;
   const sections: PDFSection[] = [];
 
   if (stats) {
@@ -297,11 +301,11 @@ function buildPDFConfig(
       items: [
         {
           label: t("summary.totalCost"),
-          value: formatCurrency(stats.totalCost, "KRW"),
+          value: formatCurrency(stats.totalCost, currency),
         },
         {
           label: t("pdf.monthlyAverage"),
-          value: formatCurrency(stats.monthlyAverage, "KRW"),
+          value: formatCurrency(stats.monthlyAverage, currency),
         },
         { label: t("summary.vsLastMonth"), value: `${stats.costChange}%` },
         {
@@ -340,7 +344,7 @@ function buildPDFConfig(
       ],
       rows: trendData.map((tr) => [
         tr.displayLabel,
-        formatCurrency(tr.totalCost, "KRW"),
+        formatCurrency(tr.totalCost, currency),
         tr.transactionCount.toString(),
       ]),
     });
@@ -369,7 +373,7 @@ function buildPDFConfig(
       ],
       rows: appData.map((a) => [
         a.appName,
-        formatCurrency(a.totalCost, "KRW"),
+        formatCurrency(a.totalCost, currency),
         `${a.percentage.toFixed(1)}%`,
       ]),
     });
@@ -387,8 +391,8 @@ function buildPDFConfig(
       ],
       rows: anomalyData.map((a) => [
         a.appName,
-        formatCurrency(a.previousCost, "KRW"),
-        formatCurrency(a.currentCost, "KRW"),
+        formatCurrency(a.previousCost, currency),
+        formatCurrency(a.currentCost, currency),
         `+${a.changeRate}%`,
       ]),
     });

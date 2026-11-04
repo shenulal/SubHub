@@ -1,6 +1,7 @@
 // src/app/(dashboard)/subscriptions/[id]/edit/page.tsx
 import { getApps } from "@/actions/apps";
 import { getSubscriptionCached } from "@/actions/subscriptions";
+import { getSubscriptionFormOptions } from "@/actions/subscriptions/subscription-form-options";
 import { getUsers } from "@/actions/users-read";
 import { requireOrganization } from "@/lib/auth/require-auth";
 import type { Metadata } from "next";
@@ -19,12 +20,12 @@ export async function generateMetadata({
   const subscription = await getSubscriptionCached(id);
 
   if (!subscription) {
-    return { title: "구독을 찾을 수 없음" };
+    return { title: "Subscription not found" };
   }
 
   return {
-    title: `${subscription.appName} 구독 수정 | SaaS 관리 플랫폼`,
-    description: `${subscription.appName} 구독 정보를 수정합니다`,
+    title: `Edit ${subscription.appName}`,
+    description: `Edit the ${subscription.appName} subscription`,
   };
 }
 
@@ -35,11 +36,13 @@ export default async function SubscriptionEditPage({
   const { role } = await requireOrganization();
   const isAdmin = role === "ADMIN";
 
-  const [subscription, { items: apps }, { items: users }] = await Promise.all([
-    getSubscriptionCached(id),
-    getApps({ limit: 1000 }),
-    getUsers({ limit: 1000, filter: { status: "ACTIVE" } }),
-  ]);
+  const [subscription, { items: apps }, { items: users }, options] =
+    await Promise.all([
+      getSubscriptionCached(id),
+      getApps({ limit: 1000 }),
+      getUsers({ limit: 1000, filter: { status: "ACTIVE" } }),
+      getSubscriptionFormOptions(),
+    ]);
 
   if (!subscription) {
     notFound();
@@ -69,6 +72,7 @@ export default async function SubscriptionEditPage({
       isAdmin={isAdmin}
       subscription={subscription}
       title={`${subscription.appName} ${t("actions.edit")}`}
+      options={options}
     />
   );
 }

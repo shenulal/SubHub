@@ -9,6 +9,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { useBaseCurrency } from "@/hooks/use-base-currency";
 import { cn } from "@/lib/utils";
 import type { UpcomingRenewal } from "@/types/dashboard";
 import { Calendar, DollarSign } from "lucide-react";
@@ -56,7 +57,7 @@ const urgencyStyles = {
 // 금액 포맷
 function formatCurrency(
   amount: number,
-  currency: string = "KRW",
+  currency: string,
   locale: string = "ko"
 ): string {
   return new Intl.NumberFormat(locale === "ko" ? "ko-KR" : "en-US", {
@@ -88,6 +89,7 @@ export function RenewalDayPanel({
 }: RenewalDayPanelProps) {
   const t = useTranslations("reports.renewal.dayPanel");
   const locale = useLocale();
+  const { baseCurrency } = useBaseCurrency();
 
   // 선택된 날짜가 없는 경우
   if (!selectedDate) {
@@ -133,7 +135,7 @@ export function RenewalDayPanel({
             <div className="text-right">
               <p className="text-muted-foreground text-sm">{t("totalCost")}</p>
               <p className="text-2xl font-semibold tabular-nums">
-                {formatCurrency(totalAmount, "KRW", locale)}
+                {formatCurrency(totalAmount, baseCurrency, locale)}
               </p>
             </div>
           )}

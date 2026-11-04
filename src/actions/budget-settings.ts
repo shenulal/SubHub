@@ -1,125 +1,101 @@
 // src/actions/budget-settings.ts
 "use server";
 
-import { auth } from "@/lib/auth";
+/**
+ * Budget settings — thin compatibility layer over the settings registry.
+ * Values live in `finance.monthlyBudget`, `finance.budgetAlertThresholdPercent`
+ * and `finance.baseCurrency`; the UI lives at /settings/workspace/finance.
+ */
 import { requireOrganization } from "@/lib/auth/require-auth";
 import { prisma } from "@/lib/db";
 import { withLogging } from "@/lib/logging";
-import { BudgetSettings, DEFAULT_BUDGET_SETTINGS } from "@/types/budget";
+import { isForbiddenError, requirePermission } from "@/lib/rbac/service";
+import {
+  getSettings,
+  setOrganizationSettings,
+  SettingValidationError,
+} from "@/lib/settings/service";
+import { BudgetSettings } from "@/types/budget";
+import type { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
-// Organization.settings 내부 구조
-interface OrganizationSettings {
-  budget?: Partial<BudgetSettings>;
-  notifications?: unknown;
-  [key: string]: unknown;
-}
+const BUDGET_KEYS = [
+  "finance.baseCurrency",
+  "finance.monthlyBudget",
+  "finance.budgetAlertThresholdPercent",
+] as const;
 
 /**
- * 조직 예산 설정 조회
+ * Resolve budget settings for an organisation from the registry.
  */
-export async function getBudgetSettings(): Promise<BudgetSettings> {
-  const { organizationId } = await requireOrganization();
-
-  const organization = await prisma.organization.findUnique({
-    where: { id: organizationId },
-    select: { settings: true },
-  });
-
-  if (!organization) {
-    return DEFAULT_BUDGET_SETTINGS;
-  }
-
-  const settings = organization.settings as OrganizationSettings;
-  const budget = settings?.budget;
-
-  if (!budget) {
-    return DEFAULT_BUDGET_SETTINGS;
-  }
-
+export async function getBudgetSettingsForOrganization(
+  organizationId: string
+): Promise<BudgetSettings> {
+  const s = await getSettings(organizationId, BUDGET_KEYS);
   return {
-    currency: budget.currency ?? DEFAULT_BUDGET_SETTINGS.currency,
-    monthlyBudget:
-      budget.monthlyBudget ?? DEFAULT_BUDGET_SETTINGS.monthlyBudget,
-    alertThreshold:
-      budget.alertThreshold ?? DEFAULT_BUDGET_SETTINGS.alertThreshold,
+    currency: s["finance.baseCurrency"],
+    monthlyBudget: s["finance.monthlyBudget"],
+    alertThreshold: s["finance.budgetAlertThresholdPercent"],
   };
 }
 
 /**
- * 조직 예산 설정 업데이트
+ * 조직 예산 설정 조회 (current session)
+ */
+export async function getBudgetSettings(): Promise<BudgetSettings> {
+  const { organizationId } = await requireOrganization();
+  return getBudgetSettingsForOrganization(organizationId);
+}
+
+/**
+ * 조직 예산 설정 업데이트 (permission: budgets:manage)
  */
 async function _updateBudgetSettings(
   updates: Partial<BudgetSettings>
 ): Promise<{ success: boolean; message?: string }> {
-  const session = await auth();
-
-  if (!session?.user) {
-    const { redirect } = await import("next/navigation");
-    return redirect("/login");
-  }
-
-  const user = session.user;
-  const organizationId = user.organizationId;
-
-  if (!organizationId) {
-    const { redirect } = await import("next/navigation");
-    return redirect("/onboarding");
-  }
-
-  // 관리자 권한 확인
-  if (user.role !== "ADMIN") {
-    return {
-      success: false,
-      message: "관리자 권한이 필요합니다",
+  try {
+    const { organizationId, userId } =
+      await requirePermission("budgets:manage");
+    const current = await getBudgetSettingsForOrganization(organizationId);
+    const next: BudgetSettings = {
+      currency: updates.currency ?? current.currency,
+      monthlyBudget:
+        updates.monthlyBudget !== undefined
+          ? updates.monthlyBudget
+          : current.monthlyBudget,
+      alertThreshold: updates.alertThreshold ?? current.alertThreshold,
     };
+    await setOrganizationSettings(
+      organizationId,
+      {
+        "finance.baseCurrency": next.currency,
+        "finance.monthlyBudget": next.monthlyBudget,
+        "finance.budgetAlertThresholdPercent": next.alertThreshold,
+      },
+      userId
+    );
+    await prisma.auditLog.create({
+      data: {
+        organizationId,
+        userId,
+        action: "UPDATE_SETTINGS",
+        entityType: "OrganizationSetting",
+        entityId: "finance",
+        changes: {
+          from: current,
+          to: next,
+        } as unknown as Prisma.InputJsonValue,
+      },
+    });
+    revalidatePath("/settings/budget");
+    revalidatePath("/settings/workspace/finance");
+    return { success: true };
+  } catch (error) {
+    if (isForbiddenError(error) || error instanceof SettingValidationError) {
+      return { success: false, message: error.message };
+    }
+    throw error;
   }
-
-  // 현재 설정 조회
-  const organization = await prisma.organization.findUnique({
-    where: { id: organizationId },
-    select: { settings: true },
-  });
-
-  const currentSettings = (organization?.settings ||
-    {}) as OrganizationSettings;
-  const currentBudget = currentSettings.budget || DEFAULT_BUDGET_SETTINGS;
-
-  // 업데이트된 예산 설정
-  const updatedBudget: BudgetSettings = {
-    currency:
-      updates.currency ??
-      currentBudget.currency ??
-      DEFAULT_BUDGET_SETTINGS.currency,
-    monthlyBudget:
-      updates.monthlyBudget !== undefined
-        ? updates.monthlyBudget
-        : (currentBudget.monthlyBudget ??
-          DEFAULT_BUDGET_SETTINGS.monthlyBudget),
-    alertThreshold:
-      updates.alertThreshold ??
-      currentBudget.alertThreshold ??
-      DEFAULT_BUDGET_SETTINGS.alertThreshold,
-  };
-
-  // 설정 데이터 구성
-  const newSettings = {
-    ...currentSettings,
-    budget: updatedBudget,
-  };
-
-  // 설정 업데이트
-  await prisma.organization.update({
-    where: { id: organizationId },
-    data: {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      settings: newSettings as any,
-    },
-  });
-
-  revalidatePath("/settings/budget");
-
-  return { success: true };
 }
 export const updateBudgetSettings = withLogging(
   "updateBudgetSettings",

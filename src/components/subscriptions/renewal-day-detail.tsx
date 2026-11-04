@@ -1,6 +1,9 @@
 // src/components/subscriptions/renewal-day-detail.tsx
 "use client";
 
+/**
+ * Detail panel for a calendar day: renewals plus trial-end / notice markers.
+ */
 import type { RenewalItem } from "@/actions/subscriptions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,6 +16,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { formatMoney } from "@/lib/services/discovery/money";
+import { cn } from "@/lib/utils";
+import type { CalendarMarker } from "@/types/discovery";
 import { format, parseISO } from "date-fns";
 import { enUS, ko } from "date-fns/locale";
 import { ExternalLink, X } from "lucide-react";
@@ -20,9 +26,12 @@ import { useLocale, useTranslations } from "next-intl";
 import Image from "next/image";
 import Link from "next/link";
 
+import { MARKER_STYLES } from "./renewal-calendar";
+
 interface RenewalDayDetailProps {
-  date: string; // ISO 8601 (YYYY-MM-DD)
+  date: string; // YYYY-MM-DD
   renewals: RenewalItem[];
+  markers?: CalendarMarker[];
   onClose: () => void;
 }
 
@@ -36,15 +45,30 @@ const statusVariants: Record<
   PENDING: "secondary",
 };
 
-/**
- * 특정 날짜의 갱신 목록을 표시하는 컴포넌트
- */
+function AppAvatar({ name, logo }: { name: string; logo: string | null }) {
+  return logo ? (
+    <Image
+      src={logo}
+      alt={name}
+      width={24}
+      height={24}
+      className="rounded-sm"
+    />
+  ) : (
+    <div className="bg-primary/10 text-primary flex h-6 w-6 items-center justify-center rounded-sm text-xs font-medium">
+      {name.charAt(0)}
+    </div>
+  );
+}
+
 export function RenewalDayDetail({
   date,
   renewals,
+  markers = [],
   onClose,
 }: RenewalDayDetailProps) {
   const t = useTranslations();
+  const td = useTranslations("discovery.calendar");
   const locale = useLocale();
   const dateLocale = locale === "ko" ? ko : enUS;
   const dateFormat =
@@ -60,106 +84,119 @@ export function RenewalDayDetail({
     PENDING: t("subscriptions.status.pending"),
   };
 
-  // 금액 포맷팅
-  const formatAmount = (amount: number, currency: string): string => {
-    const symbol = currency === "KRW" ? "₩" : "$";
-    return `${symbol}${amount.toLocaleString()}`;
-  };
-
-  // 총 갱신 금액 계산
   const totalAmount = renewals.reduce((sum, item) => sum + item.amount, 0);
-  const primaryCurrency = renewals[0]?.currency || "KRW";
-
-  if (renewals.length === 0) {
-    return (
-      <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
-        <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle>{formattedDate}</CardTitle>
-          <Button variant="ghost" size="icon" onClick={onClose}>
-            <X className="h-4 w-4" />
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <p className="text-muted-foreground py-8 text-center">
-            {t("subscriptions.renewalDay.empty")}
-          </p>
-        </CardContent>
-      </Card>
-    );
-  }
+  const primaryCurrency = renewals[0]?.currency ?? "";
+  const isEmpty = renewals.length === 0 && markers.length === 0;
 
   return (
-    <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
-      <CardHeader className="flex flex-row items-center justify-between">
+    <Card className="border-border/50 rounded-sm shadow-sm">
+      <CardHeader className="flex flex-row items-start justify-between">
         <div>
           <CardTitle>{formattedDate}</CardTitle>
-          <p className="text-muted-foreground mt-1 text-sm">
-            {t("subscriptions.renewalDay.summary", {
-              count: renewals.length,
-              amount: formatAmount(totalAmount, primaryCurrency),
-            })}
-          </p>
+          {renewals.length > 0 && (
+            <p className="text-muted-foreground mt-1 text-sm">
+              {t("subscriptions.renewalDay.summary", {
+                count: renewals.length,
+                amount: formatMoney(totalAmount, primaryCurrency, locale),
+              })}
+            </p>
+          )}
         </div>
-        <Button variant="ghost" size="icon" onClick={onClose}>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onClose}
+          aria-label={td("close")}
+        >
           <X className="h-4 w-4" />
         </Button>
       </CardHeader>
-      <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>{t("subscriptions.renewalDay.table.app")}</TableHead>
-              <TableHead>{t("subscriptions.renewalDay.table.plan")}</TableHead>
-              <TableHead>
-                {t("subscriptions.renewalDay.table.amount")}
-              </TableHead>
-              <TableHead>
-                {t("subscriptions.renewalDay.table.status")}
-              </TableHead>
-              <TableHead className="w-[50px]"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {renewals.map((renewal) => (
-              <TableRow key={renewal.subscriptionId}>
-                <TableCell>
-                  <div className="flex items-center gap-2">
-                    {renewal.appLogo ? (
-                      <Image
-                        src={renewal.appLogo}
-                        alt={renewal.appName}
-                        width={24}
-                        height={24}
-                        className="rounded-sm"
-                      />
-                    ) : (
-                      <div className="bg-purple-gray flex h-6 w-6 items-center justify-center rounded-sm text-xs font-medium">
-                        {renewal.appName.charAt(0)}
-                      </div>
-                    )}
-                    <span className="font-medium">{renewal.appName}</span>
-                  </div>
-                </TableCell>
-                <TableCell>{renewal.planName || "-"}</TableCell>
-                <TableCell>
-                  {formatAmount(renewal.amount, renewal.currency)}
-                </TableCell>
-                <TableCell>
-                  <Badge variant={statusVariants[renewal.status]}>
-                    {statusLabels[renewal.status]}
-                  </Badge>
-                </TableCell>
-                <TableCell>
-                  <Button variant="ghost" size="icon" asChild>
-                    <Link href={`/subscriptions/${renewal.subscriptionId}`}>
-                      <ExternalLink className="h-4 w-4" />
-                    </Link>
-                  </Button>
-                </TableCell>
+      <CardContent className="space-y-4">
+        {isEmpty && (
+          <p className="text-muted-foreground py-8 text-center">
+            {t("subscriptions.renewalDay.empty")}
+          </p>
+        )}
+
+        {renewals.length > 0 && (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>{t("subscriptions.renewalDay.table.app")}</TableHead>
+                <TableHead>
+                  {t("subscriptions.renewalDay.table.amount")}
+                </TableHead>
+                <TableHead>
+                  {t("subscriptions.renewalDay.table.status")}
+                </TableHead>
+                <TableHead className="w-[50px]" />
               </TableRow>
+            </TableHeader>
+            <TableBody>
+              {renewals.map((renewal) => (
+                <TableRow key={renewal.subscriptionId}>
+                  <TableCell>
+                    <div className="flex items-center gap-2">
+                      <AppAvatar
+                        name={renewal.appName}
+                        logo={renewal.appLogo}
+                      />
+                      <span className="font-medium">{renewal.appName}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="tabular-nums">
+                    {formatMoney(renewal.amount, renewal.currency, locale)}
+                  </TableCell>
+                  <TableCell>
+                    <Badge variant={statusVariants[renewal.status]}>
+                      {statusLabels[renewal.status]}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Button variant="ghost" size="icon" asChild>
+                      <Link href={`/subscriptions/${renewal.subscriptionId}`}>
+                        <ExternalLink className="h-4 w-4" />
+                      </Link>
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+
+        {markers.length > 0 && (
+          <ul className="space-y-2" data-testid="day-markers">
+            {markers.map((m) => (
+              <li
+                key={`${m.kind}-${m.subscriptionId}`}
+                className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm"
+              >
+                <span
+                  className={cn(
+                    "h-2 w-2 shrink-0 rounded-full",
+                    MARKER_STYLES[m.kind].dot
+                  )}
+                />
+                <AppAvatar name={m.appName} logo={m.appLogoUrl} />
+                <Link
+                  href={`/subscriptions/${m.subscriptionId}`}
+                  className="font-medium hover:underline"
+                >
+                  {m.appName}
+                </Link>
+                <span
+                  className={cn(
+                    "ml-auto text-xs font-medium",
+                    MARKER_STYLES[m.kind].label
+                  )}
+                >
+                  {td(`markers.${m.kind}`)}
+                </span>
+              </li>
             ))}
-          </TableBody>
-        </Table>
+          </ul>
+        )}
       </CardContent>
     </Card>
   );

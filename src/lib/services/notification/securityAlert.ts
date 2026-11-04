@@ -1,6 +1,8 @@
 // src/lib/services/notification/securityAlert.ts
 import { Resend } from "resend";
 
+import { mirrorAlertInApp } from "./alert-bridge";
+
 // Resend 클라이언트 지연 초기화 (빌드 타임에 환경변수 없어도 동작)
 let resend: Resend | null = null;
 
@@ -31,6 +33,9 @@ export interface EmailResult {
 // Shadow IT 알림 파라미터
 export interface ShadowITAlertParams {
   to: string;
+  /** When set, an in-app notification is mirrored for the recipient. */
+  organizationId?: string;
+  recipientUserId?: string;
   organizationName: string;
   shadowApps: Array<{
     name: string;
@@ -42,6 +47,9 @@ export interface ShadowITAlertParams {
 // 비용 이상 알림 파라미터
 export interface CostAnomalyAlertParams {
   to: string;
+  /** When set, an in-app notification is mirrored for the recipient. */
+  organizationId?: string;
+  recipientUserId?: string;
   organizationName: string;
   appName: string;
   previousCost: number;
@@ -83,7 +91,8 @@ function getSourceLabel(source: string): string {
 export async function sendShadowITAlertEmail(
   params: ShadowITAlertParams
 ): Promise<EmailResult> {
-  const { to, organizationName, shadowApps } = params;
+  const { to, organizationName, shadowApps, organizationId, recipientUserId } =
+    params;
 
   const subject = `🚨 [Shadow IT 경고] 승인되지 않은 SaaS ${shadowApps.length}건 탐지`;
 
@@ -172,6 +181,17 @@ export async function sendShadowITAlertEmail(
       return { success: false, error: error.message };
     }
 
+    await mirrorAlertInApp({
+      organizationId,
+      recipientUserId,
+      recipientEmail: to,
+      type: "SHADOW_IT",
+      title: `${shadowApps.length} unapproved SaaS app(s) detected`,
+      body: shadowApps.map((a) => a.name).join(", "),
+      link: "/extensions/review-apps",
+      dedupeKey: `shadow-it:${new Date().toISOString().slice(0, 10)}:${shadowApps.length}`,
+    });
+
     return { success: true, messageId: data?.id };
   } catch (err) {
     return {
@@ -194,6 +214,8 @@ export async function sendCostAnomalyAlertEmail(
     percentageIncrease,
     currency,
     period,
+    organizationId,
+    recipientUserId,
   } = params;
 
   const isCritical = percentageIncrease >= 100;
@@ -279,6 +301,17 @@ export async function sendCostAnomalyAlertEmail(
     if (error) {
       return { success: false, error: error.message };
     }
+
+    await mirrorAlertInApp({
+      organizationId,
+      recipientUserId,
+      recipientEmail: to,
+      type: "COST_ANOMALY",
+      title: `${appName} cost up ${percentageIncrease}% (${period})`,
+      body: `${formatCurrency(previousCost, currency)} → ${formatCurrency(currentCost, currency)}`,
+      link: "/cost",
+      dedupeKey: `cost-anomaly:${appName}:${period}`,
+    });
 
     return { success: true, messageId: data?.id };
   } catch (err) {

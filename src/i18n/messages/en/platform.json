@@ -1,1 +1,223 @@
-{}
+{
+  "platform": {
+    "sidebar": {
+      "workspace": {
+        "title": "Workspace settings",
+        "description": "Locale, finance, security and every tunable"
+      },
+      "masters": {
+        "title": "Master data",
+        "description": "Currencies, tax rates, cost centres, payment methods"
+      },
+      "roles": {
+        "title": "Roles & permissions",
+        "description": "Custom roles and member access"
+      },
+      "templates": {
+        "title": "Notification templates",
+        "description": "Subject and body for every alert"
+      }
+    },
+    "settings": {
+      "save": "Save changes",
+      "saving": "Saving…",
+      "saved": "Settings saved",
+      "saveFailed": "Could not save settings",
+      "discard": "Discard",
+      "pendingChanges": "{count, plural, one {# unsaved change} other {# unsaved changes}}",
+      "noChanges": "No unsaved changes",
+      "resetToDefault": "Reset to default",
+      "resetDone": "Setting reset to its default",
+      "overridden": "Customised",
+      "default": "Default",
+      "changeSecret": "Change",
+      "cancel": "Cancel",
+      "selectPlaceholder": "Select…",
+      "listPlaceholder": "Type a value and press Enter",
+      "help": "What does this setting do?",
+      "invalidJson": "One of the JSON fields is not valid JSON"
+    },
+    "masters": {
+      "tabs": {
+        "currencies": "Currencies",
+        "tax-rates": "Tax rates",
+        "cost-centers": "Cost centres",
+        "payment-methods": "Payment methods",
+        "billing-cycles": "Billing cycles"
+      },
+      "common": {
+        "active": "Active",
+        "inactive": "Inactive",
+        "default": "Default",
+        "delete": "Delete",
+        "edit": "Edit",
+        "cancel": "Cancel",
+        "save": "Save",
+        "saved": "Saved",
+        "saveFailed": "Could not save",
+        "deleted": "Deleted",
+        "code": "Code",
+        "name": "Name",
+        "status": "Status",
+        "actions": "Actions",
+        "none": "None",
+        "confirmDeleteTitle": "Delete this entry?",
+        "confirmDeleteDescription": "\"{name}\" will be removed. Entries already in use are deactivated instead."
+      },
+      "currencies": {
+        "title": "Currencies",
+        "description": "Choose which currencies members can pick in forms. Rates are expressed against your base currency ({base}).",
+        "refreshNow": "Refresh rates now",
+        "refreshed": "{count, plural, one {# rate} other {# rates}} updated from {provider}",
+        "manualRate": "Enter rate",
+        "manualRateTitle": "Manual exchange rate",
+        "manualRateDescription": "Record a rate for 1 {base}. Manual rates override provider rates for the same day.",
+        "quoteCurrency": "Currency",
+        "rateLabel": "1 {base} =",
+        "rateSaved": "Rate saved",
+        "rateColumn": "Rate per 1 {base}",
+        "asOf": "As of · source",
+        "enabled": "Enabled",
+        "base": "Base",
+        "noRate": "No rate yet",
+        "search": "Search currencies",
+        "staleWarning": "{count, plural, one {# enabled currency has} other {# enabled currencies have}} a missing or stale rate. Refresh or enter a rate manually."
+      },
+      "taxRates": {
+        "title": "Tax rates",
+        "description": "VAT and sales-tax rates applied to subscription amounts.",
+        "add": "Add tax rate",
+        "addTitle": "New tax rate",
+        "editTitle": "Edit tax rate",
+        "country": "Country",
+        "countryHint": "ISO 3166-1 alpha-2, optional",
+        "rate": "Rate %",
+        "validity": "Validity",
+        "validFrom": "Valid from",
+        "validTo": "Valid to",
+        "empty": "No tax rates yet."
+      },
+      "costCenters": {
+        "title": "Cost centres",
+        "description": "Budget owners that subscriptions and approval requests roll up to.",
+        "add": "Add cost centre",
+        "addTitle": "New cost centre",
+        "editTitle": "Edit cost centre",
+        "descriptionLabel": "Description",
+        "owner": "Owner",
+        "team": "Team",
+        "monthlyBudget": "Monthly budget",
+        "budgetCurrency": "Budget currency",
+        "empty": "No cost centres yet."
+      },
+      "paymentMethods": {
+        "title": "Payment methods",
+        "description": "Options offered when recording how a subscription is paid. Order here is the order in forms.",
+        "add": "Add payment method",
+        "addTitle": "New payment method",
+        "editTitle": "Edit payment method",
+        "order": "Order",
+        "kind": "Kind",
+        "linkedCard": "Linked corporate card",
+        "moveUp": "Move up",
+        "moveDown": "Move down"
+      },
+      "billingCycles": {
+        "title": "Billing cycles",
+        "description": "Labels and month counts used to normalise amounts to monthly and annual totals.",
+        "cycle": "Cycle",
+        "label": "Label",
+        "months": "Months",
+        "enabled": "Enabled"
+      }
+    },
+    "roles": {
+      "title": "Roles",
+      "description": "System roles follow the built-in templates; custom roles can hold any subset of permissions.",
+      "createRole": "Create role",
+      "createTitle": "New custom role",
+      "editTitle": "Edit role",
+      "viewTitle": "{name} (system role)",
+      "editorDescription": "Pick the permissions this role grants. Members assigned the role get exactly these.",
+      "systemReadOnly": "System role grants are fixed. Use \"Reset to template\" to restore the defaults.",
+      "name": "Name",
+      "description": "Description",
+      "permissions": "Permissions",
+      "selectedCount": "{count} selected",
+      "selectAll": "Select all in {group}",
+      "system": "System",
+      "custom": "Custom",
+      "memberCount": "{count, plural, one {# member} other {# members}}",
+      "grantCount": "{count, plural, one {# permission} other {# permissions}}",
+      "view": "View",
+      "edit": "Edit",
+      "delete": "Delete",
+      "deleteTitle": "Delete \"{name}\"?",
+      "deleteDescription": "{count, plural, =0 {No members use this role.} one {# member will fall back to their system role.} other {# members will fall back to their system role.}}",
+      "deleted": "Role deleted",
+      "resetTemplate": "Reset to template",
+      "resetTemplateTitle": "Reset \"{name}\" to its template?",
+      "resetTemplateDescription": "Any customised grants on this system role are replaced by the built-in defaults.",
+      "resetDone": "Role reset to template",
+      "membersTitle": "Member assignments",
+      "membersDescription": "Assign a custom role or return a member to a system role. The last administrator cannot be demoted.",
+      "searchMembers": "Search members",
+      "member": "Member",
+      "role": "Role",
+      "noRole": "No role",
+      "assigned": "Role updated",
+      "saved": "Role saved",
+      "saveFailed": "Could not save role",
+      "cancel": "Cancel",
+      "save": "Save"
+    },
+    "privacy": {
+      "title": "Privacy & data",
+      "description": "Download a copy of your data or close your account.",
+      "exportTitle": "Export my data",
+      "exportDescription": "Builds a ZIP with your profile, subscriptions, requests, notifications and activity as JSON and CSV. Links expire after {hours} hours.",
+      "requestExport": "Export my data",
+      "preparing": "Preparing export…",
+      "exportReady": "Your export is ready",
+      "exportFailed": "Could not build the export",
+      "download": "Download",
+      "expires": "expires {date}",
+      "status": {
+        "PENDING": "Preparing",
+        "READY": "Ready",
+        "FAILED": "Failed",
+        "EXPIRED": "Expired"
+      },
+      "deletionDisabled": "Self-service account deletion is disabled for this workspace. Contact an administrator."
+    },
+    "templates": {
+      "title": "Notification templates",
+      "description": "Customise the subject and body sent for each event and channel. Untouched entries use the built-in English copy.",
+      "editTitle": "{event} · {channel}",
+      "editDescription": "Use {{placeholder}} tokens; unknown tokens are rejected on save.",
+      "subject": "Subject",
+      "body": "Body",
+      "placeholdersHelp": "Click a placeholder to insert it:",
+      "preview": "Preview",
+      "activeOverride": "Use this custom template",
+      "custom": "Custom",
+      "default": "Default",
+      "customCount": "{count, plural, =0 {all defaults} one {# customised} other {# customised}}",
+      "noSubject": "No subject",
+      "enabled": "Custom template enabled",
+      "disabled": "Custom template disabled — default copy will be used",
+      "reset": "Reset to default",
+      "resetDone": "Template reset to default",
+      "edit": "Edit",
+      "saved": "Template saved",
+      "saveFailed": "Could not save template",
+      "cancel": "Cancel",
+      "save": "Save"
+    },
+    "auth": {
+      "continueWithApple": "Continue with Apple",
+      "ssoOnly": "This workspace requires single sign-on. Use one of the providers above.",
+      "selfSignupDisabled": "Self-service sign-up is disabled. Ask your administrator for an invitation."
+    }
+  }
+}

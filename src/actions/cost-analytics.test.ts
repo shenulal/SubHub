@@ -7,6 +7,11 @@ vi.mock("@/lib/auth", () => ({
 }));
 
 // Mock Prisma
+// Organisation base currency (settings registry) is resolved via the FX helper
+vi.mock("@/lib/fx/base-currency", () => ({
+  getBaseCurrency: vi.fn().mockResolvedValue("KRW"),
+}));
+
 vi.mock("@/lib/db", () => ({
   prisma: {
     paymentRecord: {

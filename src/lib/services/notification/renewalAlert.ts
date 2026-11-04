@@ -2,6 +2,11 @@
 import { prisma } from "@/lib/db";
 import type { AlertType } from "@prisma/client";
 import { sendRenewalAlertEmail } from "./email";
+import {
+  processSubscriptionReminders,
+  type ReminderRunOptions,
+  type ReminderRunResult,
+} from "./reminders";
 
 // 갱신일까지 남은 일수에 따른 AlertType 매핑
 function getAlertType(days: number): AlertType {
@@ -166,88 +171,20 @@ export async function sendRenewalAlert(
   };
 }
 
-// 전체 갱신 알림 처리 결과
-export interface ProcessResult {
-  processedAt: Date;
-  alerts: {
-    days30: { found: number; sent: number };
-    days60: { found: number; sent: number };
-    days90: { found: number; sent: number };
-  };
-  errors: string[];
-}
+// 전체 갱신 알림 처리 결과 (legacy cron → delegated to the reminders service)
+export type ProcessResult = ReminderRunResult & { legacy: true };
 
-// 모든 갱신 알림 처리
-export async function processRenewalAlerts(): Promise<ProcessResult> {
-  const result: ProcessResult = {
-    processedAt: new Date(),
-    alerts: {
-      days30: { found: 0, sent: 0 },
-      days60: { found: 0, sent: 0 },
-      days90: { found: 0, sent: 0 },
-    },
-    errors: [],
-  };
-
-  // 30일 알림
-  try {
-    const renewals30 = await findUpcomingRenewals(30);
-    result.alerts.days30.found = renewals30.length;
-
-    for (const subscription of renewals30) {
-      const alertResult = await sendRenewalAlert(subscription, 30);
-      result.alerts.days30.sent += alertResult.sent;
-      if (alertResult.error) {
-        result.errors.push(
-          `30일 알림 실패 (${subscription.id}): ${alertResult.error}`
-        );
-      }
-    }
-  } catch (error) {
-    result.errors.push(
-      `30일 알림 처리 오류: ${error instanceof Error ? error.message : "알 수 없는 오류"}`
-    );
-  }
-
-  // 60일 알림
-  try {
-    const renewals60 = await findUpcomingRenewals(60);
-    result.alerts.days60.found = renewals60.length;
-
-    for (const subscription of renewals60) {
-      const alertResult = await sendRenewalAlert(subscription, 60);
-      result.alerts.days60.sent += alertResult.sent;
-      if (alertResult.error) {
-        result.errors.push(
-          `60일 알림 실패 (${subscription.id}): ${alertResult.error}`
-        );
-      }
-    }
-  } catch (error) {
-    result.errors.push(
-      `60일 알림 처리 오류: ${error instanceof Error ? error.message : "알 수 없는 오류"}`
-    );
-  }
-
-  // 90일 알림
-  try {
-    const renewals90 = await findUpcomingRenewals(90);
-    result.alerts.days90.found = renewals90.length;
-
-    for (const subscription of renewals90) {
-      const alertResult = await sendRenewalAlert(subscription, 90);
-      result.alerts.days90.sent += alertResult.sent;
-      if (alertResult.error) {
-        result.errors.push(
-          `90일 알림 실패 (${subscription.id}): ${alertResult.error}`
-        );
-      }
-    }
-  } catch (error) {
-    result.errors.push(
-      `90일 알림 처리 오류: ${error instanceof Error ? error.message : "알 수 없는 오류"}`
-    );
-  }
-
-  return result;
+/**
+ * Legacy 30/60/90-day renewal alerts. Delegates to the unified reminders
+ * service, which honours the `renewalAlert30/60/90` flags on each subscription
+ * and records `ReminderDispatch` rows (no duplicate sends with the new cron).
+ */
+export async function processRenewalAlerts(
+  options: ReminderRunOptions = {}
+): Promise<ProcessResult> {
+  const result = await processSubscriptionReminders({
+    ...options,
+    legacyFlagsOnly: true,
+  });
+  return { ...result, legacy: true };
 }

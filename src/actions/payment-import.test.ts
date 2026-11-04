@@ -2,6 +2,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock auth
+vi.mock("@/lib/fx/base-currency", () => ({
+  getBaseCurrency: vi.fn().mockResolvedValue("KRW"),
+}));
+
 vi.mock("@/lib/auth", () => ({
   auth: vi.fn(),
 }));

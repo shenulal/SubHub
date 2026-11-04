@@ -19,6 +19,11 @@ vi.mock("@/lib/db", () => ({
   },
 }));
 
+// Mock the unified reminders service (legacy cron delegates to it)
+vi.mock("./reminders", () => ({
+  processSubscriptionReminders: vi.fn(),
+}));
+
 // Mock email service
 vi.mock("./email", () => ({
   sendRenewalAlertEmail: vi
@@ -28,6 +33,7 @@ vi.mock("./email", () => ({
 
 import { prisma } from "@/lib/db";
 import { sendRenewalAlertEmail } from "./email";
+import { processSubscriptionReminders } from "./reminders";
 import {
   findUpcomingRenewals,
   processRenewalAlerts,
@@ -174,26 +180,44 @@ describe("Renewal Alert Service", () => {
     });
   });
 
-  describe("processRenewalAlerts", () => {
-    it("30/60/90일 갱신 알림을 모두 처리해야 한다", async () => {
-      vi.mocked(prisma.subscription.findMany).mockResolvedValue([] as never);
+  describe("processRenewalAlerts (delegates to reminders service)", () => {
+    it("legacy 플래그 모드로 통합 리마인더 서비스에 위임해야 한다", async () => {
+      vi.mocked(processSubscriptionReminders).mockResolvedValue({
+        processedAt: new Date("2024-01-15T00:00:00Z"),
+        organizations: 1,
+        subscriptionsChecked: 2,
+        remindersSent: 1,
+        recipientsNotified: 3,
+        skippedDuplicates: 0,
+        errors: [],
+      });
 
       const result = await processRenewalAlerts();
 
-      expect(prisma.subscription.findMany).toHaveBeenCalledTimes(3);
+      expect(processSubscriptionReminders).toHaveBeenCalledWith({
+        legacyFlagsOnly: true,
+      });
+      expect(result.legacy).toBe(true);
+      expect(result.remindersSent).toBe(1);
       expect(result).toHaveProperty("processedAt");
-      expect(result).toHaveProperty("alerts");
     });
 
-    it("발송 결과를 집계해야 한다", async () => {
-      vi.mocked(prisma.subscription.findMany).mockResolvedValue([] as never);
+    it("호출 옵션을 그대로 전달해야 한다", async () => {
+      vi.mocked(processSubscriptionReminders).mockResolvedValue({
+        processedAt: new Date(),
+        organizations: 0,
+        subscriptionsChecked: 0,
+        remindersSent: 0,
+        recipientsNotified: 0,
+        skippedDuplicates: 0,
+        errors: [],
+      });
 
-      const result = await processRenewalAlerts();
+      await processRenewalAlerts({ organizationIds: ["org-1"] });
 
-      expect(result.alerts).toEqual({
-        days30: { found: 0, sent: 0 },
-        days60: { found: 0, sent: 0 },
-        days90: { found: 0, sent: 0 },
+      expect(processSubscriptionReminders).toHaveBeenCalledWith({
+        organizationIds: ["org-1"],
+        legacyFlagsOnly: true,
       });
     });
   });

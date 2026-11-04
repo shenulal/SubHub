@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { AiAgentProvider } from "@/components/ai-agent";
 import { AppHeader } from "@/components/layouts/app-header";
 import { AppSidebar } from "@/components/layouts/app-sidebar";
+import { WorkspaceScopeSwitch } from "@/components/layouts/workspace-scope-switch";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAiPanelStore } from "@/lib/ai/ai-panel-store";
@@ -76,11 +77,22 @@ export function SidebarWrapper({
       <AppSidebar variant="inset" role={role} user={user} />
       <SidebarInset>
         <AppHeader />
+        {/* Workspace | Personal scope switch (6.4) — hidden when personal mode is off */}
+        <ScopeBar />
         <MainContent>{children}</MainContent>
       </SidebarInset>
       {/* AI Agent — Read Tool + Write Tool + 승인 플로우 */}
       <AiAgentProvider />
     </SidebarProvider>
+  );
+}
+
+/** Thin bar under the header hosting the workspace/personal switch. */
+function ScopeBar() {
+  return (
+    <div className="bg-muted flex items-center justify-end px-4 pt-3 empty:hidden">
+      <WorkspaceScopeSwitch />
+    </div>
   );
 }
 

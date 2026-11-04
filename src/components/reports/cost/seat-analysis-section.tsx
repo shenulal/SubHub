@@ -22,6 +22,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { DEFAULT_BASE_CURRENCY } from "@/lib/fx/convert";
 import type {
   SeatOptimizationItem,
   SeatWasteAnalysis,
@@ -33,7 +34,7 @@ import { useEffect, useState } from "react";
 import { SeatAnalysisSkeleton } from "./cost-report-skeleton";
 import { SimulationDialog } from "./simulation-dialog";
 
-function formatCurrency(value: number, currency = "KRW") {
+function formatCurrency(value: number, currency = DEFAULT_BASE_CURRENCY) {
   return new Intl.NumberFormat("ko-KR", { style: "currency", currency }).format(
     value
   );

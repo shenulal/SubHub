@@ -2,6 +2,10 @@
 // TDD RED → GREEN: Subscription 서비스 레이어 테스트
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("@/lib/fx/base-currency", () => ({
+  getBaseCurrency: vi.fn().mockResolvedValue("KRW"),
+}));
+
 vi.mock("@/lib/db", () => ({
   prisma: {
     app: {

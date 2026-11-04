@@ -4,6 +4,7 @@
  * - Server Action(importPaymentCSV)과 SSE API Route(import-stream) 양쪽에서 사용
  */
 
+import { getBaseCurrency } from "@/lib/fx/base-currency";
 import type { PaymentCSVRow } from "@/lib/payment-csv";
 import {
   matchMerchant4LayerSync,
@@ -73,6 +74,7 @@ export async function processPaymentRecords(
     batchId,
     onProgress,
   } = input;
+  const baseCurrency = await getBaseCurrency(organizationId);
 
   let matchedCount = 0;
   const paymentRecords: Array<Record<string, unknown>> = [];
@@ -153,7 +155,7 @@ export async function processPaymentRecords(
         memo: row.memo || null,
         storeBizNo: null,
         amount: row.amount,
-        currency: "KRW",
+        currency: baseCurrency,
         teamId: teamId || undefined,
         userId: userId || undefined,
       });
@@ -184,7 +186,7 @@ export async function processPaymentRecords(
       transactionDate: row.transactionDate,
       merchantName: row.merchantName,
       amount: row.amount,
-      currency: "KRW",
+      currency: baseCurrency,
       cardLast4: row.cardLast4 || null,
       approvalNumber: row.approvalNumber || null,
       category: row.category || null,

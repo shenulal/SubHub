@@ -36,6 +36,15 @@ vi.mock("next-auth", () => ({
 vi.mock("@/lib/auth", () => ({
   auth: vi.fn(),
   signIn: vi.fn(),
+  isAppleSignInEnabled: () => false,
+}));
+
+vi.mock("@/lib/auth/sign-in-options", () => ({
+  getSignInOptions: vi.fn().mockResolvedValue({
+    appleEnabled: false,
+    enforceSso: false,
+    allowSelfSignup: true,
+  }),
 }));
 
 vi.mock("next/navigation", () => ({

@@ -1,18 +1,12 @@
 // src/types/budget.ts
 // 예산 설정 관련 타입 정의
+import { ZERO_DECIMAL_CURRENCIES as FX_ZERO_DECIMAL } from "@/lib/fx/convert";
+import { SETTING_DEFINITIONS } from "@/lib/settings/registry";
 
 /**
  * 지원하는 통화 단위
  */
-export type Currency =
-  | "USD"
-  | "AED"
-  | "SAR"
-  | "EUR"
-  | "GBP"
-  | "KRW"
-  | "JPY"
-  | "INR";
+export type Currency = string;
 
 /**
  * 통화 정보 (표시용)
@@ -39,10 +33,7 @@ export const CURRENCIES: CurrencyInfo[] = [
 ];
 
 /** Currencies with no minor units in everyday display */
-export const ZERO_DECIMAL_CURRENCIES: ReadonlySet<string> = new Set([
-  "KRW",
-  "JPY",
-]);
+export const ZERO_DECIMAL_CURRENCIES: ReadonlySet<string> = FX_ZERO_DECIMAL;
 
 /**
  * 예산 설정 인터페이스
@@ -60,9 +51,10 @@ export interface BudgetSettings {
  * 기본 예산 설정
  */
 export const DEFAULT_BUDGET_SETTINGS: BudgetSettings = {
-  currency: "USD",
-  monthlyBudget: null,
-  alertThreshold: 80,
+  currency: SETTING_DEFINITIONS["finance.baseCurrency"].defaultValue,
+  monthlyBudget: SETTING_DEFINITIONS["finance.monthlyBudget"].defaultValue,
+  alertThreshold:
+    SETTING_DEFINITIONS["finance.budgetAlertThresholdPercent"].defaultValue,
 };
 
 /**

@@ -62,6 +62,10 @@ interface SubscriptionFormPricingProps {
   users: UserOption[];
   isAdmin: boolean;
   selectedUserIds: string[];
+  /** Currency codes from `finance.enabledCurrencies`; falls back to constants. */
+  currencyOptions?: string[];
+  /** Enabled BillingCycleConfig rows; falls back to constants. */
+  billingCycleOptions?: Array<{ value: string; label: string }>;
 }
 
 export function SubscriptionFormPricing({
@@ -74,8 +78,14 @@ export function SubscriptionFormPricing({
   users,
   isAdmin,
   selectedUserIds,
+  currencyOptions,
+  billingCycleOptions,
 }: SubscriptionFormPricingProps) {
   const t = useTranslations();
+  const cycleOptions = billingCycleOptions ?? getBillingCycleOptions(t);
+  const currencyItems =
+    currencyOptions?.map((code) => ({ value: code, label: code })) ??
+    getCurrencyOptions(t);
   const watchedBillingType = useWatch({ control, name: "billingType" });
   const watchedTotalLicenses = useWatch({ control, name: "totalLicenses" });
   const [seatUserPopoverOpen, setSeatUserPopoverOpen] = useState(false);
@@ -131,7 +141,7 @@ export function SubscriptionFormPricing({
                     />
                   </SelectTrigger>
                   <SelectContent>
-                    {getBillingCycleOptions(t).map((option) => (
+                    {cycleOptions.map((option) => (
                       <SelectItem key={option.value} value={option.value}>
                         {option.label}
                       </SelectItem>
@@ -323,7 +333,7 @@ export function SubscriptionFormPricing({
                 />
               </SelectTrigger>
               <SelectContent>
-                {getCurrencyOptions(t).map((option) => (
+                {currencyItems.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
                   </SelectItem>

@@ -3,10 +3,10 @@ import { logger } from "@/lib/logger";
 import { withLogging } from "@/lib/logging";
 import { withCronAuth } from "@/lib/middleware";
 import { processRenewalAlerts } from "@/lib/services/notification";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
 export const GET = withCronAuth(
-  withLogging("cron:renewal-alerts", async (request: NextRequest) => {
+  withLogging("cron:renewal-alerts", async () => {
     try {
       logger.info("[Cron] 갱신 알림 처리 시작");
 

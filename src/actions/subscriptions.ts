@@ -29,3 +29,29 @@ export {
   type RenewalsByDateResponse,
   type SubscriptionSuggestion,
 } from "./subscriptions/index";
+
+// SubHub lifecycle & documents (same modules as ./subscriptions/index)
+export {
+  acknowledgePriceChange,
+  addSubscriptionComment,
+  archiveSubscription,
+  bulkUpdateSubscriptions,
+  cancelSubscription,
+  checkDuplicate,
+  deleteAttachment,
+  exportSubscriptions,
+  getSubscriptionActivity,
+  listAttachments,
+  listPriceChanges,
+  listSubscriptionComments,
+  pauseSubscription,
+  restoreSubscription,
+  resumeSubscription,
+  uploadAttachment,
+  type AttachmentItem,
+  type ExportResult,
+  type LifecycleResult,
+  type PriceChangeItem,
+  type SubscriptionActivityItem,
+  type SubscriptionCommentItem,
+} from "./subscriptions/index";

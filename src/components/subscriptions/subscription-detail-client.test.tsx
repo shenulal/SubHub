@@ -34,6 +34,18 @@ vi.mock("@/actions/subscriptions", () => ({
   getLinkedPayments: vi.fn().mockResolvedValue({ success: true, data: [] }),
 }));
 
+vi.mock("@/components/subscriptions/subscription-status-actions", () => ({
+  SubscriptionStatusActions: () => <div data-testid="status-actions" />,
+}));
+
+vi.mock("@/components/subscriptions/subscription-detail", () => ({
+  SubscriptionDetail: ({
+    subscription,
+  }: {
+    subscription: { appName: string };
+  }) => <div>{subscription.appName}</div>,
+}));
+
 // Mock notification-settings action
 vi.mock("@/actions/notification-settings", () => ({
   updateNotificationSettings: vi.fn().mockResolvedValue({ success: true }),

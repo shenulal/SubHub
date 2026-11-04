@@ -164,6 +164,36 @@ vi.mock("@/components/ui/checkbox", () => ({
   ),
 }));
 
+// Server actions used by the vendor card
+vi.mock("@/actions/taxonomy/catalog", () => ({
+  searchCatalog: vi.fn().mockResolvedValue([]),
+}));
+vi.mock("@/actions/taxonomy/auto-categorize", () => ({
+  suggestCategory: vi.fn().mockResolvedValue({ categoryId: null }),
+}));
+vi.mock("@/actions/subscriptions/subscription-lifecycle", () => ({
+  checkDuplicate: vi.fn().mockResolvedValue({ success: true, data: [] }),
+}));
+vi.mock("next/link", () => ({
+  default: ({
+    children,
+    href,
+  }: {
+    children: React.ReactNode;
+    href: string;
+  }) => <a href={href}>{children}</a>,
+}));
+
+// Taxonomy-backed cards (rendered only with `options`; they pull server actions)
+vi.mock("./subscription-form-classification", () => ({
+  SubscriptionFormClassification: () => (
+    <div data-testid="form-classification" />
+  ),
+}));
+vi.mock("./subscription-form-terms", () => ({
+  SubscriptionFormTerms: () => <div data-testid="form-terms" />,
+}));
+
 // Mock sub-components that also use radix-ui internally
 vi.mock("./subscription-form-assignment", () => ({
   SubscriptionFormAssignment: () => <div data-testid="form-assignment" />,
@@ -339,6 +369,30 @@ const mockSubscription: SubscriptionDetail = {
   team: null,
   teams: [],
   assignedUsers: [],
+  category: null,
+  tags: [],
+  owner: null,
+  isPersonal: false,
+  isTrial: false,
+  trialEndsAt: null,
+  cancellationDeadline: null,
+  paymentMethod: null,
+  costCenter: null,
+  noticePeriodDays: null,
+  reminderLeadDays: [],
+  pausedAt: null,
+  archivedAt: null,
+  lastDetectedAmount: null,
+  cancellationUrl: null,
+  cancellationNotes: null,
+  taxRate: null,
+  customFieldValues: [],
+  app: {
+    catalogId: null,
+    website: null,
+    cancellationUrl: null,
+    cancellationNotes: null,
+  },
 };
 
 describe("SubscriptionForm", () => {

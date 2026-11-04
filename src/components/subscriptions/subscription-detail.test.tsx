@@ -29,6 +29,67 @@ vi.mock("@/actions/subscriptions", () => ({
   getLinkedPayments: vi.fn().mockResolvedValue({ success: true, data: [] }),
 }));
 
+// Mock server actions pulled in by the seat card to avoid next-auth in jsdom
+vi.mock("@/actions/users-read", () => ({
+  getUsers: vi.fn().mockResolvedValue({ items: [], total: 0 }),
+}));
+vi.mock("@/actions/subscriptions/subscription-seat-management", () => ({
+  getSeatDetails: vi.fn().mockResolvedValue({ success: true, data: null }),
+  assignSeatUsers: vi.fn(),
+  unassignSeatUser: vi.fn(),
+  syncUsedLicenses: vi.fn(),
+}));
+
+// Tabs: render every panel so the overview assertions below keep working
+vi.mock("@/components/ui/tabs", () => ({
+  Tabs: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  TabsList: ({ children }: { children: React.ReactNode }) => (
+    <div role="tablist">{children}</div>
+  ),
+  TabsTrigger: ({ children }: { children: React.ReactNode }) => (
+    <button type="button" role="tab">
+      {children}
+    </button>
+  ),
+  TabsContent: ({ children }: { children: React.ReactNode }) => (
+    <div>{children}</div>
+  ),
+}));
+
+vi.mock("next/navigation", () => ({
+  useSearchParams: () => new URLSearchParams(),
+  useRouter: () => ({ push: vi.fn(), refresh: vi.fn() }),
+}));
+
+// Lifecycle sub-components exercised in their own tests
+vi.mock("./subscription-status-actions", () => ({
+  SubscriptionStatusActions: ({
+    subscriptionId,
+  }: {
+    subscriptionId: string;
+  }) => (
+    <div>
+      <a href={`/subscriptions/${subscriptionId}/edit`}>수정</a>
+      <button type="button">삭제</button>
+    </div>
+  ),
+}));
+vi.mock("./subscription-attachments", () => ({
+  SubscriptionAttachments: () => <div data-testid="attachments" />,
+}));
+vi.mock("./subscription-comments", () => ({
+  SubscriptionComments: () => <div data-testid="comments" />,
+}));
+vi.mock("./subscription-activity", () => ({
+  SubscriptionActivity: () => <div data-testid="activity" />,
+}));
+vi.mock("./price-change-alerts", () => ({
+  PriceChangeAlerts: () => null,
+}));
+vi.mock("./subscription-detail-cancellation", () => ({
+  SubscriptionDetailCancellation: () => <div data-testid="cancellation" />,
+}));
+
 // Mock notification-settings action
 vi.mock("@/actions/notification-settings", () => ({
   updateNotificationSettings: vi.fn().mockResolvedValue({ success: true }),
@@ -63,6 +124,30 @@ const mockSubscription: SubscriptionDetailType = {
   team: { id: "team-1", name: "Engineering" },
   teams: [{ id: "team-1", name: "Engineering" }],
   assignedUsers: [],
+  category: null,
+  tags: [],
+  owner: null,
+  isPersonal: false,
+  isTrial: false,
+  trialEndsAt: null,
+  cancellationDeadline: null,
+  paymentMethod: null,
+  costCenter: null,
+  noticePeriodDays: null,
+  reminderLeadDays: [],
+  pausedAt: null,
+  archivedAt: null,
+  lastDetectedAmount: null,
+  cancellationUrl: null,
+  cancellationNotes: null,
+  taxRate: null,
+  customFieldValues: [],
+  app: {
+    catalogId: null,
+    website: null,
+    cancellationUrl: null,
+    cancellationNotes: null,
+  },
 };
 
 const renderWithWait = async (

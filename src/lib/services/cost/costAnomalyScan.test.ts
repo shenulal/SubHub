@@ -2,6 +2,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Prisma mock - must be defined before vi.mock
+vi.mock("@/lib/fx/base-currency", () => ({
+  getBaseCurrency: vi.fn().mockResolvedValue("KRW"),
+}));
+
 vi.mock("@/lib/db", () => ({
   prisma: {
     organization: {
@@ -14,6 +18,11 @@ vi.mock("@/lib/db", () => ({
       findMany: vi.fn(),
     },
   },
+}));
+
+// Settings registry mock (threshold comes from discovery.costAnomalyThresholdPercent)
+vi.mock("@/lib/settings/service", () => ({
+  getSetting: vi.fn().mockResolvedValue(50),
 }));
 
 // Email mock

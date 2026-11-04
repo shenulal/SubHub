@@ -7,6 +7,7 @@
 
 import { requireOrganization } from "@/lib/auth/require-auth";
 import { prisma } from "@/lib/db";
+import { getBaseCurrency } from "@/lib/fx/base-currency";
 import type {
   TerminatedUserWithAccess,
   UserDetail,
@@ -177,9 +178,10 @@ export async function getUser(id: string): Promise<UserDetail | null> {
     return null;
   }
 
+  const baseCurrency = await getBaseCurrency(organizationId);
   const subscriptionSummary: UserSubscriptionSummary | undefined = (() => {
     if (ownedSubscriptions.length === 0) return undefined;
-    const currency = ownedSubscriptions[0]?.currency || "KRW";
+    const currency = ownedSubscriptions[0]?.currency || baseCurrency;
     const now = new Date();
     const thirtyDaysLater = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000);
 

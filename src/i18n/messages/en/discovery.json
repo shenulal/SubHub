@@ -1,1 +1,279 @@
-{}
+{
+  "discovery": {
+    "nav": {
+      "label": "Subscriptions navigation",
+      "list": {
+        "label": "List",
+        "description": "Filter, sort and bulk-edit subscriptions"
+      },
+      "pipeline": {
+        "label": "Pipeline",
+        "description": "Renewals grouped by due date"
+      },
+      "calendar": {
+        "label": "Calendar",
+        "description": "Renewals, trials and notice deadlines"
+      },
+      "receipts": {
+        "label": "Receipts",
+        "description": "Detected from your mailbox"
+      },
+      "suggestions": {
+        "label": "Suggestions",
+        "description": "Payment-based subscription suggestions"
+      },
+      "archived": {
+        "label": "Archived",
+        "description": "Archived subscriptions"
+      }
+    },
+    "scope": {
+      "label": "Workspace or personal subscriptions",
+      "workspace": "Workspace",
+      "personal": "Personal"
+    },
+    "filters": {
+      "searchPlaceholder": "Search apps, vendors, notes, tags",
+      "searchOptions": "Search…",
+      "noOptions": "No matches",
+      "clear": "Clear",
+      "status": "Status",
+      "category": "Category",
+      "tags": "Tags",
+      "more": "More filters",
+      "owner": "Owner",
+      "team": "Team",
+      "costCenter": "Cost centre",
+      "paymentMethod": "Payment method",
+      "billingCycle": "Billing cycle",
+      "any": "Any",
+      "amount": "Amount",
+      "min": "Min",
+      "max": "Max",
+      "amountMin": "Minimum amount",
+      "amountMax": "Maximum amount",
+      "renewingWithin": "Renewing within",
+      "days": "days",
+      "trialOnly": "Trials only",
+      "includeArchived": "Include archived",
+      "reset": "Reset {count, plural, one {# filter} other {# filters}}"
+    },
+    "sort": {
+      "label": "Sort by",
+      "renewalDate": "Renewal date",
+      "amount": "Cost",
+      "appName": "Name",
+      "status": "Status",
+      "category": "Category",
+      "owner": "Owner",
+      "createdAt": "Date added",
+      "ascending": "Sort ascending",
+      "descending": "Sort descending"
+    },
+    "savedViews": {
+      "empty": "No saved views yet",
+      "save": "Save view",
+      "menu": "Options for {name}",
+      "setDefault": "Make default",
+      "clearDefault": "Clear default",
+      "updateWithCurrent": "Update with current filters",
+      "delete": "Delete view",
+      "dialogTitle": "Save this view",
+      "dialogDescription": "Saves the current filters and sort order so you can reopen or share them.",
+      "name": "Name",
+      "namePlaceholder": "e.g. Marketing renewals this quarter",
+      "shared": "Share with the organisation",
+      "sharedHint": "Visible to everyone who can see all subscriptions",
+      "cancel": "Cancel",
+      "saved": "View \"{name}\" saved",
+      "updated": "View \"{name}\" updated",
+      "deleted": "View \"{name}\" deleted",
+      "defaultSet": "\"{name}\" is now your default view",
+      "defaultCleared": "Default view cleared",
+      "error": "Could not update saved views"
+    },
+    "list": {
+      "title": "Subscriptions",
+      "summary": "{count, plural, one {# subscription} other {# subscriptions}} · {total} per month",
+      "staleRates": "FX rates may be out of date",
+      "export": "Export CSV",
+      "add": "Add subscription",
+      "perMonth": "/ mo",
+      "overdue": "{days, plural, one {# day overdue} other {# days overdue}}",
+      "inDays": "in {days, plural, one {# day} other {# days}}",
+      "today": "Renews today",
+      "trial": "Trial",
+      "notice": "Notice by",
+      "empty": "No subscriptions yet",
+      "emptyHint": "Add your first subscription or connect a mailbox to detect receipts automatically.",
+      "emptyAction": "Add subscription",
+      "emptyFiltered": "Nothing matches these filters",
+      "emptyFilteredHint": "Try widening the filters or clearing them to see everything.",
+      "clearFilters": "Clear filters",
+      "exported": "Exported {count, plural, one {# row} other {# rows}}",
+      "exportFailed": "Export failed",
+      "selectAllFailed": "Could not select all matching subscriptions",
+      "selectionCapped": "Selection was capped at the export limit",
+      "columns": {
+        "app": "App",
+        "tags": "Tags",
+        "owner": "Owner",
+        "cost": "Cost",
+        "cycle": "Cycle",
+        "status": "Status",
+        "renewal": "Next renewal"
+      }
+    },
+    "bulk": {
+      "region": "Bulk actions",
+      "selected": "selected",
+      "selectAllMatching": "Select all {total} matching",
+      "allMatching": "All matching rows selected",
+      "setCategory": "Set category",
+      "addTags": "Add tags",
+      "removeTags": "Remove tags",
+      "applyTags": "Apply tags",
+      "assignOwner": "Assign owner",
+      "setCostCenter": "Set cost centre",
+      "archive": "Archive",
+      "exportSelected": "Export selected",
+      "clear": "Clear selection",
+      "failed": "Bulk update failed",
+      "tagsUpdated": "Tags updated on {count, plural, one {# subscription} other {# subscriptions}}",
+      "categoryUpdated": "Category set on {count, plural, one {# subscription} other {# subscriptions}}",
+      "ownerUpdated": "Owner assigned on {count, plural, one {# subscription} other {# subscriptions}}",
+      "costCenterUpdated": "Cost centre set on {count, plural, one {# subscription} other {# subscriptions}}",
+      "archived": "Archived {count, plural, one {# subscription} other {# subscriptions}}",
+      "exported": "Exported {count, plural, one {# row} other {# rows}}"
+    },
+    "rowActions": {
+      "open": "Actions for {appName}",
+      "view": "View details",
+      "edit": "Edit",
+      "pause": "Pause",
+      "resume": "Resume",
+      "archive": "Archive",
+      "restore": "Restore",
+      "delete": "Delete",
+      "cancel": "Cancel",
+      "deleteTitle": "Delete subscription",
+      "deleteDescription": "Delete {appName}? This cannot be undone. Consider archiving instead.",
+      "paused": "{appName} paused",
+      "resumed": "{appName} resumed",
+      "archived": "{appName} archived",
+      "restored": "{appName} restored",
+      "deleted": "{appName} deleted",
+      "failed": "Action failed"
+    },
+    "pipeline": {
+      "title": "Renewal pipeline",
+      "description": "Everything coming up for renewal, grouped by how soon it is due.",
+      "subtitle": "Totals in {currency}",
+      "staleRates": "FX rates may be out of date",
+      "loadFailed": "Could not load the pipeline",
+      "viewToggle": "Pipeline view",
+      "board": "Board",
+      "list": "List",
+      "perMonth": "/ mo",
+      "perYear": "/ yr",
+      "laneEmpty": "Nothing here",
+      "lanes": {
+        "overdue": "Overdue",
+        "week": "Next {days} days",
+        "month": "Next {days} days",
+        "later": "Later",
+        "trialEnding": "Trials ending",
+        "noticeDeadline": "Notice deadlines"
+      },
+      "daysLeft": "{days, plural, one {# day} other {# days}}",
+      "dueToday": "Today",
+      "daysOverdue": "{days, plural, one {# day} other {# days}} overdue",
+      "trial": "Trial",
+      "quickActions": "Quick actions for {appName}",
+      "edit": "Edit",
+      "pause": "Pause",
+      "archive": "Archive",
+      "paused": "{appName} paused",
+      "archived": "{appName} archived",
+      "actionFailed": "Action failed"
+    },
+    "calendar": {
+      "legend": "Calendar legend",
+      "renewal": "Renewal",
+      "close": "Close",
+      "markers": {
+        "trialEnd": "Trial ends",
+        "cancellationDeadline": "Cancellation deadline"
+      }
+    },
+    "dashboard": {
+      "kpi": {
+        "region": "Key figures",
+        "monthlySpend": "Monthly spend",
+        "annualRunRate": "Annual run-rate",
+        "annualHint": "Monthly spend × 12",
+        "active": "Active subscriptions",
+        "activeHint": "Currently billing",
+        "renewingSoon": "Renewing in {days} days",
+        "renewingHint": "Open the list to review",
+        "pendingApprovals": "Pending approvals",
+        "committed": "{amount} / mo committed",
+        "staleRates": "rates may be stale"
+      },
+      "categories": {
+        "title": "Spend by category",
+        "back": "Back to all categories",
+        "owner": "Owner",
+        "team": "Team",
+        "allOwners": "All owners",
+        "allTeams": "All teams",
+        "export": "Export CSV",
+        "exported": "Category spend exported",
+        "exportFailed": "Export failed",
+        "empty": "No active subscriptions to chart",
+        "perMonth": "per month",
+        "uncategorised": "Uncategorised"
+      },
+      "renewals": {
+        "title": "Renewing in {days} days",
+        "empty": "No renewals in this window",
+        "trial": "Trial"
+      }
+    },
+    "search": {
+      "open": "Open search",
+      "placeholder": "Search…",
+      "inputPlaceholder": "Search subscriptions, vendors, people, pages…",
+      "searching": "Searching…",
+      "typeMore": "Type at least {count} characters",
+      "empty": "No results",
+      "recent": "Recent searches",
+      "groups": {
+        "subscriptions": "Subscriptions",
+        "approvals": "Approvals",
+        "vendors": "Vendors",
+        "people": "People",
+        "pages": "Pages",
+        "actions": "Actions"
+      },
+      "catalog": {
+        "dashboard": "Dashboard",
+        "subscriptions": "Subscriptions",
+        "pipeline": "Renewal pipeline",
+        "calendar": "Renewal calendar",
+        "receipts": "Receipts",
+        "archived": "Archived subscriptions",
+        "approvals": "Approvals",
+        "notifications": "Notifications",
+        "reports": "Reports",
+        "members": "Members",
+        "settings": "Settings",
+        "taxonomy": "Categories & tags",
+        "newSubscription": "Add subscription",
+        "newApproval": "Request approval",
+        "exportSubscriptions": "Export subscriptions",
+        "inviteMember": "Invite member"
+      }
+    }
+  }
+}

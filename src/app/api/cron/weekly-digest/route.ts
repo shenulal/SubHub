@@ -2,10 +2,10 @@
 import { withLogging } from "@/lib/logging";
 import { withCronAuth } from "@/lib/middleware";
 import { processWeeklyDigest } from "@/lib/services/notification/weeklyDigest";
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
 export const GET = withCronAuth(
-  withLogging("cron:weekly-digest", async (request: NextRequest) => {
+  withLogging("cron:weekly-digest", async () => {
     try {
       const result = await processWeeklyDigest();
       return NextResponse.json(result);

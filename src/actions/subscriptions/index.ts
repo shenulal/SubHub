@@ -10,6 +10,45 @@ export {
   type LinkedPayment,
 } from "./subscription-crud";
 
+// Lifecycle (pause / resume / archive / restore / cancel / bulk / duplicates)
+export {
+  archiveSubscription,
+  bulkUpdateSubscriptions,
+  cancelSubscription,
+  checkDuplicate,
+  pauseSubscription,
+  restoreSubscription,
+  resumeSubscription,
+  type LifecycleResult,
+} from "./subscription-lifecycle";
+
+// Notes & activity
+export {
+  addSubscriptionComment,
+  getSubscriptionActivity,
+  listSubscriptionComments,
+  type SubscriptionActivityItem,
+  type SubscriptionCommentItem,
+} from "./subscription-comments";
+
+// Attachments
+export {
+  deleteAttachment,
+  listAttachments,
+  uploadAttachment,
+  type AttachmentItem,
+} from "./attachments";
+
+// Price changes
+export {
+  acknowledgePriceChange,
+  listPriceChanges,
+  type PriceChangeItem,
+} from "./price-changes";
+
+// Export
+export { exportSubscriptions, type ExportResult } from "./subscription-export";
+
 // Calendar
 export {
   getRenewalCalendar,

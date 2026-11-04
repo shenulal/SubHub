@@ -1,5 +1,6 @@
 // src/app/(dashboard)/subscriptions/new/page.tsx
 import { getApps } from "@/actions/apps";
+import { getSubscriptionFormOptions } from "@/actions/subscriptions/subscription-form-options";
 import { getUsers } from "@/actions/users-read";
 import { requireOrganization } from "@/lib/auth/require-auth";
 import type { Metadata } from "next";
@@ -18,9 +19,10 @@ export default async function NewSubscriptionPage() {
   const { role } = await requireOrganization();
   const isAdmin = role === "ADMIN";
 
-  const [{ items: apps }, { items: users }] = await Promise.all([
+  const [{ items: apps }, { items: users }, options] = await Promise.all([
     getApps({ limit: 1000 }),
     getUsers({ limit: 1000, filter: { status: "ACTIVE" } }),
+    getSubscriptionFormOptions(),
   ]);
 
   // 앱 옵션: teams 포함
@@ -48,6 +50,7 @@ export default async function NewSubscriptionPage() {
       users={userOptions}
       isAdmin={isAdmin}
       title={t("title")}
+      options={options}
     />
   );
 }

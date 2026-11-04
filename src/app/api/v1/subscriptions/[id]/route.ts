@@ -6,6 +6,7 @@ import {
   updateSubscription,
 } from "@/actions/subscriptions";
 import { auth } from "@/lib/auth";
+import { jsonBodyToFormData } from "@/lib/validations/subscriptions";
 
 /**
  * GET /api/v1/subscriptions/[id]
@@ -41,13 +42,13 @@ export const GET = withLogging(
 /**
  * PUT /api/v1/subscriptions/[id]
  * - 구독 수정
- * - 권한: ADMIN만
+ * - permission: subscriptions:update / subscriptions:delete (checked in the action)
  */
 
 /**
  * PUT /api/v1/subscriptions/[id]
  * - 구독 수정
- * - 권한: ADMIN만
+ * - permission: subscriptions:update / subscriptions:delete (checked in the action)
  */
 export const PUT = withLogging(
   "PUT /api/v1/subscriptions/:id",
@@ -60,32 +61,16 @@ export const PUT = withLogging(
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    // ADMIN만 수정 가능
-    if (session.user.role !== "ADMIN") {
-      return NextResponse.json(
-        { message: "구독 수정 권한이 없습니다" },
-        { status: 403 }
-      );
-    }
-
     const { id } = await params;
     const body = await request.json();
-    const formData = new FormData();
-
-    Object.entries(body ?? {}).forEach(([key, value]) => {
-      if (value !== undefined && value !== null) {
-        // 배열 처리 (assignedUserIds 등)
-        if (Array.isArray(value)) {
-          value.forEach((item) => formData.append(key, String(item)));
-        } else {
-          formData.append(key, String(value));
-        }
-      }
-    });
-
-    const result = await updateSubscription(id, { success: false }, formData);
+    const result = await updateSubscription(
+      id,
+      { success: false },
+      jsonBodyToFormData(body)
+    );
     if (!result.success) {
-      return NextResponse.json(result, { status: 400 });
+      const status = result.message?.includes("권한") ? 403 : 400;
+      return NextResponse.json(result, { status });
     }
 
     return NextResponse.json(result);
@@ -95,13 +80,13 @@ export const PUT = withLogging(
 /**
  * DELETE /api/v1/subscriptions/[id]
  * - 구독 삭제
- * - 권한: ADMIN만
+ * - permission: subscriptions:update / subscriptions:delete (checked in the action)
  */
 
 /**
  * DELETE /api/v1/subscriptions/[id]
  * - 구독 삭제
- * - 권한: ADMIN만
+ * - permission: subscriptions:update / subscriptions:delete (checked in the action)
  */
 export const DELETE = withLogging(
   "DELETE /api/v1/subscriptions/:id",
@@ -114,18 +99,11 @@ export const DELETE = withLogging(
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    // ADMIN만 삭제 가능
-    if (session.user.role !== "ADMIN") {
-      return NextResponse.json(
-        { message: "구독 삭제 권한이 없습니다" },
-        { status: 403 }
-      );
-    }
-
     const { id } = await params;
     const result = await deleteSubscription(id);
     if (!result.success) {
-      return NextResponse.json(result, { status: 400 });
+      const status = result.message?.includes("권한") ? 403 : 400;
+      return NextResponse.json(result, { status });
     }
 
     return NextResponse.json(result);

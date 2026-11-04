@@ -3,6 +3,7 @@
 
 import type { ReportExportConfig } from "@/components/reports/export";
 import { ReportExportButton } from "@/components/reports/export";
+import { useBaseCurrency } from "@/hooks/use-base-currency";
 import { createBarChartImage } from "@/lib/services/export/chart-image";
 import { formatCurrency, type CSVColumn } from "@/lib/services/export/csv";
 import type { ExcelColumn } from "@/lib/services/export/excel";
@@ -32,15 +33,16 @@ function formatAssignedUsers(users: UpcomingRenewal["assignedUsers"]): string {
 export function ExportButtons({ data }: ExportButtonsProps) {
   const t = useTranslations("reports.renewal.export");
   const locale = useLocale();
+  const { baseCurrency } = useBaseCurrency();
 
   const loadData = useCallback(async (): Promise<ReportExportConfig> => {
     const dateStr = new Date().toISOString().slice(0, 10);
     return {
-      csv: buildCSVConfig(t, data, locale, dateStr),
-      excel: buildExcelConfig(t, data, locale, dateStr),
-      pdf: buildPDFConfig(t, data, locale, dateStr),
+      csv: buildCSVConfig(t, data, locale, baseCurrency, dateStr),
+      excel: buildExcelConfig(t, data, locale, baseCurrency, dateStr),
+      pdf: buildPDFConfig(t, data, locale, baseCurrency, dateStr),
     };
-  }, [data, t, locale]);
+  }, [data, t, locale, baseCurrency]);
 
   return (
     <ReportExportButton loadData={loadData} formats={["csv", "excel", "pdf"]} />
@@ -50,12 +52,16 @@ export function ExportButtons({ data }: ExportButtonsProps) {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type TranslateFn = (key: any, params?: any) => string;
 
-function buildSummaryData(t: TranslateFn, data: RenewalReportData) {
+function buildSummaryData(
+  t: TranslateFn,
+  data: RenewalReportData,
+  currency: string
+) {
   return [
     { label: t("summary.totalCount"), value: `${data.totalCount}` },
     {
       label: t("summary.totalCost"),
-      value: formatCurrency(data.totalRenewalCost, "KRW"),
+      value: formatCurrency(data.totalRenewalCost, currency),
     },
     { label: t("summary.within7Days"), value: `${data.within7Days.length}` },
     {
@@ -69,6 +75,7 @@ function buildCSVConfig(
   t: TranslateFn,
   data: RenewalReportData,
   locale: string,
+  currency: string,
   dateStr: string
 ): ReportExportConfig["csv"] {
   const allRenewals = [
@@ -112,7 +119,7 @@ function buildCSVConfig(
           { key: "label", header: t("summary.label") },
           { key: "value", header: t("summary.value") },
         ],
-        data: buildSummaryData(t, data),
+        data: buildSummaryData(t, data, currency),
       },
     ],
   };
@@ -122,6 +129,7 @@ function buildExcelConfig(
   t: TranslateFn,
   data: RenewalReportData,
   _locale: string,
+  currency: string,
   dateStr: string
 ): ReportExportConfig["excel"] {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -149,7 +157,7 @@ function buildExcelConfig(
           { key: "label" as const, header: t("summary.label"), width: 20 },
           { key: "value" as const, header: t("summary.value"), width: 20 },
         ],
-        data: buildSummaryData(t, data),
+        data: buildSummaryData(t, data, currency),
         title: t("excel.summaryTitle"),
       },
       {
@@ -178,6 +186,7 @@ function buildPDFConfig(
   t: TranslateFn,
   data: RenewalReportData,
   locale: string,
+  currency: string,
   dateStr: string
 ): ReportExportConfig["pdf"] {
   const sections: PDFSection[] = [];
@@ -186,7 +195,7 @@ function buildPDFConfig(
   sections.push({
     type: "keyValue",
     title: t("pdf.summary"),
-    items: buildSummaryData(t, data).map((item) => ({
+    items: buildSummaryData(t, data, currency).map((item) => ({
       label: item.label,
       value: item.value,
     })),

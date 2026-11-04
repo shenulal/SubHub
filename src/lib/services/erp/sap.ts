@@ -1,6 +1,7 @@
 // src/lib/services/erp/sap.ts
 // SAP S/4HANA OData API 어댑터
 
+import { DEFAULT_BASE_CURRENCY } from "@/lib/fx/convert";
 import { logger } from "@/lib/logger";
 import type {
   ERPPaymentAdapter,
@@ -174,7 +175,7 @@ export const sapAdapter: ERPPaymentAdapter = {
             r.SupplierName || r.DocumentItemText || r.GLAccountName || ""
           ),
           amount: parseAmount(r.AmountInCompanyCodeCurrency),
-          currency: String(r.CompanyCodeCurrency || "KRW"),
+          currency: String(r.CompanyCodeCurrency || DEFAULT_BASE_CURRENCY),
           category: String(r.GLAccountName || ""),
           memo: String(r.DocumentItemText || ""),
           documentNumber: String(r.AccountingDocument || ""),

@@ -1,155 +1,157 @@
 // src/lib/services/notification/weeklyDigest.ts
+/**
+ * Weekly digest (11.2). The cron runs daily; this service sends only when the
+ * organisation's `notifications.digestWeekday` / `digestTime` slot has been
+ * reached in `general.timezone`, and at most once per calendar week
+ * (dedupe key `digest:<org>:<week-start>`). Members opt out through the
+ * DIGEST × EMAIL preference. Delivery goes through `notify()`.
+ */
 import { prisma } from "@/lib/db";
+import { getSettings } from "@/lib/settings/service";
+import { notify } from "./center";
 import {
-  sendWeeklyDigestEmail,
-  type WeeklyDigestEmailParams,
-} from "@/lib/services/notification/email";
+  buildDigestEmail,
+  collectDigestStats,
+  formatDateKey,
+} from "./digest-content";
+import { isScheduledSlotReached, toDateKey } from "./time";
 
-interface OrganizationSettings {
-  notifications?: {
-    emailEnabled?: boolean;
-    weeklyDigest?: boolean;
-  };
-}
+const MS_PER_DAY = 86_400_000;
+const DIGEST_LOOKBACK_DAYS = 7;
 
 export interface WeeklyDigestJobResult {
   success: boolean;
   processedOrganizations: number;
+  skippedOrganizations: number;
   emailsSent: number;
+  inAppCreated: number;
   errors: string[];
 }
 
-/**
- * 주간 요약 Cron 처리
- */
-export async function processWeeklyDigest(): Promise<WeeklyDigestJobResult> {
+export interface WeeklyDigestOptions {
+  now?: Date;
+  organizationIds?: string[];
+}
+
+/** Audience: active admins plus approvers; `notify()` applies per-user opt-outs. */
+async function digestRecipients(organizationId: string): Promise<string[]> {
+  const rows = await prisma.user.findMany({
+    where: {
+      organizationId,
+      status: "ACTIVE",
+      role: { in: ["ADMIN", "APPROVER"] },
+    },
+    select: { id: true },
+  });
+  return rows.map((r) => r.id);
+}
+
+async function processOrganization(
+  org: { id: string; name: string },
+  now: Date,
+  result: WeeklyDigestJobResult
+): Promise<void> {
+  const settings = await getSettings(org.id, [
+    "notifications.digestEnabled",
+    "notifications.digestWeekday",
+    "notifications.digestTime",
+    "general.timezone",
+    "discovery.renewingSoonDays",
+    "finance.baseCurrency",
+  ]);
+  const timeZone = settings["general.timezone"];
+  if (
+    !settings["notifications.digestEnabled"] ||
+    !isScheduledSlotReached(
+      now,
+      timeZone,
+      settings["notifications.digestWeekday"],
+      settings["notifications.digestTime"]
+    )
+  ) {
+    result.skippedOrganizations++;
+    return;
+  }
+
+  const recipients = await digestRecipients(org.id);
+  if (recipients.length === 0) {
+    result.errors.push(`${org.id}: no digest recipients`);
+    return;
+  }
+
+  const start = new Date(now.getTime() - DIGEST_LOOKBACK_DAYS * MS_PER_DAY);
+  const stats = await collectDigestStats(org.id, {
+    start,
+    end: now,
+    renewingSoonDays: settings["discovery.renewingSoonDays"],
+    baseCurrency: settings["finance.baseCurrency"],
+  });
+  const weekRange = `${formatDateKey(start)} ~ ${formatDateKey(now)}`;
+  const email = buildDigestEmail(
+    org.name,
+    weekRange,
+    stats,
+    settings["discovery.renewingSoonDays"]
+  );
+
+  const res = await notify({
+    organizationId: org.id,
+    userIds: recipients,
+    type: "DIGEST",
+    title: email.title,
+    body: email.body,
+    link: "/dashboard",
+    email: { subject: email.subject, html: email.html, text: email.text },
+    templateVars: {
+      periodLabel: "weekly",
+      renewalCount: stats.upcomingRenewals,
+      approvalCount: stats.pendingApprovals,
+      totalMonthly: stats.committedMonthlySpend.toFixed(2),
+      currency: stats.committedCurrency,
+    },
+    dedupeKey: `digest:${org.id}:${toDateKey(now, timeZone)}`,
+    metadata: { stats: JSON.parse(JSON.stringify(stats)) },
+    bypassQuietHours: true,
+    now,
+  });
+  result.processedOrganizations++;
+  result.emailsSent += res.emailsSent;
+  result.inAppCreated += res.inAppCreated;
+}
+
+export async function processWeeklyDigest(
+  options: WeeklyDigestOptions = {}
+): Promise<WeeklyDigestJobResult> {
+  const now = options.now ?? new Date();
   const result: WeeklyDigestJobResult = {
     success: true,
     processedOrganizations: 0,
+    skippedOrganizations: 0,
     emailsSent: 0,
+    inAppCreated: 0,
     errors: [],
   };
-
   try {
     const organizations = await prisma.organization.findMany({
-      select: {
-        id: true,
-        name: true,
-        settings: true,
-        users: {
-          where: { role: "ADMIN", status: "ACTIVE" },
-          select: { email: true },
-        },
-      },
+      where: options.organizationIds
+        ? { id: { in: options.organizationIds } }
+        : {},
+      select: { id: true, name: true },
     });
-
-    const startDate = new Date();
-    startDate.setDate(startDate.getDate() - 7);
-    const endDate = new Date();
-
     for (const org of organizations) {
-      const settings = org.settings as OrganizationSettings;
-      const weeklyDigest = settings?.notifications?.weeklyDigest ?? false;
-      const emailEnabled = settings?.notifications?.emailEnabled ?? true;
-
-      if (!weeklyDigest || !emailEnabled) continue;
-
-      const adminEmails = org.users
-        .map((u) => u.email)
-        .filter((e): e is string => Boolean(e));
-      if (adminEmails.length === 0) {
-        result.errors.push(`${org.id}: 관리자 이메일이 없습니다`);
-        continue;
-      }
-
-      result.processedOrganizations += 1;
-
-      const stats = await collectOrgStats(org.id, startDate, endDate);
-      const weekRange = `${formatDate(startDate)} ~ ${formatDate(endDate)}`;
-
-      const emailParams: Omit<WeeklyDigestEmailParams, "to"> = {
-        organizationName: org.name,
-        weekRange,
-        stats,
-      };
-
-      for (const email of adminEmails) {
-        const sendResult = await sendWeeklyDigestEmail({
-          ...emailParams,
-          to: email,
-        });
-
-        if (sendResult.success) {
-          result.emailsSent += 1;
-        } else {
-          result.errors.push(
-            `${org.id}: ${email} 발송 실패 - ${sendResult.error || "알 수 없는 오류"}`
-          );
-        }
+      try {
+        await processOrganization(org, now, result);
+      } catch (error) {
+        result.errors.push(
+          `${org.id}: ${error instanceof Error ? error.message : "digest failed"}`
+        );
       }
     }
   } catch (error) {
     result.success = false;
     result.errors.push(
-      error instanceof Error ? error.message : "주간 요약 처리 중 오류"
+      error instanceof Error ? error.message : "digest failed"
     );
   }
-
   return result;
-}
-
-async function collectOrgStats(
-  organizationId: string,
-  startDate: Date,
-  endDate: Date
-) {
-  const [newApps, unmatchedPayments, upcomingRenewals, pendingConfirmations] =
-    await Promise.all([
-      prisma.app.count({
-        where: { organizationId, createdAt: { gte: startDate, lte: endDate } },
-      }),
-      prisma.cardTransaction.count({
-        where: {
-          organizationId,
-          transactionType: "APPROVAL", // 승인내역 기준 카운트
-          createdAt: { gte: startDate, lte: endDate },
-          matchedAppId: null,
-        },
-      }),
-      prisma.subscription.count({
-        where: {
-          organizationId,
-          status: "ACTIVE",
-          renewalDate: {
-            not: null,
-            lte: addDays(endDate, 30),
-          },
-        },
-      }),
-      prisma.vendorInferenceLog.count({
-        where: {
-          organizationId,
-          confidence: { gte: 0.5, lte: 0.8 },
-          isSaaS: true,
-          app: { status: "PENDING_REVIEW" },
-        },
-      }),
-    ]);
-
-  return {
-    newApps,
-    unmatchedPayments,
-    upcomingRenewals,
-    pendingConfirmations,
-  };
-}
-
-function formatDate(date: Date): string {
-  return date.toISOString().split("T")[0];
-}
-
-function addDays(date: Date, days: number): Date {
-  const next = new Date(date);
-  next.setDate(next.getDate() + days);
-  return next;
 }

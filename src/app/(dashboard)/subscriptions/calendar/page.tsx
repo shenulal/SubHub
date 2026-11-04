@@ -1,56 +1,58 @@
 // src/app/(dashboard)/subscriptions/calendar/page.tsx
-import { getRenewalCalendar } from "@/actions/subscriptions";
-import { auth } from "@/lib/auth";
+/**
+ * Renewal calendar (9.4) with trial-ending and cancellation-deadline markers.
+ */
+import { getRenewalCalendarWithMarkers } from "@/actions/discovery/calendar-extras";
+import { requirePermissionOrRedirect } from "@/lib/rbac/service";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
-import { redirect } from "next/navigation";
+
 import { RenewalCalendarPageClient } from "./page.client";
 
-export async function generateMetadata(): Promise<Metadata> {
-  const t = await getTranslations("subscriptions.calendar");
-  return {
-    title: t("metaTitle"),
-    description: t("metaDescription"),
-  };
-}
+export const metadata: Metadata = { title: "Renewal calendar" };
+
+const MIN_YEAR = 2000;
+const MAX_YEAR = 2100;
 
 interface PageProps {
-  searchParams: Promise<{
-    year?: string;
-    month?: string;
-  }>;
+  searchParams: Promise<{ year?: string; month?: string }>;
 }
 
 export default async function RenewalCalendarPage({ searchParams }: PageProps) {
-  const session = await auth();
-
-  if (!session?.user) {
-    redirect("/login");
-  }
-
+  await requirePermissionOrRedirect("subscriptions:read");
   const params = await searchParams;
-
-  // URL에서 연/월 파라미터 가져오기, 없으면 현재 날짜 사용
   const today = new Date();
-  const year = params.year ? parseInt(params.year, 10) : today.getFullYear();
-  const month = params.month
-    ? parseInt(params.month, 10)
-    : today.getMonth() + 1;
+  const year = Number(params.year ?? today.getFullYear());
+  const month = Number(params.month ?? today.getMonth() + 1);
+  const validYear =
+    Number.isInteger(year) && year >= MIN_YEAR && year <= MAX_YEAR
+      ? year
+      : today.getFullYear();
+  const validMonth =
+    Number.isInteger(month) && month >= 1 && month <= 12
+      ? month
+      : today.getMonth() + 1;
 
-  // 유효성 검증
-  const validYear = year >= 2020 && year <= 2100 ? year : today.getFullYear();
-  const validMonth = month >= 1 && month <= 12 ? month : today.getMonth() + 1;
+  const [t, result] = await Promise.all([
+    getTranslations("subscriptions.calendar"),
+    getRenewalCalendarWithMarkers(validYear, validMonth),
+  ]);
 
-  // 초기 캘린더 데이터 로드
-  const calendarData = await getRenewalCalendar(validYear, validMonth);
-
-  const t = await getTranslations("subscriptions.calendar");
+  const initialData =
+    result.success && result.data
+      ? result.data
+      : {
+          year: validYear,
+          month: validMonth,
+          renewals: {},
+          markers: {},
+          scope: "workspace" as const,
+        };
 
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
-
-      <RenewalCalendarPageClient initialData={calendarData} />
+      <RenewalCalendarPageClient initialData={initialData} />
     </div>
   );
 }

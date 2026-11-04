@@ -1,5 +1,7 @@
 // src/lib/services/payment/unified-payment.ts
 import { prisma } from "@/lib/db";
+import { getBaseCurrency } from "@/lib/fx/base-currency";
+import { DEFAULT_BASE_CURRENCY } from "@/lib/fx/convert";
 import type { MatchSource, PaymentMatchStatus, Prisma } from "@prisma/client";
 
 // 통합 결제 내역 인터페이스
@@ -94,7 +96,8 @@ function extractCardLast4(cardNo: string | null | undefined): string | null {
  * CardTransaction → UnifiedPayment 변환
  */
 export function convertCardTransaction(
-  tx: CardTransactionWithRelations
+  tx: CardTransactionWithRelations,
+  baseCurrency: string = DEFAULT_BASE_CURRENCY
 ): UnifiedPayment {
   return {
     id: `card_${tx.id}`,
@@ -102,7 +105,7 @@ export function convertCardTransaction(
     transactionDate: parseCardTransactionDate(tx.useDt, tx.useTm),
     merchantName: tx.useStore,
     amount: Number(tx.useAmt),
-    currency: "KRW",
+    currency: baseCurrency,
     approvalNumber: tx.apprNo,
     cardLast4: extractCardLast4(tx.corporateCard?.cardNo),
 
@@ -287,8 +290,9 @@ export async function getUnifiedPayments(
   }
 
   // 3. Union 및 정렬
+  const baseCurrency = await getBaseCurrency(organizationId);
   const allRecords: UnifiedPayment[] = [
-    ...cardTransactions.map(convertCardTransaction),
+    ...cardTransactions.map((tx) => convertCardTransaction(tx, baseCurrency)),
     ...paymentRecords.map(convertPaymentRecord),
   ];
 

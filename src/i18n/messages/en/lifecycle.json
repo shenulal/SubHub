@@ -1,1 +1,219 @@
-{}
+{
+  "lifecycle": {
+    "status": {
+      "ACTIVE": "Active",
+      "PENDING": "Pending",
+      "EXPIRED": "Expired",
+      "CANCELLED": "Cancelled",
+      "PAUSED": "Paused",
+      "ARCHIVED": "Archived"
+    },
+    "actions": {
+      "pause": "Pause",
+      "resume": "Resume",
+      "archive": "Archive",
+      "restore": "Restore",
+      "cancel": "Cancel subscription",
+      "delete": "Delete",
+      "edit": "Edit",
+      "more": "More actions",
+      "confirmTitle": "{action} {name}?",
+      "pauseDescription": "The subscription stays on record but is excluded from renewals and reminders until you resume it.",
+      "resumeDescription": "Reminders and renewals start again from the current renewal date.",
+      "archiveDescription": "Archived subscriptions are hidden from the list by default. You can restore them later.",
+      "restoreDescription": "The subscription returns to its previous status.",
+      "cancelDescription": "Set the effective end date. Auto-renewal is switched off and the subscription is marked as cancelled.",
+      "effectiveDate": "Effective date",
+      "confirm": "Confirm",
+      "working": "Working...",
+      "success": "{name} {action}",
+      "pastTense": {
+        "pause": "paused",
+        "resume": "resumed",
+        "archive": "archived",
+        "restore": "restored",
+        "cancel": "cancelled"
+      },
+      "error": "The status could not be changed"
+    },
+    "tabs": {
+      "overview": "Overview",
+      "documents": "Documents",
+      "activity": "Activity",
+      "cancellation": "Cancellation"
+    },
+    "badges": {
+      "personal": "Personal",
+      "trial": "Trial",
+      "trialEnds": "Trial ends {date}",
+      "pausedSince": "Paused since {date}",
+      "archivedOn": "Archived on {date}"
+    },
+    "contract": {
+      "title": "Contract terms",
+      "description": "Term, auto-renewal and the notice window you must respect to cancel without renewing.",
+      "start": "Contract start",
+      "end": "Contract end",
+      "noEnd": "Open-ended",
+      "autoRenewal": "Auto-renewal",
+      "on": "On",
+      "off": "Off",
+      "noticePeriod": "Notice period",
+      "days": "{count, plural, one {# day} other {# days}}",
+      "deadline": "Cancellation deadline",
+      "noDeadline": "No deadline set",
+      "countdown": {
+        "upcoming": "{days, plural, one {# day} other {# days}} until the deadline",
+        "window_open": "Notice window open: {days, plural, =0 {today is the last day} one {# day left} other {# days left}}",
+        "deadline_passed": "Deadline passed {days, plural, one {# day} other {# days}} ago",
+        "no_deadline": "Add a contract end date and notice period to track the deadline"
+      },
+      "windowOpenHint": "Cancel before the deadline to avoid an automatic renewal.",
+      "reminders": "Reminders",
+      "reminderLead": "{days, plural, =0 {On the day} one {# day before} other {# days before}}"
+    },
+    "attachments": {
+      "title": "Documents",
+      "description": "Contracts, invoices and order forms attached to this subscription.",
+      "dropzone": "Drag a file here or click to browse",
+      "limits": "Up to {maxMb} MB. Allowed: {types}",
+      "kind": "Document type",
+      "kinds": {
+        "CONTRACT": "Contract",
+        "INVOICE": "Invoice",
+        "ORDER_FORM": "Order form",
+        "OTHER": "Other"
+      },
+      "upload": "Upload",
+      "uploading": "Uploading...",
+      "uploaded": "Document uploaded",
+      "uploadFailed": "Upload failed",
+      "empty": "No documents yet",
+      "download": "Download",
+      "delete": "Delete document",
+      "deleted": "Document deleted",
+      "deleteConfirm": "Delete {name}? This cannot be undone.",
+      "uploadedBy": "{name} · {date}",
+      "size": "{size}"
+    },
+    "comments": {
+      "title": "Notes",
+      "description": "Internal notes visible to everyone who can see this subscription.",
+      "placeholder": "Add a note for your team...",
+      "submit": "Add note",
+      "submitting": "Adding...",
+      "added": "Note added",
+      "empty": "No notes yet",
+      "unknownAuthor": "Unknown"
+    },
+    "activity": {
+      "title": "Activity",
+      "description": "Every change recorded for this subscription.",
+      "empty": "No activity recorded yet",
+      "by": "by {name}",
+      "system": "System",
+      "actions": {
+        "CREATE_SUBSCRIPTION": "Subscription created",
+        "UPDATE_SUBSCRIPTION": "Subscription updated",
+        "DELETE_SUBSCRIPTION": "Subscription deleted",
+        "PAUSE_SUBSCRIPTION": "Paused",
+        "RESUME_SUBSCRIPTION": "Resumed",
+        "ARCHIVE_SUBSCRIPTION": "Archived",
+        "RESTORE_SUBSCRIPTION": "Restored",
+        "CANCEL_SUBSCRIPTION": "Cancelled",
+        "BULK_UPDATE_SUBSCRIPTIONS": "Bulk update applied",
+        "ADD_SUBSCRIPTION_COMMENT": "Note added",
+        "UPLOAD_ATTACHMENT": "Document uploaded",
+        "DELETE_ATTACHMENT": "Document deleted",
+        "DETECT_PRICE_CHANGE": "Price change detected",
+        "ACKNOWLEDGE_PRICE_CHANGE": "Price change acknowledged",
+        "TRIAL_CONVERTED": "Trial converted to paid",
+        "EXPORT_SUBSCRIPTIONS": "Exported"
+      },
+      "statusChange": "{from} → {to}"
+    },
+    "priceChanges": {
+      "title": "Price changes",
+      "description": "Charges that differ from the expected amount.",
+      "banner": "{name} was charged {newAmount} instead of {previousAmount} ({percent}).",
+      "bannerTitle": "Price change detected",
+      "detectedOn": "Detected {date} via {source}",
+      "sources": {
+        "CARD_TRANSACTION": "card transaction",
+        "PAYMENT_RECORD": "payment record",
+        "EMAIL_RECEIPT": "email receipt",
+        "MANUAL": "manual entry"
+      },
+      "acknowledge": "Dismiss",
+      "applyNewAmount": "Update amount",
+      "acknowledged": "Price change acknowledged",
+      "applied": "Subscription amount updated",
+      "empty": "No unacknowledged price changes",
+      "viewSubscription": "View subscription"
+    },
+    "cancellation": {
+      "title": "Cancellation",
+      "description": "How to cancel this subscription and the terms that apply.",
+      "overrideTitle": "Subscription-specific instructions",
+      "overrideDescription": "Overrides the vendor guide for this subscription only.",
+      "url": "Cancellation link",
+      "notes": "Instructions",
+      "save": "Save instructions",
+      "saved": "Instructions saved"
+    },
+    "form": {
+      "vendor": {
+        "title": "Vendor",
+        "description": "Pick a service from the catalog or type a new name.",
+        "name": "Service name",
+        "placeholder": "Search the catalog or type a name",
+        "searching": "Searching...",
+        "noResults": "No catalog match — a new vendor will be created",
+        "useName": "Use \"{name}\"",
+        "selected": "Catalog match",
+        "clear": "Clear",
+        "duplicateTitle": "Possible duplicate",
+        "duplicateDescription": "Similar subscriptions already exist. You can still continue.",
+        "duplicateMatch": "{name} · {status} · {similarity}% match ({reason})",
+        "reasons": {
+          "name": "name",
+          "domain": "domain",
+          "alias": "alias"
+        }
+      },
+      "classification": {
+        "title": "Classification",
+        "description": "Category, finance dimensions, tags and custom fields.",
+        "category": "Category",
+        "suggested": "Suggested: {name}",
+        "applySuggestion": "Apply",
+        "paymentMethod": "Payment method",
+        "costCenter": "Cost centre",
+        "taxRate": "Tax rate",
+        "tags": "Tags",
+        "customFields": "Custom fields",
+        "none": "None"
+      },
+      "terms": {
+        "title": "Trial, contract & reminders",
+        "description": "Trial tracking, notice period and when to remind the owner.",
+        "isTrial": "This is a trial",
+        "trialEndsAt": "Trial ends",
+        "noticePeriodDays": "Notice period (days)",
+        "deadlinePreview": "Cancellation deadline: {date}",
+        "deadlinePreviewEmpty": "Set a contract end date to compute the deadline",
+        "reminderLeadDays": "Remind me",
+        "reminderLeadOption": "{days, plural, =0 {On the day} one {# day before} other {# days before}}",
+        "personal": "Personal subscription",
+        "personalHint": "Visible only to you; excluded from workspace totals.",
+        "owner": "Owner",
+        "ownerPlaceholder": "Select owner",
+        "cancellationUrl": "Cancellation link",
+        "cancellationNotes": "Cancellation notes",
+        "suggestRenewal": "Suggest from start date"
+      },
+      "currency": "Currency",
+      "billingCycle": "Billing cycle"
+    }
+  }
+}

@@ -32,6 +32,15 @@ vi.mock("next/navigation", () => ({
 vi.mock("@/lib/auth", () => ({
   auth: vi.fn().mockResolvedValue(null),
   signIn: vi.fn(),
+  isAppleSignInEnabled: () => false,
+}));
+
+vi.mock("@/lib/auth/sign-in-options", () => ({
+  getSignInOptions: vi.fn().mockResolvedValue({
+    appleEnabled: false,
+    enforceSso: false,
+    allowSelfSignup: true,
+  }),
 }));
 
 // Mock registerUser action

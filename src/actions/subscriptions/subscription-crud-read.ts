@@ -7,6 +7,9 @@
 
 import { requireOrganization } from "@/lib/auth/require-auth";
 import { prisma } from "@/lib/db";
+import { logger } from "@/lib/logger";
+import { getUserPermissionSet } from "@/lib/rbac/service";
+import { toMonthlyBaseAmount } from "@/lib/services/subscription/money-adapter";
 import type { ActionState, PaginatedResponse } from "@/types";
 import type {
   SubscriptionDetail,
@@ -14,10 +17,56 @@ import type {
 } from "@/types/subscription";
 import { cache } from "react";
 
+import {
+  mapSubscriptionDetail,
+  mapSubscriptionListItem,
+  SUBSCRIPTION_DETAIL_INCLUDE,
+  SUBSCRIPTION_LIST_INCLUDE,
+} from "./subscription-crud-read.mappers";
+import {
+  buildSubscriptionOrderBy,
+  buildSubscriptionWhere,
+  type ListVisibilityContext,
+} from "./subscription-crud-read.where";
 import type {
   GetSubscriptionsParams,
   LinkedPayment,
 } from "./subscription-crud.types";
+
+const DEFAULT_PAGE_SIZE = 20;
+
+async function resolveVisibility(
+  needsReadAll: boolean
+): Promise<ListVisibilityContext> {
+  const { organizationId, role, userId, teamId } = await requireOrganization();
+  let canReadAll = role === "ADMIN";
+  if (!canReadAll && needsReadAll) {
+    const permissions = await getUserPermissionSet(userId, organizationId);
+    canReadAll = permissions.has("subscriptions:read_all");
+  }
+  return { organizationId, userId, role, teamId, canReadAll };
+}
+
+/** Attach the monthly base-currency amount when FX is available. */
+async function withMonthlyBase(
+  organizationId: string,
+  items: SubscriptionListItem[]
+): Promise<SubscriptionListItem[]> {
+  const amounts = await Promise.all(
+    items.map((item) =>
+      toMonthlyBaseAmount(organizationId, {
+        amount: item.amount,
+        currency: item.currency,
+        billingCycle: item.billingCycle,
+      })
+    )
+  );
+  return items.map((item, index) =>
+    amounts[index] == null
+      ? item
+      : { ...item, monthlyAmountBase: amounts[index] }
+  );
+}
 
 /**
  * 구독 목록 조회
@@ -25,85 +74,27 @@ import type {
 export async function getSubscriptions(
   params: GetSubscriptionsParams = {}
 ): Promise<PaginatedResponse<SubscriptionListItem>> {
-  const { organizationId, role, userId, teamId } = await requireOrganization();
-
   const {
     filter = {},
     sort = { sortBy: "renewalDate", sortOrder: "asc" },
     page = 1,
-    limit = 20,
+    limit = DEFAULT_PAGE_SIZE,
   } = params;
+  const ctx = await resolveVisibility(filter.scope === "all");
+
+  // Legacy: a MEMBER without a team sees nothing.
+  if (ctx.role === "MEMBER" && !ctx.teamId && !ctx.canReadAll) {
+    return { items: [], total: 0, page, limit, totalPages: 0 };
+  }
+
+  const where = buildSubscriptionWhere(filter, ctx);
+  const orderBy = buildSubscriptionOrderBy(sort);
   const skip = (page - 1) * limit;
 
-  // Build where clause
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const where: any = { organizationId };
-
-  // MEMBER: 팀 소속 구독만 조회 (subscription.teamId 기반)
-  // VIEWER: 자신이 배정된 구독만 조회
-  if (role === "MEMBER") {
-    if (!teamId) {
-      // 팀 미배정 MEMBER: 빈 목록 반환
-      return { items: [], total: 0, page, limit, totalPages: 0 };
-    }
-    where.teamId = teamId;
-  } else if (role === "VIEWER") {
-    where.assignedUsers = { some: { userId } };
-  }
-
-  if (filter.status) {
-    where.status = filter.status;
-  }
-  if (filter.appId) {
-    where.appId = filter.appId;
-  }
-  if (filter.billingCycle) {
-    where.billingCycle = filter.billingCycle;
-  }
-  if (filter.search) {
-    where.app = { name: { contains: filter.search, mode: "insensitive" } };
-  }
-  if (filter.renewingWithinDays) {
-    const futureDate = new Date();
-    futureDate.setDate(futureDate.getDate() + filter.renewingWithinDays);
-    where.renewalDate = { lte: futureDate, gte: new Date() };
-  }
-
-  // Build orderBy
-  let orderBy = {};
-  if (sort.sortBy === "appName") {
-    orderBy = { app: { name: sort.sortOrder || "asc" } };
-  } else if (sort.sortBy) {
-    orderBy = { [sort.sortBy]: sort.sortOrder || "asc" };
-  } else {
-    orderBy = { renewalDate: "asc" };
-  }
-
-  const [subscriptions, total] = await Promise.all([
+  const [rows, total] = await Promise.all([
     prisma.subscription.findMany({
       where,
-      include: {
-        app: {
-          select: {
-            id: true,
-            name: true,
-            customLogoUrl: true,
-            catalog: { select: { logoUrl: true } },
-          },
-        },
-        // Team 배정 정보 (단일, deprecated)
-        team: { select: { id: true, name: true } },
-        // Team 배정 정보 (다중)
-        subscriptionTeams: {
-          include: { team: { select: { id: true, name: true } } },
-        },
-        // User 배정 정보
-        assignedUsers: {
-          include: {
-            user: { select: { id: true, name: true, email: true } },
-          },
-        },
-      },
+      include: SUBSCRIPTION_LIST_INCLUDE,
       orderBy,
       skip,
       take: limit,
@@ -111,41 +102,10 @@ export async function getSubscriptions(
     prisma.subscription.count({ where }),
   ]);
 
-  const items: SubscriptionListItem[] = subscriptions.map((sub) => ({
-    id: sub.id,
-    appId: sub.appId,
-    appName: sub.app.name,
-    appLogoUrl: sub.app.customLogoUrl || sub.app.catalog?.logoUrl || null,
-    status: sub.status,
-    billingCycle: sub.billingCycle,
-    billingType: sub.billingType,
-    amount: Number(sub.amount),
-    perSeatPrice: sub.perSeatPrice ? Number(sub.perSeatPrice) : null,
-    currency: sub.currency,
-    totalLicenses: sub.totalLicenses,
-    usedLicenses: sub.usedLicenses,
-    startDate: sub.startDate,
-    endDate: sub.endDate,
-    renewalDate: sub.renewalDate,
-    autoRenewal: sub.autoRenewal,
-    createdAt: sub.createdAt,
-    updatedAt: sub.updatedAt,
-    // Team 배정 (단일, deprecated)
-    teamId: sub.teamId,
-    teamName: sub.team?.name ?? null,
-    // Team 배정 (다중)
-    teams:
-      sub.subscriptionTeams?.map((st) => ({
-        id: st.team.id,
-        name: st.team.name,
-      })) ?? [],
-    // User 배정 (다중)
-    assignedUsers: sub.assignedUsers.map((su) => ({
-      id: su.user.id,
-      name: su.user.name,
-      email: su.user.email,
-    })),
-  }));
+  const items = await withMonthlyBase(
+    ctx.organizationId,
+    rows.map((row) => mapSubscriptionListItem(row))
+  );
 
   return {
     items,
@@ -164,91 +124,27 @@ export async function getSubscription(
 ): Promise<SubscriptionDetail | null> {
   const { organizationId, role, userId } = await requireOrganization();
 
-  // MEMBER/VIEWER는 자신이 배정된 구독만 조회 가능
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const where: any = { id, organizationId };
-  if (role !== "ADMIN") {
-    where.assignedUsers = {
-      some: { userId },
-    };
-  }
+  // Non-admins see subscriptions they own, are assigned to, or that are
+  // workspace-visible; personal items stay private to their owner.
+  const visibility =
+    role === "ADMIN"
+      ? {}
+      : {
+          OR: [
+            { ownerId: userId },
+            { assignedUsers: { some: { userId } } },
+            { isPersonal: false },
+          ],
+          NOT: { isPersonal: true, ownerId: { not: userId } },
+        };
 
   const subscription = await prisma.subscription.findFirst({
-    where,
-    include: {
-      app: {
-        select: {
-          id: true,
-          name: true,
-          customLogoUrl: true,
-          catalog: { select: { logoUrl: true } },
-        },
-      },
-      // Team 배정 정보 (단일, deprecated)
-      team: { select: { id: true, name: true } },
-      // Team 배정 정보 (다중)
-      subscriptionTeams: {
-        include: { team: { select: { id: true, name: true } } },
-      },
-      // User 배정 정보
-      assignedUsers: {
-        include: {
-          user: { select: { id: true, name: true, email: true } },
-        },
-      },
-    },
+    where: { id, organizationId, ...visibility },
+    include: SUBSCRIPTION_DETAIL_INCLUDE,
   });
 
-  if (!subscription) {
-    return null;
-  }
-
-  return {
-    id: subscription.id,
-    appId: subscription.appId,
-    appName: subscription.app.name,
-    appLogoUrl:
-      subscription.app.customLogoUrl ||
-      subscription.app.catalog?.logoUrl ||
-      null,
-    status: subscription.status,
-    billingCycle: subscription.billingCycle,
-    billingType: subscription.billingType,
-    amount: Number(subscription.amount),
-    perSeatPrice: subscription.perSeatPrice
-      ? Number(subscription.perSeatPrice)
-      : null,
-    currency: subscription.currency,
-    totalLicenses: subscription.totalLicenses,
-    usedLicenses: subscription.usedLicenses,
-    startDate: subscription.startDate,
-    endDate: subscription.endDate,
-    renewalDate: subscription.renewalDate,
-    autoRenewal: subscription.autoRenewal,
-    renewalAlert30: subscription.renewalAlert30,
-    renewalAlert60: subscription.renewalAlert60,
-    renewalAlert90: subscription.renewalAlert90,
-    contractUrl: subscription.contractUrl,
-    notes: subscription.notes,
-    createdAt: subscription.createdAt,
-    updatedAt: subscription.updatedAt,
-    // Team 배정 (단일, deprecated)
-    teamId: subscription.teamId,
-    teamName: subscription.team?.name ?? null,
-    team: subscription.team,
-    // Team 배정 (다중)
-    teams:
-      subscription.subscriptionTeams?.map((st) => ({
-        id: st.team.id,
-        name: st.team.name,
-      })) ?? [],
-    // User 배정 (다중)
-    assignedUsers: subscription.assignedUsers.map((su) => ({
-      id: su.user.id,
-      name: su.user.name,
-      email: su.user.email,
-    })),
-  };
+  if (!subscription) return null;
+  return mapSubscriptionDetail(subscription);
 }
 
 // 동일 요청 내에서 구독 상세를 중복 호출할 때 캐시로 DB 조회를 한 번만 수행
@@ -269,17 +165,11 @@ export async function getLinkedPayments(
     });
 
     if (!subscription) {
-      return {
-        success: false,
-        message: "구독을 찾을 수 없습니다",
-      };
+      return { success: false, message: "구독을 찾을 수 없습니다" };
     }
 
     const payments = await prisma.paymentRecord.findMany({
-      where: {
-        linkedSubscriptionId: subscriptionId,
-        organizationId,
-      },
+      where: { linkedSubscriptionId: subscriptionId, organizationId },
       select: {
         id: true,
         transactionDate: true,
@@ -288,9 +178,7 @@ export async function getLinkedPayments(
         currency: true,
         cardLast4: true,
       },
-      orderBy: {
-        transactionDate: "desc",
-      },
+      orderBy: { transactionDate: "desc" },
     });
 
     return {
@@ -305,10 +193,7 @@ export async function getLinkedPayments(
       })),
     };
   } catch (error) {
-    console.error("getLinkedPayments error:", error);
-    return {
-      success: false,
-      message: "연결된 결제 내역 조회에 실패했습니다",
-    };
+    logger.error({ err: error }, "getLinkedPayments error");
+    return { success: false, message: "연결된 결제 내역 조회에 실패했습니다" };
   }
 }

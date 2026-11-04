@@ -1,6 +1,7 @@
 // src/lib/services/erp/oracle.ts
 // Oracle ERP Cloud REST API 어댑터
 
+import { DEFAULT_BASE_CURRENCY } from "@/lib/fx/convert";
 import { logger } from "@/lib/logger";
 import type {
   ERPPaymentAdapter,
@@ -149,7 +150,7 @@ export const oracleAdapter: ERPPaymentAdapter = {
           transactionDate: new Date(String(j.AccountingDate)),
           merchantName: String(j.Description || j.JournalName || ""),
           amount: parseAmount(j.EnteredDebit),
-          currency: String(j.Currency || "KRW"),
+          currency: String(j.Currency || DEFAULT_BASE_CURRENCY),
           category: String(j.AccountClass || ""),
           memo: String(j.JournalName || ""),
           documentNumber: String(j.JournalName || ""),

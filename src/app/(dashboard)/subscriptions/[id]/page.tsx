@@ -1,7 +1,9 @@
 // src/app/(dashboard)/subscriptions/[id]/page.tsx
 import { getSubscriptionCached } from "@/actions/subscriptions";
+import { getCatalogItem } from "@/actions/taxonomy/catalog";
 import { SubscriptionDetailClient } from "@/components/subscriptions/subscription-detail-client";
 import { getCachedSession } from "@/lib/auth/require-auth";
+import { getSettings } from "@/lib/settings/service";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
@@ -16,12 +18,12 @@ export async function generateMetadata({
   const subscription = await getSubscriptionCached(id);
 
   if (!subscription) {
-    return { title: "구독을 찾을 수 없음" };
+    return { title: "Subscription not found" };
   }
 
   return {
-    title: `${subscription.appName} 구독 | SaaS 관리 플랫폼`,
-    description: `${subscription.appName} 구독 상세 정보`,
+    title: `${subscription.appName}`,
+    description: `${subscription.appName} subscription details`,
   };
 }
 
@@ -34,11 +36,44 @@ export default async function SubscriptionDetailPage({
     notFound();
   }
   const session = await getCachedSession();
+  const organizationId = session?.user?.organizationId;
   const role = session?.user?.role ?? null;
+
+  const [settings, catalog] = await Promise.all([
+    organizationId
+      ? getSettings(organizationId, [
+          "documents.maxAttachmentSizeMb",
+          "documents.allowedMimeTypes",
+          "subscriptions.noticePeriodAlertLeadDays",
+        ])
+      : null,
+    subscription.app.catalogId
+      ? getCatalogItem(subscription.app.catalogId)
+      : Promise.resolve(null),
+  ]);
+
   return (
     <SubscriptionDetailClient
       id={id}
       role={role as "ADMIN" | "APPROVER" | "MEMBER" | "VIEWER" | null}
+      documentPolicy={
+        settings
+          ? {
+              maxSizeMb: settings["documents.maxAttachmentSizeMb"],
+              allowedMimeTypes: settings["documents.allowedMimeTypes"],
+            }
+          : undefined
+      }
+      noticeWindowDays={
+        settings
+          ? Math.max(...settings["subscriptions.noticePeriodAlertLeadDays"])
+          : undefined
+      }
+      catalog={catalog}
+      appOverride={{
+        cancellationUrl: subscription.app.cancellationUrl,
+        cancellationNotes: subscription.app.cancellationNotes,
+      }}
     />
   );
 }

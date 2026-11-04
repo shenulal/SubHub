@@ -5,6 +5,7 @@
  */
 
 import { prisma } from "@/lib/db";
+import { getBaseCurrency } from "@/lib/fx/base-currency";
 import {
   matchMerchant4LayerSync,
   type AppMatch,
@@ -171,7 +172,7 @@ export async function matchRecord(
     memo: record.memo,
     storeBizNo: null,
     amount,
-    currency: "KRW",
+    currency: await getBaseCurrency(organizationId),
     userId,
   });
 

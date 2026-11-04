@@ -3,6 +3,7 @@
 
 import { requireOrganization } from "@/lib/auth/require-auth";
 import { prisma } from "@/lib/db";
+import { getBaseCurrency } from "@/lib/fx/base-currency";
 import { advanceToFutureDate } from "@/lib/utils/renewal-date";
 import type {
   CategoryDistribution,
@@ -40,12 +41,14 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     return sum + amount;
   }, 0);
 
+  const baseCurrency = await getBaseCurrency(organizationId);
+
   return {
     totalApps,
     activeSubscriptions,
     totalUsers,
     totalMonthlyCost: Math.round(totalMonthlyCost),
-    currency: "KRW",
+    currency: baseCurrency,
   };
 }
 

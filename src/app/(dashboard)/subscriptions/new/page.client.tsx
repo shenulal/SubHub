@@ -1,6 +1,7 @@
 // src/app/(dashboard)/subscriptions/new/page.client.tsx
 "use client";
 
+import type { SubscriptionFormOptions } from "@/actions/subscriptions/subscription-form-options";
 import { SubscriptionForm } from "@/components/subscriptions/subscription-form";
 import type {
   AppWithTeams,
@@ -17,6 +18,7 @@ interface SubscriptionNewPageClientProps {
   users: UserOption[];
   isAdmin: boolean;
   title: string;
+  options?: SubscriptionFormOptions;
 }
 
 export function SubscriptionNewPageClient({
@@ -24,6 +26,7 @@ export function SubscriptionNewPageClient({
   users,
   isAdmin,
   title,
+  options,
 }: SubscriptionNewPageClientProps) {
   const t = useTranslations("subscriptions");
   const router = useRouter();
@@ -61,6 +64,7 @@ export function SubscriptionNewPageClient({
         hideActions={true}
         formId="subscription-new-form"
         onPendingChange={setIsPending}
+        options={options}
       />
     </div>
   );

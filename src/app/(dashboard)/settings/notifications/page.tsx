@@ -1,23 +1,48 @@
 // src/app/(dashboard)/settings/notifications/page.tsx
-import { getOrganizationNotificationSettings } from "@/actions/organization-notification-settings";
-import { NotificationSettingsForm } from "@/components/settings";
-import { auth } from "@/lib/auth";
+import { getOrganizationNotificationDefaults } from "@/actions/notifications/org-defaults";
+import { getNotificationPreferences } from "@/actions/notifications/preferences";
+import { NotificationPreferencesForm } from "@/components/notifications/notification-preferences-form";
+import { OrganizationNotificationDefaultsForm } from "@/components/notifications/organization-notification-defaults";
+import { Separator } from "@/components/ui/separator";
+import { requirePermissionOrRedirect } from "@/lib/rbac/service";
 import type { Metadata } from "next";
-import { redirect } from "next/navigation";
+import { getTranslations } from "next-intl/server";
 
 export const metadata: Metadata = {
-  title: "알림 설정 | SaaS 관리 플랫폼",
-  description: "조직의 알림 수신 설정을 관리합니다",
+  title: "Notifications",
+  description: "Choose how and when SubHub notifies you",
 };
 
 export default async function NotificationsSettingsPage() {
-  const session = await auth();
+  const { permissions } = await requirePermissionOrRedirect(
+    "notifications:manage_own"
+  );
+  const t = await getTranslations("notifications.preferences");
+  const canManageOrg = permissions.has("settings:manage");
 
-  if (!session?.user) {
-    redirect("/login");
-  }
+  const [prefs, orgDefaults] = await Promise.all([
+    getNotificationPreferences(),
+    canManageOrg
+      ? getOrganizationNotificationDefaults()
+      : Promise.resolve(null),
+  ]);
 
-  const settings = await getOrganizationNotificationSettings();
+  return (
+    <div className="space-y-10">
+      {prefs.success && prefs.data ? (
+        <NotificationPreferencesForm initial={prefs.data} />
+      ) : (
+        <p className="text-destructive text-sm">
+          {prefs.error ?? t("toast.failed")}
+        </p>
+      )}
 
-  return <NotificationSettingsForm initialSettings={settings} />;
+      {canManageOrg && orgDefaults?.success && orgDefaults.data && (
+        <>
+          <Separator />
+          <OrganizationNotificationDefaultsForm initial={orgDefaults.data} />
+        </>
+      )}
+    </div>
+  );
 }

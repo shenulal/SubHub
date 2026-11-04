@@ -28,6 +28,9 @@ interface SubscriptionFormPeriodProps {
   control: Control<SubscriptionFormValues>;
   errors: FieldErrors<SubscriptionFormValues>;
   isPending: boolean;
+  /** Fills the renewal date from start date + billing cycle. */
+  onSuggestRenewal?: () => void;
+  suggestRenewalLabel?: string;
 }
 
 function toDate(value: string | null | undefined): Date | undefined {
@@ -48,6 +51,8 @@ export function SubscriptionFormPeriod({
   control,
   errors,
   isPending,
+  onSuggestRenewal,
+  suggestRenewalLabel,
 }: SubscriptionFormPeriodProps) {
   const t = useTranslations("subscriptions.form.period");
 
@@ -137,7 +142,21 @@ export function SubscriptionFormPeriod({
 
         {/* Renewal Date */}
         <div className="space-y-2">
-          <Label>{t("renewalDate")}</Label>
+          <div className="flex items-center justify-between">
+            <Label>{t("renewalDate")}</Label>
+            {onSuggestRenewal && (
+              <Button
+                type="button"
+                variant="link"
+                size="sm"
+                className="h-auto p-0 text-xs"
+                onClick={onSuggestRenewal}
+                disabled={isPending}
+              >
+                {suggestRenewalLabel}
+              </Button>
+            )}
+          </div>
           <Controller
             control={control}
             name="renewalDate"

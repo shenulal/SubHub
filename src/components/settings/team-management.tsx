@@ -2,6 +2,7 @@
 "use client";
 
 import { updateOrganizationTeams } from "@/actions/organization";
+import { TeamApproverSettings } from "@/components/approvals/team-approver-settings";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -144,6 +145,8 @@ export function TeamManagement({ initialTeams }: TeamManagementProps) {
           )}
         </CardContent>
       </Card>
+      {/* Approvals: default approver per team (feature 2.3) */}
+      <TeamApproverSettings />
     </div>
   );
 }

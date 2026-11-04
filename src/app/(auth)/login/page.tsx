@@ -1,10 +1,12 @@
 // src/app/(auth)/login/page.tsx
 // 로그인 페이지 (이메일/OTP + Google OAuth)
 
+import { AppleSignInButton } from "@/components/auth/apple-sign-in-button";
 import { LoginForm } from "@/components/auth/login-form";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { auth, signIn } from "@/lib/auth";
+import { getSignInOptions } from "@/lib/auth/sign-in-options";
 import { AuthError } from "next-auth";
 import { getTranslations } from "next-intl/server";
 
@@ -36,6 +38,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       redirect("/onboarding");
     }
   }
+
+  const { appleEnabled, enforceSso } = await getSignInOptions();
 
   // 에러/안내 메시지 처리
   const errorMessage = error
@@ -101,38 +105,61 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         </Button>
       </form>
 
-      {/* 구분선 */}
-      <div className="my-6 flex items-center gap-4">
-        <div className="bg-border h-px flex-1" />
-        <p className="text-muted-foreground text-sm">
-          {t("auth.login.socialDivider")}
-        </p>
-        <div className="bg-border h-px flex-1" />
-      </div>
+      {/* Apple 로그인 (APPLE_CLIENT_ID 설정 시에만) */}
+      {appleEnabled && (
+        <div className="mt-3">
+          <AppleSignInButton
+            label={t("platform.auth.continueWithApple")}
+            action={async () => {
+              "use server";
+              await signIn("apple", { redirectTo: "/dashboard" });
+            }}
+          />
+        </div>
+      )}
 
-      {/* 이메일/OTP 폼 */}
-      <LoginForm
-        action={loginAction}
-        translations={{
-          email: t("auth.login.form.email"),
-          emailPlaceholder: t("auth.login.form.emailPlaceholder"),
-          sendOtp: t("auth.login.form.sendOtp"),
-          sendingOtp: t("auth.login.form.sendingOtp"),
-          resendOtp: t("auth.login.form.resendOtp"),
-          resendCooldown: t.raw("auth.login.form.resendCooldown") as string,
-          otpLabel: t("auth.login.form.otpLabel"),
-          otpPlaceholder: t("auth.login.form.otpDescription"),
-          submit: t("auth.login.form.submit"),
-          signingIn: t("auth.login.form.signingIn"),
-          changeEmail: t("auth.login.form.changeEmail"),
-          errors: {
-            userNotFound: t("auth.login.errors.userNotFound"),
-            cooldownActive: t.raw("auth.login.errors.cooldownActive") as string,
-            emailSendFailed: t("auth.login.errors.emailSendFailed"),
-            default: t("auth.login.errors.default"),
-          },
-        }}
-      />
+      {enforceSso ? (
+        <p className="text-muted-foreground mt-6 text-center text-sm">
+          {t("platform.auth.ssoOnly")}
+        </p>
+      ) : (
+        <>
+          {/* 구분선 */}
+          <div className="my-6 flex items-center gap-4">
+            <div className="bg-border h-px flex-1" />
+            <p className="text-muted-foreground text-sm">
+              {t("auth.login.socialDivider")}
+            </p>
+            <div className="bg-border h-px flex-1" />
+          </div>
+
+          {/* 이메일/OTP 폼 */}
+          <LoginForm
+            action={loginAction}
+            translations={{
+              email: t("auth.login.form.email"),
+              emailPlaceholder: t("auth.login.form.emailPlaceholder"),
+              sendOtp: t("auth.login.form.sendOtp"),
+              sendingOtp: t("auth.login.form.sendingOtp"),
+              resendOtp: t("auth.login.form.resendOtp"),
+              resendCooldown: t.raw("auth.login.form.resendCooldown") as string,
+              otpLabel: t("auth.login.form.otpLabel"),
+              otpPlaceholder: t("auth.login.form.otpDescription"),
+              submit: t("auth.login.form.submit"),
+              signingIn: t("auth.login.form.signingIn"),
+              changeEmail: t("auth.login.form.changeEmail"),
+              errors: {
+                userNotFound: t("auth.login.errors.userNotFound"),
+                cooldownActive: t.raw(
+                  "auth.login.errors.cooldownActive"
+                ) as string,
+                emailSendFailed: t("auth.login.errors.emailSendFailed"),
+                default: t("auth.login.errors.default"),
+              },
+            }}
+          />
+        </>
+      )}
     </div>
   );
 }

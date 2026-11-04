@@ -26,6 +26,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useBaseCurrency } from "@/hooks/use-base-currency";
 import { BillingCycle } from "@prisma/client";
 import {
   AlertTriangle,
@@ -42,6 +43,7 @@ import { SuggestionRegisterDialog } from "./suggestion-register-dialog";
 type UnifiedSuggestion = CardTransactionSuggestion | PaymentRecordSuggestion;
 
 export function SuggestionTable() {
+  const { baseCurrency } = useBaseCurrency();
   const t = useTranslations("subscriptionSuggestions");
   const [suggestions, setSuggestions] = useState<UnifiedSuggestion[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -100,7 +102,7 @@ export function SuggestionTable() {
   const formatAmount = (amount: number, currency: string) => {
     return new Intl.NumberFormat(undefined, {
       style: "currency",
-      currency: currency || "KRW",
+      currency: currency || baseCurrency,
     }).format(amount);
   };
 

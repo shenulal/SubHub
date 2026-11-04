@@ -2,6 +2,7 @@
 /**
  * 알림 이메일: 갱신 알림, 퇴사자 계정 알림
  */
+import { mirrorAlertInApp } from "./alert-bridge";
 import type {
   EmailResult,
   RenewalAlertEmailParams,
@@ -127,6 +128,8 @@ export async function sendTerminatedUserAlertEmail(
     unrevokedApps,
     terminatedAt,
     organizationName,
+    organizationId,
+    recipientUserId,
   } = params;
 
   const subject = `⚠️ [${terminatedUserName}] 퇴사자 미회수 계정 ${unrevokedApps.length}건 발견`;
@@ -209,6 +212,17 @@ export async function sendTerminatedUserAlertEmail(
     if (error) {
       return { success: false, error: error.message };
     }
+
+    await mirrorAlertInApp({
+      organizationId,
+      recipientUserId,
+      recipientEmail: to,
+      type: "OFFBOARDING",
+      title: `${terminatedUserName}: ${unrevokedApps.length} unrevoked app access(es)`,
+      body: unrevokedApps.join(", "),
+      link: "/security",
+      dedupeKey: `offboarding:${terminatedUserEmail}:${unrevokedApps.length}`,
+    });
 
     return { success: true, messageId: data?.id };
   } catch (err) {

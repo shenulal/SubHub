@@ -8,6 +8,7 @@
  */
 
 import { prisma } from "@/lib/db";
+import { getBaseCurrency } from "@/lib/fx/base-currency";
 import type { BillingCycle as PrismaBillingCycle } from "@prisma/client";
 import {
   analyzePaymentIntervals,
@@ -165,7 +166,7 @@ async function syncSubscription(
       status: "ACTIVE",
       billingCycle,
       amount,
-      currency: "KRW",
+      currency: await getBaseCurrency(organizationId),
       startDate,
       renewalDate,
       autoRenewal: true,

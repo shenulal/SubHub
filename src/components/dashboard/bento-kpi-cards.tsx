@@ -6,6 +6,8 @@ import {
   TrendBadge,
 } from "@/components/common";
 import { Card, CardContent } from "@/components/ui/card";
+import { useBaseCurrency } from "@/hooks/use-base-currency";
+import { formatMoney } from "@/lib/fx/convert";
 import type {
   AnomalyKpiData,
   AppsWithoutSubKpiData,
@@ -24,12 +26,8 @@ import { TotalCostCard } from "./total-cost-card";
  * formatCurrency
  * 금액을 한국 원화 형식으로 포맷팅
  */
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("ko-KR", {
-    style: "currency",
-    currency: "KRW",
-    maximumFractionDigits: 0,
-  }).format(amount);
+function formatCurrency(amount: number, currency: string): string {
+  return formatMoney(amount, currency, "ko", 0);
 }
 
 /**
@@ -46,6 +44,7 @@ export function BentoTotalCostCard({
   isReadOnly = false,
 }: BentoTotalCostCardProps) {
   const t = useTranslations("dashboardV3.kpi.totalCost");
+  const { baseCurrency } = useBaseCurrency();
 
   const cardContent = (
     <Card className="border-l-primary/50 h-full border-l-4 transition-all">
@@ -59,7 +58,9 @@ export function BentoTotalCostCard({
           </span>
         </div>
         <div className="mt-2">
-          <p className="text-3xl font-bold">{formatCurrency(data.amount)}</p>
+          <p className="text-3xl font-bold">
+            {formatCurrency(data.amount, baseCurrency)}
+          </p>
           {data.changePercent !== 0 && (
             <div className="mt-1">
               <TrendBadge
@@ -95,7 +96,9 @@ export function BentoTotalCostCard({
             </span>
           </div>
           <div className="mt-2">
-            <p className="text-3xl font-bold">{formatCurrency(data.amount)}</p>
+            <p className="text-3xl font-bold">
+              {formatCurrency(data.amount, baseCurrency)}
+            </p>
             {data.changePercent !== 0 && (
               <div className="mt-1">
                 <TrendBadge

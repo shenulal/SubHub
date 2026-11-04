@@ -1,1 +1,219 @@
-{}
+{
+  "lifecycle": {
+    "status": {
+      "ACTIVE": "활성",
+      "PENDING": "대기",
+      "EXPIRED": "만료",
+      "CANCELLED": "해지",
+      "PAUSED": "일시중지",
+      "ARCHIVED": "보관"
+    },
+    "actions": {
+      "pause": "일시중지",
+      "resume": "재개",
+      "archive": "보관",
+      "restore": "복원",
+      "cancel": "구독 해지",
+      "delete": "삭제",
+      "edit": "수정",
+      "more": "추가 작업",
+      "confirmTitle": "{action} {name}?",
+      "pauseDescription": "The subscription stays on record but is excluded from renewals and reminders until you resume it.",
+      "resumeDescription": "Reminders and renewals start again from the current renewal date.",
+      "archiveDescription": "Archived subscriptions are hidden from the list by default. You can restore them later.",
+      "restoreDescription": "The subscription returns to its previous status.",
+      "cancelDescription": "Set the effective end date. Auto-renewal is switched off and the subscription is marked as cancelled.",
+      "effectiveDate": "Effective date",
+      "confirm": "확인",
+      "working": "처리 중...",
+      "success": "{name} {action}",
+      "pastTense": {
+        "pause": "paused",
+        "resume": "resumed",
+        "archive": "archived",
+        "restore": "restored",
+        "cancel": "cancelled"
+      },
+      "error": "상태를 변경할 수 없습니다"
+    },
+    "tabs": {
+      "overview": "개요",
+      "documents": "문서",
+      "activity": "활동",
+      "cancellation": "해지"
+    },
+    "badges": {
+      "personal": "Personal",
+      "trial": "Trial",
+      "trialEnds": "Trial ends {date}",
+      "pausedSince": "Paused since {date}",
+      "archivedOn": "Archived on {date}"
+    },
+    "contract": {
+      "title": "계약 조건",
+      "description": "Term, auto-renewal and the notice window you must respect to cancel without renewing.",
+      "start": "계약 시작",
+      "end": "계약 종료",
+      "noEnd": "기한 없음",
+      "autoRenewal": "자동 갱신",
+      "on": "켜짐",
+      "off": "꺼짐",
+      "noticePeriod": "통지 기간",
+      "days": "{count, plural, one {# day} other {# days}}",
+      "deadline": "해지 기한",
+      "noDeadline": "기한 미설정",
+      "countdown": {
+        "upcoming": "{days, plural, one {# day} other {# days}} until the deadline",
+        "window_open": "Notice window open: {days, plural, =0 {today is the last day} one {# day left} other {# days left}}",
+        "deadline_passed": "Deadline passed {days, plural, one {# day} other {# days}} ago",
+        "no_deadline": "Add a contract end date and notice period to track the deadline"
+      },
+      "windowOpenHint": "Cancel before the deadline to avoid an automatic renewal.",
+      "reminders": "알림",
+      "reminderLead": "{days, plural, =0 {On the day} one {# day before} other {# days before}}"
+    },
+    "attachments": {
+      "title": "문서",
+      "description": "Contracts, invoices and order forms attached to this subscription.",
+      "dropzone": "파일을 끌어다 놓거나 클릭하여 선택",
+      "limits": "Up to {maxMb} MB. Allowed: {types}",
+      "kind": "Document type",
+      "kinds": {
+        "CONTRACT": "Contract",
+        "INVOICE": "Invoice",
+        "ORDER_FORM": "Order form",
+        "OTHER": "Other"
+      },
+      "upload": "업로드",
+      "uploading": "업로드 중...",
+      "uploaded": "문서가 업로드되었습니다",
+      "uploadFailed": "업로드 실패",
+      "empty": "문서가 없습니다",
+      "download": "다운로드",
+      "delete": "문서 삭제",
+      "deleted": "문서가 삭제되었습니다",
+      "deleteConfirm": "Delete {name}? This cannot be undone.",
+      "uploadedBy": "{name} · {date}",
+      "size": "{size}"
+    },
+    "comments": {
+      "title": "메모",
+      "description": "Internal notes visible to everyone who can see this subscription.",
+      "placeholder": "팀을 위한 메모를 추가하세요...",
+      "submit": "메모 추가",
+      "submitting": "추가 중...",
+      "added": "메모가 추가되었습니다",
+      "empty": "메모가 없습니다",
+      "unknownAuthor": "Unknown"
+    },
+    "activity": {
+      "title": "활동",
+      "description": "Every change recorded for this subscription.",
+      "empty": "기록된 활동이 없습니다",
+      "by": "by {name}",
+      "system": "시스템",
+      "actions": {
+        "CREATE_SUBSCRIPTION": "Subscription created",
+        "UPDATE_SUBSCRIPTION": "Subscription updated",
+        "DELETE_SUBSCRIPTION": "Subscription deleted",
+        "PAUSE_SUBSCRIPTION": "Paused",
+        "RESUME_SUBSCRIPTION": "Resumed",
+        "ARCHIVE_SUBSCRIPTION": "Archived",
+        "RESTORE_SUBSCRIPTION": "Restored",
+        "CANCEL_SUBSCRIPTION": "Cancelled",
+        "BULK_UPDATE_SUBSCRIPTIONS": "Bulk update applied",
+        "ADD_SUBSCRIPTION_COMMENT": "Note added",
+        "UPLOAD_ATTACHMENT": "Document uploaded",
+        "DELETE_ATTACHMENT": "Document deleted",
+        "DETECT_PRICE_CHANGE": "Price change detected",
+        "ACKNOWLEDGE_PRICE_CHANGE": "Price change acknowledged",
+        "TRIAL_CONVERTED": "Trial converted to paid",
+        "EXPORT_SUBSCRIPTIONS": "Exported"
+      },
+      "statusChange": "{from} → {to}"
+    },
+    "priceChanges": {
+      "title": "가격 변동",
+      "description": "Charges that differ from the expected amount.",
+      "banner": "{name} was charged {newAmount} instead of {previousAmount} ({percent}).",
+      "bannerTitle": "가격 변동 감지",
+      "detectedOn": "Detected {date} via {source}",
+      "sources": {
+        "CARD_TRANSACTION": "card transaction",
+        "PAYMENT_RECORD": "payment record",
+        "EMAIL_RECEIPT": "email receipt",
+        "MANUAL": "manual entry"
+      },
+      "acknowledge": "확인",
+      "applyNewAmount": "금액 업데이트",
+      "acknowledged": "Price change acknowledged",
+      "applied": "Subscription amount updated",
+      "empty": "확인되지 않은 가격 변동이 없습니다",
+      "viewSubscription": "View subscription"
+    },
+    "cancellation": {
+      "title": "해지",
+      "description": "How to cancel this subscription and the terms that apply.",
+      "overrideTitle": "Subscription-specific instructions",
+      "overrideDescription": "Overrides the vendor guide for this subscription only.",
+      "url": "Cancellation link",
+      "notes": "Instructions",
+      "save": "안내 저장",
+      "saved": "안내가 저장되었습니다"
+    },
+    "form": {
+      "vendor": {
+        "title": "Vendor",
+        "description": "Pick a service from the catalog or type a new name.",
+        "name": "Service name",
+        "placeholder": "Search the catalog or type a name",
+        "searching": "Searching...",
+        "noResults": "No catalog match — a new vendor will be created",
+        "useName": "Use \"{name}\"",
+        "selected": "Catalog match",
+        "clear": "Clear",
+        "duplicateTitle": "Possible duplicate",
+        "duplicateDescription": "Similar subscriptions already exist. You can still continue.",
+        "duplicateMatch": "{name} · {status} · {similarity}% match ({reason})",
+        "reasons": {
+          "name": "name",
+          "domain": "domain",
+          "alias": "alias"
+        }
+      },
+      "classification": {
+        "title": "Classification",
+        "description": "Category, finance dimensions, tags and custom fields.",
+        "category": "Category",
+        "suggested": "Suggested: {name}",
+        "applySuggestion": "Apply",
+        "paymentMethod": "Payment method",
+        "costCenter": "Cost centre",
+        "taxRate": "Tax rate",
+        "tags": "Tags",
+        "customFields": "Custom fields",
+        "none": "None"
+      },
+      "terms": {
+        "title": "Trial, contract & reminders",
+        "description": "Trial tracking, notice period and when to remind the owner.",
+        "isTrial": "This is a trial",
+        "trialEndsAt": "Trial ends",
+        "noticePeriodDays": "Notice period (days)",
+        "deadlinePreview": "Cancellation deadline: {date}",
+        "deadlinePreviewEmpty": "Set a contract end date to compute the deadline",
+        "reminderLeadDays": "Remind me",
+        "reminderLeadOption": "{days, plural, =0 {On the day} one {# day before} other {# days before}}",
+        "personal": "Personal subscription",
+        "personalHint": "Visible only to you; excluded from workspace totals.",
+        "owner": "Owner",
+        "ownerPlaceholder": "Select owner",
+        "cancellationUrl": "Cancellation link",
+        "cancellationNotes": "Cancellation notes",
+        "suggestRenewal": "Suggest from start date"
+      },
+      "currency": "Currency",
+      "billingCycle": "Billing cycle"
+    }
+  }
+}

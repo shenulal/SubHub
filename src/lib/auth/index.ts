@@ -5,9 +5,28 @@ import { triggerInitialBuild } from "@/actions/extensions/builds";
 import { prisma } from "@/lib/db";
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { UserRole } from "@prisma/client";
-import NextAuth from "next-auth";
+import NextAuth, { type NextAuthConfig } from "next-auth";
+import Apple from "next-auth/providers/apple";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
+
+/** Apple sign-in is enabled only when both env vars are present (6.1). */
+export function isAppleSignInEnabled(): boolean {
+  return Boolean(
+    process.env.APPLE_CLIENT_ID && process.env.APPLE_CLIENT_SECRET
+  );
+}
+
+function optionalProviders(): NextAuthConfig["providers"] {
+  if (!isAppleSignInEnabled()) return [];
+  return [
+    Apple({
+      clientId: process.env.APPLE_CLIENT_ID!,
+      clientSecret: process.env.APPLE_CLIENT_SECRET!,
+      allowDangerousEmailAccountLinking: true,
+    }),
+  ];
+}
 
 /**
  * NextAuth.js v5 설정
@@ -97,6 +116,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         };
       },
     }),
+    ...optionalProviders(),
   ],
   // JWT 세션 전략 (Edge Runtime에서 동작)
   session: {

@@ -12,6 +12,7 @@
  * [Fix] jsonSchema() 헬퍼로 Anthropic input_schema.type: "object" 보장
  */
 
+import { DEFAULT_BASE_CURRENCY } from "@/lib/fx/convert";
 import { jsonSchema, tool } from "ai";
 import { nanoid } from "nanoid";
 
@@ -225,7 +226,7 @@ export const writeTools = {
       const pending = createPendingAction(
         { action: "create_subscription", ...params },
         `"${params.appName}" 구독을 등록합니다.`,
-        `${cycleLabel[params.billingCycle] ?? params.billingCycle} / ${Number(params.amount).toLocaleString()} ${params.currency ?? "KRW"} / 시작: ${params.startDate}`
+        `${cycleLabel[params.billingCycle] ?? params.billingCycle} / ${Number(params.amount).toLocaleString()} ${params.currency ?? DEFAULT_BASE_CURRENCY} / 시작: ${params.startDate}`
       );
       return { type: "pending_approval" as const, pendingAction: pending };
     },

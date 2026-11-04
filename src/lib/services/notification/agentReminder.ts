@@ -1,6 +1,7 @@
 // src/lib/services/notification/agentReminder.ts
 import { Resend } from "resend";
 
+import { mirrorAlertInApp } from "./alert-bridge";
 import { EmailConfig, type EmailResult } from "./email";
 
 // Resend 클라이언트 지연 초기화
@@ -19,6 +20,9 @@ export interface AgentInstallationReminderParams {
   to: string;
   userName: string | null;
   organizationName: string;
+  /** When set, an in-app notification is mirrored for the recipient. */
+  organizationId?: string;
+  recipientUserId?: string;
 }
 
 /**
@@ -27,7 +31,8 @@ export interface AgentInstallationReminderParams {
 export async function sendAgentInstallationReminderEmail(
   params: AgentInstallationReminderParams
 ): Promise<EmailResult> {
-  const { to, userName, organizationName } = params;
+  const { to, userName, organizationName, organizationId, recipientUserId } =
+    params;
 
   const displayName = userName || to.split("@")[0];
   const appUrl = process.env.NEXTAUTH_URL || "http://localhost:3000";
@@ -107,6 +112,16 @@ export async function sendAgentInstallationReminderEmail(
     });
 
     if (response.data?.id) {
+      await mirrorAlertInApp({
+        organizationId,
+        recipientUserId,
+        recipientEmail: to,
+        type: "SYSTEM",
+        title: "Install the device agent",
+        body: `${organizationName} asks you to install the FleetDM agent.`,
+        link: "/devices",
+        dedupeKey: `agent-reminder:${to}:${new Date().toISOString().slice(0, 10)}`,
+      });
       return { success: true, messageId: response.data.id };
     }
 
@@ -115,7 +130,6 @@ export async function sendAgentInstallationReminderEmail(
       error: "이메일 발송에 실패했습니다",
     };
   } catch (error) {
-    console.error("[sendAgentInstallationReminderEmail] Error:", error);
     return {
       success: false,
       error: error instanceof Error ? error.message : "알 수 없는 오류",

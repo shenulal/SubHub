@@ -85,6 +85,23 @@ export default defineConfig({
         __dirname,
         "./src/hooks/use-dismissed-alerts"
       ),
+      // SubHub hooks live in src/hooks (registered before the ui-registry fallback)
+      "@/hooks/use-permissions": path.resolve(
+        __dirname,
+        "./src/hooks/use-permissions"
+      ),
+      "@/hooks/use-base-currency": path.resolve(
+        __dirname,
+        "./src/hooks/use-base-currency"
+      ),
+      "@/hooks/use-workspace-scope": path.resolve(
+        __dirname,
+        "./src/hooks/use-workspace-scope"
+      ),
+      "@/hooks/use-element-size": path.resolve(
+        __dirname,
+        "./src/hooks/use-element-size"
+      ),
       "@/hooks": path.resolve(__dirname, "./packages/ui-registry/src/hooks"),
       // lib/utils/renewal-date는 src에서 가져옴 (@/lib/utils보다 먼저 등록)
       "@/lib/utils/renewal-date": path.resolve(

@@ -1,13 +1,14 @@
 // src/lib/services/cost/costAnomalyScan.ts
 import { prisma } from "@/lib/db";
+import { getBaseCurrency } from "@/lib/fx/base-currency";
 import { sendCostAnomalyAlertEmail } from "@/lib/services/notification/securityAlert";
+import { getSetting } from "@/lib/settings/service";
 
 // 조직 설정 타입
 interface OrganizationSettings {
   notifications?: {
     emailEnabled?: boolean;
     costAnomalyAlerts?: boolean;
-    costAnomalyThreshold?: number; // 기본 50%
   };
 }
 
@@ -54,7 +55,7 @@ export async function processCostAnomalyScan(): Promise<CostAnomalyScanResult> {
         settings: true,
         users: {
           where: { role: "ADMIN", status: "ACTIVE" },
-          select: { email: true },
+          select: { id: true, email: true },
         },
       },
     });
@@ -69,6 +70,7 @@ export async function processCostAnomalyScan(): Promise<CostAnomalyScanResult> {
             name: org.name,
             settings: org.settings,
             adminEmails: org.users.map((u) => u.email),
+            admins: org.users,
           },
           result
         );
@@ -95,13 +97,18 @@ async function processOrganization(
     name: string;
     settings: unknown;
     adminEmails: string[];
+    admins: Array<{ id: string; email: string }>;
   },
   result: CostAnomalyScanResult
 ): Promise<void> {
   const settings = org.settings as OrganizationSettings;
   const costAnomalyAlerts = settings?.notifications?.costAnomalyAlerts ?? true;
   const emailEnabled = settings?.notifications?.emailEnabled ?? true;
-  const threshold = settings?.notifications?.costAnomalyThreshold ?? 50; // 기본 50%
+  // Threshold lives on the settings registry (admin section of /settings/notifications)
+  const threshold = await getSetting(
+    org.id,
+    "discovery.costAnomalyThresholdPercent"
+  );
 
   // 알림 비활성화된 경우 스킵
   if (!costAnomalyAlerts || !emailEnabled) {
@@ -131,15 +138,19 @@ async function processOrganization(
 
     const period = `${previousMonth.getFullYear()}년 ${previousMonth.getMonth() + 1}월 → ${currentMonth.getFullYear()}년 ${currentMonth.getMonth() + 1}월`;
 
-    for (const adminEmail of org.adminEmails) {
+    const baseCurrency = await getBaseCurrency(org.id);
+    for (const admin of org.admins) {
+      const adminEmail = admin.email;
       const emailResult = await sendCostAnomalyAlertEmail({
         to: adminEmail,
+        organizationId: org.id,
+        recipientUserId: admin.id,
         organizationName: org.name,
         appName: anomaly.appName,
         previousCost: anomaly.previousMonthCost,
         currentCost: anomaly.currentMonthCost,
         percentageIncrease: Math.round(anomaly.percentageChange),
-        currency: "KRW",
+        currency: baseCurrency,
         period,
       });
 

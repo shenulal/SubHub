@@ -1,1 +1,185 @@
-{}
+{
+  "receipts": {
+    "common": {
+      "providers": { "GMAIL": "Gmail", "OUTLOOK": "Outlook" },
+      "cycles": {
+        "MONTHLY": "Monthly",
+        "QUARTERLY": "Quarterly",
+        "YEARLY": "Yearly",
+        "ONE_TIME": "One-time",
+        "unknown": "Unknown cycle"
+      },
+      "confidence": {
+        "label": "Confidence",
+        "high": "High",
+        "medium": "Medium",
+        "low": "Low"
+      },
+      "status": {
+        "NEW": "New",
+        "ACCEPTED": "Accepted",
+        "DISMISSED": "Dismissed",
+        "DUPLICATE": "Duplicate"
+      },
+      "actions": {
+        "accept": "Accept",
+        "link": "Link to existing",
+        "dismiss": "Dismiss",
+        "cancel": "Cancel",
+        "save": "Save",
+        "retry": "Retry"
+      },
+      "never": "Never",
+      "unknownAmount": "Amount not detected",
+      "loading": "Loading…",
+      "errors": {
+        "generic": "Something went wrong. Please try again.",
+        "forbidden": "You do not have permission to perform this action."
+      }
+    },
+    "queue": {
+      "title": "Receipt suggestions",
+      "subtitle": "Subscriptions detected from receipts in your connected mailboxes. Review, accept or dismiss.",
+      "tabs": {
+        "NEW": "To review",
+        "DUPLICATE": "Already tracked",
+        "ACCEPTED": "Accepted",
+        "DISMISSED": "Dismissed"
+      },
+      "filters": {
+        "search": "Search vendor, subject or sender",
+        "mailbox": "Mailbox",
+        "allMailboxes": "All mailboxes",
+        "minConfidence": "Min. confidence",
+        "anyConfidence": "Any confidence",
+        "clear": "Clear filters"
+      },
+      "columns": {
+        "vendor": "Vendor",
+        "amount": "Amount",
+        "cycle": "Cycle",
+        "chargedAt": "Charged",
+        "confidence": "Confidence",
+        "match": "Match",
+        "actions": "Actions"
+      },
+      "badges": {
+        "duplicate": "Duplicate of {name}",
+        "matched": "Looks like {name}",
+        "priceChange": "Price differs from {amount}",
+        "trial": "Trial",
+        "catalog": "In catalog"
+      },
+      "snippet": {
+        "show": "Show email snippet",
+        "hide": "Hide email snippet",
+        "from": "From {email}",
+        "subject": "Subject",
+        "via": "via {mailbox}"
+      },
+      "bulk": {
+        "selected": "{count, plural, one {# selected} other {# selected}}",
+        "dismissSelected": "Dismiss selected",
+        "selectAll": "Select all on this page",
+        "clear": "Clear selection"
+      },
+      "empty": {
+        "title": "Nothing to review",
+        "description": "New suggestions appear here after each mailbox scan.",
+        "noMailboxes": "Connect a mailbox in Settings to start detecting receipts.",
+        "connectCta": "Connect a mailbox",
+        "filtered": "No suggestions match the current filters."
+      },
+      "pagination": {
+        "summary": "{from}–{to} of {total}",
+        "previous": "Previous",
+        "next": "Next"
+      },
+      "toasts": {
+        "accepted": "Subscription created from receipt",
+        "acceptedLinked": "Linked to the existing subscription for this app",
+        "linked": "Suggestion linked to subscription",
+        "dismissed": "{count, plural, one {# suggestion dismissed} other {# suggestions dismissed}}",
+        "failed": "Action failed: {error}"
+      },
+      "accept": {
+        "title": "Create subscription from receipt",
+        "description": "Review the detected values before creating the subscription.",
+        "name": "Service name",
+        "amount": "Amount",
+        "currency": "Currency",
+        "cycle": "Billing cycle",
+        "startDate": "Start date",
+        "renewalDate": "Next renewal",
+        "category": "Category",
+        "noCategory": "No category",
+        "suggestedCategory": "Suggested",
+        "isTrial": "This is a trial",
+        "trialEndsAt": "Trial ends",
+        "notes": "Notes",
+        "submit": "Create subscription",
+        "submitting": "Creating…"
+      },
+      "link": {
+        "title": "Link to an existing subscription",
+        "description": "Attach this receipt to a subscription you already track.",
+        "search": "Search subscriptions",
+        "noResults": "No subscriptions found",
+        "updateAmount": "Record the receipt amount as the last detected amount",
+        "submit": "Link",
+        "submitting": "Linking…"
+      }
+    },
+    "mailboxes": {
+      "title": "Connected mailboxes",
+      "subtitle": "Connect your work mailbox so SubHub can detect subscription receipts automatically.",
+      "connect": {
+        "heading": "Connect a mailbox",
+        "gmail": "Connect Gmail",
+        "outlook": "Connect Outlook",
+        "notConfigured": "Not available: the {provider} OAuth client is not configured for this environment.",
+        "connected": "Mailbox connected. The first scan runs within the next scheduled window, or scan now.",
+        "errors": {
+          "denied": "Access was denied on the provider consent screen.",
+          "invalid_state": "The sign-in session expired or was tampered with. Please try again.",
+          "session_mismatch": "The mailbox connection did not match your current session.",
+          "missing_code": "The provider did not return an authorisation code.",
+          "exchange_failed": "We could not complete the connection with the provider. Please try again."
+        }
+      },
+      "list": {
+        "own": "Your mailboxes",
+        "all": "All organisation mailboxes",
+        "empty": "No mailboxes connected yet.",
+        "owner": "Owner",
+        "lastScan": "Last scan",
+        "suggestions": "{count, plural, one {# suggestion} other {# suggestions}}",
+        "newSuggestions": "{count} new",
+        "status": {
+          "ACTIVE": "Active",
+          "ERROR": "Error",
+          "REVOKED": "Access revoked"
+        },
+        "scanNow": "Scan now",
+        "scanning": "Scanning…",
+        "disconnect": "Disconnect",
+        "disconnectConfirmTitle": "Disconnect {email}?",
+        "disconnectConfirmDescription": "Stored tokens and all pending suggestions from this mailbox will be deleted. Accepted subscriptions are kept.",
+        "reviewQueue": "Review suggestions",
+        "reconnect": "Reconnect"
+      },
+      "toasts": {
+        "scanned": "Scan finished: {fetched} messages checked, {created} new suggestions",
+        "scanFailed": "Scan failed: {error}",
+        "disconnected": "Mailbox disconnected"
+      },
+      "privacy": {
+        "title": "What SubHub reads",
+        "readOnly": "Read-only access. SubHub never sends, moves or deletes email.",
+        "receiptsOnly": "Only messages that look like receipts, invoices or renewal notices are fetched; everything else is skipped at the provider.",
+        "snippets": "We keep the vendor, amount, dates and a short text snippet per suggestion — never full message bodies.",
+        "encrypted": "OAuth tokens are encrypted at rest with AES-256-GCM and are deleted when you disconnect."
+      }
+    }
+  }
+}

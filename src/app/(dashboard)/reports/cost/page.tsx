@@ -21,6 +21,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { auth } from "@/lib/auth";
+import { getBaseCurrency } from "@/lib/fx/base-currency";
+import { DEFAULT_BASE_CURRENCY, formatMoney } from "@/lib/fx/convert";
 import {
   AlertTriangle,
   ArrowDownIcon,
@@ -44,12 +46,8 @@ export async function generateMetadata(): Promise<Metadata> {
 // NextAuth 세션 조회 + 실시간 비용 데이터(fetch + headers 사용)로 인해 정적 프리렌더 불가
 export const dynamic = "force-dynamic";
 
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("ko-KR", {
-    style: "currency",
-    currency: "KRW",
-    maximumFractionDigits: 0,
-  }).format(amount);
+function formatCurrency(amount: number, currency: string): string {
+  return formatMoney(amount, currency, "ko", 0);
 }
 
 function formatPercentage(value: number): string {
@@ -72,6 +70,9 @@ export default async function CostAnalysisPage({ searchParams }: PageProps) {
     redirect("/login");
   }
 
+  const baseCurrency = session.user.organizationId
+    ? await getBaseCurrency(session.user.organizationId)
+    : DEFAULT_BASE_CURRENCY;
   const params = await searchParams;
   const isRestricted = session.user.role !== "ADMIN";
   const requestedTeamId = params.teamId ?? null;
@@ -165,7 +166,12 @@ export default async function CostAnalysisPage({ searchParams }: PageProps) {
           <div className="flex flex-1 flex-col gap-2 px-2">
             <p className="text-primary text-xs">{t("stats.totalCost")}</p>
             <p className="text-secondary-foreground text-2xl font-medium">
-              {statistics ? formatCurrency(statistics.totalCost) : "-"}
+              {statistics
+                ? formatCurrency(
+                    statistics.totalCost,
+                    statistics.currency || baseCurrency
+                  )
+                : "-"}
             </p>
           </div>
           {statistics && statistics.costChange !== 0 && (
@@ -194,7 +200,12 @@ export default async function CostAnalysisPage({ searchParams }: PageProps) {
           <div className="flex flex-1 flex-col gap-2 px-2">
             <p className="text-primary text-xs">{t("stats.monthlyAverage")}</p>
             <p className="text-secondary-foreground text-2xl font-medium">
-              {statistics ? formatCurrency(statistics.monthlyAverage) : "-"}
+              {statistics
+                ? formatCurrency(
+                    statistics.monthlyAverage,
+                    statistics.currency || baseCurrency
+                  )
+                : "-"}
             </p>
           </div>
           <div className="bg-purple-gray rounded p-2">
@@ -283,7 +294,7 @@ export default async function CostAnalysisPage({ searchParams }: PageProps) {
                       </div>
                     </div>
                     <span className="font-medium">
-                      {formatCurrency(app.totalCost)}
+                      {formatCurrency(app.totalCost, baseCurrency)}
                     </span>
                   </div>
                 ))}
@@ -320,8 +331,8 @@ export default async function CostAnalysisPage({ searchParams }: PageProps) {
                     <div>
                       <p className="font-medium">{anomaly.appName}</p>
                       <p className="text-muted-foreground text-xs">
-                        {formatCurrency(anomaly.previousCost)} →{" "}
-                        {formatCurrency(anomaly.currentCost)}
+                        {formatCurrency(anomaly.previousCost, baseCurrency)} →{" "}
+                        {formatCurrency(anomaly.currentCost, baseCurrency)}
                       </p>
                     </div>
                     <Badge

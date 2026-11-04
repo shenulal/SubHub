@@ -2,6 +2,7 @@
 
 import { requireOrganization } from "@/lib/auth/require-auth";
 import { prisma } from "@/lib/db";
+import { getBaseCurrency } from "@/lib/fx/base-currency";
 import { withLogging } from "@/lib/logging";
 import { detectBillingType } from "@/lib/services/subscription/seat-detector";
 import { calculateNextRenewalDate } from "@/lib/utils/renewal-date";
@@ -427,7 +428,8 @@ export async function suggestSubscriptionsFromPayments(): Promise<
           appLogoUrl: app.customLogoUrl || app.catalog?.logoUrl || null,
           suggestedBillingCycle: billingCycle,
           suggestedAmount: Math.round(avgAmount),
-          currency: payments[0]?.currency || "KRW",
+          currency:
+            payments[0]?.currency || (await getBaseCurrency(organizationId)),
           paymentCount: payments.length,
           firstPaymentDate: group._min.transactionDate!,
           lastPaymentDate: group._max.transactionDate!,
@@ -1520,7 +1522,8 @@ export async function suggestFromCardTransactions(): Promise<
         appLogoUrl: app.customLogoUrl || app.catalog?.logoUrl || null,
         suggestedBillingCycle: billingCycle,
         suggestedAmount: Math.round(avgAmount),
-        currency: "KRW", // CardTransaction에는 currency 필드 없음, 기본값 사용
+        // CardTransaction has no currency column → organisation base currency
+        currency: await getBaseCurrency(organizationId),
         paymentCount: transactions.length,
         firstPaymentDate: parseYYYYMMDD(group._min.useDt!),
         lastPaymentDate: parseYYYYMMDD(group._max.useDt!),

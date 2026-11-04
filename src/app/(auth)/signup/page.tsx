@@ -2,10 +2,12 @@
 // 회원가입 페이지 (이메일/비밀번호 + Google OAuth)
 
 import { registerUser } from "@/actions/auth-credentials";
+import { AppleSignInButton } from "@/components/auth/apple-sign-in-button";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { auth, signIn } from "@/lib/auth";
+import { getSignInOptions } from "@/lib/auth/sign-in-options";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
 import { redirect } from "next/navigation";
@@ -28,6 +30,28 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
     } else {
       redirect("/onboarding");
     }
+  }
+
+  const { appleEnabled, enforceSso, allowSelfSignup } =
+    await getSignInOptions();
+
+  if (!allowSelfSignup) {
+    return (
+      <div data-testid="signup-page" className="w-full space-y-6">
+        <h2
+          className="text-[28px] font-semibold"
+          style={{ color: "var(--auth-text-primary)" }}
+        >
+          {t("auth.signup.title")}
+        </h2>
+        <p className="text-sm" style={{ color: "var(--auth-text-secondary)" }}>
+          {t("platform.auth.selfSignupDisabled")}
+        </p>
+        <Button asChild variant="outline" className="w-full">
+          <Link href="/login">{t("auth.signup.footer.login")}</Link>
+        </Button>
+      </div>
+    );
   }
 
   const errorConfig: Record<
@@ -107,112 +131,144 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
         </form>
       )}
 
-      {/* 구분선 */}
-      <div className="relative my-7">
-        <div className="absolute inset-0 flex items-center">
-          <Separator className="w-full bg-[var(--auth-border)]" />
-        </div>
-        <div className="relative flex justify-center text-xs uppercase">
-          <span
-            className="px-4 text-[12px]"
+      {appleEnabled && (
+        <div className="mt-3">
+          <AppleSignInButton
+            label={t("platform.auth.continueWithApple")}
+            className="h-[50px] rounded-xl text-sm transition-colors"
             style={{
-              background: "var(--auth-panel-bg)",
-              color: "var(--auth-text-secondary)",
+              background: "transparent",
+              border: "1px solid var(--auth-border)",
+              color: "var(--auth-text-primary)",
             }}
-          >
-            {t("auth.signup.emailDivider")}
-          </span>
-        </div>
-      </div>
-
-      {/* 이메일/비밀번호 폼 */}
-      <form
-        action={async (formData: FormData) => {
-          "use server";
-          const result = await registerUser(formData);
-          const { redirect } = await import("next/navigation");
-
-          if (result.success) {
-            redirect("/login?message=verify-email");
-          }
-          if (result.error) {
-            redirect(`/signup?error=${result.error}`);
-          }
-        }}
-        className="space-y-5"
-      >
-        {/* 이름 */}
-        <div className="space-y-2">
-          <label
-            htmlFor="name"
-            className="block text-[13px] font-medium"
-            style={{ color: "var(--auth-text-secondary)" }}
-          >
-            {t("auth.signup.form.name")}
-          </label>
-          <Input
-            id="name"
-            name="name"
-            type="text"
-            placeholder={t("auth.signup.form.namePlaceholder")}
-            required
-            className="h-12 rounded-xl border-[var(--auth-input-border)] bg-[var(--auth-input-bg)] text-[var(--auth-text-primary)] placeholder:text-[var(--auth-text-muted)] focus-visible:border-[#06d6a0] focus-visible:ring-[#06d6a020]"
+            action={async () => {
+              "use server";
+              await signIn("apple", { redirectTo: "/dashboard" });
+            }}
           />
         </div>
+      )}
 
-        {/* 이메일 */}
-        <div className="space-y-2">
-          <label
-            htmlFor="email"
-            className="block text-[13px] font-medium"
-            style={{ color: "var(--auth-text-secondary)" }}
-          >
-            {t("auth.signup.form.email")}
-          </label>
-          <Input
-            id="email"
-            name="email"
-            type="email"
-            placeholder={t("auth.signup.form.emailPlaceholder")}
-            required
-            className="h-12 rounded-xl border-[var(--auth-input-border)] bg-[var(--auth-input-bg)] text-[var(--auth-text-primary)] placeholder:text-[var(--auth-text-muted)] focus-visible:border-[#06d6a0] focus-visible:ring-[#06d6a020]"
-          />
-        </div>
-
-        {/* 비밀번호 */}
-        <div className="space-y-2">
-          <label
-            htmlFor="password"
-            className="block text-[13px] font-medium"
-            style={{ color: "var(--auth-text-secondary)" }}
-          >
-            {t("auth.signup.form.password")}
-          </label>
-          <Input
-            id="password"
-            name="password"
-            type="password"
-            placeholder={t("auth.signup.form.passwordPlaceholder")}
-            required
-            className="h-12 rounded-xl border-[var(--auth-input-border)] bg-[var(--auth-input-bg)] text-[var(--auth-text-primary)] placeholder:text-[var(--auth-text-muted)] focus-visible:border-[#06d6a0] focus-visible:ring-[#06d6a020]"
-          />
-          <p className="text-xs" style={{ color: "var(--auth-text-muted)" }}>
-            {t("auth.signup.form.passwordHint")}
-          </p>
-        </div>
-
-        {/* 회원가입 버튼 */}
-        <Button
-          type="submit"
-          className="h-12 w-full rounded-xl border-none text-[15px] font-semibold transition-all hover:-translate-y-px hover:shadow-[0_8px_30px_rgba(6,214,160,0.3)]"
-          style={{
-            background: "linear-gradient(135deg, #06d6a0, #0891b2)",
-            color: "#0a0e1a",
-          }}
+      {enforceSso ? (
+        <p
+          className="mt-6 text-center text-sm"
+          style={{ color: "var(--auth-text-secondary)" }}
         >
-          {t("auth.signup.form.submit")}
-        </Button>
-      </form>
+          {t("platform.auth.ssoOnly")}
+        </p>
+      ) : (
+        <>
+          {/* 구분선 */}
+          <div className="relative my-7">
+            <div className="absolute inset-0 flex items-center">
+              <Separator className="w-full bg-[var(--auth-border)]" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span
+                className="px-4 text-[12px]"
+                style={{
+                  background: "var(--auth-panel-bg)",
+                  color: "var(--auth-text-secondary)",
+                }}
+              >
+                {t("auth.signup.emailDivider")}
+              </span>
+            </div>
+          </div>
+
+          {/* 이메일/비밀번호 폼 */}
+          <form
+            action={async (formData: FormData) => {
+              "use server";
+              const result = await registerUser(formData);
+              const { redirect } = await import("next/navigation");
+
+              if (result.success) {
+                redirect("/login?message=verify-email");
+              }
+              if (result.error) {
+                redirect(`/signup?error=${result.error}`);
+              }
+            }}
+            className="space-y-5"
+          >
+            {/* 이름 */}
+            <div className="space-y-2">
+              <label
+                htmlFor="name"
+                className="block text-[13px] font-medium"
+                style={{ color: "var(--auth-text-secondary)" }}
+              >
+                {t("auth.signup.form.name")}
+              </label>
+              <Input
+                id="name"
+                name="name"
+                type="text"
+                placeholder={t("auth.signup.form.namePlaceholder")}
+                required
+                className="h-12 rounded-xl border-[var(--auth-input-border)] bg-[var(--auth-input-bg)] text-[var(--auth-text-primary)] placeholder:text-[var(--auth-text-muted)] focus-visible:border-[#06d6a0] focus-visible:ring-[#06d6a020]"
+              />
+            </div>
+
+            {/* 이메일 */}
+            <div className="space-y-2">
+              <label
+                htmlFor="email"
+                className="block text-[13px] font-medium"
+                style={{ color: "var(--auth-text-secondary)" }}
+              >
+                {t("auth.signup.form.email")}
+              </label>
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                placeholder={t("auth.signup.form.emailPlaceholder")}
+                required
+                className="h-12 rounded-xl border-[var(--auth-input-border)] bg-[var(--auth-input-bg)] text-[var(--auth-text-primary)] placeholder:text-[var(--auth-text-muted)] focus-visible:border-[#06d6a0] focus-visible:ring-[#06d6a020]"
+              />
+            </div>
+
+            {/* 비밀번호 */}
+            <div className="space-y-2">
+              <label
+                htmlFor="password"
+                className="block text-[13px] font-medium"
+                style={{ color: "var(--auth-text-secondary)" }}
+              >
+                {t("auth.signup.form.password")}
+              </label>
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                placeholder={t("auth.signup.form.passwordPlaceholder")}
+                required
+                className="h-12 rounded-xl border-[var(--auth-input-border)] bg-[var(--auth-input-bg)] text-[var(--auth-text-primary)] placeholder:text-[var(--auth-text-muted)] focus-visible:border-[#06d6a0] focus-visible:ring-[#06d6a020]"
+              />
+              <p
+                className="text-xs"
+                style={{ color: "var(--auth-text-muted)" }}
+              >
+                {t("auth.signup.form.passwordHint")}
+              </p>
+            </div>
+
+            {/* 회원가입 버튼 */}
+            <Button
+              type="submit"
+              className="h-12 w-full rounded-xl border-none text-[15px] font-semibold transition-all hover:-translate-y-px hover:shadow-[0_8px_30px_rgba(6,214,160,0.3)]"
+              style={{
+                background: "linear-gradient(135deg, #06d6a0, #0891b2)",
+                color: "#0a0e1a",
+              }}
+            >
+              {t("auth.signup.form.submit")}
+            </Button>
+          </form>
+        </>
+      )}
 
       {/* 푸터 */}
       <div className="mt-8 space-y-3 text-center">

@@ -1,6 +1,7 @@
 // src/app/(dashboard)/subscriptions/[id]/edit/page.client.tsx
 "use client";
 
+import type { SubscriptionFormOptions } from "@/actions/subscriptions/subscription-form-options";
 import { SubscriptionForm } from "@/components/subscriptions/subscription-form";
 import type {
   AppWithTeams,
@@ -19,6 +20,7 @@ interface SubscriptionEditPageClientProps {
   isAdmin: boolean;
   subscription: SubscriptionDetail;
   title: string;
+  options?: SubscriptionFormOptions;
 }
 
 export function SubscriptionEditPageClient({
@@ -27,6 +29,7 @@ export function SubscriptionEditPageClient({
   isAdmin,
   subscription,
   title,
+  options,
 }: SubscriptionEditPageClientProps) {
   const t = useTranslations("subscriptions");
   const router = useRouter();
@@ -64,6 +67,7 @@ export function SubscriptionEditPageClient({
         hideActions={true}
         formId="subscription-edit-form"
         onPendingChange={setIsPending}
+        options={options}
       />
     </div>
   );

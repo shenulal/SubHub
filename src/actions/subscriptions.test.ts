@@ -24,11 +24,62 @@ vi.mock("@/lib/db", () => ({
     },
     app: {
       findFirst: vi.fn(),
+      create: vi.fn(),
     },
     auditLog: {
       create: vi.fn(),
     },
+    user: { findMany: vi.fn().mockResolvedValue([]) },
+    appTeam: { createMany: vi.fn() },
+    subscriptionTeam: { createMany: vi.fn(), deleteMany: vi.fn() },
+    subscriptionUser: { createMany: vi.fn(), deleteMany: vi.fn() },
+    subscriptionTag: { createMany: vi.fn(), deleteMany: vi.fn() },
+    customFieldDefinition: { findMany: vi.fn().mockResolvedValue([]) },
+    customFieldValue: { createMany: vi.fn(), deleteMany: vi.fn() },
   },
+}));
+
+// RBAC: delegate to the session helper so unauthenticated calls still redirect.
+vi.mock("@/lib/rbac/service", async () => {
+  const { requireOrganization } = await import("@/lib/auth/require-auth");
+  return {
+    requirePermission: vi.fn(async () => {
+      const ctx = await requireOrganization();
+      return { ...ctx, permissions: new Set<string>() };
+    }),
+    getUserPermissionSet: vi.fn(async () => new Set<string>()),
+    isForbiddenError: () => false,
+  };
+});
+
+// Settings: registry defaults, no database.
+vi.mock("@/lib/settings/service", async () => {
+  const { SETTING_DEFINITIONS } = await import("@/lib/settings/registry");
+  const defaults = (keys: readonly string[]) =>
+    Object.fromEntries(
+      keys.map((k) => [
+        k,
+        SETTING_DEFINITIONS[k as keyof typeof SETTING_DEFINITIONS].defaultValue,
+      ])
+    );
+  return {
+    getSetting: vi.fn(
+      async (_org: string, key: string) => defaults([key])[key]
+    ),
+    getSettings: vi.fn(async (_org: string, keys: readonly string[]) =>
+      defaults(keys)
+    ),
+  };
+});
+
+vi.mock("@/actions/subscriptions/taxonomy-adapter", () => ({
+  ensureTags: vi.fn(async () => []),
+  validateCustomFieldValues: vi.fn(async () => ({ success: true })),
+}));
+
+vi.mock("@/lib/services/subscription/money-adapter", () => ({
+  toMonthlyBaseAmount: vi.fn(async () => null),
+  resolveBaseCurrency: vi.fn(async () => null),
 }));
 
 vi.mock("@/lib/auth", () => ({

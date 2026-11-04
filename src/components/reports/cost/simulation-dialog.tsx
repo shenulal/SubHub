@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { Slider } from "@/components/ui/slider";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
+import { DEFAULT_BASE_CURRENCY } from "@/lib/fx/convert";
 import type {
   SeatOptimizationItem,
   SimulationResult,
@@ -19,7 +20,7 @@ import type {
 import { Loader2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
-function formatCurrency(value: number, currency = "KRW") {
+function formatCurrency(value: number, currency = DEFAULT_BASE_CURRENCY) {
   return new Intl.NumberFormat("ko-KR", { style: "currency", currency }).format(
     value
   );

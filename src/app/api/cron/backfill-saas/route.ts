@@ -9,6 +9,7 @@
  */
 
 import { prisma } from "@/lib/db";
+import { getBaseCurrency } from "@/lib/fx/base-currency";
 import { matchMerchantWithLLM } from "@/lib/services/saas-matcher";
 import { PaymentMatchStatus } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
@@ -82,7 +83,7 @@ async function processCardTransactions() {
       memo: tx.useDiv || null,
       storeBizNo: tx.storeBizNo || null,
       amount: Number(tx.useAmt),
-      currency: "KRW",
+      currency: await getBaseCurrency(tx.organizationId),
     });
 
     const data: Record<string, unknown> = {

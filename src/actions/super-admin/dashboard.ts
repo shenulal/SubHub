@@ -3,6 +3,7 @@
 
 import { requireSuperAdmin } from "@/lib/auth/require-auth";
 import { prisma } from "@/lib/db";
+import { getBaseCurrency } from "@/lib/fx/base-currency";
 import { withLogging } from "@/lib/logging";
 import type { ActionState } from "@/types";
 
@@ -59,7 +60,8 @@ async function _getSuperAdminStats(): Promise<ActionState<SuperAdminStats>> {
 
   // 월 환산 비용 계산
   let monthlyTotalCost = 0;
-  const currency = subscriptions[0]?.currency ?? "KRW";
+  const currency =
+    subscriptions[0]?.currency ?? (await getBaseCurrency(org.id));
 
   for (const sub of subscriptions) {
     const amount = Number(sub.amount);

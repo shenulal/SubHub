@@ -1,16 +1,12 @@
 // src/components/subscriptions/subscription-detail.utils.ts
 
+import { formatMoney } from "@/lib/fx/convert";
+
 /**
  * 금액을 통화 형식으로 포맷팅
  */
 export function formatCurrency(amount: number, currency: string): string {
-  if (currency === "KRW") {
-    return `₩${amount.toLocaleString()}`;
-  } else if (currency === "USD") {
-    return `$${amount.toLocaleString()}`;
-  } else {
-    return `${currency} ${amount.toLocaleString()}`;
-  }
+  return formatMoney(amount, currency);
 }
 
 /**

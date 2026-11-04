@@ -30,6 +30,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useBaseCurrency } from "@/hooks/use-base-currency";
+import { formatMoney } from "@/lib/fx/convert";
 import {
   ArrowUpDown,
   ChevronLeft,
@@ -155,12 +157,9 @@ export function CardTransactionsTable({
   };
 
   // 금액 포맷
-  const formatAmount = (amount: number) => {
-    return new Intl.NumberFormat("ko-KR", {
-      style: "currency",
-      currency: "KRW",
-    }).format(amount);
-  };
+  const { baseCurrency } = useBaseCurrency();
+  const formatAmount = (amount: number) =>
+    formatMoney(amount, baseCurrency, "ko");
 
   // 검색 필터링 (클라이언트 측)
   const filteredTransactions = transactions.filter((t) =>

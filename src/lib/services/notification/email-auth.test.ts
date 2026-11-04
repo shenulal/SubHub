@@ -5,13 +5,13 @@ import { sendPasswordResetEmail, sendVerificationEmail } from "./email-auth";
 
 // Mock resend
 vi.mock("resend", () => ({
-  Resend: vi.fn().mockImplementation(() => ({
-    emails: {
+  Resend: class {
+    emails = {
       send: vi
         .fn()
         .mockResolvedValue({ data: { id: "email-id" }, error: null }),
-    },
-  })),
+    };
+  },
 }));
 
 describe("email-auth", () => {

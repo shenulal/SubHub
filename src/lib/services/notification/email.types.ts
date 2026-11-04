@@ -36,6 +36,9 @@ export interface WelcomeEmailParams {
  */
 export interface TerminatedUserAlertParams {
   to: string;
+  /** When set, an in-app notification is mirrored for the recipient. */
+  organizationId?: string;
+  recipientUserId?: string;
   terminatedUserName: string;
   terminatedUserEmail: string;
   unrevokedApps: string[];

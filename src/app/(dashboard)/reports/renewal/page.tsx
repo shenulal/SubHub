@@ -6,6 +6,8 @@ import { RenewalCalendarSection } from "@/components/reports/renewal";
 import { TeamUserFilterRouter } from "@/components/reports/team-user-filter-router";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { auth } from "@/lib/auth";
+import { getBaseCurrency } from "@/lib/fx/base-currency";
+import { DEFAULT_BASE_CURRENCY } from "@/lib/fx/convert";
 import type { Metadata } from "next";
 import { getLocale, getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
@@ -21,7 +23,7 @@ export async function generateMetadata(): Promise<Metadata> {
 
 function formatCurrency(
   amount: number,
-  currency: string = "KRW",
+  currency: string,
   locale: string = "ko"
 ): string {
   return new Intl.NumberFormat(locale === "ko" ? "ko-KR" : "en-US", {
@@ -57,6 +59,9 @@ export default async function RenewalReportPage({ searchParams }: PageProps) {
     redirect("/login");
   }
 
+  const baseCurrency = session.user.organizationId
+    ? await getBaseCurrency(session.user.organizationId)
+    : DEFAULT_BASE_CURRENCY;
   const params = await searchParams;
   const isRestricted = session.user.role !== "ADMIN";
   const requestedTeamId = params.teamId ?? null;
@@ -170,7 +175,7 @@ export default async function RenewalReportPage({ searchParams }: PageProps) {
           <div className="flex flex-1 flex-col gap-2 px-2">
             <p className="text-primary text-xs">{t("stats.totalCost")}</p>
             <p className="text-secondary-foreground text-2xl font-medium">
-              {formatCurrency(data.totalRenewalCost, "KRW", locale)}
+              {formatCurrency(data.totalRenewalCost, baseCurrency, locale)}
             </p>
           </div>
           {/* <div className="bg-purple-gray rounded p-2">

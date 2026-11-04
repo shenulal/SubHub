@@ -22,6 +22,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useBaseCurrency } from "@/hooks/use-base-currency";
 import { cn } from "@/lib/utils";
 import { BillingCycle } from "@prisma/client";
 import {
@@ -46,6 +47,7 @@ import { SuggestionUserAssignment } from "./suggestion-user-assignment";
 type UnifiedSuggestion = CardTransactionSuggestion | PaymentRecordSuggestion;
 
 export function SubscriptionSuggestions() {
+  const { baseCurrency } = useBaseCurrency();
   const t = useTranslations("subscriptionSuggestions");
   const [suggestions, setSuggestions] = useState<UnifiedSuggestion[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -185,7 +187,7 @@ export function SubscriptionSuggestions() {
   const formatAmount = (amount: number, currency: string) => {
     return new Intl.NumberFormat(undefined, {
       style: "currency",
-      currency: currency || "KRW",
+      currency: currency || baseCurrency,
     }).format(amount);
   };
 

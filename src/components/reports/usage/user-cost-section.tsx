@@ -23,13 +23,14 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DEFAULT_BASE_CURRENCY } from "@/lib/fx/convert";
 import type { TeamCostComparison, UserCostItem } from "@/types/seat-analytics";
 import { ChevronDown, ChevronRight, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 
-function formatCurrency(value: number, currency = "KRW") {
+function formatCurrency(value: number, currency = DEFAULT_BASE_CURRENCY) {
   return new Intl.NumberFormat("ko-KR", { style: "currency", currency }).format(
     value
   );

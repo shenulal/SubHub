@@ -1,4 +1,5 @@
 // src/components/payments/payment-table.constants.ts
+import { DEFAULT_BASE_CURRENCY } from "@/lib/fx/convert";
 import type { PaymentMatchStatus } from "@prisma/client";
 import { useTranslations } from "next-intl";
 
@@ -42,7 +43,7 @@ export function getPaymentRecordColumns(t: ReturnType<typeof useTranslations>) {
 export function formatAmount(amount: number, currency: string) {
   return new Intl.NumberFormat("ko-KR", {
     style: "currency",
-    currency: currency || "KRW",
+    currency: currency || DEFAULT_BASE_CURRENCY,
   }).format(amount);
 }
 

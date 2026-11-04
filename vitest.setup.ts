@@ -148,11 +148,12 @@ vi.mock("next-intl/server", () => {
 });
 
 // ResizeObserver 모킹 (shadcn/ui 컴포넌트에 필요)
-global.ResizeObserver = vi.fn().mockImplementation(() => ({
-  observe: vi.fn(),
-  unobserve: vi.fn(),
-  disconnect: vi.fn(),
-}));
+class ResizeObserverMock {
+  observe = vi.fn();
+  unobserve = vi.fn();
+  disconnect = vi.fn();
+}
+global.ResizeObserver = ResizeObserverMock as unknown as typeof ResizeObserver;
 
 // matchMedia 모킹
 Object.defineProperty(window, "matchMedia", {

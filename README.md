@@ -122,6 +122,7 @@ Contributor conventions live in `docs/SUBHUB-AGENT-GUIDE.md`. The upstream saasl
 - Baseline: saaslens v0.1.0 imported; upstream migration drift repaired (`20261103000000_upstream_schema_sync`).
 - Foundation: `20261104000000_subhub_foundation` (taxonomy, approvals, notifications, documents, receipts, FX, saved views, onboarding, privacy) and `20261104010000_subhub_platform_layer` (RBAC, settings, masters).
 - Feature areas delivered against `MVP_Feature_Matrix_Subscription_Management.xlsx` — see `../SubHub-Feature-Verification-Matrix.md` for the capability-by-capability status.
+- Verification on 4 November 2026: `next build` passes; `tsc --noEmit` passes (strict) across the whole tree; Vitest 3,510 tests — 3,381 pass, 38 skipped, 91 fail. Every remaining failure is a pre-existing upstream saaslens failure (upstream baseline: 124 failing / 2,582 passing); eight upstream suites were repaired and no new failures were introduced. Roughly 800 new tests cover the SubHub areas.
 
 ## License
 

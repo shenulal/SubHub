@@ -3,6 +3,7 @@
 import { getCachedSession } from "@/lib/auth/require-auth";
 import { decryptJson } from "@/lib/crypto";
 import { prisma } from "@/lib/db";
+import { getBaseCurrency } from "@/lib/fx/base-currency";
 import { logger } from "@/lib/logger";
 import { withLogging } from "@/lib/logging";
 import {
@@ -288,6 +289,7 @@ async function _syncCardTransactions(
       { appId: string | null; confidence: number; matchSource: MatchSource }
     >();
 
+    const baseCurrency = await getBaseCurrency(organizationId);
     for (const tx of needsLLM) {
       const key = `${tx.item.apprNo}_${tx.item.useDt}`;
       const llmMatch = await matchMerchantWithLLM({
@@ -296,7 +298,7 @@ async function _syncCardTransactions(
         memo: tx.item.useDiv || null,
         storeBizNo: tx.item.storeBizNo || null,
         amount: parseFloat(tx.item.useAmt) || null,
-        currency: "KRW",
+        currency: baseCurrency,
       });
       llmResultsMap.set(key, {
         appId: llmMatch.appId,

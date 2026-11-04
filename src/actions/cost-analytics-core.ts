@@ -3,6 +3,7 @@
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { getBaseCurrency } from "@/lib/fx/base-currency";
 import type { ActionState } from "@/types";
 import type {
   AppCostDistribution,
@@ -274,13 +275,14 @@ export async function getCostStatistics(
 
     const costDifference = Math.round(currentTotal - previousTotal);
 
+    const baseCurrency = await getBaseCurrency(session.user.organizationId);
     const statistics: CostStatistics = {
       totalCost: currentTotal,
       monthlyAverage,
       costChange,
       costDifference,
       transactionCount: currentCount,
-      currency: "KRW",
+      currency: baseCurrency,
       periodStart,
       periodEnd,
       totalCostAll,

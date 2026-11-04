@@ -69,3 +69,4 @@ src/app/(local-preview)/
 (showcase)/
 claude-backup.zip
 .dev-pipeline/
+.data/

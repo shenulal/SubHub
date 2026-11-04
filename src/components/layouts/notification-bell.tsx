@@ -1,148 +1,117 @@
+// src/components/layouts/notification-bell.tsx
 "use client";
 
-import { Bell } from "lucide-react";
-import { useTranslations } from "next-intl";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-
+/**
+ * Header bell (11.1): unread badge polled every 60s, last 8 notifications,
+ * mark-read on click, "mark all read" and "view all" → /notifications.
+ */
+import { NotificationRow } from "@/components/notifications/notification-item";
 import {
-  getInAppNotifications,
-  type InAppNotification,
-  type InAppNotificationType,
-} from "@/actions/in-app-notifications";
+  useMarkRead,
+  useNotificationList,
+  useUnreadCount,
+} from "@/components/notifications/use-notifications";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
+import { BELL_PREVIEW_SIZE } from "@/lib/validations/notifications";
+import type { NotificationItem } from "@/types/notification";
+import { Bell, CheckCheck } from "lucide-react";
+import { useTranslations } from "next-intl";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
-// 알림 유형별 i18n 키 매핑
-const TYPE_I18N_MAP: Record<
-  InAppNotificationType,
-  { titleKey: string; detailKey: string }
-> = {
-  renewal: {
-    titleKey: "header.notifications.types.renewal.title",
-    detailKey: "header.notifications.types.renewal.detail",
-  },
-  offboarding: {
-    titleKey: "header.notifications.types.offboarding.title",
-    detailKey: "header.notifications.types.offboarding.detail",
-  },
-  shadowIT: {
-    titleKey: "header.notifications.types.shadowIT.title",
-    detailKey: "header.notifications.types.shadowIT.detail",
-  },
-  costAnomaly: {
-    titleKey: "header.notifications.types.costAnomaly.title",
-    detailKey: "header.notifications.types.costAnomaly.detail",
-  },
-  pendingReview: {
-    titleKey: "header.notifications.types.pendingReview.title",
-    detailKey: "header.notifications.types.pendingReview.detail",
-  },
-};
+const BADGE_MAX = 99;
 
 export function NotificationBell() {
-  const t = useTranslations();
+  const t = useTranslations("notifications.bell");
   const router = useRouter();
-  const [notifications, setNotifications] = useState<InAppNotification[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [open, setOpen] = useState(false);
+  const unread = useUnreadCount();
+  const list = useNotificationList({ limit: BELL_PREVIEW_SIZE });
+  const markRead = useMarkRead();
 
-  useEffect(() => {
-    let cancelled = false;
+  const count = unread.data ?? 0;
+  const items = (list.data?.pages[0]?.items ?? []).slice(0, BELL_PREVIEW_SIZE);
 
-    async function load() {
-      try {
-        const data = await getInAppNotifications();
-        if (!cancelled) {
-          setNotifications(data);
-        }
-      } catch {
-        // 조회 실패 시 빈 배열 유지
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    }
-
-    load();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const count = notifications.length;
-
-  function formatTitle(notif: InAppNotification): string {
-    const { titleKey } = TYPE_I18N_MAP[notif.type];
-    return t(titleKey, { value: notif.title });
-  }
-
-  function formatDetail(notif: InAppNotification): string {
-    const { detailKey } = TYPE_I18N_MAP[notif.type];
-    return t(detailKey, { value: notif.detail });
+  function openItem(item: NotificationItem) {
+    if (!item.readAt) markRead.mutate({ ids: [item.id] });
+    setOpen(false);
+    if (item.link) router.push(item.link);
   }
 
   return (
-    <DropdownMenu>
+    <DropdownMenu open={open} onOpenChange={setOpen}>
       <DropdownMenuTrigger asChild>
         <Button
           variant="ghost"
           size="icon"
-          aria-label={t("header.notifications.label")}
+          aria-label={count > 0 ? t("labelWithCount", { count }) : t("label")}
           className="relative"
         >
-          <Bell className={`h-5 w-5${count > 0 ? "animate-tada" : ""}`} />
-          {/* 동적 배지: 0이면 숨김, 9 초과면 "9+" */}
+          <Bell className={cn("h-5 w-5", count > 0 && "animate-tada")} />
           {count > 0 && (
-            <span className="bg-destructive text-destructive-foreground absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold">
-              {count > 9 ? "9+" : count}
+            <span
+              data-testid="unread-badge"
+              className="bg-destructive text-destructive-foreground absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold tabular-nums"
+            >
+              {count > BADGE_MAX ? `${BADGE_MAX}+` : count}
             </span>
           )}
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent
-        align="center"
-        className="max-h-80 w-80 overflow-y-auto"
-      >
-        <div className="text-muted-foreground px-2 py-1 text-xs font-medium">
-          {t("header.notifications.recent")}
+      <DropdownMenuContent align="end" className="w-[22rem] p-0 sm:w-96">
+        <header className="flex items-center justify-between px-3 py-2.5">
+          <p className="text-sm font-semibold">{t("title")}</p>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 gap-1 px-2 text-xs"
+            disabled={count === 0 || markRead.isPending}
+            onClick={() => markRead.mutate({ all: true })}
+          >
+            <CheckCheck className="h-3.5 w-3.5" aria-hidden="true" />
+            {t("markAllRead")}
+          </Button>
+        </header>
+        <div className="border-border/60 max-h-[26rem] overflow-y-auto border-y">
+          {list.isLoading && (
+            <div className="space-y-2 p-3" aria-busy="true">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-12 w-full" />
+              ))}
+            </div>
+          )}
+          {!list.isLoading && items.length === 0 && (
+            <p className="text-muted-foreground px-3 py-8 text-center text-sm">
+              {t("empty")}
+            </p>
+          )}
+          {!list.isLoading &&
+            items.map((item) => (
+              <NotificationRow
+                key={item.id}
+                item={item}
+                dense
+                onOpen={openItem}
+              />
+            ))}
         </div>
-        <DropdownMenuSeparator />
-
-        {/* 로딩 상태 */}
-        {loading && (
-          <div className="text-muted-foreground flex items-center justify-center py-6 text-sm">
-            <span className="animate-pulse">...</span>
-          </div>
-        )}
-
-        {/* 빈 상태 */}
-        {!loading && count === 0 && (
-          <div className="text-muted-foreground py-6 text-center text-sm">
-            {t("header.notifications.empty")}
-          </div>
-        )}
-
-        {/* 알림 목록 */}
-        {!loading &&
-          notifications.map((notif) => (
-            <DropdownMenuItem
-              key={notif.id}
-              className="flex cursor-pointer flex-col items-start gap-1 whitespace-normal"
-              onSelect={() => router.push(notif.link)}
-            >
-              <span className="text-sm font-medium">{formatTitle(notif)}</span>
-              <span className="text-muted-foreground text-xs">
-                {formatDetail(notif)}
-              </span>
-            </DropdownMenuItem>
-          ))}
+        <footer className="px-3 py-2">
+          <Link
+            href="/notifications"
+            onClick={() => setOpen(false)}
+            className="text-primary block text-center text-sm font-medium hover:underline"
+          >
+            {t("viewAll")}
+          </Link>
+        </footer>
       </DropdownMenuContent>
     </DropdownMenu>
   );

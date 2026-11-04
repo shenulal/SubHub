@@ -5,218 +5,202 @@
  * Subscription 생성/수정/삭제 관련 Server Actions
  */
 
-import { requireOrganization } from "@/lib/auth/require-auth";
 import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { withLogging } from "@/lib/logging";
+import { isForbiddenError, requirePermission } from "@/lib/rbac/service";
+import { computeCancellationDeadline } from "@/lib/services/subscription/contract-terms";
+import { getSettings } from "@/lib/settings/service";
 import type { ActionState } from "@/types";
-import { SubscriptionStatus } from "@prisma/client";
+import type { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
+import {
+  blankToNull,
+  parseSubscriptionFormData,
+  toDateOrNull,
+  type ParsedSubscriptionForm,
+} from "./subscription-crud-write.parse";
+import {
+  prepareAssignments,
+  prepareCustomFields,
+  resolveApp,
+  syncAssignments,
+  syncCustomFields,
+  syncTags,
+} from "./subscription-crud-write.relations";
 import {
   createSubscriptionSchema,
   isRedirectError,
   updateSubscriptionSchema,
+  type CreateSubscriptionData,
 } from "./subscription-crud.types";
+
+type IdResult = ActionState<{ id: string }>;
+
+const MESSAGES = {
+  forbidden: "이 작업에 대한 권한이 없습니다",
+  appNotFound: "앱을 찾을 수 없습니다",
+  notFound: "구독을 찾을 수 없습니다",
+  duplicateApp: "이 서비스에 대한 구독이 이미 존재합니다",
+  assignAdminOnly: "사용자 배정은 관리자만 가능합니다",
+  createError: "구독 생성 중 오류가 발생했습니다",
+  updateError: "구독 수정 중 오류가 발생했습니다",
+  deleteError: "구독 삭제 중 오류가 발생했습니다",
+} as const;
+
+const UNIQUE_VIOLATION = "P2002";
+
+function isUniqueViolation(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    (error as { code?: string }).code === UNIQUE_VIOLATION
+  );
+}
+
+function fieldErrors(error: {
+  flatten: () => { fieldErrors: Record<string, string[] | undefined> };
+}): IdResult {
+  return {
+    success: false,
+    errors: error.flatten().fieldErrors as Record<string, string[]>,
+  };
+}
+
+/** Resolve contract-term defaults from settings and compute the deadline. */
+async function contractTerms(
+  organizationId: string,
+  data: Pick<
+    CreateSubscriptionData,
+    "endDate" | "noticePeriodDays" | "reminderLeadDays"
+  >
+): Promise<{
+  noticePeriodDays: number | null;
+  cancellationDeadline: Date | null;
+  reminderLeadDays: number[];
+}> {
+  const settings = await getSettings(organizationId, [
+    "subscriptions.defaultNoticePeriodDays",
+    "subscriptions.defaultReminderLeadDays",
+  ]);
+  const endDate = toDateOrNull(blankToNull(data.endDate));
+  const noticePeriodDays =
+    data.noticePeriodDays ??
+    (endDate ? settings["subscriptions.defaultNoticePeriodDays"] : null);
+  return {
+    noticePeriodDays,
+    cancellationDeadline: computeCancellationDeadline({
+      endDate,
+      noticePeriodDays,
+    }),
+    reminderLeadDays:
+      data.reminderLeadDays ??
+      settings["subscriptions.defaultReminderLeadDays"],
+  };
+}
+
+/** Columns shared by create and update. */
+function columnData(
+  data: CreateSubscriptionData,
+  raw: ParsedSubscriptionForm,
+  usedLicenses: number | null,
+  terms: Awaited<ReturnType<typeof contractTerms>>,
+  ownerId: string | null
+): Omit<Prisma.SubscriptionUncheckedCreateInput, "appId" | "organizationId"> {
+  return {
+    billingCycle: data.billingCycle,
+    billingType: data.billingType,
+    amount: parseFloat(data.amount),
+    perSeatPrice: raw.perSeatPrice ? parseFloat(raw.perSeatPrice) : null,
+    currency: data.currency,
+    totalLicenses: data.totalLicenses || null,
+    usedLicenses,
+    startDate: new Date(data.startDate),
+    endDate: toDateOrNull(blankToNull(data.endDate)),
+    renewalDate: toDateOrNull(blankToNull(data.renewalDate)),
+    autoRenewal: data.autoRenewal,
+    renewalAlert30: data.renewalAlert30,
+    renewalAlert60: data.renewalAlert60,
+    renewalAlert90: data.renewalAlert90,
+    contractUrl: blankToNull(data.contractUrl),
+    notes: blankToNull(data.notes),
+    categoryId: blankToNull(data.categoryId),
+    paymentMethodId: blankToNull(data.paymentMethodId),
+    costCenterId: blankToNull(data.costCenterId),
+    taxRateId: blankToNull(data.taxRateId),
+    isTrial: data.isTrial,
+    trialEndsAt: data.isTrial
+      ? toDateOrNull(blankToNull(data.trialEndsAt))
+      : null,
+    noticePeriodDays: terms.noticePeriodDays,
+    cancellationDeadline: terms.cancellationDeadline,
+    reminderLeadDays: terms.reminderLeadDays,
+    isPersonal: data.isPersonal,
+    ownerId,
+    cancellationUrl: blankToNull(data.cancellationUrl),
+    cancellationNotes: blankToNull(data.cancellationNotes),
+  };
+}
 
 /**
  * 구독 생성
  */
 async function _createSubscription(
-  _prevState: ActionState<{ id: string }>,
+  _prevState: IdResult,
   formData: FormData
-): Promise<ActionState<{ id: string }>> {
+): Promise<IdResult> {
   try {
-    const { organizationId, userId, role } = await requireOrganization();
-
-    // 권한 검증: VIEWER는 구독 생성 불가
-    if (role === "VIEWER") {
-      return { success: false, message: "구독 생성 권한이 없습니다" };
-    }
-
-    // assignedUserIds, teamIds 처리 (FormData에서 배열 추출)
-    const assignedUserIds = formData.getAll("assignedUserIds") as string[];
-    const teamIds = formData.getAll("teamIds") as string[];
-
-    const rawData = {
-      appId: formData.get("appId") as string,
-      billingCycle: formData.get("billingCycle") as string,
-      billingType: (formData.get("billingType") as string) || "FLAT_RATE",
-      amount: formData.get("amount") as string,
-      perSeatPrice: formData.get("perSeatPrice") as string | null,
-      currency: (formData.get("currency") as string) || "KRW",
-      totalLicenses: formData.get("totalLicenses") as string | null,
-      usedLicenses: formData.get("usedLicenses") as string | null,
-      startDate: formData.get("startDate") as string,
-      endDate: formData.get("endDate") as string | null,
-      renewalDate: formData.get("renewalDate") as string | null,
-      autoRenewal:
-        formData.get("autoRenewal") === "true" ||
-        formData.get("autoRenewal") === "on",
-      renewalAlert30:
-        formData.get("renewalAlert30") === "true" ||
-        formData.get("renewalAlert30") === "on",
-      renewalAlert60:
-        formData.get("renewalAlert60") === "true" ||
-        formData.get("renewalAlert60") === "on",
-      renewalAlert90:
-        formData.get("renewalAlert90") === "true" ||
-        formData.get("renewalAlert90") === "on",
-      contractUrl: formData.get("contractUrl") as string | null,
-      notes: formData.get("notes") as string | null,
-      // Team/User 배정
-      teamId: (formData.get("teamId") as string) || null,
-      teamIds: teamIds.filter(Boolean),
-      assignedUserIds: assignedUserIds.filter(Boolean),
-    };
-
-    const result = createSubscriptionSchema.safeParse(rawData);
-    if (!result.success) {
-      return {
-        success: false,
-        errors: result.error.flatten().fieldErrors as Record<string, string[]>,
-      };
-    }
-
+    const { organizationId, userId, role } = await requirePermission(
+      "subscriptions:create"
+    );
+    const raw = parseSubscriptionFormData(formData);
+    const result = createSubscriptionSchema.safeParse(raw);
+    if (!result.success) return fieldErrors(result.error);
     const data = result.data;
 
-    const app = await prisma.app.findFirst({
-      where: { id: data.appId, organizationId },
-    });
+    const app = await resolveApp(organizationId, data);
+    if (!app) return { success: false, message: MESSAGES.appNotFound };
 
-    if (!app) {
-      return { success: false, message: "앱을 찾을 수 없습니다" };
-    }
-
-    // SMP-134: teamId 검증 → 없으면 자동 생성 (deprecated single teamId + new teamIds)
-    const allTeamIds =
-      data.teamIds.length > 0 ? data.teamIds : data.teamId ? [data.teamId] : [];
-    if (allTeamIds.length > 0) {
-      for (const tid of allTeamIds) {
-        const appTeam = await prisma.appTeam.findFirst({
-          where: { appId: data.appId, teamId: tid },
-        });
-        if (!appTeam) {
-          await prisma.appTeam.create({
-            data: { appId: data.appId, teamId: tid, assignedBy: userId },
-          });
-        }
-      }
-    }
-
-    // assignedUserIds 권한 검증: ADMIN만 사용자 배정 가능
     if (data.assignedUserIds.length > 0 && role !== "ADMIN") {
-      return {
-        success: false,
-        message: "사용자 배정은 관리자만 가능합니다",
-      };
+      return { success: false, message: MESSAGES.assignAdminOnly };
     }
+    const plan = await prepareAssignments(organizationId, app.id, userId, {
+      teamId: data.teamId ?? null,
+      teamIds: data.teamIds,
+      assignedUserIds: data.assignedUserIds,
+    });
+    if (plan.error) return { success: false, message: plan.error };
 
-    // assignedUserIds 유효성 검증: 조직 내 사용자인지 확인
-    if (data.assignedUserIds.length > 0) {
-      const validUsers = await prisma.user.findMany({
-        where: {
-          id: { in: data.assignedUserIds },
-          organizationId,
-        },
-        select: { id: true, teamId: true },
-      });
-      if (validUsers.length !== data.assignedUserIds.length) {
-        return {
-          success: false,
-          message: "유효하지 않은 사용자가 포함되어 있습니다",
-        };
-      }
+    const customFields = await prepareCustomFields(
+      organizationId,
+      data.customFields
+    );
+    if (customFields.errors)
+      return { success: false, errors: customFields.errors };
 
-      // SMP-134: 유저 배정 시 팀-앱 자동 연결
-      const userTeamIds = validUsers
-        .filter((u) => u.teamId != null)
-        .map((u) => u.teamId as string);
-      if (userTeamIds.length > 0) {
-        const existingAppTeams = await prisma.appTeam.findMany({
-          where: { appId: data.appId, teamId: { in: userTeamIds } },
-          select: { teamId: true },
-        });
-        const existingTeamIds = new Set(
-          existingAppTeams.map((at) => at.teamId)
-        );
-        const missingTeamIds = [
-          ...new Set(userTeamIds.filter((id) => !existingTeamIds.has(id))),
-        ];
-        if (missingTeamIds.length > 0) {
-          await prisma.appTeam.createMany({
-            data: missingTeamIds.map((teamId) => ({
-              appId: data.appId,
-              teamId,
-              assignedBy: userId,
-            })),
-            skipDuplicates: true,
-          });
-        }
-      }
-    }
-
-    // usedLicenses 자동 동기화: 배정된 유저 수로 설정
-    const autoUsedLicenses =
-      data.assignedUserIds.length > 0
-        ? data.assignedUserIds.length
-        : data.usedLicenses || null;
+    const terms = await contractTerms(organizationId, data);
+    const ownerId = blankToNull(data.ownerId) ?? userId;
+    const usedLicenses =
+      plan.userIds.length > 0 ? plan.userIds.length : data.usedLicenses || null;
 
     const subscription = await prisma.subscription.create({
       data: {
-        appId: data.appId,
+        appId: app.id,
         organizationId,
-        billingCycle: data.billingCycle,
-        billingType: data.billingType,
-        amount: parseFloat(data.amount),
-        perSeatPrice:
-          rawData.perSeatPrice && rawData.perSeatPrice !== ""
-            ? parseFloat(rawData.perSeatPrice)
-            : null,
-        currency: data.currency,
-        totalLicenses: data.totalLicenses || null,
-        usedLicenses: autoUsedLicenses,
-        startDate: new Date(data.startDate),
-        endDate: data.endDate ? new Date(data.endDate) : null,
-        renewalDate: data.renewalDate ? new Date(data.renewalDate) : null,
-        autoRenewal: data.autoRenewal,
-        renewalAlert30: data.renewalAlert30,
-        renewalAlert60: data.renewalAlert60,
-        renewalAlert90: data.renewalAlert90,
-        contractUrl: data.contractUrl || null,
-        notes: data.notes || null,
-        // Dual-write: keep backward compat teamId as first teamId
-        teamId: allTeamIds[0] || data.teamId || null,
+        ...columnData(data, raw, usedLicenses, terms, ownerId),
+        teamId: plan.teamIds[0] ?? null,
       },
     });
 
-    // SubscriptionTeam 생성 (다중 팀 배정)
-    if (allTeamIds.length > 0) {
-      await prisma.subscriptionTeam.createMany({
-        data: allTeamIds.map((tid) => ({
-          subscriptionId: subscription.id,
-          teamId: tid,
-          assignedBy: userId,
-        })),
-        skipDuplicates: true,
-      });
-    }
-
-    // SubscriptionUser 생성
-    if (data.assignedUserIds.length > 0) {
-      await prisma.subscriptionUser.createMany({
-        data: data.assignedUserIds.map((uid) => ({
-          subscriptionId: subscription.id,
-          userId: uid,
-          assignedBy: userId,
-        })),
-      });
-    }
+    await syncAssignments(subscription.id, userId, plan, "create");
+    await syncTags(subscription.id, data.tagNames, "create");
+    await syncCustomFields(subscription.id, customFields, "create");
 
     await prisma.auditLog.create({
       data: {
         action: "CREATE_SUBSCRIPTION",
-        entityType: "Subscription",
+        entityType: "subscription",
         entityId: subscription.id,
         userId,
         organizationId,
@@ -225,16 +209,18 @@ async function _createSubscription(
     });
 
     revalidatePath("/subscriptions");
-    revalidatePath(`/apps/${data.appId}`);
-
+    revalidatePath(`/apps/${app.id}`);
     return { success: true, data: { id: subscription.id } };
   } catch (error) {
-    logger.error({ err: error }, "구독 생성 오류");
     if (isRedirectError(error)) throw error;
-    return {
-      success: false,
-      message: "구독 생성 중 오류가 발생했습니다",
-    };
+    if (isForbiddenError(error)) {
+      return { success: false, message: MESSAGES.forbidden };
+    }
+    if (isUniqueViolation(error)) {
+      return { success: false, message: MESSAGES.duplicateApp };
+    }
+    logger.error({ err: error }, "구독 생성 오류");
+    return { success: false, message: MESSAGES.createError };
   }
 }
 export const createSubscription = withLogging(
@@ -247,227 +233,95 @@ export const createSubscription = withLogging(
  */
 async function _updateSubscription(
   id: string,
-  _prevState: ActionState<{ id: string }>,
+  _prevState: IdResult,
   formData: FormData
-): Promise<ActionState<{ id: string }>> {
+): Promise<IdResult> {
   try {
-    const { organizationId, userId, role } = await requireOrganization();
-
-    // 권한 검증: ADMIN만 구독 수정 가능
-    if (role !== "ADMIN") {
-      return { success: false, message: "구독 수정 권한이 없습니다" };
-    }
-
-    const existingSubscription = await prisma.subscription.findFirst({
+    const { organizationId, userId } = await requirePermission(
+      "subscriptions:update"
+    );
+    const existing = await prisma.subscription.findFirst({
       where: { id, organizationId },
     });
+    if (!existing) return { success: false, message: MESSAGES.notFound };
 
-    if (!existingSubscription) {
-      return { success: false, message: "구독을 찾을 수 없습니다" };
-    }
-
-    // assignedUserIds, teamIds 처리 (FormData에서 배열 추출)
-    const assignedUserIds = formData.getAll("assignedUserIds") as string[];
-    const teamIds = formData.getAll("teamIds") as string[];
-
-    const rawData = {
-      appId: existingSubscription.appId,
-      status:
-        (formData.get("status") as SubscriptionStatus) ||
-        existingSubscription.status,
-      billingCycle: formData.get("billingCycle") as string,
-      billingType:
-        (formData.get("billingType") as string) ||
-        existingSubscription.billingType,
-      amount: formData.get("amount") as string,
-      perSeatPrice: formData.get("perSeatPrice") as string | null,
-      currency:
-        (formData.get("currency") as string) || existingSubscription.currency,
-      totalLicenses: formData.get("totalLicenses") as string | null,
-      usedLicenses: formData.get("usedLicenses") as string | null,
-      startDate: formData.get("startDate") as string,
-      endDate: formData.get("endDate") as string | null,
-      renewalDate: formData.get("renewalDate") as string | null,
-      autoRenewal:
-        formData.get("autoRenewal") === "true" ||
-        formData.get("autoRenewal") === "on",
-      renewalAlert30:
-        formData.get("renewalAlert30") === "true" ||
-        formData.get("renewalAlert30") === "on",
-      renewalAlert60:
-        formData.get("renewalAlert60") === "true" ||
-        formData.get("renewalAlert60") === "on",
-      renewalAlert90:
-        formData.get("renewalAlert90") === "true" ||
-        formData.get("renewalAlert90") === "on",
-      contractUrl: formData.get("contractUrl") as string | null,
-      notes: formData.get("notes") as string | null,
-      // Team/User 배정
-      teamId: (formData.get("teamId") as string) || null,
-      teamIds: teamIds.filter(Boolean),
-      assignedUserIds: assignedUserIds.filter(Boolean),
-    };
-
-    const result = updateSubscriptionSchema.safeParse(rawData);
-    if (!result.success) {
-      return {
-        success: false,
-        errors: result.error.flatten().fieldErrors as Record<string, string[]>,
-      };
-    }
-
+    const raw = parseSubscriptionFormData(formData, {
+      billingType: existing.billingType,
+      currency: existing.currency,
+      status: existing.status,
+    });
+    const result = updateSubscriptionSchema.safeParse({
+      ...raw,
+      appId: existing.appId,
+    });
+    if (!result.success) return fieldErrors(result.error);
     const data = result.data;
 
-    // SMP-134: teamId 검증 → 없으면 자동 생성 (deprecated single teamId + new teamIds)
-    const allTeamIds =
-      data.teamIds.length > 0 ? data.teamIds : data.teamId ? [data.teamId] : [];
-    if (allTeamIds.length > 0) {
-      for (const tid of allTeamIds) {
-        const appTeam = await prisma.appTeam.findFirst({
-          where: { appId: existingSubscription.appId, teamId: tid },
-        });
-        if (!appTeam) {
-          await prisma.appTeam.create({
-            data: {
-              appId: existingSubscription.appId,
-              teamId: tid,
-              assignedBy: userId,
-            },
-          });
-        }
+    const plan = await prepareAssignments(
+      organizationId,
+      existing.appId,
+      userId,
+      {
+        teamId: data.teamId ?? null,
+        teamIds: data.teamIds,
+        assignedUserIds: data.assignedUserIds,
       }
-    }
+    );
+    if (plan.error) return { success: false, message: plan.error };
 
-    // assignedUserIds 유효성 검증: 조직 내 사용자인지 확인
-    if (data.assignedUserIds.length > 0) {
-      const validUsers = await prisma.user.findMany({
-        where: {
-          id: { in: data.assignedUserIds },
-          organizationId,
-        },
-        select: { id: true, teamId: true },
-      });
-      if (validUsers.length !== data.assignedUserIds.length) {
-        return {
-          success: false,
-          message: "유효하지 않은 사용자가 포함되어 있습니다",
-        };
-      }
+    const customFields = await prepareCustomFields(
+      organizationId,
+      data.customFields
+    );
+    if (customFields.errors)
+      return { success: false, errors: customFields.errors };
 
-      // SMP-134: 유저 배정 시 팀-앱 자동 연결
-      const userTeamIds = validUsers
-        .filter((u) => u.teamId != null)
-        .map((u) => u.teamId as string);
-      if (userTeamIds.length > 0) {
-        const existingAppTeams = await prisma.appTeam.findMany({
-          where: {
-            appId: existingSubscription.appId,
-            teamId: { in: userTeamIds },
-          },
-          select: { teamId: true },
-        });
-        const existingTeamIds = new Set(
-          existingAppTeams.map((at) => at.teamId)
-        );
-        const missingTeamIds = [
-          ...new Set(userTeamIds.filter((id) => !existingTeamIds.has(id))),
-        ];
-        if (missingTeamIds.length > 0) {
-          await prisma.appTeam.createMany({
-            data: missingTeamIds.map((teamId) => ({
-              appId: existingSubscription.appId,
-              teamId,
-              assignedBy: userId,
-            })),
-            skipDuplicates: true,
-          });
-        }
-      }
-    }
-
-    // usedLicenses 자동 동기화: 배정된 유저 수로 설정
-    const autoUsedLicenses =
-      data.assignedUserIds.length > 0
-        ? data.assignedUserIds.length
-        : data.usedLicenses || null;
+    const terms = await contractTerms(organizationId, data);
+    const ownerId = blankToNull(data.ownerId) ?? existing.ownerId ?? userId;
+    const usedLicenses =
+      plan.userIds.length > 0 ? plan.userIds.length : data.usedLicenses || null;
 
     const subscription = await prisma.subscription.update({
       where: { id },
       data: {
-        status: data.status || existingSubscription.status,
-        billingCycle: data.billingCycle,
-        billingType: data.billingType,
-        amount: parseFloat(data.amount),
-        perSeatPrice:
-          rawData.perSeatPrice && rawData.perSeatPrice !== ""
-            ? parseFloat(rawData.perSeatPrice)
-            : null,
-        currency: data.currency,
-        totalLicenses: data.totalLicenses || null,
-        usedLicenses: autoUsedLicenses,
-        startDate: new Date(data.startDate),
-        endDate: data.endDate ? new Date(data.endDate) : null,
-        renewalDate: data.renewalDate ? new Date(data.renewalDate) : null,
-        autoRenewal: data.autoRenewal,
-        renewalAlert30: data.renewalAlert30,
-        renewalAlert60: data.renewalAlert60,
-        renewalAlert90: data.renewalAlert90,
-        contractUrl: data.contractUrl || null,
-        notes: data.notes || null,
-        // Dual-write: keep backward compat teamId as first teamId
-        teamId: allTeamIds[0] || data.teamId || null,
+        status: data.status || existing.status,
+        ...columnData(data, raw, usedLicenses, terms, ownerId),
+        teamId: plan.teamIds[0] ?? null,
       },
     });
 
-    // SubscriptionTeam 동기화 (delete-recreate 패턴)
-    await prisma.subscriptionTeam.deleteMany({ where: { subscriptionId: id } });
-    if (allTeamIds.length > 0) {
-      await prisma.subscriptionTeam.createMany({
-        data: allTeamIds.map((tid) => ({
-          subscriptionId: id,
-          teamId: tid,
-          assignedBy: userId,
-        })),
-        skipDuplicates: true,
-      });
-    }
-
-    // SubscriptionUser 동기화 (delete-recreate 패턴)
-    await prisma.subscriptionUser.deleteMany({
-      where: { subscriptionId: id },
-    });
-    if (data.assignedUserIds.length > 0) {
-      await prisma.subscriptionUser.createMany({
-        data: data.assignedUserIds.map((uid) => ({
-          subscriptionId: id,
-          userId: uid,
-          assignedBy: userId,
-        })),
-      });
-    }
+    await syncAssignments(id, userId, plan, "update");
+    await syncTags(id, data.tagNames, "update");
+    await syncCustomFields(id, customFields, "update");
 
     await prisma.auditLog.create({
       data: {
         action: "UPDATE_SUBSCRIPTION",
-        entityType: "Subscription",
+        entityType: "subscription",
         entityId: subscription.id,
         userId,
         organizationId,
+        changes: {
+          amount: {
+            from: Number(existing.amount),
+            to: Number(subscription.amount),
+          },
+          status: { from: existing.status, to: subscription.status },
+        },
         metadata: { amount: data.amount },
       },
     });
 
     revalidatePath("/subscriptions");
     revalidatePath(`/subscriptions/${id}`);
-
     return { success: true, data: { id: subscription.id } };
   } catch (error) {
-    logger.error({ err: error }, "구독 수정 오류");
     if (isRedirectError(error)) throw error;
-    return {
-      success: false,
-      message: "구독 수정 중 오류가 발생했습니다",
-    };
+    if (isForbiddenError(error)) {
+      return { success: false, message: MESSAGES.forbidden };
+    }
+    logger.error({ err: error }, "구독 수정 오류");
+    return { success: false, message: MESSAGES.updateError };
   }
 }
 export const updateSubscription = withLogging(
@@ -480,44 +334,36 @@ export const updateSubscription = withLogging(
  */
 async function _deleteSubscription(id: string): Promise<ActionState> {
   try {
-    const { organizationId, userId, role } = await requireOrganization();
-
-    if (role !== "ADMIN") {
-      return { success: false, message: "관리자 권한이 필요합니다" };
-    }
-
-    const existingSubscription = await prisma.subscription.findFirst({
+    const { organizationId, userId } = await requirePermission(
+      "subscriptions:delete"
+    );
+    const existing = await prisma.subscription.findFirst({
       where: { id, organizationId },
       include: { app: { select: { name: true } } },
     });
-
-    if (!existingSubscription) {
-      return { success: false, message: "구독을 찾을 수 없습니다" };
-    }
+    if (!existing) return { success: false, message: MESSAGES.notFound };
 
     await prisma.subscription.delete({ where: { id } });
-
     await prisma.auditLog.create({
       data: {
         action: "DELETE_SUBSCRIPTION",
-        entityType: "Subscription",
+        entityType: "subscription",
         entityId: id,
         userId,
         organizationId,
-        metadata: { appName: existingSubscription.app.name },
+        metadata: { appName: existing.app.name },
       },
     });
 
     revalidatePath("/subscriptions");
-
     return { success: true };
   } catch (error) {
-    logger.error({ err: error }, "구독 삭제 오류");
     if (isRedirectError(error)) throw error;
-    return {
-      success: false,
-      message: "구독 삭제 중 오류가 발생했습니다",
-    };
+    if (isForbiddenError(error)) {
+      return { success: false, message: MESSAGES.forbidden };
+    }
+    logger.error({ err: error }, "구독 삭제 오류");
+    return { success: false, message: MESSAGES.deleteError };
   }
 }
 export const deleteSubscription = withLogging(

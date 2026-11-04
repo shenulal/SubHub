@@ -1,6 +1,8 @@
 "use client";
 
 import { Card } from "@/components/ui/card";
+import { useBaseCurrency } from "@/hooks/use-base-currency";
+import { formatMoney } from "@/lib/fx/convert";
 import type { TotalCostKpiData } from "@/types/dashboard";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
@@ -14,12 +16,8 @@ interface TotalCostCardProps {
  * formatCurrency
  * 금액을 한국 원화 형식으로 포맷팅
  */
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("ko-KR", {
-    style: "currency",
-    currency: "KRW",
-    maximumFractionDigits: 0,
-  }).format(amount);
+function formatCurrency(amount: number, currency: string): string {
+  return formatMoney(amount, currency, "ko", 0);
 }
 
 /**
@@ -33,6 +31,7 @@ export function TotalCostCard({
   isReadOnly = false,
 }: TotalCostCardProps) {
   const t = useTranslations("dashboardV3.kpi.totalCost");
+  const { baseCurrency } = useBaseCurrency();
 
   const trendText =
     data.changePercent !== 0
@@ -46,7 +45,7 @@ export function TotalCostCard({
         <p className="text-primary text-xs">{t("title")}</p>
         <div className="flex items-center gap-1">
           <p className="text-secondary-foreground text-2xl font-medium">
-            {formatCurrency(data.amount)}
+            {formatCurrency(data.amount, baseCurrency)}
           </p>
           <span className="text-muted-foreground py-1 text-xs">계정</span>
         </div>
@@ -74,7 +73,7 @@ export function TotalCostCard({
           <p className="text-primary text-xs">{t("title")}</p>
           <div className="flex items-center gap-1">
             <p className="text-secondary-foreground text-2xl font-medium">
-              {formatCurrency(data.amount)}
+              {formatCurrency(data.amount, baseCurrency)}
             </p>
             <span className="text-muted-foreground py-1 text-xs">계정</span>
           </div>

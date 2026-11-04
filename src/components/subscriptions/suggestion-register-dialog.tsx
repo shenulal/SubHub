@@ -22,6 +22,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
+import { useBaseCurrency } from "@/hooks/use-base-currency";
 import { cn } from "@/lib/utils";
 import { BillingCycle } from "@prisma/client";
 import { Check, CreditCard, Loader2, Users } from "lucide-react";
@@ -45,6 +46,7 @@ export function SuggestionRegisterDialog({
   suggestion,
   onSuccess,
 }: SuggestionRegisterDialogProps) {
+  const { baseCurrency } = useBaseCurrency();
   const t = useTranslations("subscriptionSuggestions");
   const [isPending, startTransition] = useTransition();
 
@@ -76,7 +78,7 @@ export function SuggestionRegisterDialog({
   const formatAmount = (amount: number, currency: string) => {
     return new Intl.NumberFormat(undefined, {
       style: "currency",
-      currency: currency || "KRW",
+      currency: currency || baseCurrency,
     }).format(amount);
   };
 

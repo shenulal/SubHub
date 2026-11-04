@@ -2,6 +2,7 @@
 // SMP-203: Subscription CRUD 비즈니스 로직 — Server Action + Write Tool 공용 서비스 레이어
 
 import { prisma } from "@/lib/db";
+import { getBaseCurrency } from "@/lib/fx/base-currency";
 
 // ==================== Types ====================
 
@@ -68,7 +69,7 @@ export async function createSubscription(
       billingCycle: input.billingCycle,
       billingType: input.billingType ?? "FLAT_RATE",
       amount: parseFloat(input.amount),
-      currency: input.currency ?? "KRW",
+      currency: input.currency ?? (await getBaseCurrency(ctx.organizationId)),
       totalLicenses: input.totalLicenses ?? null,
       startDate: new Date(input.startDate),
       endDate: input.endDate ? new Date(input.endDate) : null,
