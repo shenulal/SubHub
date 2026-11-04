@@ -10,7 +10,7 @@ const syncFrequencies = ["daily", "weekly", "monthly"] as const;
 
 export const createIntegrationApiSchema = z.object({
   type: z.enum(integrationTypes),
-  credentials: z.record(z.any()),
+  credentials: z.record(z.string(), z.any()),
   metadata: z
     .object({
       domain: z.string().optional(),
@@ -21,7 +21,7 @@ export const createIntegrationApiSchema = z.object({
 });
 
 export const updateIntegrationApiSchema = z.object({
-  credentials: z.record(z.any()).optional(),
+  credentials: z.record(z.string(), z.any()).optional(),
   metadata: z
     .object({
       domain: z.string().optional(),

@@ -16,12 +16,10 @@ export function createSubscriptionFormSchema(t: (key: string) => string) {
       catalogId: optionalId,
       appWebsite: z.string().nullish().or(z.literal("")),
       appLogoUrl: z.string().nullish().or(z.literal("")),
-      billingCycle: z.nativeEnum(BillingCycle, {
-        errorMap: () => ({
-          message: t("subscriptions.form.validation.billingCycleRequired"),
-        }),
+      billingCycle: z.enum(BillingCycle, {
+        error: t("subscriptions.form.validation.billingCycleRequired"),
       }),
-      billingType: z.nativeEnum(BillingType).default(BillingType.FLAT_RATE),
+      billingType: z.enum(BillingType).default(BillingType.FLAT_RATE),
       amount: z
         .string()
         .min(1, t("subscriptions.form.validation.amountRequired"))
@@ -50,7 +48,7 @@ export function createSubscriptionFormSchema(t: (key: string) => string) {
         .string()
         .max(MAX_NOTES, t("subscriptions.form.validation.notesTooLong"))
         .nullish(),
-      status: z.nativeEnum(SubscriptionStatus).optional(),
+      status: z.enum(SubscriptionStatus).optional(),
       // Team/User 배정 (Phase 2)
       teamId: z.string().nullish(),
       // Team 배정 (다중, Phase 3)

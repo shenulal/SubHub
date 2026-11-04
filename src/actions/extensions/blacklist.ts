@@ -83,7 +83,7 @@ async function _createBlacklist(
       return {
         success: false,
         error:
-          validation.error.errors[0]?.message || "입력값이 올바르지 않습니다",
+          validation.error.issues[0]?.message || "입력값이 올바르지 않습니다",
       };
     }
 
@@ -128,7 +128,7 @@ async function _updateBlacklist(
       return {
         success: false,
         error:
-          validation.error.errors[0]?.message || "입력값이 올바르지 않습니다",
+          validation.error.issues[0]?.message || "입력값이 올바르지 않습니다",
       };
     }
 

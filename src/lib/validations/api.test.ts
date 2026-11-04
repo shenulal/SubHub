@@ -64,7 +64,7 @@ describe("createIntegrationApiSchema", () => {
     const result = createIntegrationApiSchema.safeParse(input);
     expect(result.success).toBe(false);
     if (!result.success) {
-      expect(result.error.errors[0].path).toContain("type");
+      expect(result.error.issues[0].path).toContain("type");
     }
   });
 

@@ -150,6 +150,6 @@ Payment-to-app matching (CSV/ERP/card), Google Workspace SSO discovery, Chrome e
 ## 6. Delivery summary (web application, 4 November 2026)
 
 - 59 of 60 matrix capabilities delivered on the web application; 6.5 cross-device sync is delivered as a server-authoritative REST API with a single web client (🟡); 7.5 and 7.6 are mobile-client items (⏭).
-- Verification: production build passes; TypeScript strict type-check passes across the whole tree; Vitest 3,510 tests with 3,381 passing, 38 skipped and 91 failing, all 91 being pre-existing upstream saaslens failures (baseline 124); eight previously failing upstream suites now pass and no new failures were introduced.
+- Verification (after dependency upgrades): production build passes (185 routes); strict type-check passes; Vitest 3,534 tests with 3,405 passing, 38 skipped and 91 failing, all 91 being pre-existing upstream saaslens failures (baseline 124), no regressions; Playwright runtime smoke suite 50 / 50 against the production server. Per-feature evidence: `SubHub-Implementation-Tracker.md`.
 - Repository: https://github.com/shenulal/SubHub (branch `main`).
 - Items requiring external credentials before end-to-end use: Google / Apple sign-in, Gmail and Microsoft Graph mailbox OAuth, Resend email, FCM push, S3/R2 storage.

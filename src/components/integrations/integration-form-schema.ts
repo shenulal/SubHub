@@ -2,8 +2,8 @@ import { IntegrationStatus, IntegrationType } from "@prisma/client";
 import { z } from "zod";
 
 export const integrationCreateSchema = z.object({
-  type: z.nativeEnum(IntegrationType, {
-    required_error: "연동 유형을 선택하세요",
+  type: z.enum(IntegrationType, {
+    error: "연동 유형을 선택하세요",
   }),
   domain: z.string().optional(),
   adminEmail: z.string().email("올바른 이메일을 입력하세요").optional(),
@@ -15,8 +15,8 @@ export const integrationCreateSchema = z.object({
 });
 
 export const integrationStatusSchema = z.object({
-  status: z.nativeEnum(IntegrationStatus, {
-    required_error: "상태를 선택하세요",
+  status: z.enum(IntegrationStatus, {
+    error: "상태를 선택하세요",
   }),
 });
 

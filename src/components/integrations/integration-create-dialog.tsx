@@ -50,8 +50,8 @@ import { z } from "zod";
 const createIntegrationCreateSchema = (t: (key: string) => string) => {
   return z
     .object({
-      type: z.nativeEnum(IntegrationType, {
-        required_error: t("integrations.form.schema.typeRequired"),
+      type: z.enum(IntegrationType, {
+        error: t("integrations.form.schema.typeRequired"),
       }),
       domain: z.string().optional(),
       adminEmail: z.string().optional(),

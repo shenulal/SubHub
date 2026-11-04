@@ -132,7 +132,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       // JWT Callback log removed
 
       // 최초 로그인 시 (OAuth 콜백 - 서버 환경에서만 실행됨)
-      if (user && account) {
+      if (user && account && user.id) {
         token.id = user.id;
 
         // 초기 로그인 시에만 DB 조회 및 lastLoginAt 업데이트

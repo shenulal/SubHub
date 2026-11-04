@@ -83,7 +83,7 @@ async function _createWhitelist(
       return {
         success: false,
         error:
-          validation.error.errors[0]?.message || "입력값이 올바르지 않습니다",
+          validation.error.issues[0]?.message || "입력값이 올바르지 않습니다",
       };
     }
 
@@ -128,7 +128,7 @@ async function _updateWhitelist(
       return {
         success: false,
         error:
-          validation.error.errors[0]?.message || "입력값이 올바르지 않습니다",
+          validation.error.issues[0]?.message || "입력값이 올바르지 않습니다",
       };
     }
 

@@ -8,14 +8,15 @@ import { z } from "zod";
 
 const CUID = z.string().min(1).max(64);
 const OPTIONAL_ID = z
-  .union([CUID, z.literal(""), z.null(), z.undefined()])
+  .union([CUID, z.literal(""), z.null()])
+  .optional()
   .transform((v) => (v ? v : null));
 
 /**
  * Optional numeric form field: "", null and undefined mean "not set" (null).
  * Preprocessing runs before coercion so a blank input never becomes 0.
  */
-function optionalNumber(inner: z.ZodNumber) {
+function optionalNumber(inner: z.ZodType<number, unknown>) {
   return z.preprocess(
     (value) => (value === "" || value === undefined ? null : value),
     inner.nullable()

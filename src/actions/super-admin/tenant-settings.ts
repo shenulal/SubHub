@@ -87,7 +87,7 @@ async function _createTenant(
 
   const parsed = createTenantSchema.safeParse({ name, domain, logoUrl });
   if (!parsed.success) {
-    return { success: false, message: parsed.error.errors[0].message };
+    return { success: false, message: parsed.error.issues[0].message };
   }
 
   const org = await prisma.organization.create({
@@ -145,7 +145,7 @@ async function _updateTenantDomain(
   if (!parsed.success) {
     return {
       success: false,
-      message: parsed.error.errors[0].message,
+      message: parsed.error.issues[0].message,
     };
   }
 
@@ -178,7 +178,7 @@ async function _updateTenantName(
 
   const parsed = updateNameSchema.safeParse({ name });
   if (!parsed.success) {
-    return { success: false, message: parsed.error.errors[0].message };
+    return { success: false, message: parsed.error.issues[0].message };
   }
 
   await prisma.organization.update({
@@ -210,7 +210,7 @@ async function _updateTenantLogoUrl(
 
   const parsed = updateLogoSchema.safeParse({ logoUrl });
   if (!parsed.success) {
-    return { success: false, message: parsed.error.errors[0].message };
+    return { success: false, message: parsed.error.issues[0].message };
   }
 
   await prisma.organization.update({

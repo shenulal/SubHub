@@ -18,7 +18,7 @@ describe("Password Validation", () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.errors[0].message).toContain("8자");
+        expect(result.error.issues[0].message).toContain("8자");
       }
     });
 
@@ -28,7 +28,7 @@ describe("Password Validation", () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.errors[0].message).toContain("대문자");
+        expect(result.error.issues[0].message).toContain("대문자");
       }
     });
 
@@ -38,7 +38,7 @@ describe("Password Validation", () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.errors[0].message).toContain("소문자");
+        expect(result.error.issues[0].message).toContain("소문자");
       }
     });
 
@@ -48,7 +48,7 @@ describe("Password Validation", () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.errors[0].message).toContain("숫자");
+        expect(result.error.issues[0].message).toContain("숫자");
       }
     });
 
@@ -58,7 +58,7 @@ describe("Password Validation", () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.errors[0].message).toContain("특수문자");
+        expect(result.error.issues[0].message).toContain("특수문자");
       }
     });
 
@@ -68,7 +68,7 @@ describe("Password Validation", () => {
 
       expect(result.success).toBe(false);
       if (!result.success) {
-        expect(result.error.errors[0].message).toContain("72자");
+        expect(result.error.issues[0].message).toContain("72자");
       }
     });
   });

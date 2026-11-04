@@ -31,7 +31,7 @@ export const POST = withLogging(
           {
             success: false,
             error:
-              parseResult.error.errors[0]?.message || "Invalid request body",
+              parseResult.error.issues[0]?.message || "Invalid request body",
           },
           { status: 400 }
         );

@@ -70,3 +70,7 @@ src/app/(local-preview)/
 claude-backup.zip
 .dev-pipeline/
 .data/
+
+# Playwright
+/test-results/
+/html/playwright/

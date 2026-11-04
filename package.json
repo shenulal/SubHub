@@ -41,7 +41,10 @@
     "storybook": "cd packages/ui-registry && npm run storybook",
     "storybook:build": "cd packages/ui-registry && npm run storybook:build",
     "prepare": "husky",
-    "db:backfill-defaults": "npx tsx scripts/backfill-organization-defaults.ts"
+    "db:backfill-defaults": "npx tsx scripts/backfill-organization-defaults.ts",
+    "test:e2e": "playwright test",
+    "seed:smoke": "npx tsx scripts/seed-smoke.ts",
+    "audit:prod": "npm audit --omit=dev"
   },
   "dependencies": {
     "@ai-sdk/anthropic": "^3.0.63",
@@ -52,7 +55,7 @@
     "@dnd-kit/core": "^6.3.1",
     "@dnd-kit/sortable": "^10.0.0",
     "@dnd-kit/utilities": "^3.2.2",
-    "@hookform/resolvers": "^5.2.2",
+    "@hookform/resolvers": "^5.9.2",
     "@prisma/client": "^6.9.0",
     "@radix-ui/react-avatar": "^1.1.9",
     "@radix-ui/react-dialog": "^1.1.15",
@@ -107,7 +110,7 @@
     "resend": "^4.5.1",
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.4.0",
-    "zod": "^3.24.4",
+    "zod": "^4.6.7",
     "zustand": "^5.0.9"
   },
   "devDependencies": {
@@ -123,7 +126,7 @@
     "@types/node": "^24.5.2",
     "@types/react": "^19.1.13",
     "@types/react-dom": "^19.1.9",
-    "@vitejs/plugin-react": "^4.3.4",
+    "@vitejs/plugin-react": "^6.2.1",
     "@vitest/coverage-v8": "^4.0.18",
     "@vitest/ui": "^4.0.18",
     "archiver": "^7.0.1",
@@ -152,7 +155,10 @@
       "eslint --fix",
       "prettier --write"
     ],
-    "*.{json,md}": "prettier --write"
+    "*.{json,md}": "prettier --write",
+    "*": [
+      "node scripts/check-secrets.mjs"
+    ]
   },
   "prisma": {
     "seed": "npx tsx prisma/seed.ts"

@@ -71,7 +71,7 @@ async function _inviteTenantAdmin(email: string): Promise<ActionState> {
 
   const parsed = inviteSchema.safeParse({ email });
   if (!parsed.success) {
-    return { success: false, message: parsed.error.errors[0].message };
+    return { success: false, message: parsed.error.issues[0].message };
   }
 
   const org = await prisma.organization.findFirst({
