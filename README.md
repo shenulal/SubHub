@@ -1,294 +1,128 @@
 <p align="center">
-  <a href="https://github.com/Wondermove-Inc/saaslens">
-    <img src="docs/screenshots/hero-banner.svg" alt="saaslens" />
-  </a>
+  <img src="public/logo.svg" alt="SubHub" width="220" />
 </p>
 
 <p align="center">
-  <a href="README.md">English</a> · <a href="README.ko.md">한국어</a> · <a href="README.ja.md">日本語</a> · <a href="README.zh-CN.md">中文</a>
+  <strong>SubHub — subscription management for teams.</strong><br/>
+  Track every subscription, route purchases through approvals, get reminded before renewals, trials and cancellation windows, and see spend in your own currency.
 </p>
 
 <p align="center">
-  <strong>Open-source SaaS spend intelligence platform.</strong><br/>
-  Discover unused subscriptions. Match payments to apps. Manage seats and costs — all self-hosted.
-</p>
-
-<p align="center">
-  <a href="https://github.com/Wondermove-Inc/saaslens/actions/workflows/ci.yml"><img src="https://github.com/Wondermove-Inc/saaslens/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
-  <a href="LICENSE"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT" /></a>
-  <a href="https://github.com/Wondermove-Inc/saaslens/stargazers"><img src="https://img.shields.io/github/stars/Wondermove-Inc/saaslens" alt="GitHub Stars" /></a>
-  <a href="https://github.com/Wondermove-Inc/saaslens/graphs/contributors"><img src="https://img.shields.io/github/contributors/Wondermove-Inc/saaslens" alt="Contributors" /></a>
-  <a href="https://github.com/Wondermove-Inc/saaslens/commits"><img src="https://img.shields.io/github/last-commit/Wondermove-Inc/saaslens" alt="Last Commit" /></a>
-</p>
-
-<p align="center">
-  <a href="#quick-start">Quick Start</a> &middot;
-  <a href="#features">Features</a> &middot;
-  <a href="docs/guide/">Documentation</a> &middot;
-  <a href="#roadmap">Roadmap</a> &middot;
-  <a href="CONTRIBUTING.md">Contributing</a>
+  Built by <strong>HelloPixels</strong>, Dubai UAE · Derived from <a href="https://github.com/Wondermove-Inc/saaslens">saaslens</a> (MIT)
 </p>
 
 ---
 
-<p align="center">
-  <sub>If you find saaslens useful, please consider giving it a <a href="https://github.com/Wondermove-Inc/saaslens">star</a>. It helps others discover the project.</sub>
-</p>
+## What SubHub does
 
-https://github.com/user-attachments/assets/47632ce2-cef5-4e8d-90a1-d4c6627099b3
+| Area                        | Capabilities                                                                                                                                                                                                                                                                                                       |
+| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Subscription tracking**   | Manual add with vendor catalog autocomplete, edit / pause / archive, duplicate detection, trial tracking, contract terms + notice periods, attachments, notes and activity log, personal vs. workspace subscriptions                                                                                               |
+| **Email receipt detection** | Connect Gmail or Outlook (read-only); recurring charges are parsed into suggestions you can accept, link or dismiss                                                                                                                                                                                                |
+| **Approvals**               | Policies by cost threshold / category, named approvers, manager → finance chains, approve / reject / request info with comments, reminders and escalation, auto-create the subscription on approval, exportable audit trail                                                                                        |
+| **Reminders & alerts**      | Configurable lead times (1/3/7/14/30 days), trial-ending, price-change, notice-period alerts; approvers copied on renewals; in-app, email and push-ready                                                                                                                                                           |
+| **Insights**                | Spend dashboard in the organisation base currency, category / subcategory breakdown, trends, pending-approval committed spend, CSV exports                                                                                                                                                                         |
+| **Taxonomy & masters**      | Two-level categories, tags with merge/rename, custom fields, 120+ vendor catalog with logos, default pricing and cancellation guides, auto-categorisation                                                                                                                                                          |
+| **Discovery**               | Global Cmd+K search, filters + saved views, sort, calendar, renewal pipeline (this week / this month / later), bulk actions                                                                                                                                                                                        |
+| **Platform**                | Role-based access control with custom roles, every tunable in a settings registry (no hard-coded thresholds), currency / country / tax / cost-centre / payment-method masters, exchange rates from a configurable provider, notification preferences per user, data export + deletion, dark mode, English + Korean |
+| **Inherited from saaslens** | Payment-to-app matching (CSV / ERP / card feeds), Google Workspace SSO discovery, Chrome extension usage capture, FleetDM devices, seat utilisation, offboarding and shadow-IT detection, AI assistant, super-admin console                                                                                        |
 
-## Why saaslens
+The REST API under `/api/v1` is the contract for the SubHub mobile app (React Native), which is a separate deliverable.
 
-Small and mid-size teams commonly run dozens of SaaS tools, but no one has a single place that answers three questions at the same time:
+## Tech stack
 
-- **Which apps are we paying for?**
-- **Which seats are still used, and which are not?**
-- **Are the payments on the corporate card really matched to those apps?**
+| Layer    | Technology                                                              |
+| -------- | ----------------------------------------------------------------------- |
+| Frontend | Next.js 15 (App Router), React 19, TypeScript                           |
+| UI       | shadcn/ui + Radix + Tailwind CSS 4, next-themes                         |
+| Data     | Prisma 6 / PostgreSQL 14+, TanStack Query, Refine (optional)            |
+| Auth     | NextAuth 5 — email + OTP, Google, Apple                                 |
+| Email    | Resend                                                                  |
+| Storage  | Local disk (dev), Cloudflare R2 or S3                                   |
+| Jobs     | Vercel Cron (or any scheduler hitting `/api/cron/*` with `CRON_SECRET`) |
 
-Commercial SaaS management tools like Zylo, Productiv, or Cleanspend solve this — but they lock in your billing data, charge per-seat fees, and add yet another SaaS to manage your SaaS.
+## Quick start
 
-**saaslens** is the open-source alternative. It reconciles payment feeds against discovered SaaS apps, tracks seat utilization with an optional browser extension, and surfaces unused seats, anomalous spend, and opportunities to consolidate — all **self-hosted**, with **your data staying on your infrastructure**.
-
-## Features
-
-<table>
-<tr>
-<td width="50%">
-
-### Subscription & App Inventory
-
-Maintain a single source of truth for every SaaS app your organization uses. Auto-discover apps through payment feeds, SSO, and browser extension data.
-
-</td>
-<td width="50%">
-
-### Payment-to-App Matching
-
-Automatically match corporate card and ERP payment lines to known SaaS apps. Normalizes merchant descriptors and supports regional presets (e.g. Korean card issuers).
-
-</td>
-</tr>
-<tr>
-<td width="50%">
-
-### Seat & Usage Tracking
-
-Track who has access to what. Identify unused seats from offboarded employees, monitor utilization rates, and reclaim licenses before the next billing cycle.
-
-</td>
-<td width="50%">
-
-### Department Cost Analytics
-
-Break down SaaS spend by department, team, or cost center. Spot trends, flag anomalies, and generate reports for finance reviews.
-
-</td>
-</tr>
-<tr>
-<td width="50%">
-
-### Browser Extension
-
-Optional Chrome extension that passively captures SaaS login activity. Discovers shadow IT — apps paid through personal cards that aren't centrally tracked.
-
-</td>
-<td width="50%">
-
-### AI-Powered Insights
-
-Built-in AI agent that analyzes your SaaS portfolio and recommends optimizations: consolidate overlapping tools, renegotiate contracts, or reclaim unused seats.
-
-</td>
-</tr>
-</table>
-
-<p align="center">
-  <img src="docs/screenshots/subscriptions.png" alt="saaslens Subscriptions" width="800" />
-  <br/><sub>Subscription management with payment matching and seat tracking</sub>
-</p>
-
-<p align="center">
-  <img src="docs/screenshots/cost-analytics.png" alt="saaslens Cost Analytics" width="800" />
-  <br/><sub>Cost analysis with anomaly detection and spend distribution</sub>
-</p>
-
-## How it works
-
-<p align="center">
-  <img src="docs/screenshots/architecture.svg" alt="saaslens Architecture" width="800" />
-</p>
-
-1. **Ingest payments** via CSV/ERP import or a bank/card connector. The matcher normalizes merchant descriptors and pairs them with known SaaS apps (default catalog + user overrides).
-2. **Capture usage** from Google Workspace SSO, the optional Chrome extension that observes logins, or manual entry.
-3. **Reconcile** payments, seats, and departments in one canonical model — multi-tenant from day one.
-4. **Act** from the dashboard: mark an app unused, reclaim a seat from an offboarded user, flag spend anomalies, or ask the AI agent for recommendations.
-
-## Example use case
-
-> A 60-person engineering team uses 43 SaaS products. Finance sees 37 monthly payment lines but cannot tell which lines correspond to which products, and Slack invites keep growing while there is no record of who left the team.
-
-Running saaslens, they connect their card feed and enable Google Workspace SSO. Within the first hour:
-
-- 37 payment lines are matched to 35 distinct SaaS apps (2 duplicates).
-- The browser extension finds 6 previously-unknown apps paid through employee cards.
-- SSO sync reveals 11 seats still provisioned for people who left last quarter.
-- The dashboard estimates **~$2,500/month of unused-seat spend**.
-
-Finance consolidates two overlapping tools and reclaims the 11 stale seats — without adding another commercial SaaS to the stack.
-
-## Comparison
-
-| Feature               | saaslens |  Zylo  | Productiv | Cleanspend |
-| --------------------- | :------: | :----: | :-------: | :--------: |
-| Open source           | **Yes**  |   No   |    No     |     No     |
-| Self-hosted           | **Yes**  |   No   |    No     |     No     |
-| Data ownership        | **100%** | Vendor |  Vendor   |   Vendor   |
-| Payment matching      | **Yes**  |  Yes   |  Limited  |    Yes     |
-| Seat tracking         | **Yes**  |  Yes   |    Yes    |     No     |
-| AI recommendations    | **Yes**  |  Yes   |    Yes    |     No     |
-| Browser extension     | **Yes**  |   No   |    Yes    |     No     |
-| Multi-tenant          | **Yes**  |  Yes   |    Yes    |    Yes     |
-| Per-seat pricing      | **Free** |  $$$   |    $$$    |     $$     |
-| Regional presets (KR) | **Yes**  |   No   |    No     |     No     |
-
-## Tech Stack
-
-| Layer    | Technology                                      |
-| -------- | ----------------------------------------------- |
-| Frontend | Next.js 15 (App Router) + React 19 + TypeScript |
-| UI       | Shadcn/ui + Radix + Tailwind CSS 4              |
-| Data     | Refine 5 + TanStack React Query/Table           |
-| Auth     | NextAuth 5 + Prisma Adapter                     |
-| ORM      | Prisma 6 / PostgreSQL                           |
-| AI       | Anthropic AI SDK + Vercel AI SDK                |
-| Cache    | Upstash Redis                                   |
-
-## Quick Start
-
-### Option A: Docker (recommended)
+Requirements: Node.js 20+, PostgreSQL 14+ (or Docker).
 
 ```bash
-git clone https://github.com/Wondermove-Inc/saaslens.git
-cd saaslens
-docker compose up -d
-# → http://localhost:3000
-```
+git clone <your-subhub-remote>
+cd subhub
+npm ci --legacy-peer-deps            # React 19 peer-dependency resolution
 
-### Option B: Local
+cp .env.example .env.local           # fill DATABASE_URL, NEXTAUTH_SECRET, NEXTAUTH_URL (+ Google/Apple if used)
 
-Requirements: **Node.js 20+**, **PostgreSQL 14+**.
-
-```bash
-git clone https://github.com/Wondermove-Inc/saaslens.git
-cd saaslens
-
-npm install --legacy-peer-deps
-# Note: --legacy-peer-deps is needed due to React 19 peer dependency
-# resolution with some third-party packages. Does not affect functionality.
-
-cp .env.example .env.local
-# Required: DATABASE_URL, NEXTAUTH_SECRET, NEXTAUTH_URL
-
-npx prisma migrate deploy
+npx prisma migrate deploy            # creates the schema
 npx prisma generate
+npm run db:seed                      # currencies, countries, permission catalogue, vendor catalog
+npm run db:backfill-defaults         # only when upgrading an existing saaslens database
 
-npm run dev
-# → http://localhost:3000
+npm run dev                          # http://localhost:3000
 ```
 
-<details>
-<summary><strong>Environment Variables</strong></summary>
+Docker alternative: `docker compose up -d` (Postgres + app).
 
-Copy `.env.example` to `.env.local` and fill in the values you need. The app boots with only the required variables; optional integrations degrade gracefully when their vars are missing.
+### Environment variables
 
-**Required**
+| Variable                                              | Required                      | Purpose                           |
+| ----------------------------------------------------- | ----------------------------- | --------------------------------- |
+| `DATABASE_URL`, `DIRECT_URL`                          | yes                           | PostgreSQL connection             |
+| `NEXTAUTH_SECRET`, `NEXTAUTH_URL`                     | yes                           | Session signing and canonical URL |
+| `GOOGLE_CLIENT_ID/SECRET`                             | for Google sign-in            | OAuth                             |
+| `APPLE_CLIENT_ID/SECRET`                              | for Apple sign-in             | OAuth (required for the iOS app)  |
+| `RESEND_API_KEY`, `EMAIL_FROM`                        | for email                     | Transactional email               |
+| `CRON_SECRET`                                         | for jobs                      | Protects `/api/cron/*`            |
+| `STORAGE_PROVIDER`, `S3_*` / `R2_*`                   | for attachments in production | Object storage                    |
+| `GMAIL_CLIENT_ID/SECRET`, `MS_GRAPH_CLIENT_ID/SECRET` | for receipt detection         | Mailbox OAuth                     |
+| `FCM_SERVER_KEY`                                      | for mobile push               | Firebase Cloud Messaging          |
 
-| Variable          | Purpose                                          |
-| ----------------- | ------------------------------------------------ |
-| `DATABASE_URL`    | PostgreSQL connection string (Supabase works)    |
-| `NEXTAUTH_SECRET` | NextAuth session encryption (>= 32 bytes random) |
-| `NEXTAUTH_URL`    | Canonical app URL (e.g. `http://localhost:3000`) |
+See `.env.example` for the full list.
 
-Generate a `NEXTAUTH_SECRET` with `openssl rand -base64 32`.
+## Configuration model
 
-**Required for Google sign-in**
+SubHub has **no hard-coded business values**. Every threshold, default, lead time, limit and provider lives in the settings registry (`src/lib/settings/registry.ts`) and is editable under **Settings → Workspace settings** (organisation scope) or **Super admin → Platform settings** (system scope). Resolution order: organisation override → system override → registry default.
 
-| Variable               | Purpose                    |
-| ---------------------- | -------------------------- |
-| `GOOGLE_CLIENT_ID`     | Google OAuth client ID     |
-| `GOOGLE_CLIENT_SECRET` | Google OAuth client secret |
+Master data:
 
-**Optional integrations**
+- Global (seeded): currencies (ISO 4217), countries (ISO 3166 with default VAT), permission catalogue, vendor catalog.
+- Per organisation (seeded on creation, admin-editable under **Settings → Masters**): roles, categories / subcategories, payment methods, billing-cycle configuration, tax rates, cost centres, tags, custom fields, notification templates.
 
-| Feature                              | Variables                                                                       |
-| ------------------------------------ | ------------------------------------------------------------------------------- |
-| Upstash Redis (rate limiting, cache) | `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN`                            |
-| Resend (email)                       | `RESEND_API_KEY`, `EMAIL_FROM`, `EMAIL_FROM_NAME`                               |
-| Google Workspace Admin SDK (SSO)     | `GOOGLE_ADMIN_CLIENT_EMAIL`, `GOOGLE_ADMIN_PRIVATE_KEY`, `GOOGLE_ADMIN_SUBJECT` |
-| Cloudflare R2 (file storage)         | `R2_ACCOUNT_ID`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R2_BUCKET_NAME`   |
-| OpenAI (SaaS classification LLM)     | `OPENAI_API_KEY`, `OPENAI_FAST_MODEL` (default: `gpt-4o-mini`)                  |
-| FleetDM (device management)          | `FLEETDM_API_URL`, `FLEETDM_API_TOKEN`                                          |
-| Vercel Cron                          | `CRON_SECRET`                                                                   |
-| Feature flags                        | `ENABLE_REFINE` (Refine UI), `ENABLE_V2_FEATURES` (Tasks/Kanban)                |
+Exchange rates are refreshed daily (`/api/cron/exchange-rates`) from the provider chosen in `finance.fxProvider` (Frankfurter / open.er-api / exchangerate.host / Google Finance best-effort / manual).
 
-See `.env.example` for the complete list.
+## Access control
 
-</details>
+Roles are organisation-scoped. The four system roles (Administrator, Approver, Member, Viewer) are seeded with default grants from `src/lib/rbac/permissions.ts`; administrators can create custom roles with any subset of the 55 permissions under **Settings → Roles**. Every server action and API route enforces permissions server-side (`requirePermission`); the UI mirrors them with `usePermissions()` / `<Can>`.
 
-<details>
-<summary><strong>UI Components (shadcn)</strong></summary>
+## Scheduled jobs
 
-The 46+ shadcn-style components are **vendored into `packages/ui-registry/`** — you do **not** need the shadcn CLI at runtime.
+| Path                                                           | Default schedule | Purpose                                                |
+| -------------------------------------------------------------- | ---------------- | ------------------------------------------------------ |
+| `/api/cron/subscription-reminders`                             | daily 06:15      | Renewal reminders by lead time, deferred notifications |
+| `/api/cron/trial-alerts`                                       | daily 06:30      | Trial-ending alerts                                    |
+| `/api/cron/notice-period-alerts`                               | daily 06:45      | Cancellation-window alerts                             |
+| `/api/cron/price-change-scan`                                  | daily 07:00      | Detect charge amount changes                           |
+| `/api/cron/approval-reminders`                                 | daily 08:00      | Approver reminders, escalation, expiry                 |
+| `/api/cron/receipt-scan`                                       | every 6 h        | Mailbox receipt detection                              |
+| `/api/cron/exchange-rates`                                     | daily 02:00      | Refresh FX rates                                       |
+| `/api/cron/weekly-digest`                                      | Monday 07:00     | Weekly digest email                                    |
+| `/api/cron/renewal-alerts`, `auto-renewal`, `review-apps-scan` | daily            | Inherited jobs                                         |
+
+## Development
 
 ```bash
-npx shadcn@latest add <component-name>
+npm run quality        # lint + type-check + unit tests
+npm run test:coverage  # coverage report (80% threshold)
+npm run db:studio      # Prisma Studio
 ```
 
-</details>
+Contributor conventions live in `docs/SUBHUB-AGENT-GUIDE.md`. The upstream saaslens guides remain under `docs/guide/`.
 
-## Architecture
+## Build log — 4 November 2026
 
-```
-Next.js App Router
-├── (auth)/            — login, signup, invite, password reset
-├── (dashboard)/       — main app (subscriptions, payments, users, teams, reports)
-├── super-admin/       — tenant/admin management
-└── api/v1/            — REST API
-
-src/lib/
-├── services/          — business logic (matcher, notification, hyphen/*, …)
-├── config/presets/    — regional presets (e.g. Korean card issuers)
-└── …
-```
-
-## Roadmap
-
-- [ ] **v0.1** — Initial public release (Q2 2026)
-- [ ] **v0.2** — Plugin system for payment integrations (Q3 2026)
-- [ ] **v0.3** — Self-host Docker Compose quickstart (Q3 2026)
-- [ ] **v1.0** — Stable API, i18n beyond EN/KO (Q4 2026)
-
-See the [milestones](../../milestones) for detailed tracking. Have an idea? [Open a discussion](../../discussions).
-
-## Community
-
-- [GitHub Discussions](../../discussions) — Ask questions and share ideas
-- [GitHub Issues](../../issues) — Report bugs and request features
-- [CONTRIBUTING.md](CONTRIBUTING.md) — How to contribute
-
-## Documentation
-
-- [Development guide](docs/guide/) — TDD, Shadcn rules, deployment, audit logging
-- [CONTRIBUTING](CONTRIBUTING.md)
-- [SECURITY](SECURITY.md)
-- [CHANGELOG](CHANGELOG.md)
-
-## Contributing
-
-We welcome contributions of all kinds. See [CONTRIBUTING.md](CONTRIBUTING.md) for how to get started.
-
-Bug reports and feature requests via [GitHub Issues](../../issues). Vulnerability reports via [GitHub Security Advisories](../../security/advisories).
+- Baseline: saaslens v0.1.0 imported; upstream migration drift repaired (`20261103000000_upstream_schema_sync`).
+- Foundation: `20261104000000_subhub_foundation` (taxonomy, approvals, notifications, documents, receipts, FX, saved views, onboarding, privacy) and `20261104010000_subhub_platform_layer` (RBAC, settings, masters).
+- Feature areas delivered against `MVP_Feature_Matrix_Subscription_Management.xlsx` — see `../SubHub-Feature-Verification-Matrix.md` for the capability-by-capability status.
 
 ## License
 
-MIT © 2026 Wondermove-Inc. See [LICENSE](LICENSE).
+MIT. SubHub contains code from saaslens © 2026 Wondermove-Inc (MIT); see `LICENSE`.
