@@ -1,9 +1,11 @@
 "use server";
 
 import { prisma } from "@/lib/db";
+import { logger } from "@/lib/logger";
 import { withLogging } from "@/lib/logging";
 import { sendOtpEmail } from "@/lib/services/notification/email-auth";
 import type { ActionState } from "@/types";
+import { getDevOtpOverride, shouldLogOtpInsteadOfEmail } from "./otp-dev";
 
 const OTP_LENGTH = 6;
 const OTP_EXPIRY_MINUTES = 10;
@@ -66,12 +68,26 @@ async function _sendOtp(email: string): Promise<ActionState> {
 
   await prisma.otpToken.deleteMany({ where: { email } });
 
-  const code = generateOtpCode();
+  const devCode = getDevOtpOverride();
+  const code = devCode ?? generateOtpCode();
   const expires = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000);
 
   await prisma.otpToken.create({
     data: { email, code, expires },
   });
+
+  // Local / QA environments without an email provider: never block sign-in.
+  if (devCode || shouldLogOtpInsteadOfEmail()) {
+    logger.warn(
+      {
+        email,
+        otpCode: code,
+        delivery: devCode ? "AUTH_DEV_OTP" : "server-log",
+      },
+      "[auth] development OTP issued without email delivery"
+    );
+    return { success: true, message: "인증 코드가 발송되었습니다" };
+  }
 
   const emailResult = await sendOtpEmail({
     to: email,

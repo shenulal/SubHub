@@ -6,14 +6,14 @@
  * API 레벨에서 방어적으로 인증을 검증합니다 (Defense-in-depth).
  */
 
-import { auth } from "@/lib/auth";
+import { getCachedSession } from "@/lib/auth/require-auth";
 import type { PermissionKey } from "@/lib/rbac/permissions";
 import { getUserPermissionSet, hasAll, hasAny } from "@/lib/rbac/service";
 import { NextRequest, NextResponse } from "next/server";
 
 // 인증된 세션 타입
 export type AuthenticatedSession = NonNullable<
-  Awaited<ReturnType<typeof auth>>
+  Awaited<ReturnType<typeof getCachedSession>>
 > & {
   user: {
     id: string;
@@ -65,7 +65,7 @@ export function withApiAuth(
   options: ApiAuthOptions = {}
 ) {
   return async (request: NextRequest): Promise<NextResponse> => {
-    const session = await auth();
+    const session = await getCachedSession();
 
     // 세션 검증
     if (!session?.user) {

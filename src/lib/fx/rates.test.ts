@@ -1,10 +1,10 @@
 import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { getRate, resetMissingRateLog } from "./rates";
+import { getRate, invalidateRateCache, resetMissingRateLog } from "./rates";
 
 vi.mock("@/lib/db", () => ({
-  prisma: { exchangeRate: { findFirst: vi.fn() } },
+  prisma: { exchangeRate: { findFirst: vi.fn() }, $queryRaw: vi.fn() },
 }));
 vi.mock("@/lib/logger", () => ({
   logger: { warn: vi.fn(), info: vi.fn(), error: vi.fn() },
@@ -13,6 +13,7 @@ vi.mock("@/lib/logger", () => ({
 const findFirst = prisma.exchangeRate.findFirst as unknown as ReturnType<
   typeof vi.fn
 >;
+const queryRaw = prisma.$queryRaw as unknown as ReturnType<typeof vi.fn>;
 const NOW = new Date("2026-11-04T10:00:00Z");
 const FRESH = new Date("2026-11-03T00:00:00Z");
 const OLD = new Date("2026-10-01T00:00:00Z");
@@ -26,6 +27,17 @@ type Row = {
 };
 
 function stubRows(rows: Row[]) {
+  // Snapshot path (current rates): one query returning the latest row per pair.
+  queryRaw.mockResolvedValue(
+    rows.map((r) => ({
+      baseCurrency: r.base,
+      quoteCurrency: r.quote,
+      rate: r.rate,
+      asOf: r.asOf,
+      source: r.source ?? "api",
+    }))
+  );
+  // Historical path (asOf set): direct table query.
   findFirst.mockImplementation(
     async (args: {
       where: { baseCurrency: string; quoteCurrency: string };
@@ -46,12 +58,14 @@ describe("getRate", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     resetMissingRateLog();
+    invalidateRateCache();
   });
 
   it("returns 1 for the same currency without hitting the database", async () => {
     const result = await getRate("aed", "AED", { now: NOW });
     expect(result).toMatchObject({ rate: 1, stale: false, source: "identity" });
     expect(findFirst).not.toHaveBeenCalled();
+    expect(queryRaw).not.toHaveBeenCalled();
   });
 
   it("uses the direct pair when present", async () => {
@@ -101,6 +115,45 @@ describe("getRate", () => {
     expect(logger.warn).toHaveBeenCalledTimes(1);
   });
 
+  it("loads the latest-rate snapshot once for many current-rate lookups", async () => {
+    stubRows([
+      { base: "USD", quote: "AED", rate: 3.6725, asOf: FRESH },
+      { base: "USD", quote: "SAR", rate: 3.75, asOf: FRESH },
+      { base: "USD", quote: "EUR", rate: 0.92, asOf: FRESH },
+    ]);
+    await Promise.all(
+      ["SAR", "EUR", "USD", "SAR", "EUR"].map((c) =>
+        getRate("AED", c, { now: NOW })
+      )
+    );
+    expect(queryRaw).toHaveBeenCalledTimes(1);
+    expect(findFirst).not.toHaveBeenCalled();
+  });
+
+  it("reloads the snapshot after invalidateRateCache()", async () => {
+    stubRows([{ base: "USD", quote: "AED", rate: 3.6725, asOf: FRESH }]);
+    await getRate("USD", "AED", { now: NOW });
+    stubRows([{ base: "USD", quote: "AED", rate: 3.7, asOf: NOW }]);
+    expect((await getRate("USD", "AED", { now: NOW })).rate).toBe(3.6725);
+    invalidateRateCache();
+    expect((await getRate("USD", "AED", { now: NOW })).rate).toBe(3.7);
+    expect(queryRaw).toHaveBeenCalledTimes(2);
+  });
+
+  it("does not cache a failed snapshot load", async () => {
+    queryRaw.mockRejectedValueOnce(new Error("db down"));
+    await expect(getRate("USD", "AED", { now: NOW })).rejects.toThrow(
+      "db down"
+    );
+    stubRows([{ base: "USD", quote: "AED", rate: 3.6725, asOf: FRESH }]);
+    expect((await getRate("USD", "AED", { now: NOW })).rate).toBe(3.6725);
+  });
+
+  it("skips non-positive rates in the snapshot", async () => {
+    stubRows([{ base: "USD", quote: "AED", rate: 0, asOf: FRESH }]);
+    expect((await getRate("USD", "AED", { now: NOW })).source).toBe("none");
+  });
+
   it("passes the asOf bound to the query", async () => {
     stubRows([{ base: "USD", quote: "AED", rate: 3.67, asOf: FRESH }]);
     const asOf = new Date("2026-11-01T00:00:00Z");
@@ -110,5 +163,6 @@ describe("getRate", () => {
         where: expect.objectContaining({ asOf: { lte: asOf } }),
       })
     );
+    expect(queryRaw).not.toHaveBeenCalled();
   });
 });

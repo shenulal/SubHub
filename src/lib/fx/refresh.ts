@@ -12,7 +12,7 @@ import {
   type FxProviderId,
   type FxQuote,
 } from "./providers";
-import { PIVOT_CURRENCY } from "./rates";
+import { invalidateRateCache, PIVOT_CURRENCY } from "./rates";
 
 export const RATE_SOURCE_API = "api";
 export const RATE_SOURCE_MANUAL = "manual";
@@ -114,6 +114,7 @@ export async function upsertRates(
     });
     count++;
   }
+  invalidateRateCache();
   return count;
 }
 

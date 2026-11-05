@@ -29,3 +29,5 @@
 ## Local development
 
 `.env.local` holds local values only. The QA seed (`scripts/seed-smoke.ts`) creates throw-away accounts on the `subhub-qa.test` domain; never run it against production.
+
+`AUTH_DEV_OTP` (a fixed 6-digit sign-in code) lets local and QA users sign in without an email provider. It is honoured only in development or when `NEXTAUTH_URL` points at localhost (a production build previewed on this machine); `src/actions/otp-dev.ts` rejects it for any other host. Never set it in a deployed environment's secret store. Without `RESEND_API_KEY`, local environments write the one-time code to the server log instead of emailing it.

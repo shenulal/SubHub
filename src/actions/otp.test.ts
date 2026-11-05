@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("@/lib/db", () => ({
   prisma: {
     user: { findUnique: vi.fn() },
+    invitation: { findFirst: vi.fn().mockResolvedValue(null) },
     otpToken: {
       findFirst: vi.fn(),
       deleteMany: vi.fn(),
@@ -19,6 +20,14 @@ vi.mock("@/lib/services/notification/email-auth", () => ({
 
 vi.mock("@/lib/logging", () => ({
   withLogging: (_name: string, fn: unknown) => fn,
+}));
+
+vi.mock("@/lib/logger", () => ({ logger: { warn: vi.fn() } }));
+
+const devOtp = { override: null as string | null, logInstead: false };
+vi.mock("./otp-dev", () => ({
+  getDevOtpOverride: () => devOtp.override,
+  shouldLogOtpInsteadOfEmail: () => devOtp.logInstead,
 }));
 
 import { prisma } from "@/lib/db";
@@ -61,6 +70,23 @@ describe("sendOtp", () => {
       createdAt: new Date(),
     });
     mockedSendOtpEmail.mockResolvedValue({ success: true });
+    devOtp.override = null;
+    devOtp.logInstead = false;
+  });
+
+  it("uses the fixed development code and skips email when AUTH_DEV_OTP is set", async () => {
+    devOtp.override = "246810";
+    const result = await sendOtp(TEST_EMAIL);
+    expect(result.success).toBe(true);
+    expect(db.otpToken.create.mock.calls[0][0].data.code).toBe("246810");
+    expect(mockedSendOtpEmail).not.toHaveBeenCalled();
+  });
+
+  it("succeeds without email when no provider is configured outside production", async () => {
+    devOtp.logInstead = true;
+    const result = await sendOtp(TEST_EMAIL);
+    expect(result.success).toBe(true);
+    expect(mockedSendOtpEmail).not.toHaveBeenCalled();
   });
 
   it("returns USER_NOT_FOUND error when email is not registered", async () => {

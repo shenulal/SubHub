@@ -61,6 +61,10 @@ const nextConfig: NextConfig = {
     ];
   },
 
+  // Pin the workspace root so Turbopack never walks parent folders (stray lockfiles in $HOME).
+  turbopack: { root: __dirname },
+  outputFileTracingRoot: __dirname,
+
   // 실험적 기능
   experimental: {
     // Server Actions 최적화

@@ -9,6 +9,7 @@ import NextAuth, { type NextAuthConfig } from "next-auth";
 import Apple from "next-auth/providers/apple";
 import Credentials from "next-auth/providers/credentials";
 import Google from "next-auth/providers/google";
+import { cache } from "react";
 
 /** Apple sign-in is enabled only when both env vars are present (6.1). */
 export function isAppleSignInEnabled(): boolean {
@@ -29,6 +30,18 @@ function optionalProviders(): NextAuthConfig["providers"] {
 }
 
 /**
+ * Token refresh lookup, de-duplicated per request. Every `auth()` call runs the
+ * JWT callback, and a single page render calls `auth()` from many server
+ * components and actions; without this each call re-read the same user row.
+ */
+const loadTokenUser = cache(async (email: string) =>
+  prisma.user.findUnique({
+    where: { email },
+    select: { id: true, organizationId: true, role: true, teamId: true },
+  })
+);
+
+/**
  * NextAuth.js v5 설정
  * - Google OAuth 프로바이더
  * - Credentials 프로바이더 (이메일/OTP)
@@ -36,6 +49,7 @@ function optionalProviders(): NextAuthConfig["providers"] {
  * - JWT 세션 전략 (Edge Runtime 지원)
  * - 세션에 organizationId, role 추가
  */
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
   trustHost: true, // Vercel 등 프록시 뒤에서 실행 시 필요
@@ -218,15 +232,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       // email로 찾기 (token.id와 DB user.id가 불일치할 수 있음)
       if ((trigger === "update" || token.id) && !user && token.email) {
         try {
-          const dbUser = await prisma.user.findUnique({
-            where: { email: token.email as string },
-            select: {
-              id: true,
-              organizationId: true,
-              role: true,
-              teamId: true,
-            },
-          });
+          const dbUser = await loadTokenUser(token.email as string);
           if (dbUser) {
             token.id = dbUser.id; // 실제 DB user.id로 동기화
 
