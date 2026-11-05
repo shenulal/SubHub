@@ -18,6 +18,10 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  mergeLegacyValue,
+  serializeMultiValue,
+} from "@/lib/filters/multi-value";
 import type {
   AuditLogEntry,
   AuditLogFilterOptions,
@@ -27,6 +31,14 @@ import { Download, File, FileSpreadsheet, FileText } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
+
+const AUDIT_FACETS = ["action", "entityType", "userId", "teamId"] as const;
+type AuditFacet = (typeof AUDIT_FACETS)[number];
+
+/** Initial selection from the server filters (list + legacy single value). */
+function toSet(list?: string[], single?: string): Set<string> {
+  return new Set(mergeLegacyValue(list, single) ?? []);
+}
 
 interface AuditLogPageClientProps {
   initialLogs: AuditLogEntry[];
@@ -84,28 +96,21 @@ export function AuditLogPageClient({
   // Search state
   const [searchQuery, setSearchQuery] = useState(initialFilters.search || "");
 
-  // Filter state (Set-based)
+  // Filter state (Set-based; every facet is multi-select, empty = all)
   const [selectedFilters, setSelectedFilters] = useState<
-    Record<string, Set<string>>
+    Record<AuditFacet, Set<string>>
   >({
-    action: initialFilters.action
-      ? new Set([initialFilters.action])
-      : new Set(),
-    entityType: initialFilters.entityType
-      ? new Set([initialFilters.entityType])
-      : new Set(),
-    userId: initialFilters.userId
-      ? new Set([initialFilters.userId])
-      : new Set(),
+    action: toSet(initialFilters.actions, initialFilters.action),
+    entityType: toSet(initialFilters.entityTypes, initialFilters.entityType),
+    userId: toSet(initialFilters.userIds, initialFilters.userId),
+    teamId: toSet(initialFilters.teamIds, initialFilters.teamId),
   });
 
-  // Update the URL query
+  // Update the URL query (lists are comma-separated)
   const updateUrlParams = useCallback(
     (filters: {
       search?: string;
-      action?: string;
-      entityType?: string;
-      userId?: string;
+      facets: Record<AuditFacet, Set<string>>;
       startDate?: string;
       endDate?: string;
       page?: number;
@@ -113,9 +118,10 @@ export function AuditLogPageClient({
       const params = new URLSearchParams();
 
       if (filters.search) params.set("search", filters.search);
-      if (filters.action) params.set("action", filters.action);
-      if (filters.entityType) params.set("entityType", filters.entityType);
-      if (filters.userId) params.set("userId", filters.userId);
+      for (const facet of AUDIT_FACETS) {
+        const value = serializeMultiValue([...filters.facets[facet]]);
+        if (value) params.set(facet, value);
+      }
       if (filters.startDate)
         params.set("startDate", `${filters.startDate}T00:00:00Z`);
       if (filters.endDate)
@@ -134,26 +140,25 @@ export function AuditLogPageClient({
   // Filter change handler (for AdvancedFilterBar)
   const handleFilterChange = useCallback(
     (filterId: string, values: Set<string>) => {
-      setSelectedFilters((prev) => ({
-        ...prev,
-        [filterId]: values,
-      }));
-
-      const newFilters = {
+      const facets = {
         ...selectedFilters,
-        [filterId]: values,
+        [filterId as AuditFacet]: values,
       };
-
+      setSelectedFilters(facets);
       updateUrlParams({
         search: searchQuery || undefined,
-        action: Array.from(newFilters.action)[0],
-        entityType: Array.from(newFilters.entityType)[0],
-        userId: Array.from(newFilters.userId)[0],
+        facets,
         startDate: currentStartDate,
         endDate: currentEndDate,
       });
     },
-    [selectedFilters, searchQuery, updateUrlParams]
+    [
+      selectedFilters,
+      searchQuery,
+      updateUrlParams,
+      currentStartDate,
+      currentEndDate,
+    ]
   );
 
   // Search change handler
@@ -168,6 +173,7 @@ export function AuditLogPageClient({
       action: new Set(),
       entityType: new Set(),
       userId: new Set(),
+      teamId: new Set(),
     });
     router.push("/reports/audit");
   }, [router]);
@@ -212,6 +218,19 @@ export function AuditLogPageClient({
           value: user.id,
         })),
       },
+      // Team facet (applied server-side for admins only)
+      ...(filterOptions.teams.length > 0
+        ? [
+            {
+              id: "teamId",
+              title: t("reports.audit.export.columns.teamName"),
+              options: filterOptions.teams.map((team) => ({
+                label: team.name,
+                value: team.id,
+              })),
+            },
+          ]
+        : []),
     ],
     [filterOptions, actionLabels, entityTypeLabels, t]
   );
@@ -237,15 +256,12 @@ export function AuditLogPageClient({
           basePath="/reports/audit"
           preserveParams={{
             ...(searchQuery ? { search: searchQuery } : {}),
-            ...(Array.from(selectedFilters.action)[0]
-              ? { action: Array.from(selectedFilters.action)[0] }
-              : {}),
-            ...(Array.from(selectedFilters.entityType)[0]
-              ? { entityType: Array.from(selectedFilters.entityType)[0] }
-              : {}),
-            ...(Array.from(selectedFilters.userId)[0]
-              ? { userId: Array.from(selectedFilters.userId)[0] }
-              : {}),
+            ...Object.fromEntries(
+              AUDIT_FACETS.map((facet) => [
+                facet,
+                serializeMultiValue([...selectedFilters[facet]]) ?? "",
+              ])
+            ),
           }}
         />
 

@@ -17,6 +17,7 @@ import { redirect } from "next/navigation";
 import { cache } from "react";
 import {
   PERMISSION_KEYS,
+  PERMISSION_ROLLOUTS,
   PERMISSIONS,
   SYSTEM_ROLE_KEYS,
   SYSTEM_ROLE_TEMPLATES,
@@ -252,4 +253,41 @@ export async function ensureOrganizationRoles(
       }
     }
   }
+}
+
+/**
+ * Grant permissions introduced after an organisation was created
+ * (`PERMISSION_ROLLOUTS`) to its existing system roles, following the role
+ * templates. Additive and idempotent; returns the number of grants written.
+ */
+export async function applyPermissionRollouts(
+  organizationId: string,
+  db: Db = prisma
+): Promise<number> {
+  if (PERMISSION_ROLLOUTS.length === 0) return 0;
+  const [permissionRows, roles] = await Promise.all([
+    db.permission.findMany({
+      where: { key: { in: [...PERMISSION_ROLLOUTS] } },
+      select: { id: true, key: true },
+    }),
+    db.role.findMany({
+      where: { organizationId, isSystem: true },
+      select: { id: true, key: true },
+    }),
+  ]);
+  const idByKey = new Map(permissionRows.map((r) => [r.key, r.id]));
+  const data = roles.flatMap((role) => {
+    const template = SYSTEM_ROLE_TEMPLATES[role.key as SystemRoleKey];
+    if (!template) return [];
+    return PERMISSION_ROLLOUTS.filter((k) => template.grants.includes(k))
+      .map((k) => idByKey.get(k))
+      .filter((id): id is string => Boolean(id))
+      .map((permissionId) => ({ roleId: role.id, permissionId }));
+  });
+  if (data.length === 0) return 0;
+  const result = await db.rolePermission.createMany({
+    data,
+    skipDuplicates: true,
+  });
+  return result.count;
 }

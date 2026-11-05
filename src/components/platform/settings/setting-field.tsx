@@ -4,6 +4,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { MultiSelect } from "@/components/ui/multi-select";
 import {
   Select,
   SelectContent,
@@ -108,47 +109,47 @@ function SecretInput({
   );
 }
 
-function MultiSelect({
+/**
+ * `multiselect` setting: searchable multi-select (shared MultiSelect).
+ * Values outside the option list are kept so a saved value is never lost.
+ */
+function SettingMultiSelect({
+  id,
   definition,
   value,
   onChange,
   disabled,
 }: {
+  id: string;
   definition: SerializedSettingDefinition;
   value: unknown;
   onChange: (v: unknown) => void;
   disabled?: boolean;
 }) {
-  const selected = new Set(asStringArray(value));
-  const toggle = (option: string) => {
-    const next = new Set(selected);
-    if (next.has(option)) next.delete(option);
-    else next.add(option);
-    onChange(Array.from(next));
-  };
+  const t = useTranslations("platform.settings");
+  const selected = asStringArray(value);
+  const options = definition.options ?? [];
+  const known = new Set(options.map((o) => o.value));
+  const unknown = selected.filter((v) => !known.has(v));
   return (
-    <div className="flex flex-wrap gap-1.5">
-      {(definition.options ?? []).map((opt) => {
-        const active = selected.has(opt.value);
-        return (
-          <button
-            key={opt.value}
-            type="button"
-            disabled={disabled}
-            aria-pressed={active}
-            onClick={() => toggle(opt.value)}
-            className={cn(
-              "h-[30px] rounded-full border px-3.5 text-[0.8125rem] font-medium whitespace-nowrap transition-colors disabled:opacity-60",
-              active
-                ? "border-primary bg-primary text-primary-foreground shadow-xs"
-                : "border-input text-muted-foreground hover:border-primary/50 hover:text-primary bg-transparent"
-            )}
-          >
-            {opt.label}
-          </button>
-        );
-      })}
-    </div>
+    <MultiSelect
+      id={id}
+      aria-label={definition.label}
+      options={[
+        ...options.map((o) => ({ value: o.value, label: o.label })),
+        ...unknown.map((v) => ({ value: v, label: v })),
+      ]}
+      value={selected}
+      onValueChange={onChange}
+      disabled={disabled}
+      placeholder={t("multiSelectPlaceholder")}
+      searchPlaceholder={t("searchOptions")}
+      emptyText={t("noOptions")}
+      selectAllLabel={t("selectAll")}
+      clearLabel={t("clearSelection")}
+      maxChips={3}
+      className="w-full"
+    />
   );
 }
 
@@ -217,7 +218,8 @@ function FieldControl({
       );
     case "multiselect":
       return (
-        <MultiSelect
+        <SettingMultiSelect
+          id={id}
           definition={definition}
           value={value}
           onChange={onChange}

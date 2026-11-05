@@ -69,6 +69,31 @@ describe("/api/v1/integrations contract", () => {
       expect(json).toHaveProperty("items");
       expect(json).toHaveProperty("total", 0);
     });
+
+    it("GET parses a comma-separated status list and drops unknown values", async () => {
+      mockAuth.mockResolvedValueOnce({
+        user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
+      } as never);
+      mockGetIntegrations.mockResolvedValueOnce({
+        items: [],
+        total: 0,
+        page: 1,
+        limit: 20,
+        totalPages: 0,
+      });
+
+      await handler.GET(
+        new NextRequest(
+          "http://localhost/api/v1/integrations?status=ACTIVE,ERROR,BOGUS"
+        )
+      );
+
+      expect(mockGetIntegrations).toHaveBeenCalledWith(
+        expect.objectContaining({
+          filter: expect.objectContaining({ status: ["ACTIVE", "ERROR"] }),
+        })
+      );
+    });
   });
 
   describe("POST", () => {

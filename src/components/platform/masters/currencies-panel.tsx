@@ -3,6 +3,7 @@
 import {
   addManualRate,
   refreshRatesNow,
+  setCurrencyActive,
   setCurrencyEnabled,
 } from "@/actions/platform/masters/currencies";
 import { Button } from "@/components/ui/button";
@@ -34,17 +35,34 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import type { CurrencyRow } from "@/types/platform";
-import { AlertTriangle, Loader2, PencilLine, RefreshCw } from "lucide-react";
+import {
+  AlertTriangle,
+  Loader2,
+  Pencil,
+  PencilLine,
+  Plus,
+  RefreshCw,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { Field, PanelHeader } from "./master-shared";
+import { CurrencyDialog } from "./currency-dialog";
+import {
+  ActiveToggleButton,
+  Field,
+  PanelHeader,
+  StatusBadge,
+} from "./master-shared";
 
 interface CurrenciesPanelProps {
   rows: CurrencyRow[];
   canManage: boolean;
+  /** `masters:manage_global` — create/edit the platform-wide currency list. */
+  canManageGlobal?: boolean;
 }
+
+type CurrencyDialogState = { currency: CurrencyRow | null } | null;
 
 const RATE_PRECISION = 6;
 
@@ -143,12 +161,17 @@ function ManualRateDialog({
   );
 }
 
-export function CurrenciesPanel({ rows, canManage }: CurrenciesPanelProps) {
+export function CurrenciesPanel({
+  rows,
+  canManage,
+  canManageGlobal = false,
+}: CurrenciesPanelProps) {
   const t = useTranslations("platform.masters.currencies");
   const tc = useTranslations("platform.masters.common");
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [query, setQuery] = useState("");
+  const [dialog, setDialog] = useState<CurrencyDialogState>(null);
   const base = rows.find((r) => r.isBase)?.code ?? "";
   const staleCount = rows.filter(
     (r) => r.isEnabled && !r.isBase && (r.stale || r.rate === null)
@@ -169,6 +192,14 @@ export function CurrenciesPanel({ rows, canManage }: CurrenciesPanelProps) {
         a.code.localeCompare(b.code)
     );
   }, [rows, query]);
+
+  const setActive = (code: string, isActive: boolean) => {
+    startTransition(async () => {
+      const result = await setCurrencyActive({ code, isActive });
+      if (result.success) router.refresh();
+      else toast.error(result.error ?? tc("saveFailed"));
+    });
+  };
 
   const toggle = (code: string, enabled: boolean) => {
     startTransition(async () => {
@@ -201,21 +232,35 @@ export function CurrenciesPanel({ rows, canManage }: CurrenciesPanelProps) {
         title={t("title")}
         description={t("description", { base })}
         action={
-          canManage && (
+          (canManage || canManageGlobal) && (
             <div className="flex flex-wrap gap-2">
-              <ManualRateDialog
-                base={base}
-                codes={rows.filter((r) => !r.isBase).map((r) => r.code)}
-                onSaved={() => router.refresh()}
-              />
-              <Button size="sm" onClick={refresh} disabled={isPending}>
-                {isPending ? (
-                  <Loader2 className="size-4 animate-spin" />
-                ) : (
-                  <RefreshCw className="size-4" />
-                )}
-                {t("refreshNow")}
-              </Button>
+              {canManageGlobal && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setDialog({ currency: null })}
+                >
+                  <Plus className="size-4" />
+                  {t("add")}
+                </Button>
+              )}
+              {canManage && (
+                <ManualRateDialog
+                  base={base}
+                  codes={rows.filter((r) => !r.isBase).map((r) => r.code)}
+                  onSaved={() => router.refresh()}
+                />
+              )}
+              {canManage && (
+                <Button size="sm" onClick={refresh} disabled={isPending}>
+                  {isPending ? (
+                    <Loader2 className="size-4 animate-spin" />
+                  ) : (
+                    <RefreshCw className="size-4" />
+                  )}
+                  {t("refreshNow")}
+                </Button>
+              )}
             </div>
           )
         }
@@ -234,7 +279,7 @@ export function CurrenciesPanel({ rows, canManage }: CurrenciesPanelProps) {
         placeholder={t("search")}
         className="mb-4 w-full sm:max-w-xs"
       />
-      <div className="overflow-hidden rounded-md border">
+      <div className="overflow-x-auto rounded-md border">
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
@@ -243,15 +288,25 @@ export function CurrenciesPanel({ rows, canManage }: CurrenciesPanelProps) {
               <TableHead className="text-right">
                 {t("rateColumn", { base })}
               </TableHead>
-              <TableHead>{t("asOf")}</TableHead>
+              <TableHead className="hidden xl:table-cell">
+                {t("asOf")}
+              </TableHead>
+              <TableHead className="w-28">{t("platform")}</TableHead>
               <TableHead className="w-28 text-right">{t("enabled")}</TableHead>
+              {canManageGlobal && (
+                <TableHead className="w-24 text-right">
+                  {tc("actions")}
+                </TableHead>
+              )}
             </TableRow>
           </TableHeader>
           <TableBody>
             {visible.map((row) => (
               <TableRow
                 key={row.code}
-                className={cn(!row.isEnabled && "text-muted-foreground")}
+                className={cn(
+                  (!row.isEnabled || !row.isActive) && "text-muted-foreground"
+                )}
               >
                 <TableCell className="font-mono font-medium whitespace-nowrap">
                   {row.code}
@@ -270,7 +325,7 @@ export function CurrenciesPanel({ rows, canManage }: CurrenciesPanelProps) {
                 <TableCell className="text-right font-mono tabular-nums">
                   {row.isBase ? "1" : formatRate(row.rate)}
                 </TableCell>
-                <TableCell className="text-[0.8125rem] whitespace-nowrap">
+                <TableCell className="hidden text-[0.8125rem] whitespace-nowrap xl:table-cell">
                   {row.isBase ? (
                     "—"
                   ) : row.rateAsOf ? (
@@ -282,19 +337,53 @@ export function CurrenciesPanel({ rows, canManage }: CurrenciesPanelProps) {
                     <span className="text-warning">{t("noRate")}</span>
                   )}
                 </TableCell>
+                <TableCell>
+                  <StatusBadge active={row.isActive} />
+                </TableCell>
                 <TableCell className="text-right">
                   <Switch
                     checked={row.isEnabled}
-                    disabled={!canManage || row.isBase || isPending}
+                    disabled={
+                      !canManage || row.isBase || !row.isActive || isPending
+                    }
                     onCheckedChange={(v) => toggle(row.code, v)}
                     aria-label={`${row.code} ${t("enabled")}`}
                   />
                 </TableCell>
+                {canManageGlobal && (
+                  <TableCell className="text-right whitespace-nowrap">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-8 w-8"
+                      aria-label={`${tc("edit")} ${row.code}`}
+                      onClick={() => setDialog({ currency: row })}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <ActiveToggleButton
+                      active={row.isActive}
+                      label={row.code}
+                      disabled={isPending || row.isBase}
+                      onToggle={(v) => setActive(row.code, v)}
+                    />
+                  </TableCell>
+                )}
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </div>
+      {dialog && (
+        <CurrencyDialog
+          key={dialog.currency?.code ?? "new"}
+          open
+          onOpenChange={(o) => !o && setDialog(null)}
+          currency={dialog.currency}
+          canEnable={canManage}
+          onSaved={() => router.refresh()}
+        />
+      )}
     </div>
   );
 }

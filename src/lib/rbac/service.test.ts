@@ -9,6 +9,7 @@ import {
   SYSTEM_ROLE_TEMPLATES,
 } from "./permissions";
 import {
+  applyPermissionRollouts,
   can,
   ensureOrganizationRoles,
   ForbiddenError,
@@ -21,7 +22,12 @@ import {
 vi.mock("@/lib/db", () => ({
   prisma: {
     user: { findUnique: vi.fn() },
-    role: { findFirst: vi.fn(), findUnique: vi.fn(), create: vi.fn() },
+    role: {
+      findFirst: vi.fn(),
+      findUnique: vi.fn(),
+      findMany: vi.fn(),
+      create: vi.fn(),
+    },
     permission: { findMany: vi.fn(), upsert: vi.fn() },
     rolePermission: { createMany: vi.fn() },
   },
@@ -196,6 +202,39 @@ describe("ensureOrganizationRoles", () => {
     });
     await ensureOrganizationRoles("org");
     expect(db.role.create).not.toHaveBeenCalled();
+    expect(db.rolePermission.createMany).not.toHaveBeenCalled();
+  });
+});
+
+describe("applyPermissionRollouts", () => {
+  beforeEach(() => vi.clearAllMocks());
+
+  it("grants new keys only to system roles whose template includes them", async () => {
+    db.permission.findMany.mockResolvedValue([
+      { id: "p-global", key: "masters:manage_global" },
+    ]);
+    db.role.findMany.mockResolvedValue([
+      { id: "r-admin", key: "ADMIN" },
+      { id: "r-viewer", key: "VIEWER" },
+    ]);
+    db.rolePermission.createMany.mockResolvedValue({ count: 1 });
+    const count = await applyPermissionRollouts("org");
+    expect(count).toBe(1);
+    expect(db.role.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { organizationId: "org", isSystem: true },
+      })
+    );
+    expect(db.rolePermission.createMany).toHaveBeenCalledWith({
+      data: [{ roleId: "r-admin", permissionId: "p-global" }],
+      skipDuplicates: true,
+    });
+  });
+
+  it("is a no-op when the permission row is missing", async () => {
+    db.permission.findMany.mockResolvedValue([]);
+    db.role.findMany.mockResolvedValue([{ id: "r-admin", key: "ADMIN" }]);
+    expect(await applyPermissionRollouts("org")).toBe(0);
     expect(db.rolePermission.createMany).not.toHaveBeenCalled();
   });
 });

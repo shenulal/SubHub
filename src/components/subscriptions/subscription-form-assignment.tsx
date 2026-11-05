@@ -1,7 +1,6 @@
 // src/components/subscriptions/subscription-form-assignment.tsx
 "use client";
 
-import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -9,25 +8,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
 import { Label } from "@/components/ui/label";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { cn } from "@/lib/utils";
-import { Check, ChevronsUpDown, X } from "lucide-react";
+import { MultiSelect } from "@/components/ui/multi-select";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { type Control, Controller, useWatch } from "react-hook-form";
 import type { SubscriptionFormValues } from "./subscription-form-schema";
 
@@ -73,8 +57,6 @@ export function SubscriptionFormAssignment({
 }: SubscriptionFormAssignmentProps) {
   const isPerSeat = billingType === "PER_SEAT";
   const t = useTranslations("subscriptions.form.assignment");
-  const [userPopoverOpen, setUserPopoverOpen] = useState(false);
-  const [teamPopoverOpen, setTeamPopoverOpen] = useState(false);
 
   // Watch the selected app ID
   const selectedAppId = useWatch({ control, name: "appId" });
@@ -126,42 +108,19 @@ export function SubscriptionFormAssignment({
     }
   }, [isPerSeat, selectedTeamIds, selectedUserIds, users, setValue]);
 
-  // Toggle team selection
-  const toggleTeam = (teamId: string) => {
-    const newValue = selectedTeamIds.includes(teamId)
-      ? selectedTeamIds.filter((id) => id !== teamId)
-      : [...selectedTeamIds, teamId];
-    setValue("teamIds", newValue);
-  };
-
-  // Remove a team
-  const removeTeam = (teamId: string) => {
-    setValue(
-      "teamIds",
-      selectedTeamIds.filter((id) => id !== teamId)
-    );
-  };
-
-  // Toggle user selection
-  const toggleUser = (userId: string) => {
-    const newValue = selectedUserIds.includes(userId)
-      ? selectedUserIds.filter((id) => id !== userId)
-      : [...selectedUserIds, userId];
-    setValue("assignedUserIds", newValue);
-  };
-
-  // Remove a user
-  const removeUser = (userId: string) => {
-    setValue(
-      "assignedUserIds",
-      selectedUserIds.filter((id) => id !== userId)
-    );
-  };
-
-  // Selected team details
-  const selectedTeams = useMemo(() => {
-    return availableTeams.filter((team) => selectedTeamIds.includes(team.id));
-  }, [availableTeams, selectedTeamIds]);
+  const teamOptions = useMemo(
+    () => availableTeams.map((team) => ({ value: team.id, label: team.name })),
+    [availableTeams]
+  );
+  const userOptions = useMemo(
+    () =>
+      availableUsers.map((user) => ({
+        value: user.id,
+        label: user.name ?? user.email,
+        keywords: [user.email],
+      })),
+    [availableUsers]
+  );
 
   // Only ADMIN sees the assignment card
   if (!isAdmin) {
@@ -177,7 +136,7 @@ export function SubscriptionFormAssignment({
       <CardContent className="space-y-4">
         {/* Team multi-select */}
         <div className="space-y-2">
-          <Label>{t("teamLabel")}</Label>
+          <Label htmlFor="assignment-teams">{t("teamLabel")}</Label>
           {availableTeams.length === 0 ? (
             <p className="text-muted-foreground text-sm">
               {selectedAppId ? t("noTeamsForApp") : t("selectAppFirst")}
@@ -187,80 +146,19 @@ export function SubscriptionFormAssignment({
               control={control}
               name="teamIds"
               render={() => (
-                <>
-                  <Popover
-                    open={teamPopoverOpen}
-                    onOpenChange={setTeamPopoverOpen}
-                  >
-                    <PopoverTrigger asChild>
-                      <button
-                        type="button"
-                        className={cn(
-                          "border-input bg-background ring-offset-background flex min-h-10 w-full items-center justify-between rounded-md border px-3 py-2 text-sm",
-                          "focus:ring-ring focus:ring-2 focus:ring-offset-2 focus:outline-none",
-                          "disabled:cursor-not-allowed disabled:opacity-50",
-                          isPending && "cursor-not-allowed opacity-50"
-                        )}
-                        disabled={isPending}
-                      >
-                        <span className="text-muted-foreground">
-                          {selectedTeams.length > 0
-                            ? selectedTeams.map((t) => t.name).join(", ")
-                            : t("teamPlaceholder")}
-                        </span>
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                      </button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[300px] p-0" align="start">
-                      <Command>
-                        <CommandInput placeholder={t("teamPlaceholder")} />
-                        <CommandList>
-                          <CommandEmpty>{t("noTeamsForApp")}</CommandEmpty>
-                          <CommandGroup>
-                            {availableTeams.map((team) => (
-                              <CommandItem
-                                key={team.id}
-                                value={team.name}
-                                onSelect={() => toggleTeam(team.id)}
-                              >
-                                <Checkbox
-                                  checked={selectedTeamIds.includes(team.id)}
-                                  className="mr-2"
-                                />
-                                {team.name}
-                                {selectedTeamIds.includes(team.id) && (
-                                  <Check className="ml-auto h-4 w-4" />
-                                )}
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-
-                  {/* Selected teams */}
-                  {selectedTeams.length > 0 && (
-                    <div className="flex flex-wrap gap-1 pt-2">
-                      {selectedTeams.map((team) => (
-                        <Badge
-                          key={team.id}
-                          variant="secondary"
-                          className="flex items-center gap-1"
-                        >
-                          {team.name}
-                          <button
-                            type="button"
-                            onClick={() => removeTeam(team.id)}
-                            className="hover:bg-muted ml-1 rounded-full"
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </Badge>
-                      ))}
-                    </div>
-                  )}
-                </>
+                <MultiSelect
+                  id="assignment-teams"
+                  aria-label={t("teamLabel")}
+                  options={teamOptions}
+                  value={selectedTeamIds}
+                  onValueChange={(ids) => setValue("teamIds", ids)}
+                  disabled={isPending}
+                  placeholder={t("teamPlaceholder")}
+                  searchPlaceholder={t("teamPlaceholder")}
+                  emptyText={t("noTeamsForApp")}
+                  moreLabel={(count) => `+${count}`}
+                  maxChips={3}
+                />
               )}
             />
           )}
@@ -269,7 +167,7 @@ export function SubscriptionFormAssignment({
         {/* User assignment (ADMIN only; managed in the license card for PER_SEAT) */}
         {isAdmin && !isPerSeat && (
           <div className="space-y-2">
-            <Label>{t("userLabel")}</Label>
+            <Label htmlFor="assignment-users">{t("userLabel")}</Label>
             {selectedTeamIds.length === 0 ? (
               <p className="text-muted-foreground text-sm">
                 {t("selectTeamFirst")}
@@ -279,84 +177,19 @@ export function SubscriptionFormAssignment({
                 {t("noUsersForTeam")}
               </p>
             ) : (
-              <>
-                <Popover
-                  open={userPopoverOpen}
-                  onOpenChange={setUserPopoverOpen}
-                >
-                  <PopoverTrigger asChild>
-                    <button
-                      type="button"
-                      className={cn(
-                        "border-input bg-background ring-offset-background flex min-h-10 w-full items-center justify-between rounded-md border px-3 py-2 text-sm",
-                        "focus:ring-ring focus:ring-2 focus:ring-offset-2 focus:outline-none",
-                        "disabled:cursor-not-allowed disabled:opacity-50",
-                        isPending && "cursor-not-allowed opacity-50"
-                      )}
-                      disabled={isPending}
-                    >
-                      <span className="text-muted-foreground">
-                        {selectedUsers.length > 0
-                          ? t("usersSelected", { count: selectedUsers.length })
-                          : t("selectUsersPlaceholder")}
-                      </span>
-                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-[300px] p-0" align="start">
-                    <Command>
-                      <CommandInput placeholder={t("searchUsers")} />
-                      <CommandList>
-                        <CommandEmpty>{t("noUsersFound")}</CommandEmpty>
-                        <CommandGroup>
-                          {availableUsers.map((user) => (
-                            <CommandItem
-                              key={user.id}
-                              value={user.email}
-                              onSelect={() => toggleUser(user.id)}
-                            >
-                              <Checkbox
-                                checked={selectedUserIds.includes(user.id)}
-                                className="mr-2"
-                              />
-                              <div className="flex flex-col">
-                                <span>{user.name ?? user.email}</span>
-                                {user.name && (
-                                  <span className="text-muted-foreground text-xs">
-                                    {user.email}
-                                  </span>
-                                )}
-                              </div>
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
-
-                {/* Selected users */}
-                {selectedUsers.length > 0 && (
-                  <div className="flex flex-wrap gap-1 pt-2">
-                    {selectedUsers.map((user) => (
-                      <Badge
-                        key={user.id}
-                        variant="secondary"
-                        className="flex items-center gap-1"
-                      >
-                        {user.name ?? user.email}
-                        <button
-                          type="button"
-                          onClick={() => removeUser(user.id)}
-                          className="hover:bg-muted ml-1 rounded-full"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </Badge>
-                    ))}
-                  </div>
-                )}
-              </>
+              <MultiSelect
+                id="assignment-users"
+                aria-label={t("userLabel")}
+                options={userOptions}
+                value={selectedUserIds}
+                onValueChange={(ids) => setValue("assignedUserIds", ids)}
+                disabled={isPending}
+                placeholder={t("selectUsersPlaceholder")}
+                searchPlaceholder={t("searchUsers")}
+                emptyText={t("noUsersFound")}
+                moreLabel={(count) => `+${count}`}
+                maxChips={3}
+              />
             )}
           </div>
         )}

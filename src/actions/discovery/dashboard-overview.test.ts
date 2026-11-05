@@ -214,4 +214,24 @@ describe("getCategorySpendForDashboard", () => {
       false
     );
   });
+
+  it("accepts several owners and teams (multi-select) and empty lists = all", async () => {
+    const result = await getCategorySpendForDashboard({
+      ownerIds: ["u1", "u2"],
+      teamIds: ["t1", "t2"],
+    });
+    expect(result.success).toBe(true);
+    const where = JSON.stringify(
+      prisma.subscription.findMany.mock.calls.at(-1)![0].where
+    );
+    expect(where).toContain('"ownerId":{"in":["u1","u2"]}');
+    expect(where).toContain('"teamId":{"in":["t1","t2"]}');
+
+    await getCategorySpendForDashboard({ ownerIds: [], teamIds: [] });
+    const unfiltered = JSON.stringify(
+      prisma.subscription.findMany.mock.calls.at(-1)![0].where
+    );
+    expect(unfiltered).not.toContain("u1");
+    expect(unfiltered).not.toContain('"teamId":{"in"');
+  });
 });

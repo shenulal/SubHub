@@ -176,6 +176,24 @@ describe("getReceiptSuggestions", () => {
     expect(result.data?.page).toBe(2);
   });
 
+  it("filters by several mailboxes (array or CSV) and ignores an empty list", async () => {
+    grant(["mailboxes:manage"]);
+    await getReceiptSuggestions({ mailboxIds: ["mb-1", "mb-2"] });
+    expect(
+      db.receiptSuggestion.findMany.mock.calls.at(-1)![0].where.mailboxId
+    ).toEqual({ in: ["mb-1", "mb-2"] });
+
+    await getReceiptSuggestions({ mailboxId: "mb-1,mb-3" });
+    expect(
+      db.receiptSuggestion.findMany.mock.calls.at(-1)![0].where.mailboxId
+    ).toEqual({ in: ["mb-1", "mb-3"] });
+
+    await getReceiptSuggestions({ mailboxIds: [] });
+    expect(
+      db.receiptSuggestion.findMany.mock.calls.at(-1)![0].where.mailboxId
+    ).toBeUndefined();
+  });
+
   it("rejects invalid filters and forbidden callers", async () => {
     grant(["mailboxes:manage"]);
     expect((await getReceiptSuggestions({ minConfidence: 7 })).success).toBe(

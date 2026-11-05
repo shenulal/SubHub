@@ -2,9 +2,11 @@
 "use client";
 
 /**
- * "More filters" popover: owner, team, cost centre, payment method, billing
- * cycle, amount range, renewal window, trial-only and archived toggle.
+ * "More filters" popover: owners, teams, cost centres, payment methods and
+ * billing cycles (each multi-select, empty = any), amount range, renewal
+ * window, trial-only and archived toggle.
  */
+import { FilterMultiSelect } from "@/components/common/filter-multi-select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,13 +15,6 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import type {
@@ -32,7 +27,6 @@ import { useTranslations } from "next-intl";
 import { useState } from "react";
 
 const CYCLES: BillingCycle[] = ["MONTHLY", "QUARTERLY", "YEARLY", "ONE_TIME"];
-const ANY = "__any";
 
 interface AdvancedFiltersProps {
   filter: SubscriptionListFilter;
@@ -47,44 +41,38 @@ function toNumber(value: string): number | undefined {
   return Number.isFinite(n) && n >= 0 ? n : undefined;
 }
 
-interface SelectRowProps {
+interface MultiRowProps {
   id: string;
   label: string;
-  value: string | undefined;
+  value: string[] | undefined;
   options: Array<{ id: string; name: string }>;
   anyLabel: string;
-  onChange: (value: string | undefined) => void;
+  onChange: (value: string[] | undefined) => void;
 }
 
-function SelectRow({
+/** One labelled multi-value facet; an empty selection clears the facet. */
+function MultiRow({
   id,
   label,
   value,
   options,
   anyLabel,
   onChange,
-}: SelectRowProps) {
+}: MultiRowProps) {
   return (
-    <div className="grid grid-cols-[6.5rem_1fr] items-center gap-2">
+    <div className="grid grid-cols-[6.5rem_minmax(0,1fr)] items-center gap-2">
       <Label htmlFor={id} className="text-muted-foreground text-xs">
         {label}
       </Label>
-      <Select
-        value={value ?? ANY}
-        onValueChange={(v) => onChange(v === ANY ? undefined : v)}
-      >
-        <SelectTrigger id={id} className="h-8 text-xs">
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value={ANY}>{anyLabel}</SelectItem>
-          {options.map((o) => (
-            <SelectItem key={o.id} value={o.id}>
-              {o.name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      <FilterMultiSelect
+        id={id}
+        label={label}
+        placeholder={anyLabel}
+        value={value ?? []}
+        options={options.map((o) => ({ value: o.id, label: o.name }))}
+        onValueChange={(next) => onChange(next.length ? next : undefined)}
+        className="h-8 w-full text-xs"
+      />
     </div>
   );
 }
@@ -128,45 +116,45 @@ export function SubscriptionFiltersAdvanced({
         </Button>
       </PopoverTrigger>
       <PopoverContent align="start" className="w-[22rem] space-y-3 p-4">
-        <SelectRow
+        <MultiRow
           id="f-owner"
           label={t("owner")}
-          value={filter.ownerId}
+          value={filter.ownerIds}
           options={options.owners}
           anyLabel={t("any")}
-          onChange={(v) => onChange({ ownerId: v })}
+          onChange={(v) => onChange({ ownerIds: v })}
         />
-        <SelectRow
+        <MultiRow
           id="f-team"
           label={t("team")}
-          value={filter.teamId}
+          value={filter.teamIds}
           options={options.teams}
           anyLabel={t("any")}
-          onChange={(v) => onChange({ teamId: v })}
+          onChange={(v) => onChange({ teamIds: v })}
         />
-        <SelectRow
+        <MultiRow
           id="f-cost-centre"
           label={t("costCenter")}
-          value={filter.costCenterId}
+          value={filter.costCenterIds}
           options={options.costCenters}
           anyLabel={t("any")}
-          onChange={(v) => onChange({ costCenterId: v })}
+          onChange={(v) => onChange({ costCenterIds: v })}
         />
-        <SelectRow
+        <MultiRow
           id="f-payment"
           label={t("paymentMethod")}
-          value={filter.paymentMethodId}
+          value={filter.paymentMethodIds}
           options={options.paymentMethods}
           anyLabel={t("any")}
-          onChange={(v) => onChange({ paymentMethodId: v })}
+          onChange={(v) => onChange({ paymentMethodIds: v })}
         />
-        <SelectRow
+        <MultiRow
           id="f-cycle"
           label={t("billingCycle")}
-          value={filter.billingCycle}
+          value={filter.billingCycles}
           options={CYCLES.map((c) => ({ id: c, name: cycleLabel[c] }))}
           anyLabel={t("any")}
-          onChange={(v) => onChange({ billingCycle: v as BillingCycle })}
+          onChange={(v) => onChange({ billingCycles: v as BillingCycle[] })}
         />
 
         <div className="grid grid-cols-[6.5rem_1fr_1fr] items-center gap-2">

@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { describe, expect, it, vi } from "vitest";
 
 import type { CustomFieldDefinitionDto } from "@/types/taxonomy";
@@ -105,5 +106,32 @@ describe("CustomFieldsFields", () => {
       <CustomFieldsFields values={{}} onChange={() => {}} definitions={[]} />
     );
     expect(container).toBeEmptyDOMElement();
+  });
+
+  it("renders a multi-select custom field and stores picks as a JSON array", async () => {
+    Element.prototype.scrollIntoView = vi.fn();
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    const regions: CustomFieldDefinitionDto = {
+      id: "regions",
+      key: "regions",
+      label: "Regions",
+      fieldType: "MULTI_SELECT",
+      options: ["AE", "SA", "QA"],
+      isRequired: false,
+      sortOrder: 0,
+    };
+    render(
+      <CustomFieldsFields
+        values={{ regions: '["AE"]' }}
+        onChange={onChange}
+        definitions={[regions]}
+      />
+    );
+    const trigger = screen.getByRole("combobox", { name: "Regions" });
+    expect(trigger).toHaveTextContent("AE");
+    await user.click(trigger);
+    await user.click(screen.getByRole("option", { name: /SA/ }));
+    expect(onChange).toHaveBeenLastCalledWith({ regions: '["AE","SA"]' });
   });
 });

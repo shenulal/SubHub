@@ -52,10 +52,11 @@ interface ImportResult {
 
 const CHUNK_SIZE = 50;
 
-// CSV templates
+// CSV templates (app categories are Category master names or slugs; the
+// examples use slugs seeded by the default category tree)
 const APP_TEMPLATE = `name,category,vendor,description,website
-Slack,COLLABORATION,Slack Technologies,Team communication tool,https://slack.com
-Notion,PRODUCTIVITY,Notion Labs,All-in-one collaboration tool,https://notion.so`;
+Slack,communication,Slack Technologies,Team communication tool,https://slack.com
+Notion,productivity,Notion Labs,All-in-one collaboration tool,https://notion.so`;
 
 const SUBSCRIPTION_TEMPLATE = `appName,planName,billingCycle,price,renewalDate,seats
 Slack,Business+,MONTHLY,100000,2024-12-01,50

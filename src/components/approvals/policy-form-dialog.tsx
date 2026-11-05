@@ -6,7 +6,6 @@
  */
 import { upsertApprovalPolicy } from "@/actions/approvals/policies";
 import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -17,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { MultiSelect } from "@/components/ui/multi-select";
 import {
   Select,
   SelectContent,
@@ -135,14 +135,6 @@ export function PolicyFormDialog({
   const set = <K extends keyof FormState>(key: K, value: FormState[K]) =>
     setForm((prev) => ({ ...prev, [key]: value }));
 
-  const toggleCategory = (id: string) =>
-    set(
-      "categoryIds",
-      form.categoryIds.includes(id)
-        ? form.categoryIds.filter((c) => c !== id)
-        : [...form.categoryIds, id]
-    );
-
   const save = () => {
     startTransition(async () => {
       const res = await upsertApprovalPolicy({ id: policy?.id, ...form });
@@ -256,28 +248,24 @@ export function PolicyFormDialog({
                 </div>
                 <div className="space-y-2">
                   <HelpLabel
+                    htmlFor="policy-categories"
                     label={tf("categories")}
                     help={tf("categoriesHelp")}
                   />
-                  <div className="border-border max-h-40 space-y-1.5 overflow-y-auto rounded-md border p-2">
-                    {parents.map((c) => (
-                      <label
-                        key={c.id}
-                        className="flex cursor-pointer items-center gap-2 text-sm"
-                      >
-                        <Checkbox
-                          checked={form.categoryIds.includes(c.id)}
-                          onCheckedChange={() => toggleCategory(c.id)}
-                        />
-                        {c.name}
-                      </label>
-                    ))}
-                    {parents.length === 0 && (
-                      <p className="text-muted-foreground text-xs">
-                        {tc("none")}
-                      </p>
-                    )}
-                  </div>
+                  <MultiSelect
+                    id="policy-categories"
+                    aria-label={tf("categories")}
+                    options={parents.map((c) => ({
+                      value: c.id,
+                      label: c.name,
+                    }))}
+                    value={form.categoryIds}
+                    onValueChange={(ids) => set("categoryIds", ids)}
+                    placeholder={tf("categoriesPlaceholder")}
+                    searchPlaceholder={tf("categoriesSearch")}
+                    emptyText={tc("none")}
+                    maxChips={3}
+                  />
                 </div>
               </div>
             )}

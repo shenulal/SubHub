@@ -29,6 +29,8 @@ export interface AppListItem {
  */
 export interface AppDetail extends AppListItem {
   catalogId: string | null;
+  /** Category master id (`category` mirrors its name). */
+  categoryId?: string | null;
   customWebsite: string | null;
   notes: string | null;
   tags: string[];

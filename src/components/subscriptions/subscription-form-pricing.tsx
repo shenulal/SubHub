@@ -1,7 +1,7 @@
 // src/components/subscriptions/subscription-form-pricing.tsx
 "use client";
 
-import { Badge } from "@/components/ui/badge";
+import { CurrencyDialog } from "@/components/platform/masters/currency-dialog";
 import {
   Card,
   CardContent,
@@ -9,22 +9,9 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { MultiSelect } from "@/components/ui/multi-select";
 import {
   Select,
   SelectContent,
@@ -32,8 +19,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { cn } from "@/lib/utils";
-import { ChevronsUpDown, Users, X } from "lucide-react";
+import { usePermissionFlag } from "@/hooks/use-permission-flag";
+import { Users } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 import {
@@ -49,7 +36,6 @@ import type { SubscriptionFormValues } from "./subscription-form-schema";
 import {
   getBillingCycleOptions,
   getBillingTypeOptions,
-  getCurrencyOptions,
 } from "./subscription-form.constants";
 
 interface SubscriptionFormPricingProps {
@@ -62,7 +48,7 @@ interface SubscriptionFormPricingProps {
   users: UserOption[];
   isAdmin: boolean;
   selectedUserIds: string[];
-  /** Currency codes from `finance.enabledCurrencies`; falls back to constants. */
+  /** Currency codes from `finance.enabledCurrencies`; falls back to the default currency. */
   currencyOptions?: string[];
   /** Enabled BillingCycleConfig rows; falls back to constants. */
   billingCycleOptions?: Array<{ value: string; label: string }>;
@@ -83,31 +69,22 @@ export function SubscriptionFormPricing({
 }: SubscriptionFormPricingProps) {
   const t = useTranslations();
   const cycleOptions = billingCycleOptions ?? getBillingCycleOptions(t);
-  const currencyItems =
-    currencyOptions?.map((code) => ({ value: code, label: code })) ??
-    getCurrencyOptions(t);
+  const ti = useTranslations("platform.masters.inline");
+  const canCreateCurrency = usePermissionFlag("masters:manage_global");
+  const [createdCurrencies, setCreatedCurrencies] = useState<string[]>([]);
+  const [newCurrency, setNewCurrency] = useState<string | null>(null);
+  const watchedCurrency = useWatch({ control, name: "currency" });
+  const currencyItems = Array.from(
+    new Set([...(currencyOptions ?? [defaultCurrency]), ...createdCurrencies])
+  )
+    .filter(Boolean)
+    .map((code) => ({ value: code, label: code }));
   const watchedBillingType = useWatch({ control, name: "billingType" });
   const watchedTotalLicenses = useWatch({ control, name: "totalLicenses" });
-  const [seatUserPopoverOpen, setSeatUserPopoverOpen] = useState(false);
 
   const selectedUsersForSeat = useMemo(() => {
     return users.filter((u) => selectedUserIds.includes(u.id));
   }, [users, selectedUserIds]);
-
-  const toggleSeatUser = (userId: string) => {
-    const current = selectedUserIds;
-    const newValue = current.includes(userId)
-      ? current.filter((id: string) => id !== userId)
-      : [...current, userId];
-    setValue("assignedUserIds", newValue);
-  };
-
-  const removeSeatUser = (userId: string) => {
-    setValue(
-      "assignedUserIds",
-      selectedUserIds.filter((id: string) => id !== userId)
-    );
-  };
 
   return (
     <Card>
@@ -219,88 +196,24 @@ export function SubscriptionFormPricing({
                   <Users className="h-4 w-4" />
                   {t("subscriptions.form.license.assignUsers")}
                 </Label>
-                <Popover
-                  open={seatUserPopoverOpen}
-                  onOpenChange={setSeatUserPopoverOpen}
-                >
-                  <PopoverTrigger asChild>
-                    <button
-                      type="button"
-                      className={cn(
-                        "border-input bg-background ring-offset-background flex min-h-10 w-full items-center justify-between rounded-md border px-3 py-2 text-sm",
-                        "focus:ring-ring focus:ring-2 focus:ring-offset-2 focus:outline-none",
-                        isPending && "cursor-not-allowed opacity-50"
-                      )}
-                      disabled={isPending}
-                    >
-                      <span className="text-muted-foreground">
-                        {selectedUsersForSeat.length > 0
-                          ? t("subscriptions.form.license.usersSelected", {
-                              count: selectedUsersForSeat.length,
-                            })
-                          : t("subscriptions.form.license.selectUsers")}
-                      </span>
-                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-[300px] p-0" align="start">
-                    <Command>
-                      <CommandInput
-                        placeholder={t(
-                          "subscriptions.form.license.searchUsers"
-                        )}
-                      />
-                      <CommandList>
-                        <CommandEmpty>
-                          {t("subscriptions.form.license.noUsersFound")}
-                        </CommandEmpty>
-                        <CommandGroup>
-                          {users.map((user) => (
-                            <CommandItem
-                              key={user.id}
-                              value={user.email}
-                              onSelect={() => toggleSeatUser(user.id)}
-                            >
-                              <Checkbox
-                                checked={selectedUserIds.includes(user.id)}
-                                className="mr-2"
-                              />
-                              <div className="flex flex-col">
-                                <span>{user.name ?? user.email}</span>
-                                {user.name && (
-                                  <span className="text-muted-foreground text-xs">
-                                    {user.email}
-                                  </span>
-                                )}
-                              </div>
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
-
-                {selectedUsersForSeat.length > 0 && (
-                  <div className="flex flex-wrap gap-1">
-                    {selectedUsersForSeat.map((user) => (
-                      <Badge
-                        key={user.id}
-                        variant="secondary"
-                        className="flex items-center gap-1"
-                      >
-                        {user.name ?? user.email}
-                        <button
-                          type="button"
-                          onClick={() => removeSeatUser(user.id)}
-                          className="hover:bg-muted ml-1 rounded-full"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
-                      </Badge>
-                    ))}
-                  </div>
-                )}
+                <MultiSelect
+                  aria-label={t("subscriptions.form.license.assignUsers")}
+                  options={users.map((user) => ({
+                    value: user.id,
+                    label: user.name ?? user.email,
+                    keywords: [user.email],
+                  }))}
+                  value={selectedUserIds}
+                  onValueChange={(next) => setValue("assignedUserIds", next)}
+                  placeholder={t("subscriptions.form.license.selectUsers")}
+                  searchPlaceholder={t(
+                    "subscriptions.form.license.searchUsers"
+                  )}
+                  emptyText={t("subscriptions.form.license.noUsersFound")}
+                  moreLabel={(count) => `+${count}`}
+                  maxChips={3}
+                  disabled={isPending}
+                />
 
                 <p className="text-muted-foreground text-sm">
                   {t("subscriptions.form.license.seatStatus", {
@@ -321,7 +234,7 @@ export function SubscriptionFormPricing({
             </Label>
             <Select
               name="currency"
-              defaultValue={defaultCurrency}
+              value={watchedCurrency || defaultCurrency}
               onValueChange={(value) => setValue("currency", value)}
               disabled={isPending}
             >
@@ -332,7 +245,17 @@ export function SubscriptionFormPricing({
                   )}
                 />
               </SelectTrigger>
-              <SelectContent>
+              <SelectContent
+                createOption={
+                  canCreateCurrency
+                    ? {
+                        label: (q) =>
+                          q ? ti("create", { name: q }) : ti("createEmpty"),
+                        onCreate: (q) => setNewCurrency(q),
+                      }
+                    : undefined
+                }
+              >
                 {currencyItems.map((option) => (
                   <SelectItem key={option.value} value={option.value}>
                     {option.label}
@@ -340,6 +263,18 @@ export function SubscriptionFormPricing({
                 ))}
               </SelectContent>
             </Select>
+            {newCurrency !== null && (
+              <CurrencyDialog
+                open
+                onOpenChange={(o) => !o && setNewCurrency(null)}
+                defaultCode={newCurrency}
+                canEnable
+                onSaved={(code) => {
+                  setCreatedCurrencies((list) => [...list, code]);
+                  setValue("currency", code);
+                }}
+              />
+            )}
           </div>
 
           <div className="space-y-2">

@@ -1,18 +1,12 @@
 "use client";
 
+import { FilterMultiSelect } from "@/components/common/filter-multi-select";
 import { KpiCard, KpiCardsGrid } from "@/components/common/kpi-card";
 import { PageHeader } from "@/components/common/page-header";
 import { TaskTable } from "@/components/tasks/task-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import type { Task } from "@/types/task";
 import { AlertTriangle, Circle, Clock, ListTodo, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -101,8 +95,9 @@ interface TasksPageClientProps {
 
 export function TasksPageClient({ canManage = false }: TasksPageClientProps) {
   const t = useTranslations("tasks");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [priorityFilter, setPriorityFilter] = useState<string>("all");
+  // Multi-select filters (empty = all)
+  const [statusFilter, setStatusFilter] = useState<string[]>([]);
+  const [priorityFilter, setPriorityFilter] = useState<string[]>([]);
 
   // Compute statistics
   const stats = useMemo(() => {
@@ -119,12 +114,12 @@ export function TasksPageClient({ canManage = false }: TasksPageClientProps) {
   const filteredTasks = useMemo(() => {
     let result = demoTasks;
 
-    if (statusFilter !== "all") {
-      result = result.filter((t) => t.status === statusFilter);
+    if (statusFilter.length) {
+      result = result.filter((t) => statusFilter.includes(t.status));
     }
 
-    if (priorityFilter !== "all") {
-      result = result.filter((t) => t.priority === priorityFilter);
+    if (priorityFilter.length) {
+      result = result.filter((t) => priorityFilter.includes(t.priority));
     }
 
     return result;
@@ -180,42 +175,40 @@ export function TasksPageClient({ canManage = false }: TasksPageClientProps) {
 
       {/* Filter bar */}
       <div className="bg-card flex flex-wrap items-center gap-2 rounded-lg px-5 py-4 shadow-md">
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[160px]">
-            <SelectValue placeholder={t("filter.status")} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t("filter.allStatuses")}</SelectItem>
-            <SelectItem value="TODO">{t("status.todo")}</SelectItem>
-            <SelectItem value="IN_PROGRESS">
-              {t("status.inProgress")}
-            </SelectItem>
-            <SelectItem value="IN_REVIEW">{t("status.inReview")}</SelectItem>
-            <SelectItem value="DONE">{t("status.done")}</SelectItem>
-            <SelectItem value="CANCELLED">{t("status.cancelled")}</SelectItem>
-          </SelectContent>
-        </Select>
+        <FilterMultiSelect
+          label={t("filter.status")}
+          placeholder={t("filter.allStatuses")}
+          options={[
+            { value: "TODO", label: t("status.todo") },
+            { value: "IN_PROGRESS", label: t("status.inProgress") },
+            { value: "IN_REVIEW", label: t("status.inReview") },
+            { value: "DONE", label: t("status.done") },
+            { value: "CANCELLED", label: t("status.cancelled") },
+          ]}
+          value={statusFilter}
+          onValueChange={setStatusFilter}
+        />
 
-        <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-          <SelectTrigger className="w-[160px]">
-            <SelectValue placeholder={t("filter.priority")} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t("filter.allPriorities")}</SelectItem>
-            <SelectItem value="URGENT">{t("priority.urgent")}</SelectItem>
-            <SelectItem value="HIGH">{t("priority.high")}</SelectItem>
-            <SelectItem value="MEDIUM">{t("priority.medium")}</SelectItem>
-            <SelectItem value="LOW">{t("priority.low")}</SelectItem>
-          </SelectContent>
-        </Select>
+        <FilterMultiSelect
+          label={t("filter.priority")}
+          placeholder={t("filter.allPriorities")}
+          options={[
+            { value: "URGENT", label: t("priority.urgent") },
+            { value: "HIGH", label: t("priority.high") },
+            { value: "MEDIUM", label: t("priority.medium") },
+            { value: "LOW", label: t("priority.low") },
+          ]}
+          value={priorityFilter}
+          onValueChange={setPriorityFilter}
+        />
 
-        {(statusFilter !== "all" || priorityFilter !== "all") && (
+        {(statusFilter.length > 0 || priorityFilter.length > 0) && (
           <Button
             variant="ghost"
             className="text-muted-foreground hover:text-primary h-10 whitespace-nowrap"
             onClick={() => {
-              setStatusFilter("all");
-              setPriorityFilter("all");
+              setStatusFilter([]);
+              setPriorityFilter([]);
             }}
           >
             {t("filter.reset")}

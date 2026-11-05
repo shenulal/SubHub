@@ -10,9 +10,11 @@ import {
   deleteExtensionDevice,
   getExtensionStatus,
   updateInactiveThreshold,
+  type ExtensionComputedStatus,
   type ExtensionDeviceStatusItem,
   type ExtensionStatusStats,
 } from "@/actions/extensions/status";
+import { FilterMultiSelect } from "@/components/common/filter-multi-select";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -34,13 +36,6 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import {
   Table,
   TableBody,
   TableCell,
@@ -59,6 +54,14 @@ import {
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
+
+const STATUS_OPTIONS: Array<{ value: ExtensionComputedStatus; label: string }> =
+  [
+    { value: "active", label: "Active" },
+    { value: "inactive", label: "Inactive" },
+    { value: "pending", label: "Pending" },
+    { value: "revoked", label: "Revoked" },
+  ];
 
 const statusConfig = {
   active: {
@@ -163,7 +166,10 @@ export default function ExtensionStatusPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [search, setSearch] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
+  // Computed statuses: multi-select (empty = all)
+  const [statusFilter, setStatusFilter] = useState<ExtensionComputedStatus[]>(
+    []
+  );
   const [thresholdMinutes, setThresholdMinutes] = useState(30);
   const [thresholdInput, setThresholdInput] = useState("30");
   const [deleteConfirm, setDeleteConfirm] =
@@ -177,12 +183,7 @@ export default function ExtensionStatusPage() {
         page,
         limit: 20,
         search: search || undefined,
-        status: statusFilter as
-          | "all"
-          | "active"
-          | "inactive"
-          | "pending"
-          | "revoked",
+        statuses: statusFilter,
       });
       setData(result.data);
       setStats(result.stats);
@@ -287,24 +288,16 @@ export default function ExtensionStatusPage() {
             className="pl-9"
           />
         </div>
-        <Select
+        <FilterMultiSelect
+          label="Status"
+          placeholder="All statuses"
+          options={STATUS_OPTIONS}
           value={statusFilter}
           onValueChange={(v) => {
-            setStatusFilter(v);
+            setStatusFilter(v as ExtensionComputedStatus[]);
             setPage(1);
           }}
-        >
-          <SelectTrigger className="w-[140px]">
-            <SelectValue placeholder="Filter by status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">All</SelectItem>
-            <SelectItem value="active">Active</SelectItem>
-            <SelectItem value="inactive">Inactive</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="revoked">Revoked</SelectItem>
-          </SelectContent>
-        </Select>
+        />
       </div>
 
       {/* Table */}

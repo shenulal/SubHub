@@ -64,6 +64,21 @@ export interface CurrencyRow {
   rateAsOf: string | null;
   rateSource: string | null;
   stale: boolean;
+  /** Platform-wide master flag (inactive currencies are hidden from pickers). */
+  isActive: boolean;
+  numericCode: string | null;
+  sortOrder: number;
+}
+
+/** Platform-wide country master row. */
+export interface CountryRow {
+  code: string;
+  name: string;
+  region: string | null;
+  currencyCode: string | null;
+  defaultTaxRatePercent: number | null;
+  phonePrefix: string | null;
+  isActive: boolean;
 }
 
 export interface TaxRateRow {

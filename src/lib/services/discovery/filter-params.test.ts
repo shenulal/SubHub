@@ -20,15 +20,15 @@ describe("filter-params", () => {
     const query: SubscriptionListQuery = {
       filter: {
         search: "slack",
-        categoryId: "cat-1",
+        categoryIds: ["cat-1", "cat-2"],
         tagIds: ["t1", "t2"],
         statuses: ["ACTIVE", "PAUSED"],
         includeArchived: true,
-        ownerId: "u1",
-        teamId: "team-1",
-        costCenterId: "cc1",
-        paymentMethodId: "pm1",
-        billingCycle: "YEARLY",
+        ownerIds: ["u1", "u2"],
+        teamIds: ["team-1"],
+        costCenterIds: ["cc1", "cc2"],
+        paymentMethodIds: ["pm1"],
+        billingCycles: ["YEARLY", "MONTHLY"],
         amountMin: 10,
         amountMax: 500.5,
         renewingWithinDays: 30,
@@ -60,7 +60,7 @@ describe("filter-params", () => {
     );
     const filter = parseFilterParams(params);
     expect(filter.statuses).toEqual(["ACTIVE"]);
-    expect(filter.billingCycle).toBeUndefined();
+    expect(filter.billingCycles).toBeUndefined();
     expect(filter.amountMin).toBeUndefined();
     expect(filter.amountMax).toBeUndefined();
     expect(filter.renewingWithinDays).toBe(7);
@@ -80,9 +80,47 @@ describe("filter-params", () => {
     });
     expect(filter).toEqual({
       search: "notion",
-      tagIds: ["a", "b"],
+      tagIds: ["a", "b", "ignored"],
       includeArchived: true,
     });
+  });
+
+  it("reads comma-separated multi-value facets and the legacy single value", () => {
+    const filter = parseFilterParams(
+      new URLSearchParams(
+        "owner=u1,u2&team=t1&costCenter=cc1&paymentMethod=pm1,pm2&cycle=MONTHLY,YEARLY,WEEKLY"
+      )
+    );
+    expect(filter.ownerIds).toEqual(["u1", "u2"]);
+    expect(filter.teamIds).toEqual(["t1"]);
+    expect(filter.costCenterIds).toEqual(["cc1"]);
+    expect(filter.paymentMethodIds).toEqual(["pm1", "pm2"]);
+    expect(filter.billingCycles).toEqual(["MONTHLY", "YEARLY"]);
+  });
+
+  it("folds the legacy category + parentCategory params into categoryIds", () => {
+    expect(
+      parseFilterParams(new URLSearchParams("category=c1&parentCategory=p1"))
+        .categoryIds
+    ).toEqual(["c1", "p1"]);
+    expect(
+      parseFilterParams(new URLSearchParams("parentCategory=p1")).categoryIds
+    ).toEqual(["p1"]);
+  });
+
+  it("accepts repeated keys and serialises lists comma-separated", () => {
+    const filter = parseFilterParams(new URLSearchParams("owner=u1&owner=u2"));
+    expect(filter.ownerIds).toEqual(["u1", "u2"]);
+    const params = serializeListQuery({ filter });
+    expect(params.toString()).toBe("owner=u1%2Cu2");
+  });
+
+  it("treats an empty selection as no filter", () => {
+    const params = serializeListQuery({
+      filter: { ownerIds: [], teamIds: [], billingCycles: [] },
+    });
+    expect(params.toString()).toBe("");
+    expect(parseFilterParams(new URLSearchParams("owner=&team=,"))).toEqual({});
   });
 
   it("dedupes list values and ignores empties", () => {

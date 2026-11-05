@@ -32,16 +32,21 @@ export type SortOrder = "asc" | "desc";
 
 export interface SubscriptionListFilter {
   search?: string;
-  categoryId?: string;
-  parentCategoryId?: string;
+  /**
+   * Category ids; a parent category also matches its subcategories.
+   * Replaces the legacy single `categoryId` / `parentCategoryId` (still read
+   * from old URLs and saved views, see `normalizeLegacySubscriptionFilter`).
+   */
+  categoryIds?: string[];
   tagIds?: string[];
   statuses?: SubscriptionStatus[];
   includeArchived?: boolean;
-  ownerId?: string;
-  teamId?: string;
-  costCenterId?: string;
-  paymentMethodId?: string;
-  billingCycle?: BillingCycle;
+  /** Multi-value facets: empty / missing = no filter. */
+  ownerIds?: string[];
+  teamIds?: string[];
+  costCenterIds?: string[];
+  paymentMethodIds?: string[];
+  billingCycles?: BillingCycle[];
   amountMin?: number;
   amountMax?: number;
   renewingWithinDays?: number;

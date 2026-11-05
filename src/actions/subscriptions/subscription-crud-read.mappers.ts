@@ -47,7 +47,9 @@ export const SUBSCRIPTION_DETAIL_INCLUDE = {
   ...SUBSCRIPTION_LIST_INCLUDE,
   taxRate: { select: { id: true, name: true, ratePercent: true } },
   customFieldValues: {
-    include: { field: { select: { id: true, key: true, label: true } } },
+    include: {
+      field: { select: { id: true, key: true, label: true, fieldType: true } },
+    },
   },
 } satisfies Prisma.SubscriptionInclude;
 
@@ -170,6 +172,7 @@ export function mapSubscriptionDetail(
         fieldId: cfv.field.id,
         key: cfv.field.key,
         label: cfv.field.label,
+        fieldType: cfv.field.fieldType,
         value: cfv.value,
       })) ?? [],
     app: {

@@ -22,6 +22,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { auth } from "@/lib/auth";
+import { resolveReportFilterParams } from "@/lib/filters/report-filter-params";
 import { getBaseCurrency } from "@/lib/fx/base-currency";
 import { DEFAULT_BASE_CURRENCY, formatMoney } from "@/lib/fx/convert";
 import {
@@ -79,34 +80,29 @@ export default async function CostAnalysisPage({ searchParams }: PageProps) {
     : DEFAULT_BASE_CURRENCY;
   const params = await searchParams;
   const isRestricted = session.user.role !== "ADMIN";
-  const requestedTeamId = params.teamId ?? null;
-  const requestedUserId = params.userId ?? null;
-  const effectiveTeamId = isRestricted
-    ? (session.user.teamId ?? null)
-    : requestedTeamId;
-  const effectiveUserId =
-    isRestricted && !session.user.teamId ? session.user.id : requestedUserId;
+  // `teamId` / `userId` hold comma-separated lists (legacy single ids work)
+  const { teamIds, userIds } = resolveReportFilterParams(params, session.user);
 
   // Fetch data
   const [statisticsResult, trendResult, topAppsResult, anomaliesResult] =
     await Promise.all([
       getCostStatistics({
-        teamId: effectiveTeamId ?? undefined,
-        userId: effectiveUserId ?? undefined,
+        teamIds,
+        userIds,
       }),
       getMonthlyCostTrend({
         months: 6,
-        teamId: effectiveTeamId ?? undefined,
-        userId: effectiveUserId ?? undefined,
+        teamIds,
+        userIds,
       }),
       getTopCostApps({
         limit: 5,
-        teamId: effectiveTeamId ?? undefined,
-        userId: effectiveUserId ?? undefined,
+        teamIds,
+        userIds,
       }),
       detectCostAnomalies({
-        teamId: effectiveTeamId ?? undefined,
-        userId: effectiveUserId ?? undefined,
+        teamIds,
+        userIds,
       }),
     ]);
 
@@ -157,7 +153,7 @@ export default async function CostAnalysisPage({ searchParams }: PageProps) {
             trends={trends || []}
             topApps={topApps || []}
             anomalies={anomalies || []}
-            filters={{ teamId: effectiveTeamId, userId: effectiveUserId }}
+            filters={{ teamIds, userIds }}
           />
         )}
       </div>
@@ -232,8 +228,8 @@ export default async function CostAnalysisPage({ searchParams }: PageProps) {
 
       <TeamUserFilterRouter
         basePath="/reports/cost"
-        teamId={effectiveTeamId}
-        userId={effectiveUserId}
+        teamIds={teamIds}
+        userIds={userIds}
         teams={filteredTeams}
         users={filteredUsers}
         includeAllOption={!isRestricted}
@@ -243,8 +239,8 @@ export default async function CostAnalysisPage({ searchParams }: PageProps) {
       {/* Monthly trend */}
       <MonthlyTrendChart
         initialData={trends || []}
-        teamId={effectiveTeamId}
-        userId={effectiveUserId}
+        teamIds={teamIds}
+        userIds={userIds}
       />
 
       <div className="grid gap-6 xl:grid-cols-2">

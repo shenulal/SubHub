@@ -123,8 +123,16 @@ export const SEARCH_CATALOG: readonly CatalogEntry[] = [
     group: "pages",
     title: "Categories & tags",
     labelKey: "taxonomy",
-    href: "/settings/taxonomy",
-    keywords: ["categories", "tags", "custom fields"],
+    href: "/settings/masters?tab=categories",
+    keywords: [
+      "categories",
+      "tags",
+      "custom fields",
+      "master data",
+      "currencies",
+      "countries",
+      "vendor catalog",
+    ],
     permission: "categories:read",
   },
   // Actions

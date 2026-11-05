@@ -38,6 +38,61 @@ export const currencyToggleSchema = z.object({
   enabled: z.boolean(),
 });
 
+/** Platform-wide currency master (requires `masters:manage_global`). */
+export const currencyInputSchema = z.object({
+  code: z.string().trim().toUpperCase().pipe(ISO_CURRENCY),
+  name: NAME,
+  symbol: z.string().trim().min(1).max(8),
+  decimalDigits: z.coerce.number().int().min(0).max(4),
+  numericCode: z
+    .string()
+    .trim()
+    .regex(/^\d{3}$/, "Three digits expected")
+    .optional()
+    .nullable()
+    .or(z.literal("").transform(() => null)),
+  sortOrder: z.coerce.number().int().min(0).max(10_000).default(100),
+  isActive: z.boolean().default(true),
+  /** Also enable the new currency for the caller's organisation. */
+  enableForOrganization: z.boolean().optional(),
+});
+export type CurrencyInput = z.infer<typeof currencyInputSchema>;
+
+/** Platform-wide country master (requires `masters:manage_global`). */
+export const countryInputSchema = z.object({
+  code: z.string().trim().toUpperCase().pipe(ISO_COUNTRY),
+  name: NAME,
+  region: z.string().trim().max(80).optional().nullable(),
+  currencyCode: z
+    .string()
+    .trim()
+    .toUpperCase()
+    .pipe(ISO_CURRENCY)
+    .optional()
+    .nullable()
+    .or(z.literal("").transform(() => null)),
+  defaultTaxRatePercent: z.coerce
+    .number()
+    .min(0)
+    .max(100)
+    .optional()
+    .nullable(),
+  phonePrefix: z
+    .string()
+    .trim()
+    .regex(/^\+\d{1,4}$/, "Use the form +971")
+    .optional()
+    .nullable()
+    .or(z.literal("").transform(() => null)),
+  isActive: z.boolean().default(true),
+});
+export type CountryInput = z.infer<typeof countryInputSchema>;
+
+export const masterActiveSchema = z.object({
+  code: z.string().trim().min(2).max(3),
+  isActive: z.boolean(),
+});
+
 export const manualRateSchema = z.object({
   baseCurrency: ISO_CURRENCY,
   quoteCurrency: ISO_CURRENCY,

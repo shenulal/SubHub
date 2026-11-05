@@ -1,28 +1,10 @@
 "use client";
 
 import {
-  createPaymentMethod,
   deletePaymentMethod,
   reorderPaymentMethods,
-  updatePaymentMethod,
 } from "@/actions/platform/masters/payment-methods";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
 import {
   Table,
   TableBody,
@@ -32,8 +14,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import type { MasterOption, PaymentMethodRow } from "@/types/platform";
-import type { PaymentMethodKind } from "@prisma/client";
-import { ArrowDown, ArrowUp, Loader2, Pencil, Plus } from "lucide-react";
+import { ArrowDown, ArrowUp, Pencil, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
@@ -41,13 +22,10 @@ import { toast } from "sonner";
 import {
   ConfirmDelete,
   DefaultBadge,
-  EMPTY_SELECT_VALUE,
-  Field,
-  fromSelect,
   PanelHeader,
   StatusBadge,
-  toSelect,
 } from "./master-shared";
+import { PaymentMethodDialog } from "./payment-method-dialog";
 
 interface PaymentMethodsPanelProps {
   rows: PaymentMethodRow[];
@@ -55,45 +33,7 @@ interface PaymentMethodsPanelProps {
   canManage: boolean;
 }
 
-const KINDS: PaymentMethodKind[] = [
-  "CARD",
-  "BANK",
-  "INVOICE",
-  "WALLET",
-  "OTHER",
-];
-
-interface Draft {
-  id: string | null;
-  code: string;
-  name: string;
-  kind: PaymentMethodKind;
-  corporateCardId: string | null;
-  isActive: boolean;
-  isDefault: boolean;
-}
-
-const EMPTY: Draft = {
-  id: null,
-  code: "",
-  name: "",
-  kind: "CARD",
-  corporateCardId: null,
-  isActive: true,
-  isDefault: false,
-};
-
-function toDraft(row: PaymentMethodRow): Draft {
-  return {
-    id: row.id,
-    code: row.code,
-    name: row.name,
-    kind: row.kind,
-    corporateCardId: row.corporateCardId,
-    isActive: row.isActive,
-    isDefault: row.isDefault,
-  };
-}
+type DialogState = { row: PaymentMethodRow | null } | null;
 
 function move<T>(list: T[], from: number, to: number): T[] {
   if (to < 0 || to >= list.length) return list;
@@ -112,8 +52,7 @@ export function PaymentMethodsPanel({
   const tc = useTranslations("platform.masters.common");
   const router = useRouter();
   const [ordered, setOrdered] = useState(rows);
-  const [draft, setDraft] = useState<Draft | null>(null);
-  const [errors, setErrors] = useState<Record<string, string[]>>({});
+  const [dialog, setDialog] = useState<DialogState>(null);
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => setOrdered(rows), [rows]);
@@ -129,32 +68,6 @@ export function PaymentMethodsPanel({
       if (!result.success) {
         toast.error(result.error ?? tc("saveFailed"));
         setOrdered(rows);
-      }
-    });
-  };
-
-  const save = () => {
-    if (!draft) return;
-    const payload = {
-      code: draft.code,
-      name: draft.name,
-      kind: draft.kind,
-      corporateCardId: draft.corporateCardId,
-      isActive: draft.isActive,
-      isDefault: draft.isDefault,
-    };
-    startTransition(async () => {
-      const result = draft.id
-        ? await updatePaymentMethod(draft.id, payload)
-        : await createPaymentMethod(payload);
-      if (result.success) {
-        toast.success(tc("saved"));
-        setDraft(null);
-        setErrors({});
-        router.refresh();
-      } else {
-        setErrors(result.errors ?? {});
-        toast.error(result.error ?? tc("saveFailed"));
       }
     });
   };
@@ -176,7 +89,7 @@ export function PaymentMethodsPanel({
         description={t("description")}
         action={
           canManage && (
-            <Button size="sm" onClick={() => setDraft(EMPTY)}>
+            <Button size="sm" onClick={() => setDialog({ row: null })}>
               <Plus className="size-4" />
               {t("add")}
             </Button>
@@ -258,7 +171,7 @@ export function PaymentMethodsPanel({
                       size="icon"
                       className="h-8 w-8"
                       aria-label={tc("edit")}
-                      onClick={() => setDraft(toDraft(row))}
+                      onClick={() => setDialog({ row })}
                     >
                       <Pencil className="h-4 w-4" />
                     </Button>
@@ -275,119 +188,16 @@ export function PaymentMethodsPanel({
         </Table>
       </div>
 
-      <Dialog
-        open={draft !== null}
-        onOpenChange={(open) => !open && setDraft(null)}
-      >
-        <DialogContent className="sm:max-w-lg">
-          <DialogHeader>
-            <DialogTitle>
-              {draft?.id ? t("editTitle") : t("addTitle")}
-            </DialogTitle>
-          </DialogHeader>
-          {draft && (
-            <div className="grid gap-4 sm:grid-cols-2">
-              <Field
-                id="pm-code"
-                label={tc("code")}
-                hint={errors.code?.join(", ")}
-              >
-                <Input
-                  id="pm-code"
-                  value={draft.code}
-                  onChange={(e) =>
-                    setDraft({ ...draft, code: e.target.value.toUpperCase() })
-                  }
-                  className="font-mono uppercase"
-                />
-              </Field>
-              <Field
-                id="pm-name"
-                label={tc("name")}
-                hint={errors.name?.join(", ")}
-              >
-                <Input
-                  id="pm-name"
-                  value={draft.name}
-                  onChange={(e) => setDraft({ ...draft, name: e.target.value })}
-                />
-              </Field>
-              <Field id="pm-kind" label={t("kind")}>
-                <Select
-                  value={draft.kind}
-                  onValueChange={(v) =>
-                    setDraft({ ...draft, kind: v as PaymentMethodKind })
-                  }
-                >
-                  <SelectTrigger id="pm-kind">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {KINDS.map((k) => (
-                      <SelectItem key={k} value={k}>
-                        {k}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </Field>
-              <Field id="pm-card" label={t("linkedCard")}>
-                <Select
-                  value={toSelect(draft.corporateCardId)}
-                  onValueChange={(v) =>
-                    setDraft({ ...draft, corporateCardId: fromSelect(v) })
-                  }
-                  disabled={draft.kind !== "CARD"}
-                >
-                  <SelectTrigger id="pm-card">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={EMPTY_SELECT_VALUE}>
-                      {tc("none")}
-                    </SelectItem>
-                    {cards.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>
-                        {c.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </Field>
-              <div className="flex items-center gap-6 sm:col-span-2">
-                <label className="flex items-center gap-2 text-sm">
-                  <Switch
-                    checked={draft.isDefault}
-                    onCheckedChange={(v) =>
-                      setDraft({ ...draft, isDefault: v })
-                    }
-                  />
-                  {tc("default")}
-                </label>
-                <label className="flex items-center gap-2 text-sm">
-                  <Switch
-                    checked={draft.isActive}
-                    onCheckedChange={(v) => setDraft({ ...draft, isActive: v })}
-                  />
-                  {tc("active")}
-                </label>
-              </div>
-            </div>
-          )}
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setDraft(null)}>
-              {tc("cancel")}
-            </Button>
-            <Button
-              onClick={save}
-              disabled={isPending || !draft?.name || !draft?.code}
-            >
-              {isPending && <Loader2 className="size-4 animate-spin" />}
-              {tc("save")}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {dialog && (
+        <PaymentMethodDialog
+          key={dialog.row?.id ?? "new"}
+          open
+          onOpenChange={(o) => !o && setDialog(null)}
+          method={dialog.row}
+          cards={cards}
+          onSaved={() => router.refresh()}
+        />
+      )}
     </div>
   );
 }

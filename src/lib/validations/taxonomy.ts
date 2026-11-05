@@ -63,6 +63,7 @@ export const customFieldTypeSchema = z.enum([
   "NUMBER",
   "DATE",
   "SELECT",
+  "MULTI_SELECT",
 ]);
 
 const optionsSchema = z
@@ -85,7 +86,9 @@ export const createCustomFieldSchema = z
     isRequired: z.boolean().optional().default(false),
   })
   .refine(
-    (v) => v.fieldType !== "SELECT" || (v.options && v.options.length > 0),
+    (v) =>
+      (v.fieldType !== "SELECT" && v.fieldType !== "MULTI_SELECT") ||
+      (v.options && v.options.length > 0),
     { message: "Select fields need at least one option", path: ["options"] }
   );
 export type CreateCustomFieldInput = z.input<typeof createCustomFieldSchema>;
@@ -124,6 +127,82 @@ export const updateCatalogItemSchema = z.object({
   isActive: z.boolean().optional(),
 });
 export type UpdateCatalogItemInput = z.infer<typeof updateCatalogItemSchema>;
+
+/**
+ * Pricing models understood by the vendor classifier and seat analytics
+ * (`saas-classifier.types.ts`). A code contract, not tenant reference data.
+ */
+export const CATALOG_PRICING_MODELS = [
+  "PER_SEAT",
+  "FLAT_RATE",
+  "USAGE_BASED",
+  "FREEMIUM",
+] as const;
+
+const optionalText = (max: number) =>
+  z
+    .string()
+    .trim()
+    .max(max)
+    .nullable()
+    .optional()
+    .transform((v) => (v ? v : null));
+
+const optionalUrl = z
+  .string()
+  .trim()
+  .max(500)
+  .nullable()
+  .optional()
+  .transform((v) => (v ? v : null))
+  .pipe(z.string().url("Must be a valid URL").nullable());
+
+/** Create / full edit of a vendor catalog entry (`catalog:manage`). */
+export const catalogEntryInputSchema = z.object({
+  name: z.string().trim().min(1).max(120),
+  vendorName: optionalText(120),
+  category: z.string().trim().min(1).max(80),
+  subcategory: optionalText(80),
+  description: optionalText(500),
+  website: optionalUrl,
+  pricingModel: z.enum(CATALOG_PRICING_MODELS).nullable().optional(),
+  basePricePerSeat: z.coerce
+    .number()
+    .min(0)
+    .max(1_000_000)
+    .nullable()
+    .optional(),
+  basePriceCurrency: z
+    .string()
+    .trim()
+    .regex(/^[A-Z]{3}$/, "ISO 4217 code expected")
+    .nullable()
+    .optional(),
+  aliases: z.array(z.string().trim().min(1).max(120)).max(30).default([]),
+  cancellationUrl: optionalUrl,
+  billingPortalUrl: optionalUrl,
+  noticePeriodDays: z.coerce
+    .number()
+    .int()
+    .min(0)
+    .max(365)
+    .nullable()
+    .optional(),
+  countryCode: z
+    .string()
+    .trim()
+    .regex(/^[A-Z]{2}$/, "ISO 3166-1 alpha-2 expected")
+    .nullable()
+    .optional(),
+  isActive: z.boolean().default(true),
+});
+export type CatalogEntryInput = z.input<typeof catalogEntryInputSchema>;
+
+export const catalogListQuerySchema = z.object({
+  query: z.string().trim().max(120).default(""),
+  page: z.coerce.number().int().min(1).default(1),
+  status: z.enum(["all", "active", "inactive"]).default("all"),
+});
 
 export const appCancellationOverrideSchema = z.object({
   cancellationUrl: urlSchema,

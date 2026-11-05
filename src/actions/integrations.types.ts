@@ -10,7 +10,8 @@ import type { IntegrationStatus } from "@prisma/client";
  */
 export interface GetIntegrationsParams {
   filter?: {
-    status?: IntegrationStatus;
+    /** One or several statuses (multi-select; empty = all). */
+    status?: IntegrationStatus | IntegrationStatus[];
     type?: string;
     search?: string;
   };

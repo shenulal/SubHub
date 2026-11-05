@@ -48,7 +48,7 @@ export async function sendVerificationEmail(
       to,
       subject: "[SubHub] Please verify your email address",
       html: `
-        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="font-family: Lato, Inter, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2>Email verification</h2>
           <p>${userName ? `Hello ${userName},` : "Hello,"}</p>
           <p>Thank you for signing up for SubHub.</p>
@@ -105,7 +105,7 @@ export async function sendPasswordResetEmail(
       to,
       subject: "[SubHub] Password reset",
       html: `
-        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="font-family: Lato, Inter, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2>Password reset</h2>
           <p>${userName ? `Hello ${userName},` : "Hello,"}</p>
           <p>We received a request to reset your password.</p>
@@ -164,7 +164,7 @@ export async function sendOtpEmail(
       to,
       subject: "[SubHub] Sign-in verification code",
       html: `
-        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="font-family: Lato, Inter, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2>Sign-in verification code</h2>
           <p>${userName ? `Hello ${userName},` : "Hello,"}</p>
           <p>Here is your verification code for signing in to SubHub.</p>

@@ -25,6 +25,8 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { serializeMultiValue } from "@/lib/filters/multi-value";
+import { writeReportFilterParams } from "@/lib/filters/report-filter-params";
 import {
   createBarChartImage,
   createLineChartImage,
@@ -83,22 +85,17 @@ export function UsageReportPageClient({
   // Period change handler
   const updateUrlParams = useCallback(
     (nextFilters: UsageReportFilters) => {
-      const params = new URLSearchParams(searchParams.toString());
+      // Team / user selections are comma-separated lists (empty = all)
+      const params = writeReportFilterParams(
+        new URLSearchParams(searchParams.toString()),
+        {
+          teamIds: nextFilters.teamIds ?? [],
+          userIds: nextFilters.userIds ?? [],
+        }
+      );
       params.set("period", nextFilters.period);
       params.set("startDate", nextFilters.startDate);
       params.set("endDate", nextFilters.endDate);
-
-      if (nextFilters.teamId) {
-        params.set("teamId", nextFilters.teamId);
-      } else {
-        params.delete("teamId");
-      }
-
-      if (nextFilters.userId) {
-        params.set("userId", nextFilters.userId);
-      } else {
-        params.delete("userId");
-      }
 
       router.push(`/reports/usage?${params.toString()}`);
     },
@@ -112,26 +109,9 @@ export function UsageReportPageClient({
     });
   }, []);
 
-  const handleTeamChange = useCallback(
-    (nextTeamId: string | null) => {
-      const nextFilters = {
-        ...filters,
-        teamId: nextTeamId ?? undefined,
-        userId: undefined,
-      };
-      setFilters(nextFilters);
-      updateUrlParams(nextFilters);
-      refreshReportData(nextFilters);
-    },
-    [filters, refreshReportData, updateUrlParams]
-  );
-
-  const handleUserChange = useCallback(
-    (nextUserId: string | null) => {
-      const nextFilters = {
-        ...filters,
-        userId: nextUserId ?? undefined,
-      };
+  const applySelection = useCallback(
+    (teamIds: string[], userIds: string[]) => {
+      const nextFilters = { ...filters, teamIds, userIds };
       setFilters(nextFilters);
       updateUrlParams(nextFilters);
       refreshReportData(nextFilters);
@@ -440,8 +420,8 @@ export function UsageReportPageClient({
             presets={presets}
             basePath="/reports/usage"
             preserveParams={{
-              teamId: filters.teamId ?? "",
-              userId: filters.userId ?? "",
+              teamId: serializeMultiValue(filters.teamIds) ?? "",
+              userId: serializeMultiValue(filters.userIds) ?? "",
             }}
           />
           {isPending && <Loader2 className="h-4 w-4 animate-spin" />}
@@ -484,12 +464,14 @@ export function UsageReportPageClient({
       <UsageStatsCards summary={reportData.summary} />
 
       <TeamUserFilter
-        teamId={filters.teamId ?? null}
-        userId={filters.userId ?? null}
+        teamIds={filters.teamIds ?? []}
+        userIds={filters.userIds ?? []}
         teams={teams}
         users={users}
-        onTeamChange={handleTeamChange}
-        onUserChange={handleUserChange}
+        onTeamsChange={applySelection}
+        onUsersChange={(userIds) =>
+          applySelection(filters.teamIds ?? [], userIds)
+        }
         includeAllOption={includeAllOption}
         teamLocked={!includeAllOption}
       />

@@ -38,6 +38,11 @@ vi.mock("next-intl", () => ({
   useLocale: () => "en",
 }));
 
+// Inline currency creation pulls in server actions; not under test here.
+vi.mock("@/components/platform/masters/currency-dialog", () => ({
+  CurrencyDialog: () => null,
+}));
+
 vi.mock("@/components/ui/select", () => ({
   Select: ({
     children,

@@ -22,16 +22,20 @@ import { toast } from "sonner";
 
 interface NotificationSettingsFormProps {
   initialSettings: NotificationSettings;
+  /**
+   * Lead times offered, from `subscriptions.reminderLeadDayOptions`
+   * (see `getRenewalAlertDayOptions`). Saved values outside the list stay visible.
+   */
+  renewalAlertOptions: number[];
 }
 
-const RENEWAL_ALERT_OPTIONS = [
-  { value: 30, label: "30 days before" },
-  { value: 60, label: "60 days before" },
-  { value: 90, label: "90 days before" },
-];
+function mergeLeadDays(options: number[], selected: number[]): number[] {
+  return Array.from(new Set([...options, ...selected])).sort((a, b) => a - b);
+}
 
 export function NotificationSettingsForm({
   initialSettings,
+  renewalAlertOptions,
 }: NotificationSettingsFormProps) {
   const t = useTranslations();
   const [isPending, startTransition] = useTransition();
@@ -200,22 +204,22 @@ export function NotificationSettingsForm({
           {t("settings.notifications.renewal.description")}
         </p>
         <div className="space-y-4 pt-2">
-          {RENEWAL_ALERT_OPTIONS.map((option) => (
-            <div key={option.value} className="flex items-center space-x-2">
+          {mergeLeadDays(
+            renewalAlertOptions,
+            initialSettings.renewalAlertDays
+          ).map((days) => (
+            <div key={days} className="flex items-center space-x-2">
               <Checkbox
-                id={`renewal-${option.value}`}
-                checked={settings.renewalAlertDays.includes(option.value)}
+                id={`renewal-${days}`}
+                checked={settings.renewalAlertDays.includes(days)}
                 onCheckedChange={(checked) =>
-                  handleRenewalAlertDaysChange(option.value, checked === true)
+                  handleRenewalAlertDaysChange(days, checked === true)
                 }
                 disabled={isPending}
               />
-              <Label
-                htmlFor={`renewal-${option.value}`}
-                className="cursor-pointer"
-              >
+              <Label htmlFor={`renewal-${days}`} className="cursor-pointer">
                 {t("settings.notifications.renewal.option", {
-                  label: option.label,
+                  label: t("notifications.orgAlerts.renewalOption", { days }),
                 })}
               </Label>
             </div>

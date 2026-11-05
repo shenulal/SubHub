@@ -3,6 +3,7 @@
 
 /** Read side of the receipt review queue. */
 import { prisma } from "@/lib/db";
+import { inFilter, mergeLegacyValue } from "@/lib/filters/multi-value";
 import { withLogging } from "@/lib/logging";
 import {
   receiptSuggestionFilterSchema,
@@ -40,10 +41,17 @@ function buildWhere(
   base: { organizationId: string; userId?: string },
   filter: ReturnType<typeof receiptSuggestionFilterSchema.parse>
 ): Prisma.ReceiptSuggestionWhereInput {
+  // `mailboxIds` and the legacy `mailboxId` key are both lists after parsing
+  const mailboxes = inFilter(
+    mergeLegacyValue(
+      [...(filter.mailboxIds ?? []), ...(filter.mailboxId ?? [])],
+      null
+    )
+  );
   return {
     ...base,
     ...(filter.status ? { status: filter.status } : {}),
-    ...(filter.mailboxId ? { mailboxId: filter.mailboxId } : {}),
+    ...(mailboxes ? { mailboxId: mailboxes } : {}),
     ...(filter.minConfidence !== undefined
       ? { confidence: { gte: filter.minConfidence } }
       : {}),

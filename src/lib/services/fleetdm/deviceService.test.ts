@@ -113,6 +113,37 @@ describe("deviceService", () => {
       );
     });
 
+    it("should filter by several statuses and platforms (multi-select)", async () => {
+      vi.mocked(prisma.device.findMany).mockResolvedValue([]);
+      vi.mocked(prisma.device.count).mockResolvedValue(0);
+
+      await getDevices("org-1", {
+        status: ["ONLINE", "OFFLINE"],
+        platform: ["MACOS", "WINDOWS"],
+      });
+
+      expect(prisma.device.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: {
+            organizationId: "org-1",
+            status: { in: ["ONLINE", "OFFLINE"] },
+            platform: { in: ["MACOS", "WINDOWS"] },
+          },
+        })
+      );
+    });
+
+    it("should ignore empty status / platform lists (= all)", async () => {
+      vi.mocked(prisma.device.findMany).mockResolvedValue([]);
+      vi.mocked(prisma.device.count).mockResolvedValue(0);
+
+      await getDevices("org-1", { status: [], platform: [] });
+
+      expect(prisma.device.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { organizationId: "org-1" } })
+      );
+    });
+
     it("should support pagination", async () => {
       vi.mocked(prisma.device.findMany).mockResolvedValue([]);
       vi.mocked(prisma.device.count).mockResolvedValue(50);

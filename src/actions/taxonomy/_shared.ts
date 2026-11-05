@@ -10,8 +10,9 @@ import type { Prisma } from "@prisma/client";
 import type { ZodError } from "zod";
 
 export const TAXONOMY_PATHS = {
-  settings: "/settings/taxonomy",
-  customFields: "/settings/custom-fields",
+  /** Categories, tags and custom fields are managed in the Master data hub. */
+  settings: "/settings/masters",
+  customFields: "/settings/masters",
   subscriptions: "/subscriptions",
 } as const;
 

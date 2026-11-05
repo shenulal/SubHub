@@ -33,7 +33,7 @@ export async function sendConfirmationResultEmail(
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
     </head>
-    <body style="font-family: -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <body style="font-family: Lato, Inter, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
       <div style="background: linear-gradient(135deg, ${isApproved ? "#22c55e" : "#f97316"} 0%, ${isApproved ? "#16a34a" : "#ea580c"} 100%); padding: 28px; border-radius: 10px 10px 0 0;">
         <h1 style="color: white; margin: 0; font-size: 22px;">${
           isApproved ? "✅ Approved as SaaS" : "⛔ Blocked as non-SaaS"
@@ -135,7 +135,7 @@ export async function sendWeeklyDigestEmail(
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
     </head>
-    <body style="font-family: -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 640px; margin: 0 auto; padding: 20px;">
+    <body style="font-family: Lato, Inter, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 640px; margin: 0 auto; padding: 20px;">
       <div style="background: linear-gradient(135deg, #6366f1 0%, #0ea5e9 100%); padding: 26px; border-radius: 12px 12px 0 0;">
         <h1 style="color: white; margin: 0; font-size: 22px;">📊 Weekly Summary Report</h1>
         <p style="color: #e0f2fe; margin: 6px 0 0;">${organizationName} &middot; ${weekRange}</p>

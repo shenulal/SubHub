@@ -42,6 +42,40 @@ describe("buildSubscriptionWhere", () => {
     ).toBeUndefined();
   });
 
+  it("turns multi-value facets into `in` clauses and keeps a single value as equality", () => {
+    const where = buildSubscriptionWhere(
+      {
+        ownerIds: ["u1", "u2"],
+        costCenterId: "cc1",
+        paymentMethodIds: ["pm1"],
+        billingCycles: ["MONTHLY", "YEARLY"],
+        categoryIds: ["c1", "c2"],
+        teamIds: ["t1", "t2"],
+      },
+      admin
+    );
+    expect(where.ownerId).toEqual({ in: ["u1", "u2"] });
+    expect(where.costCenterId).toBe("cc1");
+    expect(where.paymentMethodId).toBe("pm1");
+    expect(where.billingCycle).toEqual({ in: ["MONTHLY", "YEARLY"] });
+    expect(where.categoryId).toEqual({ in: ["c1", "c2"] });
+    expect(where.AND).toContainEqual({
+      OR: [
+        { teamId: { in: ["t1", "t2"] } },
+        { subscriptionTeams: { some: { teamId: { in: ["t1", "t2"] } } } },
+      ],
+    });
+  });
+
+  it("merges a legacy single value with the list and ignores empty lists", () => {
+    const where = buildSubscriptionWhere(
+      { ownerId: "u1", ownerIds: ["u2", "u1"], teamIds: [] },
+      admin
+    );
+    expect(where.ownerId).toEqual({ in: ["u2", "u1"] });
+    expect(JSON.stringify(where)).not.toContain("subscriptionTeams");
+  });
+
   it("scopes personal subscriptions to the caller", () => {
     const where = buildSubscriptionWhere({ scope: "personal" }, member);
     expect(where.AND).toContainEqual({ isPersonal: true, ownerId: "user-1" });

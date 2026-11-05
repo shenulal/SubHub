@@ -11,6 +11,7 @@ import { prisma } from "@/lib/db";
 import { withLogging } from "@/lib/logging";
 import { requirePermission } from "@/lib/rbac/service";
 import { nextUniqueSlug } from "@/lib/services/taxonomy/category-tree";
+import { isOptionFieldType } from "@/lib/services/taxonomy/custom-field-options";
 import {
   keyFromLabel,
   validateCustomFieldValues as validatePure,
@@ -25,6 +26,7 @@ import {
 import type { ActionState } from "@/types";
 import type {
   CustomFieldDefinitionDto,
+  CustomFieldTypeValue,
   CustomFieldValidationResult,
 } from "@/types/taxonomy";
 
@@ -41,7 +43,7 @@ type DbDef = {
   id: string;
   key: string;
   label: string;
-  fieldType: "TEXT" | "NUMBER" | "DATE" | "SELECT";
+  fieldType: CustomFieldTypeValue;
   options: unknown;
   isRequired: boolean;
   sortOrder: number;
@@ -152,7 +154,9 @@ async function _createCustomField(
         key,
         label: data.label,
         fieldType: data.fieldType,
-        options: data.fieldType === "SELECT" ? (data.options ?? []) : undefined,
+        options: isOptionFieldType(data.fieldType)
+          ? (data.options ?? [])
+          : undefined,
         isRequired: data.isRequired ?? false,
         sortOrder,
       },
@@ -196,7 +200,7 @@ async function _updateCustomField(
     });
     if (!existing) return { success: false, error: "Custom field not found" };
     if (
-      existing.fieldType === "SELECT" &&
+      isOptionFieldType(existing.fieldType) &&
       data.options !== undefined &&
       (data.options?.length ?? 0) === 0
     ) {
@@ -211,7 +215,7 @@ async function _updateCustomField(
         ...(data.label !== undefined && { label: data.label }),
         ...(data.isRequired !== undefined && { isRequired: data.isRequired }),
         ...(data.sortOrder !== undefined && { sortOrder: data.sortOrder }),
-        ...(existing.fieldType === "SELECT" &&
+        ...(isOptionFieldType(existing.fieldType) &&
           data.options !== undefined && { options: data.options ?? [] }),
       },
     });

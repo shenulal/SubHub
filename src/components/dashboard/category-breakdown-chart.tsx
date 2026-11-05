@@ -3,21 +3,15 @@
 
 /**
  * Category breakdown (4.2): donut by parent category with drill-down to
- * subcategories, owner/team filter and CSV export. Colours come from the
+ * subcategories, multi-select owner/team filters and CSV export. Colours come from the
  * category master (falls back to chart tokens) so both themes stay intentional.
  */
 import { getCategorySpendForDashboard } from "@/actions/discovery/dashboard-overview";
 import { exportCategorySpendCsv } from "@/actions/discovery/export";
 import { Can } from "@/components/common/can";
+import { FilterMultiSelect } from "@/components/common/filter-multi-select";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatMoney } from "@/lib/services/discovery/money";
 import { downloadCSV } from "@/lib/services/export/csv";
@@ -40,7 +34,6 @@ const TOKEN_COLORS = [
   "var(--chart-5)",
   "var(--magenta-primary)",
 ];
-const ANY = "__any";
 const MAX_LEGEND = 8;
 
 interface CategoryBreakdownChartProps {
@@ -65,16 +58,25 @@ export function CategoryBreakdownChart({
 }: CategoryBreakdownChartProps) {
   const t = useTranslations("discovery.dashboard.categories");
   const locale = useLocale();
-  const [ownerId, setOwnerId] = useState<string | undefined>();
-  const [teamId, setTeamId] = useState<string | undefined>();
+  const [ownerIds, setOwnerIds] = useState<string[]>([]);
+  const [teamIds, setTeamIds] = useState<string[]>([]);
   const [drill, setDrill] = useState<CategorySpendSlice | null>(null);
   const [isExporting, startExport] = useTransition();
+  const ownerOptions = useMemo(
+    () => owners.map((o) => ({ value: o.id, label: o.name })),
+    [owners]
+  );
+  const teamOptions = useMemo(
+    () => teams.map((o) => ({ value: o.id, label: o.name })),
+    [teams]
+  );
 
-  const isDefaultFilter = !ownerId && !teamId;
+  // Empty selection = all owners / teams
+  const isDefaultFilter = ownerIds.length === 0 && teamIds.length === 0;
   const query = useQuery({
-    queryKey: ["discovery", "category-spend", ownerId ?? null, teamId ?? null],
+    queryKey: ["discovery", "category-spend", ownerIds, teamIds],
     queryFn: async () => {
-      const result = await getCategorySpendForDashboard({ ownerId, teamId });
+      const result = await getCategorySpendForDashboard({ ownerIds, teamIds });
       if (!result.success || !result.data)
         throw new Error(result.error ?? "failed");
       return result.data;
@@ -92,7 +94,7 @@ export function CategoryBreakdownChart({
 
   const exportCsv = () =>
     startExport(async () => {
-      const result = await exportCategorySpendCsv({ ownerId, teamId });
+      const result = await exportCategorySpendCsv({ ownerIds, teamIds });
       if (result.success && result.data) {
         downloadCSV(result.data.csv, result.data.filename);
         toast.success(t("exported"));
@@ -129,50 +131,28 @@ export function CategoryBreakdownChart({
         <div className="flex shrink-0 items-center gap-1.5">
           {showFilters && (
             <>
-              <Select
-                value={ownerId ?? ANY}
-                onValueChange={(v) => {
-                  setOwnerId(v === ANY ? undefined : v);
+              <FilterMultiSelect
+                label={t("owner")}
+                placeholder={t("allOwners")}
+                options={ownerOptions}
+                value={ownerIds}
+                onValueChange={(next) => {
+                  setOwnerIds(next);
                   setDrill(null);
                 }}
-              >
-                <SelectTrigger
-                  className="h-8 w-28 text-xs"
-                  aria-label={t("owner")}
-                >
-                  <SelectValue placeholder={t("owner")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={ANY}>{t("allOwners")}</SelectItem>
-                  {owners.map((o) => (
-                    <SelectItem key={o.id} value={o.id}>
-                      {o.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <Select
-                value={teamId ?? ANY}
-                onValueChange={(v) => {
-                  setTeamId(v === ANY ? undefined : v);
+                className="h-8 w-32 text-xs"
+              />
+              <FilterMultiSelect
+                label={t("team")}
+                placeholder={t("allTeams")}
+                options={teamOptions}
+                value={teamIds}
+                onValueChange={(next) => {
+                  setTeamIds(next);
                   setDrill(null);
                 }}
-              >
-                <SelectTrigger
-                  className="h-8 w-28 text-xs"
-                  aria-label={t("team")}
-                >
-                  <SelectValue placeholder={t("team")} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={ANY}>{t("allTeams")}</SelectItem>
-                  {teams.map((o) => (
-                    <SelectItem key={o.id} value={o.id}>
-                      {o.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                className="h-8 w-32 text-xs"
+              />
             </>
           )}
           <Can permission="reports:export">

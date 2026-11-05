@@ -113,6 +113,52 @@ describe("saved views", () => {
     });
   });
 
+  it("loads legacy single-value views as one-item lists", async () => {
+    prisma.savedView.findMany.mockResolvedValue([
+      {
+        ...row,
+        filters: {
+          ownerId: "u1",
+          teamId: "t1",
+          costCenterId: "cc1",
+          paymentMethodId: "pm1",
+          billingCycle: "YEARLY",
+          parentCategoryId: "p1",
+          categoryId: "c1",
+          statuses: ["ACTIVE"],
+        },
+      },
+    ]);
+    const result = await listSavedViews("subscriptions");
+    expect(result.data![0].filters).toEqual({
+      ownerIds: ["u1"],
+      teamIds: ["t1"],
+      costCenterIds: ["cc1"],
+      paymentMethodIds: ["pm1"],
+      billingCycles: ["YEARLY"],
+      categoryIds: ["c1", "p1"],
+      statuses: ["ACTIVE"],
+    });
+  });
+
+  it("round-trips multi-value filters through create and list", async () => {
+    const filters = {
+      ownerIds: ["u1", "u2"],
+      teamIds: ["t1", "t2"],
+      billingCycles: ["MONTHLY", "YEARLY"],
+      categoryIds: ["c1", "c2"],
+    };
+    prisma.savedView.upsert.mockResolvedValue({ ...row, filters });
+    const created = await createSavedView({ name: "Multi", filters });
+    expect(created.success).toBe(true);
+    expect(prisma.savedView.upsert).toHaveBeenCalledWith(
+      expect.objectContaining({
+        create: expect.objectContaining({ filters }),
+      })
+    );
+    expect(created.data!.filters).toEqual(filters);
+  });
+
   it("rejects invalid input via zod", async () => {
     const result = await createSavedView({
       name: "",

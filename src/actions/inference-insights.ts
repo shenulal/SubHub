@@ -178,7 +178,7 @@ async function _sendInferenceMetricsEmail(): Promise<SendInferenceMetricsEmailRe
   const subject = `[${orgName}] LLM matching metrics alert - ${today}`;
 
   const html = `
-    <div style="font-family: sans-serif; max-width: 640px;">
+    <div style="font-family: Lato, Inter, sans-serif; max-width: 640px;">
       <h2>LLM matching metrics alert</h2>
       <p>Recent LLM matching metrics for ${orgName}.</p>
       <ul>

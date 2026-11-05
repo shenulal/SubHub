@@ -3,6 +3,7 @@
 
 import { requireOrganization } from "@/lib/auth/require-auth";
 import { prisma } from "@/lib/db";
+import { inFilter } from "@/lib/filters/multi-value";
 import { getBaseCurrency } from "@/lib/fx/base-currency";
 import { advanceToFutureDate } from "@/lib/utils/renewal-date";
 import type {
@@ -13,6 +14,7 @@ import type {
   SubscriptionAnomalyItem,
   UpcomingRenewal,
 } from "@/types/dashboard";
+import { type ReportScope, resolveReportScope } from "./cost-analytics-scope";
 
 /**
  * Get dashboard statistics
@@ -322,12 +324,37 @@ export async function getPendingOnboardingCount(): Promise<number> {
 }
 
 /**
+ * Narrow a renewal query to the selected users (assigned) or teams (owning
+ * team or a member assigned); several ids use `in`, none = no filter.
+ */
+function applyRenewalScope(
+  where: Record<string, unknown>,
+  scope: ReportScope
+): void {
+  const users = inFilter(scope.userIds);
+  const teams = inFilter(scope.teamIds);
+  if (users) {
+    where.assignedUsers = scope.enforceTeamId
+      ? { some: { userId: users, user: { teamId: scope.enforceTeamId } } }
+      : { some: { userId: users } };
+  } else if (teams) {
+    where.OR = [
+      { teamId: teams },
+      { assignedUsers: { some: { user: { teamId: teams } } } },
+    ];
+  }
+}
+
+/**
  * Get renewals for reports (all periods, grouped by period)
  */
 export async function getRenewalReportData(
   filters: {
     teamId?: string;
     userId?: string;
+    /** Multi-select team / user filters (empty = all). */
+    teamIds?: string[];
+    userIds?: string[];
   } = {}
 ): Promise<RenewalReportData> {
   const {
@@ -345,13 +372,11 @@ export async function getRenewalReportData(
   const ninetyDaysFromNow = new Date();
   ninetyDaysFromNow.setDate(ninetyDaysFromNow.getDate() + 90);
 
-  const isRestricted = role !== "ADMIN";
-  const effectiveTeamId = isRestricted
-    ? (memberTeamId ?? undefined)
-    : filters.teamId;
-  const effectiveUserId =
-    isRestricted && !memberTeamId ? userId : filters.userId;
-
+  const scope = resolveReportScope(filters, {
+    id: userId,
+    role,
+    teamId: memberTeamId,
+  });
   const where: Record<string, unknown> = {
     organizationId,
     status: "ACTIVE",
@@ -360,18 +385,7 @@ export async function getRenewalReportData(
       lte: ninetyDaysFromNow,
     },
   };
-
-  if (effectiveUserId) {
-    where.assignedUsers =
-      isRestricted && memberTeamId
-        ? { some: { userId: effectiveUserId, user: { teamId: memberTeamId } } }
-        : { some: { userId: effectiveUserId } };
-  } else if (effectiveTeamId) {
-    where.OR = [
-      { teamId: effectiveTeamId },
-      { assignedUsers: { some: { user: { teamId: effectiveTeamId } } } },
-    ];
-  }
+  applyRenewalScope(where, scope);
 
   const subscriptions = await prisma.subscription.findMany({
     where,
@@ -401,17 +415,7 @@ export async function getRenewalReportData(
     renewalDate: { lt: now },
   };
 
-  if (effectiveUserId) {
-    overdueWhere.assignedUsers =
-      isRestricted && memberTeamId
-        ? { some: { userId: effectiveUserId, user: { teamId: memberTeamId } } }
-        : { some: { userId: effectiveUserId } };
-  } else if (effectiveTeamId) {
-    overdueWhere.OR = [
-      { teamId: effectiveTeamId },
-      { assignedUsers: { some: { user: { teamId: effectiveTeamId } } } },
-    ];
-  }
+  applyRenewalScope(overdueWhere, scope);
 
   const overdueSubscriptions = await prisma.subscription.findMany({
     where: overdueWhere,

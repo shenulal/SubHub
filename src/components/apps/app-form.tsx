@@ -7,6 +7,7 @@ import {
   type AppFormValues,
 } from "@/components/apps/app-form-schema";
 import { ImageUpload } from "@/components/common/image-upload";
+import { CategoryPicker } from "@/components/taxonomy/category-picker";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -59,6 +60,7 @@ const normalizePayload = (values: AppFormValues) => {
     ...values,
     name: values.name.trim(),
     category: values.category?.trim() || undefined,
+    categoryId: values.categoryId || undefined,
     customLogoUrl: values.customLogoUrl?.trim() || undefined,
     customWebsite: values.customWebsite?.trim() || undefined,
     notes: values.notes?.trim() || undefined,
@@ -98,13 +100,12 @@ export function AppForm({
   onSuccess,
 }: AppFormProps) {
   const t = useTranslations();
+  const tPicker = useTranslations("taxonomy.picker");
   const router = useRouter();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [teams, setTeams] = useState<TeamWithStats[]>([]);
   const [templateLogoPath, setTemplateLogoPath] = useState<string | null>(null);
   const [urlInputValue, setUrlInputValue] = useState<string>("");
-  const [categoryOpen, setCategoryOpen] = useState(false);
-  const [categorySearchValue, setCategorySearchValue] = useState<string>("");
 
   // Whether role-based restrictions apply
   const isRestricted = userRole === "MEMBER" || userRole === "VIEWER";
@@ -145,6 +146,7 @@ export function AppForm({
     defaultValues: {
       name: initialName ?? "",
       category: "",
+      categoryId: "",
       customLogoUrl: "",
       customWebsite: "",
       notes: "",
@@ -254,179 +256,32 @@ export function AppForm({
               )}
             </div>
 
-            {/* Category - Combobox (dropdown + free text) */}
+            {/* Category — from the Category master (inline create when permitted) */}
             <div className="space-y-2">
               <Label htmlFor="category">{t("apps.form.fields.category")}</Label>
               <Controller
-                name="category"
+                name="categoryId"
                 control={control}
-                render={({ field }) => {
-                  const categoryOptions = [
-                    {
-                      value: "collaboration",
-                      label: t(
-                        "apps.form.fields.categoryOptions.collaboration"
-                      ),
-                    },
-                    {
-                      value: "design",
-                      label: t("apps.form.fields.categoryOptions.design"),
-                    },
-                    {
-                      value: "ai",
-                      label: t("apps.form.fields.categoryOptions.ai"),
-                    },
-                    {
-                      value: "productivity",
-                      label: t("apps.form.fields.categoryOptions.productivity"),
-                    },
-                    {
-                      value: "development",
-                      label: t("apps.form.fields.categoryOptions.development"),
-                    },
-                    {
-                      value: "marketing",
-                      label: t("apps.form.fields.categoryOptions.marketing"),
-                    },
-                    {
-                      value: "analytics",
-                      label: t("apps.form.fields.categoryOptions.analytics"),
-                    },
-                    {
-                      value: "security",
-                      label: t("apps.form.fields.categoryOptions.security"),
-                    },
-                    {
-                      value: "finance",
-                      label: t("apps.form.fields.categoryOptions.finance"),
-                    },
-                    {
-                      value: "hr",
-                      label: t("apps.form.fields.categoryOptions.hr"),
-                    },
-                  ];
-
-                  const currentValue = field.value || "";
-                  const selectedOption = categoryOptions.find(
-                    (opt) => opt.value === currentValue
-                  );
-                  const displayValue = selectedOption
-                    ? selectedOption.label
-                    : currentValue;
-
-                  return (
-                    <>
-                      <Popover
-                        open={categoryOpen}
-                        onOpenChange={(open) => {
-                          setCategoryOpen(open);
-                          if (open) {
-                            setCategorySearchValue(currentValue);
-                          } else {
-                            if (categorySearchValue.trim()) {
-                              field.onChange(categorySearchValue.trim());
-                            }
-                            setCategorySearchValue("");
-                          }
-                        }}
-                      >
-                        <PopoverTrigger asChild>
-                          <Button
-                            variant="outline"
-                            role="combobox"
-                            className={cn(
-                              "w-full justify-between",
-                              !currentValue && "text-muted-foreground"
-                            )}
-                            disabled={isPending}
-                          >
-                            {displayValue ||
-                              t("apps.form.fields.categoryPlaceholder")}
-                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                          </Button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-full p-0" align="start">
-                          <Command
-                            shouldFilter={false}
-                            onKeyDown={(e) => {
-                              if (
-                                e.key === "Enter" &&
-                                categorySearchValue.trim()
-                              ) {
-                                e.preventDefault();
-                                field.onChange(categorySearchValue.trim());
-                                setCategoryOpen(false);
-                                setCategorySearchValue("");
-                              }
-                            }}
-                          >
-                            <CommandInput
-                              placeholder={t("apps.form.fields.categorySearch")}
-                              value={categorySearchValue}
-                              onValueChange={setCategorySearchValue}
-                            />
-                            <CommandList>
-                              <CommandEmpty>
-                                {categorySearchValue.trim()
-                                  ? t("apps.form.fields.categoryDirectInput", {
-                                      value: categorySearchValue,
-                                    })
-                                  : t("apps.form.fields.categoryEmptyHint")}
-                              </CommandEmpty>
-                              <CommandGroup>
-                                {categoryOptions
-                                  .filter((option) =>
-                                    categorySearchValue.trim()
-                                      ? option.label
-                                          .toLowerCase()
-                                          .includes(
-                                            categorySearchValue.toLowerCase()
-                                          ) ||
-                                        option.value
-                                          .toLowerCase()
-                                          .includes(
-                                            categorySearchValue.toLowerCase()
-                                          )
-                                      : true
-                                  )
-                                  .map((option) => (
-                                    <CommandItem
-                                      key={option.value}
-                                      value={option.value}
-                                      onSelect={() => {
-                                        field.onChange(option.value);
-                                        setCategoryOpen(false);
-                                        setCategorySearchValue("");
-                                      }}
-                                    >
-                                      <Check
-                                        className={cn(
-                                          "mr-2 h-4 w-4",
-                                          currentValue === option.value
-                                            ? "opacity-100"
-                                            : "opacity-0"
-                                        )}
-                                      />
-                                      {option.label}
-                                    </CommandItem>
-                                  ))}
-                              </CommandGroup>
-                            </CommandList>
-                          </Command>
-                        </PopoverContent>
-                      </Popover>
-                      <p className="text-muted-foreground text-xs">
-                        {t("apps.form.fields.categoryHelper")}
-                      </p>
-                      {errors.category?.message && (
-                        <p className="text-destructive text-sm">
-                          {errors.category.message}
-                        </p>
-                      )}
-                    </>
-                  );
-                }}
+                render={({ field }) => (
+                  <CategoryPicker
+                    id="category"
+                    value={field.value || null}
+                    onChange={(id, node) => {
+                      field.onChange(id ?? "");
+                      setValue("category", node?.name ?? "");
+                    }}
+                    disabled={isPending}
+                  />
+                )}
               />
+              <p className="text-muted-foreground text-xs">
+                {tPicker("helper")}
+              </p>
+              {errors.category?.message && (
+                <p className="text-destructive text-sm">
+                  {errors.category.message}
+                </p>
+              )}
             </div>
 
             <div className="space-y-2">

@@ -1,28 +1,14 @@
 // src/lib/csv.ts
 
-// Valid app categories
-const VALID_CATEGORIES = [
-  "COLLABORATION",
-  "PRODUCTIVITY",
-  "DEVELOPMENT",
-  "DESIGN",
-  "MARKETING",
-  "SALES",
-  "HR",
-  "FINANCE",
-  "ANALYTICS",
-  "SECURITY",
-  "IT_INFRA",
-  "COMMUNICATION",
-  "OTHER",
-] as const;
-
 // Valid billing cycles
 const VALID_BILLING_CYCLES = ["MONTHLY", "QUARTERLY", "YEARLY"] as const;
 
 export interface AppCSVRow {
   name: string;
+  /** Category master name (mirrored into the legacy `App.category`). */
   category: string;
+  /** Category master id the row resolved to. */
+  categoryId?: string;
   vendor?: string;
   description?: string;
   website?: string;
@@ -128,12 +114,37 @@ function parseCSVLine(line: string, delimiter: string = ","): string[] {
   return result;
 }
 
+/** A Category master row the import may resolve to. */
+export interface CsvCategoryOption {
+  id: string;
+  name: string;
+  slug: string;
+}
+
+const categoryKey = (value: string): string =>
+  value.toLowerCase().replace(/[^a-z0-9]+/g, "");
+
+function categoryLookup(
+  categories: CsvCategoryOption[]
+): Map<string, CsvCategoryOption> {
+  const map = new Map<string, CsvCategoryOption>();
+  for (const c of categories) {
+    map.set(categoryKey(c.slug), c);
+    map.set(categoryKey(c.name), c);
+  }
+  return map;
+}
+
 /**
- * Validate app CSV data
+ * Validate app CSV data. Categories are matched (case/punctuation-insensitive)
+ * against the organisation's Category master by name or slug.
  */
 export function validateAppCSV(
-  rows: Record<string, string>[]
+  rows: Record<string, string>[],
+  categories: CsvCategoryOption[]
 ): ValidationResult<AppCSVRow> {
+  const lookup = categoryLookup(categories);
+  const allowed = categories.map((c) => c.name).join(", ");
   const valid: AppCSVRow[] = [];
   const errors: ValidationError[] = [];
 
@@ -159,22 +170,22 @@ export function validateAppCSV(
       return;
     }
 
-    // Validate category
-    const category = row.category.trim().toUpperCase();
-    if (
-      !VALID_CATEGORIES.includes(category as (typeof VALID_CATEGORIES)[number])
-    ) {
+    // Validate category against the Category master
+    const raw = row.category.trim();
+    const match = lookup.get(categoryKey(raw));
+    if (!match) {
       errors.push({
         row: rowNum,
         field: "category",
-        message: `Row ${rowNum}: Invalid category (${category}). Allowed values: ${VALID_CATEGORIES.join(", ")}`,
+        message: `Row ${rowNum}: Invalid category (${raw}). Allowed values: ${allowed}`,
       });
       return;
     }
 
     valid.push({
       name: row.name.trim(),
-      category: category,
+      category: match.name,
+      categoryId: match.id,
       vendor: row.vendor?.trim() || undefined,
       description: row.description?.trim() || undefined,
       website: row.website?.trim() || undefined,

@@ -35,6 +35,7 @@ const toFormValues = (app: AppDetail): AppFormValues => ({
   name: app.name,
   status: app.status,
   category: app.category ?? "",
+  categoryId: app.categoryId ?? "",
   customLogoUrl: app.customLogoUrl ?? "",
   customWebsite: app.customWebsite ?? "",
   notes: app.notes ?? "",
@@ -47,6 +48,8 @@ const normalizePayload = (values: AppFormValues) => {
     ...values,
     name: values.name.trim(),
     category: values.category?.trim() || undefined,
+    // Always sent so clearing the picker clears the stored category.
+    categoryId: values.categoryId ?? "",
     customLogoUrl: values.customLogoUrl?.trim() || undefined,
     customWebsite: values.customWebsite?.trim() || undefined,
     notes: values.notes?.trim() || undefined,

@@ -141,8 +141,8 @@ describe("SubscriptionPageClient", () => {
     searchParams.current = new URLSearchParams("page=3&q=old");
     render(<SubscriptionPageClient {...baseProps()} />);
     const filters = within(screen.getByTestId("subscription-filters"));
-    fireEvent.click(filters.getByRole("button", { name: "Status" }));
-    fireEvent.click(screen.getByText("Paused"));
+    fireEvent.click(filters.getByRole("combobox", { name: "Status" }));
+    fireEvent.click(screen.getByRole("option", { name: /Paused/ }));
     expect(push).toHaveBeenCalledTimes(1);
     const url = push.mock.calls[0][0] as string;
     expect(url).toContain("status=PAUSED");

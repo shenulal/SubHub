@@ -1,5 +1,6 @@
 // src/lib/services/fleetdm/deviceService.ts
 import { prisma } from "@/lib/db";
+import { inFilter } from "@/lib/filters/multi-value";
 import type {
   Device,
   DeviceApp,
@@ -42,8 +43,9 @@ export interface ShadowITAppSummary {
 
 // Filter options
 export interface DeviceFilterOptions {
-  status?: DeviceStatus;
-  platform?: DevicePlatform;
+  /** One or several statuses / platforms (empty = all). */
+  status?: DeviceStatus | DeviceStatus[];
+  platform?: DevicePlatform | DevicePlatform[];
   userId?: string;
   search?: string;
   page?: number;
@@ -58,6 +60,11 @@ export interface DeviceListResult {
   limit: number;
 }
 
+function toList<T extends string>(value: T | T[] | undefined): T[] {
+  if (value === undefined) return [];
+  return Array.isArray(value) ? value : [value];
+}
+
 /**
  * Lists the organization's devices
  */
@@ -65,7 +72,9 @@ export async function getDevices(
   organizationId: string,
   options: DeviceFilterOptions = {}
 ): Promise<DeviceListResult> {
-  const { status, platform, userId, search, page = 1, limit = 20 } = options;
+  const { userId, search, page = 1, limit = 20 } = options;
+  const status = inFilter(toList(options.status));
+  const platform = inFilter(toList(options.platform));
 
   const where = {
     organizationId,

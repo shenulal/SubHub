@@ -2,16 +2,26 @@ import { RootThemeProvider } from "@/components/providers/root-theme-provider";
 import type { Metadata } from "next";
 import { NextIntlClientProvider } from "next-intl";
 import { getLocale, getMessages } from "next-intl/server";
-import { Geist_Mono, Inter } from "next/font/google";
+import { Geist_Mono, Inter, Lato } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
 
-// Materio typography: Inter (300–700)
+// Primary typeface: Lato (Google Fonts publishes 300 / 400 / 700 / 900).
+const lato = Lato({
+  variable: "--font-lato",
+  subsets: ["latin", "latin-ext"],
+  weight: ["300", "400", "700", "900"],
+  display: "swap",
+});
+
+// Fallback typeface: Inter, used only if Lato cannot be loaded. Not preloaded,
+// so browsers download it only when a glyph actually falls back to it.
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
   weight: ["300", "400", "500", "600", "700"],
   display: "swap",
+  preload: false,
 });
 
 const geistMono = Geist_Mono({
@@ -39,7 +49,7 @@ export default async function RootLayout({
   return (
     <html lang={locale} suppressHydrationWarning>
       <body
-        className={`${inter.variable} ${geistMono.variable} font-sans antialiased`}
+        className={`${lato.variable} ${inter.variable} ${geistMono.variable} font-sans antialiased`}
         suppressHydrationWarning
       >
         <RootThemeProvider>

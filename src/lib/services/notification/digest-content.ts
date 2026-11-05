@@ -141,7 +141,7 @@ export function buildDigestEmail(
   );
   const title = `Weekly digest · ${weekRange}`;
   const body = `${stats.pendingApprovals} pending approvals, ${stats.upcomingRenewals} renewals in ${renewingSoonDays} days, ${stats.priceChangesUnacknowledged} price changes to review, ${stats.trialsEnding} trials ending.`;
-  const html = `<!DOCTYPE html><html lang="en"><body style="font-family:Inter,Segoe UI,Arial,sans-serif;color:#0f172a;max-width:600px;margin:0 auto;padding:24px;">
+  const html = `<!DOCTYPE html><html lang="en"><body style="font-family:Lato,Inter,Segoe UI,Arial,sans-serif;color:#0f172a;max-width:600px;margin:0 auto;padding:24px;">
   <div style="background:linear-gradient(135deg,#1e293b,#0f172a);color:#fff;padding:24px;border-radius:12px 12px 0 0;">
     <p style="margin:0;font-size:12px;letter-spacing:.08em;text-transform:uppercase;opacity:.75;">${organizationName}</p>
     <h1 style="margin:8px 0 0;font-size:22px;">Weekly digest</h1>

@@ -353,6 +353,70 @@ describe("Dashboard Server Actions", () => {
         })
       );
     });
+
+    it("applies several teams with `in` (multi-select)", async () => {
+      mockedRequireOrganization.mockResolvedValue({
+        organizationId: "org-1",
+        role: "ADMIN",
+        teamId: null,
+        userId: "user-1",
+      });
+      vi.mocked(prisma.subscription.findMany).mockResolvedValue([]);
+
+      await getRenewalReportData({ teamIds: ["team-1", "team-2"] });
+
+      const teams = { in: ["team-1", "team-2"] };
+      expect(prisma.subscription.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            OR: [
+              { teamId: teams },
+              { assignedUsers: { some: { user: { teamId: teams } } } },
+            ],
+          }),
+        })
+      );
+    });
+
+    it("applies several users and ignores an empty team list", async () => {
+      mockedRequireOrganization.mockResolvedValue({
+        organizationId: "org-1",
+        role: "ADMIN",
+        teamId: null,
+        userId: "user-1",
+      });
+      vi.mocked(prisma.subscription.findMany).mockResolvedValue([]);
+
+      await getRenewalReportData({ teamIds: [], userIds: ["u1", "u2"] });
+
+      const where = vi
+        .mocked(prisma.subscription.findMany)
+        .mock.calls.at(-1)![0]!.where as Record<string, unknown>;
+      expect(where.assignedUsers).toEqual({
+        some: { userId: { in: ["u1", "u2"] } },
+      });
+      expect(where.OR).toBeUndefined();
+    });
+
+    it("pins restricted members to their own team whatever is requested", async () => {
+      mockedRequireOrganization.mockResolvedValue({
+        organizationId: "org-1",
+        role: "MEMBER",
+        teamId: "team-9",
+        userId: "user-1",
+      });
+      vi.mocked(prisma.subscription.findMany).mockResolvedValue([]);
+
+      await getRenewalReportData({ teamIds: ["team-1", "team-2"] });
+
+      const where = vi
+        .mocked(prisma.subscription.findMany)
+        .mock.calls.at(-1)![0]!.where as Record<string, unknown>;
+      expect(where.OR).toEqual([
+        { teamId: "team-9" },
+        { assignedUsers: { some: { user: { teamId: "team-9" } } } },
+      ]);
+    });
   });
 
   describe("getAppsByCategory", () => {

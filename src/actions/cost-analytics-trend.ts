@@ -28,6 +28,8 @@ export async function getMonthlyCostTrend(options: {
   appIds?: string[];
   teamId?: string;
   userId?: string;
+  teamIds?: string[];
+  userIds?: string[];
 }): Promise<ActionState<GetMonthlyCostTrendResult>> {
   try {
     const session = await auth();
@@ -43,8 +45,11 @@ export async function getMonthlyCostTrend(options: {
       };
     }
 
-    const { months = 6, appIds, teamId, userId } = options;
-    const scope = resolveReportScope({ teamId, userId }, session.user);
+    const { months = 6, appIds, teamId, userId, teamIds, userIds } = options;
+    const scope = resolveReportScope(
+      { teamId, userId, teamIds, userIds },
+      session.user
+    );
 
     // Calculate the period
     const now = new Date();

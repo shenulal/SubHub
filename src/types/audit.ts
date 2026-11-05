@@ -5,10 +5,16 @@
  */
 
 export interface AuditLogFilters {
+  /** Legacy single values; merged with the lists below. */
   action?: string;
   userId?: string;
   teamId?: string;
   entityType?: string;
+  /** Multi-select filters (empty / missing = all). */
+  actions?: string[];
+  userIds?: string[];
+  teamIds?: string[];
+  entityTypes?: string[];
   startDate?: string; // ISO 8601 string
   endDate?: string; // ISO 8601 string
   search?: string;

@@ -2,6 +2,7 @@
 import { getAuditLogFilterOptions, getAuditLogs } from "@/actions/audit";
 import { getDateRangePresets } from "@/actions/reports/browsing-usage";
 import { auth } from "@/lib/auth";
+import { parseOptionalMultiValue } from "@/lib/filters/multi-value";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
@@ -68,11 +69,12 @@ export default async function AuditLogPage({
     endDateStr = today.toISOString().split("T")[0];
   }
 
+  // Facets are comma-separated lists (a legacy single value still works)
   const filters = {
-    action: params.action,
-    userId: params.userId,
-    teamId: params.teamId,
-    entityType: params.entityType,
+    actions: parseOptionalMultiValue(params.action),
+    userIds: parseOptionalMultiValue(params.userId),
+    teamIds: parseOptionalMultiValue(params.teamId),
+    entityTypes: parseOptionalMultiValue(params.entityType),
     startDate: `${startDateStr}T00:00:00Z`,
     endDate: `${endDateStr}T23:59:59Z`,
     search: params.search,

@@ -3,6 +3,7 @@
  * Pure translation of a `SubscriptionListFilter` / sort into Prisma clauses.
  * Kept separate from the action so it can be unit-tested without a database.
  */
+import { inFilter } from "@/lib/filters/multi-value";
 import type {
   SubscriptionListFilter,
   SubscriptionListSort,
@@ -19,6 +20,47 @@ export const DEFAULT_VISIBLE_STATUSES: SubscriptionStatus[] = [
   "EXPIRED",
   "CANCELLED",
 ];
+
+/**
+ * Multi-value facets (empty list = no filter). A category id matches the
+ * category itself and, for a parent, every subcategory under it; a team id
+ * matches the owning team or any additional team on the subscription.
+ */
+export function facetClauses(
+  filter: SubscriptionListFilter
+): Prisma.SubscriptionWhereInput[] {
+  const and: Prisma.SubscriptionWhereInput[] = [];
+  const categories = filter.categoryIds;
+  if (categories?.length) {
+    and.push({
+      OR: [
+        { categoryId: inFilter(categories) },
+        { category: { parentId: inFilter(categories) } },
+      ],
+    });
+  }
+  if (filter.tagIds?.length) {
+    and.push({ tags: { some: { tagId: { in: filter.tagIds } } } });
+  }
+  const owners = inFilter(filter.ownerIds);
+  if (owners) and.push({ ownerId: owners });
+  const teams = inFilter(filter.teamIds);
+  if (teams) {
+    and.push({
+      OR: [
+        { teamId: teams },
+        { subscriptionTeams: { some: { teamId: teams } } },
+      ],
+    });
+  }
+  const costCenters = inFilter(filter.costCenterIds);
+  if (costCenters) and.push({ costCenterId: costCenters });
+  const paymentMethods = inFilter(filter.paymentMethodIds);
+  if (paymentMethods) and.push({ paymentMethodId: paymentMethods });
+  const cycles = inFilter(filter.billingCycles);
+  if (cycles) and.push({ billingCycle: cycles });
+  return and;
+}
 
 export function filterToWhere(
   filter: SubscriptionListFilter,
@@ -46,32 +88,7 @@ export function filterToWhere(
       ],
     });
   }
-  if (filter.categoryId) and.push({ categoryId: filter.categoryId });
-  else if (filter.parentCategoryId) {
-    and.push({
-      OR: [
-        { categoryId: filter.parentCategoryId },
-        { category: { parentId: filter.parentCategoryId } },
-      ],
-    });
-  }
-  if (filter.tagIds?.length) {
-    and.push({ tags: { some: { tagId: { in: filter.tagIds } } } });
-  }
-  if (filter.ownerId) and.push({ ownerId: filter.ownerId });
-  if (filter.teamId) {
-    and.push({
-      OR: [
-        { teamId: filter.teamId },
-        { subscriptionTeams: { some: { teamId: filter.teamId } } },
-      ],
-    });
-  }
-  if (filter.costCenterId) and.push({ costCenterId: filter.costCenterId });
-  if (filter.paymentMethodId) {
-    and.push({ paymentMethodId: filter.paymentMethodId });
-  }
-  if (filter.billingCycle) and.push({ billingCycle: filter.billingCycle });
+  and.push(...facetClauses(filter));
   if (filter.amountMin !== undefined || filter.amountMax !== undefined) {
     and.push({
       amount: {

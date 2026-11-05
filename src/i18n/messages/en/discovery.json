@@ -274,6 +274,13 @@
         "exportSubscriptions": "Export subscriptions",
         "inviteMember": "Invite member"
       }
+    },
+    "multiSelect": {
+      "search": "Search…",
+      "empty": "No matches",
+      "selectAll": "Select all",
+      "clear": "Clear",
+      "more": "+{count}"
     }
   }
 }

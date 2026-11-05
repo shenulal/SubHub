@@ -186,6 +186,9 @@
     "help": {
       "ariaLabel": "Help",
       "learnMore": "Learn more"
+    },
+    "orgAlerts": {
+      "renewalOption": "{days, plural, one {# day} other {# days}}"
     }
   }
 }

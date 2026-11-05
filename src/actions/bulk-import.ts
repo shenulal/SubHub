@@ -61,7 +61,14 @@ async function _bulkImportApps(
     }
 
     // Validate
-    const { valid, errors } = validateAppCSV(rows);
+    const categories = await prisma.category.findMany({
+      where: {
+        organizationId: session.user.organizationId!,
+        isArchived: false,
+      },
+      select: { id: true, name: true, slug: true },
+    });
+    const { valid, errors } = validateAppCSV(rows, categories);
 
     if (errors.length > 0 && valid.length === 0) {
       return {
@@ -76,6 +83,7 @@ async function _bulkImportApps(
       data: valid.map((row) => ({
         name: row.name,
         category: row.category,
+        categoryId: row.categoryId ?? null,
         customWebsite: row.website || null,
         notes: row.vendor
           ? `${row.vendor}${row.description ? ` - ${row.description}` : ""}`

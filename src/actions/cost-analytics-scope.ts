@@ -1,13 +1,40 @@
 // src/actions/cost-analytics-scope.ts
 
+import { inFilter, mergeLegacyValue } from "@/lib/filters/multi-value";
 import type { CostAnalyticsFilters } from "@/types/cost-analytics";
 
+/**
+ * Effective report scope. `teamIds` / `userIds` are multi-value filters
+ * (empty = all); the singular keys are accepted for older callers.
+ */
 export interface ReportScope {
+  teamIds?: string[];
+  userIds?: string[];
+  /** @deprecated use `teamIds` */
   teamId?: string;
+  /** @deprecated use `userIds` */
   userId?: string;
   enforceTeamId?: string;
 }
 
+/** Team / user lists requested by a report filter (single + list merged). */
+export function requestedTeamIds(
+  filters: Pick<CostAnalyticsFilters, "teamId" | "teamIds">
+): string[] | undefined {
+  return mergeLegacyValue(filters.teamIds, filters.teamId);
+}
+
+export function requestedUserIds(
+  filters: Pick<CostAnalyticsFilters, "userId" | "userIds">
+): string[] | undefined {
+  return mergeLegacyValue(filters.userIds, filters.userId);
+}
+
+/**
+ * Admins get the requested teams / users. Restricted roles are pinned to
+ * their own team (users inside it may still be narrowed), or to themselves
+ * when they have no team.
+ */
 export function resolveReportScope(
   filters: CostAnalyticsFilters,
   sessionUser: {
@@ -18,39 +45,50 @@ export function resolveReportScope(
 ): ReportScope {
   const isRestricted = sessionUser.role !== "ADMIN";
   const memberTeamId = sessionUser.teamId ?? undefined;
+  const userIds = requestedUserIds(filters);
 
   if (!isRestricted) {
-    return { teamId: filters.teamId, userId: filters.userId };
+    return { teamIds: requestedTeamIds(filters), userIds };
   }
 
   if (!memberTeamId) {
     return {
-      userId: sessionUser.id,
+      userIds: [sessionUser.id],
       enforceTeamId: undefined,
     };
   }
 
   return {
-    teamId: memberTeamId,
-    userId: filters.userId,
+    teamIds: [memberTeamId],
+    userIds,
     enforceTeamId: memberTeamId,
   };
+}
+
+function scopeTeams(scope: ReportScope) {
+  return inFilter(mergeLegacyValue(scope.teamIds, scope.teamId));
+}
+
+function scopeUsers(scope: ReportScope) {
+  return inFilter(mergeLegacyValue(scope.userIds, scope.userId));
 }
 
 export function applyPaymentRecordScope(
   where: Record<string, unknown>,
   scope: ReportScope
 ) {
-  if (scope.userId) {
-    where.userId = scope.userId;
+  const users = scopeUsers(scope);
+  if (users) {
+    where.userId = users;
     if (scope.enforceTeamId) {
       where.user = { teamId: scope.enforceTeamId };
     }
     return;
   }
 
-  if (scope.teamId) {
-    where.OR = [{ teamId: scope.teamId }, { user: { teamId: scope.teamId } }];
+  const teams = scopeTeams(scope);
+  if (teams) {
+    where.OR = [{ teamId: teams }, { user: { teamId: teams } }];
   }
 }
 
@@ -58,22 +96,21 @@ export function applyCardTransactionScope(
   where: Record<string, unknown>,
   scope: ReportScope
 ) {
-  if (scope.userId) {
+  const users = scopeUsers(scope);
+  if (users) {
     where.corporateCard = scope.enforceTeamId
       ? {
-          assignedUserId: scope.userId,
+          assignedUserId: users,
           assignedUser: { teamId: scope.enforceTeamId },
         }
-      : { assignedUserId: scope.userId };
+      : { assignedUserId: users };
     return;
   }
 
-  if (scope.teamId) {
+  const teams = scopeTeams(scope);
+  if (teams) {
     where.corporateCard = {
-      OR: [
-        { teamId: scope.teamId },
-        { assignedUser: { teamId: scope.teamId } },
-      ],
+      OR: [{ teamId: teams }, { assignedUser: { teamId: teams } }],
     };
   }
 }

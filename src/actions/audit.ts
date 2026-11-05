@@ -7,6 +7,7 @@
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { inFilter, mergeLegacyValue } from "@/lib/filters/multi-value";
 import { redirect } from "next/navigation";
 
 import type {
@@ -34,23 +35,29 @@ function buildAuditLogWhere(
     return where;
   }
 
-  if (filters.userId) {
-    where.userId = filters.userId;
+  const users = inFilter(mergeLegacyValue(filters.userIds, filters.userId));
+  if (users) where.userId = users;
+
+  const teams = inFilter(mergeLegacyValue(filters.teamIds, filters.teamId));
+  if (teams && sessionUser.role === "ADMIN") {
+    where.user = { teamId: teams };
   }
 
-  if (filters.teamId && sessionUser.role === "ADMIN") {
-    where.user = { teamId: filters.teamId };
+  // The action filter may include detailed codes such as CREATE_APP or
+  // CREATE_SUBSCRIPTION, so each selected category matches as a prefix.
+  const actions = mergeLegacyValue(filters.actions, filters.action);
+  if (actions?.length === 1) {
+    where.action = { startsWith: actions[0] };
+  } else if (actions?.length) {
+    where.AND = [
+      { OR: actions.map((action) => ({ action: { startsWith: action } })) },
+    ];
   }
 
-  if (filters.action) {
-    // The action filter may include detailed codes such as CREATE_APP or CREATE_SUBSCRIPTION,
-    // so match on the category prefix (e.g. CREATE).
-    where.action = { startsWith: filters.action };
-  }
-
-  if (filters.entityType) {
-    where.entityType = filters.entityType;
-  }
+  const entityTypes = inFilter(
+    mergeLegacyValue(filters.entityTypes, filters.entityType)
+  );
+  if (entityTypes) where.entityType = entityTypes;
 
   if (filters.startDate || filters.endDate) {
     where.createdAt = {};

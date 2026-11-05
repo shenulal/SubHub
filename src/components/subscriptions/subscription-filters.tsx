@@ -5,6 +5,7 @@
  * Filter bar for the subscription list (9.2 / 9.3). Fully controlled: the page
  * owns the state (mirrored in the URL) and this component only emits patches.
  */
+import { FilterMultiSelect } from "@/components/common/filter-multi-select";
 import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
@@ -17,6 +18,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import type { MultiSelectOption } from "@/components/ui/multi-select";
 import { countActiveFilters } from "@/lib/services/discovery/filter-params";
 import { cn } from "@/lib/utils";
 import {
@@ -34,10 +36,6 @@ import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 
 import { SubscriptionFiltersAdvanced } from "./subscription-filters-advanced";
-import {
-  MultiSelectPopover,
-  SingleSelectPopover,
-} from "./subscription-filters-shared";
 
 const STATUS_OPTIONS: SubscriptionStatus[] = [
   "ACTIVE",
@@ -60,16 +58,47 @@ interface SubscriptionFiltersProps {
   onReset: () => void;
 }
 
-/** Two-level category list flattened for a single-select popover. */
-function flattenCategories(tree: CategoryOption[]): NamedOption[] {
+function ColorDot({ color }: { color?: string | null }) {
+  return (
+    <span
+      aria-hidden
+      className="size-2.5 shrink-0 rounded-full"
+      style={{ background: color ?? "var(--chart-2)" }}
+    />
+  );
+}
+
+/**
+ * Two-level category list for the multi-select: each parent heads a group
+ * with itself (matches all its subcategories) followed by its children.
+ */
+function categoryOptions(tree: CategoryOption[]): MultiSelectOption[] {
   return tree.flatMap((parent) => [
-    { id: parent.id, name: parent.name, color: parent.color },
+    {
+      value: parent.id,
+      label: parent.name,
+      group: parent.name,
+      icon: <ColorDot color={parent.color} />,
+    },
     ...(parent.children ?? []).map((c) => ({
-      id: c.id,
-      name: `${parent.name} › ${c.name}`,
-      color: c.color,
+      value: c.id,
+      label: c.name,
+      group: parent.name,
+      keywords: [parent.name],
+      icon: <ColorDot color={c.color} />,
     })),
   ]);
+}
+
+function namedOptions(
+  options: NamedOption[],
+  withColor = false
+): MultiSelectOption[] {
+  return options.map((o) => ({
+    value: o.id,
+    label: o.name,
+    icon: withColor ? <ColorDot color={o.color} /> : undefined,
+  }));
 }
 
 export function SubscriptionFilters({
@@ -97,45 +126,32 @@ export function SubscriptionFilters({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search]);
 
-  const statusOptions = useMemo<NamedOption[]>(
-    () => STATUS_OPTIONS.map((s) => ({ id: s, name: ts(s.toLowerCase()) })),
+  const statusOptions = useMemo<MultiSelectOption[]>(
+    () => STATUS_OPTIONS.map((s) => ({ value: s, label: ts(s.toLowerCase()) })),
     [ts]
   );
-  const categoryOptions = useMemo(
-    () => flattenCategories(options.categories),
+  const categoryChoices = useMemo(
+    () => categoryOptions(options.categories),
     [options.categories]
   );
-  const parentIds = useMemo(
-    () => new Set(options.categories.map((c) => c.id)),
-    [options.categories]
+  const tagChoices = useMemo(
+    () => namedOptions(options.tags, true),
+    [options.tags]
   );
 
   const activeCount = countActiveFilters(filter);
   const advancedCount = countActiveFilters({
-    ownerId: filter.ownerId,
-    teamId: filter.teamId,
-    costCenterId: filter.costCenterId,
-    paymentMethodId: filter.paymentMethodId,
-    billingCycle: filter.billingCycle,
+    ownerIds: filter.ownerIds,
+    teamIds: filter.teamIds,
+    costCenterIds: filter.costCenterIds,
+    paymentMethodIds: filter.paymentMethodIds,
+    billingCycles: filter.billingCycles,
     amountMin: filter.amountMin,
     amountMax: filter.amountMax,
     renewingWithinDays: filter.renewingWithinDays,
     trialOnly: filter.trialOnly,
     includeArchived: filter.includeArchived,
   });
-
-  const categoryValue = filter.categoryId ?? filter.parentCategoryId;
-  const handleCategory = (id: string | undefined) => {
-    if (!id)
-      return onFilterChange({
-        categoryId: undefined,
-        parentCategoryId: undefined,
-      });
-    if (parentIds.has(id)) {
-      return onFilterChange({ parentCategoryId: id, categoryId: undefined });
-    }
-    onFilterChange({ categoryId: id, parentCategoryId: undefined });
-  };
 
   const SortIcon = sort.sortOrder === "asc" ? ArrowUpAZ : ArrowDownAZ;
 
@@ -165,11 +181,11 @@ export function SubscriptionFilters({
         )}
       </div>
 
-      <MultiSelectPopover
+      <FilterMultiSelect
         label={t("status")}
         options={statusOptions}
-        selected={filter.statuses ?? []}
-        onChange={(ids) =>
+        value={filter.statuses ?? []}
+        onValueChange={(ids) =>
           onFilterChange({
             statuses: ids.length ? (ids as SubscriptionStatus[]) : undefined,
             includeArchived: ids.includes("ARCHIVED")
@@ -178,20 +194,21 @@ export function SubscriptionFilters({
           })
         }
       />
-      <SingleSelectPopover
+      <FilterMultiSelect
         label={t("category")}
-        options={categoryOptions}
-        value={categoryValue}
-        onChange={handleCategory}
+        options={categoryChoices}
+        value={filter.categoryIds ?? []}
+        onValueChange={(ids) =>
+          onFilterChange({ categoryIds: ids.length ? ids : undefined })
+        }
       />
-      <MultiSelectPopover
+      <FilterMultiSelect
         label={t("tags")}
-        options={options.tags}
-        selected={filter.tagIds ?? []}
-        onChange={(ids) =>
+        options={tagChoices}
+        value={filter.tagIds ?? []}
+        onValueChange={(ids) =>
           onFilterChange({ tagIds: ids.length ? ids : undefined })
         }
-        showColor
       />
       <SubscriptionFiltersAdvanced
         filter={filter}

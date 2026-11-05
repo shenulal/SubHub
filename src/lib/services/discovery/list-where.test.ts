@@ -27,13 +27,13 @@ describe("filterToWhere", () => {
     const where = filterToWhere(
       {
         search: "slack",
-        categoryId: "c1",
+        categoryIds: ["c1"],
         tagIds: ["t1"],
-        ownerId: "u1",
-        teamId: "team1",
-        costCenterId: "cc1",
-        paymentMethodId: "pm1",
-        billingCycle: "YEARLY",
+        ownerIds: ["u1"],
+        teamIds: ["team1"],
+        costCenterIds: ["cc1"],
+        paymentMethodIds: ["pm1"],
+        billingCycles: ["YEARLY"],
         amountMin: 5,
         amountMax: 50,
         renewingWithinDays: 10,
@@ -43,7 +43,9 @@ describe("filterToWhere", () => {
       NOW
     );
     const and = (where.AND as Record<string, unknown>[]) ?? [];
-    expect(and).toContainEqual({ categoryId: "c1" });
+    expect(and).toContainEqual({
+      OR: [{ categoryId: "c1" }, { category: { parentId: "c1" } }],
+    });
     expect(and).toContainEqual({ tags: { some: { tagId: { in: ["t1"] } } } });
     expect(and).toContainEqual({ ownerId: "u1" });
     expect(and).toContainEqual({ costCenterId: "cc1" });
@@ -58,14 +60,55 @@ describe("filterToWhere", () => {
     expect(JSON.stringify(where)).toContain("subscriptionTeams");
   });
 
-  it("uses the parent category (own + children) when no leaf is chosen", () => {
+  it("matches a parent category's own rows and its children", () => {
     const where = filterToWhere(
-      { parentCategoryId: "p1", includeArchived: true },
+      { categoryIds: ["p1"], includeArchived: true },
       NOW
     );
     expect(where).toEqual({
       AND: [{ OR: [{ categoryId: "p1" }, { category: { parentId: "p1" } }] }],
     });
+  });
+
+  it("uses `in` for several values of each facet", () => {
+    const where = filterToWhere(
+      {
+        includeArchived: true,
+        categoryIds: ["p1", "c2"],
+        ownerIds: ["u1", "u2"],
+        teamIds: ["t1", "t2"],
+        costCenterIds: ["cc1", "cc2"],
+        paymentMethodIds: ["pm1", "pm2"],
+        billingCycles: ["MONTHLY", "YEARLY"],
+      },
+      NOW
+    );
+    const and = where.AND as Record<string, unknown>[];
+    expect(and).toContainEqual({
+      OR: [
+        { categoryId: { in: ["p1", "c2"] } },
+        { category: { parentId: { in: ["p1", "c2"] } } },
+      ],
+    });
+    expect(and).toContainEqual({ ownerId: { in: ["u1", "u2"] } });
+    expect(and).toContainEqual({
+      OR: [
+        { teamId: { in: ["t1", "t2"] } },
+        { subscriptionTeams: { some: { teamId: { in: ["t1", "t2"] } } } },
+      ],
+    });
+    expect(and).toContainEqual({ costCenterId: { in: ["cc1", "cc2"] } });
+    expect(and).toContainEqual({ paymentMethodId: { in: ["pm1", "pm2"] } });
+    expect(and).toContainEqual({ billingCycle: { in: ["MONTHLY", "YEARLY"] } });
+  });
+
+  it("ignores empty lists (empty selection = all)", () => {
+    expect(
+      filterToWhere(
+        { includeArchived: true, ownerIds: [], teamIds: [], categoryIds: [] },
+        NOW
+      )
+    ).toEqual({});
   });
 });
 

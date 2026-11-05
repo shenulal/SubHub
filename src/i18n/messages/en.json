@@ -2944,7 +2944,7 @@
           "users": "User Fields",
           "appsTitle": "App CSV Fields:",
           "appsName": "name (required): App name",
-          "appsCategory": "category (required): COLLABORATION, PRODUCTIVITY, DEVELOPMENT, DESIGN, MARKETING, SALES, HR, FINANCE, ANALYTICS, SECURITY, IT_INFRA, COMMUNICATION, OTHER",
+          "appsCategory": "category (required): a category name or slug from Master data → Categories",
           "appsVendor": "vendor: Vendor name",
           "appsDescription": "description: App description",
           "appsWebsite": "website: Website URL",

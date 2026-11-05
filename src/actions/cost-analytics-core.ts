@@ -314,6 +314,8 @@ export async function getTopCostApps(options: {
   endDate?: Date;
   teamId?: string;
   userId?: string;
+  teamIds?: string[];
+  userIds?: string[];
 }): Promise<ActionState<GetTopCostAppsResult>> {
   try {
     const session = await auth();
@@ -329,9 +331,13 @@ export async function getTopCostApps(options: {
       };
     }
 
-    const { limit, startDate, endDate, teamId, userId } = options;
+    const { limit, startDate, endDate, teamId, userId, teamIds, userIds } =
+      options;
     const take = limit === undefined ? 5 : limit;
-    const scope = resolveReportScope({ teamId, userId }, session.user);
+    const scope = resolveReportScope(
+      { teamId, userId, teamIds, userIds },
+      session.user
+    );
 
     // PaymentRecord groupBy (5 unified matchStatus values)
     const paymentWhere: Record<string, unknown> = {

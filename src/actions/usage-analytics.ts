@@ -3,7 +3,9 @@
 
 import { requireOrganization } from "@/lib/auth/require-auth";
 import { prisma } from "@/lib/db";
+import { inFilter } from "@/lib/filters/multi-value";
 import type { Prisma } from "@prisma/client";
+import { resolveReportScope } from "./cost-analytics-scope";
 
 // Type definitions
 export interface UsageReportFilters {
@@ -12,6 +14,9 @@ export interface UsageReportFilters {
   endDate: string; // ISO 8601
   teamId?: string;
   userId?: string;
+  /** Multi-select team / user filters (empty = all). */
+  teamIds?: string[];
+  userIds?: string[];
 }
 
 export interface UsageReportData {
@@ -81,6 +86,31 @@ async function getSubscribedAppIds(
 }
 
 /**
+ * User scope for the usage report: several teams and/or users (empty = all).
+ * Restricted roles are pinned to their own team (or themselves without one).
+ */
+function buildUsageUserScope(
+  organizationId: string,
+  filters: Pick<
+    UsageReportFilters,
+    "teamId" | "userId" | "teamIds" | "userIds"
+  >,
+  sessionUser: { id: string; role?: string | null; teamId?: string | null }
+): { userScope: Prisma.UserWhereInput; hasUserFilter: boolean } {
+  const scope = resolveReportScope(filters, sessionUser);
+  const teams = inFilter(scope.teamIds);
+  const users = inFilter(scope.userIds);
+  return {
+    userScope: {
+      organizationId,
+      ...(teams ? { teamId: teams } : {}),
+      ...(users ? { id: users } : {}),
+    },
+    hasUserFilter: Boolean(teams || users),
+  };
+}
+
+/**
  * Get usage report data
  */
 export async function getUsageReport(
@@ -96,20 +126,11 @@ export async function getUsageReport(
   const startDate = new Date(filters.startDate);
   const endDate = new Date(filters.endDate);
 
-  const isRestricted = role !== "ADMIN";
-  const effectiveTeamId = isRestricted
-    ? (memberTeamId ?? undefined)
-    : filters.teamId;
-  const effectiveUserId =
-    isRestricted && !memberTeamId ? userId : filters.userId;
-
-  const hasUserFilter = !!(effectiveTeamId || effectiveUserId);
-
-  const userScope: Prisma.UserWhereInput = {
+  const { userScope, hasUserFilter } = buildUsageUserScope(
     organizationId,
-    ...(effectiveTeamId ? { teamId: effectiveTeamId } : {}),
-    ...(effectiveUserId ? { id: effectiveUserId } : {}),
-  };
+    filters,
+    { id: userId, role, teamId: memberTeamId }
+  );
 
   // Fetch subscribed app IDs once and reuse them
   const subscribedAppIds = await getSubscribedAppIds(
@@ -540,20 +561,11 @@ export async function getUsageExportData(filters: UsageReportFilters): Promise<{
     userId,
   } = await requireOrganization();
 
-  const isRestricted = role !== "ADMIN";
-  const effectiveTeamId = isRestricted
-    ? (memberTeamId ?? undefined)
-    : filters.teamId;
-  const effectiveUserId =
-    isRestricted && !memberTeamId ? userId : filters.userId;
-
-  const userScope: Prisma.UserWhereInput = {
+  const { userScope, hasUserFilter } = buildUsageUserScope(
     organizationId,
-    ...(effectiveTeamId ? { teamId: effectiveTeamId } : {}),
-    ...(effectiveUserId ? { id: effectiveUserId } : {}),
-  };
-
-  const hasUserFilter = !!(effectiveTeamId || effectiveUserId);
+    filters,
+    { id: userId, role, teamId: memberTeamId }
+  );
   const subscribedAppIds = await getSubscribedAppIds(
     organizationId,
     userScope,

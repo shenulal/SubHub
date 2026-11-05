@@ -6,6 +6,7 @@ import {
   getReceiptSuggestions,
   type ReceiptSuggestionPage,
 } from "@/actions/receipts";
+import { FilterMultiSelect } from "@/components/common/filter-multi-select";
 import { TabFilter } from "@/components/common/tab-filter";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -71,7 +72,8 @@ export function ReceiptsReviewClient({
   const [page, setPage] = useState(initialPage);
   const [status, setStatus] = useState<ReceiptSuggestionStatus>("NEW");
   const [search, setSearch] = useState("");
-  const [mailboxId, setMailboxId] = useState(ALL);
+  // Mailboxes: multi-select (empty = all)
+  const [mailboxIds, setMailboxIds] = useState<string[]>([]);
   const [minConfidence, setMinConfidence] = useState(ALL);
   const [pageNo, setPageNo] = useState(1);
   const [selected, setSelected] = useState<Set<string>>(new Set());
@@ -85,7 +87,7 @@ export function ReceiptsReviewClient({
       const result = await getReceiptSuggestions({
         status,
         search: search || undefined,
-        mailboxId: mailboxId === ALL ? undefined : mailboxId,
+        mailboxIds: mailboxIds.length ? mailboxIds : undefined,
         minConfidence:
           minConfidence === ALL ? undefined : Number(minConfidence),
         page: pageNo,
@@ -98,7 +100,7 @@ export function ReceiptsReviewClient({
         toast.error(t("queue.toasts.failed", { error: result.error }));
       }
     });
-  }, [status, search, mailboxId, minConfidence, pageNo, initialPage.limit, t]);
+  }, [status, search, mailboxIds, minConfidence, pageNo, initialPage.limit, t]);
 
   useEffect(() => {
     if (initial) {
@@ -111,7 +113,7 @@ export function ReceiptsReviewClient({
   }, [load]);
 
   const hasFilters =
-    search !== "" || mailboxId !== ALL || minConfidence !== ALL;
+    search !== "" || mailboxIds.length > 0 || minConfidence !== ALL;
   const openItems = useMemo(
     () => page.items.filter((i) => isOpenStatus(i.status)),
     [page.items]
@@ -184,30 +186,17 @@ export function ReceiptsReviewClient({
             className="pl-9"
           />
         </div>
-        <Select
-          value={mailboxId}
-          onValueChange={(v) => {
-            setMailboxId(v);
+        <FilterMultiSelect
+          label={t("queue.filters.mailbox")}
+          placeholder={t("queue.filters.allMailboxes")}
+          options={mailboxes.map((m) => ({ value: m.id, label: m.email }))}
+          value={mailboxIds}
+          onValueChange={(ids) => {
+            setMailboxIds(ids);
             setPageNo(1);
           }}
-        >
-          <SelectTrigger
-            className="w-full md:w-56"
-            aria-label={t("queue.filters.mailbox")}
-          >
-            <SelectValue placeholder={t("queue.filters.mailbox")} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value={ALL}>
-              {t("queue.filters.allMailboxes")}
-            </SelectItem>
-            {mailboxes.map((m) => (
-              <SelectItem key={m.id} value={m.id}>
-                {m.email}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          className="w-full md:w-56"
+        />
         <Select
           value={minConfidence}
           onValueChange={(v) => {
@@ -238,7 +227,7 @@ export function ReceiptsReviewClient({
             className="text-muted-foreground hover:text-primary h-10 shrink-0 whitespace-nowrap"
             onClick={() => {
               setSearch("");
-              setMailboxId(ALL);
+              setMailboxIds([]);
               setMinConfidence(ALL);
               setPageNo(1);
             }}

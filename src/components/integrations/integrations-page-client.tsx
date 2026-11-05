@@ -94,11 +94,12 @@ export function IntegrationsPageClient({
         value: searchQuery || undefined,
       },
       {
+        // Multi-select: serialised as a comma-separated list (empty = all)
         field: "status",
-        operator: "eq",
+        operator: "in",
         value:
-          selectedFilters.status.size === 1
-            ? Array.from(selectedFilters.status)[0]
+          selectedFilters.status.size > 0
+            ? Array.from(selectedFilters.status)
             : undefined,
       },
     ],

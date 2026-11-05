@@ -7,6 +7,7 @@ import { ReportStatCard } from "@/components/reports/report-stat-card";
 import { TeamUserFilterRouter } from "@/components/reports/team-user-filter-router";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { auth } from "@/lib/auth";
+import { resolveReportFilterParams } from "@/lib/filters/report-filter-params";
 import { getBaseCurrency } from "@/lib/fx/base-currency";
 import { DEFAULT_BASE_CURRENCY } from "@/lib/fx/convert";
 import { AlarmClock, CalendarClock, CalendarSync, Wallet } from "lucide-react";
@@ -58,18 +59,13 @@ export default async function RenewalReportPage({ searchParams }: PageProps) {
     : DEFAULT_BASE_CURRENCY;
   const params = await searchParams;
   const isRestricted = session.user.role !== "ADMIN";
-  const requestedTeamId = params.teamId ?? null;
-  const requestedUserId = params.userId ?? null;
-  const effectiveTeamId = isRestricted
-    ? (session.user.teamId ?? null)
-    : requestedTeamId;
-  const effectiveUserId =
-    isRestricted && !session.user.teamId ? session.user.id : requestedUserId;
+  // `teamId` / `userId` hold comma-separated lists (legacy single ids work)
+  const { teamIds, userIds } = resolveReportFilterParams(params, session.user);
 
   const [data, teamsResult, usersResult] = await Promise.all([
     getRenewalReportData({
-      teamId: effectiveTeamId ?? undefined,
-      userId: effectiveUserId ?? undefined,
+      teamIds,
+      userIds,
     }),
     getTeams(),
     getUsers({ limit: 1000 }),
@@ -144,10 +140,7 @@ export default async function RenewalReportPage({ searchParams }: PageProps) {
           <h1 className="truncate text-2xl font-medium">{t("page.title")}</h1>
         </div>
         {session.user.role !== "VIEWER" && (
-          <ExportButtons
-            data={data}
-            filters={{ teamId: effectiveTeamId, userId: effectiveUserId }}
-          />
+          <ExportButtons data={data} filters={{ teamIds, userIds }} />
         )}
       </div>
 
@@ -183,8 +176,8 @@ export default async function RenewalReportPage({ searchParams }: PageProps) {
 
       <TeamUserFilterRouter
         basePath="/reports/renewal"
-        teamId={effectiveTeamId}
-        userId={effectiveUserId}
+        teamIds={teamIds}
+        userIds={userIds}
         teams={filteredTeams}
         users={filteredUsers}
         includeAllOption={!isRestricted}

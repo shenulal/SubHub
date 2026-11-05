@@ -1,6 +1,7 @@
 // src/components/taxonomy/custom-field-manager.tsx
 "use client";
 
+import { isOptionFieldType } from "@/lib/services/taxonomy/custom-field-options";
 import {
   Archive,
   ArchiveRestore,
@@ -150,7 +151,7 @@ export function CustomFieldManager({
                   </div>
                   <p className="text-muted-foreground truncate font-mono text-xs">
                     {field.key} · {t(`types.${field.fieldType}`)}
-                    {field.fieldType === "SELECT" && field.options?.length
+                    {isOptionFieldType(field.fieldType) && field.options?.length
                       ? ` · ${field.options.join(", ")}`
                       : ""}
                   </p>

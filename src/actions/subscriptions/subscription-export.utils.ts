@@ -5,6 +5,7 @@
  */
 import type { prisma } from "@/lib/db";
 import { escapeCSVValue, formatDate } from "@/lib/services/export/csv";
+import { formatCustomFieldValue } from "@/lib/services/taxonomy/custom-field-options";
 
 import type { SUBSCRIPTION_DETAIL_INCLUDE } from "./subscription-crud-read.mappers";
 
@@ -83,7 +84,10 @@ export function subscriptionToCsvRow(row: ExportRow): string[] {
     row.isPersonal ? "yes" : "no",
     row.notes ?? "",
     row.customFieldValues
-      .map((cfv) => `${cfv.field.label}=${cfv.value}`)
+      .map(
+        (cfv) =>
+          `${cfv.field.label}=${formatCustomFieldValue(cfv.field.fieldType, cfv.value)}`
+      )
       .join("; "),
   ];
 }

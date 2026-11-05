@@ -9,6 +9,10 @@ import {
 } from "@/actions/cost-analytics";
 import type { ReportExportConfig } from "@/components/reports/export";
 import { ReportExportButton } from "@/components/reports/export";
+import {
+  parseOptionalMultiValue,
+  serializeMultiValue,
+} from "@/lib/filters/multi-value";
 import { DEFAULT_BASE_CURRENCY } from "@/lib/fx/convert";
 import {
   createBarChartImage,
@@ -30,9 +34,10 @@ interface ExportButtonsProps {
   trends: MonthlyCostTrend[];
   topApps: AppCostDistribution[];
   anomalies: CostAnomaly[];
+  /** Selected teams / users (empty = all). */
   filters: {
-    teamId?: string | null;
-    userId?: string | null;
+    teamIds?: string[];
+    userIds?: string[];
   };
 }
 
@@ -44,16 +49,18 @@ export function ExportButtons({
   filters,
 }: ExportButtonsProps) {
   const t = useTranslations("reports.cost.export");
-  const teamId = filters.teamId ?? undefined;
-  const userId = filters.userId ?? undefined;
+  const teamKey = serializeMultiValue(filters.teamIds) ?? "";
+  const userKey = serializeMultiValue(filters.userIds) ?? "";
 
   const loadData = useCallback(async (): Promise<ReportExportConfig> => {
+    const teamIds = parseOptionalMultiValue(teamKey);
+    const userIds = parseOptionalMultiValue(userKey);
     const [statisticsResult, trendResult, topAppsResult, anomaliesResult] =
       await Promise.all([
-        getCostStatistics({ teamId, userId }),
-        getMonthlyCostTrend({ months: 12, teamId, userId }),
-        getTopCostApps({ limit: null, teamId, userId }),
-        detectCostAnomalies({ teamId, userId }),
+        getCostStatistics({ teamIds, userIds }),
+        getMonthlyCostTrend({ months: 12, teamIds, userIds }),
+        getTopCostApps({ limit: null, teamIds, userIds }),
+        detectCostAnomalies({ teamIds, userIds }),
       ]);
 
     const stats = statisticsResult.success
@@ -83,7 +90,7 @@ export function ExportButtons({
       ),
       pdf: buildPDFConfig(t, stats, trendData, appData, anomalyData, dateStr),
     };
-  }, [teamId, userId, statistics, trends, topApps, anomalies, t]);
+  }, [teamKey, userKey, statistics, trends, topApps, anomalies, t]);
 
   return (
     <ReportExportButton loadData={loadData} formats={["csv", "excel", "pdf"]} />

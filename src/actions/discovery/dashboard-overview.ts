@@ -200,8 +200,8 @@ export const getCategorySpendForDashboard = withLogging(
         organizationId,
         scope: parsed.data.scope ?? scopeState.scope,
         viewer,
-        ownerId: parsed.data.ownerId,
-        teamId: parsed.data.teamId,
+        ownerIds: parsed.data.ownerIds,
+        teamIds: parsed.data.teamIds,
         converter,
       });
       return { success: true, data };

@@ -5,6 +5,11 @@
  * the list page so every view is shareable.
  */
 import {
+  MULTI_VALUE_SEPARATOR,
+  parseMultiEnum,
+  parseOptionalMultiValue,
+} from "@/lib/filters/multi-value";
+import {
   SUBSCRIPTION_SORT_FIELDS,
   WORKSPACE_SCOPES,
   type SubscriptionListFilter,
@@ -20,7 +25,7 @@ export const DEFAULT_SORT: SubscriptionListSort = {
   sortOrder: "asc",
 };
 export const DEFAULT_PAGE = 1;
-export const LIST_SEPARATOR = ",";
+export const LIST_SEPARATOR = MULTI_VALUE_SEPARATOR;
 
 type ParamSource =
   | URLSearchParams
@@ -35,13 +40,20 @@ function readParam(source: ParamSource, key: string): string | undefined {
   return Array.isArray(value) ? value[0] : value;
 }
 
-function parseList(raw: string | undefined): string[] | undefined {
-  if (!raw) return undefined;
-  const items = raw
-    .split(LIST_SEPARATOR)
-    .map((s) => s.trim())
-    .filter(Boolean);
-  return items.length ? Array.from(new Set(items)) : undefined;
+/** Every value of a key (repeated keys and comma-separated lists). */
+function readAll(source: ParamSource, key: string): string[] {
+  if (source instanceof URLSearchParams) return source.getAll(key);
+  const value = source[key];
+  if (value === undefined) return [];
+  return Array.isArray(value) ? value : [value];
+}
+
+/** Multi-value param; accepts the legacy single value (`?owner=u1`). */
+function parseList(
+  source: ParamSource,
+  ...keys: string[]
+): string[] | undefined {
+  return parseOptionalMultiValue(keys.flatMap((key) => readAll(source, key)));
 }
 
 function parseNumber(raw: string | undefined): number | undefined {
@@ -67,23 +79,23 @@ function parseEnum<T extends string>(
 const STATUS_VALUES = Object.values(SubscriptionStatus) as SubscriptionStatus[];
 const CYCLE_VALUES = Object.values(BillingCycle) as BillingCycle[];
 
-/** Parse the filter portion of the URL. Unknown or malformed values are dropped. */
+/**
+ * Parse the filter portion of the URL. Unknown or malformed values are
+ * dropped. Multi-value facets are comma-separated; `parentCategory` is the
+ * legacy key for a parent category and folds into `categoryIds`.
+ */
 export function parseFilterParams(source: ParamSource): SubscriptionListFilter {
-  const statuses = parseList(readParam(source, "status"))?.filter(
-    (s): s is SubscriptionStatus => (STATUS_VALUES as string[]).includes(s)
-  );
   const filter: SubscriptionListFilter = {
     search: readParam(source, "q")?.trim() || undefined,
-    categoryId: readParam(source, "category") || undefined,
-    parentCategoryId: readParam(source, "parentCategory") || undefined,
-    tagIds: parseList(readParam(source, "tags")),
-    statuses: statuses?.length ? statuses : undefined,
+    categoryIds: parseList(source, "category", "parentCategory"),
+    tagIds: parseList(source, "tags"),
+    statuses: parseMultiEnum(readAll(source, "status"), STATUS_VALUES),
     includeArchived: parseBoolean(readParam(source, "archived")),
-    ownerId: readParam(source, "owner") || undefined,
-    teamId: readParam(source, "team") || undefined,
-    costCenterId: readParam(source, "costCenter") || undefined,
-    paymentMethodId: readParam(source, "paymentMethod") || undefined,
-    billingCycle: parseEnum(readParam(source, "cycle"), CYCLE_VALUES),
+    ownerIds: parseList(source, "owner"),
+    teamIds: parseList(source, "team"),
+    costCenterIds: parseList(source, "costCenter"),
+    paymentMethodIds: parseList(source, "paymentMethod"),
+    billingCycles: parseMultiEnum(readAll(source, "cycle"), CYCLE_VALUES),
     amountMin: parseNumber(readParam(source, "amountMin")),
     amountMax: parseNumber(readParam(source, "amountMax")),
     renewingWithinDays: parseNumber(readParam(source, "renewingWithin")),
@@ -143,20 +155,18 @@ export function serializeListQuery(
   const set = (key: string, value: string | undefined) => {
     if (value !== undefined && value !== "") params.set(key, value);
   };
+  const list = (values: readonly string[] | undefined) =>
+    values?.length ? values.join(LIST_SEPARATOR) : undefined;
   set("q", f.search);
-  set("category", f.categoryId);
-  set("parentCategory", f.parentCategoryId);
-  set("tags", f.tagIds?.length ? f.tagIds.join(LIST_SEPARATOR) : undefined);
-  set(
-    "status",
-    f.statuses?.length ? f.statuses.join(LIST_SEPARATOR) : undefined
-  );
+  set("category", list(f.categoryIds));
+  set("tags", list(f.tagIds));
+  set("status", list(f.statuses));
   set("archived", f.includeArchived ? "1" : undefined);
-  set("owner", f.ownerId);
-  set("team", f.teamId);
-  set("costCenter", f.costCenterId);
-  set("paymentMethod", f.paymentMethodId);
-  set("cycle", f.billingCycle);
+  set("owner", list(f.ownerIds));
+  set("team", list(f.teamIds));
+  set("costCenter", list(f.costCenterIds));
+  set("paymentMethod", list(f.paymentMethodIds));
+  set("cycle", list(f.billingCycles));
   set("amountMin", f.amountMin !== undefined ? String(f.amountMin) : undefined);
   set("amountMax", f.amountMax !== undefined ? String(f.amountMax) : undefined);
   set(

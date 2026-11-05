@@ -65,7 +65,8 @@ export function ApprovalsInboxClient({
     isTab(initialTab) ? initialTab : "to_review"
   );
   const [search, setSearch] = useState("");
-  const [filters, setFilters] = useState<Record<string, string>>({});
+  // Multi-select filters (empty list = all)
+  const [filters, setFilters] = useState<Record<string, string[]>>({});
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
   const [sort, setSort] = useState<SortState | null>({
@@ -80,9 +81,11 @@ export function ApprovalsInboxClient({
     () => ({
       tab,
       search: search || undefined,
-      status: filters.status || undefined,
-      categoryId: filters.categoryId || undefined,
-      requesterId: filters.requesterId || undefined,
+      statuses: filters.status?.length ? filters.status : undefined,
+      categoryIds: filters.categoryId?.length ? filters.categoryId : undefined,
+      requesterIds: filters.requesterId?.length
+        ? filters.requesterId
+        : undefined,
       dateFrom: dateFrom || undefined,
       dateTo: dateTo || undefined,
       sortBy: (sort?.columnId ?? "submittedAt") as ApprovalSortField,
@@ -264,8 +267,8 @@ export function ApprovalsInboxClient({
             }}
             filters={filterConfigs}
             filterValues={filters}
-            onFilterChange={(id, value) => {
-              setFilters((prev) => ({ ...prev, [id]: value }));
+            onFilterChange={(id, values) => {
+              setFilters((prev) => ({ ...prev, [id]: values }));
               resetPage();
             }}
             onClearFilters={() => {

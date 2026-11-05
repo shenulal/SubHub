@@ -9,6 +9,8 @@ import type {
   CustomFieldValidationResult,
 } from "@/types/taxonomy";
 
+import { parseMultiSelectValue } from "./custom-field-options";
+
 export const CUSTOM_FIELD_ERROR_KEYS = {
   required: "required",
   invalidNumber: "invalidNumber",
@@ -46,6 +48,16 @@ function validateOne(
       return (def.options ?? []).includes(value)
         ? null
         : CUSTOM_FIELD_ERROR_KEYS.invalidOption;
+    case "MULTI_SELECT": {
+      const picked = parseMultiSelectValue(value);
+      if (picked.length === 0) {
+        return def.isRequired ? CUSTOM_FIELD_ERROR_KEYS.required : null;
+      }
+      const allowed = new Set(def.options ?? []);
+      return picked.every((v) => allowed.has(v))
+        ? null
+        : CUSTOM_FIELD_ERROR_KEYS.invalidOption;
+    }
     case "TEXT":
     default:
       return value.length > CUSTOM_FIELD_TEXT_MAX_LENGTH

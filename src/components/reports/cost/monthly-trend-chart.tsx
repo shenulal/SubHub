@@ -25,6 +25,10 @@ import {
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useBaseCurrency } from "@/hooks/use-base-currency";
+import {
+  parseOptionalMultiValue,
+  serializeMultiValue,
+} from "@/lib/filters/multi-value";
 import { formatMoney } from "@/lib/fx/convert";
 import type { MonthlyCostTrend } from "@/types/cost-analytics";
 import { BarChart3, LineChart as LineChartIcon } from "lucide-react";
@@ -92,14 +96,15 @@ function formatAxisCurrency(value: number): string {
 
 interface MonthlyTrendChartProps {
   initialData: MonthlyCostTrend[];
-  teamId?: string | null;
-  userId?: string | null;
+  /** Selected teams / users (empty = all). */
+  teamIds?: string[];
+  userIds?: string[];
 }
 
 export function MonthlyTrendChart({
   initialData,
-  teamId,
-  userId,
+  teamIds,
+  userIds,
 }: MonthlyTrendChartProps) {
   const t = useTranslations("reports.cost.trend");
   const locale = useLocale();
@@ -116,6 +121,9 @@ export function MonthlyTrendChart({
   const [endMonth, setEndMonth] = useState(defaultEndMonth);
   const [data, setData] = useState<MonthlyCostTrend[]>(initialData);
   const [isPending, startTransition] = useTransition();
+  // Stable keys so a new array with the same ids does not refetch
+  const teamKey = serializeMultiValue(teamIds) ?? "";
+  const userKey = serializeMultiValue(userIds) ?? "";
 
   // Refetch data when the period changes
   const fetchData = useCallback(() => {
@@ -130,8 +138,8 @@ export function MonthlyTrendChart({
 
       const result = await getMonthlyCostTrend({
         months: Math.max(1, months),
-        teamId: teamId ?? undefined,
-        userId: userId ?? undefined,
+        teamIds: parseOptionalMultiValue(teamKey),
+        userIds: parseOptionalMultiValue(userKey),
       });
       if (result.success && result.data) {
         // Filter to the selected period
@@ -141,7 +149,7 @@ export function MonthlyTrendChart({
         setData(filtered);
       }
     });
-  }, [startMonth, endMonth, teamId, userId]);
+  }, [startMonth, endMonth, teamKey, userKey]);
 
   useEffect(() => {
     fetchData();

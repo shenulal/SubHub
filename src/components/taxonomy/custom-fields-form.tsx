@@ -7,6 +7,7 @@ import { useEffect, useId, useState } from "react";
 import { getCustomFieldDefinitions } from "@/actions/taxonomy/custom-fields";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { MultiSelect } from "@/components/ui/multi-select";
 import {
   Select,
   SelectContent,
@@ -14,6 +15,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  parseMultiSelectValue,
+  serializeMultiSelectValue,
+} from "@/lib/services/taxonomy/custom-field-options";
 import { validateCustomFieldValues } from "@/lib/services/taxonomy/custom-field-validation";
 import { cn } from "@/lib/utils";
 import type { CustomFieldDefinitionDto } from "@/types/taxonomy";
@@ -70,7 +75,27 @@ function FieldControl({
           </span>
         )}
       </Label>
-      {def.fieldType === "SELECT" ? (
+      {def.fieldType === "MULTI_SELECT" ? (
+        <MultiSelect
+          id={id}
+          aria-label={def.label}
+          aria-invalid={Boolean(error)}
+          options={(def.options ?? []).map((opt) => ({
+            value: opt,
+            label: opt,
+          }))}
+          value={parseMultiSelectValue(value)}
+          onValueChange={(picked) => {
+            onChange(serializeMultiSelectValue(picked));
+            onBlur();
+          }}
+          disabled={disabled}
+          placeholder={t("multiSelectPlaceholder")}
+          searchPlaceholder={t("searchOptions")}
+          emptyText={t("noOptions")}
+          maxChips={3}
+        />
+      ) : def.fieldType === "SELECT" ? (
         <Select
           value={value || undefined}
           onValueChange={onChange}

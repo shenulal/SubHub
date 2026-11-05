@@ -47,7 +47,12 @@ export interface TagDto {
   usageCount?: number;
 }
 
-export type CustomFieldTypeValue = "TEXT" | "NUMBER" | "DATE" | "SELECT";
+export type CustomFieldTypeValue =
+  | "TEXT"
+  | "NUMBER"
+  | "DATE"
+  | "SELECT"
+  | "MULTI_SELECT";
 
 export interface CustomFieldDefinitionDto {
   id: string;

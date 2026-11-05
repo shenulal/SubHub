@@ -29,6 +29,7 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { isOptionFieldType } from "@/lib/services/taxonomy/custom-field-options";
 import type {
   CustomFieldDefinitionDto,
   CustomFieldTypeValue,
@@ -39,6 +40,7 @@ const FIELD_TYPES: CustomFieldTypeValue[] = [
   "NUMBER",
   "DATE",
   "SELECT",
+  "MULTI_SELECT",
 ];
 
 export interface CustomFieldDialogProps {
@@ -79,14 +81,16 @@ export function CustomFieldDialog({
         ? await updateCustomField(field.id, {
             label,
             isRequired,
-            ...(field.fieldType === "SELECT" && { options: optionList }),
+            ...(isOptionFieldType(field.fieldType) && {
+              options: optionList,
+            }),
           })
         : await createCustomField({
             label,
             key: key.trim() || undefined,
             fieldType,
             isRequired,
-            options: fieldType === "SELECT" ? optionList : null,
+            options: isOptionFieldType(fieldType) ? optionList : null,
           });
     setIsSaving(false);
     if (!result.success) {
@@ -166,7 +170,7 @@ export function CustomFieldDialog({
               </SelectContent>
             </Select>
           </div>
-          {fieldType === "SELECT" && (
+          {isOptionFieldType(fieldType) && (
             <div className="grid gap-1.5">
               <Label htmlFor="cf-options">{t("optionsLabel")}</Label>
               <Textarea

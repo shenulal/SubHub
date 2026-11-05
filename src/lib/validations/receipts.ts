@@ -1,4 +1,5 @@
 // src/lib/validations/receipts.ts
+import { multiValueSchema } from "@/lib/filters/multi-value";
 import { BillingCycle, ReceiptSuggestionStatus } from "@prisma/client";
 import { z } from "zod";
 
@@ -9,7 +10,9 @@ export type MailboxProviderParam = z.infer<typeof mailboxProviderParamSchema>;
 
 export const receiptSuggestionFilterSchema = z.object({
   status: z.nativeEnum(ReceiptSuggestionStatus).optional(),
-  mailboxId: idSchema.optional(),
+  /** Mailboxes (multi-select, empty = all); CSV / legacy single id accepted. */
+  mailboxId: multiValueSchema(idSchema),
+  mailboxIds: multiValueSchema(idSchema),
   minConfidence: z.coerce.number().min(0).max(1).optional(),
   search: z.string().trim().max(120).optional(),
   page: z.coerce.number().int().min(1).default(1),

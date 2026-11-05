@@ -15,7 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { Trash2 } from "lucide-react";
+import { Power, PowerOff, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import type { ReactNode } from "react";
 
@@ -136,6 +136,54 @@ export function ConfirmDelete({
       </AlertDialogContent>
     </AlertDialog>
   );
+}
+
+/** Icon button that activates / deactivates a master row. */
+export function ActiveToggleButton({
+  active,
+  label,
+  disabled,
+  onToggle,
+}: {
+  active: boolean;
+  label: string;
+  disabled?: boolean;
+  onToggle: (next: boolean) => void;
+}) {
+  const t = useTranslations("platform.masters.common");
+  const action = active ? t("deactivate") : t("activate");
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      className={cn(
+        "size-8",
+        active
+          ? "text-muted-foreground hover:text-warning hover:bg-warning/10"
+          : "text-success hover:bg-success/10"
+      )}
+      aria-label={`${action} ${label}`}
+      title={action}
+      disabled={disabled}
+      onClick={() => onToggle(!active)}
+    >
+      {active ? (
+        <PowerOff className="h-4 w-4" />
+      ) : (
+        <Power className="h-4 w-4" />
+      )}
+    </Button>
+  );
+}
+
+/** Upper-case code derived from a typed name, for inline master creation. */
+export function codeFromName(name: string, max = 32): string {
+  return name
+    .normalize("NFKD")
+    .replace(/[^A-Za-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "")
+    .toUpperCase()
+    .slice(0, max);
 }
 
 export const EMPTY_SELECT_VALUE = "__none__";

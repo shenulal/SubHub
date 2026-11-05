@@ -5,6 +5,7 @@
  * organisation base currency.
  */
 import { prisma } from "@/lib/db";
+import { inFilter } from "@/lib/filters/multi-value";
 import type { CategorySpendSlice, WorkspaceScope } from "@/types/discovery";
 
 import { type BaseConverter } from "./base-currency";
@@ -15,8 +16,9 @@ export interface CategorySpendParams {
   organizationId: string;
   scope: WorkspaceScope;
   viewer: ViewerContext;
-  ownerId?: string;
-  teamId?: string;
+  /** Owners / teams to include; empty or missing = all. */
+  ownerIds?: string[];
+  teamIds?: string[];
   converter: BaseConverter;
 }
 
@@ -88,12 +90,14 @@ export function rollUpCategories(
 async function aggregateLocally(
   params: CategorySpendParams
 ): Promise<CategorySpendSlice[]> {
-  const { organizationId, scope, viewer, ownerId, teamId, converter } = params;
+  const { organizationId, scope, viewer, converter } = params;
+  const owners = inFilter(params.ownerIds);
+  const teams = inFilter(params.teamIds);
   const rows = await prisma.subscription.findMany({
     where: discoveryWhere(organizationId, scope, viewer, {
       status: "ACTIVE",
-      ...(ownerId && { ownerId }),
-      ...(teamId && { teamId }),
+      ...(owners && { ownerId: owners }),
+      ...(teams && { teamId: teams }),
     }),
     select: {
       amount: true,

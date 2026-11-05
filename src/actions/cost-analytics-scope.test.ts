@@ -13,7 +13,18 @@ describe("cost-analytics-scope", () => {
         { teamId: "team-1", userId: "user-1" },
         { id: "admin-1", role: "ADMIN", teamId: "admin-team" }
       );
-      expect(result).toEqual({ teamId: "team-1", userId: "user-1" });
+      expect(result).toEqual({ teamIds: ["team-1"], userIds: ["user-1"] });
+    });
+
+    it("should merge legacy single values with multi-value lists for ADMIN", () => {
+      const result = resolveReportScope(
+        { teamId: "team-1", teamIds: ["team-2", "team-1"], userIds: [] },
+        { id: "admin-1", role: "ADMIN", teamId: null }
+      );
+      expect(result).toEqual({
+        teamIds: ["team-2", "team-1"],
+        userIds: undefined,
+      });
     });
 
     it("should restrict to own user for MEMBER without team", () => {
@@ -22,7 +33,7 @@ describe("cost-analytics-scope", () => {
         { id: "member-1", role: "MEMBER", teamId: null }
       );
       expect(result).toEqual({
-        userId: "member-1",
+        userIds: ["member-1"],
         enforceTeamId: undefined,
       });
     });
@@ -33,8 +44,8 @@ describe("cost-analytics-scope", () => {
         { id: "member-1", role: "MEMBER", teamId: "member-team" }
       );
       expect(result).toEqual({
-        teamId: "member-team",
-        userId: "user-1",
+        teamIds: ["member-team"],
+        userIds: ["user-1"],
         enforceTeamId: "member-team",
       });
     });
@@ -44,7 +55,7 @@ describe("cost-analytics-scope", () => {
         { teamId: "team-1" },
         { id: "viewer-1", role: "VIEWER", teamId: "viewer-team" }
       );
-      expect(result.teamId).toBe("viewer-team");
+      expect(result.teamIds).toEqual(["viewer-team"]);
       expect(result.enforceTeamId).toBe("viewer-team");
     });
   });
@@ -80,6 +91,19 @@ describe("cost-analytics-scope", () => {
       applyPaymentRecordScope(where, {});
       expect(Object.keys(where)).toHaveLength(0);
     });
+
+    it("should use `in` for several users or teams", () => {
+      const byUsers: Record<string, unknown> = {};
+      applyPaymentRecordScope(byUsers, { userIds: ["u1", "u2"] });
+      expect(byUsers.userId).toEqual({ in: ["u1", "u2"] });
+
+      const byTeams: Record<string, unknown> = {};
+      applyPaymentRecordScope(byTeams, { teamIds: ["t1", "t2"], userIds: [] });
+      expect(byTeams.OR).toEqual([
+        { teamId: { in: ["t1", "t2"] } },
+        { user: { teamId: { in: ["t1", "t2"] } } },
+      ]);
+    });
   });
 
   describe("applyCardTransactionScope", () => {
@@ -113,6 +137,23 @@ describe("cost-analytics-scope", () => {
       const where: Record<string, unknown> = {};
       applyCardTransactionScope(where, {});
       expect(Object.keys(where)).toHaveLength(0);
+    });
+
+    it("should use `in` for several users or teams", () => {
+      const byUsers: Record<string, unknown> = {};
+      applyCardTransactionScope(byUsers, { userIds: ["u1", "u2"] });
+      expect(byUsers.corporateCard).toEqual({
+        assignedUserId: { in: ["u1", "u2"] },
+      });
+
+      const byTeams: Record<string, unknown> = {};
+      applyCardTransactionScope(byTeams, { teamIds: ["t1", "t2"] });
+      expect(byTeams.corporateCard).toEqual({
+        OR: [
+          { teamId: { in: ["t1", "t2"] } },
+          { assignedUser: { teamId: { in: ["t1", "t2"] } } },
+        ],
+      });
     });
   });
 });

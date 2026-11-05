@@ -64,6 +64,28 @@ vi.mock("next/image", () => ({
   ),
 }));
 
+// Category master picker (fetches via a server action) replaced by a stub that
+// selects a fixed master row.
+vi.mock("@/components/taxonomy/category-picker", () => ({
+  CategoryPicker: ({
+    id,
+    onChange,
+  }: {
+    id?: string;
+    onChange: (id: string, node: { id: string; name: string }) => void;
+  }) => (
+    <button
+      type="button"
+      id={id}
+      onClick={() =>
+        onChange("cat-collab", { id: "cat-collab", name: "Collaboration" })
+      }
+    >
+      pick category
+    </button>
+  ),
+}));
+
 vi.mock("@/actions/teams", () => ({
   getTeams: vi.fn().mockResolvedValue({ success: true, data: [] }),
 }));
@@ -248,7 +270,7 @@ describe("AppForm", () => {
     render(<AppForm />);
 
     await user.type(screen.getByLabelText(/App name/), "Slack");
-    await user.type(screen.getByLabelText(/Category/), "Collaboration");
+    await user.click(screen.getByLabelText(/Category/));
     await user.type(screen.getByLabelText(/Website/), "https://slack.com");
     await user.type(screen.getByLabelText(/Tags/), "chat, team, messaging");
     await user.type(
@@ -263,6 +285,7 @@ describe("AppForm", () => {
       expect(mockOnFinish).toHaveBeenCalledWith(
         expect.objectContaining({
           category: "Collaboration",
+          categoryId: "cat-collab",
           customWebsite: "https://slack.com",
           name: "Slack",
           notes: "Team communication tool",

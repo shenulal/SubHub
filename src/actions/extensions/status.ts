@@ -33,11 +33,59 @@ export interface ExtensionStatusStats {
   revoked: number;
 }
 
+export type ExtensionComputedStatus =
+  | "active"
+  | "inactive"
+  | "pending"
+  | "revoked";
+
 export interface ExtensionStatusFilters {
   page?: number;
   limit?: number;
   search?: string;
-  status?: "all" | "active" | "inactive" | "pending" | "revoked";
+  /** Legacy single status ("all" = no filter). */
+  status?: "all" | ExtensionComputedStatus;
+  /** Several computed statuses (multi-select; empty = all). */
+  statuses?: ExtensionComputedStatus[];
+}
+
+/**
+ * Prisma clause for one computed status, mirroring `computeDeviceStatus` so
+ * the filter runs in the database (pagination and counts stay correct).
+ */
+function computedStatusWhere(
+  status: ExtensionComputedStatus,
+  activeSince: Date
+): Record<string, unknown> {
+  const live = { status: { not: "REVOKED" } };
+  switch (status) {
+    case "revoked":
+      return { status: "REVOKED" };
+    case "pending":
+      return { ...live, onboardingCompletedAt: null };
+    case "active":
+      return {
+        ...live,
+        onboardingCompletedAt: { not: null },
+        lastSeenAt: { gte: activeSince },
+      };
+    case "inactive":
+    default:
+      return {
+        ...live,
+        onboardingCompletedAt: { not: null },
+        OR: [{ lastSeenAt: null }, { lastSeenAt: { lt: activeSince } }],
+      };
+  }
+}
+
+/** Selected statuses from the legacy single value and the list. */
+function requestedExtensionStatuses(
+  filters: Pick<ExtensionStatusFilters, "status" | "statuses">
+): ExtensionComputedStatus[] {
+  const single =
+    filters.status && filters.status !== "all" ? [filters.status] : [];
+  return Array.from(new Set([...(filters.statuses ?? []), ...single]));
 }
 
 export interface ExtensionStatusResult {
@@ -118,12 +166,13 @@ export async function getExtensionStatus(
     ];
   }
 
-  // DB status filter (only for REVOKED/PENDING)
-  if (filters.status === "revoked") {
-    whereClause.status = "REVOKED";
-  } else if (filters.status === "pending") {
-    whereClause.onboardingCompletedAt = null;
-    whereClause.status = { not: "REVOKED" };
+  // Computed-status filter (multi-select, empty = all) runs in the database
+  const statuses = requestedExtensionStatuses(filters);
+  if (statuses.length) {
+    const activeSince = new Date(Date.now() - thresholdMinutes * 60 * 1000);
+    whereClause.AND = [
+      { OR: statuses.map((st) => computedStatusWhere(st, activeSince)) },
+    ];
   }
 
   // Get all devices for stats calculation
@@ -181,8 +230,8 @@ export async function getExtensionStatus(
     where: whereClause,
   });
 
-  // Format and filter by computed status
-  let data: ExtensionDeviceStatusItem[] = devices.map((device) => ({
+  // Format rows (status filtering already happened in the query)
+  const data: ExtensionDeviceStatusItem[] = devices.map((device) => ({
     id: device.id,
     deviceKey: device.deviceKey,
     userName: device.user?.name ?? null,
@@ -197,11 +246,6 @@ export async function getExtensionStatus(
     onboardingEmail: device.onboardingEmail,
     createdAt: device.createdAt.toISOString(),
   }));
-
-  // Client-side computed status filter (active/inactive need runtime check)
-  if (filters.status === "active" || filters.status === "inactive") {
-    data = data.filter((d) => d.computedStatus === filters.status);
-  }
 
   return {
     data,

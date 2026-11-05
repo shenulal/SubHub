@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import { requireOrganization } from "@/lib/auth/require-auth";
 import { prisma } from "@/lib/db";
 import { withLogging } from "@/lib/logging";
+import { getSetting } from "@/lib/settings/service";
 import { revalidatePath } from "next/cache";
 
 // Type definitions
@@ -76,6 +77,19 @@ export async function getOrganizationNotificationSettings(): Promise<Notificatio
       notifications.costAnomalyThreshold ??
       DEFAULT_NOTIFICATION_SETTINGS.costAnomalyThreshold,
   };
+}
+
+/**
+ * Renewal-alert lead times offered in the organisation notification settings,
+ * resolved from `subscriptions.reminderLeadDayOptions` (editable in Settings).
+ */
+export async function getRenewalAlertDayOptions(): Promise<number[]> {
+  const { organizationId } = await requireOrganization();
+  const options = await getSetting(
+    organizationId,
+    "subscriptions.reminderLeadDayOptions"
+  );
+  return [...options].sort((a, b) => a - b);
 }
 
 /**

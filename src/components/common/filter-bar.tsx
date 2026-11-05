@@ -1,18 +1,12 @@
 "use client";
 
-import { Filter, Search, X } from "lucide-react";
+import { Search, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { FilterMultiSelect } from "@/components/common/filter-multi-select";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { cn } from "@/lib/utils";
 
 interface FilterOption {
@@ -32,8 +26,9 @@ interface FilterBarProps {
   searchValue?: string;
   onSearchChange?: (value: string) => void;
   filters?: FilterConfig[];
-  filterValues?: Record<string, string>;
-  onFilterChange?: (filterId: string, value: string) => void;
+  /** Selected values per filter id; an empty list means "all". */
+  filterValues?: Record<string, string[]>;
+  onFilterChange?: (filterId: string, values: string[]) => void;
   onClearFilters?: () => void;
   className?: string;
 }
@@ -41,7 +36,7 @@ interface FilterBarProps {
 /**
  * Advanced filter bar component
  * - Search input
- * - Multiple filter dropdowns
+ * - Multi-select filter dropdowns (empty selection = all)
  * - Active filter badges
  * - Reset filters button
  */
@@ -58,7 +53,7 @@ export function FilterBar({
   const t = useTranslations("filterBar");
   const resolvedPlaceholder = searchPlaceholder ?? t("searchPlaceholder");
   const activeFilterCount = Object.values(filterValues).filter(
-    (v) => v && v !== "all"
+    (v) => v.length > 0
   ).length;
 
   return (
@@ -77,26 +72,16 @@ export function FilterBar({
 
       {/* Filter dropdowns */}
       {filters.map((filter) => (
-        <Select
+        <FilterMultiSelect
           key={filter.id}
-          value={filterValues[filter.id] || "all"}
-          onValueChange={(value) => onFilterChange?.(filter.id, value)}
-        >
-          <SelectTrigger className="w-auto min-w-[120px] shrink-0">
-            <Filter className="text-muted-foreground size-4" />
-            <SelectValue placeholder={filter.placeholder || filter.label} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">
-              {t("allPrefix", { label: filter.label })}
-            </SelectItem>
-            {filter.options.map((option) => (
-              <SelectItem key={option.value} value={option.value}>
-                {option.label}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          label={filter.label}
+          placeholder={
+            filter.placeholder ?? t("allPrefix", { label: filter.label })
+          }
+          options={filter.options}
+          value={filterValues[filter.id] ?? []}
+          onValueChange={(values) => onFilterChange?.(filter.id, values)}
+        />
       ))}
 
       {/* Active filters and reset */}

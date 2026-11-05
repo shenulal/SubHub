@@ -1,3 +1,4 @@
+import { CategoryPicker } from "@/components/taxonomy/category-picker";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -111,13 +112,18 @@ export function AppFormFields({
 
       <div className="space-y-2">
         <Label htmlFor="category">{t("apps.form.fields.category")}</Label>
-        <Input
-          id="category"
-          placeholder={t("apps.form.fields.categoryPlaceholder")}
-          disabled={disabled}
-          {...register("category", {
-            setValueAs: (value) => (value ? String(value).trim() : ""),
-          })}
+        {/* Category master; the server mirrors the name into `category`. */}
+        <Controller
+          name="categoryId"
+          control={control}
+          render={({ field }) => (
+            <CategoryPicker
+              id="category"
+              value={field.value || null}
+              onChange={(id) => field.onChange(id ?? "")}
+              disabled={disabled}
+            />
+          )}
         />
         {errors.category?.message && (
           <p className="text-destructive text-sm">{errors.category.message}</p>

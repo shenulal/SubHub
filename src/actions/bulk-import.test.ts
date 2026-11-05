@@ -13,6 +13,12 @@ vi.mock("@/lib/db", () => ({
       createMany: vi.fn(),
       findMany: vi.fn(),
     },
+    category: {
+      findMany: vi.fn().mockResolvedValue([
+        { id: "c-collab", name: "Collaboration", slug: "collaboration" },
+        { id: "c-prod", name: "Productivity", slug: "productivity" },
+      ]),
+    },
     subscription: {
       createMany: vi.fn(),
     },
@@ -103,7 +109,8 @@ Notion,PRODUCTIVITY,Notion Labs,Workspace tool,https://notion.so`;
         data: expect.arrayContaining([
           expect.objectContaining({
             name: "Slack",
-            category: "COLLABORATION",
+            category: "Collaboration",
+            categoryId: "c-collab",
             notes: "Slack Inc - Team communication",
             customWebsite: "https://slack.com",
             organizationId: "org-1",
@@ -112,7 +119,7 @@ Notion,PRODUCTIVITY,Notion Labs,Workspace tool,https://notion.so`;
           }),
           expect.objectContaining({
             name: "Notion",
-            category: "PRODUCTIVITY",
+            category: "Productivity",
             notes: "Notion Labs - Workspace tool",
             customWebsite: "https://notion.so",
           }),

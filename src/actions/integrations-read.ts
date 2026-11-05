@@ -7,6 +7,7 @@
 
 import { getCachedSession } from "@/lib/auth/require-auth";
 import { prisma } from "@/lib/db";
+import { inFilter } from "@/lib/filters/multi-value";
 import type { ActionState } from "@/types";
 import type { IntegrationMetadata, IntegrationWithStats } from "@/types/sso";
 import type { Integration } from "@prisma/client";
@@ -39,10 +40,17 @@ export async function getIntegrations(
     limit = 20,
   } = params;
   const skip = (page - 1) * limit;
+  const statuses = inFilter(
+    filter.status === undefined
+      ? undefined
+      : Array.isArray(filter.status)
+        ? filter.status
+        : [filter.status]
+  );
 
   const where = {
     organizationId: session.user.organizationId,
-    ...(filter.status ? { status: filter.status } : {}),
+    ...(statuses ? { status: statuses } : {}),
     ...(filter.type ? { type: filter.type as Integration["type"] } : {}),
     ...(filter.search
       ? { metadata: { path: ["domain"], string_contains: filter.search } }

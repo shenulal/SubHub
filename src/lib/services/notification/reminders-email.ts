@@ -59,7 +59,7 @@ export function buildRenewalReminderCopy(
   const safeApp = escapeHtml(input.appName);
   const safeOrg = escapeHtml(input.organizationName);
 
-  const html = `<!DOCTYPE html><html lang="en"><body style="font-family:Inter,Segoe UI,Arial,sans-serif;color:#1f2937;max-width:600px;margin:0 auto;padding:24px;">
+  const html = `<!DOCTYPE html><html lang="en"><body style="font-family:Lato,Inter,Segoe UI,Arial,sans-serif;color:#1f2937;max-width:600px;margin:0 auto;padding:24px;">
   <div style="background:linear-gradient(135deg,#0f766e,#115e59);color:#fff;padding:24px;border-radius:12px 12px 0 0;">
     <p style="margin:0;font-size:12px;letter-spacing:.08em;text-transform:uppercase;opacity:.8;">${safeOrg} · Renewal reminder</p>
     <h1 style="margin:8px 0 0;font-size:22px;">${safeApp} renews ${when}</h1>

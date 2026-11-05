@@ -253,8 +253,8 @@ export const exportCategorySpendCsv = withLogging(
           teamId: viewer?.teamId ?? null,
           canReadAll: permissions.has("subscriptions:read_all"),
         },
-        ownerId: parsed.data.ownerId,
-        teamId: parsed.data.teamId,
+        ownerIds: parsed.data.ownerIds,
+        teamIds: parsed.data.teamIds,
         converter,
       });
       const rows = flattenCategorySpend(slices);

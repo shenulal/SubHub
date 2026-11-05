@@ -1,18 +1,12 @@
 // src/components/devices/devices-page-client.tsx
 "use client";
 
+import { FilterMultiSelect } from "@/components/common/filter-multi-select";
 import { KpiCard, KpiCardsGrid } from "@/components/common/kpi-card";
 import { PageHeader } from "@/components/common/page-header";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import {
   Sheet,
   SheetContent,
@@ -50,6 +44,21 @@ import { DevicesUsersAlert } from "./devices-users-alert";
 import { FleetDMInstallGuide } from "./fleetdm-install-guide";
 import { ShadowITTable } from "./shadow-it-table";
 
+// Workflow enums (code-defined); labels come from i18n
+const DEVICE_STATUSES: DeviceStatus[] = [
+  "ONLINE",
+  "OFFLINE",
+  "PENDING",
+  "RETIRED",
+];
+const DEVICE_PLATFORMS: DevicePlatform[] = [
+  "MACOS",
+  "WINDOWS",
+  "LINUX",
+  "IOS",
+  "ANDROID",
+];
+
 type Role = "ADMIN" | "APPROVER" | "MEMBER" | "VIEWER" | null | undefined;
 
 interface DevicesPageClientProps {
@@ -84,8 +93,9 @@ export function DevicesPageClient({ role }: DevicesPageClientProps) {
 
   // Filter state
   const [searchQuery, setSearchQuery] = useState("");
-  const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [platformFilter, setPlatformFilter] = useState<string>("all");
+  // Multi-select filters (empty = all)
+  const [statusFilter, setStatusFilter] = useState<string[]>([]);
+  const [platformFilter, setPlatformFilter] = useState<string[]>([]);
 
   // Load data
   const loadData = useCallback(() => {
@@ -93,14 +103,12 @@ export function DevicesPageClient({ role }: DevicesPageClientProps) {
       const [devicesRes, statsRes, shadowITRes, usersWithoutAgentRes] =
         await Promise.all([
           fetchDevices({
-            status:
-              statusFilter !== "all"
-                ? (statusFilter as DeviceStatus)
-                : undefined,
-            platform:
-              platformFilter !== "all"
-                ? (platformFilter as DevicePlatform)
-                : undefined,
+            status: statusFilter.length
+              ? (statusFilter as DeviceStatus[])
+              : undefined,
+            platform: platformFilter.length
+              ? (platformFilter as DevicePlatform[])
+              : undefined,
             search: searchQuery || undefined,
           }),
           fetchDeviceStats(),
@@ -208,59 +216,28 @@ export function DevicesPageClient({ role }: DevicesPageClientProps) {
                         className="bg-card pl-9"
                       />
                     </div>
-                    <Select
+                    <FilterMultiSelect
+                      label={t("filters.status.label")}
+                      placeholder={t("filters.status.all")}
+                      options={DEVICE_STATUSES.map((status) => ({
+                        value: status,
+                        label: t(`status.${status}`),
+                      }))}
                       value={statusFilter}
                       onValueChange={setStatusFilter}
-                    >
-                      <SelectTrigger className="w-[150px]">
-                        <SelectValue placeholder={t("filters.status.label")} />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">
-                          {t("filters.status.all")}
-                        </SelectItem>
-                        <SelectItem value="ONLINE">
-                          {t("status.ONLINE")}
-                        </SelectItem>
-                        <SelectItem value="OFFLINE">
-                          {t("status.OFFLINE")}
-                        </SelectItem>
-                        <SelectItem value="PENDING">
-                          {t("status.PENDING")}
-                        </SelectItem>
-                        <SelectItem value="RETIRED">
-                          {t("status.RETIRED")}
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                    <Select
+                      className="bg-card"
+                    />
+                    <FilterMultiSelect
+                      label={t("filters.platform.label")}
+                      placeholder={t("filters.platform.all")}
+                      options={DEVICE_PLATFORMS.map((platform) => ({
+                        value: platform,
+                        label: t(`platform.${platform}`),
+                      }))}
                       value={platformFilter}
                       onValueChange={setPlatformFilter}
-                    >
-                      <SelectTrigger className="w-[150px]">
-                        <SelectValue
-                          placeholder={t("filters.platform.label")}
-                        />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">
-                          {t("filters.platform.all")}
-                        </SelectItem>
-                        <SelectItem value="MACOS">
-                          {t("platform.MACOS")}
-                        </SelectItem>
-                        <SelectItem value="WINDOWS">
-                          {t("platform.WINDOWS")}
-                        </SelectItem>
-                        <SelectItem value="LINUX">
-                          {t("platform.LINUX")}
-                        </SelectItem>
-                        <SelectItem value="IOS">{t("platform.IOS")}</SelectItem>
-                        <SelectItem value="ANDROID">
-                          {t("platform.ANDROID")}
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
+                      className="bg-card"
+                    />
                     <Button
                       variant="outline"
                       size="icon"

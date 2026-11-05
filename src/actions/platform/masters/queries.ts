@@ -11,17 +11,19 @@ import { getSettings } from "@/lib/settings/service";
 import type {
   BillingCycleRow,
   CostCenterRow,
+  CountryRow,
   CurrencyRow,
   PaymentMethodRow,
   TaxRateRow,
 } from "@/types/platform";
 
 export async function queryCurrencies(
-  organizationId: string
+  organizationId: string,
+  options: { includeInactive?: boolean } = {}
 ): Promise<CurrencyRow[]> {
   const [currencies, settings] = await Promise.all([
     prisma.currency.findMany({
-      where: { isActive: true },
+      where: options.includeInactive ? {} : { isActive: true },
       orderBy: [{ sortOrder: "asc" }, { code: "asc" }],
     }),
     getSettings(organizationId, [
@@ -50,9 +52,30 @@ export async function queryCurrencies(
         rateAsOf: toIso(rate?.asOf ?? null),
         rateSource: rate && rate.source !== "none" ? rate.source : null,
         stale: rate ? rate.stale : false,
+        isActive: c.isActive,
+        numericCode: c.numericCode,
+        sortOrder: c.sortOrder,
       };
     })
   );
+}
+
+export async function queryCountries(
+  options: { includeInactive?: boolean } = {}
+): Promise<CountryRow[]> {
+  const rows = await prisma.country.findMany({
+    where: options.includeInactive ? {} : { isActive: true },
+    orderBy: { name: "asc" },
+  });
+  return rows.map((c) => ({
+    code: c.code,
+    name: c.name,
+    region: c.region,
+    currencyCode: c.currencyCode,
+    defaultTaxRatePercent: decimalToNumber(c.defaultTaxRatePercent),
+    phonePrefix: c.phonePrefix,
+    isActive: c.isActive,
+  }));
 }
 
 export async function queryTaxRates(

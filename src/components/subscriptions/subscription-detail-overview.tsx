@@ -20,6 +20,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { formatCustomFieldValue } from "@/lib/services/taxonomy/custom-field-options";
 import type { SubscriptionDetail as SubscriptionDetailType } from "@/types/subscription";
 import { ExternalLink } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -194,7 +195,9 @@ export function SubscriptionDetailOverview({
                         {cfv.label}
                       </dt>
                       <dd className="text-foreground mt-1 text-[0.9375rem] font-medium break-words">
-                        {cfv.value}
+                        {cfv.fieldType
+                          ? formatCustomFieldValue(cfv.fieldType, cfv.value)
+                          : cfv.value}
                       </dd>
                     </div>
                   ))}

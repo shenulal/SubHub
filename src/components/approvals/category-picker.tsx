@@ -1,6 +1,7 @@
 // src/components/approvals/category-picker.tsx
 "use client";
 
+import { CategoryFormDialog } from "@/components/taxonomy/category-form-dialog";
 import { Label } from "@/components/ui/label";
 import {
   Select,
@@ -9,20 +10,70 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { usePermissionFlag } from "@/hooks/use-permission-flag";
 import type { ApprovalCategoryOption } from "@/types/approval";
+import type { CategoryNode, CategoryRow } from "@/types/taxonomy";
 import { useTranslations } from "next-intl";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 interface Props {
   categories: ApprovalCategoryOption[];
   value: string | null;
   onChange: (categoryId: string | null) => void;
   error?: string;
+  /** Override the `categories:manage` check for the "+ Create …" rows. */
+  canCreate?: boolean;
+}
+
+interface CreateState {
+  name: string;
+  parent: ApprovalCategoryOption | null;
+}
+
+/** Minimal node for CategoryFormDialog, which only reads id and name. */
+function asParentNode(option: ApprovalCategoryOption): CategoryNode {
+  return {
+    ...option,
+    slug: "",
+    isArchived: false,
+    isDefault: false,
+    sortOrder: 0,
+    budgetMonthly: null,
+    children: [],
+  };
+}
+
+function toOption(row: CategoryRow): ApprovalCategoryOption {
+  return {
+    id: row.id,
+    name: row.name,
+    parentId: row.parentId,
+    color: row.color,
+    icon: row.icon,
+  };
 }
 
 /** Two-level category picker: parent first, then optional child. */
-export function CategoryPicker({ categories, value, onChange, error }: Props) {
+export function CategoryPicker({
+  categories: provided,
+  value,
+  onChange,
+  error,
+  canCreate,
+}: Props) {
   const t = useTranslations("approvals.form");
+  const ti = useTranslations("platform.masters.inline");
+  const mayManage = usePermissionFlag("categories:manage");
+  const allowCreate = canCreate ?? mayManage;
+  const [created, setCreated] = useState<ApprovalCategoryOption[]>([]);
+  const [creating, setCreating] = useState<CreateState | null>(null);
+  const categories = useMemo(
+    () => [
+      ...provided,
+      ...created.filter((c) => !provided.some((p) => p.id === c.id)),
+    ],
+    [provided, created]
+  );
   const parents = useMemo(
     () => categories.filter((c) => !c.parentId),
     [categories]
@@ -37,6 +88,15 @@ export function CategoryPicker({ categories, value, onChange, error }: Props) {
     () => (parentId ? categories.filter((c) => c.parentId === parentId) : []),
     [categories, parentId]
   );
+  const parentOption = parentId ? (byId.get(parentId) ?? null) : null;
+  const createOption = (parent: ApprovalCategoryOption | null) =>
+    allowCreate
+      ? {
+          label: (q: string) =>
+            q ? ti("create", { name: q }) : ti("createEmpty"),
+          onCreate: (q: string) => setCreating({ name: q, parent }),
+        }
+      : undefined;
 
   return (
     <div className="grid gap-4 sm:grid-cols-2">
@@ -49,7 +109,7 @@ export function CategoryPicker({ categories, value, onChange, error }: Props) {
           <SelectTrigger id="category" aria-invalid={Boolean(error)}>
             <SelectValue placeholder={t("selectCategory")} />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent createOption={createOption(null)}>
             {parents.map((c) => (
               <SelectItem key={c.id} value={c.id}>
                 <span className="flex items-center gap-2">
@@ -72,12 +132,12 @@ export function CategoryPicker({ categories, value, onChange, error }: Props) {
         <Select
           value={selected?.parentId ? selected.id : ""}
           onValueChange={(id) => onChange(id || parentId)}
-          disabled={children.length === 0}
+          disabled={!parentOption || (children.length === 0 && !allowCreate)}
         >
           <SelectTrigger id="subcategory">
             <SelectValue placeholder={t("selectSubcategory")} />
           </SelectTrigger>
-          <SelectContent>
+          <SelectContent createOption={createOption(parentOption)}>
             {children.map((c) => (
               <SelectItem key={c.id} value={c.id}>
                 {c.name}
@@ -86,6 +146,19 @@ export function CategoryPicker({ categories, value, onChange, error }: Props) {
           </SelectContent>
         </Select>
       </div>
+      {creating && (
+        <CategoryFormDialog
+          open
+          onOpenChange={(o) => !o && setCreating(null)}
+          parent={creating.parent ? asParentNode(creating.parent) : null}
+          defaultName={creating.name}
+          onSaved={(row) => {
+            if (!row) return;
+            setCreated((list) => [...list, toOption(row)]);
+            onChange(row.id);
+          }}
+        />
+      )}
     </div>
   );
 }

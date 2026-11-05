@@ -1,6 +1,7 @@
 // src/actions/apps.ts
 "use server";
 
+import { resolveAppCategory } from "@/actions/apps-category";
 import { requireOrganization } from "@/lib/auth/require-auth";
 import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
@@ -50,6 +51,7 @@ const createAppSchema = z.object({
     .min(2, "App name must be at least 2 characters")
     .max(100, "App name must be 100 characters or fewer"),
   category: z.string().nullish(),
+  categoryId: z.string().nullish(),
   customLogoUrl: z
     .string()
     .nullish()
@@ -223,6 +225,7 @@ export async function getApp(id: string): Promise<AppDetail | null> {
     status: app.status,
     source: app.source,
     category: app.category || app.catalog?.category || null,
+    categoryId: app.categoryId,
     catalogId: app.catalogId,
     customLogoUrl: app.customLogoUrl,
     catalogLogoUrl: app.catalog?.logoUrl ?? null,
@@ -264,6 +267,7 @@ async function _createApp(
     const rawData = {
       name: formData.get("name") as string,
       category: formData.get("category") as string | null,
+      categoryId: formData.get("categoryId") as string | null,
       customLogoUrl: formData.get("customLogoUrl") as string | null,
       customWebsite: formData.get("customWebsite") as string | null,
       notes: formData.get("notes") as string | null,
@@ -330,11 +334,21 @@ async function _createApp(
           .filter(Boolean)
       : [];
 
+    const categoryRef = await resolveAppCategory(
+      organizationId,
+      data.categoryId,
+      data.category
+    );
+    if (!categoryRef.ok) {
+      return { success: false, message: categoryRef.message };
+    }
+
     // Create app
     const app = await prisma.app.create({
       data: {
         name: data.name,
-        category: data.category || null,
+        category: categoryRef.category,
+        categoryId: categoryRef.categoryId,
         customLogoUrl: data.customLogoUrl || null,
         customWebsite: data.customWebsite || null,
         notes: data.notes || null,
@@ -430,6 +444,7 @@ async function _updateApp(
       name: formData.get("name") as string,
       status: formData.get("status") as AppStatus | null,
       category: formData.get("category") as string | null,
+      categoryId: formData.get("categoryId") as string | null,
       customLogoUrl: formData.get("customLogoUrl") as string | null,
       customWebsite: formData.get("customWebsite") as string | null,
       notes: formData.get("notes") as string | null,
@@ -497,13 +512,32 @@ async function _updateApp(
           .filter(Boolean)
       : [];
 
+    // Category master wins when the client sends categoryId; otherwise the
+    // legacy free-text category is kept as before.
+    const categoryRef = formData.has("categoryId")
+      ? await resolveAppCategory(
+          organizationId,
+          data.categoryId,
+          // Clearing a master-linked category also clears its mirrored name.
+          existingApp.categoryId && !data.categoryId ? null : data.category
+        )
+      : null;
+    if (categoryRef && !categoryRef.ok) {
+      return { success: false, message: categoryRef.message };
+    }
+
     // Update app
     const app = await prisma.app.update({
       where: { id },
       data: {
         name: data.name,
         status: data.status || existingApp.status,
-        category: data.category || null,
+        ...(categoryRef?.ok
+          ? {
+              category: categoryRef.category,
+              categoryId: categoryRef.categoryId,
+            }
+          : { category: data.category || null }),
         customLogoUrl: data.customLogoUrl || null,
         customWebsite: data.customWebsite || null,
         notes: data.notes || null,

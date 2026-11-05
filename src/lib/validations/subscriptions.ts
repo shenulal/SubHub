@@ -2,6 +2,10 @@
 /**
  * Zod schemas shared by subscription server actions and REST routes.
  */
+import {
+  parseMultiEnum,
+  parseOptionalMultiValue,
+} from "@/lib/filters/multi-value";
 import type {
   SubscriptionFilterOptions,
   SubscriptionScope,
@@ -97,12 +101,6 @@ const SORT_KEYS: readonly SubscriptionSortBy[] = [
   "owner",
 ];
 
-function parseStatus(value: string | null): SubscriptionStatus | undefined {
-  return value && value in SubscriptionStatus
-    ? (value as SubscriptionStatus)
-    : undefined;
-}
-
 function parseBool(value: string | null): boolean | undefined {
   if (value == null) return undefined;
   return value === "true" || value === "1";
@@ -121,30 +119,35 @@ export function parseSubscriptionListQuery(searchParams: URLSearchParams): {
     : "renewalDate";
   const sortOrder = searchParams.get("sortOrder") === "desc" ? "desc" : "asc";
   const scopeParam = searchParams.get("scope");
-  const billingCycleParam = searchParams.get("billingCycle");
-  const statuses = parseCsvParam(searchParams.get("statuses")).filter(
-    (s): s is SubscriptionStatus => s in SubscriptionStatus
+  const list = (...keys: string[]) =>
+    parseOptionalMultiValue(keys.flatMap((k) => searchParams.getAll(k)));
+  const statuses = parseMultiEnum(
+    [...searchParams.getAll("status"), ...searchParams.getAll("statuses")],
+    Object.values(SubscriptionStatus)
   );
 
+  // Every id facet accepts `key=a,b`, repeated keys or the plural key.
   const filter: SubscriptionFilterOptions = {
-    status: parseStatus(searchParams.get("status")),
-    statuses: statuses.length ? statuses : undefined,
+    statuses,
     appId: searchParams.get("appId") ?? undefined,
-    billingCycle:
-      billingCycleParam && billingCycleParam in BillingCycle
-        ? (billingCycleParam as BillingCycle)
-        : undefined,
+    billingCycles: parseMultiEnum(
+      [
+        ...searchParams.getAll("billingCycle"),
+        ...searchParams.getAll("billingCycles"),
+      ],
+      Object.values(BillingCycle)
+    ),
     search: searchParams.get("search") ?? undefined,
     renewingWithinDays: parseNumberParam(
       searchParams.get("renewingWithinDays")
     ),
-    categoryId: searchParams.get("categoryId") ?? undefined,
-    parentCategoryId: searchParams.get("parentCategoryId") ?? undefined,
+    categoryIds: list("categoryId", "categoryIds"),
+    parentCategoryIds: list("parentCategoryId", "parentCategoryIds"),
     tagIds: parseCsvParam(searchParams.get("tagIds")),
-    ownerId: searchParams.get("ownerId") ?? undefined,
-    teamId: searchParams.get("teamId") ?? undefined,
-    costCenterId: searchParams.get("costCenterId") ?? undefined,
-    paymentMethodId: searchParams.get("paymentMethodId") ?? undefined,
+    ownerIds: list("ownerId", "ownerIds"),
+    teamIds: list("teamId", "teamIds"),
+    costCenterIds: list("costCenterId", "costCenterIds"),
+    paymentMethodIds: list("paymentMethodId", "paymentMethodIds"),
     amountMin: parseNumberParam(searchParams.get("amountMin")),
     amountMax: parseNumberParam(searchParams.get("amountMax")),
     scope: SCOPES.includes(scopeParam as SubscriptionScope)

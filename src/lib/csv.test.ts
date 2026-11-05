@@ -2,6 +2,13 @@
 import { describe, expect, it } from "vitest";
 import { parseCSV, validateAppCSV, validateSubscriptionCSV } from "./csv";
 
+// Category master rows the import resolves against.
+const CATEGORIES = [
+  { id: "c-collab", name: "Collaboration", slug: "collaboration" },
+  { id: "c-prod", name: "Productivity", slug: "productivity" },
+  { id: "c-it", name: "IT Infrastructure", slug: "it-infra" },
+];
+
 describe("CSV Utils", () => {
   describe("parseCSV", () => {
     it("should parse a basic CSV", () => {
@@ -71,7 +78,7 @@ Notion,PRODUCTIVITY,Notion Labs`;
         { name: "Notion", category: "PRODUCTIVITY", vendor: "" },
       ];
 
-      const result = validateAppCSV(rows);
+      const result = validateAppCSV(rows, CATEGORIES);
 
       expect(result.valid).toHaveLength(2);
       expect(result.errors).toHaveLength(0);
@@ -83,7 +90,7 @@ Notion,PRODUCTIVITY,Notion Labs`;
         { name: "Slack", category: "" },
       ];
 
-      const result = validateAppCSV(rows);
+      const result = validateAppCSV(rows, CATEGORIES);
 
       expect(result.valid).toHaveLength(0);
       expect(result.errors).toHaveLength(2);
@@ -96,36 +103,33 @@ Notion,PRODUCTIVITY,Notion Labs`;
     it("should flag an invalid category as an error", () => {
       const rows = [{ name: "Slack", category: "INVALID_CATEGORY" }];
 
-      const result = validateAppCSV(rows);
+      const result = validateAppCSV(rows, CATEGORIES);
 
       expect(result.valid).toHaveLength(0);
       expect(result.errors).toHaveLength(1);
       expect(result.errors[0].message).toContain("category");
     });
 
-    it("should accept valid categories", () => {
-      const validCategories = [
-        "COLLABORATION",
-        "PRODUCTIVITY",
-        "DEVELOPMENT",
-        "DESIGN",
-        "MARKETING",
-        "SALES",
-        "HR",
-        "FINANCE",
-        "ANALYTICS",
-        "SECURITY",
-        "IT_INFRA",
-        "COMMUNICATION",
-        "OTHER",
-      ];
+    it("should accept master categories by name or slug, any case", () => {
+      const inputs = ["COLLABORATION", "productivity", "IT_INFRA", "it infra"];
 
-      validCategories.forEach((category) => {
+      inputs.forEach((category) => {
         const rows = [{ name: "Test App", category }];
-        const result = validateAppCSV(rows);
+        const result = validateAppCSV(rows, CATEGORIES);
 
         expect(result.valid).toHaveLength(1);
         expect(result.errors).toHaveLength(0);
+      });
+    });
+
+    it("maps a row to the master category id and name", () => {
+      const result = validateAppCSV(
+        [{ name: "Slack", category: "COLLABORATION" }],
+        CATEGORIES
+      );
+      expect(result.valid[0]).toMatchObject({
+        category: "Collaboration",
+        categoryId: "c-collab",
       });
     });
   });

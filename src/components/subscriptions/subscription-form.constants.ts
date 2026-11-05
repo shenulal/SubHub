@@ -25,15 +25,6 @@ export function getStatusOptions(t: (key: string) => string) {
   ] as const;
 }
 
-export function getCurrencyOptions(t: (key: string) => string) {
-  return [
-    { value: "KRW", label: t("subscriptions.currency.krw") },
-    { value: "USD", label: t("subscriptions.currency.usd") },
-    { value: "EUR", label: t("subscriptions.currency.eur") },
-    { value: "JPY", label: t("subscriptions.currency.jpy") },
-  ] as const;
-}
-
 /**
  * Convert a Date object to a string for input[type="date"]
  */

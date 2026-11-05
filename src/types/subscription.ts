@@ -1,4 +1,5 @@
 // src/types/subscription.ts
+import type { CustomFieldTypeValue } from "@/types/taxonomy";
 import type {
   BillingCycle,
   BillingType,
@@ -46,6 +47,8 @@ export interface SubscriptionCustomFieldValue {
   fieldId: string;
   key: string;
   label: string;
+  /** Field type; MULTI_SELECT values are JSON array strings. */
+  fieldType?: CustomFieldTypeValue;
   value: string;
 }
 
@@ -175,6 +178,17 @@ export interface SubscriptionFilterOptions {
   teamId?: string;
   costCenterId?: string;
   paymentMethodId?: string;
+  /**
+   * Multi-value variants (REST `?ownerId=a,b`). Combined with the single
+   * value above when both are given; empty = no filter.
+   */
+  billingCycles?: BillingCycle[];
+  categoryIds?: string[];
+  parentCategoryIds?: string[];
+  ownerIds?: string[];
+  teamIds?: string[];
+  costCenterIds?: string[];
+  paymentMethodIds?: string[];
   /** Monthly-normalised amount bounds in base currency (falls back to raw amount). */
   amountMin?: number;
   amountMax?: number;

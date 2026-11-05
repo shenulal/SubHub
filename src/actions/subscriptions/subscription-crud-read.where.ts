@@ -3,6 +3,7 @@
  * Pure builders for the subscription list query: where clause, order-by.
  * Kept free of I/O so filter semantics can be unit-tested directly.
  */
+import { inFilter, mergeLegacyValue } from "@/lib/filters/multi-value";
 import type {
   SubscriptionFilterOptions,
   SubscriptionSortOptions,
@@ -59,38 +60,54 @@ function searchClause(search: string): Where {
   };
 }
 
-/** Simple equality filters live at the top level of the where clause. */
+/** Single value + list → one list (`undefined` when neither is set). */
+function values<T extends string>(
+  single: T | undefined,
+  list: T[] | undefined
+): T[] | undefined {
+  return mergeLegacyValue(list, single) as T[] | undefined;
+}
+
+/** Equality / `in` filters live at the top level of the where clause. */
 function scalarFilters(filter: SubscriptionFilterOptions): Where {
+  const cycles = inFilter(values(filter.billingCycle, filter.billingCycles));
+  const categories = inFilter(values(filter.categoryId, filter.categoryIds));
+  const owners = inFilter(values(filter.ownerId, filter.ownerIds));
+  const costCenters = inFilter(
+    values(filter.costCenterId, filter.costCenterIds)
+  );
+  const paymentMethods = inFilter(
+    values(filter.paymentMethodId, filter.paymentMethodIds)
+  );
   return {
     ...(filter.appId ? { appId: filter.appId } : {}),
-    ...(filter.billingCycle ? { billingCycle: filter.billingCycle } : {}),
-    ...(filter.categoryId ? { categoryId: filter.categoryId } : {}),
-    ...(filter.ownerId ? { ownerId: filter.ownerId } : {}),
-    ...(filter.costCenterId ? { costCenterId: filter.costCenterId } : {}),
-    ...(filter.paymentMethodId
-      ? { paymentMethodId: filter.paymentMethodId }
-      : {}),
+    ...(cycles ? { billingCycle: cycles } : {}),
+    ...(categories ? { categoryId: categories } : {}),
+    ...(owners ? { ownerId: owners } : {}),
+    ...(costCenters ? { costCenterId: costCenters } : {}),
+    ...(paymentMethods ? { paymentMethodId: paymentMethods } : {}),
   };
 }
 
 function relationClauses(filter: SubscriptionFilterOptions): Where[] {
   const clauses: Where[] = [];
-  if (filter.parentCategoryId) {
+  const parents = inFilter(
+    values(filter.parentCategoryId, filter.parentCategoryIds)
+  );
+  if (parents) {
     clauses.push({
-      OR: [
-        { categoryId: filter.parentCategoryId },
-        { category: { parentId: filter.parentCategoryId } },
-      ],
+      OR: [{ categoryId: parents }, { category: { parentId: parents } }],
     });
   }
   if (filter.tagIds?.length) {
     clauses.push({ tags: { some: { tagId: { in: filter.tagIds } } } });
   }
-  if (filter.teamId) {
+  const teams = inFilter(values(filter.teamId, filter.teamIds));
+  if (teams) {
     clauses.push({
       OR: [
-        { teamId: filter.teamId },
-        { subscriptionTeams: { some: { teamId: filter.teamId } } },
+        { teamId: teams },
+        { subscriptionTeams: { some: { teamId: teams } } },
       ],
     });
   }

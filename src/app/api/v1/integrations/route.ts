@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { createIntegration, getIntegrations } from "@/actions/integrations";
 import { withApiAuth } from "@/lib/api/auth-middleware";
+import { parseMultiEnum } from "@/lib/filters/multi-value";
 import { withLogging } from "@/lib/logging";
 import {
   createIntegrationApiSchema,
@@ -41,10 +42,13 @@ export const GET = withLogging(
       | "asc"
       | "desc";
 
-    const statusParam = searchParams.get("status");
+    // `status` accepts a comma-separated list (multi-select); unknown values are dropped
     const filter = {
       category: searchParams.get("category") ?? undefined,
-      status: statusParam ? (statusParam as IntegrationStatus) : undefined,
+      status: parseMultiEnum(
+        searchParams.getAll("status"),
+        Object.values(IntegrationStatus)
+      ),
       search: searchParams.get("search") ?? undefined,
     };
 

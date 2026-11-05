@@ -20,6 +20,8 @@ export const appFormSchema = z.object({
     .max(100, "App name must be 100 characters or fewer"),
   status: z.nativeEnum(AppStatus).optional(),
   category: z.string().optional(),
+  /** Category master id; `category` mirrors its name for legacy filters. */
+  categoryId: z.string().optional(),
   customLogoUrl: z
     .string()
     .refine(isValidUrlOrPath, { message: "Please enter a valid URL" })

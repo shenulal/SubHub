@@ -14,9 +14,10 @@ import { useCallback } from "react";
 
 interface ExportButtonsProps {
   data: RenewalReportData;
+  /** Selected teams / users (data is already filtered server-side). */
   filters: {
-    teamId?: string | null;
-    userId?: string | null;
+    teamIds?: string[];
+    userIds?: string[];
   };
 }
 

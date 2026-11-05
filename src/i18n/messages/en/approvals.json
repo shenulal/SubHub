@@ -215,6 +215,8 @@
         "thresholdHelp": "Requests are normalised to a monthly amount and converted into this currency before comparing. Leave empty to ignore cost.",
         "categories": "Categories",
         "categoriesHelp": "Only requests in these categories match. Combine with a threshold to narrow further.",
+        "categoriesPlaceholder": "Pick categories",
+        "categoriesSearch": "Search categories",
         "timing": "Reminders & escalation",
         "reminderAfterDays": "Remind approver after",
         "reminderHelp": "Days an approver can sit on a request before a reminder. Empty uses the organisation default ({default} days).",

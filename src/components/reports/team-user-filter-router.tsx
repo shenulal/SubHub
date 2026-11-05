@@ -1,6 +1,11 @@
 "use client";
 
 // src/components/reports/team-user-filter-router.tsx
+/**
+ * URL-driven TeamUserFilter: the selection lives in `?teamId=a,b&userId=c`
+ * so server-rendered reports re-query on change.
+ */
+import { writeReportFilterParams } from "@/lib/filters/report-filter-params";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
   TeamUserFilter,
@@ -10,8 +15,8 @@ import {
 
 interface TeamUserFilterRouterProps {
   basePath: string;
-  teamId: string | null;
-  userId: string | null;
+  teamIds: string[];
+  userIds: string[];
   teams: TeamFilterOption[];
   users: UserFilterOption[];
   includeAllOption?: boolean;
@@ -20,8 +25,8 @@ interface TeamUserFilterRouterProps {
 
 export function TeamUserFilterRouter({
   basePath,
-  teamId,
-  userId,
+  teamIds,
+  userIds,
   teams,
   users,
   includeAllOption,
@@ -30,44 +35,23 @@ export function TeamUserFilterRouter({
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const updateParams = (
-    nextTeamId: string | null,
-    nextUserId: string | null
-  ) => {
-    const params = new URLSearchParams(searchParams.toString());
-
-    if (nextTeamId) {
-      params.set("teamId", nextTeamId);
-    } else {
-      params.delete("teamId");
-    }
-
-    if (nextUserId) {
-      params.set("userId", nextUserId);
-    } else {
-      params.delete("userId");
-    }
-
+  const push = (nextTeamIds: string[], nextUserIds: string[]) => {
+    const params = writeReportFilterParams(
+      new URLSearchParams(searchParams.toString()),
+      { teamIds: nextTeamIds, userIds: nextUserIds }
+    );
     const queryString = params.toString();
     router.push(queryString ? `${basePath}?${queryString}` : basePath);
   };
 
-  const handleTeamChange = (nextTeamId: string | null) => {
-    updateParams(nextTeamId, null);
-  };
-
-  const handleUserChange = (nextUserId: string | null) => {
-    updateParams(teamId, nextUserId);
-  };
-
   return (
     <TeamUserFilter
-      teamId={teamId}
-      userId={userId}
+      teamIds={teamIds}
+      userIds={userIds}
       teams={teams}
       users={users}
-      onTeamChange={handleTeamChange}
-      onUserChange={handleUserChange}
+      onTeamsChange={push}
+      onUsersChange={(nextUserIds) => push(teamIds, nextUserIds)}
       includeAllOption={includeAllOption}
       teamLocked={teamLocked}
     />

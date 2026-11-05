@@ -1451,6 +1451,8 @@ enum CustomFieldType {
   NUMBER
   DATE
   SELECT
+  /// Several options; the value is stored as a JSON array string.
+  MULTI_SELECT
 }
 
 model CustomFieldDefinition {

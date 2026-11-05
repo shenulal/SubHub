@@ -90,6 +90,10 @@ export default defineConfig({
         __dirname,
         "./src/hooks/use-permissions"
       ),
+      "@/hooks/use-permission-flag": path.resolve(
+        __dirname,
+        "./src/hooks/use-permission-flag"
+      ),
       "@/hooks/use-base-currency": path.resolve(
         __dirname,
         "./src/hooks/use-base-currency"

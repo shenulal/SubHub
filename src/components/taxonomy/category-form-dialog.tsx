@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import type { CategoryNode } from "@/types/taxonomy";
+import type { CategoryNode, CategoryRow } from "@/types/taxonomy";
 
 export interface CategoryFormDialogProps {
   open: boolean;
@@ -26,7 +26,10 @@ export interface CategoryFormDialogProps {
   category?: CategoryNode | null;
   /** Parent for a new subcategory. */
   parent?: CategoryNode | null;
-  onSaved?: () => void;
+  /** Prefilled name for a new category (inline creation from a picker). */
+  defaultName?: string;
+  /** Receives the saved row (create and edit). */
+  onSaved?: (category?: CategoryRow) => void;
 }
 
 const DEFAULT_COLOR = "#6366f1";
@@ -36,13 +39,14 @@ export function CategoryFormDialog({
   onOpenChange,
   category,
   parent,
+  defaultName,
   onSaved,
 }: CategoryFormDialogProps) {
   const t = useTranslations("taxonomy.categories");
   const tc = useTranslations("taxonomy.common");
   const isEdit = Boolean(category);
   const isTopLevel = isEdit ? !category?.parentId : !parent;
-  const [name, setName] = useState(category?.name ?? "");
+  const [name, setName] = useState(category?.name ?? defaultName ?? "");
   const [icon, setIcon] = useState(category?.icon ?? "");
   const [color, setColor] = useState(
     category?.color ?? (isTopLevel ? DEFAULT_COLOR : "")
@@ -85,7 +89,7 @@ export function CategoryFormDialog({
     }
     toast.success(result.message ?? tc("save"));
     onOpenChange(false);
-    onSaved?.();
+    onSaved?.(result.data ?? undefined);
   };
 
   return (

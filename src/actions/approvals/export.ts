@@ -5,6 +5,7 @@
  * Feature 2.8 — CSV export of approval history (requires `approvals:export`).
  */
 import { prisma } from "@/lib/db";
+import { inFilter } from "@/lib/filters/multi-value";
 import { withLogging } from "@/lib/logging";
 import { requirePermission } from "@/lib/rbac/service";
 import { recordAudit } from "@/lib/services/approval/audit";
@@ -116,9 +117,12 @@ async function _exportApprovals(
       ? parsed.data
       : approvalListFiltersSchema.parse({});
     const where: Prisma.ApprovalRequestWhereInput = { organizationId };
-    if (f.status) where.status = f.status;
-    if (f.requesterId) where.requesterId = f.requesterId;
-    if (f.categoryId) where.categoryId = f.categoryId;
+    const statuses = inFilter(f.statuses);
+    const requesters = inFilter(f.requesterIds);
+    const categories = inFilter(f.categoryIds);
+    if (statuses) where.status = statuses;
+    if (requesters) where.requesterId = requesters;
+    if (categories) where.categoryId = categories;
     if (f.dateFrom || f.dateTo) {
       where.submittedAt = {
         ...(f.dateFrom ? { gte: new Date(f.dateFrom) } : {}),

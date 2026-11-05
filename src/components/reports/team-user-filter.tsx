@@ -1,15 +1,16 @@
 "use client";
 
 // src/components/reports/team-user-filter.tsx
+/**
+ * Report filter: several teams and several users (empty = all). With teams
+ * picked, only their members are offered; otherwise every user is listed,
+ * grouped by team. Restricted viewers get a locked team selection.
+ */
+import { FilterMultiSelect } from "@/components/common/filter-multi-select";
 import { Card, CardContent } from "@/components/ui/card";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import type { MultiSelectOption } from "@/components/ui/multi-select";
 import { useTranslations } from "next-intl";
+import { useMemo } from "react";
 
 export interface TeamFilterOption {
   id: string;
@@ -25,78 +26,87 @@ export interface UserFilterOption {
 }
 
 interface TeamUserFilterProps {
-  teamId: string | null;
-  userId: string | null;
+  teamIds: string[];
+  userIds: string[];
   teams: TeamFilterOption[];
   users: UserFilterOption[];
-  onTeamChange: (teamId: string | null) => void;
-  onUserChange: (userId: string | null) => void;
+  /** Called with the new teams and the user selection pruned to them. */
+  onTeamsChange: (teamIds: string[], userIds: string[]) => void;
+  onUsersChange: (userIds: string[]) => void;
   includeAllOption?: boolean;
   teamLocked?: boolean;
 }
 
+/** Users offered for the current team selection (all users when none). */
+export function usersForTeams(
+  users: UserFilterOption[],
+  teamIds: string[]
+): UserFilterOption[] {
+  if (teamIds.length === 0) return users;
+  const teams = new Set(teamIds);
+  return users.filter((user) => user.teamId && teams.has(user.teamId));
+}
+
 export function TeamUserFilter({
-  teamId,
-  userId,
+  teamIds,
+  userIds,
   teams,
   users,
-  onTeamChange,
-  onUserChange,
+  onTeamsChange,
+  onUsersChange,
   includeAllOption = true,
   teamLocked = false,
 }: TeamUserFilterProps) {
   const t = useTranslations("common.filter");
-  const availableUsers = teamId
-    ? users.filter((user) => user.teamId === teamId)
-    : [];
+  const availableUsers = useMemo(
+    () => usersForTeams(users, teamIds),
+    [users, teamIds]
+  );
+  const teamOptions = useMemo<MultiSelectOption[]>(
+    () => teams.map((team) => ({ value: team.id, label: team.name })),
+    [teams]
+  );
+  const userOptions = useMemo<MultiSelectOption[]>(
+    () =>
+      availableUsers.map((user) => ({
+        value: user.id,
+        label: user.name || user.email,
+        group: user.teamName ?? undefined,
+        keywords: [user.email],
+      })),
+    [availableUsers]
+  );
 
-  const teamValue = teamId ?? (includeAllOption ? "all" : "");
-  const userValue = userId ?? "all";
+  const handleTeams = (next: string[]) => {
+    // Drop picked users that are no longer in the selected teams
+    const allowed = new Set(usersForTeams(users, next).map((u) => u.id));
+    onTeamsChange(
+      next,
+      userIds.filter((id) => allowed.has(id))
+    );
+  };
 
   return (
     <Card className="py-4">
       <CardContent className="flex flex-wrap items-center gap-3 px-4">
-        <Select
-          value={teamValue}
-          onValueChange={(value) =>
-            onTeamChange(value === "all" ? null : value)
-          }
+        <FilterMultiSelect
+          label={t("teamPlaceholder")}
+          placeholder={includeAllOption ? t("allTeams") : t("teamPlaceholder")}
+          options={teamOptions}
+          value={teamIds}
+          onValueChange={handleTeams}
           disabled={teamLocked}
-        >
-          <SelectTrigger className="h-10 w-full min-w-0 sm:w-[220px]">
-            <SelectValue placeholder={t("teamPlaceholder")} />
-          </SelectTrigger>
-          <SelectContent>
-            {includeAllOption && (
-              <SelectItem value="all">{t("allTeams")}</SelectItem>
-            )}
-            {teams.map((team) => (
-              <SelectItem key={team.id} value={team.id}>
-                {team.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <Select
-          value={userValue}
-          onValueChange={(value) =>
-            onUserChange(value === "all" ? null : value)
-          }
-          disabled={!teamId || availableUsers.length === 0}
-        >
-          <SelectTrigger className="h-10 w-full min-w-0 sm:w-[240px]">
-            <SelectValue placeholder={t("userPlaceholder")} />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">{t("allUsers")}</SelectItem>
-            {availableUsers.map((user) => (
-              <SelectItem key={user.id} value={user.id}>
-                {user.name || user.email}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+          className="h-10 w-full min-w-0 sm:w-[240px]"
+        />
+        <FilterMultiSelect
+          label={t("userPlaceholder")}
+          placeholder={t("allUsers")}
+          options={userOptions}
+          value={userIds}
+          onValueChange={onUsersChange}
+          disabled={availableUsers.length === 0}
+          className="h-10 w-full min-w-0 sm:w-[260px]"
+        />
       </CardContent>
     </Card>
   );

@@ -7,7 +7,7 @@
       },
       "masters": {
         "title": "Master data",
-        "description": "Currencies, tax rates, cost centres, payment methods"
+        "description": "Currencies, countries, tax, categories, tags, custom fields, vendors"
       },
       "roles": {
         "title": "Roles & permissions",
@@ -33,6 +33,11 @@
       "changeSecret": "Change",
       "cancel": "Cancel",
       "selectPlaceholder": "Select…",
+      "multiSelectPlaceholder": "Select one or more…",
+      "searchOptions": "Search…",
+      "noOptions": "No matches",
+      "selectAll": "Select all",
+      "clearSelection": "Clear",
       "listPlaceholder": "Type a value and press Enter",
       "help": "What does this setting do?",
       "invalidJson": "One of the JSON fields is not valid JSON"
@@ -43,7 +48,12 @@
         "tax-rates": "Tax rates",
         "cost-centers": "Cost centres",
         "payment-methods": "Payment methods",
-        "billing-cycles": "Billing cycles"
+        "billing-cycles": "Billing cycles",
+        "countries": "Countries",
+        "categories": "Categories",
+        "tags": "Tags",
+        "custom-fields": "Custom fields",
+        "vendor-catalog": "Vendor catalog"
       },
       "common": {
         "active": "Active",
@@ -62,7 +72,9 @@
         "actions": "Actions",
         "none": "None",
         "confirmDeleteTitle": "Delete this entry?",
-        "confirmDeleteDescription": "\"{name}\" will be removed. Entries already in use are deactivated instead."
+        "confirmDeleteDescription": "\"{name}\" will be removed. Entries already in use are deactivated instead.",
+        "activate": "Activate",
+        "deactivate": "Deactivate"
       },
       "currencies": {
         "title": "Currencies",
@@ -81,7 +93,19 @@
         "base": "Base",
         "noRate": "No rate yet",
         "search": "Search currencies",
-        "staleWarning": "{count, plural, one {# enabled currency has} other {# enabled currencies have}} a missing or stale rate. Refresh or enter a rate manually."
+        "staleWarning": "{count, plural, one {# enabled currency has} other {# enabled currencies have}} a missing or stale rate. Refresh or enter a rate manually.",
+        "add": "Add currency",
+        "addTitle": "New currency",
+        "editTitle": "Edit currency",
+        "symbol": "Symbol",
+        "decimalDigits": "Decimal places",
+        "numericCode": "ISO numeric code",
+        "sortOrder": "Sort order",
+        "platform": "Platform",
+        "globalHint": "Currencies are shared by every workspace on the platform.",
+        "enableNow": "Enable for this workspace",
+        "created": "Currency added",
+        "codeHint": "Three-letter ISO 4217 code, e.g. AED"
       },
       "taxRates": {
         "title": "Tax rates",
@@ -129,11 +153,72 @@
         "label": "Label",
         "months": "Months",
         "enabled": "Enabled"
+      },
+      "inline": {
+        "create": "Create “{name}”",
+        "createEmpty": "Create new…",
+        "created": "Created and selected"
+      },
+      "countries": {
+        "title": "Countries",
+        "description": "Platform-wide country list used for tax defaults, vendors and organisation profiles.",
+        "add": "Add country",
+        "addTitle": "New country",
+        "editTitle": "Edit country",
+        "region": "Region",
+        "currency": "Currency",
+        "defaultTax": "Default tax %",
+        "phonePrefix": "Phone prefix",
+        "search": "Search countries",
+        "empty": "No countries match.",
+        "codeHint": "Two-letter ISO 3166-1 code, e.g. AE",
+        "phoneHint": "For example +971"
+      },
+      "catalog": {
+        "title": "Vendor catalog",
+        "description": "Platform-wide list of SaaS vendors used for matching, suggestions and cancellation guides.",
+        "add": "Add vendor",
+        "addTitle": "New catalog entry",
+        "editTitle": "Edit catalog entry",
+        "search": "Search name, vendor, category or alias",
+        "vendor": "Vendor",
+        "category": "Category",
+        "subcategory": "Subcategory",
+        "website": "Website",
+        "pricingModel": "Pricing model",
+        "pricingModels": {
+          "PER_SEAT": "Per seat",
+          "FLAT_RATE": "Flat rate",
+          "USAGE_BASED": "Usage based",
+          "FREEMIUM": "Freemium"
+        },
+        "basePrice": "Base price per seat",
+        "priceCurrency": "Price currency",
+        "aliases": "Aliases",
+        "aliasesHint": "Comma-separated alternative names and domains",
+        "cancellationUrl": "Cancellation URL",
+        "billingPortalUrl": "Billing portal URL",
+        "noticePeriod": "Notice period (days)",
+        "country": "Country",
+        "descriptionLabel": "Description",
+        "status": {
+          "all": "All statuses",
+          "active": "Active only",
+          "inactive": "Inactive only"
+        },
+        "pageInfo": "{from}–{to} of {total}",
+        "previous": "Previous page",
+        "next": "Next page",
+        "empty": "No catalog entries match.",
+        "newCategory": "Use category “{name}”",
+        "activate": "Activate",
+        "deactivate": "Deactivate",
+        "price": "Price"
       }
     },
     "roles": {
       "title": "Roles",
-      "description": "System roles follow the built-in templates; custom roles can hold any subset of permissions.",
+      "description": "Description",
       "createRole": "Create role",
       "createTitle": "New custom role",
       "editTitle": "Edit role",
@@ -141,7 +226,6 @@
       "editorDescription": "Pick the permissions this role grants. Members assigned the role get exactly these.",
       "systemReadOnly": "System role grants are fixed. Use \"Reset to template\" to restore the defaults.",
       "name": "Name",
-      "description": "Description",
       "permissions": "Permissions",
       "selectedCount": "{count} selected",
       "selectAll": "Select all in {group}",

@@ -4,6 +4,7 @@
  * length, allowed currencies) are injected by the caller from the settings
  * registry so nothing is hard-coded here.
  */
+import { multiValueSchema } from "@/lib/filters/multi-value";
 import { z } from "zod";
 
 const CUID = z.string().min(1).max(64);
@@ -99,29 +100,63 @@ export const approvalDecisionActionSchema = z.enum([
   "cancel",
 ]);
 
-export const approvalListFiltersSchema = z.object({
-  tab: z.enum(["to_review", "mine", "all"]).default("to_review"),
-  status: z.enum(APPROVAL_STATUSES).optional(),
-  requesterId: CUID.optional(),
-  categoryId: CUID.optional(),
-  dateFrom: z
-    .string()
-    .datetime({ offset: true })
-    .or(z.string().date())
-    .optional(),
-  dateTo: z
-    .string()
-    .datetime({ offset: true })
-    .or(z.string().date())
-    .optional(),
-  search: z.string().trim().max(120).optional(),
-  sortBy: z
-    .enum(["submittedAt", "monthlyAmount", "serviceName", "status"])
-    .default("submittedAt"),
-  sortOrder: z.enum(["asc", "desc"]).default("desc"),
-  page: z.coerce.number().int().min(1).default(1),
-  limit: z.coerce.number().int().min(1).max(100).default(20),
-});
+/**
+ * Approval inbox / export / REST filters. Status, requester and category are
+ * multi-select (empty = all): each accepts an array, a comma-separated string
+ * (`?status=PENDING,APPROVED`) or a single value, under either the singular
+ * (legacy) or the plural key; both are merged into the plural output.
+ */
+export const approvalListFiltersSchema = z
+  .object({
+    tab: z.enum(["to_review", "mine", "all"]).default("to_review"),
+    status: multiValueSchema(z.enum(APPROVAL_STATUSES)),
+    statuses: multiValueSchema(z.enum(APPROVAL_STATUSES)),
+    requesterId: multiValueSchema(CUID),
+    requesterIds: multiValueSchema(CUID),
+    categoryId: multiValueSchema(CUID),
+    categoryIds: multiValueSchema(CUID),
+    dateFrom: z
+      .string()
+      .datetime({ offset: true })
+      .or(z.string().date())
+      .optional(),
+    dateTo: z
+      .string()
+      .datetime({ offset: true })
+      .or(z.string().date())
+      .optional(),
+    search: z.string().trim().max(120).optional(),
+    sortBy: z
+      .enum(["submittedAt", "monthlyAmount", "serviceName", "status"])
+      .default("submittedAt"),
+    sortOrder: z.enum(["asc", "desc"]).default("desc"),
+    page: z.coerce.number().int().min(1).default(1),
+    limit: z.coerce.number().int().min(1).max(100).default(20),
+  })
+  .transform(
+    ({
+      status,
+      statuses,
+      requesterId,
+      requesterIds,
+      categoryId,
+      categoryIds,
+      ...rest
+    }) => ({
+      ...rest,
+      statuses: mergeLists(statuses, status),
+      requesterIds: mergeLists(requesterIds, requesterId),
+      categoryIds: mergeLists(categoryIds, categoryId),
+    })
+  );
+
+function mergeLists<T extends string>(
+  a: T[] | undefined,
+  b: T[] | undefined
+): T[] | undefined {
+  const merged = Array.from(new Set([...(a ?? []), ...(b ?? [])]));
+  return merged.length ? merged : undefined;
+}
 
 export type ApprovalListFiltersInput = z.input<
   typeof approvalListFiltersSchema

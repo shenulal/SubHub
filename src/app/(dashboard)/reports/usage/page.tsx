@@ -4,6 +4,7 @@ import { getTeams } from "@/actions/teams";
 import { getUsageReport } from "@/actions/usage-analytics";
 import { getUsers } from "@/actions/users-read";
 import { auth } from "@/lib/auth";
+import { resolveReportFilterParams } from "@/lib/filters/report-filter-params";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
@@ -46,20 +47,15 @@ export default async function UsageReportPage({ searchParams }: PageProps) {
   const startDate =
     params.startDate || thirtyDaysAgo.toISOString().split("T")[0];
   const endDate = params.endDate || today.toISOString().split("T")[0];
-  const requestedTeamId = params.teamId ?? null;
-  const requestedUserId = params.userId ?? null;
-  const effectiveTeamId = isRestricted
-    ? (session.user.teamId ?? null)
-    : requestedTeamId;
-  const effectiveUserId =
-    isRestricted && !session.user.teamId ? session.user.id : requestedUserId;
+  // `teamId` / `userId` hold comma-separated lists (legacy single ids work)
+  const { teamIds, userIds } = resolveReportFilterParams(params, session.user);
 
   const filters = {
     period,
     startDate,
     endDate,
-    teamId: effectiveTeamId ?? undefined,
-    userId: effectiveUserId ?? undefined,
+    teamIds,
+    userIds,
   };
 
   // Load initial data

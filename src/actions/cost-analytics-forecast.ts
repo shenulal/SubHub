@@ -32,6 +32,8 @@ export async function detectCostAnomalies(
   options: {
     teamId?: string;
     userId?: string;
+    teamIds?: string[];
+    userIds?: string[];
   } = {}
 ): Promise<ActionState<DetectCostAnomaliesResult>> {
   try {

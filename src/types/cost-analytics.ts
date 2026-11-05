@@ -77,10 +77,14 @@ export interface CostAnalyticsFilters {
   endDate?: Date;
   /** Filter to specific apps (optional) */
   appIds?: string[];
-  /** Team filter (optional) */
+  /** Team filter (optional, legacy single value) */
   teamId?: string;
-  /** User filter (optional) */
+  /** User filter (optional, legacy single value) */
   userId?: string;
+  /** Teams to include (multi-select; empty = all) */
+  teamIds?: string[];
+  /** Users to include (multi-select; empty = all) */
+  userIds?: string[];
 }
 
 /**

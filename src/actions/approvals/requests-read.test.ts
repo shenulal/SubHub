@@ -156,6 +156,38 @@ describe("getApprovalRequests", () => {
     expect(res.data?.counts.all).toBe(1);
   });
 
+  it("accepts several statuses, categories and requesters (arrays or CSV)", async () => {
+    requirePermission.mockResolvedValue(
+      ctx("admin", ["approvals:read", "approvals:read_all"], "ADMIN")
+    );
+    await getApprovalRequests({
+      tab: "all",
+      statuses: ["APPROVED", "REJECTED"],
+      categoryIds: ["cat-1", "cat-2"],
+      requesterId: "u-1,u-2",
+    });
+    const where = prisma.approvalRequest.findMany.mock.calls.at(-1)![0].where;
+    expect(where.status).toEqual({ in: ["APPROVED", "REJECTED"] });
+    expect(where.categoryId).toEqual({ in: ["cat-1", "cat-2"] });
+    expect(where.requesterId).toEqual({ in: ["u-1", "u-2"] });
+  });
+
+  it("treats empty selections as all (to_review still defaults to PENDING)", async () => {
+    requirePermission.mockResolvedValue(
+      ctx("admin", ["approvals:read", "approvals:read_all"], "ADMIN")
+    );
+    await getApprovalRequests({
+      tab: "all",
+      statuses: [],
+      categoryIds: [],
+      requesterIds: [],
+    });
+    const where = prisma.approvalRequest.findMany.mock.calls.at(-1)![0].where;
+    expect(where.status).toBeUndefined();
+    expect(where.categoryId).toBeUndefined();
+    expect(where.requesterId).toBeUndefined();
+  });
+
   it("returns field errors for invalid filters", async () => {
     requirePermission.mockResolvedValue(ctx("u", ["approvals:read"]));
     const res = await getApprovalRequests({ status: "BOGUS" });

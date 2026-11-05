@@ -174,6 +174,68 @@ describe("audit actions", () => {
     });
   });
 
+  describe("getAuditLogs multi-select filters", () => {
+    async function whereFor(filters: Record<string, unknown>) {
+      const { auth } = await import("@/lib/auth");
+      (auth as ReturnType<typeof vi.fn>).mockResolvedValue({
+        user: { id: "admin-1", organizationId: "org-1", role: "ADMIN" },
+      });
+      const { prisma } = await import("@/lib/db");
+      const findMany = prisma.auditLog.findMany as ReturnType<typeof vi.fn>;
+      findMany.mockResolvedValue([]);
+      (prisma.auditLog.count as ReturnType<typeof vi.fn>).mockResolvedValue(0);
+      const { getAuditLogs } = await import("./audit");
+      await getAuditLogs(filters);
+      return findMany.mock.calls.at(-1)![0].where as Record<string, unknown>;
+    }
+
+    it("matches any of several actions (prefix) with other facets as `in`", async () => {
+      const where = await whereFor({
+        actions: ["CREATE", "DELETE"],
+        userIds: ["u1", "u2"],
+        entityTypes: ["App", "Subscription"],
+        teamIds: ["t1", "t2"],
+      });
+      expect(where.AND).toEqual([
+        {
+          OR: [
+            { action: { startsWith: "CREATE" } },
+            { action: { startsWith: "DELETE" } },
+          ],
+        },
+      ]);
+      expect(where.action).toBeUndefined();
+      expect(where.userId).toEqual({ in: ["u1", "u2"] });
+      expect(where.entityType).toEqual({ in: ["App", "Subscription"] });
+      expect(where.user).toEqual({ teamId: { in: ["t1", "t2"] } });
+    });
+
+    it("keeps the legacy single values working", async () => {
+      const where = await whereFor({ action: "LOGIN", entityType: "User" });
+      expect(where.action).toEqual({ startsWith: "LOGIN" });
+      expect(where.entityType).toBe("User");
+    });
+
+    it("treats empty lists as no filter", async () => {
+      const where = await whereFor({
+        actions: [],
+        userIds: [],
+        entityTypes: [],
+        teamIds: [],
+      });
+      expect(where).toEqual({ organizationId: "org-1" });
+    });
+
+    it("keeps search OR and multi-action AND apart", async () => {
+      const where = await whereFor({
+        actions: ["CREATE", "UPDATE"],
+        search: "slack",
+      });
+      expect(Array.isArray(where.OR)).toBe(true);
+      expect(where.AND).toHaveLength(1);
+    });
+  });
+
   describe("getAuditLogById", () => {
     it("should redirect when not authenticated", async () => {
       const { auth } = await import("@/lib/auth");

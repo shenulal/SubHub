@@ -92,3 +92,33 @@ describe("keyFromLabel", () => {
     expect(keyFromLabel("")).toBe("field");
   });
 });
+
+describe("MULTI_SELECT custom fields", () => {
+  const multi = def({
+    id: "regions",
+    fieldType: "MULTI_SELECT",
+    options: ["AE", "SA", "QA"],
+  });
+
+  it("accepts several listed options stored as a JSON array", () => {
+    expect(
+      validateCustomFieldValues([multi], { regions: '["AE","SA"]' }).ok
+    ).toBe(true);
+  });
+
+  it("rejects an option outside the list", () => {
+    expect(
+      validateCustomFieldValues([multi], { regions: '["AE","XX"]' }).errors
+        .regions
+    ).toBe("invalidOption");
+  });
+
+  it("treats an empty selection as missing", () => {
+    expect(validateCustomFieldValues([multi], { regions: "[]" }).ok).toBe(true);
+    expect(
+      validateCustomFieldValues([{ ...multi, isRequired: true }], {
+        regions: "",
+      }).errors.regions
+    ).toBe("required");
+  });
+});

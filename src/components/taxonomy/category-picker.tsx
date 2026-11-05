@@ -12,21 +12,37 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { usePermissionFlag } from "@/hooks/use-permission-flag";
 import { findCategoryNode } from "@/lib/services/taxonomy/category-tree";
 import { cn } from "@/lib/utils";
-import type { CategoryNode } from "@/types/taxonomy";
+import type { CategoryNode, CategoryRow } from "@/types/taxonomy";
+
+import { CategoryFormDialog } from "./category-form-dialog";
 
 const PARENT_ONLY = "__parent__";
 const CLEAR = "__clear__";
 
 export interface CategoryPickerProps {
   value: string | null;
-  onChange: (id: string | null) => void;
+  /** Receives the selected id and, when known, its node (name/slug). */
+  onChange: (id: string | null, node?: CategoryNode | null) => void;
   disabled?: boolean;
   placeholder?: string;
   /** Pre-loaded tree; when omitted the picker fetches it. */
   tree?: CategoryNode[];
   className?: string;
+  /** id for the category trigger (pairs with an external <Label htmlFor>). */
+  id?: string;
+  /**
+   * Show "+ Create …" rows. Defaults to the viewer's `categories:manage`
+   * permission (the server action re-checks it).
+   */
+  canCreate?: boolean;
+}
+
+interface CreateState {
+  name: string;
+  parent: CategoryNode | null;
 }
 
 function ColorDot({ color }: { color: string | null }) {
@@ -47,10 +63,16 @@ export function CategoryPicker({
   placeholder,
   tree,
   className,
+  id,
+  canCreate,
 }: CategoryPickerProps) {
   const t = useTranslations("taxonomy.picker");
+  const ti = useTranslations("platform.masters.inline");
+  const mayManage = usePermissionFlag("categories:manage");
+  const allowCreate = canCreate ?? mayManage;
   const [loaded, setLoaded] = useState<CategoryNode[] | null>(tree ?? null);
   const [isLoading, setIsLoading] = useState(!tree);
+  const [creating, setCreating] = useState<CreateState | null>(null);
 
   useEffect(() => {
     if (tree) {
@@ -82,12 +104,29 @@ export function CategoryPicker({
   const childValue = selected && selected.parentId ? selected.id : PARENT_ONLY;
 
   const handleParent = (next: string) => {
-    if (next === CLEAR) return onChange(null);
-    onChange(next);
+    if (next === CLEAR) return onChange(null, null);
+    onChange(next, findCategoryNode(nodes, next));
   };
   const handleChild = (next: string) => {
     if (!parent) return;
-    onChange(next === PARENT_ONLY ? parent.id : next);
+    const id = next === PARENT_ONLY ? parent.id : next;
+    onChange(id, findCategoryNode(nodes, id));
+  };
+
+  const createOption = (forParent: CategoryNode | null) =>
+    allowCreate
+      ? {
+          label: (q: string) =>
+            q ? ti("create", { name: q }) : ti("createEmpty"),
+          onCreate: (q: string) => setCreating({ name: q, parent: forParent }),
+        }
+      : undefined;
+
+  const handleCreated = async (row?: CategoryRow) => {
+    if (!row) return;
+    const fresh = await getCategoryTree();
+    setLoaded(fresh);
+    onChange(row.id, findCategoryNode(fresh, row.id));
   };
 
   return (
@@ -97,10 +136,14 @@ export function CategoryPicker({
         onValueChange={handleParent}
         disabled={disabled || isLoading}
       >
-        <SelectTrigger aria-label={t("parentPlaceholder")} className="w-full">
+        <SelectTrigger
+          id={id}
+          aria-label={id ? undefined : t("parentPlaceholder")}
+          className="w-full"
+        >
           <SelectValue placeholder={placeholder ?? t("parentPlaceholder")} />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent createOption={createOption(null)}>
           {nodes.length === 0 && (
             <div className="text-muted-foreground px-2 py-1.5 text-sm">
               {t("noCategories")}
@@ -125,12 +168,17 @@ export function CategoryPicker({
       <Select
         value={parent ? childValue : ""}
         onValueChange={handleChild}
-        disabled={disabled || isLoading || !parent || children.length === 0}
+        disabled={
+          disabled ||
+          isLoading ||
+          !parent ||
+          (children.length === 0 && !allowCreate)
+        }
       >
         <SelectTrigger aria-label={t("childPlaceholder")} className="w-full">
           <SelectValue placeholder={t("childPlaceholder")} />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent createOption={createOption(parent)}>
           <SelectItem value={PARENT_ONLY} className="text-muted-foreground">
             {t("parentOnly")}
           </SelectItem>
@@ -141,6 +189,15 @@ export function CategoryPicker({
           ))}
         </SelectContent>
       </Select>
+      {creating && (
+        <CategoryFormDialog
+          open
+          onOpenChange={(o) => !o && setCreating(null)}
+          parent={creating.parent}
+          defaultName={creating.name}
+          onSaved={(row) => void handleCreated(row)}
+        />
+      )}
     </div>
   );
 }

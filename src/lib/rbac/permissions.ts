@@ -77,6 +77,13 @@ export const PERMISSIONS = [
   ),
   p("masters", "manage", "Masters", "Edit master data"),
   p(
+    "masters",
+    "manage_global",
+    "Masters",
+    "Create and edit platform-wide masters: currencies, countries"
+  ),
+  p("catalog", "read", "Masters", "View the vendor catalog"),
+  p(
     "catalog",
     "manage",
     "Masters",
@@ -163,6 +170,7 @@ const VIEWER_GRANTS: PermissionKey[] = [
   "tags:read",
   "custom_fields:read",
   "masters:read",
+  "catalog:read",
   "attachments:read",
   "notifications:read",
   "notifications:manage_own",
@@ -227,6 +235,17 @@ export const SYSTEM_ROLE_TEMPLATES: Record<
     grants: Array.from(new Set(VIEWER_GRANTS)),
   },
 };
+
+/**
+ * Permissions added after organisations were created. `applyPermissionRollouts`
+ * (run by `npm run db:backfill-defaults`) grants each key to every existing
+ * system role whose template includes it. System-role grants cannot be edited
+ * by hand (only reset to the template), so re-applying is safe and idempotent.
+ */
+export const PERMISSION_ROLLOUTS: readonly PermissionKey[] = [
+  "masters:manage_global",
+  "catalog:read",
+];
 
 export const SYSTEM_ROLE_KEYS = Object.keys(
   SYSTEM_ROLE_TEMPLATES

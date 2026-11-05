@@ -77,12 +77,40 @@ describe("/api/v1/subscriptions contract", () => {
       expect(mockGetSubscriptions).toHaveBeenCalledWith(
         expect.objectContaining({
           filter: expect.objectContaining({
-            status: "ACTIVE",
-            billingCycle: "MONTHLY",
+            statuses: ["ACTIVE"],
+            billingCycles: ["MONTHLY"],
             search: "test",
           }),
         })
       );
+    });
+
+    it("GET accepts comma-separated multi-value filters and legacy single values", async () => {
+      mockAuth.mockResolvedValueOnce({
+        user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
+      } as never);
+      mockGetSubscriptions.mockResolvedValueOnce({
+        items: [],
+        total: 0,
+        page: 1,
+        limit: 20,
+        totalPages: 0,
+      });
+
+      const req = new NextRequest(
+        "http://localhost/api/v1/subscriptions?ownerId=u1,u2&teamId=t1&teamIds=t2&costCenterId=cc1&billingCycle=MONTHLY,YEARLY,BOGUS&categoryId=c1,c2"
+      );
+      await handler.GET(req);
+
+      const { filter } = mockGetSubscriptions.mock.calls.at(-1)![0] as {
+        filter: Record<string, unknown>;
+      };
+      expect(filter.ownerIds).toEqual(["u1", "u2"]);
+      expect(filter.teamIds).toEqual(["t1", "t2"]);
+      expect(filter.costCenterIds).toEqual(["cc1"]);
+      expect(filter.billingCycles).toEqual(["MONTHLY", "YEARLY"]);
+      expect(filter.categoryIds).toEqual(["c1", "c2"]);
+      expect(filter.paymentMethodIds).toBeUndefined();
     });
   });
 
