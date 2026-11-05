@@ -26,6 +26,9 @@ import { prisma } from "@/lib/db";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 
+/** Section panel nested inside the settings content card: outlined, no second shadow. */
+const NESTED_CARD = "border-border dark:border-border rounded-md shadow-none";
+
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("teamMembers.page");
   return {
@@ -48,8 +51,8 @@ async function InviteForm({ teams }: InviteFormProps) {
   };
 
   return (
-    <form action={handleSubmit} className="space-y-4">
-      <div className="space-y-2">
+    <form action={handleSubmit} className="grid gap-5 sm:grid-cols-2">
+      <div className="min-w-0 space-y-1.5 sm:col-span-2">
         <Label htmlFor="email">{t("email")}</Label>
         <Input
           id="email"
@@ -59,10 +62,10 @@ async function InviteForm({ teams }: InviteFormProps) {
           placeholder={t("emailPlaceholder")}
         />
       </div>
-      <div className="space-y-2">
+      <div className="min-w-0 space-y-1.5">
         <Label htmlFor="role">{t("role")}</Label>
         <Select name="role" defaultValue="MEMBER">
-          <SelectTrigger id="role">
+          <SelectTrigger id="role" className="w-full">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -74,10 +77,10 @@ async function InviteForm({ teams }: InviteFormProps) {
           </SelectContent>
         </Select>
       </div>
-      <div className="space-y-2">
+      <div className="min-w-0 space-y-1.5">
         <Label htmlFor="teamId">{t("teamAssignment")}</Label>
         <Select name="teamId">
-          <SelectTrigger id="teamId">
+          <SelectTrigger id="teamId" className="w-full">
             <SelectValue placeholder={t("teamPlaceholder")} />
           </SelectTrigger>
           <SelectContent>
@@ -89,7 +92,9 @@ async function InviteForm({ teams }: InviteFormProps) {
           </SelectContent>
         </Select>
       </div>
-      <Button type="submit">{t("submit")}</Button>
+      <div className="flex flex-wrap justify-end gap-3 sm:col-span-2">
+        <Button type="submit">{t("submit")}</Button>
+      </div>
     </form>
   );
 }
@@ -102,7 +107,7 @@ export default async function TeamPage() {
   if (role !== "ADMIN") {
     return (
       <div className="space-y-2">
-        <h1 className="text-3xl font-bold tracking-tight">{t("title")}</h1>
+        <h1 className="text-foreground text-2xl font-medium">{t("title")}</h1>
         <p className="text-muted-foreground">{t("adminOnly")}</p>
       </div>
     );
@@ -129,7 +134,7 @@ export default async function TeamPage() {
   const tForm = await getTranslations("teamMembers.inviteForm");
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <PageHeader
         title={t("title")}
         description={t("description")}
@@ -137,7 +142,7 @@ export default async function TeamPage() {
         backHref="/settings"
       />
 
-      <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
+      <Card className={NESTED_CARD}>
         <CardHeader>
           <CardTitle>{tMemberList("title")}</CardTitle>
           <CardDescription>{tMemberList("description")}</CardDescription>
@@ -157,7 +162,7 @@ export default async function TeamPage() {
         </CardContent>
       </Card>
 
-      <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
+      <Card className={NESTED_CARD}>
         <CardHeader>
           <CardTitle>{tForm("title")}</CardTitle>
           <CardDescription>{tForm("description")}</CardDescription>

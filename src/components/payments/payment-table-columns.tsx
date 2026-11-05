@@ -63,14 +63,7 @@ export function usePaymentTableColumns({
         header: t("payments.table.columns.source"),
         headerClassName: "w-16",
         cell: (record) => (
-          <Badge
-            variant="outline"
-            className={
-              record.source === "card"
-                ? "border-blue-300 bg-blue-50 text-blue-700"
-                : "border-gray-300 bg-gray-50 text-gray-700"
-            }
-          >
+          <Badge variant={record.source === "card" ? "info" : "secondary"}>
             {record.source === "card"
               ? t("payments.table.source.card")
               : t("payments.table.source.csv")}
@@ -81,22 +74,26 @@ export function usePaymentTableColumns({
         id: "transactionDate",
         header: t("payments.table.columns.transactionDate"),
         sortable: true,
-        cell: (record) => formatDate(record.transactionDate),
+        cell: (record) => (
+          <span className="whitespace-nowrap tabular-nums">
+            {formatDate(record.transactionDate)}
+          </span>
+        ),
       },
       {
         id: "merchantName",
         header: t("payments.table.columns.merchantName"),
         sortable: true,
         cell: (record) => (
-          <div>
+          <div className="max-w-[200px] min-w-0">
             <div
-              className="max-w-[180px] truncate font-medium"
+              className="text-foreground truncate font-medium"
               title={record.merchantName}
             >
               {record.merchantName}
             </div>
             {record.cardLast4 && (
-              <div className="text-muted-foreground text-xs">
+              <div className="text-muted-foreground truncate text-xs tabular-nums">
                 {t("payments.table.cardLast4")}
                 {record.cardLast4}
               </div>
@@ -108,7 +105,7 @@ export function usePaymentTableColumns({
         id: "amount",
         header: t("payments.table.columns.amount"),
         sortable: true,
-        className: "text-right font-medium",
+        className: "text-right font-medium whitespace-nowrap tabular-nums",
         headerClassName: "text-right",
         cell: (record) => formatAmount(record.amount, record.currency),
       },
@@ -116,7 +113,7 @@ export function usePaymentTableColumns({
         id: "matchStatus",
         header: t("payments.table.columns.matchStatus"),
         cell: (record) => (
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 whitespace-nowrap">
             <Badge
               variant="secondary"
               className={STATUS_COLORS[record.matchStatus]}
@@ -177,7 +174,7 @@ export function usePaymentTableColumns({
                 disabled={isPending}
                 title={t("payments.table.unmatch")}
               >
-                <X className="h-4 w-4 text-red-600" />
+                <X className="text-error h-4 w-4" />
               </Button>
             )}
           </div>
@@ -189,7 +186,7 @@ export function usePaymentTableColumns({
         cell: (record) =>
           record.linkedSubscription ? (
             <div className="flex items-center gap-2">
-              <Link2 className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+              <Link2 className="text-success h-4 w-4 shrink-0" />
               <span
                 className="max-w-[120px] truncate text-sm"
                 title={record.linkedSubscription.appName}

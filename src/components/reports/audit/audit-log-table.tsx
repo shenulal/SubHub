@@ -46,31 +46,27 @@ function getActionCategory(action: string): string {
   return action;
 }
 
+type BadgeTone = "secondary" | "success" | "info" | "primary" | "error";
+
 function getActionBadge(action: string, t: (key: string) => string) {
   const category = getActionCategory(action);
 
-  const actionConfig: Record<
-    string,
-    {
-      label: string;
-      variant: "default" | "secondary" | "destructive" | "outline";
-    }
-  > = {
-    CREATE: { label: t("reports.audit.actions.create"), variant: "default" },
-    UPDATE: { label: t("reports.audit.actions.update"), variant: "secondary" },
+  const actionConfig: Record<string, { label: string; variant: BadgeTone }> = {
+    CREATE: { label: t("reports.audit.actions.create"), variant: "success" },
+    UPDATE: { label: t("reports.audit.actions.update"), variant: "info" },
     DELETE: {
       label: t("reports.audit.actions.delete"),
-      variant: "destructive",
+      variant: "error",
     },
-    LOGIN: { label: t("reports.audit.actions.login"), variant: "outline" },
-    LOGOUT: { label: t("reports.audit.actions.logout"), variant: "outline" },
-    SYNC: { label: t("reports.audit.actions.sync"), variant: "secondary" },
-    EXPORT: { label: t("reports.audit.actions.export"), variant: "outline" },
-    IMPORT: { label: t("reports.audit.actions.import"), variant: "outline" },
+    LOGIN: { label: t("reports.audit.actions.login"), variant: "secondary" },
+    LOGOUT: { label: t("reports.audit.actions.logout"), variant: "secondary" },
+    SYNC: { label: t("reports.audit.actions.sync"), variant: "primary" },
+    EXPORT: { label: t("reports.audit.actions.export"), variant: "secondary" },
+    IMPORT: { label: t("reports.audit.actions.import"), variant: "secondary" },
   };
   const config = actionConfig[category] || {
     label: action,
-    variant: "outline" as const,
+    variant: "secondary" as const,
   };
   return <Badge variant={config.variant}>{config.label}</Badge>;
 }
@@ -150,9 +146,13 @@ export function AuditLogTable({
         id: "user",
         header: t("reports.audit.columns.user"),
         cell: (log) => (
-          <div>
-            <p className="font-medium">{log.userName || "-"}</p>
-            <p className="text-muted-foreground text-xs">{log.userEmail}</p>
+          <div className="min-w-0">
+            <p className="max-w-[16rem] truncate font-medium">
+              {log.userName || "-"}
+            </p>
+            <p className="text-muted-foreground max-w-[16rem] truncate text-xs">
+              {log.userEmail}
+            </p>
           </div>
         ),
       },
@@ -171,12 +171,12 @@ export function AuditLogTable({
             : null;
 
           return (
-            <div>
+            <div className="min-w-0">
               <p className="font-medium">
                 {getEntityTypeName(log.entityType, t)}
               </p>
               {(displayName || fallbackId) && (
-                <p className="text-muted-foreground text-xs">
+                <p className="text-muted-foreground max-w-[18rem] truncate text-xs">
                   {displayName || fallbackId}
                 </p>
               )}
@@ -240,7 +240,9 @@ export function AuditLogTable({
   if (logs.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
-        <FileText className="text-muted-foreground mb-4 h-12 w-12" />
+        <div className="tonal-neutral mb-3 flex size-10 items-center justify-center rounded-md">
+          <FileText className="size-5" />
+        </div>
         <h3 className="text-lg font-medium">
           {t("reports.audit.empty.title")}
         </h3>

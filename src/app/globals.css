@@ -5,126 +5,155 @@
 /* Tailwind dark mode variant: .dark 클래스를 가진 요소와 그 자식 모두에 적용 */
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* 기본 테마 변수 정의 (:root 레벨) - Indigo Primary Theme (#6366F1) */
+/* ─── Materio design system (themeselection/materio-mui-nextjs-admin-template-free, MIT) ───
+ * Palette, text-opacity scale, dividers, shadows and radius ported from
+ * src/@core/theme (colorSchemes.ts, customShadows.ts, index.ts).
+ * Light: body #F4F5FA, paper #FFF, text rgb(46 38 61 / .9). Dark: body #28243D, paper #312D4B.
+ */
 :root {
-  --background: #ffffff;
-  --foreground: #333333;
+  --materio-text: 46 38 61;
+  --materio-shadow: 46 38 61;
+
+  --background: #f4f5fa;
+  --foreground: rgb(var(--materio-text) / 0.9);
   --card: #ffffff;
-  --card-foreground: #333333;
+  --card-foreground: rgb(var(--materio-text) / 0.9);
   --popover: #ffffff;
-  --popover-foreground: #333333;
-  --primary: #6366f1;
+  --popover-foreground: rgb(var(--materio-text) / 0.9);
+  --primary: #8c57ff;
+  --primary-light: #a379ff;
+  --primary-dark: #7e4ee6;
   --primary-foreground: #ffffff;
-  --secondary: #f5f5f5;
-  --secondary-foreground: #4b5666;
-  --muted: #f8f8f8;
-  --muted-foreground: #6c727e;
-  --accent: #e0e7ff;
-  --accent-foreground: #3730a3;
-  --destructive: #f14444;
-  --border: #e4e8ef;
-  --input: #e4e8ef;
-  --ring: #6366f1;
-  --chart-1: #6366f1;
-  --chart-2: #818cf8;
-  --chart-3: #4f46e5;
-  --chart-4: #4338ca;
-  --chart-5: #3730a3;
+  --secondary: rgb(var(--materio-text) / 0.06);
+  --secondary-foreground: rgb(var(--materio-text) / 0.9);
+  --muted: #f6f7fb;
+  --muted-foreground: rgb(var(--materio-text) / 0.7);
+  --disabled-foreground: rgb(var(--materio-text) / 0.4);
+  --accent: rgb(var(--materio-text) / 0.06);
+  --accent-foreground: rgb(var(--materio-text) / 0.9);
+  --destructive: #ff4c51;
+  --border: rgb(var(--materio-text) / 0.12);
+  --input: rgb(var(--materio-text) / 0.22);
+  --ring: #8c57ff;
 
-  /* Purple 색상 계열 (Figma: #6474F3) */
-  --purple-primary: #6474f3;
-  --purple-secondary: rgba(100, 116, 243, 0.6);
-  --purple-tertiary: rgba(100, 116, 243, 0.15);
-  --purple-gray: rgba(100, 116, 243, 0.05);
+  /* Semantic colours (Materio palette) */
+  --success: #56ca00;
+  --warning: #ffb400;
+  --info: #16b1ff;
+  --error: #ff4c51;
+  --neutral: #8a8d93;
 
-  /* Magenta 색상 계열 (Figma: #D165D3) */
-  --magenta-primary: #d165d3;
-  --magenta-secondary: rgba(209, 101, 211, 0.6);
-  --magenta-tertiary: rgba(209, 101, 211, 0.15);
-  --magenta-gray: rgba(209, 101, 211, 0.05);
-  --sidebar: #f8f8f8;
-  --sidebar-foreground: #090909;
-  --sidebar-primary: #161616;
-  --sidebar-primary-foreground: #f8f8f8;
-  --sidebar-accent: #e4e4e4;
-  --sidebar-accent-foreground: #161616;
-  --sidebar-border: #e4e4e4;
-  --sidebar-ring: #a1a1a1;
+  --chart-1: #8c57ff;
+  --chart-2: #16b1ff;
+  --chart-3: #56ca00;
+  --chart-4: #ffb400;
+  --chart-5: #ff4c51;
+
+  /* Legacy accent families, re-pointed at the Materio primary */
+  --purple-primary: #8c57ff;
+  --purple-secondary: rgb(140 87 255 / 0.6);
+  --purple-tertiary: rgb(140 87 255 / 0.16);
+  --purple-gray: rgb(140 87 255 / 0.08);
+  --magenta-primary: #c6abff;
+  --magenta-secondary: rgb(198 171 255 / 0.6);
+  --magenta-tertiary: rgb(198 171 255 / 0.16);
+  --magenta-gray: rgb(198 171 255 / 0.08);
+
+  /* Vertical navigation sits on the body colour, as in Materio */
+  --sidebar: #f4f5fa;
+  --sidebar-foreground: rgb(var(--materio-text) / 0.9);
+  --sidebar-primary: #8c57ff;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: rgb(var(--materio-text) / 0.06);
+  --sidebar-accent-foreground: rgb(var(--materio-text) / 0.9);
+  --sidebar-border: rgb(var(--materio-text) / 0.12);
+  --sidebar-ring: #8c57ff;
+  --nav-active-gradient: linear-gradient(270deg, #8c57ff, #c6abff 100%);
 
   --font-sans:
-    "Geist", "Geist Fallback", ui-sans-serif, system-ui, -apple-system,
+    var(--font-inter), "Inter", ui-sans-serif, system-ui, -apple-system,
     BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial,
-    "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
-    "Segoe UI Symbol", "Noto Color Emoji";
+    sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
   --font-serif: Source Serif 4, serif;
-  --font-mono: JetBrains Mono, monospace;
+  --font-mono: var(--font-geist-mono), JetBrains Mono, monospace;
 
   --radius: 0.375rem;
 
-  --shadow-2xs: 0 1px 3px 0px rgb(0 0 0 / 0.05);
-  --shadow-xs: 0 1px 3px 0px rgb(0 0 0 / 0.05);
-  --shadow-sm: 0 1px 3px 0px rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --shadow: 0 1px 3px 0px rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --shadow-md: 0 1px 3px 0px rgb(0 0 0 / 0.1), 0 2px 4px -1px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 1px 3px 0px rgb(0 0 0 / 0.1), 0 4px 6px -1px rgb(0 0 0 / 0.1);
-  --shadow-xl: 0 1px 3px 0px rgb(0 0 0 / 0.1), 0 8px 10px -1px rgb(0 0 0 / 0.1);
-  --shadow-2xl: 0 1px 3px 0px rgb(0 0 0 / 0.25);
+  --shadow-2xs: 0px 1px 2px rgb(var(--materio-shadow) / 0.12);
+  --shadow-xs: 0px 2px 4px rgb(var(--materio-shadow) / 0.16);
+  --shadow-sm: 0px 3px 6px rgb(var(--materio-shadow) / 0.18);
+  --shadow: 0px 4px 10px rgb(var(--materio-shadow) / 0.2);
+  --shadow-md: 0px 4px 10px rgb(var(--materio-shadow) / 0.2);
+  --shadow-lg: 0px 6px 16px rgb(var(--materio-shadow) / 0.22);
+  --shadow-xl: 0px 8px 28px rgb(var(--materio-shadow) / 0.24);
+  --shadow-2xl: 0px 12px 36px rgb(var(--materio-shadow) / 0.26);
 }
 
-/* 다크모드 테마 변수 - Indigo Primary Dark Theme (#6366F1) */
 .dark {
-  --background: #161616;
-  --foreground: #e4e4e4;
-  --card: #171717;
-  --card-foreground: #e4e4e4;
-  --popover: #262626;
-  --popover-foreground: #e4e4e4;
-  --primary: #818cf8;
-  --primary-foreground: #1e1b4b;
-  --secondary: #262626;
-  --secondary-foreground: #e4e4e4;
-  --muted: #262626;
-  --muted-foreground: #a4a4a4;
-  --accent: #312e81;
-  --accent-foreground: #c7d2fe;
-  --destructive: #f14444;
-  --border: #404040;
-  --input: #404040;
-  --ring: #818cf8;
-  --chart-1: #a5b4fc;
-  --chart-2: #818cf8;
-  --chart-3: #6366f1;
-  --chart-4: #4f46e5;
-  --chart-5: #4338ca;
+  --materio-text: 231 227 252;
+  --materio-shadow: 19 17 32;
 
-  /* Purple 색상 계열 (Figma: #6474F3) - 다크모드 동일 */
-  --purple-primary: #6474f3;
-  --purple-secondary: rgba(100, 116, 243, 0.6);
-  --purple-tertiary: #6474f326;
-  --purple-gray: #6474f326;
+  --background: #28243d;
+  --foreground: rgb(var(--materio-text) / 0.9);
+  --card: #312d4b;
+  --card-foreground: rgb(var(--materio-text) / 0.9);
+  --popover: #312d4b;
+  --popover-foreground: rgb(var(--materio-text) / 0.9);
+  --primary: #8c57ff;
+  --primary-light: #a379ff;
+  --primary-dark: #7e4ee6;
+  --primary-foreground: #ffffff;
+  --secondary: rgb(var(--materio-text) / 0.08);
+  --secondary-foreground: rgb(var(--materio-text) / 0.9);
+  --muted: #3d3759;
+  --muted-foreground: rgb(var(--materio-text) / 0.7);
+  --disabled-foreground: rgb(var(--materio-text) / 0.4);
+  --accent: rgb(var(--materio-text) / 0.08);
+  --accent-foreground: rgb(var(--materio-text) / 0.9);
+  --destructive: #ff4c51;
+  --border: rgb(var(--materio-text) / 0.12);
+  --input: rgb(var(--materio-text) / 0.22);
+  --ring: #8c57ff;
 
-  /* Magenta 색상 계열 (Figma: #D165D3) - 다크모드 동일 */
-  --magenta-primary: #d165d3;
-  --magenta-secondary: rgba(209, 101, 211, 0.6);
-  --magenta-tertiary: rgba(209, 101, 211, 0.15);
-  --magenta-gray: rgba(209, 101, 211, 0.15);
-  --sidebar: #18181d;
-  --sidebar-foreground: #fcfcfc;
-  --sidebar-primary: #6366f1;
-  --sidebar-primary-foreground: #fcfcfc;
-  --sidebar-accent: #26262b;
-  --sidebar-accent-foreground: #fcfcfc;
-  --sidebar-border: #ffffff1a;
-  --sidebar-ring: #70707d;
+  --success: #56ca00;
+  --warning: #ffb400;
+  --info: #16b1ff;
+  --error: #ff4c51;
+  --neutral: #8a8d93;
 
-  --shadow-2xs: 0 1px 3px 0px rgb(0 0 0 / 0.05);
-  --shadow-xs: 0 1px 3px 0px rgb(0 0 0 / 0.05);
-  --shadow-sm: 0 1px 3px 0px rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --shadow: 0 1px 3px 0px rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
-  --shadow-md: 0 1px 3px 0px rgb(0 0 0 / 0.1), 0 2px 4px -1px rgb(0 0 0 / 0.1);
-  --shadow-lg: 0 1px 3px 0px rgb(0 0 0 / 0.1), 0 4px 6px -1px rgb(0 0 0 / 0.1);
-  --shadow-xl: 0 1px 3px 0px rgb(0 0 0 / 0.1), 0 8px 10px -1px rgb(0 0 0 / 0.1);
-  --shadow-2xl: 0 1px 3px 0px rgb(0 0 0 / 0.25);
+  --chart-1: #8c57ff;
+  --chart-2: #16b1ff;
+  --chart-3: #56ca00;
+  --chart-4: #ffb400;
+  --chart-5: #ff4c51;
+
+  --purple-primary: #a379ff;
+  --purple-secondary: rgb(163 121 255 / 0.6);
+  --purple-tertiary: rgb(140 87 255 / 0.24);
+  --purple-gray: rgb(140 87 255 / 0.16);
+  --magenta-primary: #c6abff;
+  --magenta-secondary: rgb(198 171 255 / 0.6);
+  --magenta-tertiary: rgb(198 171 255 / 0.2);
+  --magenta-gray: rgb(198 171 255 / 0.12);
+
+  --sidebar: #28243d;
+  --sidebar-foreground: rgb(var(--materio-text) / 0.9);
+  --sidebar-primary: #8c57ff;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: rgb(var(--materio-text) / 0.08);
+  --sidebar-accent-foreground: rgb(var(--materio-text) / 0.9);
+  --sidebar-border: rgb(var(--materio-text) / 0.12);
+  --sidebar-ring: #8c57ff;
+  --nav-active-gradient: linear-gradient(270deg, #8c57ff, #c6abff 100%);
+
+  --shadow-2xs: 0px 1px 2px rgb(var(--materio-shadow) / 0.16);
+  --shadow-xs: 0px 2px 4px rgb(var(--materio-shadow) / 0.2);
+  --shadow-sm: 0px 3px 6px rgb(var(--materio-shadow) / 0.22);
+  --shadow: 0px 4px 10px rgb(var(--materio-shadow) / 0.24);
+  --shadow-md: 0px 4px 10px rgb(var(--materio-shadow) / 0.24);
+  --shadow-lg: 0px 6px 16px rgb(var(--materio-shadow) / 0.26);
+  --shadow-xl: 0px 8px 28px rgb(var(--materio-shadow) / 0.28);
+  --shadow-2xl: 0px 12px 36px rgb(var(--materio-shadow) / 0.3);
 }
 
 @theme inline {
@@ -146,6 +175,14 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-primary-light: var(--primary-light);
+  --color-primary-dark: var(--primary-dark);
+  --color-disabled-foreground: var(--disabled-foreground);
+  --color-success: var(--success);
+  --color-warning: var(--warning);
+  --color-info: var(--info);
+  --color-error: var(--error);
+  --color-neutral: var(--neutral);
   --color-chart-1: var(--chart-1);
   --color-chart-2: var(--chart-2);
   --color-chart-3: var(--chart-3);
@@ -200,8 +237,35 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-size: 0.9375rem;
+    line-height: 1.46667;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  /* Materio heading scale (h1 2.875rem … h6 0.9375rem, weight 500) */
+  h1, h2, h3, h4, h5, h6 {
+    font-weight: 500;
+    letter-spacing: normal;
+  }
+  /* Numbers line up in tables and KPI cards */
+  td, .tabular-nums, [data-slot="card"] [data-kpi] {
+    font-variant-numeric: tabular-nums;
+  }
+  button, [role="tab"], [data-slot="badge"] {
+    white-space: nowrap;
   }
 }
+
+/* Materio tonal surfaces (16% tint + full-strength text), nav gradient and KPI sizing.
+   Declared with @utility so they accept variants such as dark: and hover:. */
+@utility tonal-primary { background-color: rgb(140 87 255 / 0.16); color: var(--primary); }
+@utility tonal-success { background-color: rgb(86 202 0 / 0.16); color: var(--success); }
+@utility tonal-warning { background-color: rgb(255 180 0 / 0.16); color: var(--warning); }
+@utility tonal-info { background-color: rgb(22 177 255 / 0.16); color: var(--info); }
+@utility tonal-error { background-color: rgb(255 76 81 / 0.16); color: var(--error); }
+@utility tonal-neutral { background-color: rgb(138 141 147 / 0.16); color: var(--neutral); }
+@utility nav-active { background-image: var(--nav-active-gradient); color: #fff; box-shadow: var(--shadow-xs); }
+@utility kpi-value { font-size: clamp(1.25rem, 0.9rem + 1vw, 1.75rem); line-height: 1.25; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
 
 
 @keyframes auth-fade-up {
@@ -246,12 +310,12 @@
 
 /* Optimization Hero 그라데이션 배경 */
 .optimization-hero-gradient {
-  background-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 1174 130' xmlns='http://www.w3.org/2000/svg' preserveAspectRatio='none'><rect x='0' y='0' height='100%' width='100%' fill='url(%23grad)' opacity='1'/><defs><radialGradient id='grad' gradientUnits='userSpaceOnUse' cx='0' cy='0' r='10' gradientTransform='matrix(116.58 13 -12.767 87.644 8.218 0.0000062816)'><stop stop-color='rgba(135,148,246,1)' offset='0'/><stop stop-color='rgba(185,139,242,1)' offset='0.5'/><stop stop-color='rgba(235,130,238,1)' offset='1'/></radialGradient></defs></svg>");
+  background-image: linear-gradient(135deg, #8c57ff 0%, #a379ff 55%, #c6abff 100%);
   background-size: cover;
 }
 
 /* 다크모드: Figma 디자인 기반 그라데이션 */
 .dark .optimization-hero-gradient {
-  background-image: url("data:image/svg+xml;utf8,<svg viewBox='0 0 1174 130' xmlns='http://www.w3.org/2000/svg' preserveAspectRatio='none'><rect x='0' y='0' height='100%' width='100%' fill='url(%23grad)' opacity='1'/><defs><radialGradient id='grad' gradientUnits='userSpaceOnUse' cx='0' cy='0' r='10' gradientTransform='matrix(116.58 13 -12.767 87.644 8.218 0.0000062816)'><stop stop-color='rgba(72,62,142,1)' offset='0'/><stop stop-color='rgba(121,56,123,1)' offset='1'/></radialGradient></defs></svg>");
+  background-image: linear-gradient(135deg, #7e4ee6 0%, #8c57ff 60%, #a379ff 100%);
   background-size: cover;
 }

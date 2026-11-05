@@ -156,36 +156,33 @@ export function KanbanPageClient({ canManage = false }: KanbanPageClientProps) {
   ];
 
   return (
-    <div className="space-y-4">
+    <div className="min-w-0 space-y-6">
       {/* 페이지 헤더 */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="min-w-0">
+          <h1 className="text-foreground text-2xl font-medium">
             {t("header.title")}
           </h1>
         </div>
 
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           {/* 담당자 아바타 */}
-          <div className="flex -space-x-2">
+          <div className="flex shrink-0 -space-x-2">
             {assignees.map((assignee) => (
-              <Avatar
-                key={assignee.id}
-                className="border-background h-8 w-8 border-2"
-              >
-                <AvatarFallback className="text-xs">
+              <Avatar key={assignee.id} className="border-card size-9 border-2">
+                <AvatarFallback className="tonal-primary text-xs">
                   {assignee.name.slice(0, 2)}
                 </AvatarFallback>
               </Avatar>
             ))}
-            <div className="border-background bg-muted flex h-8 w-8 items-center justify-center rounded-full border-2 text-xs">
+            <div className="border-card tonal-neutral flex size-9 items-center justify-center rounded-full border-2 text-xs font-medium">
               +5
             </div>
           </div>
 
           {canManage && (
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
+            <Button className="shrink-0 whitespace-nowrap">
+              <Plus className="size-4" />
               {t("header.addAssignee")}
             </Button>
           )}
@@ -193,7 +190,7 @@ export function KanbanPageClient({ canManage = false }: KanbanPageClientProps) {
       </div>
 
       {/* 뷰 전환 + 검색/필터 */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="bg-card flex flex-wrap items-center justify-between gap-4 rounded-lg px-5 pt-2 pb-4 shadow-md lg:py-3">
         <Tabs
           value={viewMode}
           onValueChange={(v) => setViewMode(v as ViewMode)}
@@ -214,25 +211,25 @@ export function KanbanPageClient({ canManage = false }: KanbanPageClientProps) {
           </TabsList>
         </Tabs>
 
-        <div className="flex items-center gap-3">
-          <div className="relative">
-            <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <div className="relative w-full min-w-0 sm:w-64">
+            <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2" />
             <Input
               placeholder={t("search.placeholder")}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-64 pl-9"
+              className="w-full pl-9"
             />
           </div>
 
-          <Button variant="outline">
-            <Filter className="mr-2 h-4 w-4" />
+          <Button variant="outline" className="shrink-0 whitespace-nowrap">
+            <Filter className="size-4" />
             {t("actions.filters")}
           </Button>
 
           {canManage && (
-            <Button>
-              <Plus className="mr-2 h-4 w-4" />
+            <Button className="shrink-0 whitespace-nowrap">
+              <Plus className="size-4" />
               {t("actions.addBoard")}
             </Button>
           )}
@@ -254,12 +251,17 @@ export function KanbanPageClient({ canManage = false }: KanbanPageClientProps) {
           {filteredTasks.map((task) => (
             <div
               key={task.id}
-              className="bg-card flex items-center gap-4 rounded-lg border p-4"
+              className="bg-card flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg p-4 shadow-xs sm:flex-nowrap"
             >
-              <div className="flex-1">
-                <h4 className="font-medium">{task.title}</h4>
+              <div className="min-w-0 flex-1 basis-full sm:basis-auto">
+                <h4
+                  className="text-foreground truncate text-[0.9375rem] font-medium"
+                  title={task.title}
+                >
+                  {task.title}
+                </h4>
                 {task.description && (
-                  <p className="text-muted-foreground line-clamp-1 text-sm">
+                  <p className="text-muted-foreground line-clamp-1 text-[0.8125rem]">
                     {task.description}
                   </p>
                 )}

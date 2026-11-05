@@ -11,6 +11,7 @@ import {
   MonthlyTrendChart,
   SeatAnalysisSection,
 } from "@/components/reports/cost";
+import { ReportStatCard } from "@/components/reports/report-stat-card";
 import { TeamUserFilterRouter } from "@/components/reports/team-user-filter-router";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -27,7 +28,10 @@ import {
   AlertTriangle,
   ArrowDownIcon,
   ArrowUpIcon,
+  CalendarClock,
   DollarSign,
+  Receipt,
+  Wallet,
 } from "lucide-react";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
@@ -141,13 +145,11 @@ export default async function CostAnalysisPage({ searchParams }: PageProps) {
     : [];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* 헤더 */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            {t("page.title")}
-          </h1>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="min-w-0">
+          <h1 className="truncate text-2xl font-medium">{t("page.title")}</h1>
         </div>
         {session.user.role !== "VIEWER" && (
           <ExportButtons
@@ -161,26 +163,24 @@ export default async function CostAnalysisPage({ searchParams }: PageProps) {
       </div>
 
       {/* 핵심 지표 */}
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card className="bg-card flex h-full flex-col gap-3 rounded-sm border-none px-3 pt-5 pb-3 shadow-[0px_2px_8px_0px_rgba(0,0,0,0.1)]">
-          <div className="flex flex-1 flex-col gap-2 px-2">
-            <p className="text-primary text-xs">{t("stats.totalCost")}</p>
-            <p className="text-secondary-foreground text-2xl font-medium">
-              {statistics
-                ? formatCurrency(
-                    statistics.totalCost,
-                    statistics.currency || baseCurrency
-                  )
-                : "-"}
-            </p>
-          </div>
-          {statistics && statistics.costChange !== 0 && (
-            <div className="bg-purple-gray rounded p-2">
+      <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+        <ReportStatCard
+          icon={Wallet}
+          tone="primary"
+          title={t("stats.totalCost")}
+          value={
+            statistics
+              ? formatCurrency(
+                  statistics.totalCost,
+                  statistics.currency || baseCurrency
+                )
+              : "-"
+          }
+          caption={
+            statistics && statistics.costChange !== 0 ? (
               <p
-                className={`text-xs ${
-                  statistics.costChange > 0
-                    ? "text-destructive"
-                    : "text-success"
+                className={`truncate ${
+                  statistics.costChange > 0 ? "text-error" : "text-success"
                 }`}
               >
                 {statistics.costChange > 0 ? (
@@ -192,60 +192,42 @@ export default async function CostAnalysisPage({ searchParams }: PageProps) {
                   value: formatPercentage(statistics.costChange),
                 })}
               </p>
-            </div>
-          )}
-        </Card>
+            ) : undefined
+          }
+        />
 
-        <Card className="bg-card flex h-full flex-col gap-3 rounded-sm border-none px-3 pt-5 pb-3 shadow-[0px_2px_8px_0px_rgba(0,0,0,0.1)]">
-          <div className="flex flex-1 flex-col gap-2 px-2">
-            <p className="text-primary text-xs">{t("stats.monthlyAverage")}</p>
-            <p className="text-secondary-foreground text-2xl font-medium">
-              {statistics
-                ? formatCurrency(
-                    statistics.monthlyAverage,
-                    statistics.currency || baseCurrency
-                  )
-                : "-"}
-            </p>
-          </div>
-          <div className="bg-purple-gray rounded p-2">
-            <p className="text-muted-foreground text-xs">
-              {t("stats.last30Days")}
-            </p>
-          </div>
-        </Card>
+        <ReportStatCard
+          icon={CalendarClock}
+          tone="info"
+          title={t("stats.monthlyAverage")}
+          value={
+            statistics
+              ? formatCurrency(
+                  statistics.monthlyAverage,
+                  statistics.currency || baseCurrency
+                )
+              : "-"
+          }
+          caption={t("stats.last30Days")}
+        />
 
-        <Card className="bg-card flex h-full flex-col gap-3 rounded-sm border-none px-3 pt-5 pb-3 shadow-[0px_2px_8px_0px_rgba(0,0,0,0.1)]">
-          <div className="flex flex-1 flex-col gap-2 px-2">
-            <p className="text-primary text-xs">
-              {t("stats.transactionCount")}
-            </p>
-            <p className="text-secondary-foreground text-2xl font-medium">
-              {statistics ? statistics.transactionCount.toLocaleString() : "-"}
-            </p>
-          </div>
-          <div className="bg-purple-gray rounded p-2">
-            <p className="text-muted-foreground text-xs">
-              {t("stats.thisPeriod")}
-            </p>
-          </div>
-        </Card>
+        <ReportStatCard
+          icon={Receipt}
+          tone="success"
+          title={t("stats.transactionCount")}
+          value={
+            statistics ? statistics.transactionCount.toLocaleString() : "-"
+          }
+          caption={t("stats.thisPeriod")}
+        />
 
-        <Card className="bg-card flex h-full flex-col gap-3 rounded-sm border-none px-3 pt-5 pb-3 shadow-[0px_2px_8px_0px_rgba(0,0,0,0.1)]">
-          <div className="flex flex-1 flex-col gap-2 px-2">
-            <p className="text-primary text-xs">
-              {t("stats.anomalyDetection")}
-            </p>
-            <p className="text-secondary-foreground text-2xl font-medium">
-              {t("stats.anomalyCount", { count: anomalies?.length || 0 })}
-            </p>
-          </div>
-          <div className="bg-purple-gray rounded p-2">
-            <p className="text-muted-foreground text-xs">
-              {t("stats.anomalyThreshold")}
-            </p>
-          </div>
-        </Card>
+        <ReportStatCard
+          icon={AlertTriangle}
+          tone="warning"
+          title={t("stats.anomalyDetection")}
+          value={t("stats.anomalyCount", { count: anomalies?.length || 0 })}
+          caption={t("stats.anomalyThreshold")}
+        />
       </div>
 
       <TeamUserFilterRouter
@@ -265,9 +247,9 @@ export default async function CostAnalysisPage({ searchParams }: PageProps) {
         userId={effectiveUserId}
       />
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-6 xl:grid-cols-2">
         {/* 앱별 비용 분포 */}
-        <Card className="border-border/50 min-h-[450px] rounded-sm shadow-sm transition-shadow hover:shadow-md">
+        <Card className="xl:min-h-[450px]">
           <CardHeader>
             <CardTitle>{t("distribution.title")}</CardTitle>
             <CardDescription>{t("distribution.description")}</CardDescription>
@@ -278,42 +260,49 @@ export default async function CostAnalysisPage({ searchParams }: PageProps) {
                 {topApps.map((app) => (
                   <div
                     key={app.appId}
-                    className="flex items-center justify-between"
+                    className="flex min-w-0 items-center justify-between gap-4"
                   >
-                    <div className="flex items-center gap-2">
-                      <div className="bg-primary/10 flex h-8 w-8 items-center justify-center rounded-lg">
-                        <DollarSign className="text-primary h-4 w-4" />
+                    <div className="flex min-w-0 items-center gap-3">
+                      <div className="tonal-primary flex size-10 shrink-0 items-center justify-center rounded-md">
+                        <DollarSign className="size-5" />
                       </div>
-                      <div>
-                        <p className="font-medium">{app.appName}</p>
-                        <p className="text-muted-foreground text-xs">
+                      <div className="min-w-0">
+                        <p className="truncate font-medium" title={app.appName}>
+                          {app.appName}
+                        </p>
+                        <p className="text-muted-foreground truncate text-[0.8125rem]">
                           {t("distribution.percentage", {
                             value: app.percentage.toFixed(1),
                           })}
                         </p>
                       </div>
                     </div>
-                    <span className="font-medium">
+                    <span className="shrink-0 font-medium tabular-nums">
                       {formatCurrency(app.totalCost, baseCurrency)}
                     </span>
                   </div>
                 ))}
               </div>
             ) : (
-              <p className="text-muted-foreground py-8 text-center">
-                {t("distribution.noData")}
-              </p>
+              <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
+                <div className="tonal-neutral flex size-10 items-center justify-center rounded-md">
+                  <DollarSign className="size-5" />
+                </div>
+                <p className="text-muted-foreground text-[0.9375rem]">
+                  {t("distribution.noData")}
+                </p>
+              </div>
             )}
           </CardContent>
         </Card>
 
         {/* 비용 이상 감지 */}
-        <Card className="border-border/50 min-h-[450px] rounded-sm shadow-sm transition-shadow hover:shadow-md">
+        <Card className="xl:min-h-[450px]">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              {t("anomaly.title")}
+            <CardTitle className="flex min-w-0 items-center gap-2">
+              <span className="truncate">{t("anomaly.title")}</span>
               {anomalies && anomalies.length > 0 && (
-                <Badge className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                <Badge variant="error">
                   {t("anomaly.count", { count: anomalies.length })}
                 </Badge>
               )}
@@ -322,26 +311,31 @@ export default async function CostAnalysisPage({ searchParams }: PageProps) {
           </CardHeader>
           <CardContent>
             {anomalies && anomalies.length > 0 ? (
-              <div className="space-y-4">
+              <div className="space-y-3">
                 {anomalies.map((anomaly) => (
                   <div
                     key={anomaly.appId}
-                    className="hover:bg-purple-gray flex items-center justify-between rounded-lg border p-3 transition-colors"
+                    className="hover:bg-muted flex min-w-0 items-center justify-between gap-3 rounded-md border p-3 transition-colors"
                   >
-                    <div>
-                      <p className="font-medium">{anomaly.appName}</p>
-                      <p className="text-muted-foreground text-xs">
+                    <div className="min-w-0">
+                      <p
+                        className="truncate font-medium"
+                        title={anomaly.appName}
+                      >
+                        {anomaly.appName}
+                      </p>
+                      <p className="text-muted-foreground truncate text-[0.8125rem] tabular-nums">
                         {formatCurrency(anomaly.previousCost, baseCurrency)} →{" "}
                         {formatCurrency(anomaly.currentCost, baseCurrency)}
                       </p>
                     </div>
                     <Badge
-                      className={
+                      variant={
                         anomaly.severity === "high"
-                          ? "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                          ? "error"
                           : anomaly.severity === "medium"
-                            ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-                            : "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400"
+                            ? "warning"
+                            : "info"
                       }
                     >
                       +{anomaly.changeRate}%
@@ -350,9 +344,11 @@ export default async function CostAnalysisPage({ searchParams }: PageProps) {
                 ))}
               </div>
             ) : (
-              <div className="flex flex-col items-center justify-center py-8 text-center">
-                <AlertTriangle className="text-muted-foreground mb-2 h-8 w-8" />
-                <p className="text-muted-foreground">
+              <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
+                <div className="tonal-success flex size-10 items-center justify-center rounded-md">
+                  <AlertTriangle className="size-5" />
+                </div>
+                <p className="text-muted-foreground text-[0.9375rem]">
                   {t("anomaly.noAnomalies")}
                 </p>
               </div>

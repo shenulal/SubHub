@@ -96,7 +96,7 @@ export function CancellationGuide({
           <ScrollText className="text-destructive size-4" />
           <h3
             id="cancellation-guide-heading"
-            className="text-base font-semibold tracking-tight"
+            className="text-foreground text-lg font-medium"
           >
             {t("title")}
           </h3>

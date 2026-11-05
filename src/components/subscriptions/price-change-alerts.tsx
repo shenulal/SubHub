@@ -93,8 +93,8 @@ export function PriceChangeAlerts({
             className={cn(
               "flex flex-col gap-3 rounded-md border px-4 py-3 text-sm sm:flex-row sm:items-center",
               up
-                ? "border-amber-500/40 bg-amber-500/10 text-amber-950 dark:text-amber-50"
-                : "border-emerald-500/40 bg-emerald-500/10 text-emerald-950 dark:text-emerald-50"
+                ? "border-warning/40 bg-warning/10 text-foreground"
+                : "border-success/40 bg-success/10 text-foreground"
             )}
           >
             <Icon className="h-5 w-5 shrink-0" />

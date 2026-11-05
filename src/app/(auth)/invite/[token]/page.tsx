@@ -16,9 +16,13 @@ export default async function InviteAcceptPage({
 
   if (!token) {
     return (
-      <div className="space-y-2">
-        <h1 className="text-2xl font-bold">{t("auth.invite.title")}</h1>
-        <p className="text-destructive">{t("auth.invite.invalid")}</p>
+      <div className="flex w-full flex-col gap-1">
+        <h1 className="text-foreground text-2xl font-medium">
+          {t("auth.invite.title")}
+        </h1>
+        <p className="text-error text-[0.9375rem]">
+          {t("auth.invite.invalid")}
+        </p>
       </div>
     );
   }
@@ -31,16 +35,23 @@ export default async function InviteAcceptPage({
   }
 
   return (
-    <div className="space-y-3 p-6">
-      <h1 className="text-2xl font-bold">{t("auth.invite.title")}</h1>
+    <div className="flex w-full flex-col gap-1">
+      <h1 className="text-foreground text-2xl font-medium">
+        {t("auth.invite.title")}
+      </h1>
       {result.success ? (
         <>
-          <p className="text-muted-foreground">{t("auth.invite.success")}</p>
+          <p className="text-muted-foreground text-[0.9375rem]">
+            {t("auth.invite.success")}
+          </p>
         </>
       ) : (
         <>
-          <p className="text-destructive">{result.message}</p>
-          <Link href="/login" className="text-primary underline">
+          <p className="text-error text-[0.9375rem]">{result.message}</p>
+          <Link
+            href="/login"
+            className="text-primary mt-4 text-[0.9375rem] hover:underline"
+          >
             {t("auth.invite.cta")}
           </Link>
         </>

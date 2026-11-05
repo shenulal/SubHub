@@ -38,10 +38,10 @@ export function StatusBalloon({ variant, className }: StatusBalloonProps) {
   return (
     <div className={cn("flex items-center", className)}>
       {/* 왼쪽 삼각형 화살표 */}
-      <div className="border-y-[5px] border-r-[6px] border-y-transparent border-r-white" />
+      <div className="border-r-card border-y-[5px] border-r-[6px] border-y-transparent" />
       {/* 말풍선 박스 */}
-      <div className="flex h-[22px] items-center rounded bg-white px-2 shadow-[0px_0px_4px_0px_rgba(0,0,0,0.25)]">
-        <span className="text-[12px] leading-none whitespace-nowrap text-[#666]">
+      <div className="bg-card flex h-[22px] items-center rounded px-2 shadow-sm">
+        <span className="text-muted-foreground text-[12px] leading-none whitespace-nowrap">
           {emoji} {text}
         </span>
       </div>

@@ -32,17 +32,16 @@ const ICONS = {
 } as const;
 
 const TONE = {
-  SUBMITTED: "bg-primary/10 text-primary",
-  APPROVED: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300",
-  REJECTED: "bg-rose-500/15 text-rose-600 dark:text-rose-300",
-  INFO_REQUESTED: "bg-sky-500/15 text-sky-600 dark:text-sky-300",
-  INFO_PROVIDED: "bg-sky-500/15 text-sky-600 dark:text-sky-300",
-  COMMENTED: "bg-muted text-muted-foreground",
-  REMINDED: "bg-amber-500/15 text-amber-600 dark:text-amber-300",
-  ESCALATED: "bg-amber-500/15 text-amber-600 dark:text-amber-300",
-  CANCELLED: "bg-muted text-muted-foreground",
-  SUBSCRIPTION_CREATED:
-    "bg-emerald-500/15 text-emerald-600 dark:text-emerald-300",
+  SUBMITTED: "tonal-primary",
+  APPROVED: "tonal-success",
+  REJECTED: "tonal-error",
+  INFO_REQUESTED: "tonal-info",
+  INFO_PROVIDED: "tonal-info",
+  COMMENTED: "tonal-neutral",
+  REMINDED: "tonal-warning",
+  ESCALATED: "tonal-warning",
+  CANCELLED: "tonal-neutral",
+  SUBSCRIPTION_CREATED: "tonal-success",
 } as const;
 
 function eventKey(event: ApprovalEventView): string {
@@ -102,7 +101,7 @@ export function ApprovalTimeline({ events }: { events: ApprovalEventView[] }) {
                 )}
               </p>
               {event.comment && (
-                <p className="bg-muted/50 mt-1.5 rounded-md px-3 py-2 text-sm whitespace-pre-wrap">
+                <p className="bg-muted mt-1.5 rounded-md px-3 py-2 text-sm break-words whitespace-pre-wrap">
                   {event.comment}
                 </p>
               )}

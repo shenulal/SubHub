@@ -31,9 +31,13 @@ export default async function PrivacySettingsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h3 className="text-lg font-semibold tracking-tight">{t("title")}</h3>
-        <p className="text-muted-foreground text-sm">{t("description")}</p>
+      <div className="space-y-1">
+        <h3 className="text-foreground text-lg leading-snug font-medium">
+          {t("title")}
+        </h3>
+        <p className="text-muted-foreground text-[0.8125rem]">
+          {t("description")}
+        </p>
       </div>
       {canExport && (
         <DataExportSection
@@ -44,7 +48,7 @@ export default async function PrivacySettingsPage() {
       {canDelete && allowSelfDeletion ? (
         <DeleteAccountSection />
       ) : (
-        <p className="text-muted-foreground rounded-md border border-dashed p-4 text-sm">
+        <p className="text-muted-foreground bg-muted rounded-md p-4 text-[0.9375rem]">
           {t("deletionDisabled")}
         </p>
       )}

@@ -32,25 +32,25 @@ function getUrgencyLevel(daysUntilRenewal: number): UrgencyLevel {
 // 긴급도별 스타일 (Tailwind 표준 색상)
 const urgencyStyles = {
   urgent: {
-    badge: "destructive" as const,
-    bg: "bg-red-100 dark:bg-red-900/30",
-    border: "border-red-500/50",
-    icon: "text-red-700 dark:text-red-400",
-    iconBg: "bg-red-500/20",
+    badge: "error" as const,
+    bg: "",
+    border: "border-error/40",
+    icon: "text-error",
+    iconBg: "tonal-error",
   },
   warning: {
-    badge: "secondary" as const,
-    bg: "bg-amber-100 dark:bg-amber-900/30",
-    border: "border-amber-500/50",
-    icon: "text-amber-700 dark:text-amber-400",
-    iconBg: "bg-amber-500/20",
+    badge: "warning" as const,
+    bg: "",
+    border: "border-warning/40",
+    icon: "text-warning",
+    iconBg: "tonal-warning",
   },
   normal: {
-    badge: "outline" as const,
-    bg: "bg-blue-100 dark:bg-blue-900/30",
-    border: "border-blue-500/50",
-    icon: "text-blue-700 dark:text-blue-400",
-    iconBg: "bg-blue-500/20",
+    badge: "info" as const,
+    bg: "",
+    border: "",
+    icon: "text-info",
+    iconBg: "tonal-info",
   },
 };
 
@@ -94,18 +94,22 @@ export function RenewalDayPanel({
   // 선택된 날짜가 없는 경우
   if (!selectedDate) {
     return (
-      <Card className="border-border/50 flex h-full flex-col rounded-sm shadow-sm transition-shadow hover:shadow-md">
+      <Card className="flex h-full flex-col">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            {t("title")}
+          <CardTitle className="flex min-w-0 items-center gap-3">
+            <span className="tonal-primary flex size-10 shrink-0 items-center justify-center rounded-md">
+              <Calendar className="size-5" />
+            </span>
+            <span className="truncate">{t("title")}</span>
           </CardTitle>
           <CardDescription>{t("selectDate")}</CardDescription>
         </CardHeader>
         <CardContent className="flex-1">
-          <div className="flex h-full flex-col items-center justify-center py-12 text-center">
-            <Calendar className="text-muted-foreground mb-4 h-12 w-12" />
-            <p className="text-muted-foreground whitespace-pre-line">
+          <div className="flex h-full flex-col items-center justify-center gap-3 py-12 text-center">
+            <div className="tonal-neutral flex size-10 items-center justify-center rounded-md">
+              <Calendar className="size-5" />
+            </div>
+            <p className="text-muted-foreground text-[0.9375rem] whitespace-pre-line">
               {t("selectDateHint")}
             </p>
           </div>
@@ -117,13 +121,15 @@ export function RenewalDayPanel({
   const totalAmount = calculateTotalAmount(renewals);
 
   return (
-    <Card className="border-border/50 flex h-full flex-col rounded-sm shadow-sm transition-shadow hover:shadow-md">
+    <Card className="flex h-full flex-col">
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2">
-              <Calendar className="h-5 w-5" />
-              {formatDateLocalized(selectedDate, locale)}
+        <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0">
+            <CardTitle className="flex min-w-0 items-center gap-2">
+              <Calendar className="text-primary size-5 shrink-0" />
+              <span className="truncate">
+                {formatDateLocalized(selectedDate, locale)}
+              </span>
             </CardTitle>
             <CardDescription>
               {renewals.length > 0
@@ -132,9 +138,11 @@ export function RenewalDayPanel({
             </CardDescription>
           </div>
           {renewals.length > 0 && (
-            <div className="text-right">
-              <p className="text-muted-foreground text-sm">{t("totalCost")}</p>
-              <p className="text-2xl font-semibold tabular-nums">
+            <div className="min-w-0 text-right">
+              <p className="text-muted-foreground truncate text-[0.8125rem]">
+                {t("totalCost")}
+              </p>
+              <p className="kpi-value">
                 {formatCurrency(totalAmount, baseCurrency, locale)}
               </p>
             </div>
@@ -143,8 +151,10 @@ export function RenewalDayPanel({
       </CardHeader>
       <CardContent className="flex-1 overflow-hidden">
         {renewals.length === 0 ? (
-          <div className="flex h-full flex-col items-center justify-center py-8 text-center">
-            <Calendar className="text-muted-foreground mb-2 h-8 w-8" />
+          <div className="flex h-full flex-col items-center justify-center gap-3 py-8 text-center">
+            <div className="tonal-neutral flex size-10 items-center justify-center rounded-md">
+              <Calendar className="size-5" />
+            </div>
             <p className="text-muted-foreground">{t("emptyDate")}</p>
           </div>
         ) : (
@@ -157,29 +167,37 @@ export function RenewalDayPanel({
                 <div
                   key={renewal.id}
                   className={cn(
-                    "flex items-center justify-between rounded-lg border p-3",
+                    "flex min-w-0 items-center justify-between gap-3 rounded-md border p-3",
                     styles.border,
                     styles.bg
                   )}
                 >
-                  <div className="flex items-center gap-3">
+                  <div className="flex min-w-0 items-center gap-3">
                     <div
                       className={cn(
-                        "flex h-10 w-10 items-center justify-center rounded-lg",
+                        "flex size-10 shrink-0 items-center justify-center rounded-md",
                         styles.iconBg
                       )}
                     >
-                      <DollarSign className={cn("h-5 w-5", styles.icon)} />
+                      <DollarSign className={cn("size-5", styles.icon)} />
                     </div>
-                    <div>
-                      <p className="font-medium">{renewal.appName}</p>
-                      <Badge variant={styles.badge} className="mt-1">
+                    <div className="min-w-0">
+                      <p
+                        className="truncate font-medium"
+                        title={renewal.appName}
+                      >
+                        {renewal.appName}
+                      </p>
+                      <Badge
+                        variant={styles.badge}
+                        className="mt-1 tabular-nums"
+                      >
                         D-{renewal.daysUntilRenewal}
                       </Badge>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className="font-semibold">
+                  <div className="shrink-0 text-right">
+                    <p className="font-medium tabular-nums">
                       {formatCurrency(renewal.amount, renewal.currency, locale)}
                     </p>
                   </div>

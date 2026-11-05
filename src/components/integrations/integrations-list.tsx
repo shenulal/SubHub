@@ -82,20 +82,23 @@ function getStatusBadge(status: string, t: (key: string) => string) {
     string,
     {
       label: string;
-      variant: "default" | "secondary" | "destructive" | "outline";
+      variant: "success" | "warning" | "secondary" | "error";
     }
   > = {
-    ACTIVE: { label: t("integrations.status.active"), variant: "default" },
-    PENDING: { label: t("integrations.status.pending"), variant: "secondary" },
-    ERROR: { label: t("integrations.status.error"), variant: "destructive" },
+    ACTIVE: { label: t("integrations.status.active"), variant: "success" },
+    PENDING: { label: t("integrations.status.pending"), variant: "warning" },
+    ERROR: {
+      label: t("integrations.status.error"),
+      variant: "error",
+    },
     DISCONNECTED: {
       label: t("integrations.status.disconnected"),
-      variant: "outline",
+      variant: "secondary",
     },
   };
   const config = statusConfig[status] || {
     label: status,
-    variant: "outline" as const,
+    variant: "secondary" as const,
   };
   return <Badge variant={config.variant}>{config.label}</Badge>;
 }
@@ -217,13 +220,13 @@ export function IntegrationsList({
         header: t("integrations.list.columns.type"),
         sortable: true,
         cell: (integration) => (
-          <div className="flex items-center gap-3">
-            <div className="bg-primary/10 flex h-8 w-8 items-center justify-center rounded-lg">
-              <Link2 className="text-primary h-4 w-4" />
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="tonal-primary flex size-10 shrink-0 items-center justify-center rounded-md">
+              <Link2 className="size-5" />
             </div>
             <Link
               href={`/integrations/${integration.id}`}
-              className="font-medium hover:underline"
+              className="text-foreground hover:text-primary truncate font-medium transition-colors"
             >
               {getIntegrationTypeName(integration.type, t)}
             </Link>
@@ -239,16 +242,23 @@ export function IntegrationsList({
         id: "lastSyncAt",
         header: t("integrations.list.columns.lastSyncAt"),
         sortable: true,
-        cell: (integration) =>
-          integration.lastSyncAt
-            ? formatKoreanDateTime(integration.lastSyncAt)
-            : "-",
+        cell: (integration) => (
+          <span className="text-muted-foreground text-sm whitespace-nowrap tabular-nums">
+            {integration.lastSyncAt
+              ? formatKoreanDateTime(integration.lastSyncAt)
+              : "-"}
+          </span>
+        ),
       },
       {
         id: "createdAt",
         header: t("integrations.list.columns.createdAt"),
         sortable: true,
-        cell: (integration) => formatKoreanDate(integration.createdAt),
+        cell: (integration) => (
+          <span className="text-muted-foreground text-sm whitespace-nowrap tabular-nums">
+            {formatKoreanDate(integration.createdAt)}
+          </span>
+        ),
       },
       {
         id: "actions",
@@ -375,10 +385,14 @@ export function IntegrationsList({
 
   if (integrations.length === 0 && !isLoading) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <Link2 className="text-muted-foreground mb-4 h-12 w-12" />
-        <h3 className="text-sm font-medium">{t("integrations.list.empty")}</h3>
-        <p className="text-muted-foreground mt-2">
+      <div className="bg-card flex flex-col items-center justify-center gap-3 rounded-lg px-4 py-16 text-center shadow-md">
+        <span className="tonal-neutral flex size-12 items-center justify-center rounded-md">
+          <Link2 className="size-[22px]" />
+        </span>
+        <h3 className="text-foreground text-[0.9375rem] font-medium">
+          {t("integrations.list.empty")}
+        </h3>
+        <p className="text-muted-foreground text-[0.8125rem]">
           {t("integrations.list.emptyDescription")}
         </p>
       </div>

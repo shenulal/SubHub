@@ -39,50 +39,57 @@ export function SettingsPageClient({ fallbackUser }: SettingsPageClientProps) {
   };
 
   return (
-    <div className="space-y-4" data-loading={isLoading ? "true" : "false"}>
+    <div className="space-y-5" data-loading={isLoading ? "true" : "false"}>
       <div>
-        <h3 className="text-lg font-medium">{t("settings.overview.title")}</h3>
-        <p className="text-muted-foreground text-sm">
+        <h3 className="text-foreground text-lg leading-snug font-medium">
+          {t("settings.overview.title")}
+        </h3>
+        <p className="text-muted-foreground text-[0.8125rem]">
           {t("settings.overview.subtitle")}
         </p>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2">
-        <div className="flex items-start gap-4">
-          <div className="bg-primary/10 flex h-10 w-10 items-center justify-center rounded-lg">
-            <User className="text-primary h-5 w-5" />
+        <div className="flex min-w-0 items-center gap-4 rounded-md border p-4">
+          <div className="tonal-primary flex size-10 shrink-0 items-center justify-center rounded-md">
+            <User className="size-5" />
           </div>
-          <div className="space-y-1">
-            <p className="text-sm leading-none font-medium">
+          <div className="min-w-0 space-y-1">
+            <p className="text-muted-foreground truncate text-xs tracking-wide uppercase">
               {t("settings.fields.name")}
             </p>
-            <p className="text-muted-foreground text-sm">
+            <p className="text-foreground truncate text-[0.9375rem] font-medium">
               {user?.name || t("settings.fields.nameEmpty")}
             </p>
           </div>
         </div>
 
-        <div className="flex items-start gap-4">
-          <div className="bg-primary/10 flex h-10 w-10 items-center justify-center rounded-lg">
-            <Mail className="text-primary h-5 w-5" />
+        <div className="flex min-w-0 items-center gap-4 rounded-md border p-4">
+          <div className="tonal-primary flex size-10 shrink-0 items-center justify-center rounded-md">
+            <Mail className="size-5" />
           </div>
-          <div className="space-y-1">
-            <p className="text-sm leading-none font-medium">
+          <div className="min-w-0 space-y-1">
+            <p className="text-muted-foreground truncate text-xs tracking-wide uppercase">
               {t("settings.fields.email")}
             </p>
-            <p className="text-muted-foreground text-sm">{user?.email}</p>
+            <p
+              className="text-foreground truncate text-[0.9375rem] font-medium"
+              title={user?.email}
+            >
+              {user?.email}
+            </p>
           </div>
         </div>
 
-        <div className="flex items-start gap-4">
-          <div className="bg-primary/10 flex h-10 w-10 items-center justify-center rounded-lg">
-            <Building2 className="text-primary h-5 w-5" />
+        <div className="flex min-w-0 items-center gap-4 rounded-md border p-4">
+          <div className="tonal-primary flex size-10 shrink-0 items-center justify-center rounded-md">
+            <Building2 className="size-5" />
           </div>
-          <div className="space-y-1">
-            <p className="text-sm leading-none font-medium">
+          <div className="min-w-0 space-y-1">
+            <p className="text-muted-foreground truncate text-xs tracking-wide uppercase">
               {t("settings.fields.organizationId")}
             </p>
-            <p className="text-muted-foreground font-mono text-sm">
+            <p className="text-foreground truncate font-mono text-[0.9375rem] font-medium">
               {user?.organizationId
                 ? `${user.organizationId.slice(0, 8)}...`
                 : t("settings.fields.organizationIdEmpty")}
@@ -90,15 +97,15 @@ export function SettingsPageClient({ fallbackUser }: SettingsPageClientProps) {
           </div>
         </div>
 
-        <div className="flex items-start gap-4">
-          <div className="bg-primary/10 flex h-10 w-10 items-center justify-center rounded-lg">
-            <Shield className="text-primary h-5 w-5" />
+        <div className="flex min-w-0 items-center gap-4 rounded-md border p-4">
+          <div className="tonal-primary flex size-10 shrink-0 items-center justify-center rounded-md">
+            <Shield className="size-5" />
           </div>
-          <div className="space-y-1">
-            <p className="text-sm leading-none font-medium">
+          <div className="min-w-0 space-y-1">
+            <p className="text-muted-foreground truncate text-xs tracking-wide uppercase">
               {t("settings.fields.role")}
             </p>
-            <p className="text-muted-foreground text-sm">
+            <p className="text-foreground truncate text-[0.9375rem] font-medium">
               {getRoleLabel(user?.role)}
             </p>
           </div>

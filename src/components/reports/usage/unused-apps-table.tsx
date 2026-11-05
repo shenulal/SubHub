@@ -12,6 +12,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { DEFAULT_BASE_CURRENCY, formatMoney } from "@/lib/fx/convert";
 import { format, parseISO } from "date-fns";
 import { ko } from "date-fns/locale";
 import { AlertTriangle, ExternalLink } from "lucide-react";
@@ -43,16 +44,25 @@ export function UnusedAppsTable({ apps }: UnusedAppsTableProps) {
 
   if (apps.length === 0) {
     return (
-      <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
+      <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5" />
-            {t("reports.usage.unusedApps.title")}
+          <CardTitle className="flex min-w-0 items-center gap-3">
+            <span className="tonal-warning flex size-10 shrink-0 items-center justify-center rounded-md">
+              <AlertTriangle className="size-5" />
+            </span>
+            <span className="truncate">
+              {t("reports.usage.unusedApps.title")}
+            </span>
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-muted-foreground py-8 text-center">
-            {t("reports.usage.unusedApps.empty")}
+          <div className="flex flex-col items-center justify-center gap-3 py-8 text-center">
+            <div className="tonal-neutral flex size-10 items-center justify-center rounded-md">
+              <AlertTriangle className="size-5" />
+            </div>
+            <p className="text-muted-foreground text-[0.9375rem]">
+              {t("reports.usage.unusedApps.empty")}
+            </p>
           </div>
         </CardContent>
       </Card>
@@ -66,68 +76,78 @@ export function UnusedAppsTable({ apps }: UnusedAppsTableProps) {
   );
 
   return (
-    <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
+    <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <AlertTriangle className="text-warning h-5 w-5" />
-            {t("reports.usage.unusedApps.title")}
+        <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
+          <CardTitle className="flex min-w-0 items-center gap-3">
+            <span className="tonal-warning flex size-10 shrink-0 items-center justify-center rounded-md">
+              <AlertTriangle className="size-5" />
+            </span>
+            <span className="truncate">
+              {t("reports.usage.unusedApps.title")}
+            </span>
           </CardTitle>
           {estimatedWaste > 0 && (
-            <Badge variant="destructive">
+            <Badge variant="error" className="tabular-nums">
               {t("reports.usage.unusedApps.estimatedWaste", {
-                amount: estimatedWaste.toLocaleString(),
+                amount: formatMoney(estimatedWaste, DEFAULT_BASE_CURRENCY),
               })}
             </Badge>
           )}
         </div>
       </CardHeader>
       <CardContent>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>
-                {t("reports.usage.unusedApps.table.appName")}
-              </TableHead>
-              <TableHead>
-                {t("reports.usage.unusedApps.table.lastUsedAt")}
-              </TableHead>
-              <TableHead>
-                {t("reports.usage.unusedApps.table.licenseCount")}
-              </TableHead>
-              <TableHead className="w-[50px]"></TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {apps.map((app) => (
-              <TableRow
-                key={app.appId}
-                className="hover:bg-muted/50 transition-colors"
-              >
-                <TableCell className="font-medium">{app.appName}</TableCell>
-                <TableCell>{formatLastUsed(app.lastUsedAt)}</TableCell>
-                <TableCell>
-                  {app.licenseCount !== null ? (
-                    <Badge variant="secondary">
-                      {t("reports.usage.unusedApps.lastUsed.count", {
-                        count: app.licenseCount,
-                      })}
-                    </Badge>
-                  ) : (
-                    <span className="text-muted-foreground">-</span>
-                  )}
-                </TableCell>
-                <TableCell>
-                  <Button variant="ghost" size="icon" asChild>
-                    <Link href={`/apps/${app.appId}`}>
-                      <ExternalLink className="h-4 w-4" />
-                    </Link>
-                  </Button>
-                </TableCell>
+        <div className="overflow-hidden rounded-md border">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>
+                  {t("reports.usage.unusedApps.table.appName")}
+                </TableHead>
+                <TableHead>
+                  {t("reports.usage.unusedApps.table.lastUsedAt")}
+                </TableHead>
+                <TableHead>
+                  {t("reports.usage.unusedApps.table.licenseCount")}
+                </TableHead>
+                <TableHead className="w-[50px]"></TableHead>
               </TableRow>
-            ))}
-          </TableBody>
-        </Table>
+            </TableHeader>
+            <TableBody>
+              {apps.map((app) => (
+                <TableRow
+                  key={app.appId}
+                  className="hover:bg-muted/60 transition-colors"
+                >
+                  <TableCell className="max-w-[18rem] font-medium">
+                    <span className="block truncate" title={app.appName}>
+                      {app.appName}
+                    </span>
+                  </TableCell>
+                  <TableCell>{formatLastUsed(app.lastUsedAt)}</TableCell>
+                  <TableCell>
+                    {app.licenseCount !== null ? (
+                      <Badge variant="secondary" className="tabular-nums">
+                        {t("reports.usage.unusedApps.lastUsed.count", {
+                          count: app.licenseCount,
+                        })}
+                      </Badge>
+                    ) : (
+                      <span className="text-muted-foreground">-</span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <Button variant="ghost" size="icon" asChild>
+                      <Link href={`/apps/${app.appId}`}>
+                        <ExternalLink className="h-4 w-4" />
+                      </Link>
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
       </CardContent>
     </Card>
   );

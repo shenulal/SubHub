@@ -57,7 +57,7 @@ export function NotificationSettings({
   ];
 
   return (
-    <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
+    <Card>
       <CardHeader>
         <div className="flex items-center gap-2">
           <Bell className="text-primary h-5 w-5" />

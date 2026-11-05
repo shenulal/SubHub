@@ -1,61 +1,71 @@
 "use client";
 
 import { Card } from "@/components/ui/card";
+import { DEFAULT_BASE_CURRENCY, formatMoney } from "@/lib/fx/convert";
+import { cn } from "@/lib/utils";
 import type { OptimizationHeroData } from "@/types/dashboard";
-import { useTranslations } from "next-intl";
+import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 
 interface BentoOptimizationHeroProps {
   data: OptimizationHeroData;
   isReadOnly?: boolean;
+  /** Organisation base currency (amounts are already in it). */
+  currency?: string;
 }
 
 /**
- * formatCurrency
- * 금액을 한국 원화 형식으로 포맷팅
- */
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("ko-KR").format(amount);
-}
-
-/**
- * StatSection - 개별 통계 섹션 컴포넌트
+ * StatSection - one figure of the hero: label, value + suffix on one line.
  */
 function StatSection({
   label,
-  amount,
+  value,
   suffix,
   subtext,
   href,
   isReadOnly = false,
-  showDivider = false,
-  style = {},
+  dividerClassName,
+  className,
 }: {
   label: string;
-  amount: number;
+  value: string;
   suffix: string;
   subtext?: string;
   href?: string;
   isReadOnly?: boolean;
-  showDivider?: boolean;
-  style?: React.CSSProperties;
+  /** Border classes separating this figure from its neighbours. */
+  dividerClassName?: string;
+  className?: string;
 }) {
   const content = (
     <div
-      style={style}
-      className={`flex min-w-0 flex-1 flex-col justify-center gap-1.5 px-4 ${
-        showDivider ? "border-l border-white/30" : ""
-      }`}
+      className={cn(
+        "flex min-w-0 flex-1 flex-col justify-center gap-1 border-white/25 px-5 py-4",
+        dividerClassName
+      )}
     >
-      <p className="text-sm text-white/90">{label}</p>
-      <div className="flex items-end gap-0.5">
-        <span className="py-1 text-sm text-white">₩</span>
-        <span className="text-3xl font-semibold text-white">
-          {formatCurrency(amount)}
+      <p className="truncate text-[0.8125rem] text-white/85" title={label}>
+        {label}
+      </p>
+      <div className="flex min-w-0 items-baseline gap-1.5 text-white">
+        <span
+          className="shrink-0 text-2xl leading-tight font-medium tabular-nums"
+          title={value}
+        >
+          {value}
         </span>
-        <span className="py-1 text-sm text-white">{suffix}</span>
+        <span
+          className="min-w-0 truncate text-[0.8125rem] text-white/85"
+          title={suffix}
+        >
+          {suffix}
+        </span>
       </div>
-      {subtext && <p className="text-xs text-white/70">{subtext}</p>}
+      {subtext && (
+        <p className="truncate text-xs text-white/70" title={subtext}>
+          {subtext}
+        </p>
+      )}
     </div>
   );
 
@@ -63,60 +73,64 @@ function StatSection({
     return (
       <Link
         href={href}
-        className="flex min-w-0 flex-1 rounded transition-colors hover:bg-white/5"
+        className={cn(
+          "flex min-w-0 rounded-md transition-colors hover:bg-white/10 focus-visible:ring-2 focus-visible:ring-white/70 focus-visible:outline-none",
+          className
+        )}
       >
         {content}
       </Link>
     );
   }
 
-  return content;
+  return <div className={cn("flex min-w-0", className)}>{content}</div>;
 }
 
 /**
  * BentoOptimizationHero
- * Figma 디자인 기반 최적화 히어로 섹션
- * - 보라-핑크 그라데이션 배경
- * - 3개 섹션이 가로로 배치
- * - 세로 구분선으로 섹션 분리
+ * Materio gradient banner with three figures: total optimisation opportunity,
+ * unused seats and unused subscription cost. Stacks on narrow screens.
  */
 export function BentoOptimizationHero({
   data,
   isReadOnly = false,
+  currency = DEFAULT_BASE_CURRENCY,
 }: BentoOptimizationHeroProps) {
   const t = useTranslations("dashboardV2Cost.hero");
+  const locale = useLocale();
+  const money = (amount: number) => formatMoney(amount, currency, locale);
 
   return (
-    <Card className="optimization-hero-gradient flex h-[130px] flex-1 flex-row items-stretch gap-3 rounded-md border-none px-4 py-3 shadow-[0px_2px_8px_0px_rgba(0,0,0,0.1)]">
+    // Layout follows the dashboard container: stacked → total on top with two
+    // halves below → three figures in one row on wide content areas.
+    <Card className="optimization-hero-gradient grid gap-0 p-1 @xl:grid-cols-2 @4xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)]">
       {/* 섹션 1: 총 최적화 기회 */}
       <StatSection
-        style={{ flex: 2 }}
         label={t("title")}
-        amount={data.monthlySavings}
-        suffix={`${t("perMonth")} (${t("annualPossible", { amount: `₩${formatCurrency(data.annualSavings)}` })})`}
+        value={money(data.monthlySavings)}
+        suffix={`${t("perMonth")} (${t("annualPossible", { amount: money(data.annualSavings) })})`}
         isReadOnly={isReadOnly}
+        className="@xl:col-span-2 @4xl:col-span-1"
       />
 
       {/* 섹션 2: 미사용 Seat */}
       <StatSection
-        style={{ flex: 1 }}
         label={t("unusedLicenses")}
-        amount={data.breakdown.unusedLicenses.amount}
+        value={money(data.breakdown.unusedLicenses.amount)}
         suffix={t("perMonth")}
         href="/subscriptions?filter=unused"
         isReadOnly={isReadOnly}
-        showDivider
+        dividerClassName="border-t @4xl:border-t-0 @4xl:border-l"
       />
 
       {/* 섹션 3: 미사용 앱 */}
       <StatSection
-        style={{ flex: 1 }}
         label={t("overProvisioned")}
-        amount={data.breakdown.unusedApps.amount}
+        value={money(data.breakdown.unusedApps.amount)}
         suffix={t("perMonth")}
         href="/apps?filter=unused"
         isReadOnly={isReadOnly}
-        showDivider
+        dividerClassName="border-t @xl:border-l @4xl:border-t-0"
       />
     </Card>
   );

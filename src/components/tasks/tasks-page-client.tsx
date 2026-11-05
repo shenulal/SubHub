@@ -117,7 +117,7 @@ export function TasksPageClient({ canManage = false }: TasksPageClientProps) {
   }, [statusFilter, priorityFilter]);
 
   return (
-    <div className="space-y-4">
+    <div className="min-w-0 space-y-6">
       <PageHeader
         title={t("page.title")}
         description={t("page.description")}
@@ -165,9 +165,9 @@ export function TasksPageClient({ canManage = false }: TasksPageClientProps) {
       </KpiCardsGrid>
 
       {/* 필터 바 */}
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="bg-card flex flex-wrap items-center gap-2 rounded-lg px-5 py-4 shadow-md">
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[140px]">
+          <SelectTrigger className="w-[160px]">
             <SelectValue placeholder={t("filter.status")} />
           </SelectTrigger>
           <SelectContent>
@@ -183,7 +183,7 @@ export function TasksPageClient({ canManage = false }: TasksPageClientProps) {
         </Select>
 
         <Select value={priorityFilter} onValueChange={setPriorityFilter}>
-          <SelectTrigger className="w-[140px]">
+          <SelectTrigger className="w-[160px]">
             <SelectValue placeholder={t("filter.priority")} />
           </SelectTrigger>
           <SelectContent>
@@ -198,7 +198,7 @@ export function TasksPageClient({ canManage = false }: TasksPageClientProps) {
         {(statusFilter !== "all" || priorityFilter !== "all") && (
           <Button
             variant="ghost"
-            size="sm"
+            className="text-muted-foreground hover:text-primary h-10 whitespace-nowrap"
             onClick={() => {
               setStatusFilter("all");
               setPriorityFilter("all");
@@ -208,15 +208,15 @@ export function TasksPageClient({ canManage = false }: TasksPageClientProps) {
           </Button>
         )}
 
-        <div className="ml-auto">
-          <Badge variant="outline">
+        <div className="ml-auto shrink-0">
+          <Badge variant="primary" className="h-7 px-3 text-[0.8125rem]">
             {t("filter.count", { count: filteredTasks.length })}
           </Badge>
         </div>
       </div>
 
       {/* 작업 테이블 */}
-      <Card>
+      <Card className="overflow-hidden pb-0">
         <CardContent className="p-0">
           <TaskTable
             tasks={filteredTasks}

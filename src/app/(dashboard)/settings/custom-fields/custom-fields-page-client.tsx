@@ -21,7 +21,9 @@ export function CustomFieldsPageClient({
   return (
     <div className="space-y-5">
       <header className="space-y-1">
-        <h1 className="text-xl font-semibold tracking-tight">{t("title")}</h1>
+        <h1 className="text-foreground text-lg leading-snug font-medium">
+          {t("title")}
+        </h1>
       </header>
       <CustomFieldManager
         fields={fields}

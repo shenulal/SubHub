@@ -49,10 +49,10 @@ export function CsvUploadResultModal({
           {/* Auto Matched */}
           <div
             data-testid="stat-card"
-            className="bg-success-muted text-success-muted-foreground flex flex-col items-center gap-2 rounded-sm p-4"
+            className="bg-success-muted text-success-muted-foreground flex flex-col items-center gap-2 rounded-md p-4"
           >
             <CheckCircle2 className="h-5 w-5" />
-            <span className="text-2xl font-bold">{matched}</span>
+            <span className="text-2xl font-medium tabular-nums">{matched}</span>
             <span className="text-center text-xs">
               {t("payments.upload.resultModal.autoMatched")}
             </span>
@@ -61,10 +61,12 @@ export function CsvUploadResultModal({
           {/* Unmatched */}
           <div
             data-testid="stat-card"
-            className="bg-warning-muted text-warning-muted-foreground flex flex-col items-center gap-2 rounded-sm p-4"
+            className="bg-warning-muted text-warning-muted-foreground flex flex-col items-center gap-2 rounded-md p-4"
           >
             <AlertCircle className="h-5 w-5" />
-            <span className="text-2xl font-bold">{unmatched}</span>
+            <span className="text-2xl font-medium tabular-nums">
+              {unmatched}
+            </span>
             <span className="text-center text-xs">
               {t("payments.upload.resultModal.unmatched")}
             </span>

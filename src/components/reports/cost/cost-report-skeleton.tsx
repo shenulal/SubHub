@@ -8,13 +8,13 @@ import { Skeleton } from "@/components/ui/skeleton";
  */
 export function KpiCardsSkeleton() {
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
       {[1, 2, 3, 4].map((i) => (
         <Card key={i} className="transition-all">
           <CardContent className="flex h-full flex-col justify-between px-4 py-1.5">
             <div className="flex items-center gap-2">
               {/* 아이콘 placeholder */}
-              <Skeleton className="h-8 w-8 rounded-lg" />
+              <Skeleton className="size-10 rounded-md" />
               {/* 라벨 */}
               <Skeleton className="h-4 w-20" />
             </div>
@@ -37,7 +37,7 @@ export function KpiCardsSkeleton() {
  */
 export function ChartCardSkeleton() {
   return (
-    <Card className="border-border/50 min-h-[450px] rounded-sm shadow-sm">
+    <Card className="min-h-[450px]">
       <CardHeader className="border-b pb-4">
         <div className="flex items-center justify-between">
           <div>
@@ -48,9 +48,9 @@ export function ChartCardSkeleton() {
           </div>
           <div className="flex items-center gap-2">
             {/* 필터 토글 버튼들 */}
-            <Skeleton className="h-9 w-[130px]" />
-            <Skeleton className="h-9 w-[130px]" />
-            <Skeleton className="h-9 w-[70px]" />
+            <Skeleton className="h-10 w-[130px]" />
+            <Skeleton className="h-10 w-[130px]" />
+            <Skeleton className="h-10 w-[70px]" />
           </div>
         </div>
       </CardHeader>
@@ -74,7 +74,7 @@ export function TableCardSkeleton({
   title?: boolean;
 }) {
   return (
-    <Card className="border-border/50 min-h-[450px] rounded-sm shadow-sm">
+    <Card className="min-h-[450px]">
       {title && (
         <CardHeader className="border-b pb-4">
           <div>
@@ -90,7 +90,7 @@ export function TableCardSkeleton({
           {Array.from({ length: rowCount }).map((_, i) => (
             <div key={i} className="flex items-center gap-4">
               {/* 아이콘/체크박스 */}
-              <Skeleton className="h-8 w-8 rounded-lg" />
+              <Skeleton className="size-10 rounded-md" />
               {/* 이름 */}
               <Skeleton className="h-4 w-32" />
               {/* Badge */}
@@ -113,9 +113,9 @@ export function FilterBarSkeleton() {
   return (
     <div className="flex items-center gap-2">
       {/* 팀 선택 */}
-      <Skeleton className="h-9 w-[180px]" />
+      <Skeleton className="h-10 w-[180px]" />
       {/* 사용자 선택 */}
-      <Skeleton className="h-9 w-[180px]" />
+      <Skeleton className="h-10 w-[180px]" />
     </div>
   );
 }
@@ -137,9 +137,9 @@ export function SeatAnalysisSkeleton() {
       </div>
 
       {/* 낭비 KPI 카드 3개 */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
         {[1, 2, 3].map((i) => (
-          <Card key={i} className="border-border/50 shadow-sm">
+          <Card key={i}>
             <CardContent className="p-4">
               <Skeleton className="h-4 w-24" />
               <Skeleton className="mt-2 h-8 w-16" />
@@ -158,9 +158,9 @@ export function SeatAnalysisSkeleton() {
       </div>
 
       {/* 최적화 KPI 카드 3개 */}
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
         {[1, 2, 3].map((i) => (
-          <Card key={i} className="border-border/50 shadow-sm">
+          <Card key={i}>
             <CardContent className="p-4">
               <Skeleton className="h-4 w-24" />
               <Skeleton className="mt-2 h-8 w-16" />
@@ -185,7 +185,7 @@ export function CostReportPageSkeleton() {
       {/* 페이지 헤더 */}
       <div className="flex items-center justify-between">
         <Skeleton className="h-8 w-48" />
-        <Skeleton className="h-9 w-28" />
+        <Skeleton className="h-10 w-28" />
       </div>
 
       {/* KPI 카드 */}
@@ -198,7 +198,7 @@ export function CostReportPageSkeleton() {
       <ChartCardSkeleton />
 
       {/* 앱별 비용 분포 + 비용 이상 감지 */}
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-6 xl:grid-cols-2">
         <TableCardSkeleton rowCount={5} />
         <TableCardSkeleton rowCount={5} />
       </div>

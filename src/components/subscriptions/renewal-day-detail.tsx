@@ -37,12 +37,12 @@ interface RenewalDayDetailProps {
 
 const statusVariants: Record<
   RenewalItem["status"],
-  "default" | "secondary" | "destructive" | "outline"
+  "success" | "secondary" | "warning" | "outline"
 > = {
-  ACTIVE: "default",
-  EXPIRED: "destructive",
-  CANCELLED: "outline",
-  PENDING: "secondary",
+  ACTIVE: "success",
+  EXPIRED: "outline",
+  CANCELLED: "secondary",
+  PENDING: "warning",
 };
 
 function AppAvatar({ name, logo }: { name: string; logo: string | null }) {
@@ -52,10 +52,10 @@ function AppAvatar({ name, logo }: { name: string; logo: string | null }) {
       alt={name}
       width={24}
       height={24}
-      className="rounded-sm"
+      className="size-7 shrink-0 rounded-md border object-contain"
     />
   ) : (
-    <div className="bg-primary/10 text-primary flex h-6 w-6 items-center justify-center rounded-sm text-xs font-medium">
+    <div className="tonal-primary flex size-7 shrink-0 items-center justify-center rounded-md text-xs font-medium">
       {name.charAt(0)}
     </div>
   );
@@ -89,12 +89,14 @@ export function RenewalDayDetail({
   const isEmpty = renewals.length === 0 && markers.length === 0;
 
   return (
-    <Card className="border-border/50 rounded-sm shadow-sm">
-      <CardHeader className="flex flex-row items-start justify-between">
-        <div>
-          <CardTitle>{formattedDate}</CardTitle>
+    <Card className="min-w-0">
+      <CardHeader className="flex flex-row items-start justify-between gap-2">
+        <div className="min-w-0">
+          <CardTitle className="truncate" title={formattedDate}>
+            {formattedDate}
+          </CardTitle>
           {renewals.length > 0 && (
-            <p className="text-muted-foreground mt-1 text-sm">
+            <p className="text-muted-foreground mt-1 text-[0.8125rem] tabular-nums">
               {t("subscriptions.renewalDay.summary", {
                 count: renewals.length,
                 amount: formatMoney(totalAmount, primaryCurrency, locale),
@@ -104,7 +106,8 @@ export function RenewalDayDetail({
         </div>
         <Button
           variant="ghost"
-          size="icon"
+          size="icon-sm"
+          className="text-muted-foreground -mt-1 -mr-2 shrink-0"
           onClick={onClose}
           aria-label={td("close")}
         >
@@ -113,7 +116,7 @@ export function RenewalDayDetail({
       </CardHeader>
       <CardContent className="space-y-4">
         {isEmpty && (
-          <p className="text-muted-foreground py-8 text-center">
+          <p className="text-muted-foreground py-8 text-center text-[0.9375rem]">
             {t("subscriptions.renewalDay.empty")}
           </p>
         )}
@@ -136,24 +139,40 @@ export function RenewalDayDetail({
               {renewals.map((renewal) => (
                 <TableRow key={renewal.subscriptionId}>
                   <TableCell>
-                    <div className="flex items-center gap-2">
+                    <div className="flex min-w-0 items-center gap-2">
                       <AppAvatar
                         name={renewal.appName}
                         logo={renewal.appLogo}
                       />
-                      <span className="font-medium">{renewal.appName}</span>
+                      <span
+                        className="max-w-[9rem] truncate font-medium"
+                        title={renewal.appName}
+                      >
+                        {renewal.appName}
+                      </span>
                     </div>
                   </TableCell>
-                  <TableCell className="tabular-nums">
+                  <TableCell className="whitespace-nowrap tabular-nums">
                     {formatMoney(renewal.amount, renewal.currency, locale)}
                   </TableCell>
                   <TableCell>
-                    <Badge variant={statusVariants[renewal.status]}>
+                    <Badge
+                      variant={statusVariants[renewal.status]}
+                      className={cn(
+                        renewal.status === "EXPIRED" &&
+                          "bg-error/15 text-error border-transparent"
+                      )}
+                    >
                       {statusLabels[renewal.status]}
                     </Badge>
                   </TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="icon" asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon-sm"
+                      className="text-muted-foreground hover:text-primary"
+                      asChild
+                    >
                       <Link href={`/subscriptions/${renewal.subscriptionId}`}>
                         <ExternalLink className="h-4 w-4" />
                       </Link>
@@ -170,7 +189,7 @@ export function RenewalDayDetail({
             {markers.map((m) => (
               <li
                 key={`${m.kind}-${m.subscriptionId}`}
-                className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm"
+                className="bg-muted/60 flex min-w-0 items-center gap-2 rounded-md px-3 py-2 text-[0.9375rem]"
               >
                 <span
                   className={cn(
@@ -181,13 +200,14 @@ export function RenewalDayDetail({
                 <AppAvatar name={m.appName} logo={m.appLogoUrl} />
                 <Link
                   href={`/subscriptions/${m.subscriptionId}`}
-                  className="font-medium hover:underline"
+                  className="hover:text-primary min-w-0 truncate font-medium"
+                  title={m.appName}
                 >
                   {m.appName}
                 </Link>
                 <span
                   className={cn(
-                    "ml-auto text-xs font-medium",
+                    "ml-auto shrink-0 text-xs font-medium whitespace-nowrap",
                     MARKER_STYLES[m.kind].label
                   )}
                 >

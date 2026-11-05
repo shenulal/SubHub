@@ -144,23 +144,23 @@ export function SubscriptionFilters({
       className="flex flex-wrap items-center gap-2"
       data-testid="subscription-filters"
     >
-      <div className="relative">
-        <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-2.5 h-3.5 w-3.5 -translate-y-1/2" />
+      <div className="relative w-full min-w-0 sm:w-64">
+        <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2" />
         <Input
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           placeholder={t("searchPlaceholder")}
           aria-label={t("searchPlaceholder")}
-          className="h-8 w-56 pl-8 text-sm"
+          className="h-10 w-full pr-9 pl-9"
         />
         {search && (
           <button
             type="button"
             aria-label={t("clear")}
             onClick={() => setSearch("")}
-            className="text-muted-foreground hover:text-foreground absolute top-1/2 right-2 -translate-y-1/2"
+            className="text-muted-foreground hover:text-foreground absolute top-1/2 right-3 -translate-y-1/2"
           >
-            <X className="h-3.5 w-3.5" />
+            <X className="size-4" />
           </button>
         )}
       </div>
@@ -204,24 +204,26 @@ export function SubscriptionFilters({
         <Button
           variant="ghost"
           size="sm"
-          className="text-muted-foreground h-8 px-2 text-xs"
+          className="text-muted-foreground hover:text-primary h-10 shrink-0 px-3 whitespace-nowrap"
           onClick={onReset}
         >
-          <X className="mr-1 h-3.5 w-3.5" />
+          <X className="size-4" />
           {t("reset", { count: activeCount })}
         </Button>
       )}
 
-      <div className="ml-auto">
+      <div className="ml-auto shrink-0">
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button
               variant="outline"
               size="sm"
-              className={cn("h-8 gap-1.5 font-normal")}
+              className={cn(
+                "h-10 gap-2 px-4 text-[0.9375rem] font-normal whitespace-nowrap"
+              )}
               aria-label={tSort("label")}
             >
-              <SortIcon className="h-3.5 w-3.5" />
+              <SortIcon className="size-4" />
               {tSort(sort.sortBy)}
             </Button>
           </DropdownMenuTrigger>

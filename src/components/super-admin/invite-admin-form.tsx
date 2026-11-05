@@ -29,10 +29,12 @@ export function InviteAdminForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-3">
-      <div className="space-y-1">
-        <Label htmlFor="invite-email">초대할 이메일</Label>
-        <div className="flex gap-2">
+    <form onSubmit={handleSubmit} className="max-w-3xl space-y-3">
+      <div className="space-y-1.5">
+        <Label htmlFor="invite-email" className="text-[0.9375rem]">
+          초대할 이메일
+        </Label>
+        <div className="flex min-w-0 flex-wrap gap-3 sm:flex-nowrap [&>button]:h-10 [&>button]:shrink-0 [&>input]:min-w-0 [&>input]:flex-1">
           <Input
             id="invite-email"
             type="email"
@@ -45,7 +47,7 @@ export function InviteAdminForm() {
             {loading ? "발송 중..." : "초대 발송"}
           </Button>
         </div>
-        <p className="text-muted-foreground text-xs">
+        <p className="text-muted-foreground text-[0.8125rem]">
           ADMIN 역할로 초대됩니다. 초대 링크는 7일간 유효합니다.
         </p>
       </div>

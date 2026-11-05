@@ -134,7 +134,7 @@ export function TaxRatesPanel({ rows, canManage }: TaxRatesPanelProps) {
         action={
           canManage && (
             <Button size="sm" onClick={() => setDraft(EMPTY)}>
-              <Plus className="mr-2 h-4 w-4" />
+              <Plus className="size-4" />
               {t("add")}
             </Button>
           )
@@ -143,7 +143,7 @@ export function TaxRatesPanel({ rows, canManage }: TaxRatesPanelProps) {
       <div className="overflow-hidden rounded-md border">
         <Table>
           <TableHeader>
-            <TableRow className="bg-muted/40">
+            <TableRow className="hover:bg-transparent">
               <TableHead>{tc("name")}</TableHead>
               <TableHead className="w-24">{t("country")}</TableHead>
               <TableHead className="w-24 text-right">{t("rate")}</TableHead>
@@ -312,7 +312,7 @@ export function TaxRatesPanel({ rows, canManage }: TaxRatesPanelProps) {
               {tc("cancel")}
             </Button>
             <Button onClick={save} disabled={isPending || !draft?.name}>
-              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isPending && <Loader2 className="size-4 animate-spin" />}
               {tc("save")}
             </Button>
           </DialogFooter>

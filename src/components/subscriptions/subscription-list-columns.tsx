@@ -18,18 +18,26 @@ import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-/** Light + dark safe status styling (semantic colour, not just decoration). */
+/** Materio tonal Badge variant per status (semantic colour, light + dark safe). */
+export const STATUS_BADGE_VARIANT: Record<
+  SubscriptionStatus,
+  "success" | "warning" | "info" | "secondary" | "outline"
+> = {
+  ACTIVE: "success",
+  PENDING: "warning",
+  PAUSED: "info",
+  EXPIRED: "outline",
+  CANCELLED: "secondary",
+  ARCHIVED: "outline",
+};
+
+/** Extra per-status refinements on top of the Badge variant. */
 export const STATUS_STYLES: Record<SubscriptionStatus, string> = {
-  ACTIVE:
-    "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/60 dark:text-emerald-300",
-  PENDING:
-    "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900 dark:bg-amber-950/60 dark:text-amber-300",
-  PAUSED:
-    "border-sky-200 bg-sky-50 text-sky-700 dark:border-sky-900 dark:bg-sky-950/60 dark:text-sky-300",
-  EXPIRED:
-    "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900 dark:bg-rose-950/60 dark:text-rose-300",
-  CANCELLED:
-    "border-border bg-muted text-muted-foreground line-through decoration-muted-foreground/50",
+  ACTIVE: "",
+  PENDING: "",
+  PAUSED: "",
+  EXPIRED: "border-transparent bg-error/15 text-error",
+  CANCELLED: "line-through decoration-muted-foreground/50",
   ARCHIVED: "border-dashed border-border bg-transparent text-muted-foreground",
 };
 
@@ -38,45 +46,46 @@ const URGENT_DAYS = 7;
 const SOON_DAYS = 30;
 
 export function countdownTone(days: number): string {
-  if (days < 0) return "text-rose-600 dark:text-rose-400";
-  if (days <= URGENT_DAYS) return "text-amber-600 dark:text-amber-400";
+  if (days < 0) return "text-error";
+  if (days <= URGENT_DAYS) return "text-warning";
   if (days <= SOON_DAYS) return "text-foreground";
   return "text-muted-foreground";
 }
 
 export function AppCell({ item }: { item: DiscoverySubscriptionItem }) {
   return (
-    <div className="flex items-center gap-3">
+    <div className="flex max-w-[15rem] min-w-[12rem] items-center gap-3">
       {item.appLogoUrl ? (
         <Image
           src={item.appLogoUrl}
           alt={item.appName}
           width={32}
           height={32}
-          className="h-8 w-8 rounded-md border object-contain"
+          className="bg-background size-9 shrink-0 rounded-md border object-contain p-0.5"
         />
       ) : (
-        <div className="bg-primary/10 text-primary flex h-8 w-8 items-center justify-center rounded-md text-sm font-semibold">
+        <div className="tonal-primary flex size-9 shrink-0 items-center justify-center rounded-md text-[0.9375rem] font-medium">
           {item.appName.charAt(0).toUpperCase()}
         </div>
       )}
       <div className="min-w-0">
         <Link
           href={`/subscriptions/${item.id}`}
-          className="block truncate font-medium hover:underline"
+          className="text-foreground hover:text-primary block truncate text-[0.9375rem] font-medium transition-colors"
+          title={item.appName}
         >
           {item.appName}
         </Link>
-        <div className="mt-0.5 flex items-center gap-1.5">
+        <div className="mt-1 flex min-w-0 items-center gap-1.5">
           {item.category ? (
             <CategoryBadge
               category={item.category}
               parentName={item.category.parentName}
-              className="h-5 text-[11px]"
+              className="h-6 max-w-full min-w-0 px-2 text-xs"
             />
           ) : null}
           {item.isPersonal && (
-            <span className="text-muted-foreground inline-flex items-center gap-0.5 text-[11px]">
+            <span className="text-muted-foreground inline-flex shrink-0 items-center gap-0.5 text-xs">
               <User className="h-3 w-3" />
             </span>
           )}
@@ -92,21 +101,24 @@ export function TagsCell({ item }: { item: DiscoverySubscriptionItem }) {
   const shown = item.tags.slice(0, 3);
   const extra = item.tags.length - shown.length;
   return (
-    <div className="flex flex-wrap gap-1">
+    <div className="flex min-w-max items-center gap-1">
       {shown.map((tag) => (
         <span
           key={tag.id}
-          className="bg-muted inline-flex h-5 items-center gap-1 rounded-full px-2 text-[11px]"
+          className="tonal-neutral inline-flex h-6 max-w-[8rem] shrink-0 items-center gap-1.5 rounded-full px-2.5 text-xs font-medium whitespace-nowrap"
+          title={tag.name}
         >
           <span
-            className="h-1.5 w-1.5 rounded-full"
+            className="size-1.5 shrink-0 rounded-full"
             style={{ background: tag.color ?? "var(--chart-2)" }}
           />
-          {tag.name}
+          <span className="truncate">{tag.name}</span>
         </span>
       ))}
       {extra > 0 && (
-        <span className="text-muted-foreground text-[11px]">+{extra}</span>
+        <span className="text-muted-foreground shrink-0 text-xs font-medium">
+          +{extra}
+        </span>
       )}
     </div>
   );
@@ -116,10 +128,12 @@ export function OwnerCell({ item }: { item: DiscoverySubscriptionItem }) {
   const label = item.owner?.name ?? item.owner?.email ?? item.teamName;
   if (!label) return <span className="text-muted-foreground">—</span>;
   return (
-    <div className="flex min-w-0 flex-col">
-      <span className="truncate text-sm">{label}</span>
+    <div className="flex max-w-[14rem] min-w-0 flex-col">
+      <span className="text-foreground truncate text-[0.9375rem]" title={label}>
+        {label}
+      </span>
       {item.owner && item.teamName && (
-        <span className="text-muted-foreground truncate text-[11px]">
+        <span className="text-muted-foreground truncate text-[0.8125rem]">
           {item.teamName}
         </span>
       )}
@@ -144,12 +158,12 @@ export function CostCell({
     typeof item.monthlyAmountBase === "number" &&
     (item.currency !== baseCurrency || item.billingCycle !== "MONTHLY");
   return (
-    <div className="flex flex-col items-end tabular-nums">
-      <span className="font-medium">
+    <div className="flex flex-col items-end whitespace-nowrap tabular-nums">
+      <span className="text-foreground text-[0.9375rem] font-medium">
         {formatMoney(item.amount, item.currency, locale)}
       </span>
       {showBase && (
-        <span className="text-muted-foreground text-[11px]">
+        <span className="text-muted-foreground text-[0.8125rem]">
           ≈ {formatMoney(item.monthlyAmountBase ?? 0, baseCurrency, locale)}{" "}
           {monthlyLabel}
         </span>
@@ -187,33 +201,30 @@ export function RenewalCell({ item, now, labels }: RenewalCellProps) {
           : labels.inDays(days);
 
   return (
-    <div className="flex flex-col gap-0.5">
-      <span className="text-sm">
+    <div className="flex flex-col gap-0.5 whitespace-nowrap">
+      <span className="text-foreground text-[0.9375rem] tabular-nums">
         {renewal ? format(renewal, "yyyy-MM-dd") : "—"}
       </span>
       {countdown && (
         <span
-          className={cn("text-[11px] font-medium", countdownTone(days ?? 0))}
+          className={cn(
+            "text-[0.8125rem] font-medium",
+            countdownTone(days ?? 0)
+          )}
         >
           {countdown}
         </span>
       )}
-      <div className="flex flex-wrap gap-1">
+      <div className="flex flex-wrap gap-1 empty:hidden">
         {item.isTrial && (
-          <Badge
-            variant="outline"
-            className="h-5 gap-1 border-violet-200 bg-violet-50 px-1.5 text-[10px] text-violet-700 dark:border-violet-900 dark:bg-violet-950/60 dark:text-violet-300"
-          >
+          <Badge variant="primary" className="h-5 gap-1 px-2 text-[0.6875rem]">
             <FlaskConical className="h-3 w-3" />
             {labels.trial}
             {trial && ` · ${format(trial, "MM-dd")}`}
           </Badge>
         )}
         {notice && (
-          <Badge
-            variant="outline"
-            className="h-5 gap-1 border-amber-200 bg-amber-50 px-1.5 text-[10px] text-amber-700 dark:border-amber-900 dark:bg-amber-950/60 dark:text-amber-300"
-          >
+          <Badge variant="warning" className="h-5 gap-1 px-2 text-[0.6875rem]">
             <ShieldAlert className="h-3 w-3" />
             {labels.notice} {format(notice, "MM-dd")}
           </Badge>
@@ -289,7 +300,7 @@ export function buildSubscriptionColumns({
       id: "cycle",
       header: labels.cycle,
       cell: (item) => (
-        <span className="text-muted-foreground text-sm">
+        <span className="text-muted-foreground text-[0.9375rem] whitespace-nowrap">
           {labels.cycleLabel(item.billingCycle)}
         </span>
       ),
@@ -300,8 +311,11 @@ export function buildSubscriptionColumns({
       sortable: true,
       cell: (item) => (
         <Badge
-          variant="outline"
-          className={cn("h-5 px-2 text-[11px]", STATUS_STYLES[item.status])}
+          variant={STATUS_BADGE_VARIANT[item.status]}
+          className={cn(
+            "h-6 px-2.5 text-[0.8125rem]",
+            STATUS_STYLES[item.status]
+          )}
         >
           {labels.statusLabel(item.status)}
         </Badge>

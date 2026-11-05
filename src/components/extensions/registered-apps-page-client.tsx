@@ -151,9 +151,9 @@ export function RegisteredAppsPageClient() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex flex-1 items-center gap-2">
-          <div className="relative max-w-sm flex-1">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex min-w-[260px] flex-1 items-center gap-2">
+          <div className="relative max-w-sm min-w-0 flex-1">
             <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
             <Input
               placeholder={t("registeredApps.searchPlaceholder")}
@@ -163,12 +163,12 @@ export function RegisteredAppsPageClient() {
               className="pl-9"
             />
           </div>
-          <Button variant="outline" onClick={handleSearch}>
+          <Button variant="outline" onClick={handleSearch} className="shrink-0">
             {t("common.search")}
           </Button>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button variant="outline" onClick={handleSync} disabled={syncing}>
             <RefreshCw
               className={`mr-2 h-4 w-4 ${syncing ? "animate-spin" : ""}`}
@@ -234,11 +234,11 @@ export function RegisteredAppsPageClient() {
         </div>
       </div>
 
-      <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
-        <CardContent className="p-0">
+      <Card className="border-border dark:border-border gap-0 overflow-hidden border py-0 shadow-none">
+        <CardContent className="px-0">
           {items.length === 0 ? (
             <div className="py-10 text-center">
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground text-[0.9375rem]">
                 {t("registeredApps.emptyTitle")}
               </p>
               <p className="text-muted-foreground mt-2 text-sm">
@@ -278,10 +278,10 @@ export function RegisteredAppsPageClient() {
                           alt={item.appName}
                           width={32}
                           height={32}
-                          className="rounded"
+                          className="size-8 rounded-md object-contain"
                         />
                       ) : (
-                        <div className="bg-purple-gray flex h-8 w-8 items-center justify-center rounded">
+                        <div className="tonal-primary flex size-8 items-center justify-center rounded-md">
                           <span className="text-xs font-medium">
                             {item.appName.charAt(0).toUpperCase()}
                           </span>
@@ -289,32 +289,37 @@ export function RegisteredAppsPageClient() {
                       )}
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">{item.appName}</span>
+                      <div className="flex max-w-[260px] min-w-0 items-center gap-2">
+                        <span
+                          className="text-foreground truncate font-medium"
+                          title={item.appName}
+                        >
+                          {item.appName}
+                        </span>
                         {item.website && (
                           <a
                             href={item.website}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-muted-foreground hover:text-foreground"
+                            className="text-muted-foreground hover:text-primary shrink-0"
                           >
                             <ExternalLink className="h-3 w-3" />
                           </a>
                         )}
                       </div>
                     </TableCell>
-                    <TableCell className="font-mono text-sm">
+                    <TableCell className="max-w-[240px] truncate font-mono text-sm">
                       {item.pattern}
                     </TableCell>
                     <TableCell>
                       {item.category && (
-                        <Badge variant="outline">{item.category}</Badge>
+                        <Badge variant="secondary">{item.category}</Badge>
                       )}
                     </TableCell>
                     <TableCell>
                       <Badge
                         variant={
-                          item.source === "AUTO" ? "default" : "secondary"
+                          item.source === "AUTO" ? "primary" : "secondary"
                         }
                       >
                         {item.source === "AUTO"

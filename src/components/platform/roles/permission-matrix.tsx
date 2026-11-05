@@ -37,7 +37,7 @@ export function PermissionMatrix({
   };
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2">
+    <div className="grid min-w-0 gap-4 sm:grid-cols-2">
       {groups.map((group) => {
         const total = group.permissions.length;
         const count = group.permissions.filter((p) =>
@@ -49,40 +49,48 @@ export function PermissionMatrix({
           <fieldset
             key={group.group}
             className={cn(
-              "rounded-lg border p-3",
-              all && "border-primary/40 bg-primary/[0.03]"
+              "min-w-0 rounded-md border p-4 transition-colors",
+              all && "border-primary/50 bg-primary/[0.04]"
             )}
           >
             <legend className="sr-only">{group.group}</legend>
-            <label className="mb-2 flex cursor-pointer items-center justify-between gap-2">
-              <span className="flex items-center gap-2 text-sm font-semibold">
+            <label className="mb-3 flex min-w-0 cursor-pointer items-center justify-between gap-2 border-b pb-3">
+              <span className="text-foreground flex min-w-0 items-center gap-2 text-[0.9375rem] font-medium">
                 <Checkbox
                   checked={all ? true : some ? "indeterminate" : false}
                   disabled={readOnly}
                   onCheckedChange={(v) => toggleGroup(group, v === true)}
                   aria-label={t("selectAll", { group: group.group })}
                 />
-                {group.group}
+                <span className="truncate">{group.group}</span>
               </span>
-              <span className="text-muted-foreground text-[11px] tabular-nums">
+              <span
+                className={cn(
+                  "shrink-0 rounded px-1.5 py-0.5 text-[11px] font-medium tabular-nums",
+                  count > 0 ? "tonal-primary" : "tonal-neutral"
+                )}
+              >
                 {count}/{total}
               </span>
             </label>
-            <ul className="space-y-1.5 pl-6">
+            <ul className="space-y-2.5">
               {group.permissions.map((p) => (
-                <li key={p.key}>
-                  <label className="flex cursor-pointer items-start gap-2 text-sm">
+                <li key={p.key} className="min-w-0">
+                  <label className="flex min-w-0 cursor-pointer items-start gap-2.5 text-[0.9375rem]">
                     <Checkbox
                       checked={selected.has(p.key)}
                       disabled={readOnly}
                       onCheckedChange={(v) => toggleKey(p.key, v === true)}
                       className="mt-0.5"
                     />
-                    <span>
-                      <span className="block leading-tight">
+                    <span className="min-w-0">
+                      <span className="text-foreground block leading-snug break-words">
                         {p.description}
                       </span>
-                      <code className="text-muted-foreground text-[10px]">
+                      <code
+                        className="text-muted-foreground block truncate text-[11px]"
+                        title={p.key}
+                      >
                         {p.key}
                       </code>
                     </span>

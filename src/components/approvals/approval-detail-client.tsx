@@ -25,11 +25,16 @@ import { formatDate, formatMoney, userLabel } from "./format";
 
 function Fact({ label, value }: { label: string; value: React.ReactNode }) {
   return (
-    <div>
-      <dt className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
+    <div className="bg-muted/60 min-w-0 rounded-md px-4 py-3">
+      <dt className="text-muted-foreground truncate text-xs font-medium tracking-wide uppercase">
         {label}
       </dt>
-      <dd className="mt-0.5 text-sm">{value}</dd>
+      <dd
+        className="text-foreground mt-1 truncate text-[0.9375rem]"
+        title={typeof value === "string" ? value : undefined}
+      >
+        {value}
+      </dd>
     </div>
   );
 }
@@ -73,15 +78,15 @@ export function ApprovalDetailClient({
   return (
     <div className="space-y-6">
       <PageHeader title={request.serviceName} backHref="/approvals" showBack>
-        <ApprovalStatusBadge status={request.status} className="text-sm" />
+        <ApprovalStatusBadge status={request.status} className="px-3 text-sm" />
       </PageHeader>
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_360px]">
-        <div className="space-y-6">
-          <Card className="border-border rounded-sm shadow-xs">
-            <CardContent className="space-y-5 pt-6">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+        <div className="min-w-0 space-y-6">
+          <Card>
+            <CardContent className="space-y-5">
               <div className="flex flex-wrap items-end justify-between gap-4">
-                <div>
+                <div className="min-w-0">
                   <p className="text-muted-foreground text-sm">
                     {t("requestedBy", {
                       name: userLabel(request.requester, tc("unknownUser")),
@@ -91,7 +96,7 @@ export function ApprovalDetailClient({
                       date: formatDate(request.submittedAt),
                     })}
                   </p>
-                  <p className="mt-1 text-3xl font-semibold tabular-nums">
+                  <p className="text-foreground mt-1 truncate text-3xl font-medium tabular-nums">
                     {formatMoney(request.monthlyAmount, request.currency)}
                     <span className="text-muted-foreground ml-1 text-base font-normal">
                       {tRoot("perMonth")}
@@ -104,12 +109,12 @@ export function ApprovalDetailClient({
                 />
               </div>
               {request.escalatedAt && (
-                <p className="flex items-center gap-2 rounded-md bg-amber-500/10 px-3 py-2 text-sm text-amber-700 dark:text-amber-300">
-                  <TrendingUp className="h-4 w-4" />
+                <p className="tonal-warning flex items-center gap-2 rounded-md px-4 py-2.5 text-sm">
+                  <TrendingUp className="size-4 shrink-0" />
                   {t("escalated", { date: formatDate(request.escalatedAt) })}
                 </p>
               )}
-              <dl className="grid gap-4 sm:grid-cols-3">
+              <dl className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 <Fact
                   label={t("amount")}
                   value={`${formatMoney(request.amount, request.currency)} · ${tCycle(request.billingCycle)}`}
@@ -135,10 +140,10 @@ export function ApprovalDetailClient({
                         href={request.vendorWebsite}
                         target="_blank"
                         rel="noreferrer"
-                        className="text-primary inline-flex items-center gap-1 hover:underline"
+                        className="text-primary inline-flex max-w-full min-w-0 items-center gap-1 hover:underline"
                       >
                         {request.vendorWebsite.replace(/^https?:\/\//, "")}
-                        <ExternalLink className="h-3 w-3" />
+                        <ExternalLink className="size-3 shrink-0" />
                       </a>
                     ) : (
                       "—"
@@ -154,7 +159,7 @@ export function ApprovalDetailClient({
                 <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
                   {t("justification")}
                 </p>
-                <p className="mt-1 text-sm leading-relaxed whitespace-pre-wrap">
+                <p className="text-foreground mt-1.5 text-[0.9375rem] leading-relaxed break-words whitespace-pre-wrap">
                   {request.justification}
                 </p>
               </div>
@@ -169,9 +174,9 @@ export function ApprovalDetailClient({
             </CardContent>
           </Card>
 
-          <Card className="border-border rounded-sm shadow-xs">
+          <Card>
             <CardHeader>
-              <CardTitle className="text-base">{t("timeline")}</CardTitle>
+              <CardTitle>{t("timeline")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
               <ApprovalTimeline events={request.events} />
@@ -205,9 +210,9 @@ export function ApprovalDetailClient({
         </div>
 
         <aside>
-          <Card className="border-border rounded-sm shadow-xs lg:sticky lg:top-6">
+          <Card className="lg:sticky lg:top-20">
             <CardHeader>
-              <CardTitle className="text-base">{t("steps")}</CardTitle>
+              <CardTitle>{t("steps")}</CardTitle>
             </CardHeader>
             <CardContent>
               {request.steps.length === 0 ? (

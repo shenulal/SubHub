@@ -12,10 +12,14 @@ import { formatMoney } from "@/lib/services/discovery/money";
 import { cn } from "@/lib/utils";
 import type { RenewalItem } from "@/types/dashboard";
 import type { DashboardRenewalRow } from "@/types/discovery";
-import { FlaskConical } from "lucide-react";
+import { CalendarCheck, FlaskConical } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useMemo } from "react";
+
+import { DashboardEmptyState } from "./dashboard-empty-state";
+
+const CARD_CLASSES = "h-[440px] gap-4 overflow-clip px-5";
 
 export type { RenewalItem };
 
@@ -77,7 +81,7 @@ export function UpcomingRenewals({
 
   if (isLoading) {
     return (
-      <Card className="bg-card flex h-[450px] flex-col gap-5 rounded-xl border p-5 shadow-xs">
+      <Card className={CARD_CLASSES}>
         <Skeleton className="h-6 w-48" />
         <div className="flex flex-1 flex-col gap-1">
           {[1, 2, 3, 4, 5].map((i) => (
@@ -89,64 +93,67 @@ export function UpcomingRenewals({
   }
 
   return (
-    <Card
-      className="bg-card flex h-[450px] flex-col gap-4 overflow-clip rounded-xl border p-5 shadow-xs"
-      data-testid="upcoming-renewals"
-    >
-      <div className="flex items-start gap-1 whitespace-nowrap">
-        <span className="text-foreground text-base font-semibold">
+    <Card className={CARD_CLASSES} data-testid="upcoming-renewals">
+      <div className="flex min-w-0 items-center gap-2 whitespace-nowrap">
+        <span
+          className="text-foreground min-w-0 truncate text-lg font-medium"
+          title={
+            windowDays ? td("title", { days: windowDays }) : t("title30days")
+          }
+        >
           {windowDays ? td("title", { days: windowDays }) : t("title30days")}
         </span>
-        <span className="text-primary text-base font-semibold">
+        <span className="tonal-primary shrink-0 rounded-full px-2 py-0.5 text-xs font-medium tabular-nums">
           {rows.length}
         </span>
       </div>
 
-      <div className="flex flex-1 flex-col gap-1 overflow-y-auto">
+      <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
         {rows.length === 0 && (
-          <p className="text-muted-foreground flex flex-1 items-center justify-center text-sm">
-            {td("empty")}
-          </p>
+          <DashboardEmptyState icon={CalendarCheck} message={td("empty")} />
         )}
         {rows.map((item) => (
           <Link
             key={item.id}
             href={`/subscriptions/${item.id}`}
-            className="bg-muted/50 hover:bg-muted flex items-center gap-2 overflow-clip rounded-lg p-2 transition-colors"
+            className="hover:bg-muted flex min-w-0 items-center gap-3 overflow-clip rounded-md p-2 transition-colors"
           >
-            <div className="bg-card flex h-10 w-10 shrink-0 items-center justify-center rounded-md border">
+            <div className="bg-card flex size-10 shrink-0 items-center justify-center rounded-md border">
               <Avatar className="h-[30px] w-[30px] rounded">
                 {item.logoUrl ? (
                   <AvatarImage src={item.logoUrl} alt={item.appName} />
                 ) : null}
-                <AvatarFallback className="bg-primary/10 text-primary rounded text-sm font-semibold">
+                <AvatarFallback className="bg-primary/15 text-primary rounded text-sm font-medium">
                   {getAppInitial(item.appName)}
                 </AvatarFallback>
               </Avatar>
             </div>
             <div className="flex min-w-0 flex-1 flex-col gap-0.5 py-1">
-              <span className="text-foreground flex items-center gap-1.5 truncate text-sm font-medium">
-                {item.appName}
+              <span className="text-foreground flex min-w-0 items-center gap-1.5 text-sm font-medium">
+                <span className="truncate" title={item.appName}>
+                  {item.appName}
+                </span>
                 {item.isTrial && (
                   <FlaskConical
-                    className="h-3.5 w-3.5 text-violet-600 dark:text-violet-400"
+                    className="text-primary size-3.5 shrink-0"
                     aria-label={td("trial")}
                   />
                 )}
               </span>
-              <div className="flex items-center gap-2">
+              <div className="flex min-w-0 items-center gap-2">
                 <span
                   className={cn(
-                    "text-sm font-bold tabular-nums",
-                    item.days <= URGENT_DAYS
-                      ? "text-amber-600 dark:text-amber-400"
-                      : "text-primary"
+                    "shrink-0 text-[0.8125rem] font-medium tabular-nums",
+                    item.days <= URGENT_DAYS ? "text-warning" : "text-primary"
                   )}
                 >
                   D-{item.days}
                 </span>
-                <div className="bg-border h-3 w-px" />
-                <span className="text-muted-foreground text-sm tabular-nums">
+                <div className="bg-border h-3 w-px shrink-0" />
+                <span
+                  className="text-muted-foreground truncate text-[0.8125rem] tabular-nums"
+                  title={item.amountLabel}
+                >
                   {item.amountLabel}
                 </span>
               </div>

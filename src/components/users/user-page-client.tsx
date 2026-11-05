@@ -144,22 +144,23 @@ export function UserPageClient({ role }: UserPageClientProps) {
   // 로딩 상태 - Skeleton UI
   if (isLoading) {
     return (
-      <div className="space-y-4">
+      <div className="min-w-0 space-y-6">
         {/* 페이지 헤더 Skeleton */}
-        <div className="flex items-center justify-between">
-          <div>
+        <div className="flex items-center justify-between gap-4">
+          <div className="min-w-0">
             <Skeleton className="h-8 w-32" />
             <Skeleton className="mt-2 h-4 w-48" />
           </div>
-          <Skeleton className="h-9 w-28" />
+          <Skeleton className="h-10 w-28" />
         </div>
 
         {/* KPI Cards Skeleton */}
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
           {[1, 2, 3, 4].map((i) => (
-            <Card key={i} className="border-border/50 rounded-sm shadow-sm">
-              <CardContent className="p-4">
-                <Skeleton className="h-4 w-20" />
+            <Card key={i}>
+              <CardContent>
+                <Skeleton className="size-10 rounded-md" />
+                <Skeleton className="mt-4 h-4 w-20" />
                 <Skeleton className="mt-2 h-8 w-12" />
               </CardContent>
             </Card>
@@ -167,10 +168,10 @@ export function UserPageClient({ role }: UserPageClientProps) {
         </div>
 
         {/* Filter Bar Skeleton */}
-        <div className="flex items-center gap-2">
-          <Skeleton className="h-9 w-64" />
-          <Skeleton className="h-9 w-24" />
-          <Skeleton className="h-9 w-24" />
+        <div className="flex flex-wrap items-center gap-2">
+          <Skeleton className="h-10 w-64" />
+          <Skeleton className="h-10 w-24" />
+          <Skeleton className="h-10 w-24" />
         </div>
 
         {/* Table Skeleton */}
@@ -209,7 +210,7 @@ export function UserPageClient({ role }: UserPageClientProps) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="min-w-0 space-y-6">
       {/* 페이지 헤더 */}
       <PageHeader
         title={t("users.page.title")}

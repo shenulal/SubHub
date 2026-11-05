@@ -165,10 +165,7 @@ export function ChartCard({
   // 로딩 상태
   if (isLoading) {
     return (
-      <Card
-        className={cn("shadow-xs", className)}
-        data-testid="chart-card-skeleton"
-      >
+      <Card className={cn(className)} data-testid="chart-card-skeleton">
         <CardHeader>
           <div className="space-y-1">
             <div className="flex items-center gap-2">
@@ -196,20 +193,22 @@ export function ChartCard({
   // 빈 상태
   if (isEmpty) {
     return (
-      <Card className={cn("shadow-xs", className)}>
+      <Card className={cn(className)}>
         <CardHeader>
-          <CardTitle className="text-foreground flex items-center gap-2 text-lg font-bold">
+          <CardTitle className="flex min-w-0 items-center gap-2">
             {icon}
-            {title}
+            <span className="truncate">{title}</span>
           </CardTitle>
           {description && <CardDescription>{description}</CardDescription>}
         </CardHeader>
         <CardContent>
           <div
-            className="flex flex-col items-center justify-center text-center"
+            className="bg-muted/60 flex flex-col items-center justify-center rounded-md text-center"
             style={{ height: chartHeight }}
           >
-            <p className="text-muted-foreground">{emptyMessage}</p>
+            <p className="text-muted-foreground text-[0.9375rem]">
+              {emptyMessage}
+            </p>
             {emptyAction && <div className="mt-2">{emptyAction}</div>}
           </div>
         </CardContent>
@@ -218,27 +217,26 @@ export function ChartCard({
   }
 
   return (
-    <Card
-      className={cn(
-        "border-border/50 shadow-sm transition-shadow hover:shadow-md",
-        className
-      )}
-    >
+    <Card className={cn(className)}>
       <CardHeader>
-        <CardTitle className="text-foreground flex items-center gap-2 text-lg font-bold">
+        <CardTitle className="flex min-w-0 items-center gap-2">
           {icon}
-          {title}
+          <span className="truncate" title={title}>
+            {title}
+          </span>
         </CardTitle>
-        {description && (
-          <CardDescription className="text-xs">{description}</CardDescription>
-        )}
+        {description && <CardDescription>{description}</CardDescription>}
         <CardAction>
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2">
             {action}
             {summary && (
-              <div className="text-right">
-                <p className="text-muted-foreground text-xs">{summary.label}</p>
-                <p className="font-bold tabular-nums">{summary.value}</p>
+              <div className="min-w-0 text-right">
+                <p className="text-muted-foreground text-[0.8125rem] whitespace-nowrap">
+                  {summary.label}
+                </p>
+                <p className="text-foreground font-medium whitespace-nowrap tabular-nums">
+                  {summary.value}
+                </p>
               </div>
             )}
             {enableExport && exportData && (
@@ -246,20 +244,20 @@ export function ChartCard({
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
-                    size="sm"
-                    className="h-8 w-8 p-0"
+                    size="icon-sm"
+                    className="text-muted-foreground hover:text-foreground rounded-full"
                     aria-label="Export options"
                   >
-                    <MoreVertical className="h-4 w-4" />
+                    <MoreVertical className="size-4" />
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem onClick={handleExportCSV}>
-                    <Download className="mr-2 h-4 w-4" />
+                    <Download className="mr-2 size-4" />
                     CSV로 내보내기
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleExportJSON}>
-                    <Download className="mr-2 h-4 w-4" />
+                    <Download className="mr-2 size-4" />
                     JSON으로 내보내기
                   </DropdownMenuItem>
                 </DropdownMenuContent>
@@ -269,7 +267,9 @@ export function ChartCard({
         </CardAction>
       </CardHeader>
       <CardContent>
-        <div style={{ height: chartHeight }}>{children}</div>
+        <div className="min-w-0" style={{ height: chartHeight }}>
+          {children}
+        </div>
         {footer && <div className="mt-4 border-t pt-4">{footer}</div>}
       </CardContent>
     </Card>
@@ -291,9 +291,9 @@ interface ChartCardFooterProps {
 
 const variantColors = {
   default: "",
-  success: "text-green-500",
-  warning: "text-yellow-500",
-  danger: "text-red-500",
+  success: "text-success",
+  warning: "text-warning",
+  danger: "text-error",
 };
 
 export function ChartCardFooter({ items, columns = 3 }: ChartCardFooterProps) {
@@ -304,13 +304,18 @@ export function ChartCardFooter({ items, columns = 3 }: ChartCardFooterProps) {
   };
 
   return (
-    <div className={cn("grid gap-4 text-center text-sm", gridCols[columns])}>
+    <div className={cn("grid gap-4 text-center", gridCols[columns])}>
       {items.map((item, index) => (
-        <div key={index}>
-          <p className="text-muted-foreground">{item.label}</p>
+        <div key={index} className="min-w-0">
+          <p
+            className="text-muted-foreground truncate text-[0.8125rem]"
+            title={item.label}
+          >
+            {item.label}
+          </p>
           <p
             className={cn(
-              "font-medium tabular-nums",
+              "text-foreground truncate font-medium tabular-nums",
               item.color && `text-[${item.color}]`,
               item.variant && variantColors[item.variant]
             )}
@@ -344,20 +349,22 @@ export function ChartLegend({ items, onClick }: ChartLegendProps) {
           <div
             key={index}
             className={cn(
-              "flex items-center justify-between rounded-md p-2 text-sm",
-              onClick && "hover:bg-muted/50 cursor-pointer transition-colors"
+              "flex min-w-0 items-center justify-between gap-3 rounded-md p-2 text-[0.9375rem]",
+              onClick && "hover:bg-accent/60 cursor-pointer transition-colors"
             )}
             onClick={() => onClick?.(item)}
           >
-            <div className="flex items-center gap-3">
+            <div className="flex min-w-0 items-center gap-3">
               <div
-                className="h-3 w-3 rounded-full"
+                className="size-2.5 shrink-0 rounded-full"
                 style={{ backgroundColor: item.color }}
               />
-              <span className="font-medium">{item.label}</span>
+              <span className="text-foreground truncate" title={item.label}>
+                {item.label}
+              </span>
             </div>
             {item.value !== undefined && (
-              <span className="text-muted-foreground tabular-nums">
+              <span className="text-muted-foreground shrink-0 tabular-nums">
                 {item.value}
               </span>
             )}

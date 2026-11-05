@@ -56,7 +56,7 @@ export function BentoGridItem({
 }: BentoGridItemProps) {
   return (
     <div
-      className={cn(className)}
+      className={cn("min-w-0", className)}
       style={{
         gridColumn: `span ${colSpanLg ?? colSpanMd ?? colSpan}`,
         gridRow: rowSpan > 1 ? `span ${rowSpan}` : undefined,
@@ -173,6 +173,7 @@ export function ResponsiveBentoItem({
   return (
     <div
       className={cn(
+        "min-w-0",
         COL_SPAN_CLASSES[cols] || "col-span-1",
         colsSm && (SM_COL_SPAN_CLASSES[colsSm] || ""),
         colsMd && (MD_COL_SPAN_CLASSES[colsMd] || ""),

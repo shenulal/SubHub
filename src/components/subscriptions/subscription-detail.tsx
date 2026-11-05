@@ -87,13 +87,13 @@ export function SubscriptionDetail({
     <div className="space-y-6">
       {!hideHeader && (
         <div className="flex flex-wrap items-start justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-bold">
+          <div className="min-w-0">
+            <h1 className="text-foreground text-2xl font-medium">
               {t("subscriptions.detail.title", {
                 appName: subscription.appName,
               })}
             </h1>
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground mt-1 text-[0.9375rem]">
               {t("subscriptions.detail.subtitle")}
             </p>
           </div>
@@ -107,18 +107,18 @@ export function SubscriptionDetail({
       )}
 
       {/* Status strip: status + taxonomy chips */}
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="flex min-w-0 flex-wrap items-center gap-2">
         <Badge
           variant="outline"
-          className={cn("font-medium", statusToneClasses[subscription.status])}
+          className={cn(
+            "h-6 px-2.5 text-[0.8125rem] font-medium",
+            statusToneClasses[subscription.status]
+          )}
         >
           {statusLabels[subscription.status]}
         </Badge>
         {subscription.isTrial && (
-          <Badge
-            variant="outline"
-            className="border-violet-500/30 bg-violet-500/10 text-violet-700 dark:text-violet-300"
-          >
+          <Badge variant="primary" className="h-6 px-2.5 text-[0.8125rem]">
             {subscription.trialEndsAt
               ? tl("badges.trialEnds", {
                   date: formatDate(subscription.trialEndsAt),
@@ -127,17 +127,19 @@ export function SubscriptionDetail({
           </Badge>
         )}
         {subscription.isPersonal && (
-          <Badge variant="secondary">{tl("badges.personal")}</Badge>
+          <Badge variant="secondary" className="h-6 px-2.5 text-[0.8125rem]">
+            {tl("badges.personal")}
+          </Badge>
         )}
         {subscription.status === "PAUSED" && subscription.pausedAt && (
-          <span className="text-muted-foreground text-xs">
+          <span className="text-muted-foreground text-[0.8125rem] whitespace-nowrap">
             {tl("badges.pausedSince", {
               date: formatDate(subscription.pausedAt),
             })}
           </span>
         )}
         {subscription.status === "ARCHIVED" && subscription.archivedAt && (
-          <span className="text-muted-foreground text-xs">
+          <span className="text-muted-foreground text-[0.8125rem] whitespace-nowrap">
             {tl("badges.archivedOn", {
               date: formatDate(subscription.archivedAt),
             })}
@@ -146,6 +148,7 @@ export function SubscriptionDetail({
         {subscription.category && (
           <Badge
             variant="outline"
+            className="h-6 max-w-full px-2.5 text-[0.8125rem]"
             style={
               subscription.category.color
                 ? { borderColor: subscription.category.color }
@@ -158,7 +161,12 @@ export function SubscriptionDetail({
           </Badge>
         )}
         {subscription.tags?.map((tag) => (
-          <Badge key={tag.id} variant="secondary" className="font-normal">
+          <Badge
+            key={tag.id}
+            variant="secondary"
+            className="h-6 max-w-[12rem] px-2.5 text-[0.8125rem] font-normal"
+            title={tag.name}
+          >
             {tag.name}
           </Badge>
         ))}
@@ -247,7 +255,7 @@ export function SubscriptionDetail({
         </TabsContent>
 
         <TabsContent value="activity">
-          <div className="grid gap-6 lg:grid-cols-[1fr_400px]">
+          <div className="grid min-w-0 gap-6 2xl:grid-cols-[minmax(0,1fr)_400px]">
             <SubscriptionActivity
               subscriptionId={subscription.id}
               refreshToken={activityToken}

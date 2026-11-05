@@ -29,22 +29,22 @@ function getUrgencyLevel(daysUntilRenewal: number): UrgencyLevel {
 // 긴급도별 색상 클래스 (Tailwind 표준 색상)
 const urgencyStyles = {
   urgent: {
-    dot: "bg-red-500",
-    border: "border-red-500/50",
-    bg: "bg-red-100 dark:bg-red-900/30",
-    text: "text-red-700 dark:text-red-400",
+    dot: "bg-error",
+    border: "border-error/50",
+    bg: "tonal-error",
+    text: "text-error",
   },
   warning: {
-    dot: "bg-amber-500",
-    border: "border-amber-500/50",
-    bg: "bg-amber-100 dark:bg-amber-900/30",
-    text: "text-amber-700 dark:text-amber-400",
+    dot: "bg-warning",
+    border: "border-warning/50",
+    bg: "tonal-warning",
+    text: "text-warning",
   },
   normal: {
-    dot: "bg-blue-500",
-    border: "border-blue-500/50",
-    bg: "bg-blue-100 dark:bg-blue-900/30",
-    text: "text-blue-700 dark:text-blue-400",
+    dot: "bg-info",
+    border: "border-info/50",
+    bg: "tonal-info",
+    text: "text-info",
   },
 };
 
@@ -176,21 +176,28 @@ export function RenewalCalendarView({
   const monthName = t(`months.${currentMonth}`);
 
   return (
-    <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
+    <Card className="h-full">
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2">
-            <CalendarDays className="h-5 w-5" />
-            {t("title")}
+        <div className="flex min-w-0 items-center justify-between gap-3">
+          <CardTitle className="flex min-w-0 items-center gap-3">
+            <span className="tonal-primary flex size-10 shrink-0 items-center justify-center rounded-md">
+              <CalendarDays className="size-5" />
+            </span>
+            <span className="truncate">{t("title")}</span>
           </CardTitle>
-          <Button variant="outline" size="sm" onClick={handleToday}>
+          <Button
+            variant="outline"
+            size="sm"
+            className="shrink-0"
+            onClick={handleToday}
+          >
             {t("today")}
           </Button>
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* 범례 */}
-        <div className="flex flex-wrap items-center gap-4 rounded-lg border p-3">
+        <div className="bg-muted flex flex-wrap items-center gap-x-5 gap-y-2 rounded-md px-3 py-2">
           <div className="flex items-center gap-2">
             <span
               className={cn("h-3 w-3 rounded-full", urgencyStyles.urgent.dot)}
@@ -212,15 +219,25 @@ export function RenewalCalendarView({
         </div>
 
         {/* 월 네비게이션 */}
-        <div className="flex items-center justify-between">
-          <Button variant="ghost" size="sm" onClick={handlePrevMonth}>
+        <div className="flex items-center justify-between gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="shrink-0"
+            onClick={handlePrevMonth}
+          >
             <ChevronLeft className="mr-1 h-4 w-4" />
             {t("prev")}
           </Button>
-          <h2 className="text-lg font-semibold">
+          <h2 className="min-w-0 truncate text-lg font-medium">
             {t("yearMonth", { year: currentYear, month: monthName })}
           </h2>
-          <Button variant="ghost" size="sm" onClick={handleNextMonth}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="shrink-0"
+            onClick={handleNextMonth}
+          >
             {t("next")}
             <ChevronRight className="ml-1 h-4 w-4" />
           </Button>
@@ -232,9 +249,9 @@ export function RenewalCalendarView({
             <div
               key={key}
               className={cn(
-                "py-2 text-center text-sm font-medium",
-                index === 0 && "text-red-500",
-                index === 6 && "text-blue-500"
+                "text-muted-foreground py-2 text-center text-xs font-medium tracking-wide uppercase",
+                index === 0 && "text-error",
+                index === 6 && "text-info"
               )}
             >
               {t(`weekdays.${key}`)}
@@ -262,17 +279,17 @@ export function RenewalCalendarView({
                 key={dateKey}
                 onClick={() => handleDateClick(day)}
                 className={cn(
-                  "relative h-16 rounded-md border p-1 text-left transition-all",
-                  "hover:bg-muted/50",
-                  isToday(day) && "border-primary bg-primary/5 font-bold",
+                  "relative h-16 min-w-0 rounded-md border p-1.5 text-left transition-colors",
+                  "hover:bg-muted",
+                  isToday(day) && "border-primary bg-primary/5 font-medium",
                   isSelected(day) && "ring-primary ring-2",
                   hasRenewals &&
                     urgencyLevel && [
                       urgencyStyles[urgencyLevel].border,
                       urgencyStyles[urgencyLevel].bg,
                     ],
-                  dayOfWeek === 0 && !hasRenewals && "text-red-500",
-                  dayOfWeek === 6 && !hasRenewals && "text-blue-500"
+                  dayOfWeek === 0 && !hasRenewals && "text-error",
+                  dayOfWeek === 6 && !hasRenewals && "text-info"
                 )}
               >
                 <span

@@ -121,12 +121,16 @@ export function SavedViewsBar({
 
   return (
     <div
-      className="flex flex-wrap items-center gap-1.5"
+      className="flex min-w-0 flex-wrap items-center gap-2"
       data-testid="saved-views-bar"
     >
-      <Bookmark className="text-muted-foreground mr-0.5 h-3.5 w-3.5" />
+      <span className="tonal-primary flex size-8 shrink-0 items-center justify-center rounded-md">
+        <Bookmark className="size-4" />
+      </span>
       {views.length === 0 && (
-        <span className="text-muted-foreground text-xs">{t("empty")}</span>
+        <span className="text-muted-foreground text-[0.8125rem]">
+          {t("empty")}
+        </span>
       )}
       {views.map((view) => {
         const isActive = view.id === activeId;
@@ -134,16 +138,16 @@ export function SavedViewsBar({
           <div
             key={view.id}
             className={cn(
-              "group inline-flex h-7 items-center rounded-full border pr-1 pl-2.5 text-xs transition-colors",
+              "group inline-flex h-8 max-w-full shrink-0 items-center rounded-full border pr-1 pl-3 text-[0.8125rem] font-medium whitespace-nowrap transition-colors",
               isActive
-                ? "border-primary bg-primary text-primary-foreground"
-                : "border-border bg-card hover:bg-muted"
+                ? "border-primary bg-primary text-primary-foreground shadow-xs"
+                : "border-border text-foreground hover:border-primary/50 hover:text-primary bg-transparent"
             )}
           >
             <button
               type="button"
               onClick={() => onApply(view)}
-              className="inline-flex items-center gap-1"
+              className="inline-flex min-w-0 items-center gap-1.5"
               aria-pressed={isActive}
             >
               {view.isDefault && <Star className="h-3 w-3 fill-current" />}
@@ -156,7 +160,7 @@ export function SavedViewsBar({
                   type="button"
                   aria-label={t("menu", { name: view.name })}
                   className={cn(
-                    "ml-0.5 rounded-full p-0.5 opacity-60 transition-opacity hover:opacity-100",
+                    "ml-1 rounded-full p-1 opacity-60 transition-opacity hover:opacity-100",
                     isActive
                       ? "hover:bg-primary-foreground/20"
                       : "hover:bg-muted-foreground/15"
@@ -224,7 +228,7 @@ export function SavedViewsBar({
       <Button
         variant="ghost"
         size="sm"
-        className="h-7 gap-1 px-2 text-xs"
+        className="text-primary hover:text-primary h-8 shrink-0 gap-1.5 px-3 whitespace-nowrap"
         onClick={() => setDialogOpen(true)}
         disabled={isPending}
       >
@@ -255,7 +259,7 @@ export function SavedViewsBar({
               <div className="flex items-center justify-between rounded-md border p-3">
                 <div>
                   <Label htmlFor="saved-view-shared">{t("shared")}</Label>
-                  <p className="text-muted-foreground text-xs">
+                  <p className="text-muted-foreground text-[0.8125rem]">
                     {t("sharedHint")}
                   </p>
                 </div>

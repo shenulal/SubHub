@@ -22,39 +22,44 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { DEFAULT_BASE_CURRENCY } from "@/lib/fx/convert";
+import { DEFAULT_BASE_CURRENCY, formatMoney } from "@/lib/fx/convert";
 import type {
   SeatOptimizationItem,
   SeatWasteAnalysis,
 } from "@/types/seat-analytics";
-import { AlertTriangle, TrendingDown } from "lucide-react";
+import {
+  AlertTriangle,
+  Gauge,
+  PiggyBank,
+  TrendingDown,
+  Wallet,
+} from "lucide-react";
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 import { useEffect, useState } from "react";
+import { ReportStatCard } from "../report-stat-card";
 import { SeatAnalysisSkeleton } from "./cost-report-skeleton";
 import { SimulationDialog } from "./simulation-dialog";
 
 function formatCurrency(value: number, currency = DEFAULT_BASE_CURRENCY) {
-  return new Intl.NumberFormat("ko-KR", { style: "currency", currency }).format(
-    value
-  );
+  return formatMoney(value, currency);
 }
 
 function getUtilizationBadge(rate: number) {
   if (rate < 50)
     return (
-      <Badge className="bg-red-100 text-xs text-red-700 dark:bg-red-900/30 dark:text-red-400">
+      <Badge variant="error" className="tabular-nums">
         {rate}%
       </Badge>
     );
   if (rate < 75)
     return (
-      <Badge className="bg-amber-100 text-xs text-amber-700 dark:bg-amber-900/30 dark:text-amber-400">
+      <Badge variant="warning" className="tabular-nums">
         {rate}%
       </Badge>
     );
   return (
-    <Badge className="bg-emerald-100 text-xs text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
+    <Badge variant="success" className="tabular-nums">
       {rate}%
     </Badge>
   );
@@ -102,8 +107,11 @@ export function SeatAnalysisSection() {
 
   if (!hasWasteData && !hasOptimizationData) {
     return (
-      <Card className="border-border/50 rounded-sm shadow-sm">
-        <CardContent className="py-10 text-center">
+      <Card>
+        <CardContent className="flex flex-col items-center justify-center gap-3 py-8 text-center">
+          <div className="tonal-neutral flex size-10 items-center justify-center rounded-md">
+            <TrendingDown className="size-5" />
+          </div>
           <p className="text-muted-foreground">{t("noData")}</p>
         </CardContent>
       </Card>
@@ -111,69 +119,49 @@ export function SeatAnalysisSection() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Seat 낭비 분석 (D-2) */}
       {hasWasteData && (
         <>
           <Separator />
-          <div>
-            <h2 className="text-xl font-semibold">{t("wasteTitle")}</h2>
-            <p className="text-muted-foreground text-sm">
+          <div className="min-w-0">
+            <h2 className="text-xl font-medium">{t("wasteTitle")}</h2>
+            <p className="text-muted-foreground text-[0.9375rem]">
               {t("wasteDescription")}
             </p>
           </div>
 
           {/* KPI Cards */}
-          <div className="grid gap-4 md:grid-cols-3">
-            <Card className="group border-border/50 from-card via-card relative overflow-hidden rounded-sm bg-gradient-to-br to-red-500/[0.03] shadow-sm transition-all duration-300 hover:border-red-500/20 hover:shadow-md">
-              <div className="absolute inset-0 bg-gradient-to-br from-red-500/[0.02] to-red-500/[0.06] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-              <CardHeader className="relative pb-2">
-                <CardDescription>{t("monthlyWaste")}</CardDescription>
-              </CardHeader>
-              <CardContent className="relative">
-                <div className="flex items-center gap-2">
-                  <TrendingDown className="h-5 w-5 text-red-600 dark:text-red-400" />
-                  <span className="text-2xl font-bold text-red-700 tabular-nums dark:text-red-400">
-                    {formatCurrency(wasteData.summary.totalMonthlyWaste)}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="group border-border/50 from-card via-card relative overflow-hidden rounded-sm bg-gradient-to-br to-amber-500/[0.03] shadow-sm transition-all duration-300 hover:border-amber-500/20 hover:shadow-md">
-              <div className="absolute inset-0 bg-gradient-to-br from-amber-500/[0.02] to-amber-500/[0.06] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-              <CardHeader className="relative pb-2">
-                <CardDescription>{t("annualWaste")}</CardDescription>
-              </CardHeader>
-              <CardContent className="relative">
-                <div className="flex items-center gap-2">
-                  <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-                  <span className="text-2xl font-bold text-amber-700 tabular-nums dark:text-amber-400">
-                    {formatCurrency(wasteData.summary.totalAnnualWaste)}
-                  </span>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="group border-border/50 from-card via-card to-primary/[0.03] hover:border-primary/20 relative overflow-hidden rounded-sm bg-gradient-to-br shadow-sm transition-all duration-300 hover:shadow-md">
-              <div className="from-primary/[0.02] to-primary/[0.06] absolute inset-0 bg-gradient-to-br opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-              <CardHeader className="relative pb-2">
-                <CardDescription>{t("overallUtilization")}</CardDescription>
-              </CardHeader>
-              <CardContent className="relative space-y-2">
-                <span className="text-2xl font-bold tabular-nums">
-                  {wasteData.summary.overallUtilizationRate}%
-                </span>
-                <Progress
-                  value={wasteData.summary.overallUtilizationRate}
-                  className="h-2"
-                />
-              </CardContent>
-            </Card>
+          <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+            <ReportStatCard
+              icon={TrendingDown}
+              tone="error"
+              toneValue
+              title={t("monthlyWaste")}
+              value={formatCurrency(wasteData.summary.totalMonthlyWaste)}
+            />
+            <ReportStatCard
+              icon={AlertTriangle}
+              tone="warning"
+              toneValue
+              title={t("annualWaste")}
+              value={formatCurrency(wasteData.summary.totalAnnualWaste)}
+            />
+            <ReportStatCard
+              icon={Gauge}
+              tone="primary"
+              title={t("overallUtilization")}
+              value={`${wasteData.summary.overallUtilizationRate}%`}
+            >
+              <Progress
+                value={wasteData.summary.overallUtilizationRate}
+                className="mt-1 h-2"
+              />
+            </ReportStatCard>
           </div>
 
           {/* App-level detail table */}
-          <Card className="border-border/50 min-h-[450px] rounded-sm shadow-sm transition-shadow hover:shadow-md">
+          <Card className="min-h-[450px]">
             <CardHeader>
               <CardTitle>{t("appWasteTable")}</CardTitle>
               <CardDescription>
@@ -181,7 +169,7 @@ export function SeatAnalysisSection() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="rounded-md border">
+              <div className="overflow-hidden rounded-md border">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -208,10 +196,10 @@ export function SeatAnalysisSection() {
                     {wasteData.apps.map((app) => (
                       <TableRow
                         key={app.appId}
-                        className="hover:bg-purple-gray transition-colors"
+                        className="hover:bg-muted/60 transition-colors"
                       >
                         <TableCell>
-                          <div className="flex items-center gap-2">
+                          <div className="flex min-w-0 items-center gap-2">
                             {app.appLogoUrl ? (
                               <Image
                                 src={app.appLogoUrl}
@@ -221,11 +209,16 @@ export function SeatAnalysisSection() {
                                 className="rounded"
                               />
                             ) : (
-                              <div className="bg-primary/10 flex h-6 w-6 items-center justify-center rounded text-xs font-medium">
+                              <div className="tonal-primary flex size-6 shrink-0 items-center justify-center rounded-md text-xs font-medium">
                                 {app.appName.charAt(0)}
                               </div>
                             )}
-                            <span className="font-medium">{app.appName}</span>
+                            <span
+                              className="max-w-[16rem] truncate font-medium"
+                              title={app.appName}
+                            >
+                              {app.appName}
+                            </span>
                           </div>
                         </TableCell>
                         <TableCell className="text-right">
@@ -238,11 +231,9 @@ export function SeatAnalysisSection() {
                           {app.activeSeats}
                         </TableCell>
                         <TableCell className="text-right">
-                          <span className="text-red-700 dark:text-red-400">
-                            {app.wastedSeats}
-                          </span>
+                          <span className="text-error">{app.wastedSeats}</span>
                         </TableCell>
-                        <TableCell className="text-right font-medium text-red-700 dark:text-red-400">
+                        <TableCell className="text-error text-right font-medium">
                           {formatCurrency(app.monthlyWaste)}
                         </TableCell>
                         <TableCell>
@@ -262,52 +253,45 @@ export function SeatAnalysisSection() {
       {hasOptimizationData && (
         <>
           <Separator />
-          <div>
-            <h2 className="text-xl font-semibold">{t("optimizationTitle")}</h2>
-            <p className="text-muted-foreground text-sm">
+          <div className="min-w-0">
+            <h2 className="text-xl font-medium">{t("optimizationTitle")}</h2>
+            <p className="text-muted-foreground text-[0.9375rem]">
               {t("optimizationDescription")}
             </p>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-3">
-            <Card className="group border-border/50 from-card via-card relative overflow-hidden rounded-sm bg-gradient-to-br to-emerald-500/[0.03] shadow-sm transition-all duration-300 hover:border-emerald-500/20 hover:shadow-md">
-              <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/[0.02] to-emerald-500/[0.06] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-              <CardHeader className="relative pb-2">
-                <CardDescription>{t("monthlySavings")}</CardDescription>
-                <CardTitle className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">
-                  {formatCurrency(totalMonthlySavings)}
-                </CardTitle>
-              </CardHeader>
-            </Card>
-            <Card className="group border-border/50 from-card via-card relative overflow-hidden rounded-sm bg-gradient-to-br to-emerald-500/[0.03] shadow-sm transition-all duration-300 hover:border-emerald-500/20 hover:shadow-md">
-              <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/[0.02] to-emerald-500/[0.06] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-              <CardHeader className="relative pb-2">
-                <CardDescription>{t("annualSavings")}</CardDescription>
-                <CardTitle className="text-2xl font-bold text-emerald-700 dark:text-emerald-400">
-                  {formatCurrency(totalAnnualSavings)}
-                </CardTitle>
-              </CardHeader>
-            </Card>
-            <Card className="group border-border/50 from-card via-card to-primary/[0.03] hover:border-primary/20 relative overflow-hidden rounded-sm bg-gradient-to-br shadow-sm transition-all duration-300 hover:shadow-md">
-              <div className="from-primary/[0.02] to-primary/[0.06] absolute inset-0 bg-gradient-to-br opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-              <CardHeader className="relative pb-2">
-                <CardDescription>{t("optimizableApps")}</CardDescription>
-                <CardTitle className="text-2xl font-bold">
-                  {t("optimizableAppsCount", {
-                    count: optimizationItems.length,
-                  })}
-                </CardTitle>
-              </CardHeader>
-            </Card>
+          <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+            <ReportStatCard
+              icon={Wallet}
+              tone="success"
+              toneValue
+              title={t("monthlySavings")}
+              value={formatCurrency(totalMonthlySavings)}
+            />
+            <ReportStatCard
+              icon={PiggyBank}
+              tone="success"
+              toneValue
+              title={t("annualSavings")}
+              value={formatCurrency(totalAnnualSavings)}
+            />
+            <ReportStatCard
+              icon={TrendingDown}
+              tone="primary"
+              title={t("optimizableApps")}
+              value={t("optimizableAppsCount", {
+                count: optimizationItems.length,
+              })}
+            />
           </div>
 
-          <Card className="border-border/50 min-h-[450px] rounded-sm shadow-sm transition-shadow hover:shadow-md">
+          <Card className="min-h-[450px]">
             <CardHeader>
               <CardTitle>{t("optimizationTitle")}</CardTitle>
               <CardDescription>{t("optimizationDescription")}</CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="rounded-md border">
+              <div className="overflow-hidden rounded-md border">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -337,10 +321,10 @@ export function SeatAnalysisSection() {
                     {optimizationItems.map((item) => (
                       <TableRow
                         key={item.subscriptionId}
-                        className="hover:bg-purple-gray transition-colors"
+                        className="hover:bg-muted/60 transition-colors"
                       >
                         <TableCell>
-                          <div className="flex items-center gap-2">
+                          <div className="flex min-w-0 items-center gap-2">
                             {item.appLogoUrl ? (
                               <Image
                                 src={item.appLogoUrl}
@@ -350,11 +334,16 @@ export function SeatAnalysisSection() {
                                 className="rounded"
                               />
                             ) : (
-                              <div className="bg-primary/10 flex h-6 w-6 items-center justify-center rounded text-xs">
+                              <div className="tonal-primary flex size-6 shrink-0 items-center justify-center rounded-md text-xs font-medium">
                                 {item.appName.charAt(0)}
                               </div>
                             )}
-                            <span className="font-medium">{item.appName}</span>
+                            <span
+                              className="max-w-[16rem] truncate font-medium"
+                              title={item.appName}
+                            >
+                              {item.appName}
+                            </span>
                           </div>
                         </TableCell>
                         <TableCell className="text-right">
@@ -364,19 +353,19 @@ export function SeatAnalysisSection() {
                           {item.activeUsers}
                         </TableCell>
                         <TableCell className="text-right">
-                          <Badge className="bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400">
+                          <Badge variant="info" className="tabular-nums">
                             {item.recommendedSeats}
                           </Badge>
                         </TableCell>
                         <TableCell className="text-right">
-                          <Badge className="bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400">
+                          <Badge variant="error" className="tabular-nums">
                             {item.excessSeats}
                           </Badge>
                         </TableCell>
-                        <TableCell className="text-right font-medium text-emerald-700 dark:text-emerald-400">
+                        <TableCell className="text-success text-right font-medium">
                           {formatCurrency(item.monthlySavings)}
                         </TableCell>
-                        <TableCell className="text-right text-sm text-emerald-700 dark:text-emerald-400">
+                        <TableCell className="text-success text-right text-sm">
                           {formatCurrency(item.annualSavings)}
                         </TableCell>
                         <TableCell>

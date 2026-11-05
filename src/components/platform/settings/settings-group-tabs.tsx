@@ -10,32 +10,29 @@ interface SettingsGroupTabsProps {
   basePath?: string;
 }
 
-/** Horizontal, scrollable group navigation for the workspace settings pages. */
+/** Horizontal (wrapping) pill navigation for the workspace settings pages. */
 export function SettingsGroupTabs({
   groups,
   basePath = "/settings/workspace",
 }: SettingsGroupTabsProps) {
   const pathname = usePathname();
   return (
-    <nav
-      aria-label="Settings groups"
-      className="-mx-6 mb-6 overflow-x-auto border-b px-6"
-    >
-      <ul className="flex min-w-max gap-1">
+    <nav aria-label="Settings groups" className="mb-6 min-w-0">
+      <ul className="flex flex-wrap gap-2">
         {groups.map((group) => {
           const href = `${basePath}/${group.key}`;
           const active = pathname === href;
           return (
-            <li key={group.key}>
+            <li key={group.key} className="min-w-0">
               <Link
                 href={href}
                 aria-current={active ? "page" : undefined}
                 title={group.description}
                 className={cn(
-                  "-mb-px inline-flex items-center border-b-2 px-3 py-2.5 text-sm font-medium whitespace-nowrap transition-colors",
+                  "focus-visible:ring-ring/50 inline-flex h-[38px] items-center rounded-md px-4 text-[0.9375rem] font-medium whitespace-nowrap transition-colors outline-none focus-visible:ring-[3px]",
                   active
-                    ? "border-primary text-foreground"
-                    : "text-muted-foreground hover:text-foreground hover:border-border border-transparent"
+                    ? "bg-primary text-primary-foreground shadow-xs"
+                    : "text-foreground hover:bg-primary/10 hover:text-primary"
                 )}
               >
                 {group.label}

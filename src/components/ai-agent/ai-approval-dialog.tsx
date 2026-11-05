@@ -142,27 +142,32 @@ export function AiApprovalDialog({
     <Dialog open={open} onOpenChange={(open: boolean) => !open && onCancel()}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <AlertTriangle
-              className={isDestructive ? "text-destructive" : "text-warning"}
-              size={20}
-            />
+          <DialogTitle className="flex items-center gap-3">
+            <span
+              className={`flex size-10 shrink-0 items-center justify-center rounded-md ${isDestructive ? "tonal-error" : "tonal-warning"}`}
+            >
+              <AlertTriangle size={20} />
+            </span>
             작업 확인
           </DialogTitle>
-          <DialogDescription className="text-base">
+          <DialogDescription className="text-[0.9375rem]">
             {pendingAction.description}
           </DialogDescription>
         </DialogHeader>
 
         {pendingAction.impact && (
-          <div className="bg-muted rounded-sm p-3 text-sm">
-            <p className="text-muted-foreground mb-1 font-medium">영향 범위</p>
-            <p>{pendingAction.impact}</p>
+          <div className="bg-muted rounded-md p-4 text-[0.9375rem]">
+            <p className="text-muted-foreground mb-1 text-xs font-medium tracking-wide uppercase">
+              영향 범위
+            </p>
+            <p className="text-foreground break-words">
+              {pendingAction.impact}
+            </p>
           </div>
         )}
 
         {/* SMP-203: 남은 시간 표시 */}
-        <div className="flex items-center gap-2 text-sm">
+        <div className="flex items-center gap-2 text-[0.8125rem]">
           <Clock size={14} className="text-muted-foreground" />
           <span
             className={
@@ -175,7 +180,7 @@ export function AiApprovalDialog({
           </span>
         </div>
 
-        <DialogFooter className="gap-2 sm:gap-0">
+        <DialogFooter className="gap-3">
           <Button variant="outline" onClick={onCancel} disabled={isExecuting}>
             취소
           </Button>

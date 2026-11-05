@@ -37,16 +37,15 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
 
   if (!allowSelfSignup) {
     return (
-      <div data-testid="signup-page" className="w-full space-y-6">
-        <h2
-          className="text-[28px] font-semibold"
-          style={{ color: "var(--auth-text-primary)" }}
-        >
-          {t("auth.signup.title")}
-        </h2>
-        <p className="text-sm" style={{ color: "var(--auth-text-secondary)" }}>
-          {t("platform.auth.selfSignupDisabled")}
-        </p>
+      <div data-testid="signup-page" className="flex w-full flex-col gap-5">
+        <div className="flex flex-col gap-1">
+          <h2 className="text-foreground text-2xl font-medium">
+            {t("auth.signup.title")}
+          </h2>
+          <p className="text-muted-foreground text-[0.9375rem]">
+            {t("platform.auth.selfSignupDisabled")}
+          </p>
+        </div>
         <Button asChild variant="outline" className="w-full">
           <Link href="/login">{t("auth.signup.footer.login")}</Link>
         </Button>
@@ -81,23 +80,13 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
   };
 
   return (
-    <div
-      data-testid="signup-page"
-      className="w-full"
-      style={{ animation: "auth-fade-up 0.6s ease-out 0.2s both" }}
-    >
+    <div data-testid="signup-page" className="flex w-full flex-col gap-5">
       {/* 헤더 */}
-      <div className="mb-10">
-        <h2
-          className="text-[28px] font-semibold"
-          style={{ color: "var(--auth-text-primary)" }}
-        >
+      <div className="flex flex-col gap-1">
+        <h2 className="text-foreground text-2xl font-medium">
           {t("auth.signup.title")}
         </h2>
-        <p
-          className="mt-2 text-sm"
-          style={{ color: "var(--auth-text-secondary)" }}
-        >
+        <p className="text-muted-foreground text-[0.9375rem]">
           {t("auth.signup.description")}
         </p>
       </div>
@@ -115,32 +104,17 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
             await signIn("google", { redirectTo: "/dashboard" });
           }}
         >
-          <Button
-            type="submit"
-            variant="outline"
-            className="h-[50px] w-full rounded-xl text-sm transition-colors"
-            style={{
-              background: "transparent",
-              border: "1px solid var(--auth-border)",
-              color: "var(--auth-text-primary)",
-            }}
-          >
-            <GoogleIcon className="mr-2.5 h-[18px] w-[18px]" />
+          <Button type="submit" variant="outline" className="w-full">
+            <GoogleIcon className="size-[18px] shrink-0" />
             {t("auth.signup.social.googleContinue")}
           </Button>
         </form>
       )}
 
       {appleEnabled && (
-        <div className="mt-3">
+        <div className="-mt-2">
           <AppleSignInButton
             label={t("platform.auth.continueWithApple")}
-            className="h-[50px] rounded-xl text-sm transition-colors"
-            style={{
-              background: "transparent",
-              border: "1px solid var(--auth-border)",
-              color: "var(--auth-text-primary)",
-            }}
             action={async () => {
               "use server";
               await signIn("apple", { redirectTo: "/dashboard" });
@@ -150,30 +124,18 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
       )}
 
       {enforceSso ? (
-        <p
-          className="mt-6 text-center text-sm"
-          style={{ color: "var(--auth-text-secondary)" }}
-        >
+        <p className="text-muted-foreground text-center text-[0.9375rem]">
           {t("platform.auth.ssoOnly")}
         </p>
       ) : (
         <>
           {/* 구분선 */}
-          <div className="relative my-7">
-            <div className="absolute inset-0 flex items-center">
-              <Separator className="w-full bg-[var(--auth-border)]" />
-            </div>
-            <div className="relative flex justify-center text-xs uppercase">
-              <span
-                className="px-4 text-[12px]"
-                style={{
-                  background: "var(--auth-panel-bg)",
-                  color: "var(--auth-text-secondary)",
-                }}
-              >
-                {t("auth.signup.emailDivider")}
-              </span>
-            </div>
+          <div className="flex items-center gap-3">
+            <Separator className="flex-1" />
+            <span className="text-foreground/70 shrink-0 text-[0.9375rem]">
+              {t("auth.signup.emailDivider")}
+            </span>
+            <Separator className="flex-1" />
           </div>
 
           {/* 이메일/비밀번호 폼 */}
@@ -190,14 +152,13 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
                 redirect(`/signup?error=${result.error}`);
               }
             }}
-            className="space-y-5"
+            className="flex flex-col gap-5"
           >
             {/* 이름 */}
-            <div className="space-y-2">
+            <div className="flex flex-col gap-1.5">
               <label
                 htmlFor="name"
-                className="block text-[13px] font-medium"
-                style={{ color: "var(--auth-text-secondary)" }}
+                className="text-foreground block text-[0.8125rem] font-medium"
               >
                 {t("auth.signup.form.name")}
               </label>
@@ -207,16 +168,14 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
                 type="text"
                 placeholder={t("auth.signup.form.namePlaceholder")}
                 required
-                className="h-12 rounded-xl border-[var(--auth-input-border)] bg-[var(--auth-input-bg)] text-[var(--auth-text-primary)] placeholder:text-[var(--auth-text-muted)] focus-visible:border-[#06d6a0] focus-visible:ring-[#06d6a020]"
               />
             </div>
 
             {/* 이메일 */}
-            <div className="space-y-2">
+            <div className="flex flex-col gap-1.5">
               <label
                 htmlFor="email"
-                className="block text-[13px] font-medium"
-                style={{ color: "var(--auth-text-secondary)" }}
+                className="text-foreground block text-[0.8125rem] font-medium"
               >
                 {t("auth.signup.form.email")}
               </label>
@@ -226,16 +185,14 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
                 type="email"
                 placeholder={t("auth.signup.form.emailPlaceholder")}
                 required
-                className="h-12 rounded-xl border-[var(--auth-input-border)] bg-[var(--auth-input-bg)] text-[var(--auth-text-primary)] placeholder:text-[var(--auth-text-muted)] focus-visible:border-[#06d6a0] focus-visible:ring-[#06d6a020]"
               />
             </div>
 
             {/* 비밀번호 */}
-            <div className="space-y-2">
+            <div className="flex flex-col gap-1.5">
               <label
                 htmlFor="password"
-                className="block text-[13px] font-medium"
-                style={{ color: "var(--auth-text-secondary)" }}
+                className="text-foreground block text-[0.8125rem] font-medium"
               >
                 {t("auth.signup.form.password")}
               </label>
@@ -245,25 +202,14 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
                 type="password"
                 placeholder={t("auth.signup.form.passwordPlaceholder")}
                 required
-                className="h-12 rounded-xl border-[var(--auth-input-border)] bg-[var(--auth-input-bg)] text-[var(--auth-text-primary)] placeholder:text-[var(--auth-text-muted)] focus-visible:border-[#06d6a0] focus-visible:ring-[#06d6a020]"
               />
-              <p
-                className="text-xs"
-                style={{ color: "var(--auth-text-muted)" }}
-              >
+              <p className="text-muted-foreground text-[0.8125rem]">
                 {t("auth.signup.form.passwordHint")}
               </p>
             </div>
 
             {/* 회원가입 버튼 */}
-            <Button
-              type="submit"
-              className="h-12 w-full rounded-xl border-none text-[15px] font-semibold transition-all hover:-translate-y-px hover:shadow-[0_8px_30px_rgba(6,214,160,0.3)]"
-              style={{
-                background: "linear-gradient(135deg, #06d6a0, #0891b2)",
-                color: "#0a0e1a",
-              }}
-            >
+            <Button type="submit" className="w-full">
               {t("auth.signup.form.submit")}
             </Button>
           </form>
@@ -271,30 +217,20 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
       )}
 
       {/* 푸터 */}
-      <div className="mt-8 space-y-3 text-center">
-        <p
-          className="text-[13px]"
-          style={{ color: "var(--auth-text-secondary)" }}
-        >
+      <div className="flex flex-col gap-3 text-center">
+        <p className="text-foreground/80 text-[0.9375rem]">
           {t("auth.signup.footer.hasAccount")}{" "}
-          <Link
-            href="/login"
-            className="font-medium hover:underline"
-            style={{ color: "#06d6a0" }}
-          >
+          <Link href="/login" className="text-primary hover:underline">
             {t("auth.signup.footer.login")}
           </Link>
         </p>
-        <p
-          className="text-center text-xs"
-          style={{ color: "var(--auth-text-muted)" }}
-        >
+        <p className="text-muted-foreground text-[0.8125rem]">
           {t("auth.signup.footer.agreePrefix")}{" "}
-          <Link href="/terms" className="underline hover:opacity-80">
+          <Link href="/terms" className="text-primary hover:underline">
             {t("auth.signup.footer.terms")}
           </Link>{" "}
           {t("auth.signup.footer.and")}{" "}
-          <Link href="/privacy" className="underline hover:opacity-80">
+          <Link href="/privacy" className="text-primary hover:underline">
             {t("auth.signup.footer.privacy")}
           </Link>
           {t("auth.signup.footer.agreeSuffix")}
@@ -351,10 +287,8 @@ function ErrorAlert({
   const errorConfig = config[error] || config.default;
 
   return (
-    <div className="bg-destructive/10 border-destructive/20 mb-6 rounded-lg border p-4">
-      <p className="text-destructive mb-3 text-sm font-medium">
-        {errorConfig.message}
-      </p>
+    <div className="tonal-error flex flex-col gap-3 rounded-md p-4">
+      <p className="text-[0.9375rem] font-medium">{errorConfig.message}</p>
 
       {/* Google OAuth 에러: Google 로그인 버튼 표시 */}
       {errorConfig.type === "google" && (
@@ -365,7 +299,7 @@ function ErrorAlert({
           }}
         >
           <Button type="submit" variant="outline" size="sm" className="w-full">
-            <GoogleIcon className="mr-2 h-4 w-4" />
+            <GoogleIcon className="size-4 shrink-0" />
             {labels.googleLogin}
           </Button>
         </form>

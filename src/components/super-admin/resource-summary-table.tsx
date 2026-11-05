@@ -43,28 +43,33 @@ export function ResourceSummaryTable({ data }: ResourceSummaryTableProps) {
         {data.map((item) => (
           <TableRow key={item.appId}>
             <TableCell>
-              <div className="flex items-center gap-2">
+              <div className="flex min-w-0 items-center gap-3">
                 {item.logoUrl ? (
                   <Image
                     src={item.logoUrl}
                     alt={item.appName}
-                    width={24}
-                    height={24}
-                    className="rounded"
+                    width={30}
+                    height={30}
+                    className="size-[30px] shrink-0 rounded-md object-contain"
                     unoptimized
                   />
                 ) : (
-                  <div className="bg-muted flex h-6 w-6 items-center justify-center rounded text-xs font-medium">
+                  <div className="tonal-primary flex size-[30px] shrink-0 items-center justify-center rounded-md text-[0.8125rem] font-medium">
                     {item.appName.charAt(0)}
                   </div>
                 )}
-                <span className="font-medium">{item.appName}</span>
+                <span
+                  className="text-foreground max-w-[20rem] truncate font-medium"
+                  title={item.appName}
+                >
+                  {item.appName}
+                </span>
               </div>
             </TableCell>
-            <TableCell className="text-right">
+            <TableCell className="text-right tabular-nums">
               {item.subscriptionCount}
             </TableCell>
-            <TableCell className="text-right font-medium">
+            <TableCell className="text-foreground text-right font-medium tabular-nums">
               {formatCurrency(item.totalMonthlyCost, item.currency)}
             </TableCell>
           </TableRow>

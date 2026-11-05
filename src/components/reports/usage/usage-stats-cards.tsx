@@ -1,8 +1,9 @@
 // src/components/reports/usage/usage-stats-cards.tsx
 "use client";
 
-import { Card } from "@/components/ui/card";
+import { AppWindow, Gauge, PackageX, Users } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { ReportStatCard } from "../report-stat-card";
 
 interface UsageStatsSummary {
   totalActiveUsers: number;
@@ -19,37 +20,38 @@ export function UsageStatsCards({ summary }: UsageStatsCardsProps) {
   const t = useTranslations();
   const stats = [
     {
+      icon: Users,
       title: t("reports.usage.stats.activeUsers.title"),
       value: summary.totalActiveUsers.toLocaleString(),
     },
     {
+      icon: AppWindow,
       title: t("reports.usage.stats.totalApps.title"),
       value: summary.totalApps.toLocaleString(),
     },
     {
+      icon: PackageX,
       title: t("reports.usage.stats.unusedApps.title"),
       value: summary.unusedAppsCount.toLocaleString(),
     },
     {
+      icon: Gauge,
       title: t("reports.usage.stats.averageUsageRate.title"),
       value: `${summary.averageUsageRate}%`,
     },
   ];
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+    <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
       {stats.map((stat) => (
-        <Card
+        <ReportStatCard
           key={stat.title}
-          className="bg-card flex h-full flex-col gap-3 rounded-sm border-none px-3 pt-5 pb-3 shadow-[0px_2px_8px_0px_rgba(0,0,0,0.1)]"
-        >
-          <div className="flex flex-1 flex-col gap-2 px-2">
-            <p className="text-primary text-xs">{stat.title}</p>
-            <p className="text-secondary-foreground text-2xl font-medium">
-              {stat.value}
-            </p>
-          </div>
-        </Card>
+          icon={stat.icon}
+          tone="primary"
+          title={stat.title}
+          value={stat.value}
+          className="border-none"
+        />
       ))}
     </div>
   );

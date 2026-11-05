@@ -177,7 +177,7 @@ export function PaymentMethodsPanel({
         action={
           canManage && (
             <Button size="sm" onClick={() => setDraft(EMPTY)}>
-              <Plus className="mr-2 h-4 w-4" />
+              <Plus className="size-4" />
               {t("add")}
             </Button>
           )
@@ -186,7 +186,7 @@ export function PaymentMethodsPanel({
       <div className="overflow-hidden rounded-md border">
         <Table>
           <TableHeader>
-            <TableRow className="bg-muted/40">
+            <TableRow className="hover:bg-transparent">
               {canManage && (
                 <TableHead className="w-20">{t("order")}</TableHead>
               )}
@@ -241,7 +241,7 @@ export function PaymentMethodsPanel({
                   </span>
                 </TableCell>
                 <TableCell>
-                  <span className="bg-muted rounded px-1.5 py-0.5 text-[11px] font-semibold tracking-wide">
+                  <span className="tonal-neutral rounded px-1.5 py-0.5 text-[11px] font-medium tracking-wide">
                     {row.kind}
                   </span>
                 </TableCell>
@@ -382,7 +382,7 @@ export function PaymentMethodsPanel({
               onClick={save}
               disabled={isPending || !draft?.name || !draft?.code}
             >
-              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isPending && <Loader2 className="size-4 animate-spin" />}
               {tc("save")}
             </Button>
           </DialogFooter>

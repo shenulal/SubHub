@@ -63,33 +63,19 @@ const roleIcons: Record<UserRole, typeof Shield> = {
 // TERMINATED: destructive-muted (영구적)
 // PENDING: info-muted (대기 중)
 type StatusStyle = {
-  variant: "secondary";
-  className: string;
+  variant: "secondary" | "warning" | "info" | "error";
 };
 
 const getStatusStyle = (status: string): StatusStyle => {
   switch (status) {
     case "INACTIVE":
-      return {
-        variant: "secondary",
-        className: "bg-warning-muted text-warning-muted-foreground border-0",
-      };
+      return { variant: "warning" };
     case "TERMINATED":
-      return {
-        variant: "secondary",
-        className:
-          "bg-destructive-muted text-destructive-muted-foreground border-0",
-      };
+      return { variant: "error" };
     case "PENDING":
-      return {
-        variant: "secondary",
-        className: "bg-info-muted text-info-muted-foreground border-0",
-      };
+      return { variant: "info" };
     default:
-      return {
-        variant: "secondary",
-        className: "bg-muted text-muted-foreground border-0",
-      };
+      return { variant: "secondary" };
   }
 };
 
@@ -135,23 +121,23 @@ export function MemberCard({
 
   return (
     <>
-      <div className="flex items-center justify-between rounded-lg border p-4">
-        <div className="flex items-center gap-4">
+      <div className="flex min-w-0 flex-wrap items-center justify-between gap-3 rounded-md border p-4">
+        <div className="flex min-w-0 items-center gap-3">
           {member.image ? (
             <Image
               src={member.image}
               alt={member.name || ""}
               width={40}
               height={40}
-              className="rounded-full"
+              className="size-10 shrink-0 rounded-full object-cover"
             />
           ) : (
-            <div className="bg-muted flex h-10 w-10 items-center justify-center rounded-full">
+            <div className="tonal-primary flex size-10 shrink-0 items-center justify-center rounded-full font-medium">
               {(member.name || member.email).charAt(0).toUpperCase()}
             </div>
           )}
-          <div>
-            <p className="font-medium">
+          <div className="min-w-0">
+            <p className="truncate font-medium">
               {member.name || member.email}
               {isCurrentUser && (
                 <span className="text-muted-foreground ml-2 text-sm">
@@ -159,19 +145,18 @@ export function MemberCard({
                 </span>
               )}
             </p>
-            <p className="text-muted-foreground text-sm">{member.email}</p>
+            <p className="text-muted-foreground truncate text-[0.8125rem]">
+              {member.email}
+            </p>
           </div>
         </div>
-        <div className="flex items-center gap-4">
-          <Badge variant={member.role === "ADMIN" ? "default" : "secondary"}>
+        <div className="flex shrink-0 items-center gap-2">
+          <Badge variant={member.role === "ADMIN" ? "primary" : "secondary"}>
             <RoleIcon className="mr-1 h-3 w-3" />
             {getRoleLabel(member.role)}
           </Badge>
           {member.status !== "ACTIVE" && (
-            <Badge
-              variant={getStatusStyle(member.status).variant}
-              className={getStatusStyle(member.status).className}
-            >
+            <Badge variant={getStatusStyle(member.status).variant}>
               {getStatusLabel(member.status)}
             </Badge>
           )}

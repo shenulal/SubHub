@@ -49,12 +49,12 @@ export function ActiveUsersChart({ data }: ActiveUsersChartProps) {
 
   if (data.length === 0) {
     return (
-      <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
+      <Card className="h-full">
         <CardHeader>
           <CardTitle>{t("reports.usage.activeUsersChart.title")}</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-muted-foreground flex h-[300px] items-center justify-center">
+          <div className="text-muted-foreground flex h-[300px] items-center justify-center text-[0.9375rem]">
             {t("reports.usage.activeUsersChart.empty")}
           </div>
         </CardContent>
@@ -63,7 +63,7 @@ export function ActiveUsersChart({ data }: ActiveUsersChartProps) {
   }
 
   return (
-    <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
+    <Card className="h-full">
       <CardHeader>
         <CardTitle>{t("reports.usage.activeUsersChart.title")}</CardTitle>
       </CardHeader>
@@ -79,17 +79,20 @@ export function ActiveUsersChart({ data }: ActiveUsersChartProps) {
             <CartesianGrid
               strokeDasharray="3 3"
               vertical={false}
-              stroke="hsl(var(--muted-foreground))"
-              strokeOpacity={0.2}
+              stroke="var(--border)"
             />
             <XAxis
               dataKey="date"
               tickFormatter={formatXAxis}
               axisLine={false}
               tickLine={false}
-              tick={{ fontSize: 12 }}
+              tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
             />
-            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 12 }} />
+            <YAxis
+              axisLine={false}
+              tickLine={false}
+              tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
+            />
             <ChartTooltip
               cursor={false}
               content={

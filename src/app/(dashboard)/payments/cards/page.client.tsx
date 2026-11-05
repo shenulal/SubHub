@@ -64,8 +64,8 @@ export function CardsPageClient({
   return (
     <>
       {/* 안내 메시지 */}
-      <Alert>
-        <Info className="h-4 w-4" />
+      <Alert className="border-info/30 bg-info/[0.06]">
+        <Info className="text-info h-4 w-4" />
         <AlertTitle>{t("title")}</AlertTitle>
         <AlertDescription>{t("description")}</AlertDescription>
       </Alert>

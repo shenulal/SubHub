@@ -102,7 +102,7 @@ export function IntegrationCreateForm() {
   });
 
   return (
-    <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
+    <Card>
       <CardHeader>
         <CardTitle>{t("integrations.form.create.title")}</CardTitle>
         <CardDescription>

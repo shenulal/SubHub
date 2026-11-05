@@ -155,18 +155,18 @@ export function MonthlyTrendChart({
   }));
 
   return (
-    <Card className="border-border/50 min-h-[450px] rounded-sm shadow-sm transition-shadow hover:shadow-md">
+    <Card className="min-h-[450px]">
       <CardHeader>
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-1.5">
+          <div className="min-w-0 space-y-1">
             <CardTitle>{t("title")}</CardTitle>
             <CardDescription>{t("description")}</CardDescription>
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {/* 기간 선택 */}
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <Select value={startMonth} onValueChange={setStartMonth}>
-                <SelectTrigger className="w-[130px]">
+                <SelectTrigger className="w-[140px] shrink-0">
                   <SelectValue placeholder={t("startMonth")} />
                 </SelectTrigger>
                 <SelectContent>
@@ -179,7 +179,7 @@ export function MonthlyTrendChart({
               </Select>
               <span className="text-muted-foreground">~</span>
               <Select value={endMonth} onValueChange={setEndMonth}>
-                <SelectTrigger className="w-[130px]">
+                <SelectTrigger className="w-[140px] shrink-0">
                   <SelectValue placeholder={t("endMonth")} />
                 </SelectTrigger>
                 <SelectContent>
@@ -192,10 +192,10 @@ export function MonthlyTrendChart({
               </Select>
             </div>
             {/* 차트 뷰 토글 */}
-            <div className="flex rounded-lg border">
+            <div className="flex h-10 shrink-0 items-center rounded-md border p-1">
               <Button
                 variant={chartView === "line" ? "secondary" : "ghost"}
-                size="sm"
+                size="icon-sm"
                 className="rounded-r-none"
                 onClick={() => setChartView("line")}
               >
@@ -203,7 +203,7 @@ export function MonthlyTrendChart({
               </Button>
               <Button
                 variant={chartView === "bar" ? "secondary" : "ghost"}
-                size="sm"
+                size="icon-sm"
                 className="rounded-l-none"
                 onClick={() => setChartView("bar")}
               >
@@ -247,7 +247,7 @@ export function MonthlyTrendChart({
               <CartesianGrid
                 horizontal={true}
                 vertical={false}
-                stroke="rgba(100, 116, 243, 0.15)"
+                stroke="var(--border)"
                 strokeDasharray="0"
               />
               <XAxis
@@ -296,13 +296,15 @@ export function MonthlyTrendChart({
                 maxCost > 0 ? (trend.saasCost / maxCost) * 100 : 0;
               return (
                 <div key={trend.month} className="space-y-1">
-                  <div className="flex items-center justify-between text-sm">
-                    <span>{formatMonth(trend.month, locale)}</span>
-                    <span className="font-medium">
+                  <div className="flex items-center justify-between gap-4 text-[0.9375rem]">
+                    <span className="truncate">
+                      {formatMonth(trend.month, locale)}
+                    </span>
+                    <span className="shrink-0 font-medium tabular-nums">
                       {formatCurrency(trend.saasCost, baseCurrency)}
                     </span>
                   </div>
-                  <div className="bg-secondary h-2 w-full overflow-hidden rounded-full">
+                  <div className="bg-muted h-2 w-full overflow-hidden rounded-full">
                     <div
                       className="bg-primary h-full transition-all"
                       style={{ width: `${percentage}%` }}

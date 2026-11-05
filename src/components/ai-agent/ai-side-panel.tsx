@@ -112,23 +112,41 @@ export function AiSidePanel() {
 
   return (
     <>
-      <div className="bg-background fixed top-[55px] right-0 z-40 flex h-[calc(100vh-55px)] w-[400px] flex-col border-l shadow-lg transition-transform duration-300">
+      <div
+        data-slot="ai-panel"
+        className="bg-card text-card-foreground fixed inset-y-4 right-4 z-50 flex w-[calc(100vw-2rem)] max-w-[400px] flex-col overflow-hidden rounded-lg shadow-xl"
+      >
         {/* Header */}
-        <div className="flex items-center justify-between border-b px-4 py-3">
-          <div className="flex items-center gap-2">
-            <Bot className="text-primary h-5 w-5" />
-            <h3 className="font-semibold">AI 어시스턴트</h3>
+        <div className="flex items-center justify-between gap-3 border-b px-5 py-4">
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="tonal-primary flex size-10 shrink-0 items-center justify-center rounded-md">
+              <Bot className="size-5" />
+            </span>
+            <h3 className="text-foreground truncate text-lg font-medium">
+              AI 어시스턴트
+            </h3>
           </div>
-          <Button variant="ghost" size="icon" onClick={close}>
-            <X className="h-4 w-4" />
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={close}
+            className="text-muted-foreground hover:text-foreground shrink-0"
+          >
+            <X className="size-4" />
           </Button>
         </div>
 
         {/* Messages */}
-        <div ref={scrollRef} className="flex-1 space-y-4 overflow-y-auto p-4">
+        <div
+          ref={scrollRef}
+          className="min-h-0 flex-1 space-y-4 overflow-y-auto px-5 py-4"
+        >
           {messages.length === 0 && (
-            <div className="text-muted-foreground flex h-full items-center justify-center">
-              <p className="text-center text-sm">
+            <div className="text-muted-foreground flex h-full flex-col items-center justify-center gap-3">
+              <span className="tonal-primary flex size-12 items-center justify-center rounded-full">
+                <Bot className="size-6" />
+              </span>
+              <p className="text-center text-[0.9375rem] leading-relaxed">
                 안녕하세요! SMP AI 어시스턴트입니다.
                 <br />
                 앱, 구독, 비용 등을 자연어로 조회하거나
@@ -145,14 +163,16 @@ export function AiSidePanel() {
               )}
             >
               {msg.role === "assistant" && (
-                <Bot className="text-primary mt-1 h-5 w-5 shrink-0" />
+                <span className="tonal-primary mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full">
+                  <Bot className="size-4" />
+                </span>
               )}
               <div
                 className={cn(
-                  "max-w-[85%] rounded-lg px-3 py-2 text-sm",
+                  "max-w-[85%] min-w-0 rounded-lg px-3.5 py-2 text-[0.9375rem] break-words",
                   msg.role === "user"
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted"
+                    ? "bg-primary text-primary-foreground rounded-tr-sm shadow-xs"
+                    : "bg-muted text-foreground rounded-tl-sm"
                 )}
               >
                 {msg.parts.map((part, i) =>
@@ -168,30 +188,37 @@ export function AiSidePanel() {
                 )}
               </div>
               {msg.role === "user" && (
-                <User className="text-muted-foreground mt-1 h-5 w-5 shrink-0" />
+                <span className="tonal-neutral mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full">
+                  <User className="size-4" />
+                </span>
               )}
             </div>
           ))}
           {isLoading && (
             <div className="flex gap-2">
-              <Bot className="text-primary mt-1 h-5 w-5 shrink-0" />
-              <div className="bg-muted flex items-center gap-2 rounded-lg px-3 py-2">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                <span className="text-muted-foreground text-sm">
+              <span className="tonal-primary mt-0.5 flex size-7 shrink-0 items-center justify-center rounded-full">
+                <Bot className="size-4" />
+              </span>
+              <div className="bg-muted flex items-center gap-2 rounded-lg rounded-tl-sm px-3.5 py-2">
+                <Loader2 className="text-primary size-4 animate-spin" />
+                <span className="text-muted-foreground text-[0.8125rem]">
                   생각 중...
                 </span>
               </div>
             </div>
           )}
           {error && (
-            <div className="bg-destructive/10 text-destructive rounded-lg px-3 py-2 text-sm">
+            <div className="tonal-error rounded-md px-3.5 py-2 text-[0.8125rem]">
               오류가 발생했습니다. 다시 시도해주세요.
             </div>
           )}
         </div>
 
         {/* Input */}
-        <form onSubmit={handleSubmit} className="flex gap-2 border-t p-4">
+        <form
+          onSubmit={handleSubmit}
+          className="flex shrink-0 gap-2 border-t px-5 py-4"
+        >
           <Input
             value={input}
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
@@ -199,14 +226,15 @@ export function AiSidePanel() {
             }
             placeholder="메시지를 입력하세요..."
             disabled={isLoading}
-            className="flex-1"
+            className="min-w-0 flex-1"
           />
           <Button
             type="submit"
             size="icon"
+            className="size-10 shrink-0"
             disabled={!input.trim() || isLoading}
           >
-            <Send className="h-4 w-4" />
+            <Send className="size-4" />
           </Button>
         </form>
       </div>

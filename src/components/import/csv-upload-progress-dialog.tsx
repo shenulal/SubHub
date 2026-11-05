@@ -47,7 +47,7 @@ export function CsvUploadProgressDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             {isComplete ? (
-              <CheckCircle2 className="h-5 w-5 text-green-500" />
+              <CheckCircle2 className="text-success size-5" />
             ) : (
               <Loader2 className="text-primary h-5 w-5 animate-spin" />
             )}

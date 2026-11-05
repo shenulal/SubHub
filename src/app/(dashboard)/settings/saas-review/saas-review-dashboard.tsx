@@ -118,7 +118,7 @@ export function SaasReviewDashboard({
             <CardTitle className="text-sm">{t("stats.totalLogs")}</CardTitle>
             <CardDescription>{t("stats.totalLogsDesc")}</CardDescription>
           </CardHeader>
-          <CardContent className="text-2xl font-bold">
+          <CardContent className="text-2xl font-medium">
             {t("stats.count", { count: data.stats.totalLogs })}
           </CardContent>
         </Card>
@@ -127,7 +127,7 @@ export function SaasReviewDashboard({
             <CardTitle className="text-sm">{t("stats.saasDetected")}</CardTitle>
             <CardDescription>{t("stats.saasDetectedDesc")}</CardDescription>
           </CardHeader>
-          <CardContent className="text-2xl font-bold text-green-600">
+          <CardContent className="text-2xl font-medium text-green-600">
             {t("stats.count", { count: data.stats.saasLogs })}
           </CardContent>
         </Card>
@@ -136,7 +136,7 @@ export function SaasReviewDashboard({
             <CardTitle className="text-sm">{t("stats.nonSaas")}</CardTitle>
             <CardDescription>{t("stats.nonSaasDesc")}</CardDescription>
           </CardHeader>
-          <CardContent className="text-2xl font-bold text-amber-600">
+          <CardContent className="text-2xl font-medium text-amber-600">
             {t("stats.count", { count: data.stats.nonSaasLogs })}
           </CardContent>
         </Card>
@@ -147,7 +147,7 @@ export function SaasReviewDashboard({
             </CardTitle>
             <CardDescription>{t("stats.avgConfidenceDesc")}</CardDescription>
           </CardHeader>
-          <CardContent className="text-2xl font-bold">
+          <CardContent className="text-2xl font-medium">
             {(data.stats.avgConfidence * 100).toFixed(0)}%
           </CardContent>
         </Card>
@@ -156,7 +156,7 @@ export function SaasReviewDashboard({
             <CardTitle className="text-sm">{t("stats.successRate")}</CardTitle>
             <CardDescription>{t("stats.successRateDesc")}</CardDescription>
           </CardHeader>
-          <CardContent className="text-2xl font-bold">
+          <CardContent className="text-2xl font-medium">
             {inferenceMetrics.successRate.toFixed(1)}%
           </CardContent>
         </Card>

@@ -169,7 +169,7 @@ export function AppsPageClient({ role }: AppsPageClientProps) {
   const canManage = canCreate;
 
   return (
-    <div className="space-y-4">
+    <div className="min-w-0 space-y-6">
       {/* 페이지 헤더 */}
       <PageHeader title={t("apps.page.title")} />
 
@@ -226,7 +226,7 @@ export function AppsPageClient({ role }: AppsPageClientProps) {
           {/* KPI Cards Skeleton */}
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             {[1, 2].map((i) => (
-              <Card key={i} className="border-border/50 rounded-sm shadow-sm">
+              <Card key={i}>
                 <CardContent className="p-4">
                   <Skeleton className="h-4 w-20" />
                   <Skeleton className="mt-2 h-8 w-12" />
@@ -236,7 +236,7 @@ export function AppsPageClient({ role }: AppsPageClientProps) {
           </div>
 
           {/* Table Skeleton */}
-          <Card className="border-border/50 rounded-sm shadow-sm">
+          <Card>
             <CardHeader>
               <div className="flex items-center gap-4">
                 {[1, 2, 3, 4, 5].map((i) => (

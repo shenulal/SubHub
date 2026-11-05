@@ -29,24 +29,24 @@ function getStatusBadge(
     SyncLogEntry["status"],
     {
       label: string;
-      variant: "default" | "secondary" | "destructive" | "outline";
+      variant: "info" | "success" | "warning" | "error";
     }
   > = {
     RUNNING: {
       label: t("integrations.syncLogs.status.running"),
-      variant: "secondary",
+      variant: "info",
     },
     SUCCESS: {
       label: t("integrations.syncLogs.status.success"),
-      variant: "default",
+      variant: "success",
     },
     PARTIAL: {
       label: t("integrations.syncLogs.status.partial"),
-      variant: "outline",
+      variant: "warning",
     },
     FAILED: {
       label: t("integrations.syncLogs.status.failed"),
-      variant: "destructive",
+      variant: "error",
     },
   };
   const config = statusConfig[status];
@@ -79,10 +79,10 @@ export function SyncLogsTable({ logs, isLoading = false }: SyncLogsTableProps) {
   const t = useTranslations();
   if (isLoading) {
     return (
-      <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
+      <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <History className="h-5 w-5" />
+            <History className="text-primary size-5" />
             {t("integrations.syncLogs.title")}
           </CardTitle>
         </CardHeader>
@@ -97,17 +97,19 @@ export function SyncLogsTable({ logs, isLoading = false }: SyncLogsTableProps) {
 
   if (logs.length === 0) {
     return (
-      <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
+      <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <History className="h-5 w-5" />
+            <History className="text-primary size-5" />
             {t("integrations.syncLogs.title")}
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="flex flex-col items-center justify-center py-12 text-center">
-            <History className="text-muted-foreground mb-4 h-12 w-12" />
-            <p className="text-muted-foreground">
+          <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
+            <span className="tonal-neutral flex size-12 items-center justify-center rounded-md">
+              <History className="size-[22px]" />
+            </span>
+            <p className="text-muted-foreground text-[0.9375rem]">
               {t("integrations.syncLogs.empty")}
             </p>
           </div>
@@ -117,10 +119,10 @@ export function SyncLogsTable({ logs, isLoading = false }: SyncLogsTableProps) {
   }
 
   return (
-    <Card className="border-border/50 shadow-sm transition-shadow hover:shadow-md">
+    <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <History className="h-5 w-5" />
+          <History className="text-primary size-5" />
           {t("integrations.syncLogs.title")}
         </CardTitle>
       </CardHeader>
@@ -150,16 +152,20 @@ export function SyncLogsTable({ logs, isLoading = false }: SyncLogsTableProps) {
           <TableBody>
             {logs.map((log) => (
               <TableRow key={log.id}>
-                <TableCell>{formatKoreanDateTime(log.startedAt)}</TableCell>
+                <TableCell className="whitespace-nowrap tabular-nums">
+                  {formatKoreanDateTime(log.startedAt)}
+                </TableCell>
                 <TableCell>{getStatusBadge(log.status, t)}</TableCell>
-                <TableCell className="text-right">{log.itemsFound}</TableCell>
-                <TableCell className="text-right text-emerald-700 dark:text-emerald-400">
+                <TableCell className="text-right tabular-nums">
+                  {log.itemsFound}
+                </TableCell>
+                <TableCell className="text-success text-right tabular-nums">
                   {log.itemsCreated}
                 </TableCell>
-                <TableCell className="text-right text-blue-700 dark:text-blue-400">
+                <TableCell className="text-info text-right tabular-nums">
                   {log.itemsUpdated}
                 </TableCell>
-                <TableCell className="text-right">
+                <TableCell className="text-right whitespace-nowrap">
                   {formatDuration(log.startedAt, log.completedAt, t)}
                 </TableCell>
                 <TableCell>

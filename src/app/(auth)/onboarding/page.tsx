@@ -6,13 +6,6 @@
 import { createOrganization } from "@/actions/organization";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
@@ -55,123 +48,127 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div
-      data-testid="onboarding-page"
-      className="mx-auto flex max-w-4xl flex-col gap-6"
-    >
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-primary text-sm font-medium">
+    <div data-testid="onboarding-page" className="flex w-full flex-col gap-6">
+      <div className="flex flex-col gap-1">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-primary text-[0.8125rem] font-medium">
             {t("auth.onboarding.step")}
           </p>
-          <h1 className="text-3xl font-bold">{t("auth.onboarding.title")}</h1>
-          <p className="text-muted-foreground">
-            {t("auth.onboarding.description")}
-          </p>
+          <Badge variant="primary" className="flex shrink-0 items-center gap-1">
+            <Sparkles className="size-3.5" />
+            {t("auth.onboarding.interestBadge", {
+              count: selectedInterests.length,
+            })}
+          </Badge>
         </div>
-        <Badge variant="outline" className="flex items-center gap-1">
-          <Sparkles className="h-4 w-4" />
-          {t("auth.onboarding.interestBadge", {
-            count: selectedInterests.length,
-          })}
-        </Badge>
+        <h1 className="text-foreground text-2xl font-medium">
+          {t("auth.onboarding.title")}
+        </h1>
+        <p className="text-muted-foreground text-[0.9375rem]">
+          {t("auth.onboarding.description")}
+        </p>
       </div>
 
-      <Card className="w-full">
-        <CardHeader>
-          <CardTitle>{t("auth.onboarding.org.title")}</CardTitle>
-          <CardDescription>
+      <section className="flex flex-col gap-5 border-t pt-6">
+        <div className="flex flex-col gap-1">
+          <h2 className="text-foreground text-lg font-medium">
+            {t("auth.onboarding.org.title")}
+          </h2>
+          <p className="text-muted-foreground text-[0.8125rem]">
             {t("auth.onboarding.org.description")}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <form action={formAction} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="name">{t("auth.onboarding.org.name")}</Label>
-              <Input
-                id="name"
-                name="name"
-                placeholder={t("auth.onboarding.org.placeholder")}
-                required
-                minLength={2}
-                maxLength={50}
-                disabled={isPending}
-              />
-              <p className="text-muted-foreground text-xs">
-                {t("auth.onboarding.org.helper")}
-              </p>
-            </div>
+          </p>
+        </div>
+        <form action={formAction} className="flex flex-col gap-5">
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="name">{t("auth.onboarding.org.name")}</Label>
+            <Input
+              id="name"
+              name="name"
+              placeholder={t("auth.onboarding.org.placeholder")}
+              required
+              minLength={2}
+              maxLength={50}
+              disabled={isPending}
+            />
+            <p className="text-muted-foreground text-[0.8125rem]">
+              {t("auth.onboarding.org.helper")}
+            </p>
+          </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="domain">
-                {t("auth.onboarding.org.domain", {
-                  defaultValue: "회사 도메인",
-                })}
-              </Label>
-              <Input
-                id="domain"
-                name="domain"
-                placeholder={t("auth.onboarding.org.domainPlaceholder", {
-                  defaultValue: "company.com",
-                })}
-                required
-                disabled={isPending}
-              />
-              <p className="text-muted-foreground text-xs">
-                {t("auth.onboarding.org.domainHelper", {
-                  defaultValue:
-                    "회사 이메일 도메인을 입력하세요. Extension 사용자 인증에 사용됩니다.",
-                })}
-              </p>
-            </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="domain">
+              {t("auth.onboarding.org.domain", {
+                defaultValue: "회사 도메인",
+              })}
+            </Label>
+            <Input
+              id="domain"
+              name="domain"
+              placeholder={t("auth.onboarding.org.domainPlaceholder", {
+                defaultValue: "company.com",
+              })}
+              required
+              disabled={isPending}
+            />
+            <p className="text-muted-foreground text-[0.8125rem]">
+              {t("auth.onboarding.org.domainHelper", {
+                defaultValue:
+                  "회사 이메일 도메인을 입력하세요. Extension 사용자 인증에 사용됩니다.",
+              })}
+            </p>
+          </div>
 
-            <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="font-medium">
-                    {t("auth.onboarding.goals.title")}
-                  </p>
-                  <p className="text-muted-foreground text-sm">
-                    {t("auth.onboarding.goals.description")}
-                  </p>
-                </div>
-                <Badge variant="secondary">
-                  {t("auth.onboarding.goals.selected", {
-                    count: selectedInterests.length,
-                  })}
-                </Badge>
+          <div className="flex flex-col gap-3 border-t pt-5">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex min-w-0 flex-col gap-0.5">
+                <p className="text-foreground text-[0.9375rem] font-medium">
+                  {t("auth.onboarding.goals.title")}
+                </p>
+                <p className="text-muted-foreground text-[0.8125rem]">
+                  {t("auth.onboarding.goals.description")}
+                </p>
               </div>
-              <div className="grid gap-3 sm:grid-cols-2 md:grid-cols-3">
-                {interests.map((item) => {
-                  const active = selectedInterests.includes(item.id);
-                  return (
-                    <button
-                      type="button"
-                      key={item.id}
-                      onClick={() => toggleInterest(item.id)}
-                      className={cn(
-                        "hover:border-primary/60 flex items-center justify-between rounded-lg border p-3 text-left transition",
-                        active ? "border-primary bg-primary/5" : "border-muted"
-                      )}
+              <Badge variant="secondary" className="shrink-0">
+                {t("auth.onboarding.goals.selected", {
+                  count: selectedInterests.length,
+                })}
+              </Badge>
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {interests.map((item) => {
+                const active = selectedInterests.includes(item.id);
+                return (
+                  <button
+                    type="button"
+                    key={item.id}
+                    onClick={() => toggleInterest(item.id)}
+                    className={cn(
+                      "hover:border-primary/60 focus-visible:ring-primary/20 flex h-10 min-w-0 items-center justify-between gap-2 rounded-md border px-3 text-left transition-colors outline-none focus-visible:ring-[3px]",
+                      active
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-input text-foreground"
+                    )}
+                  >
+                    <span
+                      className="truncate text-[0.8125rem] font-medium"
+                      title={item.label}
                     >
-                      <span className="text-sm font-medium">{item.label}</span>
-                      {active && (
-                        <CheckCircle2 className="text-primary h-4 w-4" />
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
+                      {item.label}
+                    </span>
+                    {active && <CheckCircle2 className="size-4 shrink-0" />}
+                  </button>
+                );
+              })}
             </div>
+          </div>
 
-            <Button type="submit" className="w-full" disabled={isPending}>
-              {isPending
-                ? t("auth.onboarding.actions.creating")
-                : t("auth.onboarding.actions.start")}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+          <Button type="submit" className="w-full" disabled={isPending}>
+            {isPending
+              ? t("auth.onboarding.actions.creating")
+              : t("auth.onboarding.actions.start")}
+          </Button>
+        </form>
+      </section>
     </div>
   );
 }

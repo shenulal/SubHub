@@ -28,7 +28,6 @@ import {
 } from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import type { Task, TaskPriority, TaskStatus } from "@/types/task";
-import { taskPriorityColors, taskStatusColors } from "@/types/task";
 import { format } from "date-fns";
 import { ko } from "date-fns/locale";
 import {
@@ -42,6 +41,21 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
+
+/** Materio tonal badge colours (theme tokens, light + dark safe). */
+const STATUS_TONE: Record<TaskStatus, string> = {
+  TODO: "border-transparent bg-neutral/15 text-neutral",
+  IN_PROGRESS: "border-transparent bg-info/15 text-info",
+  IN_REVIEW: "border-transparent bg-warning/15 text-warning",
+  DONE: "border-transparent bg-success/15 text-success",
+  CANCELLED: "border-transparent bg-error/15 text-error",
+};
+const PRIORITY_TONE: Record<TaskPriority, string> = {
+  LOW: "border-transparent bg-neutral/15 text-neutral",
+  MEDIUM: "border-transparent bg-info/15 text-info",
+  HIGH: "border-transparent bg-warning/15 text-warning",
+  URGENT: "border-transparent bg-error/15 text-error",
+};
 
 interface TaskTableProps {
   tasks: Task[];
@@ -105,7 +119,7 @@ export function TaskTable({
 
     return (
       <span
-        className={cn("flex items-center gap-1", isOverdue && "text-red-500")}
+        className={cn("flex items-center gap-1", isOverdue && "text-error")}
       >
         <Calendar className="h-3 w-3" />
         {formatted}
@@ -199,7 +213,12 @@ export function TaskTable({
               </TableCell>
               <TableCell>
                 <div className="space-y-1">
-                  <p className="font-medium">{task.title}</p>
+                  <p
+                    className="text-foreground max-w-[22rem] truncate text-[0.9375rem] font-medium"
+                    title={task.title}
+                  >
+                    {task.title}
+                  </p>
                   {task.description && (
                     <p className="text-muted-foreground line-clamp-1 text-sm">
                       {task.description}
@@ -227,9 +246,10 @@ export function TaskTable({
               </TableCell>
               <TableCell>
                 <Badge
+                  variant="outline"
                   className={cn(
-                    "font-normal",
-                    taskStatusColors[task.status as TaskStatus]
+                    "font-medium",
+                    STATUS_TONE[task.status as TaskStatus]
                   )}
                 >
                   {getStatusLabel(task.status as TaskStatus)}
@@ -237,9 +257,10 @@ export function TaskTable({
               </TableCell>
               <TableCell>
                 <Badge
+                  variant="outline"
                   className={cn(
-                    "font-normal",
-                    taskPriorityColors[task.priority as TaskPriority]
+                    "font-medium",
+                    PRIORITY_TONE[task.priority as TaskPriority]
                   )}
                 >
                   {getPriorityLabel(task.priority as TaskPriority)}
@@ -282,7 +303,7 @@ export function TaskTable({
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         onClick={() => onDelete?.(task.id)}
-                        className="text-red-600"
+                        className="text-error focus:text-error"
                       >
                         <Trash2 className="mr-2 h-4 w-4" />
                         {t("table.actions.delete")}
@@ -297,8 +318,8 @@ export function TaskTable({
       </Table>
 
       {/* 페이지네이션 */}
-      <div className="flex items-center justify-between px-4 py-4">
-        <div className="text-muted-foreground text-sm">
+      <div className="border-border flex flex-wrap items-center justify-between gap-4 border-t px-5 py-4">
+        <div className="text-muted-foreground text-[0.8125rem]">
           {selectedIds.size > 0 ? (
             <span>
               {t("table.pagination.rowsSelected", {
@@ -317,9 +338,9 @@ export function TaskTable({
           )}
         </div>
 
-        <div className="flex items-center space-x-6 lg:space-x-8">
-          <div className="flex items-center space-x-2">
-            <p className="text-sm font-medium">
+        <div className="flex flex-wrap items-center gap-6">
+          <div className="flex items-center gap-2">
+            <p className="text-muted-foreground text-[0.8125rem] whitespace-nowrap">
               {t("table.pagination.rowsPerPage")}
             </p>
             <Select
@@ -341,8 +362,8 @@ export function TaskTable({
               </SelectContent>
             </Select>
           </div>
-          <div className="flex items-center space-x-2">
-            <div className="flex w-[100px] items-center justify-center text-sm font-medium">
+          <div className="flex items-center gap-2">
+            <div className="flex min-w-[100px] items-center justify-center text-[0.8125rem] font-medium whitespace-nowrap tabular-nums">
               {t("table.pagination.page", {
                 current: pageIndex + 1,
                 total: totalPages,

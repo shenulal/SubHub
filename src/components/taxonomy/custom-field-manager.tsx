@@ -81,9 +81,7 @@ export function CustomFieldManager({
           <p
             className={cn(
               "text-xs tabular-nums",
-              limitReached
-                ? "text-amber-600 dark:text-amber-400"
-                : "text-muted-foreground"
+              limitReached ? "text-warning" : "text-muted-foreground"
             )}
           >
             {limitReached

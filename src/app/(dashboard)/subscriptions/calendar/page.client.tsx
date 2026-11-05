@@ -16,6 +16,7 @@ import { RenewalDayDetail } from "@/components/subscriptions/renewal-day-detail"
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useQuery } from "@tanstack/react-query";
+import { CalendarDays } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useCallback, useMemo, useState } from "react";
@@ -111,13 +112,13 @@ export function RenewalCalendarPageClient({
 
   return (
     <div
-      className="grid gap-6 lg:grid-cols-[1fr_400px]"
+      className="grid min-w-0 gap-6 2xl:grid-cols-[minmax(0,1fr)_360px]"
       data-loading={isPending ? "true" : "false"}
     >
-      <div className="relative">
+      <div className="relative min-w-0">
         {isPending && (
-          <div className="bg-background/80 absolute inset-0 z-10 flex items-center justify-center rounded-sm">
-            <Card className="border-border/50 w-full max-w-md rounded-sm shadow-sm">
+          <div className="bg-background/80 absolute inset-0 z-10 flex items-center justify-center rounded-lg">
+            <Card className="w-full max-w-md">
               <CardContent className="p-6">
                 <div className="space-y-4">
                   <Skeleton className="h-6 w-32" />
@@ -140,10 +141,10 @@ export function RenewalCalendarPageClient({
         />
       </div>
 
-      <div className="lg:sticky lg:top-4">
+      <div className="min-w-0 2xl:sticky 2xl:top-4 2xl:self-start">
         {selectedDate ? (
           dayQuery.isLoading ? (
-            <Card className="border-border/50 rounded-sm shadow-sm">
+            <Card>
               <CardHeader>
                 <Skeleton className="h-6 w-48" />
                 <Skeleton className="mt-2 h-4 w-32" />
@@ -165,8 +166,11 @@ export function RenewalCalendarPageClient({
             />
           )
         ) : (
-          <div className="bg-card flex h-64 flex-col items-center justify-center rounded-sm border p-6 text-center">
-            <p className="text-muted-foreground whitespace-pre-line">
+          <div className="border-border flex min-h-40 flex-col items-center justify-center gap-4 rounded-md border border-dashed p-6 text-center 2xl:h-64">
+            <span className="tonal-primary flex size-12 items-center justify-center rounded-md">
+              <CalendarDays className="size-6" />
+            </span>
+            <p className="text-muted-foreground text-[0.9375rem] whitespace-pre-line">
               {t("selectDateHint")}
             </p>
           </div>

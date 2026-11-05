@@ -55,72 +55,76 @@ export function OnboardingMonitorClient({
   ];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Stats Cards */}
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Card className="rounded-sm">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              {t("stats.total")}
-            </CardTitle>
-            <Users className="text-muted-foreground h-4 w-4" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{total}</div>
-          </CardContent>
-        </Card>
-        <Card className="rounded-sm">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              {t("stats.completed")}
-            </CardTitle>
-            <CheckCircle2 className="h-4 w-4 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">
-              {completedCount}
+      <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
+        <Card className="border-border dark:border-border gap-0 border px-5 shadow-none">
+          <div className="flex min-w-0 items-center gap-4">
+            <span className="tonal-primary flex size-10 shrink-0 items-center justify-center rounded-md">
+              <Users className="size-5" />
+            </span>
+            <div className="min-w-0">
+              <CardTitle className="text-muted-foreground truncate text-[0.8125rem] font-normal">
+                {t("stats.total")}
+              </CardTitle>
+              <div className="kpi-value text-foreground">{total}</div>
             </div>
-          </CardContent>
+          </div>
         </Card>
-        <Card className="rounded-sm">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              {t("stats.pending")}
-            </CardTitle>
-            <Clock className="text-muted-foreground h-4 w-4" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{pendingCount}</div>
-          </CardContent>
+        <Card className="border-border dark:border-border gap-0 border px-5 shadow-none">
+          <div className="flex min-w-0 items-center gap-4">
+            <span className="tonal-success flex size-10 shrink-0 items-center justify-center rounded-md">
+              <CheckCircle2 className="size-5" />
+            </span>
+            <div className="min-w-0">
+              <CardTitle className="text-muted-foreground truncate text-[0.8125rem] font-normal">
+                {t("stats.completed")}
+              </CardTitle>
+              <div className="kpi-value text-success">{completedCount}</div>
+            </div>
+          </div>
+        </Card>
+        <Card className="border-border dark:border-border gap-0 border px-5 shadow-none">
+          <div className="flex min-w-0 items-center gap-4">
+            <span className="tonal-warning flex size-10 shrink-0 items-center justify-center rounded-md">
+              <Clock className="size-5" />
+            </span>
+            <div className="min-w-0">
+              <CardTitle className="text-muted-foreground truncate text-[0.8125rem] font-normal">
+                {t("stats.pending")}
+              </CardTitle>
+              <div className="kpi-value text-foreground">{pendingCount}</div>
+            </div>
+          </div>
         </Card>
       </div>
 
       {/* Filter Badges */}
-      <div className="flex gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         {filterButtons.map(({ key, label, count }) => (
           <button
             key={key}
             onClick={() => setFilter(key)}
-            className="focus:outline-none"
+            className="focus-visible:ring-ring/50 shrink-0 rounded-full focus:outline-none focus-visible:ring-[3px]"
           >
             <Badge
               variant={filter === key ? "default" : "outline"}
-              className="cursor-pointer px-3 py-1 text-sm"
+              className="cursor-pointer px-3.5 py-1 text-sm"
             >
               {label}
-              <span className="ml-1.5 opacity-70">{count}</span>
+              <span className="ml-1.5 tabular-nums opacity-70">{count}</span>
             </Badge>
           </button>
         ))}
       </div>
 
       {/* Table */}
-      <Card className="rounded-sm">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">{t("table.title")}</CardTitle>
+      <Card className="border-border dark:border-border gap-4 border shadow-none">
+        <CardHeader>
+          <CardTitle>{t("table.title")}</CardTitle>
           <CardDescription>{t("table.description")}</CardDescription>
         </CardHeader>
-        <CardContent className="p-0">
+        <CardContent className="px-0">
           <Table>
             <TableHeader>
               <TableRow>
@@ -143,22 +147,22 @@ export function OnboardingMonitorClient({
               ) : (
                 filteredItems.map((item) => (
                   <TableRow key={item.userId}>
-                    <TableCell className="font-medium">
+                    <TableCell className="text-foreground max-w-[220px] truncate font-medium">
                       {item.userName || "-"}
                     </TableCell>
-                    <TableCell className="text-muted-foreground text-sm">
+                    <TableCell className="text-muted-foreground max-w-[260px] truncate text-sm">
                       {item.userEmail}
                     </TableCell>
-                    <TableCell className="text-sm">
+                    <TableCell className="max-w-[180px] truncate text-sm">
                       {item.department || "-"}
                     </TableCell>
                     <TableCell>
                       {item.onboardingCompletedAt ? (
-                        <Badge variant="default" className="bg-green-600">
+                        <Badge variant="success">
                           {t("table.status.completed")}
                         </Badge>
                       ) : (
-                        <Badge variant="outline">
+                        <Badge variant="warning">
                           {t("table.status.pending")}
                         </Badge>
                       )}

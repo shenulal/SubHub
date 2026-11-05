@@ -50,7 +50,7 @@ export function IntegrationSettingsForm({
   };
 
   return (
-    <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
+    <Card>
       <CardHeader>
         <CardTitle>{t("integrations.settings.title")}</CardTitle>
       </CardHeader>

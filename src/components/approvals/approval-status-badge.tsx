@@ -7,24 +7,20 @@ import type { ApprovalRequestStatus, ApprovalStepStatus } from "@prisma/client";
 import { useTranslations } from "next-intl";
 
 const REQUEST_STYLES: Record<ApprovalRequestStatus, string> = {
-  PENDING:
-    "bg-amber-100 text-amber-800 ring-amber-200 dark:bg-amber-500/15 dark:text-amber-300 dark:ring-amber-500/30",
-  INFO_REQUESTED:
-    "bg-sky-100 text-sky-800 ring-sky-200 dark:bg-sky-500/15 dark:text-sky-300 dark:ring-sky-500/30",
-  APPROVED:
-    "bg-emerald-100 text-emerald-800 ring-emerald-200 dark:bg-emerald-500/15 dark:text-emerald-300 dark:ring-emerald-500/30",
-  REJECTED:
-    "bg-rose-100 text-rose-800 ring-rose-200 dark:bg-rose-500/15 dark:text-rose-300 dark:ring-rose-500/30",
-  CANCELLED: "bg-muted text-muted-foreground ring-border dark:bg-muted/60",
+  PENDING: "tonal-warning ring-warning/25",
+  INFO_REQUESTED: "tonal-info ring-info/25",
+  APPROVED: "tonal-success ring-emerald-500/20",
+  REJECTED: "tonal-error ring-error/25",
+  CANCELLED: "tonal-neutral ring-border",
 };
 
 const STEP_STYLES: Record<ApprovalStepStatus, string> = {
-  WAITING: "bg-muted text-muted-foreground ring-border",
+  WAITING: "tonal-neutral ring-border",
   PENDING: REQUEST_STYLES.PENDING,
   APPROVED: REQUEST_STYLES.APPROVED,
   REJECTED: REQUEST_STYLES.REJECTED,
   INFO_REQUESTED: REQUEST_STYLES.INFO_REQUESTED,
-  SKIPPED: "bg-muted text-muted-foreground ring-border line-through",
+  SKIPPED: "tonal-neutral ring-border line-through",
 };
 
 export function ApprovalStatusBadge({
@@ -39,7 +35,7 @@ export function ApprovalStatusBadge({
     <Badge
       variant="outline"
       className={cn(
-        "border-0 font-medium ring-1 ring-inset",
+        "shrink-0 border-0 font-medium whitespace-nowrap ring-1 ring-inset",
         REQUEST_STYLES[status],
         className
       )}
@@ -61,7 +57,7 @@ export function ApprovalStepBadge({
     <Badge
       variant="outline"
       className={cn(
-        "border-0 font-medium ring-1 ring-inset",
+        "shrink-0 border-0 font-medium whitespace-nowrap ring-1 ring-inset",
         STEP_STYLES[status],
         className
       )}

@@ -142,15 +142,15 @@ export function ApprovalRequestForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <PageHeader title={t("title")} backHref="/approvals" showBack />
-      <p className="text-muted-foreground -mt-4 max-w-2xl text-sm">
+      <p className="text-muted-foreground -mt-4 max-w-2xl text-[0.9375rem]">
         {t("description")}
       </p>
 
-      <div className="grid gap-6 lg:grid-cols-[2fr_1fr]">
-        <div className="space-y-6">
-          <Card className="border-border rounded-sm shadow-xs">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
+        <div className="min-w-0 space-y-6">
+          <Card>
             <CardHeader>
-              <CardTitle className="text-base">{t("sectionService")}</CardTitle>
+              <CardTitle>{t("sectionService")}</CardTitle>
             </CardHeader>
             <CardContent className="grid gap-4 sm:grid-cols-2">
               <div className="sm:col-span-2">
@@ -194,9 +194,9 @@ export function ApprovalRequestForm({
             </CardContent>
           </Card>
 
-          <Card className="border-border rounded-sm shadow-xs">
+          <Card>
             <CardHeader>
-              <CardTitle className="text-base">{t("sectionCost")}</CardTitle>
+              <CardTitle>{t("sectionCost")}</CardTitle>
               {monthly !== null && (
                 <CardDescription className="tabular-nums">
                   {t("monthlyEquivalent", {
@@ -285,9 +285,9 @@ export function ApprovalRequestForm({
             </CardContent>
           </Card>
 
-          <Card className="border-border rounded-sm shadow-xs">
+          <Card>
             <CardHeader>
-              <CardTitle className="text-base">{t("sectionContext")}</CardTitle>
+              <CardTitle>{t("sectionContext")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <CategoryPicker
@@ -339,13 +339,18 @@ export function ApprovalRequestForm({
           </Card>
         </div>
 
-        <aside className="space-y-4 lg:sticky lg:top-6 lg:self-start">
-          <Card className="border-primary/20 bg-primary/5 rounded-sm shadow-none">
-            <CardContent className="space-y-3 pt-6">
-              <p className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
-                {t("sectionCost")}
-              </p>
-              <p className="text-3xl font-semibold tabular-nums">
+        <aside className="min-w-0 space-y-4 lg:sticky lg:top-20 lg:self-start">
+          <Card>
+            <CardContent className="space-y-4">
+              <div className="flex items-center gap-3">
+                <span className="tonal-primary flex size-10 shrink-0 items-center justify-center rounded-md">
+                  <Send className="size-5" aria-hidden="true" />
+                </span>
+                <p className="text-muted-foreground truncate text-xs font-medium tracking-wide uppercase">
+                  {t("sectionCost")}
+                </p>
+              </div>
+              <p className="text-foreground truncate text-3xl font-medium tabular-nums">
                 {monthly !== null ? formatMoney(monthly, form.currency) : "—"}
                 <span className="text-muted-foreground ml-1 text-sm font-normal">
                   {tRoot("perMonth")}

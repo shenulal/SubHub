@@ -307,7 +307,7 @@ export function PaymentRecordsTable({
           <Skeleton className="h-9 w-60" />
         </div>
         {/* Table Skeleton */}
-        <Card className="border-border/50 rounded-sm shadow-sm">
+        <Card className="border-border dark:border-border border shadow-none">
           <CardHeader>
             <div className="flex items-center gap-2">
               {[1, 2, 3, 4, 5].map((i) => (
@@ -336,13 +336,13 @@ export function PaymentRecordsTable({
   return (
     <div className="space-y-4">
       {/* 검색 + 액션 버튼 */}
-      <div className="flex items-center gap-2">
-        <Search className="text-muted-foreground h-4 w-4" />
+      <div className="relative w-full max-w-xs">
+        <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
         <Input
           placeholder={t("payments.table.searchPlaceholder")}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-60"
+          className="w-full pl-9"
         />
       </div>
 
@@ -386,8 +386,8 @@ export function PaymentRecordsTable({
 
       {/* 서버 측 페이지네이션 */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between">
-          <div className="text-muted-foreground text-sm">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="text-muted-foreground text-sm tabular-nums">
             {total}
             {t("payments.table.of")} {(serverPage - 1) * limit + 1}-
             {Math.min(serverPage * limit, total)}
@@ -404,7 +404,7 @@ export function PaymentRecordsTable({
             >
               {t("payments.table.previous")}
             </Button>
-            <span className="text-sm">
+            <span className="text-sm tabular-nums">
               {serverPage} / {totalPages}
             </span>
             <Button

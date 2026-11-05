@@ -145,16 +145,16 @@ export function SubscriptionList({
   if (subscriptions.length === 0) {
     return (
       <div
-        className="border-border/60 flex flex-col items-center justify-center rounded-lg border border-dashed py-16 text-center"
+        className="border-border flex flex-col items-center justify-center rounded-md border border-dashed px-5 py-16 text-center"
         data-testid="subscription-list-empty"
       >
-        <p className="text-foreground font-medium">
+        <p className="text-foreground text-lg font-medium">
           {hasFilters ? t("emptyFiltered") : t("empty")}
         </p>
-        <p className="text-muted-foreground mt-1 max-w-sm text-sm">
+        <p className="text-muted-foreground mt-1 max-w-sm text-[0.9375rem]">
           {hasFilters ? t("emptyFilteredHint") : t("emptyHint")}
         </p>
-        <div className="mt-4 flex gap-2">
+        <div className="mt-5 flex flex-wrap justify-center gap-2">
           {hasFilters && (
             <Button variant="outline" onClick={onResetFilters}>
               {t("clearFilters")}

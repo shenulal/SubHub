@@ -66,23 +66,25 @@ function AppAccessCard({
   };
 
   return (
-    <div className="bg-purple-gray flex items-center justify-between rounded-sm p-3">
-      <div className="flex items-center gap-3">
+    <div className="bg-muted flex min-w-0 flex-wrap items-center justify-between gap-3 rounded-md p-3">
+      <div className="flex min-w-0 items-center gap-3">
         {access.appLogoUrl ? (
           <Image
             src={access.appLogoUrl}
             alt={access.appName}
             width={32}
             height={32}
-            className="rounded"
+            className="size-8 shrink-0 rounded-md"
           />
         ) : (
-          <div className="bg-muted flex h-8 w-8 items-center justify-center rounded text-sm font-medium">
+          <div className="tonal-primary flex size-8 shrink-0 items-center justify-center rounded-md text-sm font-medium">
             {access.appName.charAt(0)}
           </div>
         )}
-        <div>
-          <div className="text-sm font-medium">{access.appName}</div>
+        <div className="min-w-0">
+          <div className="truncate text-sm font-medium" title={access.appName}>
+            {access.appName}
+          </div>
           <div className="text-muted-foreground text-xs">
             {access.accessLevel && (
               <Badge variant="outline" className="mr-2">
@@ -96,6 +98,7 @@ function AppAccessCard({
       <Button
         variant="destructive"
         size="sm"
+        className="shrink-0"
         onClick={handleRevoke}
         disabled={isPending}
       >
@@ -115,23 +118,28 @@ function SubscriptionAssignmentCard({
   const t = useTranslations();
 
   return (
-    <div className="bg-purple-gray flex items-center justify-between rounded-sm p-3">
-      <div className="flex items-center gap-3">
+    <div className="bg-muted flex min-w-0 items-center justify-between gap-3 rounded-md p-3">
+      <div className="flex min-w-0 items-center gap-3">
         {assignment.appLogoUrl ? (
           <Image
             src={assignment.appLogoUrl}
             alt={assignment.appName}
             width={32}
             height={32}
-            className="rounded"
+            className="size-8 shrink-0 rounded-md"
           />
         ) : (
-          <div className="bg-muted flex h-8 w-8 items-center justify-center rounded text-sm font-medium">
+          <div className="tonal-primary flex size-8 shrink-0 items-center justify-center rounded-md text-sm font-medium">
             {assignment.appName.charAt(0)}
           </div>
         )}
-        <div>
-          <div className="text-sm font-medium">{assignment.appName}</div>
+        <div className="min-w-0">
+          <div
+            className="truncate text-sm font-medium"
+            title={assignment.appName}
+          >
+            {assignment.appName}
+          </div>
           <div className="text-muted-foreground text-xs">
             <Badge variant="outline" className="mr-2">
               <CreditCard className="mr-1 h-3 w-3" />
@@ -187,33 +195,35 @@ function TerminatedUserCard({ user }: { user: TerminatedUserWithAccess }) {
   };
 
   return (
-    <Card className="border-l-destructive/50 border-border/50 rounded-sm border-l-4 shadow-sm transition-shadow hover:shadow-md">
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
+    <Card>
+      <CardHeader>
+        <div className="flex min-w-0 flex-wrap items-start justify-between gap-3">
+          <div className="flex min-w-0 items-center gap-3">
             {user.avatarUrl ? (
               <Image
                 src={user.avatarUrl}
                 alt={user.name || user.email}
-                width={48}
-                height={48}
-                className="rounded-full"
+                width={40}
+                height={40}
+                className="size-10 shrink-0 rounded-full object-cover"
               />
             ) : (
-              <div className="bg-muted flex h-12 w-12 items-center justify-center rounded-full text-lg font-medium">
+              <div className="tonal-error flex size-10 shrink-0 items-center justify-center rounded-full text-base font-medium uppercase">
                 {(user.name || user.email).charAt(0)}
               </div>
             )}
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                {user.name || user.email}
-                <Badge variant="destructive" className="text-xs">
+            <div className="min-w-0">
+              <CardTitle className="flex min-w-0 flex-wrap items-center gap-2">
+                <span className="truncate">{user.name || user.email}</span>
+                <Badge variant="error">
                   <AlertCircle className="mr-1 h-3 w-3" />
                   {user.unrevokedAccessCount}
                   {t("users.terminated.appCount")}
                 </Badge>
               </CardTitle>
-              <p className="text-muted-foreground text-sm">{user.email}</p>
+              <p className="text-muted-foreground truncate text-[0.8125rem]">
+                {user.email}
+              </p>
               <p className="text-muted-foreground text-xs">
                 {user.department} · {user.jobTitle} ·{" "}
                 {t("users.terminated.terminatedDate")}:{" "}
@@ -221,7 +231,7 @@ function TerminatedUserCard({ user }: { user: TerminatedUserWithAccess }) {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
             <AlertDialog
               open={revokeAllDialogOpen}
               onOpenChange={setRevokeAllDialogOpen}
@@ -301,7 +311,7 @@ function TerminatedUserCard({ user }: { user: TerminatedUserWithAccess }) {
           </div>
         </div>
       </CardHeader>
-      <CardContent className="pb-3">
+      <CardContent>
         <div className="space-y-2">
           {user.appAccesses.map((access) => (
             <AppAccessCard key={access.id} access={access} userId={user.id} />
@@ -332,15 +342,17 @@ export function TerminatedUsersList({ users }: TerminatedUsersListProps) {
 
   if (users.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <Shield className="text-muted-foreground mb-4 h-12 w-12" />
+      <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
+        <div className="tonal-neutral flex size-10 items-center justify-center rounded-md">
+          <Shield className="size-5" />
+        </div>
         <p className="text-muted-foreground">{t("users.terminated.empty")}</p>
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {users.map((user) => (
         <TerminatedUserCard key={user.id} user={user} />
       ))}

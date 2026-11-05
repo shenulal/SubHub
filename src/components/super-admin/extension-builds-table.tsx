@@ -24,12 +24,12 @@ const STATUS_MAP: Record<
   string,
   {
     label: string;
-    variant: "default" | "secondary" | "destructive" | "outline";
+    variant: "secondary" | "destructive" | "outline" | "success" | "info";
   }
 > = {
-  COMPLETED: { label: "완료", variant: "default" },
-  BUILDING: { label: "빌드 중", variant: "secondary" },
-  PENDING: { label: "대기", variant: "outline" },
+  COMPLETED: { label: "완료", variant: "success" },
+  BUILDING: { label: "빌드 중", variant: "info" },
+  PENDING: { label: "대기", variant: "secondary" },
   FAILED: { label: "실패", variant: "destructive" },
 };
 
@@ -77,9 +77,11 @@ export function ExtensionBuildsTable({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <p className="text-muted-foreground text-sm">최근 20개 빌드 표시</p>
-        <div className="flex gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-5">
+        <p className="text-muted-foreground text-[0.8125rem]">
+          최근 20개 빌드 표시
+        </p>
+        <div className="flex flex-wrap gap-2">
           <Button
             variant="outline"
             size="sm"
@@ -87,7 +89,7 @@ export function ExtensionBuildsTable({
             disabled={refreshing}
           >
             <RefreshCw
-              className={`mr-1 h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
+              className={`size-4 ${refreshing ? "animate-spin" : ""}`}
             />
             새로고침
           </Button>
@@ -128,7 +130,7 @@ export function ExtensionBuildsTable({
                         v{build.version}
                       </span>
                       {build.isLatest && (
-                        <Badge variant="default" className="text-xs">
+                        <Badge variant="primary" className="text-xs">
                           최신
                         </Badge>
                       )}
@@ -153,7 +155,12 @@ export function ExtensionBuildsTable({
                   </TableCell>
                   <TableCell>
                     {build.downloadUrl && build.status === "COMPLETED" ? (
-                      <Button variant="ghost" size="sm" asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        className="hover:text-primary hover:bg-primary/10"
+                        asChild
+                      >
                         <a
                           href={build.downloadUrl}
                           download

@@ -36,6 +36,8 @@ import {
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 
+import { ReportStatCard } from "@/components/reports/report-stat-card";
+
 import { CreateTeamDialog } from "./create-team-dialog";
 import { DeleteTeamDialog } from "./delete-team-dialog";
 import { EditTeamDialog } from "./edit-team-dialog";
@@ -238,11 +240,11 @@ export function TeamsPageClient({ initialTeams }: TeamsPageClientProps) {
     return (
       <div key={node.id} style={{ paddingLeft: `${depth * 24}px` }}>
         <div
-          className={`group hover:bg-purple-gray flex cursor-pointer items-center gap-2 rounded-md px-3 py-2 transition-colors ${isMembersExpanded ? "bg-purple-tertiary" : ""}`}
+          className={`group hover:bg-muted flex min-h-11 min-w-0 cursor-pointer items-center gap-2 rounded-md px-3 py-2 transition-colors ${isMembersExpanded ? "bg-primary/[0.08]" : ""}`}
           onClick={() => toggleMembers(node.id)}
         >
           {/* 자식 팀 펼침/접힘 버튼 (자식 있을 때만) */}
-          <div className="w-5">
+          <div className="w-5 shrink-0">
             {hasChildren ? (
               <Button
                 variant="ghost"
@@ -265,15 +267,22 @@ export function TeamsPageClient({ initialTeams }: TeamsPageClientProps) {
           </div>
 
           {/* 팀 아이콘 */}
-          <FolderTree className="text-muted-foreground h-4 w-4" />
+          <span className="tonal-primary flex size-7 shrink-0 items-center justify-center rounded-md">
+            <FolderTree className="h-4 w-4" />
+          </span>
 
           {/* 팀 이름 */}
-          <span className="flex-1 font-medium">{node.name}</span>
+          <span
+            className="min-w-0 flex-1 truncate font-medium"
+            title={node.name}
+          >
+            {node.name}
+          </span>
 
           {/* 멤버 수 (정보 표시용 Badge) */}
           <Badge
             variant="secondary"
-            className="flex items-center gap-1 text-xs"
+            className="flex shrink-0 items-center gap-1 tabular-nums"
           >
             <Users className="h-3 w-3" />
             <span>{node._count?.members || 0}</span>
@@ -281,16 +290,16 @@ export function TeamsPageClient({ initialTeams }: TeamsPageClientProps) {
 
           {/* Google OU 배지 */}
           {node.googleOrgUnitPath && (
-            <Badge variant="outline" className="text-xs">
+            <Badge variant="info" className="shrink-0">
               OU
             </Badge>
           )}
 
           {/* 멤버 펼침 상태 아이콘 */}
           {isMembersExpanded ? (
-            <ChevronDown className="text-muted-foreground h-4 w-4" />
+            <ChevronDown className="text-muted-foreground h-4 w-4 shrink-0" />
           ) : (
-            <ChevronRight className="text-muted-foreground h-4 w-4" />
+            <ChevronRight className="text-muted-foreground h-4 w-4 shrink-0" />
           )}
 
           {/* 수동 팀: 수정/삭제 메뉴 */}
@@ -300,7 +309,7 @@ export function TeamsPageClient({ initialTeams }: TeamsPageClientProps) {
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="h-8 w-8 opacity-0 group-hover:opacity-100"
+                  className="h-8 w-8 shrink-0 opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <MoreHorizontal className="h-4 w-4" />
@@ -337,7 +346,7 @@ export function TeamsPageClient({ initialTeams }: TeamsPageClientProps) {
           style={{ gridTemplateRows: isMembersExpanded ? "1fr" : "0fr" }}
         >
           <div className="overflow-hidden">
-            <div className="bg-purple-gray border-border mr-2 ml-10 rounded-md border p-3">
+            <div className="bg-muted mt-1 mr-2 mb-2 ml-10 rounded-md p-3">
               {loadingMembers.has(node.id) ? (
                 <div className="space-y-2">
                   {[1, 2].map((i) => (
@@ -345,19 +354,26 @@ export function TeamsPageClient({ initialTeams }: TeamsPageClientProps) {
                   ))}
                 </div>
               ) : teamMembers[node.id]?.length ? (
-                <div className="space-y-1">
+                <div className="space-y-2">
                   {teamMembers[node.id].map((member) => (
                     <div
                       key={member.id}
-                      className="flex items-center gap-2 text-sm"
+                      className="flex min-w-0 items-center gap-2 text-sm"
                     >
-                      <Users className="text-muted-foreground h-3 w-3" />
-                      <span className="font-medium">{member.name}</span>
-                      <span className="text-muted-foreground text-xs">
+                      <span
+                        aria-hidden
+                        className="tonal-primary flex size-7 shrink-0 items-center justify-center rounded-full text-xs font-medium uppercase"
+                      >
+                        {(member.name || member.email || "?").charAt(0)}
+                      </span>
+                      <span className="max-w-[12rem] truncate font-medium">
+                        {member.name}
+                      </span>
+                      <span className="text-muted-foreground min-w-0 truncate text-xs">
                         {member.email}
                       </span>
                       {member.role && (
-                        <Badge variant="outline" className="text-xs">
+                        <Badge variant="secondary" className="shrink-0">
                           {member.role}
                         </Badge>
                       )}
@@ -385,13 +401,14 @@ export function TeamsPageClient({ initialTeams }: TeamsPageClientProps) {
 
   if (isLoading) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-6">
         {/* Stats Skeleton */}
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           {[1, 2].map((i) => (
-            <Card key={i} className="border-border/50 shadow-sm">
-              <CardContent className="p-4">
-                <Skeleton className="h-4 w-24" />
+            <Card key={i}>
+              <CardContent>
+                <Skeleton className="size-10 rounded-md" />
+                <Skeleton className="mt-4 h-4 w-24" />
                 <Skeleton className="mt-2 h-8 w-16" />
               </CardContent>
             </Card>
@@ -416,65 +433,39 @@ export function TeamsPageClient({ initialTeams }: TeamsPageClientProps) {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="min-w-0 space-y-6">
       {/* 통계 카드 */}
       {stats && (
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-          <Card className="border-l-primary/50 border-border/50 h-full rounded-sm border-l-4 shadow-sm transition-shadow hover:shadow-md">
-            <CardContent className="flex h-full flex-col justify-between p-4">
-              <div className="flex items-center gap-2">
-                <div className="bg-primary/10 rounded-lg p-2">
-                  <FolderTree className="text-primary h-4 w-4" />
-                </div>
-                <span className="text-muted-foreground text-xs font-medium">
-                  {t("teams.stats.totalTeams")}
-                </span>
-              </div>
-              <div className="mt-2">
-                <p className="text-3xl font-bold">{stats.totalTeams}</p>
-              </div>
-            </CardContent>
-          </Card>
-          <Card className="border-l-primary/50 border-border/50 h-full rounded-sm border-l-4 shadow-sm transition-shadow hover:shadow-md">
-            <CardContent className="flex h-full flex-col justify-between p-4">
-              <div className="flex items-center gap-2">
-                <div className="bg-primary/10 rounded-lg p-2">
-                  <Users className="text-primary h-4 w-4" />
-                </div>
-                <span className="text-muted-foreground text-xs font-medium">
-                  {t("teams.stats.teamsWithMembers")}
-                </span>
-              </div>
-              <div className="mt-2">
-                <p className="text-3xl font-bold">{stats.teamsWithMembers}</p>
-              </div>
-            </CardContent>
-          </Card>
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+          <ReportStatCard
+            icon={FolderTree}
+            tone="primary"
+            title={t("teams.stats.totalTeams")}
+            value={String(stats.totalTeams)}
+          />
+          <ReportStatCard
+            icon={Users}
+            tone="info"
+            title={t("teams.stats.teamsWithMembers")}
+            value={String(stats.teamsWithMembers)}
+          />
         </div>
       )}
 
       {/* 팀 트리 */}
-      <Card className="border-l-primary/50 border-border/50 rounded-sm border-l-4 shadow-sm transition-shadow hover:shadow-md">
+      <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <FolderTree className="h-5 w-5" />
-              {t("teams.tree.title")}
+          <div className="flex min-w-0 items-center justify-between gap-3">
+            <CardTitle className="flex min-w-0 items-center gap-3">
+              <span className="tonal-primary flex size-10 shrink-0 items-center justify-center rounded-md">
+                <FolderTree className="size-5" />
+              </span>
+              <span className="truncate">{t("teams.tree.title")}</span>
             </CardTitle>
-            <div className="flex items-center gap-2">
-              <Button size="sm" onClick={() => setIsCreateDialogOpen(true)}>
-                <Plus className="mr-2 h-4 w-4" />
-                {t("teams.tree.addTeam")}
-              </Button>
-              <Button variant="outline" size="sm" onClick={expandAll}>
-                {t("teams.tree.expandAll")}
-              </Button>
-              <Button variant="outline" size="sm" onClick={collapseAll}>
-                {t("teams.tree.collapseAll")}
-              </Button>
+            <div className="flex shrink-0 items-center gap-2">
               <Button
                 variant="outline"
-                size="icon"
+                size="icon-sm"
                 onClick={handleRefresh}
                 disabled={isPending}
               >
@@ -482,25 +473,44 @@ export function TeamsPageClient({ initialTeams }: TeamsPageClientProps) {
                   className={`h-4 w-4 ${isPending ? "animate-spin" : ""}`}
                 />
               </Button>
+              <Button size="sm" onClick={() => setIsCreateDialogOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                {t("teams.tree.addTeam")}
+              </Button>
             </div>
           </div>
           {/* 검색 */}
-          <div className="relative mt-4">
-            <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
-            <Input
-              placeholder={t("teams.tree.searchPlaceholder")}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-9"
-            />
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            <div className="relative min-w-[12rem] flex-1">
+              <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
+              <Input
+                placeholder={t("teams.tree.searchPlaceholder")}
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="h-10 pl-9"
+              />
+            </div>
+            <div className="flex shrink-0 items-center gap-2">
+              <Button variant="outline" className="h-10" onClick={expandAll}>
+                {t("teams.tree.expandAll")}
+              </Button>
+              <Button variant="outline" className="h-10" onClick={collapseAll}>
+                {t("teams.tree.collapseAll")}
+              </Button>
+            </div>
           </div>
         </CardHeader>
         <CardContent>
           {filteredTeams.length === 0 ? (
-            <div className="text-muted-foreground py-8 text-center">
-              {searchQuery
-                ? t("teams.tree.noSearchResults")
-                : t("teams.tree.empty")}
+            <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
+              <div className="tonal-neutral flex size-10 items-center justify-center rounded-md">
+                <FolderTree className="size-5" />
+              </div>
+              <p className="text-muted-foreground">
+                {searchQuery
+                  ? t("teams.tree.noSearchResults")
+                  : t("teams.tree.empty")}
+              </p>
             </div>
           ) : (
             <ScrollArea className="min-h-[450px]">

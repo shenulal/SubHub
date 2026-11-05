@@ -82,11 +82,13 @@ export function DomainManagement({
   };
 
   return (
-    <div className="max-w-lg space-y-4">
-      <Card className="border-border rounded-sm shadow-sm transition-shadow hover:shadow-md">
+    <div className="max-w-2xl space-y-4">
+      <Card className="border-border dark:border-border rounded-md shadow-none">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Globe className="h-5 w-5" />
+          <CardTitle className="flex min-w-0 items-center gap-3">
+            <span className="tonal-primary flex size-10 shrink-0 items-center justify-center rounded-md">
+              <Globe className="size-5" />
+            </span>
             {t("settings.domains.title")}
           </CardTitle>
           <CardDescription>{t("settings.domains.description")}</CardDescription>
@@ -94,10 +96,16 @@ export function DomainManagement({
         <CardContent className="space-y-4">
           {/* 기본 도메인 (삭제 불가) - info-muted로 강조 */}
           {primaryDomain && (
-            <div className="border-info/50 bg-info-muted flex items-center justify-between rounded-lg border p-3">
-              <div className="flex items-center gap-2">
-                <Badge variant="default">{primaryDomain}</Badge>
-                <span className="text-info-muted-foreground text-xs">
+            <div className="tonal-info flex min-w-0 items-center justify-between rounded-md px-3 py-2.5">
+              <div className="flex min-w-0 items-center gap-2">
+                <Badge
+                  variant="default"
+                  className="max-w-full truncate"
+                  title={primaryDomain}
+                >
+                  {primaryDomain}
+                </Badge>
+                <span className="shrink-0 text-[0.8125rem]">
                   {t("settings.domains.primary")}
                 </span>
               </div>
@@ -105,8 +113,9 @@ export function DomainManagement({
           )}
 
           {/* 도메인 추가 입력 */}
-          <div className="flex gap-2">
+          <div className="flex min-w-0 gap-2">
             <Input
+              className="min-w-0 flex-1"
               placeholder={t("settings.domains.addPlaceholder")}
               value={newDomain}
               onChange={(e) => setNewDomain(e.target.value)}
@@ -128,12 +137,14 @@ export function DomainManagement({
 
           {/* 추가 도메인 목록 */}
           {domains.length === 0 ? (
-            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-8 text-center">
-              <Globe className="text-muted-foreground mb-2 h-8 w-8" />
-              <p className="text-muted-foreground text-sm">
+            <div className="bg-muted flex flex-col items-center justify-center gap-1 rounded-md py-8 text-center">
+              <span className="tonal-neutral mb-2 flex size-10 items-center justify-center rounded-md">
+                <Globe className="size-5" />
+              </span>
+              <p className="text-muted-foreground text-[0.9375rem]">
                 {t("settings.domains.empty.title")}
               </p>
-              <p className="text-muted-foreground text-xs">
+              <p className="text-muted-foreground text-[0.8125rem]">
                 {t("settings.domains.empty.description")}
               </p>
             </div>
@@ -142,10 +153,16 @@ export function DomainManagement({
               {domains.map((domain) => (
                 <div
                   key={domain}
-                  className="flex items-center justify-between rounded-lg border p-3"
+                  className="hover:bg-accent/60 flex min-w-0 items-center justify-between gap-2 rounded-md border px-3 py-2 transition-colors"
                 >
-                  <div className="flex items-center gap-2">
-                    <Badge variant="secondary">{domain}</Badge>
+                  <div className="flex min-w-0 items-center gap-2">
+                    <Badge
+                      variant="primary"
+                      className="max-w-full truncate"
+                      title={domain}
+                    >
+                      {domain}
+                    </Badge>
                   </div>
                   <Button
                     type="button"
@@ -164,7 +181,7 @@ export function DomainManagement({
 
           {/* 도메인 수 표시 */}
           {domains.length > 0 && (
-            <p className="text-muted-foreground text-xs">
+            <p className="text-muted-foreground text-[0.8125rem]">
               {t("settings.domains.count", { count: domains.length })}
             </p>
           )}

@@ -148,7 +148,7 @@ export function SubscriptionFormVendor({
   };
 
   return (
-    <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
+    <Card>
       <CardHeader>
         <CardTitle>{t("subscriptions.form.basicInfo.title")}</CardTitle>
         <CardDescription>{tv("description")}</CardDescription>
@@ -276,7 +276,7 @@ export function SubscriptionFormVendor({
         {duplicates.length > 0 && (
           <div
             role="alert"
-            className="space-y-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-4 py-3 text-sm text-amber-950 dark:text-amber-50"
+            className="border-warning/40 bg-warning/10 text-foreground space-y-2 rounded-md border px-4 py-3 text-sm"
           >
             <p className="flex items-center gap-2 font-medium">
               <AlertTriangle className="h-4 w-4" />

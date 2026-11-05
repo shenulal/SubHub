@@ -179,9 +179,7 @@ export function SuggestionRegisterDialog({
           </Avatar>
           <div className="flex-1 space-y-1">
             <div className="flex items-center gap-2">
-              <span className="text-lg font-semibold">
-                {suggestion.appName}
-              </span>
+              <span className="text-lg font-medium">{suggestion.appName}</span>
               {getConfidenceBadge(suggestion.confidence)}
             </div>
             <div className="text-muted-foreground flex items-center gap-3 text-sm">
@@ -234,17 +232,14 @@ export function SuggestionRegisterDialog({
                   )
                 }
                 placeholder={t("totalSeatsPlaceholder")}
-                className={cn(
-                  "max-w-[140px]",
-                  isSeatInvalid && "border-red-500"
-                )}
+                className={cn("max-w-[140px]", isSeatInvalid && "border-error")}
                 disabled={isPending}
               />
               <span
                 className={cn(
                   "shrink-0 text-xs",
                   totalSeats && selectedUserIds.length > totalSeats
-                    ? "font-medium text-red-500"
+                    ? "text-error font-medium"
                     : "text-muted-foreground"
                 )}
               >

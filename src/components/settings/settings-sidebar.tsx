@@ -156,7 +156,7 @@ export function SettingsSidebar({ isAdmin = false }: SettingsSidebarProps) {
   );
 
   return (
-    <nav className="flex flex-col space-y-0.5">
+    <nav className="flex min-w-0 gap-1 overflow-x-auto pb-1 xl:flex-col xl:overflow-visible xl:pb-0">
       {settingsMenuItems.map((item) => {
         // 관리자 전용 항목 처리
         if (item.adminOnly && !isAdmin) {
@@ -172,17 +172,17 @@ export function SettingsSidebar({ isAdmin = false }: SettingsSidebarProps) {
             key={item.href}
             href={item.href}
             className={cn(
-              "inline-flex items-start gap-2 rounded-md px-4 py-2 text-sm font-medium transition-all",
+              "group flex shrink-0 items-start gap-3 rounded-md px-3 py-2.5 text-[0.9375rem] leading-snug font-medium transition-colors xl:min-w-0 xl:shrink",
               isActive
-                ? "bg-accent text-accent-foreground"
-                : "text-foreground hover:bg-muted hover:text-accent-foreground"
+                ? "bg-accent bg-primary/16! text-primary"
+                : "text-foreground hover:bg-accent"
             )}
           >
-            <Icon className="mt-0.5 h-4 w-4 shrink-0" />
-            <div className="flex flex-col gap-0.5">
+            <Icon className="mt-px size-[18px] shrink-0" />
+            <div className="flex min-w-0 flex-col gap-0.5">
               <span>{item.label}</span>
               {item.description && (
-                <span className="text-muted-foreground text-xs font-normal">
+                <span className="text-muted-foreground group-aria-[current=page]:text-primary/75 hidden truncate text-[0.8125rem] font-normal xl:block">
                   {item.description}
                 </span>
               )}

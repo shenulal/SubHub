@@ -22,17 +22,14 @@ export function TerminatedUsersPageClient() {
   // 로딩 상태 - Skeleton UI
   if (isLoading) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-6">
         {/* Terminated User Cards Skeleton */}
         {[1, 2, 3].map((i) => (
-          <Card
-            key={i}
-            className="border-l-destructive/50 border-border/50 rounded-sm border-l-4 shadow-sm"
-          >
-            <CardHeader className="pb-3">
+          <Card key={i}>
+            <CardHeader>
               <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
-                  <Skeleton className="h-12 w-12 rounded-full" />
+                  <Skeleton className="size-10 rounded-full" />
                   <div>
                     <div className="flex items-center gap-2">
                       <Skeleton className="h-5 w-32" />
@@ -48,12 +45,12 @@ export function TerminatedUsersPageClient() {
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="pb-3">
+            <CardContent>
               <div className="space-y-2">
                 {[1, 2].map((j) => (
                   <div
                     key={j}
-                    className="bg-purple-gray flex items-center justify-between rounded-sm p-3"
+                    className="bg-muted flex items-center justify-between rounded-md p-3"
                   >
                     <div className="flex items-center gap-3">
                       <Skeleton className="h-8 w-8 rounded" />

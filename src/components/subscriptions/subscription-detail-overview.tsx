@@ -84,9 +84,9 @@ export function SubscriptionDetailOverview({
   const daysUntilRenewal = getDaysUntilRenewal(subscription.renewalDate);
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr_400px]">
-      <div className="space-y-6">
-        <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
+    <div className="grid min-w-0 gap-6 2xl:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="min-w-0 space-y-6">
+        <Card>
           <CardHeader>
             <CardTitle>{t("subscriptions.detail.period.title")}</CardTitle>
             <CardDescription>
@@ -95,37 +95,41 @@ export function SubscriptionDetailOverview({
           </CardHeader>
           <CardContent>
             <dl className="grid gap-4 sm:grid-cols-3">
-              <div>
-                <dt className="text-muted-foreground text-sm font-medium">
+              <div className="bg-muted/60 min-w-0 rounded-md p-4">
+                <dt className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
                   {t("subscriptions.detail.period.startDate")}
                 </dt>
-                <dd className="mt-1 font-medium">
+                <dd className="text-foreground mt-1.5 truncate text-[0.9375rem] font-medium tabular-nums">
                   {formatDate(subscription.startDate)}
                 </dd>
               </div>
-              <div>
-                <dt className="text-muted-foreground text-sm font-medium">
+              <div className="bg-muted/60 min-w-0 rounded-md p-4">
+                <dt className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
                   {t("subscriptions.detail.period.endDate")}
                 </dt>
-                <dd className="mt-1 font-medium">
+                <dd className="text-foreground mt-1.5 truncate text-[0.9375rem] font-medium tabular-nums">
                   {formatDate(subscription.endDate)}
                 </dd>
               </div>
-              <div>
-                <dt className="text-muted-foreground text-sm font-medium">
+              <div className="bg-muted/60 min-w-0 rounded-md p-4">
+                <dt className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
                   {t("subscriptions.detail.period.renewalDate")}
                 </dt>
-                <dd className="mt-1 font-medium">
+                <dd className="text-foreground mt-1.5 flex flex-wrap items-center gap-2 text-[0.9375rem] font-medium tabular-nums">
                   {formatDate(subscription.renewalDate)}
                   {daysUntilRenewal !== null &&
                     daysUntilRenewal <= RENEWAL_BADGE_DAYS && (
                       <Badge
                         variant={
                           daysUntilRenewal <= RENEWAL_URGENT_DAYS
-                            ? "destructive"
-                            : "outline"
+                            ? "outline"
+                            : "warning"
                         }
-                        className="ml-2"
+                        className={
+                          daysUntilRenewal <= RENEWAL_URGENT_DAYS
+                            ? "bg-error/15 text-error border-transparent"
+                            : undefined
+                        }
                       >
                         {t("subscriptions.detail.period.daysLeft", {
                           days: daysUntilRenewal,
@@ -153,7 +157,7 @@ export function SubscriptionDetailOverview({
           isLoading={isLoadingPayments}
         />
 
-        <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
+        <Card>
           <CardHeader>
             <CardTitle>{t("subscriptions.detail.additional.title")}</CardTitle>
             <CardDescription>
@@ -161,7 +165,7 @@ export function SubscriptionDetailOverview({
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex min-w-0 items-center justify-between gap-4 text-[0.9375rem]">
               <span className="text-muted-foreground">
                 {t("subscriptions.detail.additional.contract")}
               </span>
@@ -183,13 +187,15 @@ export function SubscriptionDetailOverview({
             {(subscription.customFieldValues ?? []).length > 0 && (
               <>
                 <Separator />
-                <dl className="grid gap-3 sm:grid-cols-2">
+                <dl className="grid gap-4 sm:grid-cols-2">
                   {subscription.customFieldValues.map((cfv) => (
-                    <div key={cfv.fieldId}>
-                      <dt className="text-muted-foreground text-xs">
+                    <div key={cfv.fieldId} className="min-w-0">
+                      <dt className="text-muted-foreground text-xs tracking-wide uppercase">
                         {cfv.label}
                       </dt>
-                      <dd className="text-sm font-medium">{cfv.value}</dd>
+                      <dd className="text-foreground mt-1 text-[0.9375rem] font-medium break-words">
+                        {cfv.value}
+                      </dd>
                     </div>
                   ))}
                 </dl>
@@ -199,10 +205,10 @@ export function SubscriptionDetailOverview({
               <>
                 <Separator />
                 <div>
-                  <span className="text-muted-foreground text-sm">
+                  <span className="text-muted-foreground text-xs tracking-wide uppercase">
                     {t("subscriptions.detail.additional.notes")}
                   </span>
-                  <p className="mt-1 text-sm whitespace-pre-wrap">
+                  <p className="text-foreground mt-1 text-[0.9375rem] break-words whitespace-pre-wrap">
                     {subscription.notes}
                   </p>
                 </div>
@@ -211,7 +217,7 @@ export function SubscriptionDetailOverview({
           </CardContent>
         </Card>
 
-        <div className="text-muted-foreground text-xs">
+        <div className="text-muted-foreground text-[0.8125rem]">
           {t("subscriptions.detail.metadata.createdAt", {
             date: formatDate(subscription.createdAt),
           })}{" "}
@@ -222,7 +228,7 @@ export function SubscriptionDetailOverview({
         </div>
       </div>
 
-      <div className="space-y-6">
+      <div className="min-w-0 space-y-6">
         <SubscriptionDetailAppCard
           appName={subscription.appName}
           appLogoUrl={subscription.appLogoUrl}
@@ -232,7 +238,7 @@ export function SubscriptionDetailOverview({
           currency={subscription.currency}
         />
 
-        <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
+        <Card>
           <CardHeader>
             <CardTitle>{t("subscriptions.detail.assignment.title")}</CardTitle>
             <CardDescription>
@@ -242,23 +248,23 @@ export function SubscriptionDetailOverview({
           <CardContent className="space-y-4">
             {subscription.owner && (
               <>
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">
+                <div className="flex min-w-0 items-center justify-between gap-4 text-[0.9375rem]">
+                  <span className="text-muted-foreground shrink-0">
                     {tl("form.terms.owner")}
                   </span>
-                  <span className="font-medium">
+                  <span className="text-foreground min-w-0 truncate font-medium">
                     {subscription.owner.name ?? subscription.owner.email}
                   </span>
                 </div>
                 <Separator />
               </>
             )}
-            <div className="flex items-center justify-between">
-              <span className="text-muted-foreground text-sm">
+            <div className="flex min-w-0 items-center justify-between gap-4 text-[0.9375rem]">
+              <span className="text-muted-foreground shrink-0">
                 {t("subscriptions.detail.assignment.team")}
               </span>
               {subscription.teams && subscription.teams.length > 0 ? (
-                <div className="flex flex-wrap justify-end gap-1">
+                <div className="flex min-w-0 flex-wrap justify-end gap-1">
                   {subscription.teams.map((team) => (
                     <Badge key={team.id} variant="secondary">
                       {team.name}
@@ -266,33 +272,33 @@ export function SubscriptionDetailOverview({
                   ))}
                 </div>
               ) : (
-                <span className="font-medium">
+                <span className="text-foreground min-w-0 truncate font-medium">
                   {subscription.teamName ?? "-"}
                 </span>
               )}
             </div>
             <Separator />
             <div>
-              <span className="text-muted-foreground text-sm">
+              <span className="text-muted-foreground text-[0.9375rem]">
                 {t("subscriptions.detail.assignment.assignedUsers")}
               </span>
               {subscription.assignedUsers &&
               subscription.assignedUsers.length > 0 ? (
-                <div className="mt-2 space-y-2">
+                <div className="mt-3 space-y-3">
                   {subscription.assignedUsers.map((user) => (
                     <div
                       key={user.id}
-                      className="flex items-center gap-2 text-sm"
+                      className="flex min-w-0 items-center gap-3 text-[0.9375rem]"
                     >
-                      <div className="bg-muted flex h-6 w-6 items-center justify-center rounded-full text-xs font-medium">
+                      <div className="tonal-primary flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-medium">
                         {(user.name ?? user.email).charAt(0).toUpperCase()}
                       </div>
-                      <div>
-                        <span className="font-medium">
+                      <div className="min-w-0 truncate">
+                        <span className="text-foreground font-medium">
                           {user.name ?? user.email}
                         </span>
                         {user.name && (
-                          <span className="text-muted-foreground ml-1">
+                          <span className="text-muted-foreground ml-1 text-[0.8125rem]">
                             ({user.email})
                           </span>
                         )}
@@ -301,7 +307,7 @@ export function SubscriptionDetailOverview({
                   ))}
                 </div>
               ) : (
-                <p className="text-muted-foreground mt-1 text-sm">
+                <p className="text-muted-foreground mt-1 text-[0.8125rem]">
                   {t("subscriptions.detail.assignment.noUsers")}
                 </p>
               )}

@@ -6,6 +6,7 @@ import type {
   RegisteredAppUsageResponse,
 } from "@/actions/reports/registered-app-usage";
 import { DateRangeSelector } from "@/components/common/date-range-selector";
+import { ReportStatCard } from "@/components/reports/report-stat-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -18,7 +19,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Download, ExternalLink, Search } from "lucide-react";
+import {
+  AppWindow,
+  Clock,
+  Download,
+  ExternalLink,
+  MousePointerClick,
+  Search,
+  Users,
+} from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -98,21 +107,21 @@ export function RegisteredAppUsagePageClient({
   const summary = data?.summary;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Filter Bar - 1행: 검색(좌) + 기간·내보내기(우) */}
-      <div className="flex items-center gap-3">
-        <div className="relative w-[calc(25%-0.75rem)]">
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="relative w-full min-w-0 sm:w-72">
           <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
           <Input
             placeholder={t("filters.searchPlaceholder")}
             value={filters.search}
             onChange={(e) => handleFilterChange("search", e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && applyFilters()}
-            className="pl-9"
+            className="h-10 pl-9"
           />
         </div>
 
-        <div className="ml-auto flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3 sm:ml-auto">
           <DateRangeSelector
             currentPeriod={filters.period}
             startDate={filters.startDate}
@@ -126,7 +135,7 @@ export function RegisteredAppUsagePageClient({
             }}
           />
 
-          <Button variant="outline">
+          <Button variant="outline" className="h-10 shrink-0">
             <Download className="mr-2 h-4 w-4" />
             {t("filters.export")}
           </Button>
@@ -135,70 +144,42 @@ export function RegisteredAppUsagePageClient({
 
       {/* Summary Cards - Bento Style */}
       {summary && (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          <Card className="bg-card flex h-full flex-col gap-3 rounded-sm border-none px-3 pt-5 pb-3 shadow-[0px_2px_8px_0px_rgba(0,0,0,0.1)]">
-            <div className="flex flex-1 flex-col gap-2 px-2">
-              <p className="text-primary text-xs">{t("stats.totalVisits")}</p>
-              <p className="text-secondary-foreground text-2xl font-medium">
-                {summary.totalVisits.toLocaleString()}
-              </p>
-            </div>
-            {/* <div className="bg-purple-gray rounded p-2">
-              <p className="text-muted-foreground text-xs">
-                {t("stats.totalVisitsDesc")}
-              </p>
-            </div> */}
-          </Card>
-
-          <Card className="bg-card flex h-full flex-col gap-3 rounded-sm border-none px-3 pt-5 pb-3 shadow-[0px_2px_8px_0px_rgba(0,0,0,0.1)]">
-            <div className="flex flex-1 flex-col gap-2 px-2">
-              <p className="text-primary text-xs">{t("stats.activeUsers")}</p>
-              <p className="text-secondary-foreground text-2xl font-medium">
-                {summary.uniqueUsers}
-              </p>
-            </div>
-            {/* <div className="bg-purple-gray rounded p-2">
-              <p className="text-muted-foreground text-xs">
-                {t("stats.activeUsersDesc")}
-              </p>
-            </div> */}
-          </Card>
-
-          <Card className="bg-card flex h-full flex-col gap-3 rounded-sm border-none px-3 pt-5 pb-3 shadow-[0px_2px_8px_0px_rgba(0,0,0,0.1)]">
-            <div className="flex flex-1 flex-col gap-2 px-2">
-              <p className="text-primary text-xs">{t("stats.usedApps")}</p>
-              <p className="text-secondary-foreground text-2xl font-medium">
-                {summary.uniqueApps}
-              </p>
-            </div>
-            {/* <div className="bg-purple-gray rounded p-2">
-              <p className="text-muted-foreground text-xs">
-                {t("stats.usedAppsDesc")}
-              </p>
-            </div> */}
-          </Card>
-
-          <Card className="bg-card flex h-full flex-col gap-3 rounded-sm border-none px-3 pt-5 pb-3 shadow-[0px_2px_8px_0px_rgba(0,0,0,0.1)]">
-            <div className="flex flex-1 flex-col gap-2 px-2">
-              <p className="text-primary text-xs">{t("stats.totalDuration")}</p>
-              <p className="text-secondary-foreground text-2xl font-medium">
-                {formatDuration(summary.totalDuration)}
-              </p>
-            </div>
-            {/* <div className="bg-purple-gray rounded p-2">
-              <p className="text-muted-foreground text-xs">
-                {t("stats.totalDurationDesc")}
-              </p>
-            </div> */}
-          </Card>
+        <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+          <ReportStatCard
+            icon={MousePointerClick}
+            tone="primary"
+            title={t("stats.totalVisits")}
+            value={summary.totalVisits.toLocaleString()}
+          />
+          <ReportStatCard
+            icon={Users}
+            tone="info"
+            title={t("stats.activeUsers")}
+            value={String(summary.uniqueUsers)}
+          />
+          <ReportStatCard
+            icon={AppWindow}
+            tone="success"
+            title={t("stats.usedApps")}
+            value={String(summary.uniqueApps)}
+          />
+          <ReportStatCard
+            icon={Clock}
+            tone="warning"
+            title={t("stats.totalDuration")}
+            value={formatDuration(summary.totalDuration)}
+          />
         </div>
       )}
 
       {/* Data Table */}
-      <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
+      <Card className="gap-0 overflow-hidden py-0">
         <CardContent className="p-0">
           {!data || data.items.length === 0 ? (
-            <div className="py-10 text-center">
+            <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
+              <div className="tonal-neutral flex size-10 items-center justify-center rounded-md">
+                <AppWindow className="size-5" />
+              </div>
               <p className="text-muted-foreground">{t("table.empty")}</p>
             </div>
           ) : (
@@ -217,11 +198,16 @@ export function RegisteredAppUsagePageClient({
                   {data.items.map((item: RegisteredAppUsageItem) => (
                     <TableRow
                       key={item.id}
-                      className="hover:bg-muted/50 transition-colors"
+                      className="hover:bg-muted/60 transition-colors"
                     >
                       <TableCell>
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium">{item.appName}</span>
+                        <div className="flex min-w-0 items-center gap-2">
+                          <span
+                            className="max-w-[14rem] truncate font-medium"
+                            title={item.appName}
+                          >
+                            {item.appName}
+                          </span>
                           {item.appId && (
                             <Link
                               href={`/apps/${item.appId}`}
@@ -233,22 +219,25 @@ export function RegisteredAppUsagePageClient({
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="max-w-[300px] truncate font-mono text-xs">
+                        <div
+                          className="max-w-[300px] truncate font-mono text-xs"
+                          title={item.url}
+                        >
                           {item.url}
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="flex flex-col">
-                          <span className="text-sm font-medium">
+                        <div className="flex min-w-0 flex-col">
+                          <span className="max-w-[16rem] truncate text-sm font-medium">
                             {item.userName || "Unknown"}
                           </span>
-                          <span className="text-muted-foreground text-xs">
+                          <span className="text-muted-foreground max-w-[16rem] truncate text-xs">
                             {item.userEmail}
                           </span>
                         </div>
                       </TableCell>
                       <TableCell>
-                        <span className="text-sm">
+                        <span className="text-sm whitespace-nowrap">
                           {formatDateTime(item.visitedAt)}
                         </span>
                       </TableCell>
@@ -268,8 +257,8 @@ export function RegisteredAppUsagePageClient({
 
               {/* Pagination */}
               {data.totalPages > 1 && (
-                <div className="flex items-center justify-between border-t px-4 py-4">
-                  <div className="text-muted-foreground text-sm">
+                <div className="flex flex-wrap items-center justify-between gap-3 border-t px-5 py-4">
+                  <div className="text-muted-foreground text-[0.8125rem]">
                     {t("pagination.totalItems", {
                       total: data.total.toLocaleString(),
                       start: (
@@ -282,7 +271,7 @@ export function RegisteredAppUsagePageClient({
                       ).toLocaleString(),
                     })}
                   </div>
-                  <div className="flex items-center gap-2">
+                  <div className="flex shrink-0 items-center gap-2">
                     <Button
                       variant="outline"
                       size="sm"
@@ -291,7 +280,7 @@ export function RegisteredAppUsagePageClient({
                     >
                       {t("pagination.previous")}
                     </Button>
-                    <span className="text-sm">
+                    <span className="text-sm whitespace-nowrap tabular-nums">
                       {t("pagination.pageOf", {
                         page: data.page,
                         totalPages: data.totalPages,

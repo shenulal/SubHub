@@ -44,25 +44,12 @@ interface InvitationListProps {
 // CANCELLED: warning-muted (취소, 주의 필요)
 const statusStyles: Record<
   InvitationStatus,
-  { variant: "secondary"; className: string }
+  { variant: "info" | "success" | "warning" | "error" }
 > = {
-  PENDING: {
-    variant: "secondary",
-    className: "bg-info-muted text-info-muted-foreground border-0",
-  },
-  ACCEPTED: {
-    variant: "secondary",
-    className: "bg-success-muted text-success-muted-foreground border-0",
-  },
-  EXPIRED: {
-    variant: "secondary",
-    className:
-      "bg-destructive-muted text-destructive-muted-foreground border-0",
-  },
-  CANCELLED: {
-    variant: "secondary",
-    className: "bg-warning-muted text-warning-muted-foreground border-0",
-  },
+  PENDING: { variant: "info" },
+  ACCEPTED: { variant: "success" },
+  EXPIRED: { variant: "error" },
+  CANCELLED: { variant: "warning" },
 };
 
 function formatDate(date: Date): string {
@@ -108,9 +95,9 @@ function InvitationRow({
   return (
     <TableRow>
       <TableCell>
-        <div className="flex items-center gap-2">
-          <Mail className="text-muted-foreground h-4 w-4" />
-          {invitation.email}
+        <div className="flex min-w-0 items-center gap-2">
+          <Mail className="text-muted-foreground h-4 w-4 shrink-0" />
+          <span className="max-w-[16rem] truncate">{invitation.email}</span>
         </div>
       </TableCell>
       <TableCell>{getRoleLabel(invitation.role)}</TableCell>
@@ -119,15 +106,14 @@ function InvitationRow({
           variant={
             statusStyles[isExpired ? "EXPIRED" : invitation.status].variant
           }
-          className={
-            statusStyles[isExpired ? "EXPIRED" : invitation.status].className
-          }
         >
           {isExpired ? t("status.expired") : getStatusLabel(invitation.status)}
         </Badge>
       </TableCell>
       <TableCell>{invitation.invitedBy?.name || "-"}</TableCell>
-      <TableCell>{formatDate(invitation.createdAt)}</TableCell>
+      <TableCell className="whitespace-nowrap tabular-nums">
+        {formatDate(invitation.createdAt)}
+      </TableCell>
       <TableCell>
         {invitation.status === "PENDING" && (
           <DropdownMenu>

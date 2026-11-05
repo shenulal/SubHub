@@ -138,16 +138,16 @@ export function RecommendedAppsPageClient() {
   return (
     <div className="space-y-4">
       {pendingScanCount > 0 && (
-        <Card className="border-border/50 shadow-sm transition-shadow hover:shadow-md">
-          <CardHeader className="pb-2">
+        <Card className="border-warning/40 dark:border-warning/40 bg-warning/[0.06] gap-3 border shadow-none">
+          <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <AlertCircle className="h-4 w-4 text-yellow-500" />
+              <AlertCircle className="text-warning size-5 shrink-0" />
               {t("recommendedApps.unscannedTitle")}
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="flex items-center justify-between">
-              <div>
+            <div className="flex flex-wrap items-center justify-between gap-4">
+              <div className="min-w-0">
                 <p className="text-muted-foreground text-sm">
                   {t("recommendedApps.unscannedDescription", {
                     count: pendingScanCount,
@@ -157,7 +157,11 @@ export function RecommendedAppsPageClient() {
                   {t("recommendedApps.unscannedHint")}
                 </p>
               </div>
-              <Button onClick={handleScan} disabled={scanning}>
+              <Button
+                onClick={handleScan}
+                disabled={scanning}
+                className="shrink-0"
+              >
                 <Scan
                   className={`mr-2 h-4 w-4 ${scanning ? "animate-pulse" : ""}`}
                 />
@@ -176,9 +180,9 @@ export function RecommendedAppsPageClient() {
         </Card>
       )}
 
-      <div className="flex items-center justify-between gap-4">
-        <div className="flex flex-1 items-center gap-2">
-          <div className="relative max-w-sm flex-1">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex min-w-[260px] flex-1 items-center gap-2">
+          <div className="relative max-w-sm min-w-0 flex-1">
             <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
             <Input
               placeholder={t("recommendedApps.searchPlaceholder")}
@@ -188,21 +192,26 @@ export function RecommendedAppsPageClient() {
               className="pl-9"
             />
           </div>
-          <Button variant="outline" onClick={handleSearch}>
+          <Button variant="outline" onClick={handleSearch} className="shrink-0">
             {t("common.search")}
           </Button>
         </div>
-        <Button variant="outline" onClick={handleScan} disabled={scanning}>
+        <Button
+          variant="outline"
+          onClick={handleScan}
+          disabled={scanning}
+          className="shrink-0"
+        >
           <Scan className={`mr-2 h-4 w-4 ${scanning ? "animate-pulse" : ""}`} />
           {t("common.manualScan")}
         </Button>
       </div>
 
-      <Card className="border-border/50 shadow-sm transition-shadow hover:shadow-md">
-        <CardContent className="p-0">
+      <Card className="border-border dark:border-border gap-0 overflow-hidden border py-0 shadow-none">
+        <CardContent className="px-0">
           {items.length === 0 ? (
             <div className="py-10 text-center">
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground text-[0.9375rem]">
                 {t("recommendedApps.emptyTitle")}
               </p>
               <p className="text-muted-foreground mt-2 text-sm">
@@ -243,14 +252,19 @@ export function RecommendedAppsPageClient() {
                 {items.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell>
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-sm">{item.domain}</span>
+                      <div className="flex max-w-[240px] min-w-0 items-center gap-2">
+                        <span
+                          className="truncate font-mono text-sm"
+                          title={item.domain}
+                        >
+                          {item.domain}
+                        </span>
                         {item.website && (
                           <a
                             href={item.website}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-muted-foreground hover:text-foreground"
+                            className="text-muted-foreground hover:text-primary shrink-0"
                           >
                             <ExternalLink className="h-3 w-3" />
                           </a>
@@ -258,36 +272,36 @@ export function RecommendedAppsPageClient() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <span className="font-medium">
+                      <span className="text-foreground block max-w-[200px] truncate font-medium">
                         {item.serviceName || "-"}
                       </span>
                     </TableCell>
                     <TableCell>
                       {item.category && (
-                        <Badge variant="outline">{item.category}</Badge>
+                        <Badge variant="secondary">{item.category}</Badge>
                       )}
                     </TableCell>
                     <TableCell>
                       <Badge
                         variant={
                           (item.confidence ?? 0) >= 0.8
-                            ? "default"
+                            ? "success"
                             : (item.confidence ?? 0) >= 0.6
-                              ? "secondary"
-                              : "outline"
+                              ? "warning"
+                              : "secondary"
                         }
                       >
                         {formatConfidence(item.confidence)}
                       </Badge>
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right tabular-nums">
                       {item.visitCount.toLocaleString()}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right tabular-nums">
                       {item.uniqueUsers}
                     </TableCell>
                     <TableCell>
-                      <span className="text-muted-foreground text-sm">
+                      <span className="text-muted-foreground text-sm whitespace-nowrap">
                         {new Date(item.lastSeenAt).toLocaleDateString()}
                       </span>
                     </TableCell>
@@ -295,6 +309,7 @@ export function RecommendedAppsPageClient() {
                       <div className="flex items-center gap-1">
                         <Button
                           size="sm"
+                          className="shrink-0"
                           variant="default"
                           onClick={() => handleRegister(item)}
                           disabled={registering === item.id}

@@ -28,13 +28,11 @@ interface TabFilterProps<T extends string = string> {
  * 배지 색상 매핑
  */
 const badgeVariantStyles: Record<string, string> = {
-  default: "bg-primary/10 text-primary hover:bg-primary/20",
-  success:
-    "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
-  warning:
-    "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
-  danger: "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
-  secondary: "bg-muted text-muted-foreground",
+  default: "tonal-primary",
+  success: "tonal-success",
+  warning: "tonal-warning",
+  danger: "tonal-error",
+  secondary: "tonal-neutral",
 };
 
 /**
@@ -50,7 +48,7 @@ export function TabFilter<T extends string = string>({
   return (
     <div
       className={cn(
-        "bg-muted text-muted-foreground inline-flex h-10 items-center justify-center rounded-lg p-1",
+        "inline-flex max-w-full flex-wrap items-center gap-1",
         className
       )}
     >
@@ -62,10 +60,10 @@ export function TabFilter<T extends string = string>({
             type="button"
             onClick={() => onChange(item.value)}
             className={cn(
-              "ring-offset-background focus-visible:ring-ring inline-flex items-center justify-center rounded-md px-3 py-1.5 text-sm font-medium whitespace-nowrap transition-all focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50",
+              "focus-visible:ring-primary/20 inline-flex h-[38px] shrink-0 items-center justify-center rounded-md px-4 text-[0.9375rem] font-medium whitespace-nowrap transition-colors focus-visible:ring-[3px] focus-visible:outline-none disabled:pointer-events-none disabled:opacity-50",
               isActive
-                ? "bg-background text-foreground shadow-sm"
-                : "hover:bg-background/50 hover:text-foreground"
+                ? "bg-primary text-primary-foreground shadow-xs"
+                : "text-foreground hover:bg-primary/10 hover:text-primary"
             )}
           >
             {item.label}
@@ -73,8 +71,10 @@ export function TabFilter<T extends string = string>({
               <Badge
                 variant="secondary"
                 className={cn(
-                  "ml-2 h-5 min-w-[20px] rounded-full px-1.5 text-xs",
-                  isActive && item.variant
+                  "ml-2 h-5 min-w-[20px] rounded-full px-1.5 text-xs tabular-nums",
+                  isActive &&
+                    "bg-primary-foreground/20 text-primary-foreground dark:text-primary-foreground",
+                  !isActive && item.variant
                     ? badgeVariantStyles[item.variant]
                     : ""
                 )}

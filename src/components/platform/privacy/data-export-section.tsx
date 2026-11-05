@@ -27,10 +27,10 @@ function formatBytes(bytes: number | null): string {
 }
 
 const STATUS_STYLES: Record<DataExportRow["status"], string> = {
-  READY: "border-emerald-500/40 text-emerald-700 dark:text-emerald-400",
-  PENDING: "border-amber-500/40 text-amber-700 dark:text-amber-400",
-  FAILED: "border-destructive/40 text-destructive",
-  EXPIRED: "text-muted-foreground",
+  READY: "tonal-success border-transparent",
+  PENDING: "tonal-warning border-transparent",
+  FAILED: "tonal-error border-transparent",
+  EXPIRED: "tonal-neutral border-transparent",
 };
 
 export function DataExportSection({
@@ -52,23 +52,25 @@ export function DataExportSection({
   };
 
   return (
-    <section className="rounded-lg border p-6">
-      <div className="flex items-start gap-4">
-        <div className="bg-primary/10 rounded-lg p-2.5">
-          <FileArchive className="text-primary h-5 w-5" />
+    <section className="rounded-md border p-5">
+      <div className="flex min-w-0 items-start gap-4">
+        <div className="tonal-primary flex size-10 shrink-0 items-center justify-center rounded-md">
+          <FileArchive className="size-5" />
         </div>
-        <div className="flex-1 space-y-4">
-          <div>
-            <h3 className="text-lg font-semibold">{t("exportTitle")}</h3>
-            <p className="text-muted-foreground mt-1 text-sm">
+        <div className="min-w-0 flex-1 space-y-4">
+          <div className="space-y-1">
+            <h3 className="text-foreground text-lg leading-snug font-medium">
+              {t("exportTitle")}
+            </h3>
+            <p className="text-muted-foreground text-[0.8125rem]">
               {t("exportDescription", { hours: expiryHours })}
             </p>
           </div>
-          <Button onClick={request} disabled={isPending}>
+          <Button onClick={request} disabled={isPending} className="shrink-0">
             {isPending ? (
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              <Loader2 className="size-4 animate-spin" />
             ) : (
-              <Download className="mr-2 h-4 w-4" />
+              <Download className="size-4" />
             )}
             {isPending ? t("preparing") : t("requestExport")}
           </Button>
@@ -78,21 +80,21 @@ export function DataExportSection({
               {exports.map((row) => (
                 <li
                   key={row.id}
-                  className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 text-sm"
+                  className="flex min-w-0 flex-wrap items-center justify-between gap-3 px-4 py-3 text-[0.9375rem]"
                 >
-                  <div className="space-y-0.5">
-                    <div className="flex items-center gap-2">
+                  <div className="min-w-0 space-y-1">
+                    <div className="flex min-w-0 flex-wrap items-center gap-2">
                       <Badge
                         variant="outline"
-                        className={cn("font-normal", STATUS_STYLES[row.status])}
+                        className={cn("font-medium", STATUS_STYLES[row.status])}
                       >
                         {t(`status.${row.status}`)}
                       </Badge>
-                      <span className="text-muted-foreground text-xs">
+                      <span className="text-muted-foreground text-[0.8125rem]">
                         {new Date(row.requestedAt).toLocaleString()}
                       </span>
                     </div>
-                    <div className="text-muted-foreground text-xs">
+                    <div className="text-muted-foreground text-[0.8125rem] break-words">
                       {row.format} · {formatBytes(row.sizeBytes)}
                       {row.expiresAt &&
                         row.status === "READY" &&
@@ -103,7 +105,7 @@ export function DataExportSection({
                   {row.downloadUrl && (
                     <Button asChild variant="outline" size="sm">
                       <a href={row.downloadUrl} download>
-                        <Download className="mr-1.5 h-3.5 w-3.5" />
+                        <Download className="size-3.5" />
                         {t("download")}
                       </a>
                     </Button>

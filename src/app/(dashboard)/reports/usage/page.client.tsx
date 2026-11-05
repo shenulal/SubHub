@@ -426,11 +426,13 @@ export function UsageReportPageClient({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* 헤더: 타이틀 + 기간 선택 + Export */}
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">{t("page.title")}</h1>
-        <div className="flex items-center gap-2">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <h1 className="min-w-0 truncate text-2xl font-medium">
+          {t("page.title")}
+        </h1>
+        <div className="flex flex-wrap items-center gap-2">
           <DateRangeSelector
             currentPeriod={filters.period}
             startDate={filters.startDate}
@@ -446,7 +448,11 @@ export function UsageReportPageClient({
           {canExport && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" disabled={isExporting}>
+                <Button
+                  variant="outline"
+                  className="h-10 shrink-0"
+                  disabled={isExporting}
+                >
                   {isExporting ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   ) : (
@@ -489,7 +495,7 @@ export function UsageReportPageClient({
       />
 
       {/* 차트 영역 */}
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid gap-6 xl:grid-cols-2">
         <ActiveUsersChart data={reportData.activeUsersTrend} />
         <AppUsageChart data={reportData.appUsageRanking} />
       </div>

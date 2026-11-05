@@ -23,10 +23,12 @@ export default async function RenewalPipelinePage({ searchParams }: PageProps) {
   const result = await getRenewalPipeline({ scope: params.scope });
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-xl font-semibold tracking-tight">{t("title")}</h1>
-        <p className="text-muted-foreground text-sm">{t("description")}</p>
+    <div className="min-w-0 space-y-6">
+      <div className="min-w-0">
+        <h1 className="text-foreground text-2xl font-medium">{t("title")}</h1>
+        <p className="text-muted-foreground mt-1 text-[0.9375rem]">
+          {t("description")}
+        </p>
       </div>
       {result.success && result.data ? (
         <RenewalPipelinePageClient
@@ -34,7 +36,7 @@ export default async function RenewalPipelinePage({ searchParams }: PageProps) {
           initialView={params.view === "list" ? "list" : "board"}
         />
       ) : (
-        <div className="border-destructive/40 bg-destructive/5 text-destructive rounded-md border px-3 py-2 text-sm">
+        <div className="tonal-error rounded-md px-4 py-3 text-[0.9375rem]">
           {result.error ?? t("loadFailed")}
         </div>
       )}

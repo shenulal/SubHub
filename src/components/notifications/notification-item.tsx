@@ -32,65 +32,67 @@ export function NotificationRow({
       aria-label={unread ? `${item.title} (${t("centre.unread")})` : item.title}
       data-unread={unread ? "true" : "false"}
       className={cn(
-        "group flex w-full items-start gap-3 border-l-2 text-left transition-colors",
-        "hover:bg-accent/60 focus-visible:bg-accent/60 focus-visible:outline-none",
+        "group flex w-full min-w-0 items-center gap-3 border-l-2 text-left transition-colors sm:gap-4",
+        "hover:bg-accent focus-visible:bg-accent focus-visible:outline-none",
         unread ? meta.accentClass : "border-l-transparent",
-        unread ? "bg-card" : "bg-transparent",
-        dense ? "px-3 py-2.5" : "px-4 py-3.5 sm:px-5"
+        unread ? "bg-primary/[0.04]" : "bg-transparent",
+        dense ? "gap-3 px-3 py-2.5 sm:gap-3" : "px-4 py-3.5 sm:px-5"
       )}
     >
       <span
         className={cn(
-          "mt-0.5 flex shrink-0 items-center justify-center rounded-lg",
+          "flex shrink-0 items-center justify-center rounded-md",
           meta.iconClass,
-          dense ? "h-7 w-7" : "h-9 w-9"
+          dense ? "size-8" : "size-10"
         )}
         aria-hidden="true"
       >
-        <Icon className={dense ? "h-3.5 w-3.5" : "h-4 w-4"} />
+        <Icon className={dense ? "size-4" : "size-5"} />
       </span>
-      <span className="min-w-0 flex-1">
-        <span className="flex items-baseline justify-between gap-3">
-          <span
-            className={cn(
-              "truncate leading-snug",
-              dense ? "text-sm" : "text-[15px]",
-              unread
-                ? "text-foreground font-semibold"
-                : "text-foreground/85 font-medium"
-            )}
-          >
-            {item.title}
-          </span>
-          <time
-            dateTime={item.createdAt}
-            className="text-muted-foreground shrink-0 font-mono text-[11px] tabular-nums"
-          >
-            {format.relativeTime(created)}
-          </time>
+      <span className="flex min-w-0 flex-1 flex-col gap-0.5 overflow-hidden">
+        <span
+          className={cn(
+            "text-foreground block truncate leading-snug",
+            dense ? "text-sm" : "text-[0.9375rem]",
+            unread ? "font-medium" : "font-normal"
+          )}
+          title={item.title}
+        >
+          {item.title}
         </span>
         {item.body && (
           <span
             className={cn(
-              "text-muted-foreground mt-0.5 block leading-snug",
-              dense ? "line-clamp-1 text-xs" : "line-clamp-2 text-sm"
+              "text-muted-foreground block truncate leading-snug",
+              dense ? "text-xs" : "text-[0.8125rem]"
             )}
+            title={item.body}
           >
             {item.body}
           </span>
         )}
+      </span>
+      <span className="flex shrink-0 flex-col items-end gap-1 self-start whitespace-nowrap">
+        <span className="flex items-center gap-2">
+          <time
+            dateTime={item.createdAt}
+            className="text-muted-foreground text-xs tabular-nums"
+          >
+            {format.relativeTime(created)}
+          </time>
+          {unread && (
+            <span
+              className="bg-primary size-2 shrink-0 rounded-full"
+              aria-hidden="true"
+            />
+          )}
+        </span>
         {!dense && (
-          <span className="text-muted-foreground/80 mt-1.5 inline-flex items-center gap-1.5 text-[11px] tracking-wide uppercase">
+          <span className="text-muted-foreground hidden text-[0.6875rem] tracking-wide uppercase sm:inline">
             {t(`groups.${meta.labelKey}`)}
           </span>
         )}
       </span>
-      {unread && (
-        <span
-          className="bg-primary mt-2 h-2 w-2 shrink-0 rounded-full"
-          aria-hidden="true"
-        />
-      )}
     </button>
   );
 }

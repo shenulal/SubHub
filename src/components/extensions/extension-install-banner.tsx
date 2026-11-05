@@ -40,16 +40,16 @@ export function ExtensionInstallBanner({
   }
 
   return (
-    <Alert className="relative">
-      <Chrome className="h-4 w-4" />
+    <Alert className="border-primary/30 bg-primary/[0.06] relative">
+      <Chrome className="text-primary h-4 w-4" />
       <AlertTitle>{t("title")}</AlertTitle>
-      <AlertDescription className="flex items-center justify-between">
-        <span>
+      <AlertDescription className="flex flex-wrap items-center justify-between gap-2">
+        <span className="min-w-0">
           {deployMethod === "auto" && t("auto.message")}
           {deployMethod === "webstore" && t("webstore.message")}
           {deployMethod === "manual" && t("manual.message")}
         </span>
-        <div className="ml-4 flex shrink-0 items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           {deployMethod === "webstore" && webstoreUrl && (
             <Button size="sm" variant="outline" asChild>
               <a href={webstoreUrl} target="_blank" rel="noopener noreferrer">

@@ -129,15 +129,15 @@ function TemplateEditor({
                 key={p}
                 type="button"
                 onClick={() => insert(p)}
-                className="bg-muted hover:bg-primary/10 hover:text-primary rounded px-1.5 py-0.5 font-mono text-[11px] transition-colors"
+                className="tonal-neutral hover:tonal-primary rounded px-2 py-0.5 font-mono text-xs transition-colors"
               >
                 {`{{${p}}}`}
               </button>
             ))}
           </div>
         </div>
-        <div className="bg-muted/40 rounded-md border p-3 text-sm">
-          <p className="text-muted-foreground mb-1 text-[11px] font-semibold tracking-wide uppercase">
+        <div className="bg-muted rounded-md p-4 text-[0.9375rem]">
+          <p className="text-muted-foreground mb-1.5 text-xs font-medium tracking-wide uppercase">
             {t("preview")}
           </p>
           <p className="font-medium">{preview.subject || PREVIEW_SAMPLE}</p>
@@ -150,12 +150,12 @@ function TemplateEditor({
           {t("activeOverride")}
         </label>
       </div>
-      <DialogFooter>
-        <Button variant="ghost" onClick={onClose}>
+      <DialogFooter className="gap-3">
+        <Button variant="outline" onClick={onClose}>
           {t("cancel")}
         </Button>
         <Button onClick={save} disabled={isPending || !body.trim()}>
-          {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          {isPending && <Loader2 className="size-4 animate-spin" />}
           {t("save")}
         </Button>
       </DialogFooter>
@@ -191,18 +191,25 @@ export function TemplatesClient({ rows }: TemplatesClientProps) {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h3 className="text-base font-semibold tracking-tight">{t("title")}</h3>
-        <p className="text-muted-foreground text-sm">{t("description")}</p>
+      <div className="space-y-1">
+        <h3 className="text-foreground text-lg leading-snug font-medium">
+          {t("title")}
+        </h3>
+        <p className="text-muted-foreground text-[0.8125rem]">
+          {t("description")}
+        </p>
       </div>
-      <div className="space-y-3">
+      <div className="space-y-4">
         {byEvent.map(([event, channels]) => (
-          <section key={event} className="rounded-lg border">
-            <header className="bg-muted/40 flex items-center justify-between border-b px-4 py-2">
-              <h4 className="font-mono text-xs font-semibold tracking-wide">
+          <section key={event} className="overflow-hidden rounded-md border">
+            <header className="bg-muted flex min-w-0 items-center justify-between gap-3 border-b px-4 py-2.5">
+              <h4
+                className="text-foreground min-w-0 truncate font-mono text-[0.8125rem] font-medium tracking-wide"
+                title={event}
+              >
                 {event}
               </h4>
-              <span className="text-muted-foreground text-[11px]">
+              <span className="text-muted-foreground shrink-0 text-xs">
                 {t("customCount", {
                   count: channels.filter((c) => c.source === "custom").length,
                 })}
@@ -220,36 +227,34 @@ export function TemplatesClient({ rows }: TemplatesClientProps) {
                   <li
                     key={row.channel}
                     className={cn(
-                      "grid items-center gap-3 px-4 py-2.5 sm:grid-cols-[7rem_1fr_auto]",
+                      "grid min-w-0 items-center gap-3 px-4 py-3 sm:grid-cols-[8rem_minmax(0,1fr)_auto]",
                       !row.isActive && "opacity-60"
                     )}
                   >
-                    <span className="flex items-center gap-1.5 text-xs font-medium">
-                      <Icon className="text-muted-foreground h-3.5 w-3.5" />
-                      {row.channel}
+                    <span className="text-foreground flex min-w-0 items-center gap-2 text-[0.8125rem] font-medium">
+                      <span className="tonal-primary flex size-7 shrink-0 items-center justify-center rounded-md">
+                        <Icon className="size-4" />
+                      </span>
+                      <span className="truncate">{row.channel}</span>
                     </span>
                     <div className="min-w-0">
-                      <p className="truncate text-sm">
+                      <p className="text-foreground truncate text-[0.9375rem]">
                         {row.subject || (
                           <span className="text-muted-foreground italic">
                             {t("noSubject")}
                           </span>
                         )}
                       </p>
-                      <p className="text-muted-foreground truncate text-xs">
+                      <p className="text-muted-foreground truncate text-[0.8125rem]">
                         {row.body}
                       </p>
                     </div>
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex shrink-0 items-center gap-1.5">
                       <Badge
                         variant={
-                          row.source === "custom" ? "outline" : "secondary"
+                          row.source === "custom" ? "primary" : "secondary"
                         }
-                        className={cn(
-                          "text-[10px]",
-                          row.source === "custom" &&
-                            "border-primary/40 text-primary"
-                        )}
+                        className="shrink-0 text-[10px]"
                       >
                         {row.source === "custom" ? t("custom") : t("default")}
                       </Badge>

@@ -206,11 +206,13 @@ export function WhitelistPageClient() {
         </Dialog>
       </div>
 
-      <Card className="border-border/50 shadow-sm transition-shadow hover:shadow-md">
-        <CardContent className="p-0">
+      <Card className="border-border dark:border-border gap-0 overflow-hidden border py-0 shadow-none">
+        <CardContent className="px-0">
           {items.length === 0 ? (
             <div className="py-10 text-center">
-              <p className="text-muted-foreground">{t("common.noItems")}</p>
+              <p className="text-muted-foreground text-[0.9375rem]">
+                {t("common.noItems")}
+              </p>
             </div>
           ) : (
             <Table>
@@ -229,15 +231,17 @@ export function WhitelistPageClient() {
               <TableBody>
                 {items.map((item) => (
                   <TableRow key={item.id}>
-                    <TableCell className="font-medium">{item.name}</TableCell>
-                    <TableCell className="font-mono text-sm">
+                    <TableCell className="text-foreground max-w-[240px] truncate font-medium">
+                      {item.name}
+                    </TableCell>
+                    <TableCell className="max-w-[240px] truncate font-mono text-sm">
                       {item.pattern}
                     </TableCell>
                     <TableCell>
-                      <Badge variant="outline">{item.source}</Badge>
+                      <Badge variant="secondary">{item.source}</Badge>
                     </TableCell>
                     <TableCell>
-                      <Badge variant={item.enabled ? "default" : "secondary"}>
+                      <Badge variant={item.enabled ? "success" : "secondary"}>
                         {item.enabled
                           ? t("common.enabled")
                           : t("common.disabled")}

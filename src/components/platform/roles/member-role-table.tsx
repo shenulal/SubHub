@@ -78,12 +78,12 @@ export function MemberRoleTable({ members, roles }: MemberRoleTableProps) {
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder={t("searchMembers")}
-        className="mb-3 max-w-xs"
+        className="mb-4 w-full sm:max-w-xs"
       />
       <div className="overflow-hidden rounded-md border">
         <Table>
           <TableHeader>
-            <TableRow className="bg-muted/40">
+            <TableRow className="hover:bg-transparent">
               <TableHead>{t("member")}</TableHead>
               <TableHead className="w-64">{t("role")}</TableHead>
             </TableRow>
@@ -92,11 +92,11 @@ export function MemberRoleTable({ members, roles }: MemberRoleTableProps) {
             {visible.map((member) => (
               <TableRow key={member.id}>
                 <TableCell>
-                  <div className="font-medium">
+                  <div className="text-foreground font-medium">
                     {member.name ?? member.email}
                   </div>
                   {member.name && (
-                    <div className="text-muted-foreground text-xs">
+                    <div className="text-muted-foreground text-[0.8125rem]">
                       {member.email}
                     </div>
                   )}
@@ -107,7 +107,10 @@ export function MemberRoleTable({ members, roles }: MemberRoleTableProps) {
                     onValueChange={(v) => assign(member, v)}
                     disabled={busyId === member.id}
                   >
-                    <SelectTrigger aria-label={`${member.email} ${t("role")}`}>
+                    <SelectTrigger
+                      aria-label={`${member.email} ${t("role")}`}
+                      className="w-full min-w-[12rem]"
+                    >
                       <SelectValue placeholder={t("noRole")} />
                     </SelectTrigger>
                     <SelectContent>

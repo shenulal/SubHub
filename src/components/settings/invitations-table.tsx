@@ -83,16 +83,16 @@ export function InvitationsTable({ invitations }: InvitationsTableProps) {
   };
 
   return (
-    <Card className="border-border rounded-sm shadow-sm transition-shadow hover:shadow-md">
-      <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div>
+    <Card className="border-border dark:border-border rounded-md shadow-none">
+      <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0 space-y-1">
           <CardTitle>{t("settings.invitations.title")}</CardTitle>
           <CardDescription>
             {t("settings.invitations.description")}
           </CardDescription>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-muted-foreground text-sm">
+        <div className="flex shrink-0 items-center gap-2">
+          <span className="text-muted-foreground text-[0.8125rem] whitespace-nowrap">
             {t("settings.invitations.statusLabel")}
           </span>
           <Select
@@ -122,13 +122,13 @@ export function InvitationsTable({ invitations }: InvitationsTableProps) {
             {filteredInvitations.map((invite) => (
               <div
                 key={invite.id}
-                className="hover:bg-purple-gray flex flex-col gap-2 p-4 transition-colors sm:flex-row sm:items-center sm:justify-between"
+                className="hover:bg-accent/60 flex min-w-0 flex-col gap-3 px-4 py-3 transition-colors sm:flex-row sm:items-center sm:justify-between"
               >
-                <div>
-                  <p className="font-medium">
+                <div className="min-w-0">
+                  <p className="text-foreground truncate font-medium">
                     {invite.email} · {invite.role}
                   </p>
-                  <p className="text-muted-foreground text-sm">
+                  <p className="text-muted-foreground text-[0.8125rem]">
                     {t("settings.invitations.item.expiresAt", {
                       date: formatKoreanDateTime(invite.expiresAt),
                     })}{" "}
@@ -136,7 +136,7 @@ export function InvitationsTable({ invitations }: InvitationsTableProps) {
                   </p>
                 </div>
                 {invite.status === "PENDING" ? (
-                  <div className="flex gap-2">
+                  <div className="flex shrink-0 flex-wrap gap-2">
                     <Button
                       variant="secondary"
                       size="sm"
@@ -167,7 +167,7 @@ export function InvitationsTable({ invitations }: InvitationsTableProps) {
                     </Button>
                   </div>
                 ) : (
-                  <span className="text-muted-foreground text-sm">
+                  <span className="tonal-success shrink-0 rounded px-2 py-0.5 text-[0.8125rem] font-medium">
                     {t("settings.invitations.item.completed")}
                   </span>
                 )}
@@ -175,7 +175,7 @@ export function InvitationsTable({ invitations }: InvitationsTableProps) {
             ))}
           </div>
         ) : (
-          <p className="text-muted-foreground text-sm">
+          <p className="text-muted-foreground bg-muted rounded-md py-6 text-center text-[0.9375rem]">
             {t("settings.invitations.empty")}
           </p>
         )}

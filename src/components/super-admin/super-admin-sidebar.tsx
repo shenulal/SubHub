@@ -48,20 +48,24 @@ export function SuperAdminSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="bg-card flex h-screen w-64 flex-col border-r">
+    <aside className="bg-background flex w-full shrink-0 flex-col max-lg:border-b lg:h-screen lg:w-[260px]">
       {/* 헤더 */}
-      <div className="flex items-center gap-3 border-b px-6 py-4">
-        <div className="bg-primary flex h-8 w-8 items-center justify-center rounded-lg">
-          <Shield className="text-primary-foreground h-4 w-4" />
+      <div className="flex min-w-0 items-center gap-3 px-5 py-4 lg:py-5">
+        <div className="bg-primary text-primary-foreground flex size-10 shrink-0 items-center justify-center rounded-md shadow-xs">
+          <Shield className="size-5" />
         </div>
-        <div>
-          <p className="text-sm font-semibold">Super Admin</p>
-          <p className="text-muted-foreground text-xs">관리 콘솔</p>
+        <div className="min-w-0">
+          <p className="text-foreground truncate text-[0.9375rem] font-medium">
+            Super Admin
+          </p>
+          <p className="text-muted-foreground truncate text-[0.8125rem]">
+            관리 콘솔
+          </p>
         </div>
       </div>
 
       {/* 네비게이션 */}
-      <nav className="flex-1 space-y-1 p-4">
+      <nav className="flex gap-1 overflow-x-auto px-4 pb-3 lg:flex-1 lg:flex-col lg:overflow-visible lg:py-2 lg:pr-4 lg:pl-0">
         {navItems.map((item) => {
           const isActive =
             item.href === "/super-admin"
@@ -73,13 +77,13 @@ export function SuperAdminSidebar() {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                "flex h-[42px] shrink-0 items-center gap-2.5 rounded-full px-4 text-[0.9375rem] whitespace-nowrap transition-colors lg:rounded-l-none lg:pl-6",
                 isActive
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  ? "nav-active"
+                  : "text-foreground/90 hover:bg-foreground/[0.06]"
               )}
             >
-              <item.icon className="h-4 w-4" />
+              <item.icon className="size-[22px] shrink-0" />
               {item.label}
             </Link>
           );
@@ -87,22 +91,22 @@ export function SuperAdminSidebar() {
       </nav>
 
       {/* 통계 배지 */}
-      <div className="border-t p-4">
-        <div className="bg-muted flex items-center gap-2 rounded-md px-3 py-2">
-          <BarChart3 className="text-muted-foreground h-4 w-4" />
-          <span className="text-muted-foreground text-xs">
+      <div className="hidden px-4 pb-3 lg:block">
+        <div className="tonal-neutral flex items-center gap-2 rounded-md px-3 py-2">
+          <BarChart3 className="size-4 shrink-0" />
+          <span className="truncate text-xs font-medium">
             PHASE 1 (단일 테넌트)
           </span>
         </div>
       </div>
 
       {/* 로그아웃 */}
-      <div className="border-t p-4">
+      <div className="px-4 pb-3 lg:border-t lg:p-4">
         <button
           onClick={() => signOut({ callbackUrl: "/login" })}
-          className="text-muted-foreground hover:bg-muted hover:text-foreground flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors"
+          className="text-foreground/90 hover:bg-error/10 hover:text-error flex h-[42px] w-full items-center gap-2.5 rounded-md px-3 text-[0.9375rem] transition-colors"
         >
-          <LogOut className="h-4 w-4" />
+          <LogOut className="size-5" />
           로그아웃
         </button>
       </div>

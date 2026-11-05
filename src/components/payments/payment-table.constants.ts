@@ -15,10 +15,10 @@ export function getStatusLabels(
 }
 
 export const STATUS_COLORS: Record<PaymentMatchStatus, string> = {
-  PENDING: "bg-yellow-100 text-yellow-800",
-  AUTO_MATCHED: "bg-blue-100 text-blue-800",
-  MANUAL: "bg-purple-100 text-purple-800",
-  UNMATCHED: "bg-gray-100 text-gray-800",
+  PENDING: "tonal-warning",
+  AUTO_MATCHED: "tonal-info",
+  MANUAL: "tonal-primary",
+  UNMATCHED: "tonal-neutral",
 };
 
 // 컬럼 가시성 드롭다운에서 사용할 컬럼 정의 (외부 노출용)

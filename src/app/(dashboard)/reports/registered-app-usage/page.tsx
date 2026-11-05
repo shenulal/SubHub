@@ -80,8 +80,8 @@ export default async function RegisteredAppUsagePage({
   const reportResult = await getRegisteredAppUsageReport(filters);
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-bold tracking-tight">{t("page.title")}</h1>
+    <div className="space-y-6">
+      <h1 className="truncate text-2xl font-medium">{t("page.title")}</h1>
 
       <RegisteredAppUsagePageClient
         initialData={reportResult.data}

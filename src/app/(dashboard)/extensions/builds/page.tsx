@@ -42,7 +42,7 @@ export default async function BuildsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+      <h1 className="text-foreground text-xl font-medium">{t("title")}</h1>
       <Suspense fallback={<Skeleton className="h-64 w-full" />}>
         <DeploySettingsSection />
       </Suspense>

@@ -17,12 +17,12 @@ import {
   UserCircle,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMemo } from "react";
 
 import { logout } from "@/actions/auth";
+import { SubHubLogo } from "@/components/brand/subhub-logo";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import {
   DropdownMenu,
@@ -233,21 +233,15 @@ export function AppSidebar({
   return (
     <Sidebar data-testid="app-sidebar" variant={variant}>
       {/* 로고 + 브랜드명 헤더 - AppHeader(55px) + SidebarInset 상단 마진(8px)과 정렬 */}
-      <SidebarHeader className="h-[64px]">
+      <SidebarHeader className="h-16 justify-center px-5 py-0">
         <SidebarMenu>
           <SidebarMenuItem>
             <SidebarMenuButton
               asChild
-              className="h-12 hover:bg-[var(--primary)]/5"
+              className="h-12 px-0 hover:bg-transparent active:bg-transparent"
             >
               <Link href="/dashboard" className="flex items-center">
-                <Image
-                  src="/logo.svg"
-                  alt="SubHub"
-                  width={170}
-                  height={28}
-                  priority
-                />
+                <SubHubLogo className="group-data-[collapsible=icon]:[&>span]:hidden" />
               </Link>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -258,15 +252,21 @@ export function AppSidebar({
       <SidebarContent className="px-0">
         <ScrollArea className="h-full">
           {filteredMenuItems.map((section, sectionIndex) => (
-            <SidebarGroup key={section.group ?? `section-${sectionIndex}`}>
+            <SidebarGroup
+              key={section.group ?? `section-${sectionIndex}`}
+              className={
+                sectionIndex === 0 ? "py-1 pr-4 pl-0" : "pt-5 pr-4 pb-1 pl-0"
+              }
+            >
               {section.group && (
-                <SidebarGroupLabel className="text-muted-foreground text-xs tracking-wider uppercase">
-                  <div className="flex items-center gap-1.5">
-                    <div
-                      className="size-[5px] shrink-0 rounded-full"
-                      style={{ background: section.color }}
+                <SidebarGroupLabel className="text-disabled-foreground h-auto px-0 py-1.5 text-[0.8125rem] font-normal tracking-normal normal-case group-data-[collapsible=icon]:opacity-0">
+                  <div className="flex w-full items-center gap-2.5">
+                    <span
+                      aria-hidden
+                      className="bg-border h-px w-3.5 shrink-0"
                     />
-                    {section.group}
+                    <span className="shrink-0">{section.group}</span>
+                    <span aria-hidden className="bg-border h-px flex-1" />
                   </div>
                 </SidebarGroupLabel>
               )}
@@ -283,26 +283,18 @@ export function AppSidebar({
                           asChild
                           isActive={isActive(item.href)}
                           tooltip={item.label}
-                          className="hover:text-foreground active:text-foreground hover:bg-[var(--primary)]/10"
-                          style={
+                          className={
                             isActive(item.href)
-                              ? { background: `${section.color}20` }
-                              : undefined
+                              ? "nav-active mt-1.5 h-[42px] rounded-l-none rounded-r-full pr-3.5 pl-[22px] text-[0.9375rem] font-normal hover:text-white data-[active=true]:text-white"
+                              : "text-sidebar-foreground hover:bg-sidebar-accent mt-1.5 h-[42px] rounded-l-none rounded-r-full pr-3.5 pl-[22px] text-[0.9375rem] font-normal"
                           }
                         >
                           <Link
                             href={item.href}
                             data-active={isActive(item.href)}
                           >
-                            <Icon
-                              className="h-4 w-4"
-                              style={
-                                isActive(item.href)
-                                  ? { color: section.color }
-                                  : undefined
-                              }
-                            />
-                            <span>{item.label}</span>
+                            <Icon className="size-[1.375rem] shrink-0 stroke-[1.75]" />
+                            <span className="truncate">{item.label}</span>
                             {item.badge && (
                               <SidebarMenuBadge className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
                                 {item.badge}
@@ -320,7 +312,7 @@ export function AppSidebar({
         </ScrollArea>
       </SidebarContent>
 
-      <SidebarSeparator />
+      <SidebarSeparator className="mx-5 w-auto" />
 
       {/* 하단 프로필 영역 */}
       <SidebarFooter>
@@ -332,22 +324,22 @@ export function AppSidebar({
                   size="lg"
                   className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                 >
-                  <Avatar className="size-8">
-                    <AvatarFallback className="text-xs">
+                  <Avatar className="size-[38px]">
+                    <AvatarFallback className="tonal-primary text-sm font-medium">
                       {(user?.name ?? user?.email ?? "U")
                         .charAt(0)
                         .toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
-                  <div className="flex flex-1 flex-col items-start text-left">
-                    <span className="text-sm font-medium">
+                  <div className="flex min-w-0 flex-1 flex-col items-start text-left">
+                    <span className="w-full truncate text-[0.9375rem] font-medium">
                       {user?.name ?? t("sidebar.user.fallbackName")}
                     </span>
-                    <span className="text-muted-foreground text-xs">
+                    <span className="text-muted-foreground w-full truncate text-[0.8125rem]">
                       {user?.email ?? "user@example.com"}
                     </span>
                   </div>
-                  <MoreHorizontal className="text-muted-foreground h-4 w-4" />
+                  <MoreHorizontal className="text-muted-foreground h-4 w-4 shrink-0" />
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent

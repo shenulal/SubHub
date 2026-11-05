@@ -230,7 +230,7 @@ export function SubscriptionSuggestions() {
 
   if (isLoading) {
     return (
-      <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
+      <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Sparkles className="text-warning h-5 w-5" />
@@ -249,7 +249,7 @@ export function SubscriptionSuggestions() {
   }
 
   return (
-    <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
+    <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
           <div>
@@ -429,7 +429,7 @@ export function SubscriptionSuggestions() {
                         placeholder={t("totalSeatsPlaceholder")}
                         className={cn(
                           "max-w-[140px]",
-                          isSeatInvalid && "border-red-500"
+                          isSeatInvalid && "border-error"
                         )}
                         disabled={isPending && creatingId === suggestion.appId}
                       />
@@ -437,7 +437,7 @@ export function SubscriptionSuggestions() {
                         className={cn(
                           "shrink-0 text-xs",
                           totalSeats && selectedUserIds.length > totalSeats
-                            ? "font-medium text-red-500"
+                            ? "text-error font-medium"
                             : "text-muted-foreground"
                         )}
                       >

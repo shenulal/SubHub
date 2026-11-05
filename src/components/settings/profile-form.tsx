@@ -82,78 +82,84 @@ export function ProfileForm({ defaultValues, userEmail }: ProfileFormProps) {
   return (
     <div className="space-y-6">
       {/* Header Section */}
-      <div className="flex items-center gap-3">
-        <div className="bg-primary/10 rounded-lg p-2">
-          <User className="text-primary h-5 w-5" />
+      <div className="flex min-w-0 items-center gap-4 border-b pb-5">
+        <div className="tonal-primary flex size-10 shrink-0 items-center justify-center rounded-md">
+          <User className="size-5" />
         </div>
-        <div>
-          <h3 className="text-lg font-medium">{t("settings.profile.title")}</h3>
-          <p className="text-muted-foreground text-sm">
+        <div className="min-w-0 space-y-1">
+          <h3 className="text-foreground text-lg leading-snug font-medium">
+            {t("settings.profile.title")}
+          </h3>
+          <p className="text-muted-foreground text-[0.8125rem]">
             {t("settings.profile.description")}
           </p>
         </div>
       </div>
 
-      <form action={formAction} className="space-y-4">
+      <form action={formAction} className="space-y-6">
         {/* MVP scope: 아바타 선택 섹션 비활성화 (backend에서 name만 처리) */}
-
-        {/* Name Field - Editable Section */}
-        <div className="hover:bg-purple-gray rounded-lg border p-4 transition-colors">
-          <div className="space-y-0.5">
-            <Label htmlFor="name">{t("settings.profile.fields.name")}</Label>
+        <div className="grid gap-5 sm:grid-cols-2">
+          {/* Name Field - Editable Section */}
+          <div className="min-w-0 space-y-1.5">
+            <div className="space-y-0.5">
+              <Label htmlFor="name" className="text-[0.9375rem]">
+                {t("settings.profile.fields.name")}
+              </Label>
+            </div>
+            <Input
+              id="name"
+              name="name"
+              defaultValue={defaultValues.name}
+              required
+            />
+            {state?.errors?.name && (
+              <p className="text-destructive text-[0.8125rem]">
+                {state.errors.name.join(", ")}
+              </p>
+            )}
           </div>
-          <Input
-            id="name"
-            name="name"
-            defaultValue={defaultValues.name}
-            required
-            className="mt-2"
-          />
-          {state?.errors?.name && (
-            <p className="text-destructive mt-1 text-sm">
-              {state.errors.name.join(", ")}
-            </p>
-          )}
-        </div>
 
-        {/* Email Field - Info Notice Pattern (Read-only) */}
-        {userEmail && (
-          <div className="bg-muted flex items-start gap-3 rounded-lg p-4">
-            <Mail className="text-muted-foreground mt-0.5 h-4 w-4" />
-            <div className="flex-1">
-              <Label htmlFor="email" className="text-muted-foreground">
+          {/* Email Field - Info Notice Pattern (Read-only) */}
+          {userEmail && (
+            <div className="min-w-0 space-y-1.5">
+              <Label
+                htmlFor="email"
+                className="text-muted-foreground flex items-center gap-1.5 text-[0.9375rem]"
+              >
+                <Mail className="size-4 shrink-0" />
                 {t("settings.profile.fields.email")}
               </Label>
               <Input
                 id="email"
                 value={userEmail}
                 disabled
-                className="bg-muted/50 mt-2 cursor-not-allowed"
+                className="bg-muted cursor-not-allowed"
               />
             </div>
-          </div>
-        )}
+          )}
 
-        {/* Department Field - Info Notice Pattern (Read-only) */}
-        {defaultValues.department && (
-          <div className="bg-muted flex items-start gap-3 rounded-lg p-4">
-            <Building2 className="text-muted-foreground mt-0.5 h-4 w-4" />
-            <div className="flex-1">
-              <Label htmlFor="department" className="text-muted-foreground">
+          {/* Department Field - Info Notice Pattern (Read-only) */}
+          {defaultValues.department && (
+            <div className="min-w-0 space-y-1.5">
+              <Label
+                htmlFor="department"
+                className="text-muted-foreground flex items-center gap-1.5 text-[0.9375rem]"
+              >
+                <Building2 className="size-4 shrink-0" />
                 {t("settings.profile.fields.department")}
               </Label>
               <Input
                 id="department"
                 value={defaultValues.department}
                 disabled
-                className="bg-muted/50 mt-2 cursor-not-allowed"
+                className="bg-muted cursor-not-allowed"
               />
             </div>
-          </div>
-        )}
+          )}
+        </div>
 
         {/* Submit Button */}
-        <div className="flex justify-end pt-2">
+        <div className="flex flex-wrap justify-end gap-3 border-t pt-5">
           <SubmitButton
             idleLabel={t("settings.profile.actions.save")}
             pendingLabel={t("settings.profile.actions.saving")}

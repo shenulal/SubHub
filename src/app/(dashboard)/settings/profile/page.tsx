@@ -28,7 +28,7 @@ export default async function ProfilePage() {
   });
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <ProfileForm
         defaultValues={{
           name: user?.name || "",

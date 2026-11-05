@@ -51,9 +51,9 @@ export function formatBytes(bytes: number): string {
 }
 
 const KIND_TONE: Record<AttachmentKind, string> = {
-  CONTRACT: "bg-indigo-500/10 text-indigo-700 dark:text-indigo-300",
-  INVOICE: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
-  ORDER_FORM: "bg-amber-500/10 text-amber-700 dark:text-amber-300",
+  CONTRACT: "tonal-primary",
+  INVOICE: "tonal-success",
+  ORDER_FORM: "tonal-warning",
   OTHER: "bg-muted text-muted-foreground",
 };
 
@@ -122,7 +122,7 @@ export function SubscriptionAttachments({
   const accept = allowedMimeTypes.join(",");
 
   return (
-    <Card className="border-border/50 rounded-sm shadow-sm">
+    <Card>
       <CardHeader>
         <CardTitle>{t("title")}</CardTitle>
         <CardDescription>{t("description")}</CardDescription>

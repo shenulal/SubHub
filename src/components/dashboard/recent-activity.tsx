@@ -7,8 +7,13 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { RecentActivityItem } from "@/types/dashboard";
 import { formatDistanceToNow } from "date-fns";
 import { enUS, ko } from "date-fns/locale";
+import { History } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo } from "react";
+
+import { DashboardEmptyState } from "./dashboard-empty-state";
+
+const CARD_CLASSES = "h-[440px] gap-4 overflow-clip px-5";
 
 interface RecentActivityProps {
   activities: RecentActivityItem[];
@@ -35,7 +40,7 @@ export function RecentActivity({ activities, isLoading }: RecentActivityProps) {
   // 로딩 상태
   if (isLoading) {
     return (
-      <Card className="bg-card flex h-[450px] flex-col gap-5 rounded border-none p-5 shadow-[0px_2px_8px_0px_rgba(0,0,0,0.1)]">
+      <Card className={CARD_CLASSES}>
         <Skeleton className="h-6 w-24" />
         <div className="flex flex-1 flex-col gap-1">
           {[1, 2, 3, 4, 5].map((i) => (
@@ -49,28 +54,27 @@ export function RecentActivity({ activities, isLoading }: RecentActivityProps) {
   // 빈 상태
   if (!displayActivities || displayActivities.length === 0) {
     return (
-      <Card className="bg-card flex h-[450px] flex-col gap-5 rounded border-none p-5 shadow-[0px_2px_8px_0px_rgba(0,0,0,0.1)]">
-        <p className="text-foreground text-base font-semibold">
+      <Card className={CARD_CLASSES}>
+        <p className="text-foreground truncate text-lg font-medium">
           {t("dashboard.sections.recentActivity.title")}
         </p>
-        <div className="flex flex-1 items-center justify-center">
-          <p className="text-muted-foreground text-sm">
-            {t("dashboard.recentActivity.empty")}
-          </p>
-        </div>
+        <DashboardEmptyState
+          icon={History}
+          message={t("dashboard.recentActivity.empty")}
+        />
       </Card>
     );
   }
 
   return (
-    <Card className="bg-card flex h-[450px] flex-col gap-5 overflow-clip rounded border-none p-5 shadow-[0px_2px_8px_0px_rgba(0,0,0,0.1)]">
+    <Card className={CARD_CLASSES}>
       {/* 타이틀 */}
-      <p className="text-foreground text-base font-semibold">
+      <p className="text-foreground truncate text-lg font-medium">
         {t("dashboard.sections.recentActivity.title")}
       </p>
 
       {/* 활동 목록 */}
-      <div className="flex flex-1 flex-col gap-1 overflow-y-auto">
+      <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
         {displayActivities.map((activity) => {
           const displayName =
             activity.userName ??
@@ -90,17 +94,17 @@ export function RecentActivity({ activities, isLoading }: RecentActivityProps) {
           return (
             <div
               key={activity.id}
-              className="bg-purple-gray flex items-center gap-2 rounded p-2"
+              className="hover:bg-muted flex min-w-0 items-center gap-3 rounded-md p-2 transition-colors"
             >
               {/* 아바타 */}
               <Avatar className="h-10 w-10 shrink-0">
-                <AvatarFallback className="bg-muted-foreground text-xs text-white">
+                <AvatarFallback className="bg-primary/15 text-primary text-xs font-medium">
                   {initials}
                 </AvatarFallback>
               </Avatar>
 
               {/* 내용 */}
-              <div className="flex min-w-0 flex-1 flex-col gap-1 py-2">
+              <div className="flex min-w-0 flex-1 flex-col gap-0.5 py-1">
                 <p className="text-foreground truncate text-sm font-medium">
                   {displayName}
                 </p>

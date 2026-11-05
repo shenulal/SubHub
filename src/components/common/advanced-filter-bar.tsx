@@ -70,9 +70,9 @@ function FacetedFilter({
         <Button
           variant="outline"
           size="sm"
-          className="h-8 border-dashed dark:!bg-transparent"
+          className="h-10 shrink-0 border-dashed"
         >
-          <PlusCircle className="mr-2 h-4 w-4" />
+          <PlusCircle className="size-4" />
           {title}
           {selectedValues.size > 0 && (
             <>
@@ -212,15 +212,15 @@ export function AdvancedFilterBar({
         className
       )}
     >
-      <div className="flex flex-1 items-center space-x-2">
+      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
         {/* 검색 입력 */}
         <div className="relative w-full sm:w-64 lg:w-80">
-          <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 bg-white dark:bg-slate-900" />
+          <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2" />
           <Input
             placeholder={searchPlaceholder}
             value={searchValue}
             onChange={(e) => onSearchChange(e.target.value)}
-            className="h-8 pl-9 dark:!bg-transparent"
+            className="pl-9"
           />
         </div>
 
@@ -240,18 +240,20 @@ export function AdvancedFilterBar({
           <Button
             variant="ghost"
             size="sm"
-            className="h-8 px-2 lg:px-3"
+            className="shrink-0 px-2 lg:px-3"
             onClick={onClearAllFilters}
           >
             Reset
-            <X className="ml-2 h-4 w-4" />
+            <X className="size-4" />
           </Button>
         )}
       </div>
 
       {/* 우측 액션 영역 (Columns 버튼 등) */}
       {children && (
-        <div className="flex items-center space-x-2">{children}</div>
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
+          {children}
+        </div>
       )}
     </div>
   );

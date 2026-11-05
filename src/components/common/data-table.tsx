@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
@@ -243,9 +242,9 @@ export function DataTable<T>({
     <div className={cn("space-y-4", className)}>
       {/* 상단 툴바 (매칭상태 필터 등 toolbarLeft + Columns) */}
       {(enableColumnVisibility || toolbarLeft) && !hideToolbar && (
-        <div className="flex items-center justify-between gap-4 rounded-sm">
+        <div className="flex flex-wrap items-center justify-between gap-4">
           {toolbarLeft ? (
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex min-w-0 flex-wrap items-center gap-2">
               {toolbarLeft}
             </div>
           ) : (
@@ -254,8 +253,8 @@ export function DataTable<T>({
           {enableColumnVisibility && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="h-8">
-                  <Columns className="mr-2 h-4 w-4" />
+                <Button variant="outline" size="sm" className="shrink-0">
+                  <Columns className="size-4" />
                   Columns
                 </Button>
               </DropdownMenuTrigger>
@@ -282,11 +281,14 @@ export function DataTable<T>({
       )}
 
       {/* 테이블 */}
-      <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
-        <CardContent className="p-0">
+      <div
+        data-slot="data-table-panel"
+        className="bg-card min-w-0 overflow-hidden rounded-md border"
+      >
+        <div className="min-w-0">
           <Table>
             <TableHeader>
-              <TableRow className="hover:bg-muted/50">
+              <TableRow className="hover:bg-transparent">
                 {enableRowSelection && (
                   <TableHead className="w-12">
                     <Checkbox
@@ -313,7 +315,7 @@ export function DataTable<T>({
                         <Button
                           variant="ghost"
                           size="sm"
-                          className="data-[state=open]:bg-accent -ml-3 h-8"
+                          className="data-[state=open]:bg-accent hover:text-primary -ml-3 h-8 hover:bg-transparent"
                           onClick={() => handleSort(column.id)}
                         >
                           {headerContent}
@@ -334,7 +336,7 @@ export function DataTable<T>({
                     colSpan={
                       visibleColumns.length + (enableRowSelection ? 1 : 0)
                     }
-                    className="h-24 text-center"
+                    className="text-muted-foreground h-24 text-center"
                   >
                     로딩 중...
                   </TableCell>
@@ -345,7 +347,7 @@ export function DataTable<T>({
                     colSpan={
                       visibleColumns.length + (enableRowSelection ? 1 : 0)
                     }
-                    className="h-24 text-center"
+                    className="text-muted-foreground h-24 text-center"
                   >
                     {emptyMessage}
                   </TableCell>
@@ -358,7 +360,7 @@ export function DataTable<T>({
                     <TableRow
                       key={rowId}
                       data-state={isSelected ? "selected" : undefined}
-                      className="hover:bg-muted/50 transition-colors"
+                      className="transition-colors"
                     >
                       {enableRowSelection && (
                         <TableCell>
@@ -385,9 +387,9 @@ export function DataTable<T>({
 
           {/* 하단 페이지네이션 및 선택 정보 (서버 페이지네이션 사용 시 hideFooterItemCount로 푸터 전체 숨김) */}
           {(!hideFooterItemCount || enablePagination) && (
-            <div className="flex items-center justify-between border-t px-4 py-4">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t px-5 py-3">
               {!hideFooterItemCount && (
-                <div className="text-muted-foreground flex-1 text-sm">
+                <div className="text-muted-foreground min-w-0 flex-1 text-[0.8125rem] whitespace-nowrap">
                   {enableRowSelection ? (
                     <span>
                       {selectedRows.size} of {total} row(s) selected.
@@ -404,9 +406,11 @@ export function DataTable<T>({
               )}
 
               {enablePagination && (
-                <div className="flex items-center space-x-6 lg:space-x-8">
-                  <div className="flex items-center space-x-2">
-                    <p className="text-sm font-medium">Rows per page</p>
+                <div className="flex flex-wrap items-center gap-4 lg:gap-6">
+                  <div className="flex items-center gap-2">
+                    <p className="text-muted-foreground text-[0.8125rem] whitespace-nowrap">
+                      Rows per page
+                    </p>
                     <Select
                       value={pagination.pageSize.toString()}
                       onValueChange={(value) =>
@@ -430,8 +434,8 @@ export function DataTable<T>({
                       </SelectContent>
                     </Select>
                   </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="flex w-[100px] items-center justify-center text-sm font-medium">
+                  <div className="flex items-center gap-2">
+                    <div className="text-foreground flex min-w-[100px] items-center justify-center text-[0.8125rem] whitespace-nowrap tabular-nums">
                       Page {currentPage} of {totalPages}
                     </div>
                     <Button
@@ -467,8 +471,8 @@ export function DataTable<T>({
               )}
             </div>
           )}
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 }

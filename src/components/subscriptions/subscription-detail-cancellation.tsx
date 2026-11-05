@@ -76,7 +76,7 @@ export function SubscriptionDetailCancellation({
         onUpdated={() => router.refresh()}
       />
 
-      <Card className="border-border/50 rounded-sm shadow-sm">
+      <Card>
         <CardHeader>
           <CardTitle>{t("overrideTitle")}</CardTitle>
           <CardDescription>{t("overrideDescription")}</CardDescription>

@@ -50,19 +50,19 @@ export function TrendBadge({
 
   const bgClass =
     isPositive === null
-      ? "bg-muted"
+      ? "tonal-neutral"
       : isPositive
-        ? "bg-success/10"
-        : "bg-destructive/10";
+        ? "tonal-success"
+        : "tonal-error";
 
-  const iconClass = iconSize === "sm" ? "h-3 w-3" : "h-4 w-4";
+  const iconClass = iconSize === "sm" ? "size-3" : "size-4";
 
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1 text-sm font-medium",
+        "inline-flex shrink-0 items-center gap-1 text-[0.8125rem] font-medium whitespace-nowrap tabular-nums",
         colorClass,
-        variant === "pill" && cn("rounded px-2 py-1", bgClass),
+        variant === "pill" && cn("rounded-full px-2 py-0.5", bgClass),
         className
       )}
     >

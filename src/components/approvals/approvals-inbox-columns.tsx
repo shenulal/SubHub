@@ -22,22 +22,26 @@ export function useInboxColumns(): DataTableColumn<ApprovalRequestListItem>[] {
         header: t("columns.service"),
         sortable: true,
         cell: (row) => (
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
+          <div className="max-w-[320px] min-w-0">
+            <div className="flex min-w-0 items-center gap-2">
               <Link
                 href={`/approvals/${row.id}`}
-                className="truncate font-medium hover:underline"
+                className="text-foreground hover:text-primary truncate font-medium transition-colors"
+                title={row.serviceName}
               >
                 {row.serviceName}
               </Link>
               {row.isAwaitingMe && (
-                <span className="bg-primary/10 text-primary rounded-full px-2 py-0.5 text-[11px] font-medium">
+                <span className="tonal-primary shrink-0 rounded-full px-2 py-0.5 text-[0.6875rem] font-medium whitespace-nowrap">
                   {t("awaitingYou")}
                 </span>
               )}
             </div>
             {row.category && (
-              <p className="text-muted-foreground truncate text-xs">
+              <p
+                className="text-muted-foreground truncate text-[0.8125rem]"
+                title={row.category.name}
+              >
                 {row.category.name}
               </p>
             )}
@@ -48,7 +52,7 @@ export function useInboxColumns(): DataTableColumn<ApprovalRequestListItem>[] {
         id: "requester",
         header: t("columns.requester"),
         cell: (row) => (
-          <span className="text-sm">
+          <span className="block max-w-[200px] truncate text-sm">
             {userLabel(row.requester, tc("unknownUser"))}
           </span>
         ),
@@ -60,7 +64,7 @@ export function useInboxColumns(): DataTableColumn<ApprovalRequestListItem>[] {
         className: "text-right",
         headerClassName: "text-right",
         cell: (row) => (
-          <div className="text-right">
+          <div className="text-right whitespace-nowrap">
             <p className="font-medium tabular-nums">
               {formatMoney(row.monthlyAmount, row.currency)}
               <span className="text-muted-foreground ml-1 text-xs">
@@ -85,8 +89,8 @@ export function useInboxColumns(): DataTableColumn<ApprovalRequestListItem>[] {
         header: t("columns.step"),
         cell: (row) =>
           row.status === "PENDING" || row.status === "INFO_REQUESTED" ? (
-            <div className="text-sm">
-              <p className="tabular-nums">
+            <div className="max-w-[180px] min-w-0 text-sm">
+              <p className="whitespace-nowrap tabular-nums">
                 {t("stepOf", {
                   current: row.currentStep,
                   total: row.totalSteps,
@@ -105,7 +109,7 @@ export function useInboxColumns(): DataTableColumn<ApprovalRequestListItem>[] {
         header: t("columns.submitted"),
         sortable: true,
         cell: (row) => (
-          <span className="text-muted-foreground text-sm">
+          <span className="text-muted-foreground text-sm whitespace-nowrap">
             {formatRelative(row.submittedAt)}
           </span>
         ),

@@ -67,20 +67,20 @@ export function OnboardingChecklist({
     <section
       aria-labelledby="onboarding-heading"
       className={cn(
-        "bg-card relative overflow-hidden rounded-2xl border p-5 shadow-sm sm:p-6",
-        "before:from-primary/15 before:pointer-events-none before:absolute before:inset-y-0 before:left-0 before:w-40 before:bg-gradient-to-r before:to-transparent",
+        "bg-card text-card-foreground relative overflow-hidden rounded-lg p-5 shadow-md sm:p-6",
+        "before:from-primary/10 before:pointer-events-none before:absolute before:inset-y-0 before:left-0 before:w-40 before:bg-gradient-to-r before:to-transparent",
         className
       )}
     >
       <div className="relative flex items-start justify-between gap-4">
-        <div className="flex items-start gap-3">
-          <span className="bg-primary/10 text-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-xl">
-            <Rocket className="h-5 w-5" aria-hidden="true" />
+        <div className="flex min-w-0 items-start gap-3">
+          <span className="tonal-primary flex size-10 shrink-0 items-center justify-center rounded-md">
+            <Rocket className="size-5" aria-hidden="true" />
           </span>
-          <div>
+          <div className="min-w-0">
             <h2
               id="onboarding-heading"
-              className="text-base font-semibold tracking-tight"
+              className="text-foreground text-lg leading-snug font-medium"
             >
               {t("title")}
             </h2>
@@ -95,7 +95,7 @@ export function OnboardingChecklist({
         <Button
           variant="ghost"
           size="icon"
-          className="h-8 w-8"
+          className="h-8 w-8 shrink-0"
           aria-label={t("dismiss")}
           onClick={handleDismiss}
           disabled={isPending}
@@ -120,18 +120,16 @@ export function OnboardingChecklist({
               href={step.href}
               aria-disabled={step.done}
               className={cn(
-                "group flex items-center gap-3 rounded-xl border px-3 py-2.5 text-sm transition-colors",
+                "group flex min-w-0 items-center gap-3 rounded-md border px-3 py-2.5 text-sm transition-colors",
                 step.done
                   ? "bg-muted/60 text-muted-foreground border-transparent"
-                  : "hover:border-primary/50 hover:bg-accent/50"
+                  : "hover:border-primary/50 hover:bg-primary/[0.04]"
               )}
             >
               <span
                 className={cn(
-                  "flex h-6 w-6 shrink-0 items-center justify-center rounded-full font-mono text-[11px]",
-                  step.done
-                    ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300"
-                    : "bg-foreground/5 text-foreground/70"
+                  "flex size-7 shrink-0 items-center justify-center rounded-md text-xs font-medium tabular-nums",
+                  step.done ? "tonal-success" : "tonal-primary"
                 )}
                 aria-hidden="true"
               >
@@ -139,7 +137,7 @@ export function OnboardingChecklist({
               </span>
               <span
                 className={cn(
-                  "flex-1 leading-snug",
+                  "min-w-0 flex-1 truncate leading-snug",
                   step.done && "line-through"
                 )}
               >
@@ -147,7 +145,7 @@ export function OnboardingChecklist({
               </span>
               {!step.done && (
                 <ArrowRight
-                  className="h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100"
+                  className="text-primary h-4 w-4 shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
                   aria-hidden="true"
                 />
               )}

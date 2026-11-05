@@ -37,16 +37,25 @@ export function PendingApprovalsCard({ className }: { className?: string }) {
   });
 
   return (
-    <Card className={cn("border-border rounded-sm shadow-xs", className)}>
+    <Card className={cn(className)}>
       <CardHeader className="flex flex-row items-start justify-between gap-4">
-        <div className="space-y-1">
-          <CardTitle className="flex items-center gap-2 text-base">
-            <ClipboardCheck className="text-primary h-4 w-4" />
-            {t("title")}
-          </CardTitle>
-          <CardDescription>{t("description")}</CardDescription>
+        <div className="flex min-w-0 items-start gap-3">
+          <span className="tonal-primary flex size-10 shrink-0 items-center justify-center rounded-md">
+            <ClipboardCheck className="size-5" />
+          </span>
+          <div className="min-w-0 space-y-1">
+            <CardTitle className="truncate">{t("title")}</CardTitle>
+            <CardDescription className="line-clamp-2">
+              {t("description")}
+            </CardDescription>
+          </div>
         </div>
-        <Button asChild variant="ghost" size="sm" className="-mr-2">
+        <Button
+          asChild
+          variant="ghost"
+          size="sm"
+          className="-mr-2 shrink-0 whitespace-nowrap"
+        >
           <Link href="/approvals">
             {t("viewAll")}
             <ArrowUpRight className="ml-1 h-4 w-4" />
@@ -63,22 +72,28 @@ export function PendingApprovalsCard({ className }: { className?: string }) {
         ) : (
           <>
             <div className="grid grid-cols-2 gap-4">
-              <div className="bg-muted/40 rounded-md p-3">
-                <p className="text-muted-foreground text-xs tracking-wide uppercase">
+              <div className="bg-muted min-w-0 rounded-md p-4">
+                <p className="text-muted-foreground truncate text-xs tracking-wide uppercase">
                   {t("count")}
                 </p>
-                <p className="mt-1 text-3xl font-semibold tabular-nums">
+                <p
+                  className="text-foreground mt-1 truncate text-2xl font-medium tabular-nums"
+                  title={String(data.count)}
+                >
                   {data.count}
                 </p>
               </div>
-              <div className="bg-muted/40 rounded-md p-3">
-                <p className="text-muted-foreground text-xs tracking-wide uppercase">
+              <div className="bg-muted min-w-0 rounded-md p-4">
+                <p className="text-muted-foreground truncate text-xs tracking-wide uppercase">
                   {t("committed")}
                 </p>
-                <p className="mt-1 text-3xl font-semibold tabular-nums">
+                <p
+                  className="text-foreground mt-1 truncate text-2xl font-medium tabular-nums"
+                  title={formatMoney(data.committedMonthly, data.currency)}
+                >
                   {formatMoney(data.committedMonthly, data.currency)}
                 </p>
-                <p className="text-muted-foreground text-xs">
+                <p className="text-muted-foreground truncate text-xs">
                   {t("committedHint")}
                 </p>
               </div>
@@ -95,10 +110,13 @@ export function PendingApprovalsCard({ className }: { className?: string }) {
                     <li key={item.id}>
                       <Link
                         href={`/approvals/${item.id}`}
-                        className="hover:bg-muted/50 -mx-2 flex items-center justify-between gap-3 rounded-md px-2 py-2 transition-colors"
+                        className="hover:bg-accent -mx-2 flex min-w-0 items-center justify-between gap-3 rounded-md px-2 py-2.5 transition-colors"
                       >
                         <div className="min-w-0">
-                          <p className="truncate text-sm font-medium">
+                          <p
+                            className="text-foreground truncate text-sm font-medium"
+                            title={item.serviceName}
+                          >
                             {item.serviceName}
                           </p>
                           <p className="text-muted-foreground truncate text-xs">
@@ -106,7 +124,7 @@ export function PendingApprovalsCard({ className }: { className?: string }) {
                           </p>
                         </div>
                         <div className="flex shrink-0 items-center gap-2">
-                          <span className="text-sm font-medium tabular-nums">
+                          <span className="text-sm font-medium whitespace-nowrap tabular-nums">
                             {formatMoney(item.monthlyAmount, item.currency)}
                           </span>
                           <ApprovalStatusBadge status={item.status} />

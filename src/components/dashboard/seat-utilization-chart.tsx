@@ -10,9 +10,14 @@ import {
 } from "@/components/ui/chart";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { LowUtilizationApp } from "@/types/dashboard";
+import { Armchair } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 import { Bar, BarChart, CartesianGrid, Cell, XAxis, YAxis } from "recharts";
+
+import { DashboardEmptyState } from "./dashboard-empty-state";
+
+const CARD_CLASSES = "h-[440px] gap-4 px-5";
 
 export interface SeatUtilizationChartProps {
   data: LowUtilizationApp[];
@@ -36,14 +41,14 @@ function getAppInitial(name: string): string {
 // 앱 이름 기반 색상
 function getAppColor(name: string): string {
   const colors: Record<string, string> = {
-    S: "bg-chart-4/20 text-chart-4",
-    N: "bg-primary text-primary-foreground",
-    F: "bg-chart-5/20 text-chart-5",
-    J: "bg-info-muted text-info-muted-foreground",
-    Z: "bg-info text-info-foreground",
+    S: "tonal-warning",
+    N: "tonal-primary",
+    F: "tonal-error",
+    J: "tonal-info",
+    Z: "tonal-success",
   };
   const initial = getAppInitial(name);
-  return colors[initial] || "bg-secondary text-secondary-foreground";
+  return colors[initial] || "tonal-neutral";
 }
 
 // X축 커스텀 틱 컴포넌트 (앱 아바타 표시)
@@ -72,10 +77,12 @@ function CustomAvatarTick({
     <g transform={`translate(${Number(x)},${Number(y) + 8})`}>
       <foreignObject x={-16} y={0} width={32} height={32}>
         <Avatar className="h-8 w-8 rounded-md">
-          <AvatarFallback
-            className={`rounded-md text-sm font-semibold ${colorClass}`}
-          >
-            {initial}
+          <AvatarFallback className="rounded-md bg-transparent text-sm font-medium">
+            <span
+              className={`flex size-full items-center justify-center rounded-md ${colorClass}`}
+            >
+              {initial}
+            </span>
           </AvatarFallback>
         </Avatar>
       </foreignObject>
@@ -126,7 +133,7 @@ export function SeatUtilizationChart({
   // 로딩 상태
   if (isLoading) {
     return (
-      <Card className="bg-card flex h-[400px] flex-col gap-5 rounded border-none p-5 shadow-[0px_2px_8px_0px_rgba(0,0,0,0.1)]">
+      <Card className={CARD_CLASSES}>
         <Skeleton className="h-5 w-40" />
         <Skeleton className="flex-1" />
       </Card>
@@ -136,19 +143,30 @@ export function SeatUtilizationChart({
   // 빈 상태
   if (!sortedData.length) {
     return (
-      <Card className="bg-card flex h-[400px] flex-col items-center justify-center gap-5 rounded border-none p-5 shadow-[0px_2px_8px_0px_rgba(0,0,0,0.1)]">
-        <p className="text-muted-foreground text-sm">{t("empty")}</p>
+      <Card className={CARD_CLASSES}>
+        <p
+          className="text-foreground truncate text-lg font-medium"
+          title={t("title")}
+        >
+          {t("title")}
+        </p>
+        <DashboardEmptyState icon={Armchair} message={t("empty")} />
       </Card>
     );
   }
 
   return (
-    <Card className="bg-card flex h-[400px] flex-col gap-5 rounded border-none p-5 shadow-[0px_2px_8px_0px_rgba(0,0,0,0.1)]">
+    <Card className={CARD_CLASSES}>
       {/* 헤더: 타이틀 */}
-      <p className="text-foreground text-base font-semibold">{t("title")}</p>
+      <p
+        className="text-foreground truncate text-lg font-medium"
+        title={t("title")}
+      >
+        {t("title")}
+      </p>
 
       {/* 차트 영역 */}
-      <div className="flex-1">
+      <div className="min-h-0 flex-1">
         <ChartContainer config={chartConfig} className="h-full w-full">
           <BarChart
             data={chartData}
@@ -157,7 +175,7 @@ export function SeatUtilizationChart({
             <CartesianGrid
               horizontal={true}
               vertical={false}
-              stroke="rgba(100, 116, 243, 0.15)"
+              stroke="var(--border)"
               strokeDasharray="0"
             />
             <XAxis
@@ -215,8 +233,8 @@ export function SeatUtilizationChart({
               {chartData.map((entry, index) => (
                 <Cell
                   key={`cell-${index}`}
-                  fill="rgba(100,116,243,0.15)"
-                  stroke="rgba(100,116,243,0.6)"
+                  fill="color-mix(in oklab, var(--chart-1) 24%, transparent)"
+                  stroke="var(--chart-1)"
                   strokeWidth={1}
                 />
               ))}

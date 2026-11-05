@@ -23,7 +23,7 @@ function PageSkeleton() {
 export default function RecommendedAppsPage() {
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold tracking-tight">추천 앱 리스트</h1>
+      <h1 className="text-foreground text-xl font-medium">추천 앱 리스트</h1>
       <Suspense fallback={<PageSkeleton />}>
         <RecommendedAppsPageClient />
       </Suspense>

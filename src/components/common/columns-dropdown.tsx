@@ -21,6 +21,8 @@ interface ColumnsDropdownProps {
   columns: ColumnDefinition[];
   columnVisibility: Record<string, boolean>;
   onColumnVisibilityChange: (columnId: string, visible: boolean) => void;
+  /** Trigger size; defaults to the Button default (38px) to line up with toolbar controls. */
+  size?: "default" | "sm";
 }
 
 /**
@@ -31,13 +33,14 @@ export function ColumnsDropdown({
   columns,
   columnVisibility,
   onColumnVisibilityChange,
+  size = "default",
 }: ColumnsDropdownProps) {
   const t = useTranslations("common.columnsDropdown");
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <Button variant="outline" size="sm" className="h-8">
-          <Columns className="mr-2 h-4 w-4" />
+        <Button variant="outline" size={size} className="shrink-0">
+          <Columns className="size-4" />
           {t("button")}
         </Button>
       </DropdownMenuTrigger>

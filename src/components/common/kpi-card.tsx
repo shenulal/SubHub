@@ -6,7 +6,6 @@ import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import {
   Card,
-  CardAction,
   CardDescription,
   CardFooter,
   CardHeader,
@@ -51,62 +50,69 @@ export function KpiCard({
   const isNegative = change?.type === "decrease";
 
   return (
-    <Card
-      className={cn(
-        "border-border/50 @container/card rounded-sm shadow-sm transition-shadow hover:shadow-md",
-        className
-      )}
-    >
-      <CardHeader>
-        <CardDescription className="text-sm font-medium">
-          {title}
-        </CardDescription>
-        <CardTitle className="text-2xl font-semibold tabular-nums @[250px]/card:text-3xl">
-          {value}
-        </CardTitle>
-        {change && (
-          <CardAction>
-            <Badge
-              variant="outline"
-              className={cn(
-                "gap-1 text-xs font-medium",
-                isPositive &&
-                  "border-green-200 text-green-700 dark:border-green-800 dark:text-green-400",
-                isNegative &&
-                  "border-red-200 text-red-700 dark:border-red-800 dark:text-red-400"
-              )}
+    <Card className={cn("@container/card gap-3", className)}>
+      <CardHeader className="gap-3">
+        {Icon && (
+          <div className="tonal-primary flex size-10 items-center justify-center rounded-md">
+            <Icon className="size-[22px]" />
+          </div>
+        )}
+        <div className="min-w-0 space-y-1">
+          <CardDescription className="truncate" title={title}>
+            {title}
+          </CardDescription>
+          {/* Trend chip follows the value so the title keeps the full width */}
+          <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+            <CardTitle
+              data-kpi
+              className="kpi-value text-foreground min-w-0"
+              title={String(value)}
             >
-              {isPositive && <ArrowUp className="size-3" />}
-              {isNegative && <ArrowDown className="size-3" />}
-              {change.value > 0 ? "+" : ""}
-              {change.value}%
-            </Badge>
-          </CardAction>
-        )}
-        {!change && Icon && (
-          <CardAction>
-            <div className="bg-muted rounded-lg p-2.5">
-              <Icon className="text-muted-foreground size-4" />
-            </div>
-          </CardAction>
-        )}
+              {value}
+            </CardTitle>
+            {change && (
+              <Badge
+                variant={
+                  isPositive ? "success" : isNegative ? "error" : "neutral"
+                }
+                className="shrink-0 gap-1 text-xs font-medium"
+              >
+                {isPositive && <ArrowUp className="size-3" />}
+                {isNegative && <ArrowDown className="size-3" />}
+                {change.value > 0 ? "+" : ""}
+                {change.value}%
+              </Badge>
+            )}
+          </div>
+        </div>
       </CardHeader>
       {(description || trendSummary || href) && (
-        <CardFooter className="flex-col items-start gap-1.5 text-sm">
+        <CardFooter className="min-w-0 flex-col items-start gap-1">
           {description && (
-            <div className="text-muted-foreground text-xs">{description}</div>
+            <div
+              className="text-muted-foreground w-full truncate text-[0.8125rem]"
+              title={description}
+            >
+              {description}
+            </div>
           )}
           {trendSummary && (
-            <div className="flex gap-2 text-xs font-medium">
-              {trendSummary}
-              {isPositive && <ArrowUp className="size-3" />}
-              {isNegative && <ArrowDown className="size-3" />}
+            <div
+              className={cn(
+                "flex w-full min-w-0 items-center gap-1.5 text-[0.8125rem] font-medium",
+                isPositive && "text-success",
+                isNegative && "text-error"
+              )}
+            >
+              <span className="truncate">{trendSummary}</span>
+              {isPositive && <ArrowUp className="size-3 shrink-0" />}
+              {isNegative && <ArrowDown className="size-3 shrink-0" />}
             </div>
           )}
           {href && (
             <Link
               href={href}
-              className="text-primary inline-flex items-center text-xs font-medium hover:underline"
+              className="text-primary inline-flex items-center text-[0.8125rem] font-medium hover:underline"
             >
               View more
               <ArrowRight className="ml-1 size-3" />
@@ -135,10 +141,10 @@ export function KpiCardsGrid({
   return (
     <div
       className={cn(
-        "grid gap-4",
-        columns === 2 && "grid-cols-1 md:grid-cols-2",
-        columns === 3 && "grid-cols-1 md:grid-cols-2 lg:grid-cols-3",
-        columns === 4 && "grid-cols-1 md:grid-cols-2 lg:grid-cols-4",
+        "grid gap-6",
+        columns === 2 && "grid-cols-1 sm:grid-cols-2",
+        columns === 3 && "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3",
+        columns === 4 && "grid-cols-1 sm:grid-cols-2 xl:grid-cols-4",
         className
       )}
     >

@@ -37,24 +37,20 @@ function isValidImageUrl(url: string | null | undefined): boolean {
   }
 }
 
-const statusVariants: Record<
-  UserStatus,
-  "default" | "secondary" | "destructive" | "outline"
-> = {
-  ACTIVE: "default",
-  INACTIVE: "outline",
-  TERMINATED: "destructive",
+type TonalBadgeVariant = "secondary" | "success" | "info" | "primary" | "error";
+
+const statusVariants: Record<UserStatus, TonalBadgeVariant> = {
+  ACTIVE: "success",
+  INACTIVE: "secondary",
+  TERMINATED: "error",
 };
 
-const roleVariants: Record<
-  UserRole,
-  "default" | "secondary" | "destructive" | "outline"
-> = {
-  SUPER_ADMIN: "default",
-  ADMIN: "default",
-  APPROVER: "default",
+const roleVariants: Record<UserRole, TonalBadgeVariant> = {
+  SUPER_ADMIN: "primary",
+  ADMIN: "primary",
+  APPROVER: "info",
   MEMBER: "secondary",
-  VIEWER: "outline",
+  VIEWER: "secondary",
 };
 
 // 컬럼 가시성 드롭다운에서 사용할 컬럼 정의 (외부 노출용) - 함수로 변환
@@ -121,24 +117,28 @@ export function UserList({
         cell: (user) => (
           <Link
             href={`/users/${user.id}`}
-            className="flex items-center gap-3 hover:underline"
+            className="group flex min-w-0 items-center gap-3"
           >
             {isValidImageUrl(user.avatarUrl) ? (
               <Image
                 src={user.avatarUrl!}
                 alt={user.name || user.email}
-                width={32}
-                height={32}
-                className="rounded-full"
+                width={34}
+                height={34}
+                className="size-[34px] shrink-0 rounded-full object-cover"
               />
             ) : (
-              <div className="bg-muted flex h-8 w-8 items-center justify-center rounded-full text-sm font-medium">
+              <div className="tonal-primary flex size-[34px] shrink-0 items-center justify-center rounded-full text-sm font-medium uppercase">
                 {(user.name || user.email).charAt(0)}
               </div>
             )}
-            <div>
-              <div className="font-medium">{user.name || "-"}</div>
-              <div className="text-muted-foreground text-sm">{user.email}</div>
+            <div className="min-w-0">
+              <div className="group-hover:text-primary max-w-[14rem] truncate font-medium transition-colors">
+                {user.name || "-"}
+              </div>
+              <div className="text-muted-foreground max-w-[14rem] truncate text-[0.8125rem]">
+                {user.email}
+              </div>
             </div>
           </Link>
         ),
@@ -165,7 +165,11 @@ export function UserList({
         id: "department",
         header: t("users.table.columns.department"),
         sortable: true,
-        cell: (user) => user.team?.name || user.department || "-",
+        cell: (user) => (
+          <span className="block max-w-[12rem] truncate">
+            {user.team?.name || user.department || "-"}
+          </span>
+        ),
       },
       {
         id: "assignedAppCount",
@@ -177,7 +181,11 @@ export function UserList({
         id: "lastLoginAt",
         header: t("users.table.columns.lastLoginAt"),
         sortable: true,
-        cell: (user) => formatKoreanDate(user.lastLoginAt),
+        cell: (user) => (
+          <span className="whitespace-nowrap">
+            {formatKoreanDate(user.lastLoginAt)}
+          </span>
+        ),
       },
     ],
     [t, statusLabels, roleLabels]
@@ -227,10 +235,8 @@ export function UserList({
 
   if (users.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <p className="text-muted-foreground mb-4">
-          {t("users.table.emptyMessage")}
-        </p>
+      <div className="flex flex-col items-center justify-center gap-3 py-12 text-center">
+        <p className="text-muted-foreground">{t("users.table.emptyMessage")}</p>
       </div>
     );
   }

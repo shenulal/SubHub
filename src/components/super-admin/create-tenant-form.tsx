@@ -40,9 +40,12 @@ export function CreateTenantForm() {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-6">
+    <form
+      onSubmit={handleSubmit}
+      className="grid gap-5 sm:grid-cols-2 [&_[data-slot=label]]:text-[0.9375rem]"
+    >
       {/* 회사명 (필수) */}
-      <div className="space-y-2">
+      <div className="min-w-0 space-y-1.5">
         <Label htmlFor="name">
           회사명 <span className="text-destructive">*</span>
         </Label>
@@ -56,7 +59,7 @@ export function CreateTenantForm() {
       </div>
 
       {/* 도메인 (선택) */}
-      <div className="space-y-2">
+      <div className="min-w-0 space-y-1.5">
         <Label htmlFor="domain">도메인 (선택)</Label>
         <Input
           id="domain"
@@ -64,13 +67,13 @@ export function CreateTenantForm() {
           onChange={(e) => setDomain(e.target.value)}
           placeholder="예: example.com"
         />
-        <p className="text-muted-foreground text-xs">
+        <p className="text-muted-foreground text-[0.8125rem]">
           https:// 제외하고 입력해주세요
         </p>
       </div>
 
       {/* 로고 URL (선택) */}
-      <div className="space-y-2">
+      <div className="min-w-0 space-y-1.5 sm:col-span-2">
         <Label htmlFor="logoUrl">로고 URL (선택)</Label>
         <Input
           id="logoUrl"
@@ -80,9 +83,11 @@ export function CreateTenantForm() {
         />
       </div>
 
-      <Button type="submit" disabled={loading} className="w-full">
-        {loading ? "생성 중..." : "테넌트 생성"}
-      </Button>
+      <div className="flex flex-wrap justify-end gap-3 sm:col-span-2">
+        <Button type="submit" disabled={loading}>
+          {loading ? "생성 중..." : "테넌트 생성"}
+        </Button>
+      </div>
     </form>
   );
 }

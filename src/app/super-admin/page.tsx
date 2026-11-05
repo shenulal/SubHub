@@ -26,16 +26,18 @@ export default async function SuperAdminHomePage() {
     statsResult.message === "테넌트 정보를 찾을 수 없습니다.";
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">사용 현황</h1>
-        <p className="text-muted-foreground">테넌트 전체 현황을 확인합니다.</p>
+    <div className="space-y-6">
+      <div className="space-y-1">
+        <h1 className="text-foreground text-2xl font-medium">사용 현황</h1>
+        <p className="text-muted-foreground text-[0.9375rem]">
+          테넌트 전체 현황을 확인합니다.
+        </p>
       </div>
 
       {noTenant ? (
-        <Card className="border-dashed">
+        <Card>
           <CardContent className="flex flex-col items-center justify-center gap-4 py-16 text-center">
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground text-[0.9375rem]">
               아직 테넌트가 없습니다. 테넌트를 먼저 생성해주세요.
             </p>
             <Button asChild>
@@ -48,7 +50,7 @@ export default async function SuperAdminHomePage() {
           {statsResult.success && statsResult.data ? (
             <StatsKpiCards stats={statsResult.data} />
           ) : (
-            <div className="border-destructive/50 bg-destructive/10 text-destructive rounded-lg border p-4 text-sm">
+            <div className="tonal-error rounded-md p-4 text-[0.9375rem]">
               {statsResult.message ?? "통계를 불러오는데 실패했습니다."}
             </div>
           )}
@@ -57,7 +59,7 @@ export default async function SuperAdminHomePage() {
             <CardHeader>
               <CardTitle>앱별 구독 현황</CardTitle>
             </CardHeader>
-            <CardContent>
+            <CardContent className="px-0">
               {resourceResult.success && resourceResult.data ? (
                 <ResourceSummaryTable data={resourceResult.data} />
               ) : (

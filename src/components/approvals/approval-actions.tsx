@@ -110,7 +110,7 @@ export function ApprovalActions({ request, onChanged }: Props) {
           <Can permission="approvals:decide">
             <Button
               onClick={() => open("approve")}
-              className="bg-emerald-600 text-white hover:bg-emerald-700"
+              className="bg-success hover:bg-success/90 shrink-0 text-white"
             >
               <Check className="mr-2 h-4 w-4" />
               {t("approve")}

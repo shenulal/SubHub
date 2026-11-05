@@ -170,10 +170,12 @@ export function SuggestionTable() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Sparkles className="text-warning h-5 w-5" />
-            <h2 className="text-lg font-semibold">{t("title")}</h2>
+            <h2 className="text-foreground text-lg font-medium">
+              {t("title")}
+            </h2>
           </div>
         </div>
-        <Card className="border-l-primary/50 border-border/50 rounded-sm border-l-4 shadow-sm">
+        <Card className="border-l-primary border-l-4">
           <CardContent className="p-0">
             <div className="flex items-center gap-4 border-b px-4 py-3">
               {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
@@ -209,7 +211,9 @@ export function SuggestionTable() {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Sparkles className="text-warning h-5 w-5" />
-            <h2 className="text-lg font-semibold">{t("title")}</h2>
+            <h2 className="text-foreground text-lg font-medium">
+              {t("title")}
+            </h2>
           </div>
           <Button
             variant="ghost"
@@ -220,7 +224,7 @@ export function SuggestionTable() {
             <RefreshCw className="h-4 w-4" />
           </Button>
         </div>
-        <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
+        <Card>
           <CardContent className="flex items-center justify-center py-12">
             <p className="text-muted-foreground">{t("table.empty")}</p>
           </CardContent>
@@ -237,7 +241,9 @@ export function SuggestionTable() {
           <div>
             <div className="flex items-center gap-2">
               <Sparkles className="text-warning h-5 w-5" />
-              <h2 className="text-lg font-semibold">{t("title")}</h2>
+              <h2 className="text-foreground text-lg font-medium">
+                {t("title")}
+              </h2>
               <Badge variant="secondary" className="ml-1">
                 {suggestions.length}
               </Badge>
@@ -259,7 +265,7 @@ export function SuggestionTable() {
         </div>
 
         {/* DataTable */}
-        <Card className="border-l-primary/50 border-border/50 rounded-sm border-l-4 shadow-sm">
+        <Card className="border-l-primary border-l-4">
           <CardContent className="p-0">
             <Table>
               <TableHeader>

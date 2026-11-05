@@ -178,7 +178,7 @@ export function UsageAnalyticsClient() {
 
   if (error) {
     return (
-      <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
+      <Card className="border-border dark:border-border border shadow-none">
         <CardContent className="py-10 text-center">
           <p className="text-muted-foreground">{error}</p>
         </CardContent>
@@ -205,50 +205,58 @@ export function UsageAnalyticsClient() {
       </Tabs>
 
       {/* Summary Cards */}
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              {t("cards.totalLogins")}
-            </CardTitle>
-            <LogIn className="text-muted-foreground h-4 w-4" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-semibold tabular-nums">
-              {data.totalLogins.toLocaleString()}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2">
+        <Card className="border-border dark:border-border gap-0 border px-5 shadow-none">
+          <div className="flex min-w-0 items-center gap-4">
+            <span className="tonal-primary flex size-10 shrink-0 items-center justify-center rounded-md">
+              <LogIn className="size-5" />
+            </span>
+            <div className="min-w-0">
+              <CardTitle className="text-muted-foreground truncate text-[0.8125rem] font-normal">
+                {t("cards.totalLogins")}
+              </CardTitle>
+              <div className="kpi-value text-foreground">
+                {data.totalLogins.toLocaleString()}
+              </div>
             </div>
-          </CardContent>
+          </div>
         </Card>
 
-        <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              {t("cards.uniqueDevices")}
-            </CardTitle>
-            <Monitor className="text-muted-foreground h-4 w-4" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-semibold tabular-nums">
-              {data.uniqueDevices.toLocaleString()}
+        <Card className="border-border dark:border-border gap-0 border px-5 shadow-none">
+          <div className="flex min-w-0 items-center gap-4">
+            <span className="tonal-info flex size-10 shrink-0 items-center justify-center rounded-md">
+              <Monitor className="size-5" />
+            </span>
+            <div className="min-w-0">
+              <CardTitle className="text-muted-foreground truncate text-[0.8125rem] font-normal">
+                {t("cards.uniqueDevices")}
+              </CardTitle>
+              <div className="kpi-value text-foreground">
+                {data.uniqueDevices.toLocaleString()}
+              </div>
             </div>
-          </CardContent>
+          </div>
         </Card>
       </div>
 
       {/* Domain Table */}
-      <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
+      <Card className="border-border dark:border-border border shadow-none">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Globe className="h-5 w-5" />
+            <Globe className="text-primary size-5" />
             {t("domain.title")}
           </CardTitle>
         </CardHeader>
         <CardContent>
           {data.topDomains.length === 0 ? (
-            <div className="py-10 text-center">
-              <Globe className="text-muted-foreground mx-auto mb-2 h-12 w-12 opacity-50" />
-              <p className="text-muted-foreground">{t("domain.emptyState")}</p>
-              <p className="text-muted-foreground mt-1 text-xs">
+            <div className="flex flex-col items-center gap-3 py-10 text-center">
+              <span className="tonal-neutral flex size-12 items-center justify-center rounded-md">
+                <Globe className="size-[22px]" />
+              </span>
+              <p className="text-muted-foreground text-[0.9375rem]">
+                {t("domain.emptyState")}
+              </p>
+              <p className="text-muted-foreground text-[0.8125rem]">
                 {t("domain.emptyDescription")}
               </p>
             </div>
@@ -272,15 +280,17 @@ export function UsageAnalyticsClient() {
                 {data.topDomains.map((item) => (
                   <TableRow key={item.domain}>
                     <TableCell className="font-medium">
-                      <div className="flex items-center gap-2">
-                        <Globe className="text-muted-foreground h-4 w-4" />
-                        {item.domain}
+                      <div className="flex max-w-[360px] min-w-0 items-center gap-2">
+                        <Globe className="text-muted-foreground size-4 shrink-0" />
+                        <span className="truncate" title={item.domain}>
+                          {item.domain}
+                        </span>
                       </div>
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right tabular-nums">
                       {item.loginCount.toLocaleString()}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right tabular-nums">
                       {item.uniqueDevices.toLocaleString()}
                     </TableCell>
                     <TableCell>
@@ -318,7 +328,7 @@ export function UsageAnalyticsClient() {
           </DialogHeader>
 
           {/* Date Navigation */}
-          <div className="bg-purple-gray flex items-center justify-between gap-4 rounded-lg p-3">
+          <div className="bg-muted flex items-center justify-between gap-4 rounded-md p-3">
             <Button
               variant="ghost"
               size="icon"
@@ -346,7 +356,7 @@ export function UsageAnalyticsClient() {
           </div>
 
           {/* Login Events Table */}
-          <div className="rounded-sm border">
+          <div className="rounded-md border">
             <Table>
               <TableHeader>
                 <TableRow>

@@ -65,13 +65,13 @@ export function FilterBar({
     <div className={cn("flex flex-wrap items-center gap-3", className)}>
       {/* 검색 입력 */}
       <div className="relative max-w-sm min-w-[200px] flex-1">
-        <Search className="text-muted-foreground absolute top-2.5 left-2.5 h-4 w-4" />
+        <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2" />
         <Input
           type="search"
           placeholder={resolvedPlaceholder}
           value={searchValue}
           onChange={(e) => onSearchChange?.(e.target.value)}
-          className="pl-8"
+          className="pl-9"
         />
       </div>
 
@@ -82,8 +82,8 @@ export function FilterBar({
           value={filterValues[filter.id] || "all"}
           onValueChange={(value) => onFilterChange?.(filter.id, value)}
         >
-          <SelectTrigger className="w-auto min-w-[120px]">
-            <Filter className="mr-2 h-4 w-4" />
+          <SelectTrigger className="w-auto min-w-[120px] shrink-0">
+            <Filter className="text-muted-foreground size-4" />
             <SelectValue placeholder={filter.placeholder || filter.label} />
           </SelectTrigger>
           <SelectContent>
@@ -101,8 +101,8 @@ export function FilterBar({
 
       {/* 활성 필터 표시 및 초기화 */}
       {activeFilterCount > 0 && (
-        <div className="flex items-center gap-2">
-          <Badge variant="secondary" className="gap-1">
+        <div className="flex shrink-0 items-center gap-2">
+          <Badge variant="primary" className="gap-1">
             {t("activeFilters", { count: activeFilterCount })}
           </Badge>
           <Button
@@ -140,13 +140,13 @@ export function SearchBar({
   const resolvedPlaceholder = placeholder ?? t("searchPlaceholder");
   return (
     <div className={cn("relative w-full max-w-sm", className)}>
-      <Search className="text-muted-foreground absolute top-2.5 left-2.5 h-4 w-4" />
+      <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2" />
       <Input
         type="search"
         placeholder={resolvedPlaceholder}
         value={value}
         onChange={(e) => onChange?.(e.target.value)}
-        className="pl-8"
+        className="pl-9"
       />
     </div>
   );

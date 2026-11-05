@@ -3,6 +3,7 @@
 // src/app/(dashboard)/reports/block-events/page.client.tsx
 import type { BlockEventItem } from "@/actions/reports/block-events";
 import { DateRangeSelector } from "@/components/common/date-range-selector";
+import { ReportStatCard } from "@/components/reports/report-stat-card";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -22,7 +23,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Download, Search } from "lucide-react";
+import { Download, Globe, Search, ShieldBan } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useCallback, useState } from "react";
@@ -135,20 +136,20 @@ export function BlockEventsPageClient({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Filter Bar */}
-      <div className="flex items-center gap-3">
-        <div className="relative w-[calc(25%-0.75rem)]">
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="relative w-full min-w-0 sm:w-72">
           <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
           <Input
             placeholder={t("filters.searchPlaceholder")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             onKeyDown={handleSearchKeyDown}
-            className="pl-9"
+            className="h-10 pl-9"
           />
         </div>
-        <div className="ml-auto flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3 sm:ml-auto">
           <DateRangeSelector
             currentPeriod={initialFilters.period}
             startDate={initialFilters.startDate}
@@ -157,7 +158,7 @@ export function BlockEventsPageClient({
             basePath="/reports/block-events"
             preserveParams={{ search: search }}
           />
-          <Button variant="outline">
+          <Button variant="outline" className="h-10 shrink-0">
             <Download className="mr-2 h-4 w-4" />
             {t("filters.export")}
           </Button>
@@ -165,28 +166,24 @@ export function BlockEventsPageClient({
       </div>
 
       {/* Stats Summary - Bento Style */}
-      <div className="grid gap-4 md:grid-cols-2">
-        <Card className="bg-card flex h-full flex-col gap-3 rounded-sm border-none px-3 pt-5 pb-3 shadow-[0px_2px_8px_0px_rgba(0,0,0,0.1)]">
-          <div className="flex flex-1 flex-col gap-2 px-2">
-            <p className="text-primary text-xs">{t("stats.totalBlocks")}</p>
-            <p className="text-secondary-foreground text-2xl font-medium">
-              {statsSummary.totalBlocks.toLocaleString()}
-            </p>
-          </div>
-        </Card>
-        <Card className="bg-card flex h-full flex-col gap-3 rounded-sm border-none px-3 pt-5 pb-3 shadow-[0px_2px_8px_0px_rgba(0,0,0,0.1)]">
-          <div className="flex flex-1 flex-col gap-2 px-2">
-            <p className="text-primary text-xs">{t("stats.blockedDomains")}</p>
-            <p className="text-secondary-foreground text-2xl font-medium">
-              {statsSummary.uniqueDomains.toLocaleString()}
-            </p>
-          </div>
-        </Card>
+      <div className="grid gap-6 sm:grid-cols-2">
+        <ReportStatCard
+          icon={ShieldBan}
+          tone="error"
+          title={t("stats.totalBlocks")}
+          value={statsSummary.totalBlocks.toLocaleString()}
+        />
+        <ReportStatCard
+          icon={Globe}
+          tone="warning"
+          title={t("stats.blockedDomains")}
+          value={statsSummary.uniqueDomains.toLocaleString()}
+        />
       </div>
 
       {/* Top Blocked Domains */}
       {statsSummary.topBlockedDomains.length > 0 && (
-        <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
+        <Card>
           <CardHeader>
             <CardTitle>{t("topDomains.title")}</CardTitle>
           </CardHeader>
@@ -195,10 +192,12 @@ export function BlockEventsPageClient({
               {statsSummary.topBlockedDomains.map((item) => (
                 <div
                   key={item.domain}
-                  className="bg-destructive/10 flex items-center gap-2 rounded-md px-3 py-1 text-sm"
+                  className="tonal-error flex max-w-full min-w-0 items-center gap-2 rounded-md px-3 py-1 text-sm"
                 >
-                  <span className="font-medium">{item.domain}</span>
-                  <span className="text-muted-foreground">
+                  <span className="truncate font-medium" title={item.domain}>
+                    {item.domain}
+                  </span>
+                  <span className="text-muted-foreground shrink-0 tabular-nums">
                     {t("topDomains.countSuffix", { count: item.count })}
                   </span>
                 </div>
@@ -209,7 +208,7 @@ export function BlockEventsPageClient({
       )}
 
       {/* Results Table */}
-      <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
+      <Card className="gap-0 overflow-hidden py-0">
         <CardContent className="p-0">
           <Table>
             <TableHeader>
@@ -231,7 +230,7 @@ export function BlockEventsPageClient({
                 initialData.map((item) => (
                   <TableRow
                     key={item.id}
-                    className="hover:bg-muted/50 transition-colors"
+                    className="hover:bg-muted/60 transition-colors"
                   >
                     <TableCell className="max-w-sm truncate">
                       <span title={item.url}>{item.url}</span>
@@ -241,12 +240,12 @@ export function BlockEventsPageClient({
                     </TableCell>
                     <TableCell>
                       {item.userName ? (
-                        <div>
-                          <div className="text-sm font-medium">
+                        <div className="min-w-0">
+                          <div className="max-w-[16rem] truncate text-sm font-medium">
                             {item.userName}
                           </div>
                           {item.userEmail && (
-                            <div className="text-muted-foreground text-xs">
+                            <div className="text-muted-foreground max-w-[16rem] truncate text-xs">
                               {item.userEmail}
                             </div>
                           )}
@@ -263,8 +262,8 @@ export function BlockEventsPageClient({
               )}
             </TableBody>
           </Table>
-          <div className="flex items-center justify-between border-t px-4 py-4">
-            <div className="text-muted-foreground text-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t px-5 py-4">
+            <div className="text-muted-foreground text-[0.8125rem]">
               {t("table.totalRecords", { total: pagination.total })}
             </div>
             {pagination.totalPages > 1 && (

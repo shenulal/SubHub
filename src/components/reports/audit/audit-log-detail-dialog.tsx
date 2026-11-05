@@ -30,31 +30,27 @@ function getActionCategory(action: string): string {
   return action;
 }
 
+type BadgeTone = "secondary" | "success" | "info" | "primary" | "error";
+
 function getActionBadge(action: string, t: (key: string) => string) {
   const category = getActionCategory(action);
 
-  const actionConfig: Record<
-    string,
-    {
-      label: string;
-      variant: "default" | "secondary" | "destructive" | "outline";
-    }
-  > = {
-    CREATE: { label: t("reports.audit.actions.create"), variant: "default" },
-    UPDATE: { label: t("reports.audit.actions.update"), variant: "secondary" },
+  const actionConfig: Record<string, { label: string; variant: BadgeTone }> = {
+    CREATE: { label: t("reports.audit.actions.create"), variant: "success" },
+    UPDATE: { label: t("reports.audit.actions.update"), variant: "info" },
     DELETE: {
       label: t("reports.audit.actions.delete"),
-      variant: "destructive",
+      variant: "error",
     },
-    LOGIN: { label: t("reports.audit.actions.login"), variant: "outline" },
-    LOGOUT: { label: t("reports.audit.actions.logout"), variant: "outline" },
-    SYNC: { label: t("reports.audit.actions.sync"), variant: "secondary" },
-    EXPORT: { label: t("reports.audit.actions.export"), variant: "outline" },
-    IMPORT: { label: t("reports.audit.actions.import"), variant: "outline" },
+    LOGIN: { label: t("reports.audit.actions.login"), variant: "secondary" },
+    LOGOUT: { label: t("reports.audit.actions.logout"), variant: "secondary" },
+    SYNC: { label: t("reports.audit.actions.sync"), variant: "primary" },
+    EXPORT: { label: t("reports.audit.actions.export"), variant: "secondary" },
+    IMPORT: { label: t("reports.audit.actions.import"), variant: "secondary" },
   };
   const config = actionConfig[category] || {
     label: action,
-    variant: "outline" as const,
+    variant: "secondary" as const,
   };
   return <Badge variant={config.variant}>{config.label}</Badge>;
 }
@@ -115,7 +111,7 @@ export function AuditLogDetailDialog({
 
         <div className="space-y-6">
           {/* 기본 정보 */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid gap-4 sm:grid-cols-2 [&>div]:min-w-0">
             <div>
               <p className="text-muted-foreground text-sm">
                 {t("reports.audit.detail.fields.time")}
@@ -149,7 +145,9 @@ export function AuditLogDetailDialog({
               <p className="text-muted-foreground text-sm">
                 {t("reports.audit.detail.fields.entityId")}
               </p>
-              <p className="font-mono text-sm">{log.entityId || "-"}</p>
+              <p className="font-mono text-sm break-all">
+                {log.entityId || "-"}
+              </p>
             </div>
             <div>
               <p className="text-muted-foreground text-sm">
@@ -176,7 +174,7 @@ export function AuditLogDetailDialog({
               <p className="text-muted-foreground mb-2 text-sm">
                 {t("reports.audit.detail.fields.changes")}
               </p>
-              <pre className="bg-muted max-h-48 overflow-auto rounded-lg p-4 text-sm">
+              <pre className="bg-muted max-h-48 overflow-auto rounded-md p-4 text-sm">
                 {JSON.stringify(log.changes, null, 2)}
               </pre>
             </div>
@@ -188,7 +186,7 @@ export function AuditLogDetailDialog({
               <p className="text-muted-foreground mb-2 text-sm">
                 {t("reports.audit.detail.fields.metadata")}
               </p>
-              <pre className="bg-muted max-h-48 overflow-auto rounded-lg p-4 text-sm">
+              <pre className="bg-muted max-h-48 overflow-auto rounded-md p-4 text-sm">
                 {JSON.stringify(log.metadata, null, 2)}
               </pre>
             </div>

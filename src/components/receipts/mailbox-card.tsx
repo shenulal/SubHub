@@ -26,15 +26,14 @@ interface MailboxCardProps {
 }
 
 const STATUS_STYLES: Record<MailboxConnectionDTO["status"], string> = {
-  ACTIVE:
-    "bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200",
-  ERROR: "bg-amber-100 text-amber-900 dark:bg-amber-900/40 dark:text-amber-200",
-  REVOKED: "bg-rose-100 text-rose-800 dark:bg-rose-900/40 dark:text-rose-200",
+  ACTIVE: "border-transparent bg-success/15 text-success",
+  ERROR: "border-transparent bg-warning/15 text-warning",
+  REVOKED: "border-transparent bg-error/15 text-error",
 };
 
 const PROVIDER_STYLES: Record<MailboxConnectionDTO["provider"], string> = {
-  GMAIL: "from-red-500/15 to-amber-400/15 text-red-600 dark:text-red-300",
-  OUTLOOK: "from-sky-500/15 to-blue-600/15 text-sky-700 dark:text-sky-300",
+  GMAIL: "from-error/15 to-warning/15 text-error",
+  OUTLOOK: "from-info/15 to-primary/15 text-info",
 };
 
 export function MailboxCard({

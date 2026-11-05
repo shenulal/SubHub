@@ -15,6 +15,10 @@ import { useFormStatus } from "react-dom";
 
 type OtpState = "idle" | "sending" | "sent";
 
+/** Materio-sized OTP cell: 40px tall, full-radius box, primary focus ring. */
+const OTP_SLOT_CLASS =
+  "h-10 w-full rounded-md border text-[0.9375rem] font-medium shadow-none data-[active=true]:border-primary data-[active=true]:ring-primary/20";
+
 /** 부모 Server Component에서 주입하는 번역 문자열 */
 export interface LoginFormTranslations {
   email: string;
@@ -133,52 +137,54 @@ export function LoginForm({ action, translations: t }: LoginFormProps) {
   return (
     <form
       action={action}
-      className="space-y-4"
+      className="flex flex-col gap-5"
       data-testid="login-credentials-form"
     >
       {/* 이메일 + 발송/변경 버튼 */}
-      <div className="space-y-1.5">
-        <Label htmlFor="email">{t.email}</Label>
-        <div className="flex gap-2">
-          <Input
-            ref={emailRef}
-            id="email"
-            name="email"
-            type="email"
-            placeholder={t.emailPlaceholder}
-            autoComplete="email"
-            required
-            readOnly={emailDisabled}
-            tabIndex={emailDisabled ? -1 : undefined}
-            className={`flex-1 ${emailDisabled ? "pointer-events-none opacity-50" : ""}`}
-          />
-          {!isOtpSectionVisible ? (
+      <div className="flex flex-col gap-1.5">
+        <div className="flex min-h-5 items-center justify-between gap-2">
+          <Label htmlFor="email">{t.email}</Label>
+          {isOtpSectionVisible && (
             <Button
               type="button"
-              variant="outline"
-              onClick={handleSendOtp}
-              disabled={isSending}
-              className="shrink-0"
-            >
-              {isSending ? t.sendingOtp : t.sendOtp}
-            </Button>
-          ) : (
-            <Button
-              type="button"
-              variant="ghost"
+              variant="link"
+              size="sm"
               onClick={handleChangeEmail}
-              className="text-muted-foreground shrink-0"
+              className="text-primary h-auto shrink-0 px-0 py-0 text-[0.8125rem]"
               data-testid="change-email-btn"
             >
               {t.changeEmail}
             </Button>
           )}
         </div>
+        <Input
+          ref={emailRef}
+          id="email"
+          name="email"
+          type="email"
+          placeholder={t.emailPlaceholder}
+          autoComplete="email"
+          required
+          readOnly={emailDisabled}
+          tabIndex={emailDisabled ? -1 : undefined}
+          className={emailDisabled ? "bg-muted pointer-events-none" : ""}
+        />
       </div>
+
+      {!isOtpSectionVisible && (
+        <Button
+          type="button"
+          onClick={handleSendOtp}
+          disabled={isSending}
+          className="w-full"
+        >
+          {isSending ? t.sendingOtp : t.sendOtp}
+        </Button>
+      )}
 
       {/* Step 1 에러 */}
       {!isOtpSectionVisible && error && (
-        <p className="text-destructive text-sm" role="alert">
+        <p className="text-destructive text-[0.8125rem]" role="alert">
           {error}
         </p>
       )}
@@ -187,7 +193,7 @@ export function LoginForm({ action, translations: t }: LoginFormProps) {
       {isOtpSectionVisible && (
         <>
           <div
-            className="space-y-1.5"
+            className="flex flex-col gap-1.5"
             style={{ animation: "auth-fade-up 0.35s ease-out both" }}
             data-testid="otp-section"
           >
@@ -197,25 +203,26 @@ export function LoginForm({ action, translations: t }: LoginFormProps) {
               value={otpValue}
               onChange={setOtpValue}
               className="w-full"
+              containerClassName="w-full gap-2"
             >
-              <InputOTPGroup className="flex-1">
-                <InputOTPSlot index={0} />
+              <InputOTPGroup className="min-w-0 flex-1">
+                <InputOTPSlot index={0} className={OTP_SLOT_CLASS} />
               </InputOTPGroup>
-              <InputOTPGroup className="flex-1">
-                <InputOTPSlot index={1} />
+              <InputOTPGroup className="min-w-0 flex-1">
+                <InputOTPSlot index={1} className={OTP_SLOT_CLASS} />
               </InputOTPGroup>
-              <InputOTPGroup className="flex-1">
-                <InputOTPSlot index={2} />
+              <InputOTPGroup className="min-w-0 flex-1">
+                <InputOTPSlot index={2} className={OTP_SLOT_CLASS} />
               </InputOTPGroup>
-              <InputOTPSeparator />
-              <InputOTPGroup className="flex-1">
-                <InputOTPSlot index={3} />
+              <InputOTPSeparator className="text-muted-foreground shrink-0 [&_svg]:size-4" />
+              <InputOTPGroup className="min-w-0 flex-1">
+                <InputOTPSlot index={3} className={OTP_SLOT_CLASS} />
               </InputOTPGroup>
-              <InputOTPGroup className="flex-1">
-                <InputOTPSlot index={4} />
+              <InputOTPGroup className="min-w-0 flex-1">
+                <InputOTPSlot index={4} className={OTP_SLOT_CLASS} />
               </InputOTPGroup>
-              <InputOTPGroup className="flex-1">
-                <InputOTPSlot index={5} />
+              <InputOTPGroup className="min-w-0 flex-1">
+                <InputOTPSlot index={5} className={OTP_SLOT_CLASS} />
               </InputOTPGroup>
             </InputOTP>
             <input type="hidden" name="otp" value={otpValue} />
@@ -226,14 +233,14 @@ export function LoginForm({ action, translations: t }: LoginFormProps) {
               size="sm"
               onClick={handleSendOtp}
               disabled={resendButtonDisabled}
-              className="text-muted-foreground h-auto px-0 text-xs"
+              className="text-primary disabled:text-muted-foreground h-auto self-start px-0 py-0 text-[0.8125rem] whitespace-nowrap"
             >
               {resendButtonLabel}
             </Button>
           </div>
 
           {error && (
-            <p className="text-destructive text-sm" role="alert">
+            <p className="text-destructive text-[0.8125rem]" role="alert">
               {error}
             </p>
           )}

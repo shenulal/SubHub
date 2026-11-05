@@ -38,16 +38,16 @@ interface SubscriptionActivityProps {
 }
 
 const ICON_BY_PREFIX: Array<[string, typeof History, string]> = [
-  ["PAUSE", Pause, "text-amber-600"],
-  ["RESUME", Play, "text-emerald-600"],
+  ["PAUSE", Pause, "text-warning"],
+  ["RESUME", Play, "text-success"],
   ["ARCHIVE", Archive, "text-muted-foreground"],
-  ["RESTORE", Archive, "text-sky-600"],
-  ["CANCEL", Ban, "text-rose-600"],
-  ["UPLOAD_ATTACHMENT", FileText, "text-indigo-600"],
-  ["DELETE_ATTACHMENT", FileText, "text-rose-600"],
+  ["RESTORE", Archive, "text-info"],
+  ["CANCEL", Ban, "text-error"],
+  ["UPLOAD_ATTACHMENT", FileText, "text-primary"],
+  ["DELETE_ATTACHMENT", FileText, "text-error"],
   ["ADD_SUBSCRIPTION_COMMENT", MessageSquareText, "text-muted-foreground"],
-  ["DETECT_PRICE_CHANGE", TrendingUp, "text-amber-600"],
-  ["ACKNOWLEDGE_PRICE_CHANGE", TrendingUp, "text-emerald-600"],
+  ["DETECT_PRICE_CHANGE", TrendingUp, "text-warning"],
+  ["ACKNOWLEDGE_PRICE_CHANGE", TrendingUp, "text-success"],
 ];
 
 function iconFor(action: string): [typeof History, string] {
@@ -95,7 +95,7 @@ export function SubscriptionActivity({
     tStatus.has(value) ? tStatus(value) : value;
 
   return (
-    <Card className="border-border/50 rounded-sm shadow-sm">
+    <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <History className="text-muted-foreground h-4 w-4" />

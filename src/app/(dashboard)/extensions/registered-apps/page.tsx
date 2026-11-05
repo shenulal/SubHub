@@ -30,7 +30,7 @@ export default async function RegisteredAppsPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold tracking-tight">{t("pageTitle")}</h1>
+      <h1 className="text-foreground text-xl font-medium">{t("pageTitle")}</h1>
       <Suspense fallback={<PageSkeleton />}>
         <RegisteredAppsPageClient />
       </Suspense>

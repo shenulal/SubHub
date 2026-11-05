@@ -69,24 +69,20 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   }
 
   return (
-    <div
-      data-testid="login-page"
-      className="w-full"
-      style={{ animation: "auth-fade-up 0.6s ease-out 0.2s both" }}
-    >
+    <div data-testid="login-page" className="flex w-full flex-col gap-5">
       {/* 헤더 */}
-      <div className="mb-6 flex flex-col gap-1">
-        <h2 className="text-foreground text-2xl font-semibold">
+      <div className="flex flex-col gap-1">
+        <h2 className="text-foreground text-2xl font-medium">
           {t("auth.login.title")}
         </h2>
-        <p className="text-muted-foreground text-sm">
+        <p className="text-muted-foreground text-[0.9375rem]">
           {t("auth.login.description")}
         </p>
       </div>
 
       {/* 에러 메시지 */}
       {errorMessage && (
-        <Alert variant="destructive" className="mb-6">
+        <Alert variant="destructive">
           <AlertDescription>{errorMessage}</AlertDescription>
         </Alert>
       )}
@@ -99,15 +95,19 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           await signIn("google", { redirectTo: "/dashboard" });
         }}
       >
-        <Button type="submit" variant="outline" className="w-full grow">
-          <GoogleIcon className="mr-2.5 h-[18px] w-[18px]" />
+        <Button
+          type="submit"
+          variant="outline"
+          className="w-full whitespace-nowrap"
+        >
+          <GoogleIcon className="size-[18px] shrink-0" />
           {t("auth.login.social.google")}
         </Button>
       </form>
 
       {/* Apple 로그인 (APPLE_CLIENT_ID 설정 시에만) */}
       {appleEnabled && (
-        <div className="mt-3">
+        <div className="-mt-2">
           <AppleSignInButton
             label={t("platform.auth.continueWithApple")}
             action={async () => {
@@ -119,15 +119,15 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       )}
 
       {enforceSso ? (
-        <p className="text-muted-foreground mt-6 text-center text-sm">
+        <p className="text-muted-foreground text-center text-[0.9375rem]">
           {t("platform.auth.ssoOnly")}
         </p>
       ) : (
         <>
           {/* 구분선 */}
-          <div className="my-6 flex items-center gap-4">
+          <div className="flex items-center gap-3">
             <div className="bg-border h-px flex-1" />
-            <p className="text-muted-foreground text-sm">
+            <p className="text-foreground/70 shrink-0 text-[0.9375rem]">
               {t("auth.login.socialDivider")}
             </p>
             <div className="bg-border h-px flex-1" />

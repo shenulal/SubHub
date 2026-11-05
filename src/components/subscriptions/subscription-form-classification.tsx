@@ -58,14 +58,16 @@ function MasterSelect({
   items,
 }: MasterSelectProps) {
   return (
-    <div className="space-y-2">
-      <Label htmlFor={id}>{label}</Label>
+    <div className="min-w-0 space-y-2">
+      <Label htmlFor={id} className="truncate">
+        {label}
+      </Label>
       <Select
         value={value || NONE}
         onValueChange={(v) => onChange(v === NONE ? "" : v)}
         disabled={disabled}
       >
-        <SelectTrigger id={id}>
+        <SelectTrigger id={id} className="w-full min-w-0">
           <SelectValue placeholder={noneLabel} />
         </SelectTrigger>
         <SelectContent>
@@ -89,7 +91,7 @@ export function SubscriptionFormClassification({
   const t = useTranslations("lifecycle.form.classification");
 
   return (
-    <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
+    <Card>
       <CardHeader>
         <CardTitle>{t("title")}</CardTitle>
         <CardDescription>{t("description")}</CardDescription>
@@ -110,7 +112,7 @@ export function SubscriptionFormClassification({
           />
         </div>
 
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-3">
           <Controller
             control={control}
             name="paymentMethodId"

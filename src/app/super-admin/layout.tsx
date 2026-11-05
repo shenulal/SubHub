@@ -16,10 +16,12 @@ export default async function SuperAdminLayout({
 
   return (
     <ClientProviders>
-      <div className="flex h-screen overflow-hidden">
+      <div className="bg-background flex min-h-screen flex-col lg:h-screen lg:flex-row lg:overflow-hidden">
         <SuperAdminSidebar />
-        <main className="bg-background flex-1 overflow-y-auto">
-          <div className="p-8">{children}</div>
+        <main className="bg-background min-w-0 flex-1 lg:overflow-y-auto">
+          <div className="mx-auto w-full max-w-[1440px] px-4 py-6 sm:px-6">
+            {children}
+          </div>
         </main>
       </div>
     </ClientProviders>

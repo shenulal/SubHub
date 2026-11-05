@@ -232,12 +232,14 @@ export function BlockedAppsPageClient() {
         </Dialog>
       </div>
 
-      <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
-        <CardContent className="p-0">
+      <Card className="border-border dark:border-border gap-0 overflow-hidden border py-0 shadow-none">
+        <CardContent className="px-0">
           {items.length === 0 ? (
-            <div className="py-10 text-center">
-              <Ban className="text-muted-foreground/50 mx-auto h-12 w-12" />
-              <p className="text-muted-foreground mt-4">
+            <div className="flex flex-col items-center py-10 text-center">
+              <span className="tonal-neutral flex size-12 items-center justify-center rounded-md">
+                <Ban className="size-[22px]" />
+              </span>
+              <p className="text-muted-foreground mt-4 text-[0.9375rem]">
                 {t("blockedApps.emptyTitle")}
               </p>
               <p className="text-muted-foreground mt-2 text-sm">
@@ -262,21 +264,26 @@ export function BlockedAppsPageClient() {
                 {items.map((item) => (
                   <TableRow key={item.id}>
                     <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Ban className="text-destructive h-4 w-4" />
-                        <span className="font-medium">{item.name}</span>
+                      <div className="flex max-w-[240px] min-w-0 items-center gap-3">
+                        <span className="tonal-error flex size-8 shrink-0 items-center justify-center rounded-md">
+                          <Ban className="size-4" />
+                        </span>
+                        <span
+                          className="text-foreground truncate font-medium"
+                          title={item.name}
+                        >
+                          {item.name}
+                        </span>
                       </div>
                     </TableCell>
-                    <TableCell className="font-mono text-sm">
+                    <TableCell className="max-w-[220px] truncate font-mono text-sm">
                       {item.pattern}
                     </TableCell>
-                    <TableCell className="max-w-[200px] truncate">
+                    <TableCell className="text-muted-foreground max-w-[200px] truncate">
                       {item.reason || "-"}
                     </TableCell>
                     <TableCell>
-                      <Badge
-                        variant={item.enabled ? "destructive" : "secondary"}
-                      >
+                      <Badge variant={item.enabled ? "error" : "neutral"}>
                         {item.enabled
                           ? t("blockedApps.statusBlocking")
                           : t("blockedApps.statusInactive")}

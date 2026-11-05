@@ -40,10 +40,14 @@ export function ExtensionGuideContent({
   return (
     <div className="flex flex-1 flex-col items-center justify-center p-6">
       <div className="w-full max-w-2xl space-y-6">
-        <div className="space-y-2 text-center">
-          <Chrome className="text-primary mx-auto h-12 w-12" />
-          <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
-          <p className="text-muted-foreground">{t("description")}</p>
+        <div className="flex flex-col items-center gap-3 text-center">
+          <span className="tonal-primary flex size-16 items-center justify-center rounded-lg">
+            <Chrome className="size-8" />
+          </span>
+          <h1 className="text-foreground text-2xl font-medium">{t("title")}</h1>
+          <p className="text-muted-foreground max-w-xl text-[0.9375rem]">
+            {t("description")}
+          </p>
         </div>
 
         {deployMethod === "auto" && <AutoGuide t={t} />}
@@ -58,7 +62,7 @@ export function ExtensionGuideContent({
           />
         )}
 
-        <div className="flex justify-center gap-3">
+        <div className="flex flex-wrap justify-center gap-3">
           <Button variant="outline" onClick={() => router.push("/dashboard")}>
             <SkipForward className="mr-2 h-4 w-4" />
             {t("skipButton")}
@@ -75,21 +79,23 @@ export function ExtensionGuideContent({
 
 function StepItem({ number, text }: { number: number; text: string }) {
   return (
-    <div className="flex gap-3">
-      <div className="bg-primary text-primary-foreground flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-medium">
+    <div className="flex items-start gap-3">
+      <div className="tonal-primary flex size-7 shrink-0 items-center justify-center rounded-md text-xs font-medium tabular-nums">
         {number}
       </div>
-      <p className="text-muted-foreground pt-0.5 text-sm">{text}</p>
+      <p className="text-foreground/80 min-w-0 pt-1 text-[0.9375rem] leading-snug">
+        {text}
+      </p>
     </div>
   );
 }
 
 function AutoGuide({ t }: { t: ReturnType<typeof useTranslations> }) {
   return (
-    <Card className="border-border/50 shadow-sm transition-shadow hover:shadow-md">
+    <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Monitor className="h-5 w-5" />
+          <Monitor className="text-primary size-5" />
           {t("auto.title")}
         </CardTitle>
         <CardDescription>{t("auto.description")}</CardDescription>
@@ -111,10 +117,10 @@ function WebstoreGuide({
   webstoreUrl: string;
 }) {
   return (
-    <Card className="border-border/50 shadow-sm transition-shadow hover:shadow-md">
+    <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Chrome className="h-5 w-5" />
+          <Chrome className="text-primary size-5" />
           {t("webstore.title")}
         </CardTitle>
         <CardDescription>{t("webstore.description")}</CardDescription>
@@ -148,10 +154,10 @@ function ManualGuide({
   latestBuildVersion: string | null;
 }) {
   return (
-    <Card className="border-border/50 shadow-sm transition-shadow hover:shadow-md">
+    <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Download className="h-5 w-5" />
+          <Download className="text-primary size-5" />
           {t("manual.title")}
         </CardTitle>
         <CardDescription>{t("manual.description")}</CardDescription>

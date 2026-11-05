@@ -8,7 +8,8 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { useTranslations } from "next-intl";
+import { DEFAULT_BASE_CURRENCY, formatMoney } from "@/lib/fx/convert";
+import { useLocale, useTranslations } from "next-intl";
 import { Area, AreaChart, CartesianGrid, XAxis, YAxis } from "recharts";
 
 export interface MonthlyBarData {
@@ -23,11 +24,13 @@ interface CostBarChartProps {
   data: MonthlyBarData[];
   period: string;
   onPeriodChange?: (period: string) => void;
+  /** Organisation base currency (trend amounts are already in it). */
+  currency?: string;
 }
 
-function formatCurrency(amount: number): string {
-  return `₩${new Intl.NumberFormat("ko-KR").format(amount)}`;
-}
+/** Shared Materio segmented-control item style (one line, fixed width). */
+const PERIOD_ITEM_CLASSES =
+  "text-muted-foreground data-[state=on]:bg-card data-[state=on]:text-primary h-7 w-12 shrink-0 rounded-sm px-3 text-xs whitespace-nowrap data-[state=on]:font-medium data-[state=on]:shadow-xs";
 
 function formatMonthShort(yearMonth: string): string {
   const [, month] = yearMonth.split("-").map(Number);
@@ -52,8 +55,12 @@ export function CostBarChart({
   data,
   period,
   onPeriodChange,
+  currency = DEFAULT_BASE_CURRENCY,
 }: CostBarChartProps) {
   const t = useTranslations("dashboardV2Cost.chart");
+  const locale = useLocale();
+  const formatCurrency = (amount: number) =>
+    formatMoney(amount, currency, locale);
 
   const monthsToShow = parseInt(period);
   const chartData = data.slice(-monthsToShow);
@@ -66,33 +73,29 @@ export function CostBarChart({
   } satisfies ChartConfig;
 
   return (
-    <Card className="bg-card flex h-[400px] flex-col gap-5 overflow-hidden rounded border-none p-5 shadow-[0px_2px_8px_0px_rgba(0,0,0,0.1)]">
+    <Card className="h-[400px] gap-4 overflow-hidden px-5">
       {/* 헤더: 타이틀 + 기간 탭 */}
-      <div className="flex items-center justify-between">
-        <p className="text-foreground text-base font-semibold">{t("title")}</p>
+      <div className="flex min-w-0 items-center justify-between gap-3">
+        <p
+          className="text-foreground min-w-0 truncate text-lg font-medium"
+          title={t("title")}
+        >
+          {t("title")}
+        </p>
         {onPeriodChange && (
           <ToggleGroup
             type="single"
             value={period}
             onValueChange={(value) => value && onPeriodChange(value)}
-            className="bg-purple-gray gap-0 rounded p-[3px]"
+            className="bg-muted shrink-0 gap-0 rounded-md p-[3px]"
           >
-            <ToggleGroupItem
-              value="3"
-              className="text-muted-foreground data-[state=on]:bg-card data-[state=on]:text-purple-primary w-[50px] rounded px-3 py-1 text-xs data-[state=on]:font-semibold data-[state=on]:shadow-sm"
-            >
+            <ToggleGroupItem value="3" className={PERIOD_ITEM_CLASSES}>
               {t("period3M")}
             </ToggleGroupItem>
-            <ToggleGroupItem
-              value="6"
-              className="text-muted-foreground data-[state=on]:bg-card data-[state=on]:text-purple-primary w-[50px] rounded px-3 py-1 text-xs data-[state=on]:font-semibold data-[state=on]:shadow-sm"
-            >
+            <ToggleGroupItem value="6" className={PERIOD_ITEM_CLASSES}>
               {t("period6M")}
             </ToggleGroupItem>
-            <ToggleGroupItem
-              value="12"
-              className="text-muted-foreground data-[state=on]:bg-card data-[state=on]:text-purple-primary w-[50px] rounded px-3 py-1 text-xs data-[state=on]:font-semibold data-[state=on]:shadow-sm"
-            >
+            <ToggleGroupItem value="12" className={PERIOD_ITEM_CLASSES}>
               {t("period1Y")}
             </ToggleGroupItem>
           </ToggleGroup>
@@ -112,20 +115,20 @@ export function CostBarChart({
               <linearGradient id="saasCostGradient" x1="0" y1="0" x2="0" y2="1">
                 <stop
                   offset="0%"
-                  stopColor="rgba(100, 116, 243, 0.15)"
-                  stopOpacity={1}
+                  stopColor="var(--chart-1)"
+                  stopOpacity={0.24}
                 />
                 <stop
                   offset="100%"
-                  stopColor="rgba(100, 116, 243, 0)"
-                  stopOpacity={1}
+                  stopColor="var(--chart-1)"
+                  stopOpacity={0}
                 />
               </linearGradient>
             </defs>
             <CartesianGrid
               horizontal={true}
               vertical={false}
-              stroke="rgba(100, 116, 243, 0.15)"
+              stroke="var(--border)"
               strokeDasharray="0"
             />
             <XAxis

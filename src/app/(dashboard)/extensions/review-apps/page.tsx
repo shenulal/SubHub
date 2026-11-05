@@ -34,7 +34,7 @@ export default async function ReviewAppsPage() {
   const t = await getTranslations("extensions.reviewApps.page");
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold tracking-tight">{t("title")}</h1>
+      <h1 className="text-foreground text-xl font-medium">{t("title")}</h1>
       <Suspense fallback={<PageSkeleton />}>
         <ReviewAppsPageClient />
       </Suspense>

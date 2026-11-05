@@ -13,8 +13,13 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { useTranslations } from "next-intl";
+import { DEFAULT_BASE_CURRENCY, formatMoney } from "@/lib/fx/convert";
+import { cn } from "@/lib/utils";
+import { Trophy } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
+
+import { DashboardEmptyState } from "./dashboard-empty-state";
 
 export interface CostAppData {
   id: string;
@@ -33,24 +38,29 @@ interface CostAppsTableProps {
   period: string;
   onPeriodChange: (period: string) => void;
   className?: string;
+  /** Organisation base currency (costs are already in it). */
+  currency?: string;
 }
 
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat("ko-KR").format(amount);
-}
+/** Shared Materio segmented-control item style (one line, fixed width). */
+const PERIOD_ITEM_CLASSES =
+  "text-muted-foreground data-[state=on]:bg-card data-[state=on]:text-primary h-7 w-12 shrink-0 rounded-sm px-3 text-xs whitespace-nowrap data-[state=on]:font-medium data-[state=on]:shadow-xs";
+
+const HEAD_CLASSES =
+  "text-muted-foreground h-10 bg-transparent px-2 text-xs font-medium";
 
 function getGradeColor(grade: string) {
   switch (grade) {
     case "A":
-      return "bg-success-muted text-success-muted-foreground";
+      return "tonal-success";
     case "B":
-      return "bg-info-muted text-info-muted-foreground";
+      return "tonal-info";
     case "C":
-      return "bg-warning-muted text-warning-muted-foreground";
+      return "tonal-warning";
     case "D":
-      return "bg-destructive-muted text-destructive-muted-foreground";
+      return "tonal-error";
     default:
-      return "bg-secondary text-secondary-foreground";
+      return "tonal-neutral";
   }
 }
 
@@ -60,14 +70,14 @@ function getAppInitial(name: string): string {
 
 function getAppColor(name: string): string {
   const colors: Record<string, string> = {
-    S: "bg-chart-4/20 text-chart-4",
-    N: "bg-primary text-primary-foreground",
-    F: "bg-chart-5/20 text-chart-5",
-    J: "bg-info-muted text-info-muted-foreground",
-    Z: "bg-info text-info-foreground",
+    S: "tonal-warning",
+    N: "tonal-primary",
+    F: "tonal-error",
+    J: "tonal-info",
+    Z: "tonal-success",
   };
   const initial = getAppInitial(name);
-  return colors[initial] || "bg-secondary text-secondary-foreground";
+  return colors[initial] || "tonal-neutral";
 }
 
 function periodToDateRange(period: string): {
@@ -85,11 +95,10 @@ function RankBadge({ rank }: { rank: number }) {
   const isFirst = rank === 1;
   return (
     <div
-      className={`flex size-6 items-center justify-center rounded-sm text-sm font-semibold ${
-        isFirst
-          ? "bg-purple-primary text-white"
-          : "bg-purple-tertiary text-purple-primary"
-      }`}
+      className={cn(
+        "flex size-6 items-center justify-center rounded-sm text-xs font-medium tabular-nums",
+        isFirst ? "bg-primary text-primary-foreground" : "tonal-primary"
+      )}
     >
       {rank}
     </div>
@@ -101,14 +110,15 @@ function UsageBars({ efficiency }: { efficiency: number }) {
   const filledBars = Math.ceil(efficiency / 20);
   return (
     <div className="flex items-center gap-1.5">
-      <span className="text-sm">{efficiency}%</span>
+      <span className="w-9 text-right text-sm tabular-nums">{efficiency}%</span>
       <div className="flex gap-0.5">
         {[1, 2, 3, 4, 5].map((i) => (
           <div
             key={i}
-            className={`h-3 w-1 rounded-sm ${
-              i <= filledBars ? "bg-purple-primary" : "bg-purple-tertiary"
-            }`}
+            className={cn(
+              "h-3 w-1 rounded-sm",
+              i <= filledBars ? "bg-primary" : "bg-primary/20"
+            )}
           />
         ))}
       </div>
@@ -121,9 +131,12 @@ export function CostAppsTable({
   period,
   onPeriodChange,
   className,
+  currency = DEFAULT_BASE_CURRENCY,
 }: CostAppsTableProps) {
   const t = useTranslations("dashboardV2Cost.table");
   const tChart = useTranslations("dashboardV2Cost.chart");
+  const tEmpty = useTranslations("dashboardV2Seat.department");
+  const locale = useLocale();
   const [data, setData] = useState<CostAppData[]>(initialData);
   const [isPending, startTransition] = useTransition();
   const isInitialMount = useRef(true);
@@ -164,130 +177,139 @@ export function CostAppsTable({
   const filteredData = data.slice(0, 10);
 
   return (
-    <Card
-      className={`bg-card flex h-[400px] flex-col gap-5 rounded border-none p-5 shadow-[0px_2px_8px_0px_rgba(0,0,0,0.1)] ${className ?? ""}`}
-    >
+    <Card className={cn("h-[400px] gap-4 px-5", className)}>
       {/* 헤더: 타이틀 + 기간 탭 */}
-      <div className="flex items-center justify-between">
-        <p className="text-foreground text-base font-semibold">{t("title")}</p>
+      <div className="flex min-w-0 items-center justify-between gap-3">
+        <p
+          className="text-foreground min-w-0 truncate text-lg font-medium"
+          title={t("title")}
+        >
+          {t("title")}
+        </p>
         <ToggleGroup
           type="single"
           value={period}
           onValueChange={(value) => value && onPeriodChange(value)}
-          className="bg-purple-gray gap-0 rounded p-[3px]"
+          className="bg-muted shrink-0 gap-0 rounded-md p-[3px]"
         >
-          <ToggleGroupItem
-            value="3"
-            className="text-muted-foreground data-[state=on]:bg-card data-[state=on]:text-purple-primary w-[50px] rounded px-3 py-1 text-xs data-[state=on]:font-semibold data-[state=on]:shadow-sm"
-          >
+          <ToggleGroupItem value="3" className={PERIOD_ITEM_CLASSES}>
             {tChart("period3M")}
           </ToggleGroupItem>
-          <ToggleGroupItem
-            value="6"
-            className="text-muted-foreground data-[state=on]:bg-card data-[state=on]:text-purple-primary w-[50px] rounded px-3 py-1 text-xs data-[state=on]:font-semibold data-[state=on]:shadow-sm"
-          >
+          <ToggleGroupItem value="6" className={PERIOD_ITEM_CLASSES}>
             {tChart("period6M")}
           </ToggleGroupItem>
-          <ToggleGroupItem
-            value="12"
-            className="text-muted-foreground data-[state=on]:bg-card data-[state=on]:text-purple-primary w-[50px] rounded px-3 py-1 text-xs data-[state=on]:font-semibold data-[state=on]:shadow-sm"
-          >
+          <ToggleGroupItem value="12" className={PERIOD_ITEM_CLASSES}>
             {tChart("period1Y")}
           </ToggleGroupItem>
         </ToggleGroup>
       </div>
 
       {/* 테이블 영역 */}
-      <div
-        className={`flex-1 overflow-y-auto transition-opacity [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden ${isPending ? "opacity-50" : ""}`}
-      >
-        <Table>
-          <TableHeader>
-            <TableRow className="border-none hover:bg-transparent">
-              <TableHead className="text-muted-foreground w-[60px] px-2 py-2 text-center text-sm font-medium">
-                {t("rank")}
-              </TableHead>
-              <TableHead className="text-muted-foreground px-2 py-2 text-sm font-medium">
-                {t("appName")}
-              </TableHead>
-              <TableHead className="text-muted-foreground px-2 py-2 text-sm font-medium">
-                {t("monthlyCost")}
-              </TableHead>
-              <TableHead className="text-muted-foreground px-2 py-2 text-sm font-medium">
-                {t("licenses")}
-              </TableHead>
-              <TableHead className="text-muted-foreground px-2 py-2 text-sm font-medium">
-                {t("usageEfficiency")}
-              </TableHead>
-              <TableHead className="text-muted-foreground px-2 py-2 text-center text-sm font-medium">
-                {t("grade")}
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {filteredData.map((app, index) => {
-              const rank = index + 1;
-              return (
-                <TableRow
-                  key={app.id}
-                  className="hover:bg-purple-gray h-[52px] border-none transition-colors"
-                >
-                  <TableCell className="px-2 py-2 text-center">
-                    <div className="flex justify-center">
-                      <RankBadge rank={rank} />
-                    </div>
-                  </TableCell>
-                  <TableCell className="px-2 py-2">
-                    <div className="flex items-center gap-3">
-                      <Avatar className="h-8 w-8 rounded-md">
-                        {app.logoUrl ? (
-                          <AvatarImage src={app.logoUrl} alt={app.name} />
-                        ) : null}
-                        <AvatarFallback
-                          className={`rounded-md text-sm font-semibold ${getAppColor(app.name)}`}
+      {filteredData.length === 0 ? (
+        <DashboardEmptyState icon={Trophy} message={tEmpty("noData")} />
+      ) : (
+        <div
+          className={cn(
+            "min-h-0 flex-1 overflow-y-auto transition-opacity [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+            isPending && "opacity-50"
+          )}
+        >
+          <Table>
+            <TableHeader>
+              <TableRow className="border-none hover:bg-transparent">
+                <TableHead className={cn(HEAD_CLASSES, "w-12 text-center")}>
+                  {t("rank")}
+                </TableHead>
+                <TableHead className={HEAD_CLASSES}>{t("appName")}</TableHead>
+                <TableHead className={HEAD_CLASSES}>
+                  {t("monthlyCost")}
+                </TableHead>
+                <TableHead className={HEAD_CLASSES}>{t("licenses")}</TableHead>
+                <TableHead className={HEAD_CLASSES}>
+                  {t("usageEfficiency")}
+                </TableHead>
+                <TableHead className={cn(HEAD_CLASSES, "text-center")}>
+                  {t("grade")}
+                </TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredData.map((app, index) => {
+                const rank = index + 1;
+                return (
+                  <TableRow
+                    key={app.id}
+                    className="hover:bg-muted h-[52px] border-none transition-colors"
+                  >
+                    <TableCell className="px-2 py-2 text-center">
+                      <div className="flex justify-center">
+                        <RankBadge rank={rank} />
+                      </div>
+                    </TableCell>
+                    <TableCell className="px-2 py-2">
+                      <div className="flex min-w-0 items-center gap-3">
+                        <Avatar className="size-8 shrink-0 rounded-md">
+                          {app.logoUrl ? (
+                            <AvatarImage src={app.logoUrl} alt={app.name} />
+                          ) : null}
+                          <AvatarFallback className="rounded-md bg-transparent text-sm font-medium">
+                            <span
+                              className={cn(
+                                "flex size-full items-center justify-center rounded-md",
+                                getAppColor(app.name)
+                              )}
+                            >
+                              {getAppInitial(app.name)}
+                            </span>
+                          </AvatarFallback>
+                        </Avatar>
+                        <span
+                          className="text-foreground max-w-[11rem] truncate text-sm font-medium"
+                          title={app.name}
                         >
-                          {getAppInitial(app.name)}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span className="text-foreground text-sm font-medium">
-                        {app.name}
-                      </span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-foreground px-2 py-2 text-sm font-medium">
-                    ₩{formatCurrency(app.monthlyCost)}
-                  </TableCell>
-                  <TableCell className="text-muted-foreground px-2 py-2 text-sm">
-                    {app.hasSeatData ? (
-                      `${app.usedLicenses} / ${app.totalLicenses}`
-                    ) : (
-                      <span className="text-muted-foreground">-</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="px-2 py-2">
-                    {app.hasSeatData ? (
-                      <UsageBars efficiency={app.usageEfficiency} />
-                    ) : (
-                      <span className="text-muted-foreground text-sm">-</span>
-                    )}
-                  </TableCell>
-                  <TableCell className="px-2 py-2 text-center">
-                    {app.hasSeatData ? (
-                      <Badge
-                        className={`${getGradeColor(app.grade)} text-xs font-semibold`}
-                      >
-                        {app.grade}
-                      </Badge>
-                    ) : (
-                      <span className="text-muted-foreground text-sm">-</span>
-                    )}
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </div>
+                          {app.name}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-foreground px-2 py-2 text-sm font-medium tabular-nums">
+                      {formatMoney(app.monthlyCost, currency, locale)}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground px-2 py-2 text-sm tabular-nums">
+                      {app.hasSeatData ? (
+                        `${app.usedLicenses} / ${app.totalLicenses}`
+                      ) : (
+                        <span className="text-muted-foreground">-</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="px-2 py-2">
+                      {app.hasSeatData ? (
+                        <UsageBars efficiency={app.usageEfficiency} />
+                      ) : (
+                        <span className="text-muted-foreground text-sm">-</span>
+                      )}
+                    </TableCell>
+                    <TableCell className="px-2 py-2 text-center">
+                      {app.hasSeatData ? (
+                        <Badge
+                          variant="outline"
+                          className={cn(
+                            getGradeColor(app.grade),
+                            "border-transparent text-xs font-medium"
+                          )}
+                        >
+                          {app.grade}
+                        </Badge>
+                      ) : (
+                        <span className="text-muted-foreground text-sm">-</span>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
+      )}
     </Card>
   );
 }

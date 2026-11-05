@@ -37,7 +37,7 @@ export default async function WorkspaceSettingsGroupPage({
   ]);
   if (!result.success || !result.data) {
     return (
-      <div className="border-destructive/40 bg-destructive/10 text-destructive rounded-md border p-4 text-sm">
+      <div className="tonal-error rounded-md p-4 text-[0.9375rem]">
         {result.error}
       </div>
     );

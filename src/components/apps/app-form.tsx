@@ -232,7 +232,7 @@ export function AppForm({
       {/* 1컬럼 레이아웃 */}
       <div className="space-y-6">
         {/* 기본 정보 카드 (상태, 태그, 담당자 통합) */}
-        <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
+        <Card>
           <CardHeader>
             <CardTitle>{t("apps.form.create.title")}</CardTitle>
           </CardHeader>
@@ -619,7 +619,7 @@ export function AppForm({
         </Card>
 
         {/* 앱 로고 카드 */}
-        <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
+        <Card>
           <CardHeader>
             <CardTitle>{t("apps.form.fields.logo")}</CardTitle>
           </CardHeader>

@@ -298,7 +298,7 @@ export function FieldMappingDialog({
         {/* 매핑 상태 요약 */}
         <div className="flex items-center gap-2 text-sm">
           {requiredFieldsMapped ? (
-            <Badge variant="default" className="bg-green-600">
+            <Badge variant="success">
               <Check className="mr-1 h-3 w-3" />
               필수 필드 매핑 완료
             </Badge>

@@ -45,41 +45,47 @@ function RoleCard({
   return (
     <article
       className={cn(
-        "group bg-card relative flex flex-col gap-3 rounded-lg border p-4 transition-shadow hover:shadow-sm",
+        "group hover:border-primary/50 relative flex min-w-0 flex-col gap-3 rounded-md border p-4 transition-colors",
         role.isSystem && "border-dashed"
       )}
     >
-      <header className="flex items-start justify-between gap-2">
-        <button type="button" onClick={onOpen} className="text-left">
-          <h4 className="flex items-center gap-1.5 font-semibold">
+      <header className="flex min-w-0 items-start justify-between gap-2">
+        <button
+          type="button"
+          onClick={onOpen}
+          className="min-w-0 text-left whitespace-normal"
+        >
+          <h4 className="text-foreground flex min-w-0 items-center gap-1.5 text-[0.9375rem] font-medium">
             {role.isSystem && (
-              <Lock className="text-muted-foreground h-3.5 w-3.5" />
+              <Lock className="text-muted-foreground size-3.5 shrink-0" />
             )}
-            {role.name}
+            <span className="truncate" title={role.name}>
+              {role.name}
+            </span>
           </h4>
           {role.description && (
-            <p className="text-muted-foreground mt-0.5 line-clamp-2 text-xs">
+            <p className="text-muted-foreground mt-0.5 line-clamp-2 text-[0.8125rem]">
               {role.description}
             </p>
           )}
         </button>
         <Badge
-          variant={role.isSystem ? "secondary" : "outline"}
+          variant={role.isSystem ? "secondary" : "primary"}
           className="shrink-0 text-[10px]"
         >
           {role.isSystem ? t("system") : t("custom")}
         </Badge>
       </header>
-      <div className="text-muted-foreground mt-auto flex items-center justify-between text-xs">
-        <span className="flex items-center gap-1">
-          <Users className="h-3.5 w-3.5" />
+      <div className="text-muted-foreground mt-auto flex min-w-0 items-center justify-between gap-2 text-[0.8125rem]">
+        <span className="flex min-w-0 items-center gap-1 truncate">
+          <Users className="size-3.5 shrink-0" />
           {t("memberCount", { count: role.memberCount })}
         </span>
-        <span className="tabular-nums">
+        <span className="shrink-0 tabular-nums">
           {t("grantCount", { count: role.permissionKeys.length })}
         </span>
       </div>
-      <div className="flex gap-1 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
+      <div className="-mx-1 -mb-1 flex flex-wrap gap-1 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
         <Button variant="ghost" size="sm" onClick={onOpen}>
           {role.isSystem ? t("view") : t("edit")}
         </Button>
@@ -87,7 +93,7 @@ function RoleCard({
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="ghost" size="sm" disabled={busy}>
-                <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
+                <RotateCcw className="size-3.5" />
                 {t("resetTemplate")}
               </Button>
             </AlertDialogTrigger>
@@ -117,7 +123,7 @@ function RoleCard({
                 className="text-destructive hover:text-destructive"
                 disabled={busy}
               >
-                <Trash2 className="mr-1.5 h-3.5 w-3.5" />
+                <Trash2 className="size-3.5" />
                 {t("delete")}
               </Button>
             </AlertDialogTrigger>
@@ -169,25 +175,28 @@ export function RolesPageClient({ payload }: { payload: RolesPagePayload }) {
   return (
     <div className="space-y-8">
       <section>
-        <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-          <div>
-            <h3 className="text-base font-semibold tracking-tight">
+        <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+          <div className="min-w-0 space-y-1">
+            <h3 className="text-foreground text-lg leading-snug font-medium">
               {t("title")}
             </h3>
-            <p className="text-muted-foreground text-sm">{t("description")}</p>
+            <p className="text-muted-foreground text-[0.8125rem]">
+              {t("description")}
+            </p>
           </div>
           <Button
             size="sm"
+            className="shrink-0"
             onClick={() => {
               setEditing(null);
               setOpen(true);
             }}
           >
-            <Plus className="mr-2 h-4 w-4" />
+            <Plus className="size-4" />
             {t("createRole")}
           </Button>
         </div>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {payload.roles.map((role) => (
             <RoleCard
               key={role.id}
@@ -206,12 +215,12 @@ export function RolesPageClient({ payload }: { payload: RolesPagePayload }) {
         </div>
       </section>
 
-      <section>
-        <div className="mb-4">
-          <h3 className="text-base font-semibold tracking-tight">
+      <section className="border-t pt-6">
+        <div className="mb-5 space-y-1">
+          <h3 className="text-foreground text-lg leading-snug font-medium">
             {t("membersTitle")}
           </h3>
-          <p className="text-muted-foreground text-sm">
+          <p className="text-muted-foreground text-[0.8125rem]">
             {t("membersDescription")}
           </p>
         </div>

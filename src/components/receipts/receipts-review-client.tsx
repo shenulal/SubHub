@@ -148,12 +148,12 @@ export function ReceiptsReviewClient({
   const to = Math.min(page.total, page.page * page.limit);
 
   return (
-    <div className="space-y-5">
-      <header className="flex flex-col gap-1">
-        <h1 className="text-xl font-semibold tracking-tight">
+    <div className="min-w-0 space-y-6">
+      <header className="flex min-w-0 flex-col gap-1">
+        <h1 className="text-foreground text-2xl font-medium">
           {t("queue.title")}
         </h1>
-        <p className="text-muted-foreground max-w-2xl text-sm">
+        <p className="text-muted-foreground max-w-2xl text-[0.9375rem]">
           {t("queue.subtitle")}
         </p>
       </header>
@@ -167,10 +167,10 @@ export function ReceiptsReviewClient({
         }}
       />
 
-      <div className="flex flex-col gap-2 md:flex-row md:items-center">
-        <div className="relative flex-1">
+      <div className="border-border flex flex-col gap-2 rounded-md border p-4 md:flex-row md:flex-wrap md:items-center">
+        <div className="relative min-w-0 flex-1 md:min-w-[16rem]">
           <Search
-            className="text-muted-foreground absolute top-2.5 left-2.5 h-4 w-4"
+            className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2"
             aria-hidden
           />
           <Input
@@ -181,7 +181,7 @@ export function ReceiptsReviewClient({
             }}
             placeholder={t("queue.filters.search")}
             aria-label={t("queue.filters.search")}
-            className="pl-8"
+            className="pl-9"
           />
         </div>
         <Select
@@ -192,7 +192,7 @@ export function ReceiptsReviewClient({
           }}
         >
           <SelectTrigger
-            className="md:w-56"
+            className="w-full md:w-56"
             aria-label={t("queue.filters.mailbox")}
           >
             <SelectValue placeholder={t("queue.filters.mailbox")} />
@@ -216,7 +216,7 @@ export function ReceiptsReviewClient({
           }}
         >
           <SelectTrigger
-            className="md:w-44"
+            className="w-full md:w-44"
             aria-label={t("queue.filters.minConfidence")}
           >
             <SelectValue placeholder={t("queue.filters.minConfidence")} />
@@ -235,7 +235,7 @@ export function ReceiptsReviewClient({
         {hasFilters && (
           <Button
             variant="ghost"
-            size="sm"
+            className="text-muted-foreground hover:text-primary h-10 shrink-0 whitespace-nowrap"
             onClick={() => {
               setSearch("");
               setMailboxId(ALL);
@@ -243,14 +243,14 @@ export function ReceiptsReviewClient({
               setPageNo(1);
             }}
           >
-            <X className="mr-1 h-4 w-4" aria-hidden />
+            <X className="size-4" aria-hidden />
             {t("queue.filters.clear")}
           </Button>
         )}
       </div>
 
       {selected.size > 0 && (
-        <div className="bg-primary/5 border-primary/20 dark:bg-primary/10 flex items-center justify-between rounded-md border px-3 py-2 text-sm">
+        <div className="tonal-primary flex flex-wrap items-center justify-between gap-2 rounded-md px-4 py-2.5 text-[0.9375rem]">
           <span className="font-medium">
             {t("queue.bulk.selected", { count: selected.size })}
           </span>
@@ -275,7 +275,7 @@ export function ReceiptsReviewClient({
         </div>
       )}
 
-      <div className="border-border/60 relative overflow-x-auto rounded-lg border">
+      <div className="border-border relative overflow-x-auto rounded-md border">
         {isPending && (
           <div className="bg-background/60 absolute inset-0 z-10 flex items-center justify-center backdrop-blur-[1px]">
             <Loader2
@@ -286,7 +286,7 @@ export function ReceiptsReviewClient({
         )}
         <Table>
           <TableHeader>
-            <TableRow className="bg-muted/40 hover:bg-muted/40">
+            <TableRow className="bg-muted/60 hover:bg-muted/60">
               <TableHead className="w-10">
                 {openItems.length > 0 && (
                   <Checkbox
@@ -339,7 +339,7 @@ export function ReceiptsReviewClient({
       </div>
 
       {page.total > page.limit && (
-        <div className="text-muted-foreground flex items-center justify-between text-sm">
+        <div className="text-muted-foreground flex flex-wrap items-center justify-between gap-3 text-[0.8125rem]">
           <span>
             {t("queue.pagination.summary", { from, to, total: page.total })}
           </span>
@@ -402,11 +402,11 @@ function EmptyQueue({
   const t = useTranslations("receipts.queue.empty");
   return (
     <div className="flex flex-col items-center gap-2 px-6 py-14 text-center">
-      <div className="bg-muted text-muted-foreground flex h-12 w-12 items-center justify-center rounded-full">
-        <Inbox className="h-6 w-6" aria-hidden />
+      <div className="tonal-neutral flex size-12 items-center justify-center rounded-md">
+        <Inbox className="size-6" aria-hidden />
       </div>
-      <p className="font-medium">{t("title")}</p>
-      <p className="text-muted-foreground max-w-sm text-sm">
+      <p className="text-foreground font-medium">{t("title")}</p>
+      <p className="text-muted-foreground max-w-sm text-[0.8125rem]">
         {hasFilters
           ? t("filtered")
           : hasMailboxes

@@ -23,6 +23,8 @@ import {
 import { useTranslations } from "next-intl";
 import Image from "next/image";
 
+import { APP_STATUS_TONE } from "./app-status-tone";
+
 interface AppDetailProps {
   app: AppDetailType;
   canEdit?: boolean;
@@ -60,13 +62,13 @@ export function AppDetail({ app, canEdit = true }: AppDetailProps) {
       </KpiCardsGrid>
 
       {/* 2컬럼 레이아웃 - 레퍼런스: pages-products-1.png */}
-      <div className="grid gap-6 lg:grid-cols-3">
+      <div className="grid min-w-0 gap-6 lg:grid-cols-3">
         {/* 좌측 (span-2): 메인 콘텐츠 */}
-        <div className="space-y-6 lg:col-span-2">
+        <div className="min-w-0 space-y-6 lg:col-span-2">
           {/* 앱 로고 및 기본 정보 카드 */}
-          <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
-            <CardContent className="p-6">
-              <div className="flex gap-6">
+          <Card>
+            <CardContent>
+              <div className="flex min-w-0 flex-col gap-6 sm:flex-row">
                 {/* 로고 */}
                 <div className="shrink-0">
                   {logoUrl ? (
@@ -75,22 +77,25 @@ export function AppDetail({ app, canEdit = true }: AppDetailProps) {
                       alt={app.name}
                       width={120}
                       height={120}
-                      className="rounded-xl border"
+                      className="size-[120px] rounded-lg border object-contain p-2"
                     />
                   ) : (
-                    <div className="bg-muted flex h-[120px] w-[120px] items-center justify-center rounded-xl border text-4xl font-semibold">
+                    <div className="tonal-primary flex size-[120px] items-center justify-center rounded-lg text-4xl font-medium">
                       {app.name.charAt(0).toUpperCase()}
                     </div>
                   )}
                 </div>
                 {/* 정보 */}
-                <div className="flex-1 space-y-3">
-                  <div className="flex items-center gap-2">
-                    <Badge variant={statusMeta.badgeVariant}>
+                <div className="min-w-0 flex-1 space-y-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge
+                      variant="outline"
+                      className={APP_STATUS_TONE[app.status]}
+                    >
                       {statusMeta.label}
                     </Badge>
                     {app.category && (
-                      <Badge variant="outline">{app.category}</Badge>
+                      <Badge variant="secondary">{app.category}</Badge>
                     )}
                   </div>
                   {app.customWebsite && (
@@ -98,29 +103,32 @@ export function AppDetail({ app, canEdit = true }: AppDetailProps) {
                       href={app.customWebsite}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="text-primary inline-flex items-center text-sm hover:underline"
+                      className="text-primary inline-flex max-w-full min-w-0 items-center gap-1 text-[0.9375rem] hover:underline"
+                      title={app.customWebsite}
                     >
-                      <Globe className="mr-1 h-4 w-4" />
-                      {app.customWebsite.replace(/^https?:\/\//, "")}
-                      <ExternalLink className="ml-1 h-3 w-3" />
+                      <Globe className="size-4 shrink-0" />
+                      <span className="truncate">
+                        {app.customWebsite.replace(/^https?:\/\//, "")}
+                      </span>
+                      <ExternalLink className="size-3 shrink-0" />
                     </a>
                   )}
-                  <div className="grid grid-cols-2 gap-4 pt-2">
-                    <div>
-                      <dt className="text-muted-foreground text-sm">
+                  <div className="grid gap-4 pt-2 sm:grid-cols-2">
+                    <div className="bg-muted/60 min-w-0 rounded-md p-4">
+                      <dt className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
                         {t("apps.detail.info.registrationMethod")}
                       </dt>
-                      <dd className="font-medium">
+                      <dd className="text-foreground mt-1 truncate text-[0.9375rem] font-medium">
                         {app.source === "MANUAL"
                           ? t("apps.detail.info.manual")
                           : t("apps.detail.info.discovered")}
                       </dd>
                     </div>
-                    <div>
-                      <dt className="text-muted-foreground text-sm">
+                    <div className="bg-muted/60 min-w-0 rounded-md p-4">
+                      <dt className="text-muted-foreground text-xs font-medium tracking-wide uppercase">
                         {t("apps.detail.info.lastModified")}
                       </dt>
-                      <dd className="font-medium">
+                      <dd className="text-foreground mt-1 truncate text-[0.9375rem] font-medium">
                         {formatKoreanDate(app.updatedAt)}
                       </dd>
                     </div>
@@ -131,7 +139,7 @@ export function AppDetail({ app, canEdit = true }: AppDetailProps) {
           </Card>
 
           {/* 메모 카드 */}
-          <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
+          <Card>
             <CardHeader>
               <CardTitle>{t("apps.detail.notes.title")}</CardTitle>
               <CardDescription>
@@ -151,7 +159,7 @@ export function AppDetail({ app, canEdit = true }: AppDetailProps) {
 
           {/* 리스크 정보 카드 (있을 경우) */}
           {app.riskScore !== null && (
-            <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
+            <Card>
               <CardHeader>
                 <CardTitle>{t("apps.detail.risk.title")}</CardTitle>
                 <CardDescription>
@@ -161,12 +169,12 @@ export function AppDetail({ app, canEdit = true }: AppDetailProps) {
               <CardContent>
                 <div className="flex items-center gap-4">
                   <div
-                    className={`flex h-16 w-16 items-center justify-center rounded-full text-2xl font-bold ${
+                    className={`flex size-16 shrink-0 items-center justify-center rounded-full text-2xl font-medium ${
                       app.riskScore <= 3
-                        ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                        ? "tonal-success"
                         : app.riskScore <= 6
-                          ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400"
-                          : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                          ? "tonal-warning"
+                          : "tonal-error"
                     }`}
                   >
                     {app.riskScore}
@@ -179,7 +187,7 @@ export function AppDetail({ app, canEdit = true }: AppDetailProps) {
                           ? t("apps.detail.risk.medium")
                           : t("apps.detail.risk.high")}
                     </p>
-                    <p className="text-muted-foreground text-sm">
+                    <p className="text-muted-foreground text-[0.8125rem]">
                       {t("apps.detail.risk.scoreRange")}
                     </p>
                   </div>
@@ -190,29 +198,31 @@ export function AppDetail({ app, canEdit = true }: AppDetailProps) {
         </div>
 
         {/* 우측 (span-1): 메타데이터 카드 */}
-        <div className="space-y-6">
+        <div className="min-w-0 space-y-6">
           {/* 담당자 카드 */}
-          <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
-            <CardHeader className="pb-3">
+          <Card>
+            <CardHeader>
               <CardTitle>{t("apps.detail.owner.title")}</CardTitle>
             </CardHeader>
             <CardContent>
               {app.ownerName ? (
-                <div className="flex items-center gap-3">
-                  <div className="bg-muted flex h-10 w-10 items-center justify-center rounded-full text-sm font-medium">
+                <div className="flex min-w-0 items-center gap-3">
+                  <div className="tonal-primary flex size-10 shrink-0 items-center justify-center rounded-full text-sm font-medium">
                     {app.ownerName.charAt(0)}
                   </div>
-                  <div>
-                    <div className="font-medium">{app.ownerName}</div>
+                  <div className="min-w-0">
+                    <div className="text-foreground truncate font-medium">
+                      {app.ownerName}
+                    </div>
                     {app.ownerEmail && (
-                      <div className="text-muted-foreground text-sm">
+                      <div className="text-muted-foreground truncate text-[0.8125rem]">
                         {app.ownerEmail}
                       </div>
                     )}
                   </div>
                 </div>
               ) : (
-                <p className="text-muted-foreground text-sm">
+                <p className="text-muted-foreground text-[0.8125rem]">
                   {t("apps.detail.owner.empty")}
                 </p>
               )}
@@ -220,8 +230,8 @@ export function AppDetail({ app, canEdit = true }: AppDetailProps) {
           </Card>
 
           {/* 배정 팀 카드 */}
-          <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
-            <CardHeader className="pb-3">
+          <Card>
+            <CardHeader>
               <CardTitle>{t("apps.detail.assignedTeam.title")}</CardTitle>
             </CardHeader>
             <CardContent>
@@ -234,7 +244,7 @@ export function AppDetail({ app, canEdit = true }: AppDetailProps) {
                   ))}
                 </div>
               ) : (
-                <p className="text-muted-foreground text-sm">
+                <p className="text-muted-foreground text-[0.8125rem]">
                   {t("apps.detail.assignedTeam.empty")}
                 </p>
               )}
@@ -242,14 +252,14 @@ export function AppDetail({ app, canEdit = true }: AppDetailProps) {
           </Card>
 
           {/* 카테고리 카드 */}
-          <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
-            <CardHeader className="pb-3">
+          <Card>
+            <CardHeader>
               <CardTitle>{t("apps.detail.category.title")}</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="flex items-center gap-2">
-                <Tag className="text-muted-foreground h-4 w-4" />
-                <span>
+              <div className="flex min-w-0 items-center gap-2 text-[0.9375rem]">
+                <Tag className="text-muted-foreground size-4 shrink-0" />
+                <span className="truncate">
                   {app.category || t("apps.detail.category.uncategorized")}
                 </span>
               </div>
@@ -257,32 +267,38 @@ export function AppDetail({ app, canEdit = true }: AppDetailProps) {
           </Card>
 
           {/* 날짜 정보 카드 */}
-          <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
-            <CardHeader className="pb-3">
+          <Card>
+            <CardHeader>
               <CardTitle>{t("apps.detail.dates.title")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-3">
-              <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center justify-between gap-4 text-[0.9375rem]">
                 <span className="text-muted-foreground">
                   {t("apps.detail.dates.createdAt")}
                 </span>
-                <span>{formatKoreanDate(app.createdAt)}</span>
+                <span className="whitespace-nowrap tabular-nums">
+                  {formatKoreanDate(app.createdAt)}
+                </span>
               </div>
               <Separator />
-              <div className="flex items-center justify-between text-sm">
+              <div className="flex items-center justify-between gap-4 text-[0.9375rem]">
                 <span className="text-muted-foreground">
                   {t("apps.detail.dates.updatedAt")}
                 </span>
-                <span>{formatKoreanDate(app.updatedAt)}</span>
+                <span className="whitespace-nowrap tabular-nums">
+                  {formatKoreanDate(app.updatedAt)}
+                </span>
               </div>
               {app.discoveredAt && (
                 <>
                   <Separator />
-                  <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center justify-between gap-4 text-[0.9375rem]">
                     <span className="text-muted-foreground">
                       {t("apps.detail.dates.discoveredAt")}
                     </span>
-                    <span>{formatKoreanDate(app.discoveredAt)}</span>
+                    <span className="whitespace-nowrap tabular-nums">
+                      {formatKoreanDate(app.discoveredAt)}
+                    </span>
                   </div>
                 </>
               )}
@@ -291,8 +307,8 @@ export function AppDetail({ app, canEdit = true }: AppDetailProps) {
 
           {/* 태그 카드 */}
           {app.tags && app.tags.length > 0 && (
-            <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
-              <CardHeader className="pb-3">
+            <Card>
+              <CardHeader>
                 <CardTitle>{t("apps.detail.tags.title")}</CardTitle>
               </CardHeader>
               <CardContent>

@@ -215,7 +215,7 @@ export function IntegrationsPageClient({
   // 로딩 상태 - Skeleton UI
   if (isLoading) {
     return (
-      <div className="space-y-4">
+      <div className="space-y-6">
         {/* Page Header Skeleton */}
         <div className="flex items-center justify-between">
           <div>
@@ -226,10 +226,10 @@ export function IntegrationsPageClient({
         </div>
 
         {/* KPI Cards Skeleton */}
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-4">
           {[1, 2, 3, 4].map((i) => (
-            <Card key={i} className="border-border/50 rounded-sm shadow-sm">
-              <CardContent className="p-4">
+            <Card key={i}>
+              <CardContent>
                 <Skeleton className="h-4 w-20" />
                 <Skeleton className="mt-2 h-8 w-12" />
               </CardContent>
@@ -244,8 +244,8 @@ export function IntegrationsPageClient({
         </div>
 
         {/* Table Skeleton */}
-        <Card className="rounded-sm">
-          <CardContent className="p-4">
+        <Card>
+          <CardContent>
             <div className="space-y-3">
               {[1, 2, 3, 4, 5].map((i) => (
                 <div key={i} className="flex items-center gap-4">
@@ -263,7 +263,7 @@ export function IntegrationsPageClient({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* 페이지 헤더 */}
       <PageHeader
         title={t("integrations.page.title")}

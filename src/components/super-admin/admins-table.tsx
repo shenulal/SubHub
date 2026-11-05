@@ -66,12 +66,14 @@ export function AdminsTable({ admins: initialAdmins }: AdminsTableProps) {
       <TableBody>
         {admins.map((admin) => (
           <TableRow key={admin.id}>
-            <TableCell className="font-medium">{admin.name ?? "-"}</TableCell>
+            <TableCell className="text-foreground font-medium">
+              {admin.name ?? "-"}
+            </TableCell>
             <TableCell className="text-muted-foreground">
               {admin.email}
             </TableCell>
             <TableCell>
-              <Badge variant={admin.role === "ADMIN" ? "default" : "secondary"}>
+              <Badge variant={admin.role === "ADMIN" ? "primary" : "secondary"}>
                 {admin.role === "ADMIN" ? "관리자" : "멤버"}
               </Badge>
             </TableCell>

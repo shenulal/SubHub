@@ -113,14 +113,15 @@ export function SubscriptionFiltersAdvanced({
           variant="outline"
           size="sm"
           className={cn(
-            "h-8 gap-1.5 border-dashed font-normal",
-            activeCount > 0 && "border-primary/50 bg-primary/5 border-solid"
+            "h-10 shrink-0 gap-2 border-dashed px-4 text-[0.9375rem] font-normal whitespace-nowrap",
+            activeCount > 0 &&
+              "border-primary/50 bg-primary/5 text-primary border-solid"
           )}
         >
-          <SlidersHorizontal className="h-3.5 w-3.5" />
+          <SlidersHorizontal className="size-4" />
           {t("more")}
           {activeCount > 0 && (
-            <span className="bg-primary/15 text-primary rounded-full px-1.5 text-[11px] font-medium">
+            <span className="tonal-primary rounded-full px-1.5 text-[0.6875rem] font-medium">
               {activeCount}
             </span>
           )}

@@ -60,7 +60,7 @@ export function ChipInput({
   return (
     <div
       className={cn(
-        "border-input bg-background focus-within:ring-ring flex min-h-10 flex-wrap items-center gap-1.5 rounded-md border px-2 py-1.5 focus-within:ring-2 focus-within:ring-offset-1",
+        "border-input hover:border-foreground/60 focus-within:border-primary focus-within:ring-primary/20 flex min-h-10 min-w-0 flex-wrap items-center gap-1.5 rounded-md border bg-transparent px-2 py-1.5 transition-[color,box-shadow] focus-within:ring-[3px]",
         disabled && "opacity-60",
         className
       )}
@@ -68,7 +68,7 @@ export function ChipInput({
       {values.map((value) => (
         <Badge
           key={value}
-          variant="secondary"
+          variant="primary"
           className="gap-1 pr-1 font-mono text-xs"
         >
           {value}
@@ -77,9 +77,9 @@ export function ChipInput({
             aria-label={`Remove ${value}`}
             disabled={disabled}
             onClick={() => onChange(values.filter((v) => v !== value))}
-            className="hover:bg-muted-foreground/20 rounded-sm p-0.5"
+            className="hover:bg-primary/20 rounded-sm p-0.5"
           >
-            <X className="h-3 w-3" />
+            <X className="size-3" />
           </button>
         </Badge>
       ))}
@@ -92,7 +92,7 @@ export function ChipInput({
         onChange={(e) => setDraft(e.target.value)}
         onKeyDown={handleKeyDown}
         onBlur={() => commit(draft)}
-        className="h-7 min-w-24 flex-1 border-0 bg-transparent px-1 shadow-none focus-visible:ring-0"
+        className="h-7 min-w-24 flex-1 border-0 bg-transparent px-1 shadow-none hover:border-0 focus-visible:ring-0"
       />
     </div>
   );

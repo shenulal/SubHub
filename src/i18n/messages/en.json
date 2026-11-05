@@ -690,7 +690,7 @@
         },
         "renewal60": {
           "title": "Renewal in 60 days: Zoom",
-          "detail": "Estimated cost ₩1,200,000"
+          "detail": "Estimated cost AED 1,200,000"
         },
         "paymentFailed": {
           "title": "Payment failed: GitHub",
@@ -2033,7 +2033,7 @@
       "unusedApps": {
         "title": "Unused apps",
         "empty": "No unused apps for 30 days or more.",
-        "estimatedWaste": "Estimated waste: ₩{amount}/month",
+        "estimatedWaste": "Estimated waste: {amount}/month",
         "table": {
           "appName": "App name",
           "lastUsedAt": "Last used",
@@ -4239,7 +4239,7 @@
       "title": "Department Spend Analysis",
       "subtitle": "SaaS spending by functional team",
       "totalMonthly": "Total Monthly",
-      "monthlyTotal": "Monthly Total (₩)",
+      "monthlyTotal": "Monthly Total",
       "countUnit": "",
       "ofTotal": "{percent}% of total",
       "empty": "No department spend data available",

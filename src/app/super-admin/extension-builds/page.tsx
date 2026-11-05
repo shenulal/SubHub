@@ -18,10 +18,10 @@ export default async function ExtensionBuildsPage() {
   const result = await listExtensionBuilds();
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Extension 빌드</h1>
-        <p className="text-muted-foreground">
+    <div className="space-y-6">
+      <div className="space-y-1">
+        <h1 className="text-foreground text-2xl font-medium">Extension 빌드</h1>
+        <p className="text-muted-foreground text-[0.9375rem]">
           브라우저 확장 프로그램 빌드를 관리합니다.
         </p>
       </div>
@@ -33,7 +33,7 @@ export default async function ExtensionBuildsPage() {
             새 빌드를 생성하거나 기존 빌드를 다운로드합니다.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-0">
           {result.success && result.data ? (
             <ExtensionBuildsTable initialBuilds={result.data} />
           ) : (

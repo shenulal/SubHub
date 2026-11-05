@@ -156,7 +156,7 @@ export function CostCentersPanel({
               size="sm"
               onClick={() => setDraft(emptyDraft(options.baseCurrency))}
             >
-              <Plus className="mr-2 h-4 w-4" />
+              <Plus className="size-4" />
               {t("add")}
             </Button>
           )
@@ -165,7 +165,7 @@ export function CostCentersPanel({
       <div className="overflow-hidden rounded-md border">
         <Table>
           <TableHeader>
-            <TableRow className="bg-muted/40">
+            <TableRow className="hover:bg-transparent">
               <TableHead className="w-28">{tc("code")}</TableHead>
               <TableHead>{tc("name")}</TableHead>
               <TableHead>{t("owner")}</TableHead>
@@ -195,10 +195,15 @@ export function CostCentersPanel({
                 <TableCell className="font-mono text-xs font-medium">
                   {row.code}
                 </TableCell>
-                <TableCell>
-                  <div className="font-medium">{row.name}</div>
+                <TableCell className="max-w-[18rem]">
+                  <div className="truncate font-medium" title={row.name}>
+                    {row.name}
+                  </div>
                   {row.description && (
-                    <div className="text-muted-foreground line-clamp-1 text-xs">
+                    <div
+                      className="text-muted-foreground truncate text-[0.8125rem]"
+                      title={row.description}
+                    >
                       {row.description}
                     </div>
                   )}
@@ -388,7 +393,7 @@ export function CostCentersPanel({
               onClick={save}
               disabled={isPending || !draft?.name || !draft?.code}
             >
-              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isPending && <Loader2 className="size-4 animate-spin" />}
               {tc("save")}
             </Button>
           </DialogFooter>

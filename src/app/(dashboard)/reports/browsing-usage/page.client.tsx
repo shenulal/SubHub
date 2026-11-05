@@ -132,21 +132,21 @@ export function BrowsingUsagePageClient({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* Filter Bar */}
-      <div className="flex items-center gap-3">
-        <div className="relative w-[calc(25%-0.75rem)]">
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="relative w-full min-w-0 sm:w-72">
           <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
           <Input
             placeholder={t("filters.searchPlaceholder")}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             onKeyDown={handleSearchKeyDown}
-            className="pl-9"
+            className="h-10 pl-9"
           />
         </div>
 
-        <div className="ml-auto flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3 sm:ml-auto">
           <DateRangeSelector
             currentPeriod={initialFilters.period}
             startDate={initialFilters.startDate}
@@ -155,7 +155,7 @@ export function BrowsingUsagePageClient({
             basePath="/reports/browsing-usage"
             preserveParams={{ search: search }}
           />
-          <Button variant="outline">
+          <Button variant="outline" className="h-10 shrink-0">
             <Download className="mr-2 h-4 w-4" />
             {t("filters.export")}
           </Button>
@@ -163,7 +163,7 @@ export function BrowsingUsagePageClient({
       </div>
 
       {/* Results Table */}
-      <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
+      <Card className="gap-0 overflow-hidden py-0">
         <CardContent className="p-0">
           <Table>
             <TableHeader>
@@ -184,19 +184,19 @@ export function BrowsingUsagePageClient({
                 initialData.map((item) => (
                   <TableRow
                     key={item.id}
-                    className="hover:bg-muted/50 transition-colors"
+                    className="hover:bg-muted/60 transition-colors"
                   >
                     <TableCell className="max-w-md truncate">
                       <span title={item.url}>{item.url}</span>
                     </TableCell>
                     <TableCell>
                       {item.userName ? (
-                        <div>
-                          <div className="text-sm font-medium">
+                        <div className="min-w-0">
+                          <div className="max-w-[16rem] truncate text-sm font-medium">
                             {item.userName}
                           </div>
                           {item.userEmail && (
-                            <div className="text-muted-foreground text-xs">
+                            <div className="text-muted-foreground max-w-[16rem] truncate text-xs">
                               {item.userEmail}
                             </div>
                           )}
@@ -215,8 +215,8 @@ export function BrowsingUsagePageClient({
           </Table>
 
           {/* Pagination */}
-          <div className="flex items-center justify-between border-t px-4 py-4">
-            <div className="text-muted-foreground text-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t px-5 py-4">
+            <div className="text-muted-foreground text-[0.8125rem]">
               {t("table.totalResults", { total: pagination.total })}
             </div>
             {pagination.totalPages > 1 && (

@@ -9,7 +9,7 @@ import Image from "next/image";
 import {
   getBillingCycleLabels,
   getStatusLabels,
-  statusVariants,
+  statusToneClasses,
 } from "./subscription-detail.constants";
 import { formatCurrency } from "./subscription-detail.utils";
 
@@ -35,7 +35,7 @@ export function SubscriptionDetailAppCard({
   const billingCycleLabels = getBillingCycleLabels(t);
 
   return (
-    <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
+    <Card>
       <CardContent className="p-6">
         <div className="flex flex-col items-center text-center">
           {appLogoUrl ? (
@@ -44,21 +44,28 @@ export function SubscriptionDetailAppCard({
               alt={appName}
               width={96}
               height={96}
-              className="rounded-sm"
+              className="size-24 rounded-md border object-contain p-1"
             />
           ) : (
-            <div className="bg-muted flex h-24 w-24 items-center justify-center rounded-sm text-3xl font-bold">
+            <div className="tonal-primary flex size-24 items-center justify-center rounded-md text-3xl font-medium">
               {appName.charAt(0)}
             </div>
           )}
-          <h2 className="mt-4 text-xl font-semibold">{appName}</h2>
-          <div className="mt-2 flex items-center gap-2">
-            <Badge variant={statusVariants[status]}>
+          <h2
+            className="text-foreground mt-4 max-w-full truncate text-xl font-medium"
+            title={appName}
+          >
+            {appName}
+          </h2>
+          <div className="mt-2 flex flex-wrap items-center justify-center gap-2">
+            <Badge variant="outline" className={statusToneClasses[status]}>
               {statusLabels[status]}
             </Badge>
-            <Badge variant="outline">{billingCycleLabels[billingCycle]}</Badge>
+            <Badge variant="secondary">
+              {billingCycleLabels[billingCycle]}
+            </Badge>
           </div>
-          <div className="mt-4 text-2xl font-semibold tabular-nums">
+          <div className="text-foreground mt-4 max-w-full truncate text-2xl font-medium tabular-nums">
             {formatCurrency(amount, currency)}
             <span className="text-muted-foreground text-sm font-normal">
               /{billingCycleLabels[billingCycle]}

@@ -52,7 +52,7 @@ export function AppsByCategory({ data, isLoading }: AppsByCategoryProps) {
   // 로딩 상태
   if (isLoading) {
     return (
-      <Card className="bg-card flex h-[450px] flex-col gap-5 rounded border-none p-5 shadow-[0px_2px_8px_0px_rgba(0,0,0,0.1)]">
+      <Card className="h-[440px] gap-4 px-5">
         <Skeleton className="h-6 w-32" />
         <div className="flex h-[180px] shrink-0 items-center justify-center">
           <Skeleton className="h-[180px] w-[180px] rounded-full" />
@@ -67,7 +67,7 @@ export function AppsByCategory({ data, isLoading }: AppsByCategoryProps) {
   }
 
   return (
-    <Card className="bg-card flex h-[450px] flex-col gap-5 overflow-clip rounded border-none p-5 shadow-[0px_2px_8px_0px_rgba(0,0,0,0.1)]">
+    <Card className="h-[440px] gap-4 overflow-clip px-5">
       {/* 타이틀 */}
       <p className="text-foreground text-base font-semibold">{t("title")}</p>
 

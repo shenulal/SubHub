@@ -71,7 +71,7 @@ export function RoleEditorDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
+      <DialogContent className="flex max-h-[90vh] flex-col gap-5 overflow-hidden sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>
             {role
@@ -84,8 +84,8 @@ export function RoleEditorDialog({
             {readOnly ? t("systemReadOnly") : t("editorDescription")}
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-4 sm:grid-cols-[1fr_2fr]">
-          <div className="space-y-1.5">
+        <div className="grid shrink-0 gap-5 sm:grid-cols-2">
+          <div className="min-w-0 space-y-1.5">
             <Label htmlFor="role-name">{t("name")}</Label>
             <Input
               id="role-name"
@@ -94,38 +94,41 @@ export function RoleEditorDialog({
               disabled={readOnly}
             />
           </div>
-          <div className="space-y-1.5">
+          <div className="min-w-0 space-y-1.5">
             <Label htmlFor="role-description">{t("description")}</Label>
             <Textarea
               id="role-description"
               rows={1}
+              className="min-h-10"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               disabled={readOnly}
             />
           </div>
         </div>
-        <div className="mt-2">
-          <div className="mb-2 flex items-center justify-between">
+        <div className="flex min-h-0 flex-1 flex-col">
+          <div className="mb-3 flex shrink-0 items-center justify-between gap-2">
             <Label>{t("permissions")}</Label>
-            <span className="text-muted-foreground text-xs tabular-nums">
+            <span className="text-muted-foreground text-[0.8125rem] tabular-nums">
               {t("selectedCount", { count: selected.size })}
             </span>
           </div>
-          <PermissionMatrix
-            groups={groups}
-            selected={selected}
-            onChange={setSelected}
-            readOnly={readOnly}
-          />
+          <div className="-mx-1 min-h-0 flex-1 overflow-y-auto px-1 pb-1">
+            <PermissionMatrix
+              groups={groups}
+              selected={selected}
+              onChange={setSelected}
+              readOnly={readOnly}
+            />
+          </div>
         </div>
-        <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+        <DialogFooter className="shrink-0 gap-3 border-t pt-4">
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
             {t("cancel")}
           </Button>
           {!readOnly && (
             <Button onClick={save} disabled={isPending || !name.trim()}>
-              {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isPending && <Loader2 className="size-4 animate-spin" />}
               {t("save")}
             </Button>
           )}

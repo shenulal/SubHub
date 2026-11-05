@@ -38,12 +38,12 @@ export function AppUsageChart({ data }: AppUsageChartProps) {
 
   if (data.length === 0 || !hasAnyUsage) {
     return (
-      <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
+      <Card className="h-full">
         <CardHeader>
           <CardTitle>{t("reports.usage.appUsageChart.title")}</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-muted-foreground flex h-[300px] items-center justify-center">
+          <div className="text-muted-foreground flex h-[300px] items-center justify-center text-[0.9375rem]">
             {t("reports.usage.appUsageChart.empty")}
           </div>
         </CardContent>
@@ -52,7 +52,7 @@ export function AppUsageChart({ data }: AppUsageChartProps) {
   }
 
   return (
-    <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
+    <Card className="h-full">
       <CardHeader>
         <CardTitle>{t("reports.usage.appUsageChart.title")}</CardTitle>
       </CardHeader>
@@ -64,13 +64,12 @@ export function AppUsageChart({ data }: AppUsageChartProps) {
           <BarChart
             data={data}
             layout="vertical"
-            margin={{ top: 5, right: 30, left: 80, bottom: 5 }}
+            margin={{ top: 5, right: 24, left: 8, bottom: 5 }}
           >
             <CartesianGrid
               strokeDasharray="3 3"
-              vertical={false}
-              stroke="hsl(var(--muted-foreground))"
-              strokeOpacity={0.2}
+              horizontal={false}
+              stroke="var(--border)"
             />
             <XAxis
               type="number"
@@ -78,15 +77,15 @@ export function AppUsageChart({ data }: AppUsageChartProps) {
               tickFormatter={(value) => `${value}%`}
               axisLine={false}
               tickLine={false}
-              tick={{ fontSize: 12 }}
+              tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
             />
             <YAxis
               type="category"
               dataKey="appName"
-              width={70}
+              width={110}
               axisLine={false}
               tickLine={false}
-              tick={{ fontSize: 12 }}
+              tick={{ fontSize: 12, fill: "var(--muted-foreground)" }}
             />
             <ChartTooltip
               cursor={false}

@@ -79,9 +79,16 @@ export function NewDashboardClient({
     subscriptionAnomalies,
   });
 
+  const baseCurrency = overview?.baseCurrency;
+  // Three-card rows (12-col bento): stacked → 2 + full-width third (md/lg)
+  // → 3 equal columns from xl. Every card in a row shares one fixed height.
+  const pairSpan = { cols: 1, colsSm: 6, colsMd: 4, colsLg: 6 };
+  const lastSpan = { cols: 1, colsSm: 6, colsMd: 8, colsLg: 12 };
+  const tripleXl = "min-w-0 xl:col-span-4";
+
   return (
     <div
-      className="space-y-4"
+      className="@container space-y-6"
       data-testid="dashboard"
       data-scope={overview?.scope ?? "workspace"}
     >
@@ -90,7 +97,11 @@ export function NewDashboardClient({
       )}
 
       {!isPersonal && (
-        <BentoOptimizationHero data={data.hero} isReadOnly={isReadOnly} />
+        <BentoOptimizationHero
+          data={data.hero}
+          isReadOnly={isReadOnly}
+          currency={baseCurrency}
+        />
       )}
 
       {overview && (
@@ -102,25 +113,27 @@ export function NewDashboardClient({
         />
       )}
 
-      <ResponsiveBentoGrid gap="md">
-        <ResponsiveBentoItem cols={1} colsSm={6} colsMd={4} colsLg={6}>
+      <ResponsiveBentoGrid gap="lg">
+        <ResponsiveBentoItem {...lastSpan} className="min-w-0 xl:col-span-6">
           <CostBarChart
             data={data.costTrend}
             period={period}
             onPeriodChange={setPeriod}
+            currency={baseCurrency}
           />
         </ResponsiveBentoItem>
-        <ResponsiveBentoItem cols={1} colsSm={6} colsMd={4} colsLg={6}>
+        <ResponsiveBentoItem {...lastSpan} className="min-w-0 xl:col-span-6">
           <CostAppsTable
             initialData={data.topApps}
             period={period}
             onPeriodChange={setPeriod}
+            currency={baseCurrency}
           />
         </ResponsiveBentoItem>
       </ResponsiveBentoGrid>
 
-      <ResponsiveBentoGrid gap="md">
-        <ResponsiveBentoItem cols={1} colsSm={6} colsMd={8} colsLg={4}>
+      <ResponsiveBentoGrid gap="lg">
+        <ResponsiveBentoItem {...pairSpan} className={tripleXl}>
           {overview ? (
             <CategoryBreakdownChart
               initialData={overview.categorySpend}
@@ -133,7 +146,7 @@ export function NewDashboardClient({
             <AppsByCategory data={categoryData} />
           )}
         </ResponsiveBentoItem>
-        <ResponsiveBentoItem cols={1} colsSm={6} colsMd={8} colsLg={4}>
+        <ResponsiveBentoItem {...pairSpan} className={tripleXl}>
           <UpcomingRenewals
             data={data.renewals}
             overviewRenewals={overview?.upcomingRenewals}
@@ -141,23 +154,29 @@ export function NewDashboardClient({
             windowDays={overview?.kpis.renewingSoonDays}
           />
         </ResponsiveBentoItem>
-        <ResponsiveBentoItem cols={1} colsSm={6} colsMd={8} colsLg={4}>
+        <ResponsiveBentoItem {...lastSpan} className={tripleXl}>
           <SeatUtilizationChart data={seatWidgetData.lowUtilizationApps} />
         </ResponsiveBentoItem>
       </ResponsiveBentoGrid>
 
       <DashboardIntegrations isPersonal={isPersonal} />
 
-      <ResponsiveBentoGrid gap="md">
-        <ResponsiveBentoItem cols={1} colsSm={6} colsMd={8} colsLg={4}>
+      <ResponsiveBentoGrid gap="lg">
+        <ResponsiveBentoItem {...pairSpan} className={tripleXl}>
           <PerUserLicenseAppsChart data={seatWidgetData.topLicenseApps} />
         </ResponsiveBentoItem>
         {!isPersonal && (
-          <ResponsiveBentoItem cols={1} colsSm={6} colsMd={8} colsLg={4}>
-            <DepartmentSpendChart data={departmentSpendData} />
+          <ResponsiveBentoItem {...pairSpan} className={tripleXl}>
+            <DepartmentSpendChart
+              data={departmentSpendData}
+              currency={baseCurrency}
+            />
           </ResponsiveBentoItem>
         )}
-        <ResponsiveBentoItem cols={1} colsSm={6} colsMd={8} colsLg={4}>
+        <ResponsiveBentoItem
+          {...(isPersonal ? pairSpan : lastSpan)}
+          className={isPersonal ? "min-w-0" : tripleXl}
+        >
           <RecentActivity activities={recentActivities} />
         </ResponsiveBentoItem>
       </ResponsiveBentoGrid>

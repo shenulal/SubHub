@@ -55,7 +55,7 @@ export function DeploySettings({ initialSettings }: DeploySettingsProps) {
     webstoreUrl !== initialSettings.extensionWebstoreUrl;
 
   return (
-    <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
+    <Card className="border-border dark:border-border border shadow-none">
       <CardHeader>
         <CardTitle>{t("title")}</CardTitle>
         <CardDescription>{t("description")}</CardDescription>
@@ -66,7 +66,7 @@ export function DeploySettings({ initialSettings }: DeploySettingsProps) {
           onValueChange={(value) => setMethod(value as ExtensionDeployMethod)}
           className="space-y-4"
         >
-          <div className="flex items-start space-x-3 rounded-sm border p-4">
+          <div className="has-[button[data-state=checked]]:border-primary has-[button[data-state=checked]]:bg-primary/[0.04] flex items-start space-x-3 rounded-md border p-4 transition-colors">
             <RadioGroupItem value="auto" id="deploy-auto" className="mt-1" />
             <div className="flex-1 space-y-1">
               <Label
@@ -82,7 +82,7 @@ export function DeploySettings({ initialSettings }: DeploySettingsProps) {
             </div>
           </div>
 
-          <div className="flex items-start space-x-3 rounded-sm border p-4">
+          <div className="has-[button[data-state=checked]]:border-primary has-[button[data-state=checked]]:bg-primary/[0.04] flex items-start space-x-3 rounded-md border p-4 transition-colors">
             <RadioGroupItem
               value="webstore"
               id="deploy-webstore"

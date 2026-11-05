@@ -18,10 +18,10 @@ interface KanbanCardProps {
 }
 
 const priorityColors: Record<TaskPriority, string> = {
-  LOW: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
-  MEDIUM: "bg-blue-100 text-blue-700 dark:bg-blue-900 dark:text-blue-300",
-  HIGH: "bg-orange-100 text-orange-700 dark:bg-orange-900 dark:text-orange-300",
-  URGENT: "bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300",
+  LOW: "border-transparent bg-neutral/15 text-neutral",
+  MEDIUM: "border-transparent bg-info/15 text-info",
+  HIGH: "border-transparent bg-warning/15 text-warning",
+  URGENT: "border-transparent bg-error/15 text-error",
 };
 
 export function KanbanCard({
@@ -81,18 +81,23 @@ export function KanbanCard({
       ref={setNodeRef}
       style={style}
       className={cn(
-        "cursor-grab transition-all",
+        "min-w-0 cursor-grab gap-0 py-0 shadow-xs transition-all",
         isDragging
           ? "ring-primary opacity-50 shadow-lg ring-2"
           : "hover:shadow-md"
       )}
       onClick={onClick}
     >
-      <CardHeader className="p-4 pb-2">
-        <div className="flex items-start justify-between gap-2">
-          <h4 className="flex-1 leading-snug font-medium">{task.title}</h4>
+      <CardHeader className="gap-1.5 p-4 pb-2">
+        <div className="flex min-w-0 items-start justify-between gap-2">
+          <h4
+            className="text-foreground line-clamp-2 min-w-0 flex-1 text-[0.9375rem] leading-snug font-medium break-words"
+            title={task.title}
+          >
+            {task.title}
+          </h4>
           <button
-            className="text-muted-foreground hover:text-foreground cursor-grab touch-none"
+            className="text-muted-foreground hover:text-foreground shrink-0 cursor-grab touch-none"
             {...listeners}
             {...attributes}
           >
@@ -100,14 +105,14 @@ export function KanbanCard({
           </button>
         </div>
         {task.description && (
-          <p className="text-muted-foreground line-clamp-2 text-sm">
+          <p className="text-muted-foreground line-clamp-2 text-[0.8125rem] break-words">
             {task.description}
           </p>
         )}
       </CardHeader>
-      <CardContent className="space-y-3 p-4 pt-2">
+      <CardContent className="space-y-3 px-4 pt-2 pb-4">
         {/* 담당자 + 진행률 */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2">
           <div className="flex -space-x-2">
             {task.assignee ? (
               <Avatar className="border-background h-7 w-7 border-2">
@@ -122,23 +127,26 @@ export function KanbanCard({
               </Avatar>
             )}
           </div>
-          <div className="flex items-center gap-2">
-            <Progress value={progress} className="h-1.5 w-12" />
-            <span className="text-muted-foreground text-xs">{progress}%</span>
+          <div className="flex shrink-0 items-center gap-2">
+            <Progress value={progress} className="h-1.5 w-14" />
+            <span className="text-muted-foreground w-8 text-right text-xs tabular-nums">
+              {progress}%
+            </span>
           </div>
         </div>
 
         {/* 우선순위 + 메타 정보 */}
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2">
           <Badge
+            variant="outline"
             className={cn(
-              "text-xs font-normal",
+              "text-xs font-medium",
               priorityColors[task.priority as TaskPriority]
             )}
           >
             {getPriorityLabel(task.priority as TaskPriority)}
           </Badge>
-          <div className="text-muted-foreground flex items-center gap-3">
+          <div className="text-muted-foreground flex shrink-0 items-center gap-3">
             <div className="flex items-center gap-1 text-xs">
               <Paperclip className="h-3 w-3" />
               {attachments}

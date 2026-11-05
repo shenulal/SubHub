@@ -36,6 +36,8 @@ import Link from "next/link";
 import { useCallback, useMemo, useTransition } from "react";
 import { toast } from "sonner";
 
+import { APP_STATUS_TONE } from "./app-status-tone";
+
 interface AppListProps {
   apps: AppListItem[];
   canManage?: boolean;
@@ -146,10 +148,10 @@ export function AppList({
               alt={app.name}
               width={32}
               height={32}
-              className="rounded-sm"
+              className="size-9 shrink-0 rounded-md border object-contain p-0.5"
             />
           ) : (
-            <div className="bg-purple-gray flex h-8 w-8 items-center justify-center rounded-sm text-xs font-medium">
+            <div className="tonal-primary flex size-9 shrink-0 items-center justify-center rounded-md text-[0.9375rem] font-medium">
               {app.name.charAt(0).toUpperCase()}
             </div>
           );
@@ -164,7 +166,8 @@ export function AppList({
         cell: (app) => (
           <Link
             href={`/apps/${app.id}`}
-            className="font-medium hover:underline"
+            className="text-foreground hover:text-primary block max-w-[18rem] truncate font-medium transition-colors"
+            title={app.name}
           >
             {app.name}
           </Link>
@@ -183,7 +186,9 @@ export function AppList({
         cell: (app) => {
           const statusMeta = getAppStatusMeta(app.status, t);
           return (
-            <Badge variant={statusMeta.badgeVariant}>{statusMeta.label}</Badge>
+            <Badge variant="outline" className={APP_STATUS_TONE[app.status]}>
+              {statusMeta.label}
+            </Badge>
           );
         },
       },
@@ -327,8 +332,10 @@ export function AppList({
 
   if (apps.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 text-center">
-        <p className="text-muted-foreground mb-4">{t("apps.list.empty")}</p>
+      <div className="border-border flex flex-col items-center justify-center rounded-md border border-dashed px-5 py-16 text-center">
+        <p className="text-muted-foreground mb-4 text-[0.9375rem]">
+          {t("apps.list.empty")}
+        </p>
         <Link href="/apps/new">
           <Button>{t("apps.list.emptyAction")}</Button>
         </Link>

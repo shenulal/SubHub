@@ -20,7 +20,7 @@ export function DashboardIntegrations({
 }: DashboardIntegrationsProps) {
   return (
     <div
-      className="grid gap-4 md:grid-cols-2 xl:grid-cols-3"
+      className="grid gap-6 @3xl:grid-cols-2 @3xl:[&>*:last-child:nth-child(odd)]:col-span-2"
       data-testid="dashboard-integrations"
     >
       {!isPersonal && <PendingApprovalsCard />}

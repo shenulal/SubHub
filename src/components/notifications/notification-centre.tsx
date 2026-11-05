@@ -86,7 +86,7 @@ export function NotificationCentre() {
             </FilterChip>
           );
         })}
-        <label className="text-muted-foreground ml-auto inline-flex items-center gap-2 text-sm">
+        <label className="text-muted-foreground ml-auto inline-flex shrink-0 items-center gap-2 text-sm whitespace-nowrap">
           <Switch
             checked={unreadOnly}
             onCheckedChange={setUnreadOnly}
@@ -94,14 +94,14 @@ export function NotificationCentre() {
           />
           {t("unreadOnly")}
           {unreadCount > 0 && (
-            <span className="bg-primary/10 text-primary rounded-full px-2 py-0.5 font-mono text-xs tabular-nums">
+            <span className="tonal-primary rounded-full px-2 py-0.5 text-xs font-medium tabular-nums">
               {unreadCount}
             </span>
           )}
         </label>
       </section>
 
-      <section className="bg-card/50 divide-border/60 divide-y overflow-hidden rounded-xl border shadow-sm">
+      <section className="bg-card text-card-foreground divide-border divide-y overflow-hidden rounded-lg shadow-md">
         {list.isLoading && (
           <div className="space-y-3 p-4" aria-busy="true">
             {Array.from({ length: 5 }).map((_, i) => (
@@ -116,10 +116,10 @@ export function NotificationCentre() {
         )}
         {!list.isLoading && !list.isError && items.length === 0 && (
           <div className="text-muted-foreground flex flex-col items-center gap-3 px-4 py-16 text-center">
-            <span className="bg-muted flex h-12 w-12 items-center justify-center rounded-full">
-              <Inbox className="h-5 w-5" aria-hidden="true" />
+            <span className="tonal-neutral flex size-12 items-center justify-center rounded-md">
+              <Inbox className="size-[22px]" aria-hidden="true" />
             </span>
-            <p className="text-sm">
+            <p className="text-[0.9375rem]">
               {unreadOnly ? t("emptyUnread") : t("empty")}
             </p>
           </div>
@@ -157,10 +157,11 @@ function FilterChip({ active, onClick, children }: FilterChipProps) {
       onClick={onClick}
       aria-pressed={active}
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm transition-colors",
+        "inline-flex shrink-0 items-center gap-1.5 rounded-full border px-3.5 py-1.5 text-sm font-medium whitespace-nowrap transition-colors",
+        "focus-visible:ring-ring/50 focus-visible:ring-[3px] focus-visible:outline-none",
         active
-          ? "bg-foreground text-background border-foreground shadow-sm"
-          : "bg-background text-muted-foreground hover:text-foreground hover:border-foreground/40"
+          ? "bg-primary text-primary-foreground border-primary shadow-sm"
+          : "bg-card text-muted-foreground border-border hover:text-primary hover:border-primary/40 hover:bg-primary/[0.06]"
       )}
     >
       {children}

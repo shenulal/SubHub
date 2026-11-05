@@ -23,7 +23,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { DEFAULT_BASE_CURRENCY } from "@/lib/fx/convert";
+import { DEFAULT_BASE_CURRENCY, formatMoney } from "@/lib/fx/convert";
 import type { TeamCostComparison, UserCostItem } from "@/types/seat-analytics";
 import { ChevronDown, ChevronRight, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -31,9 +31,7 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 
 function formatCurrency(value: number, currency = DEFAULT_BASE_CURRENCY) {
-  return new Intl.NumberFormat("ko-KR", { style: "currency", currency }).format(
-    value
-  );
+  return formatMoney(value, currency);
 }
 
 export function UserCostSection() {
@@ -76,9 +74,11 @@ export function UserCostSection() {
   return (
     <>
       <Separator />
-      <div>
-        <h2 className="text-xl font-semibold">{t("title")}</h2>
-        <p className="text-muted-foreground text-sm">{t("description")}</p>
+      <div className="min-w-0">
+        <h2 className="text-xl font-medium">{t("title")}</h2>
+        <p className="text-muted-foreground text-[0.9375rem]">
+          {t("description")}
+        </p>
       </div>
 
       <Tabs defaultValue="users">
@@ -88,7 +88,7 @@ export function UserCostSection() {
         </TabsList>
 
         <TabsContent value="users" className="mt-4">
-          <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
+          <Card>
             <CardHeader>
               <CardTitle>{t("usersTitle")}</CardTitle>
               <CardDescription>{t("usersDescription")}</CardDescription>
@@ -142,7 +142,7 @@ export function UserCostSection() {
         </TabsContent>
 
         <TabsContent value="teams" className="mt-4">
-          <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
+          <Card>
             <CardHeader>
               <CardTitle>{t("teamsTitle")}</CardTitle>
               <CardDescription>{t("teamsDescription")}</CardDescription>
@@ -191,11 +191,12 @@ export function UserCostSection() {
                             <Badge
                               variant={
                                 team.activeRate >= 75
-                                  ? "default"
+                                  ? "success"
                                   : team.activeRate >= 50
-                                    ? "secondary"
-                                    : "destructive"
+                                    ? "warning"
+                                    : "error"
                               }
+                              className="tabular-nums"
                             >
                               {team.activeRate}%
                             </Badge>
@@ -236,9 +237,18 @@ function UserRow({
           )}
         </TableCell>
         <TableCell>
-          <div>
-            <p className="font-medium">{user.userName ?? user.userEmail}</p>
-            <p className="text-muted-foreground text-xs">{user.userEmail}</p>
+          <div className="flex min-w-0 items-center gap-3">
+            <span className="tonal-primary flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-medium uppercase">
+              {(user.userName ?? user.userEmail).charAt(0)}
+            </span>
+            <div className="min-w-0">
+              <p className="max-w-[16rem] truncate font-medium">
+                {user.userName ?? user.userEmail}
+              </p>
+              <p className="text-muted-foreground max-w-[16rem] truncate text-xs">
+                {user.userEmail}
+              </p>
+            </div>
           </div>
         </TableCell>
         <TableCell>
@@ -293,10 +303,7 @@ function UserRow({
                         {formatCurrency(sub.perSeatPrice)}
                       </TableCell>
                       <TableCell>
-                        <Badge
-                          variant={sub.isActive ? "default" : "destructive"}
-                          className="text-xs"
-                        >
+                        <Badge variant={sub.isActive ? "success" : "error"}>
                           {sub.isActive
                             ? t("statusActive")
                             : t("statusInactive")}

@@ -39,11 +39,9 @@ interface SubscriptionContractCardProps {
 
 const TONE: Record<NoticeWindowState, string> = {
   no_deadline: "border-border bg-muted/40 text-muted-foreground",
-  upcoming: "border-sky-500/30 bg-sky-500/10 text-sky-800 dark:text-sky-200",
-  window_open:
-    "border-amber-500/40 bg-amber-500/10 text-amber-900 dark:text-amber-100",
-  deadline_passed:
-    "border-rose-500/40 bg-rose-500/10 text-rose-900 dark:text-rose-100",
+  upcoming: "border-info/30 bg-info/10 text-foreground",
+  window_open: "border-warning/40 bg-warning/10 text-foreground",
+  deadline_passed: "border-error/40 bg-error/10 text-foreground",
 };
 
 export function SubscriptionContractCard({
@@ -61,7 +59,7 @@ export function SubscriptionContractCard({
   const days = Math.abs(window.daysUntilDeadline ?? 0);
 
   return (
-    <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
+    <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <CalendarRange className="text-muted-foreground h-4 w-4" />
@@ -122,7 +120,7 @@ export function SubscriptionContractCard({
               <RefreshCw
                 className={cn(
                   "h-3.5 w-3.5",
-                  autoRenewal ? "text-emerald-600" : "text-muted-foreground"
+                  autoRenewal ? "text-success" : "text-muted-foreground"
                 )}
               />
               {autoRenewal ? t("on") : t("off")}

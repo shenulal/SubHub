@@ -1,6 +1,7 @@
 "use client";
 
 import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 import type { ActionState } from "@/types";
 import { SECRET_UNCHANGED, type SettingsGroupPayload } from "@/types/platform";
 import { Loader2, Save } from "lucide-react";
@@ -11,6 +12,15 @@ import { toast } from "sonner";
 import { SettingField } from "./setting-field";
 
 type Values = Record<string, unknown>;
+
+/** Inputs that need the full row width in the two-column field grid. */
+const FULL_WIDTH_INPUTS = new Set([
+  "textarea",
+  "json",
+  "multiselect",
+  "string-list",
+  "number-list",
+]);
 
 interface WorkspaceSettingsFormProps {
   payload: SettingsGroupPayload;
@@ -116,16 +126,24 @@ export function WorkspaceSettingsForm({
       }}
       className="space-y-6"
     >
-      <header className="space-y-1">
-        <h3 className="text-lg font-semibold tracking-tight">
+      <header className="space-y-1 border-b pb-5">
+        <h3 className="text-foreground text-lg leading-snug font-medium">
           {payload.label}
         </h3>
-        <p className="text-muted-foreground text-sm">{payload.description}</p>
+        <p className="text-muted-foreground text-[0.8125rem]">
+          {payload.description}
+        </p>
       </header>
 
-      <div>
+      <div className="grid gap-5 sm:grid-cols-2">
         {payload.definitions.map((definition) => (
-          <div key={definition.key}>
+          <div
+            key={definition.key}
+            className={cn(
+              "flex min-w-0 flex-col",
+              FULL_WIDTH_INPUTS.has(definition.input) && "sm:col-span-2"
+            )}
+          >
             <SettingField
               definition={definition}
               value={values[definition.key]}
@@ -137,7 +155,7 @@ export function WorkspaceSettingsForm({
               isDirty={dirtyKeys.includes(definition.key)}
             />
             {fieldErrors[definition.key] && (
-              <p className="text-destructive -mt-3 pb-3 text-xs">
+              <p className="text-destructive mt-1.5 text-[0.8125rem]">
                 {fieldErrors[definition.key].join(", ")}
               </p>
             )}
@@ -146,31 +164,33 @@ export function WorkspaceSettingsForm({
       </div>
 
       {canManage && (
-        <div className="bg-background/95 sticky bottom-0 -mx-6 flex items-center justify-between border-t px-6 py-3 backdrop-blur">
-          <span className="text-muted-foreground text-xs">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-5">
+          <span className="text-muted-foreground min-w-0 text-[0.8125rem]">
             {dirtyKeys.length > 0
               ? t("pendingChanges", { count: dirtyKeys.length })
               : t("noChanges")}
           </span>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap justify-end gap-3">
+            <Button
+              type="submit"
+              className="shrink-0"
+              disabled={dirtyKeys.length === 0 || isPending}
+            >
+              {isPending ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : (
+                <Save className="size-4" />
+              )}
+              {isPending ? t("saving") : t("save")}
+            </Button>
             <Button
               type="button"
-              variant="ghost"
+              variant="outline"
+              className="shrink-0"
               disabled={dirtyKeys.length === 0 || isPending}
               onClick={() => setValues(baseline)}
             >
               {t("discard")}
-            </Button>
-            <Button
-              type="submit"
-              disabled={dirtyKeys.length === 0 || isPending}
-            >
-              {isPending ? (
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              ) : (
-                <Save className="mr-2 h-4 w-4" />
-              )}
-              {isPending ? t("saving") : t("save")}
             </Button>
           </div>
         </div>

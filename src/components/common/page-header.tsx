@@ -106,14 +106,14 @@ export function PageHeader({
     <div className={cn("flex flex-col gap-2", className)}>
       {/* Breadcrumbs */}
       {breadcrumbs && breadcrumbs.length > 0 && (
-        <nav className="text-muted-foreground flex items-center gap-1 text-sm">
+        <nav className="text-muted-foreground flex min-w-0 flex-wrap items-center gap-1 text-[0.8125rem]">
           {breadcrumbs.map((crumb, index) => (
             <span key={index} className="flex items-center gap-1">
               {index > 0 && <ChevronRight className="h-3.5 w-3.5" />}
               {crumb.href ? (
                 <Link
                   href={crumb.href}
-                  className="hover:text-foreground transition-colors"
+                  className="hover:text-primary transition-colors"
                 >
                   {crumb.label}
                 </Link>
@@ -128,19 +128,21 @@ export function PageHeader({
       {/* Badge */}
       {badge && (
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className="gap-1.5">
-            {BadgeIcon && <BadgeIcon className="h-3.5 w-3.5" />}
+          <Badge variant="primary" className="gap-1.5">
+            {BadgeIcon && <BadgeIcon className="size-3.5" />}
             {badge.label}
           </Badge>
         </div>
       )}
 
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
+      <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-foreground text-2xl leading-tight font-medium break-words">
+            {title}
+          </h1>
         </div>
         {actions.length > 0 && (
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 flex-wrap items-center gap-2">
             {actions.map((action, index) => {
               // Support both iconName (from Server Components) and icon (from Client Components)
               const ActionIcon = action.iconName
@@ -148,7 +150,7 @@ export function PageHeader({
                 : action.icon;
               const buttonContent = (
                 <>
-                  {ActionIcon && <ActionIcon className="mr-2 h-4 w-4" />}
+                  {ActionIcon && <ActionIcon className="size-4" />}
                   {action.label}
                 </>
               );

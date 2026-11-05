@@ -28,7 +28,7 @@ export default async function NotificationsSettingsPage() {
   ]);
 
   return (
-    <div className="space-y-10">
+    <div className="min-w-0 space-y-6">
       {prefs.success && prefs.data ? (
         <NotificationPreferencesForm initial={prefs.data} />
       ) : (

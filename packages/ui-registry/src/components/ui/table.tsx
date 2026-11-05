@@ -12,7 +12,7 @@ const Table = React.forwardRef<HTMLTableElement, React.ComponentProps<"table">>(
     return (
       <div
         data-slot="table-container"
-        className="relative w-full overflow-x-auto"
+        className="relative w-full max-w-full min-w-0 overflow-x-auto"
       >
         <table
           ref={ref}
@@ -39,7 +39,7 @@ const TableHeader = React.forwardRef<
     <thead
       ref={ref}
       data-slot="table-header"
-      className={cn("[&_tr]:border-b", className)}
+      className={cn("bg-muted [&_tr]:border-b", className)}
       {...props}
     />
   );
@@ -103,7 +103,7 @@ const TableRow = React.forwardRef<
       ref={ref}
       data-slot="table-row"
       className={cn(
-        "hover:bg-muted/50 data-[state=selected]:bg-muted border-b transition-colors",
+        "hover:bg-accent/60 data-[state=selected]:bg-primary/[0.08] border-b transition-colors",
         className,
       )}
       {...props}
@@ -126,7 +126,7 @@ const TableHead = React.forwardRef<
       ref={ref}
       data-slot="table-head"
       className={cn(
-        "text-foreground h-10 px-2 text-left align-middle font-medium whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+        "text-foreground h-12 px-4 text-left align-middle text-[0.8125rem] font-medium tracking-[0.2px] whitespace-nowrap uppercase [&_button]:text-[0.8125rem] [&_button]:font-medium [&_button]:tracking-[0.2px] [&_button]:uppercase [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
         className,
       )}
       {...props}
@@ -149,7 +149,7 @@ const TableCell = React.forwardRef<
       ref={ref}
       data-slot="table-cell"
       className={cn(
-        "p-2 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
+        "px-4 py-3 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0 [&>[role=checkbox]]:translate-y-[2px]",
         className,
       )}
       {...props}

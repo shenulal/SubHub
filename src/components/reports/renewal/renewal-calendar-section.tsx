@@ -24,9 +24,9 @@ export function RenewalCalendarSection({
   };
 
   return (
-    <div className="grid items-stretch gap-4 lg:grid-cols-3">
+    <div className="grid items-stretch gap-6 xl:grid-cols-3">
       {/* 캘린더 (2/3 너비) */}
-      <div className="lg:col-span-2">
+      <div className="min-w-0 xl:col-span-2">
         <RenewalCalendarView
           renewals={renewals}
           onDateSelect={handleDateSelect}
@@ -35,7 +35,7 @@ export function RenewalCalendarSection({
       </div>
 
       {/* 날짜별 상세 (1/3 너비) */}
-      <div className="h-full">
+      <div className="h-full min-w-0">
         <RenewalDayPanel
           selectedDate={selectedDate}
           renewals={selectedRenewals}

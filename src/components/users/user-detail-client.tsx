@@ -36,24 +36,20 @@ interface UserDetailClientProps {
   id: string;
 }
 
-const roleVariants: Record<
-  UserRole,
-  "default" | "secondary" | "destructive" | "outline"
-> = {
-  SUPER_ADMIN: "default",
-  ADMIN: "default",
-  APPROVER: "default",
+type TonalBadgeVariant = "secondary" | "success" | "info" | "primary" | "error";
+
+const roleVariants: Record<UserRole, TonalBadgeVariant> = {
+  SUPER_ADMIN: "primary",
+  ADMIN: "primary",
+  APPROVER: "info",
   MEMBER: "secondary",
-  VIEWER: "outline",
+  VIEWER: "secondary",
 };
 
-const statusVariants: Record<
-  UserStatus,
-  "default" | "secondary" | "destructive" | "outline"
-> = {
-  ACTIVE: "default",
-  INACTIVE: "outline",
-  TERMINATED: "destructive",
+const statusVariants: Record<UserStatus, TonalBadgeVariant> = {
+  ACTIVE: "success",
+  INACTIVE: "secondary",
+  TERMINATED: "error",
 };
 
 export function UserDetailClient({ id }: UserDetailClientProps) {
@@ -142,7 +138,7 @@ export function UserDetailClient({ id }: UserDetailClientProps) {
         showBack
         backHref="/users"
       >
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {canDelete?.can &&
             identity?.role === "ADMIN" &&
             user.role !== "ADMIN" &&
@@ -170,9 +166,14 @@ export function UserDetailClient({ id }: UserDetailClientProps) {
         </div>
       </PageHeader>
 
-      <Card className="border-l-primary/50 border-border/50 rounded-sm border-l-4 shadow-sm transition-shadow hover:shadow-md">
+      <Card>
         <CardHeader>
-          <CardTitle>{t("users.detail.accountInfo")}</CardTitle>
+          <CardTitle className="flex min-w-0 items-center gap-3">
+            <span className="tonal-primary flex size-10 shrink-0 items-center justify-center rounded-full text-base font-medium uppercase">
+              {(user.name || user.email).charAt(0)}
+            </span>
+            <span className="truncate">{t("users.detail.accountInfo")}</span>
+          </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Account info grid */}
@@ -205,9 +206,9 @@ export function UserDetailClient({ id }: UserDetailClientProps) {
           <Separator />
 
           {/* Role & Status */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-sm border p-3">
-              <div className="text-muted-foreground flex items-center gap-1.5 text-xs">
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="min-w-0 rounded-md border p-3">
+              <div className="text-muted-foreground flex items-center gap-1.5 text-xs tracking-wide uppercase">
                 <Shield className="h-3.5 w-3.5" />
                 {t("users.detail.role")}
               </div>
@@ -217,16 +218,14 @@ export function UserDetailClient({ id }: UserDetailClientProps) {
                 </Badge>
               </div>
             </div>
-            <div className="rounded-sm border p-3">
-              <div className="text-muted-foreground flex items-center gap-1.5 text-xs">
+            <div className="min-w-0 rounded-md border p-3">
+              <div className="text-muted-foreground flex items-center gap-1.5 text-xs tracking-wide uppercase">
                 <CircleDot className="h-3.5 w-3.5" />
                 {t("users.detail.status")}
               </div>
               <div className="mt-1.5">
                 {user.status === "ACTIVE" ? (
-                  <Badge className="border border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-400">
-                    {statusLabels[user.status]}
-                  </Badge>
+                  <Badge variant="success">{statusLabels[user.status]}</Badge>
                 ) : (
                   <Badge variant={statusVariants[user.status]}>
                     {statusLabels[user.status]}
@@ -240,14 +239,14 @@ export function UserDetailClient({ id }: UserDetailClientProps) {
 
           {/* Subscriptions */}
           <div className="space-y-3">
-            <h4 className="text-sm font-semibold">
+            <h4 className="text-[0.9375rem] font-medium">
               {t("users.detail.subscriptions")}
             </h4>
             {subscriptionSummary ? (
-              <div className="grid grid-cols-3 gap-3">
-                <div className="bg-purple-gray rounded-sm p-3 text-center">
-                  <Layers className="text-muted-foreground mx-auto h-4 w-4" />
-                  <div className="mt-1 text-2xl font-bold tabular-nums">
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="bg-muted min-w-0 rounded-md p-3 text-center">
+                  <Layers className="text-primary mx-auto h-4 w-4" />
+                  <div className="mt-1 truncate text-2xl font-medium tabular-nums">
                     {subscriptionSummary.total}
                     <span className="text-sm font-normal">
                       {t("common.count")}
@@ -257,9 +256,15 @@ export function UserDetailClient({ id }: UserDetailClientProps) {
                     {t("users.detail.totalSubscriptions")}
                   </div>
                 </div>
-                <div className="bg-purple-gray rounded-sm p-3 text-center">
-                  <CreditCard className="text-muted-foreground mx-auto h-4 w-4" />
-                  <div className="mt-1 text-2xl font-bold tabular-nums">
+                <div className="bg-muted min-w-0 rounded-md p-3 text-center">
+                  <CreditCard className="text-info mx-auto h-4 w-4" />
+                  <div
+                    className="mt-1 truncate text-2xl font-medium tabular-nums"
+                    title={formatMoney(
+                      subscriptionSummary.monthlyAmount,
+                      subscriptionSummary.currency
+                    )}
+                  >
                     {formatMoney(
                       subscriptionSummary.monthlyAmount,
                       subscriptionSummary.currency
@@ -269,12 +274,12 @@ export function UserDetailClient({ id }: UserDetailClientProps) {
                     {t("users.detail.monthlyCost")}
                   </div>
                 </div>
-                <div className="bg-purple-gray rounded-sm p-3 text-center">
+                <div className="bg-muted min-w-0 rounded-md p-3 text-center">
                   <Clock
                     className={`mx-auto h-4 w-4 ${subscriptionSummary.renewingSoon > 0 ? "text-warning" : "text-muted-foreground"}`}
                   />
                   <div
-                    className={`mt-1 text-2xl font-bold tabular-nums ${subscriptionSummary.renewingSoon > 0 ? "text-warning" : ""}`}
+                    className={`mt-1 truncate text-2xl font-medium tabular-nums ${subscriptionSummary.renewingSoon > 0 ? "text-warning" : ""}`}
                   >
                     {subscriptionSummary.renewingSoon}
                     <span className="text-sm font-normal">
@@ -344,12 +349,14 @@ function InfoItem({
   icon?: React.ReactNode;
 }) {
   return (
-    <div className="rounded-sm border p-3">
-      <div className="text-muted-foreground flex items-center gap-2 text-sm">
+    <div className="min-w-0 rounded-md border p-3">
+      <div className="text-muted-foreground flex items-center gap-2 text-[0.8125rem]">
         {icon}
         {label}
       </div>
-      <div className="mt-1 font-medium">{value}</div>
+      <div className="mt-1 truncate font-medium" title={value}>
+        {value}
+      </div>
     </div>
   );
 }

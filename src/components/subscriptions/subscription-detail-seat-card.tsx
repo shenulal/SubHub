@@ -86,7 +86,7 @@ export function SubscriptionDetailSeatCard({
     const usagePercent = total > 0 ? (used / total) * 100 : 0;
 
     return (
-      <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
+      <Card>
         <CardHeader>
           <CardTitle>라이선스 사용량</CardTitle>
         </CardHeader>
@@ -107,7 +107,7 @@ export function SubscriptionDetailSeatCard({
   // PER_SEAT: Full seat card
   if (isLoading) {
     return (
-      <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
+      <Card>
         <CardContent className="flex items-center justify-center py-8">
           <Loader2 className="text-muted-foreground h-5 w-5 animate-spin" />
           <span className="text-muted-foreground ml-2 text-sm">
@@ -156,7 +156,7 @@ export function SubscriptionDetailSeatCard({
   };
 
   return (
-    <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
+    <Card>
       <CardHeader>
         <div className="flex items-center justify-between">
           <CardTitle>{isPerSeat ? t("title") : t("flatRateTitle")}</CardTitle>
@@ -187,28 +187,28 @@ export function SubscriptionDetailSeatCard({
 
         {/* Summary stats - PER_SEAT only */}
         {isPerSeat && (
-          <div className="grid grid-cols-3 gap-2 text-center">
-            <div className="bg-success-muted rounded-sm p-2">
-              <p className="text-success-muted-foreground text-lg font-semibold">
+          <div className="grid grid-cols-3 gap-3 text-center">
+            <div className="bg-success/10 min-w-0 rounded-md p-3">
+              <p className="text-success truncate text-lg font-medium tabular-nums">
                 {usedSeats}
               </p>
-              <p className="text-muted-foreground text-xs">
+              <p className="text-muted-foreground truncate text-xs">
                 {t("summary.assigned")}
               </p>
             </div>
-            <div className="bg-warning-muted rounded-sm p-2">
-              <p className="text-warning-muted-foreground text-lg font-semibold">
+            <div className="bg-warning/10 min-w-0 rounded-md p-3">
+              <p className="text-warning truncate text-lg font-medium tabular-nums">
                 {unassignedSeats}
               </p>
-              <p className="text-muted-foreground text-xs">
+              <p className="text-muted-foreground truncate text-xs">
                 {t("summary.unassigned")}
               </p>
             </div>
-            <div className="bg-destructive-muted rounded-sm p-2">
-              <p className="text-destructive-muted-foreground text-lg font-semibold">
+            <div className="bg-error/10 min-w-0 rounded-md p-3">
+              <p className="text-error truncate text-lg font-medium tabular-nums">
                 {inactiveSeats}
               </p>
-              <p className="text-muted-foreground text-xs">
+              <p className="text-muted-foreground truncate text-xs">
                 {t("summary.inactive")}
               </p>
             </div>

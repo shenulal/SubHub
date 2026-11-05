@@ -19,10 +19,10 @@ const ICONS = {
 
 const RING = {
   WAITING: "border-border text-muted-foreground",
-  PENDING: "border-amber-400 text-amber-600 dark:text-amber-300",
-  APPROVED: "border-emerald-500 bg-emerald-500 text-white",
-  REJECTED: "border-rose-500 bg-rose-500 text-white",
-  INFO_REQUESTED: "border-sky-400 text-sky-600 dark:text-sky-300",
+  PENDING: "border-warning text-warning",
+  APPROVED: "border-success bg-success text-white",
+  REJECTED: "border-error bg-error text-white",
+  INFO_REQUESTED: "border-info text-info",
   SKIPPED: "border-border text-muted-foreground",
 } as const;
 
@@ -53,9 +53,9 @@ export function ApprovalStepsList({
             )}
             <span
               className={cn(
-                "bg-background z-10 flex h-8 w-8 shrink-0 items-center justify-center rounded-full border-2",
+                "bg-card z-10 flex size-8 shrink-0 items-center justify-center rounded-full border-2",
                 RING[step.status],
-                isCurrent && "ring-4 ring-amber-400/20"
+                isCurrent && "ring-warning/20 ring-4"
               )}
             >
               <Icon className="h-4 w-4" />
@@ -84,7 +84,7 @@ export function ApprovalStepsList({
                 )}
               </p>
               {step.comment && (
-                <p className="bg-muted/50 mt-2 rounded-md px-3 py-2 text-sm">
+                <p className="bg-muted mt-2 rounded-md px-3 py-2 text-sm break-words">
                   {step.comment}
                 </p>
               )}

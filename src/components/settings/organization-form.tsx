@@ -61,8 +61,11 @@ export function OrganizationForm({ defaultValues }: OrganizationFormProps) {
   }, [state, t]);
 
   return (
-    <form action={formAction} className="max-w-lg space-y-4">
-      <div className="space-y-2">
+    <form
+      action={formAction}
+      className="grid gap-5 sm:grid-cols-2 [&_[data-slot=label]]:text-[0.9375rem]"
+    >
+      <div className="min-w-0 space-y-1.5">
         <Label htmlFor="name">{t("settings.organization.fields.name")}</Label>
         <Input
           id="name"
@@ -76,7 +79,7 @@ export function OrganizationForm({ defaultValues }: OrganizationFormProps) {
           </p>
         )}
       </div>
-      <div className="space-y-2">
+      <div className="min-w-0 space-y-1.5">
         <Label htmlFor="domain">
           {t("settings.organization.fields.domain")}
         </Label>
@@ -93,7 +96,7 @@ export function OrganizationForm({ defaultValues }: OrganizationFormProps) {
         )}
       </div>
       {FEATURES.ORGANIZATION_LOGO ? (
-        <div className="space-y-2">
+        <div className="min-w-0 space-y-1.5">
           <Label htmlFor="logoUrl">
             {t("settings.organization.fields.logo")}
           </Label>
@@ -112,7 +115,7 @@ export function OrganizationForm({ defaultValues }: OrganizationFormProps) {
       ) : (
         <input type="hidden" name="logoUrl" value={defaultValues.logoUrl} />
       )}
-      <div className="space-y-2">
+      <div className="min-w-0 space-y-1.5">
         <Label htmlFor="address">
           {t("settings.organization.fields.address")}
         </Label>
@@ -128,7 +131,7 @@ export function OrganizationForm({ defaultValues }: OrganizationFormProps) {
           </p>
         )}
       </div>
-      <div className="flex justify-end pt-4">
+      <div className="flex flex-wrap justify-end gap-3 border-t pt-5 sm:col-span-2">
         <SubmitButton
           idleLabel={t("settings.organization.actions.save")}
           pendingLabel={t("settings.organization.actions.saving")}

@@ -1,87 +1,76 @@
 /**
- * 인증 레이아웃
- * 좌: 보라/핑크 그라디언트 배경 + 브랜드/히어로 텍스트 (중앙)
- * 우: 다크 카드 + 폼 영역
+ * Authentication layout — Materio "auth v1" composition
+ * (themeselection/materio-mui-nextjs-admin-template-free, MIT):
+ * a centred 450px card with the brand mark, over the body colour,
+ * with the mask wave and tree illustrations along the bottom edge (md+).
  */
-import { getTranslations } from "next-intl/server";
-import Image from "next/image";
+import Link from "next/link";
 
-export default async function AuthLayout({
+import { SubHubLogo } from "@/components/brand/subhub-logo";
+
+export default function AuthLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const t = await getTranslations("auth.brand");
-
   return (
-    <div className="flex min-h-screen flex-col bg-white lg:flex-row">
-      {/* ── 좌측 패널: 보라/핑크 그라디언트 + 중앙 텍스트 (데스크톱 전용) ── */}
-      <div className="relative hidden p-2 lg:flex lg:flex-1">
-        <div className="relative flex w-full flex-col items-center justify-center overflow-hidden rounded-3xl bg-[#8794F6]">
-          {/* SVG 배경 (애니메이션 포함) */}
-          <object
-            data="/sublex-hero.svg"
-            type="image/svg+xml"
-            className="absolute inset-0 h-full w-full"
-            aria-hidden="true"
-          />
-          {/* 콘텐츠 */}
-          <div
-            className="relative z-10 flex flex-col items-center gap-6 px-16 text-center"
-            style={{ animation: "auth-fade-up 0.6s ease-out 0.1s both" }}
-          >
-            {/* 브랜드 로고 */}
-            <Image
-              src="/logo-white.svg"
-              alt="SubHub"
-              width={240}
-              height={38}
-              priority
-            />
-
-            {/* 히어로 타이틀 */}
-            <h1 className="text-[36px] leading-[40px] font-semibold text-white">
-              {t("tagline")}
-              <br />
-              {t("taglineHighlight")}
-            </h1>
-
-            {/* 서브텍스트 */}
-            <p className="text-sm leading-5 text-white">
-              {t("feature1")}, {t("feature2")}, {t("feature3")}
-              <br />
-              {t("feature4")}로 SaaS 비용을 완벽하게 관리하세요.
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* ── 우측 패널: 폼 영역 ── */}
+    <div className="bg-background relative isolate flex min-h-[100dvh] flex-col items-center justify-center overflow-hidden p-6">
       <div
-        className="relative flex w-full flex-col items-center justify-center px-14 py-14 lg:w-[520px] lg:shrink-0"
-        style={{
-          background: "var(--auth-panel-bg)",
-          borderLeft: "1px solid var(--auth-border)",
-        }}
+        className="bg-card relative z-10 flex w-full flex-col rounded-lg shadow-md sm:w-[450px]"
+        style={{ animation: "auth-fade-up 0.5s ease-out both" }}
       >
-        {/* 모바일 전용 로고 */}
-        <div className="mb-8 flex items-center lg:hidden">
-          <Image
-            src="/logo-white.svg"
-            alt="SubHub"
-            width={170}
-            height={27}
-            priority
-          />
-        </div>
-
-        <div
-          className="w-full max-w-[400px]"
-          style={{ filter: "drop-shadow(0px 0px 4px rgba(0,0,0,0.15))" }}
-        >
+        <div className="p-6 sm:p-12">
+          <Link
+            href="/login"
+            className="mb-6 flex items-center justify-center"
+            aria-label="SubHub"
+          >
+            <SubHubLogo />
+          </Link>
           {children}
         </div>
       </div>
+
+      <p className="text-muted-foreground relative z-10 mt-6 text-center text-[0.8125rem]">
+        © {new Date().getFullYear()} SubHub ·{" "}
+        <span className="text-primary font-medium">HelloPixels</span>
+      </p>
+
+      <AuthIllustrations />
+    </div>
+  );
+}
+
+/** Materio mask wave + trees, hidden below the md breakpoint as in the template. */
+function AuthIllustrations() {
+  return (
+    <div aria-hidden className="pointer-events-none hidden md:block">
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/images/materio/auth-v1-mask-light.png"
+        alt=""
+        className="absolute inset-x-0 bottom-0 -z-10 w-full dark:hidden"
+      />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/images/materio/auth-v1-mask-dark.png"
+        alt=""
+        className="absolute inset-x-0 bottom-0 -z-10 hidden w-full dark:block"
+      />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/images/materio/tree-1.png"
+        alt=""
+        height={200}
+        className="absolute bottom-0 left-0 h-[200px] w-auto"
+      />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
+        src="/images/materio/tree-2.png"
+        alt=""
+        height={200}
+        className="absolute right-0 bottom-0 h-[200px] w-auto"
+      />
     </div>
   );
 }

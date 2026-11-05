@@ -32,16 +32,20 @@ export function ShadowITTable({
 }: ShadowITTableProps) {
   const t = useTranslations("devices.shadowIT");
   return (
-    <div className="rounded-lg border p-4">
-      <div className="flex items-center gap-2 font-medium">
-        <AlertTriangle className="h-5 w-5 text-orange-500" />
+    <div className="rounded-md border p-4">
+      <div className="text-foreground flex items-center gap-3 font-medium">
+        <span className="tonal-warning flex size-8 shrink-0 items-center justify-center rounded-md">
+          <AlertTriangle className="size-[18px]" />
+        </span>
         {t("title")}
       </div>
       <div className="mt-4">
         {shadowITApps.length === 0 ? (
-          <div className="text-muted-foreground py-8 text-center">
-            <CheckCircle className="mx-auto mb-2 h-8 w-8 text-green-500" />
-            <p>{t("empty")}</p>
+          <div className="text-muted-foreground flex flex-col items-center gap-3 py-8 text-center">
+            <span className="tonal-success flex size-12 items-center justify-center rounded-md">
+              <CheckCircle className="size-[22px]" />
+            </span>
+            <p className="text-[0.9375rem]">{t("empty")}</p>
           </div>
         ) : (
           <Table>
@@ -57,15 +61,17 @@ export function ShadowITTable({
             <TableBody>
               {shadowITApps.map((app) => (
                 <TableRow key={app.name}>
-                  <TableCell className="font-medium">{app.name}</TableCell>
+                  <TableCell className="text-foreground max-w-[280px] truncate font-medium">
+                    {app.name}
+                  </TableCell>
                   <TableCell>
-                    <Badge variant="destructive">
+                    <Badge variant="error">
                       {t("deviceCount", { count: app.deviceCount })}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
                     {role === "ADMIN" && (
-                      <div className="flex justify-end gap-2">
+                      <div className="flex justify-end gap-2 whitespace-nowrap">
                         <Button
                           size="sm"
                           variant="outline"

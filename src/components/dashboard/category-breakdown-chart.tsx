@@ -24,11 +24,13 @@ import { downloadCSV } from "@/lib/services/export/csv";
 import { cn } from "@/lib/utils";
 import type { CategorySpendSlice, NamedOption } from "@/types/discovery";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronLeft, Download } from "lucide-react";
+import { ChevronLeft, Download, PieChart as PieChartIcon } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import { useMemo, useState, useTransition } from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer, Tooltip } from "recharts";
 import { toast } from "sonner";
+
+import { DashboardEmptyState } from "./dashboard-empty-state";
 
 const TOKEN_COLORS = [
   "var(--chart-1)",
@@ -101,11 +103,11 @@ export function CategoryBreakdownChart({
 
   return (
     <Card
-      className="bg-card flex h-[450px] flex-col gap-4 overflow-clip rounded-xl border p-5 shadow-xs"
+      className="h-[440px] gap-4 overflow-clip px-5"
       data-testid="category-breakdown"
     >
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex items-center gap-1.5">
+      <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
+        <div className="flex min-w-0 items-center gap-1.5">
           {drill && (
             <Button
               variant="ghost"
@@ -117,11 +119,14 @@ export function CategoryBreakdownChart({
               <ChevronLeft className="h-4 w-4" />
             </Button>
           )}
-          <p className="text-foreground text-base font-semibold">
+          <p
+            className="text-foreground truncate text-lg font-medium"
+            title={drill ? drill.name : t("title")}
+          >
             {drill ? drill.name : t("title")}
           </p>
         </div>
-        <div className="flex items-center gap-1.5">
+        <div className="flex shrink-0 items-center gap-1.5">
           {showFilters && (
             <>
               <Select
@@ -132,7 +137,7 @@ export function CategoryBreakdownChart({
                 }}
               >
                 <SelectTrigger
-                  className="h-7 w-32 text-xs"
+                  className="h-8 w-28 text-xs"
                   aria-label={t("owner")}
                 >
                   <SelectValue placeholder={t("owner")} />
@@ -154,7 +159,7 @@ export function CategoryBreakdownChart({
                 }}
               >
                 <SelectTrigger
-                  className="h-7 w-32 text-xs"
+                  className="h-8 w-28 text-xs"
                   aria-label={t("team")}
                 >
                   <SelectValue placeholder={t("team")} />
@@ -174,7 +179,7 @@ export function CategoryBreakdownChart({
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7"
+              className="size-8"
               onClick={exportCsv}
               disabled={isExporting}
               aria-label={t("export")}
@@ -191,9 +196,7 @@ export function CategoryBreakdownChart({
           <Skeleton className="h-24 w-full" />
         </div>
       ) : slices.length === 0 ? (
-        <p className="text-muted-foreground flex flex-1 items-center justify-center text-sm">
-          {t("empty")}
-        </p>
+        <DashboardEmptyState icon={PieChartIcon} message={t("empty")} />
       ) : (
         <div className="flex min-h-0 flex-1 flex-col gap-3">
           <div className="relative flex h-[180px] shrink-0 items-center justify-center">
@@ -235,10 +238,13 @@ export function CategoryBreakdownChart({
               </PieChart>
             </ResponsiveContainer>
             <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-muted-foreground text-[11px]">
+              <span className="text-muted-foreground text-xs">
                 {t("perMonth")}
               </span>
-              <span className="text-foreground text-base font-semibold tabular-nums">
+              <span
+                className="text-foreground max-w-[7.5rem] truncate text-base font-medium tabular-nums"
+                title={formatMoney(total, baseCurrency, locale)}
+              >
                 {formatMoney(total, baseCurrency, locale)}
               </span>
             </div>
@@ -263,18 +269,18 @@ export function CategoryBreakdownChart({
                       className="h-2.5 w-2.5 shrink-0 rounded-full"
                       style={{ background: sliceColor(s, i) }}
                     />
-                    <span className="truncate">
+                    <span className="min-w-0 truncate">
                       {s.name === "__uncategorised"
                         ? t("uncategorised")
                         : s.name}
                     </span>
-                    <span className="text-muted-foreground ml-auto text-xs tabular-nums">
+                    <span className="text-muted-foreground ml-auto shrink-0 text-xs tabular-nums">
                       {s.count}
                     </span>
-                    <span className="w-20 text-right text-xs tabular-nums">
+                    <span className="w-24 shrink-0 truncate text-right text-xs tabular-nums">
                       {formatMoney(s.monthlyBase, baseCurrency, locale)}
                     </span>
-                    <span className="text-muted-foreground w-9 text-right text-xs tabular-nums">
+                    <span className="text-muted-foreground w-9 shrink-0 text-right text-xs tabular-nums">
                       {pct}%
                     </span>
                   </button>

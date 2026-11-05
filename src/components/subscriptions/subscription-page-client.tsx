@@ -158,24 +158,26 @@ export function SubscriptionPageClient({
   const activeFilters = countActiveFilters(query.filter);
 
   return (
-    <div className="space-y-4" data-testid="subscription-page">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-xl font-semibold tracking-tight">{t("title")}</h1>
-          <p className="text-muted-foreground mt-0.5 text-sm">
-            {t("summary", {
-              count: total,
-              total: formatMoney(monthlyTotalBase, baseCurrency, locale),
-            })}
+    <div className="space-y-6" data-testid="subscription-page">
+      <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-3">
+        <div className="min-w-0 flex-1 basis-64">
+          <h1 className="text-foreground text-2xl font-medium">{t("title")}</h1>
+          <p className="text-muted-foreground mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[0.9375rem]">
+            <span className="tabular-nums">
+              {t("summary", {
+                count: total,
+                total: formatMoney(monthlyTotalBase, baseCurrency, locale),
+              })}
+            </span>
             {hasStaleRates && (
-              <span className="ml-2 inline-flex items-center gap-1 text-amber-600 dark:text-amber-400">
-                <AlertTriangle className="h-3.5 w-3.5" />
+              <span className="tonal-warning inline-flex h-6 shrink-0 items-center gap-1 rounded-full px-2.5 text-[0.8125rem] font-medium whitespace-nowrap">
+                <AlertTriangle className="size-3.5" />
                 {t("staleRates")}
               </span>
             )}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex max-w-full min-w-0 flex-wrap items-center gap-2 [&_button]:whitespace-nowrap [&>button]:h-[38px] [&>button]:px-4 [&>button]:text-[0.9375rem]">
           <ColumnsDropdown
             columns={COLUMN_IDS.map((id) => ({
               id,
@@ -187,22 +189,22 @@ export function SubscriptionPageClient({
           <Can permission="subscriptions:export">
             <Button
               variant="outline"
-              size="sm"
+              className="shrink-0"
               onClick={exportView}
               disabled={isExporting}
             >
               {isExporting ? (
-                <Loader2 className="mr-1.5 h-4 w-4 animate-spin" />
+                <Loader2 className="size-4 animate-spin" />
               ) : (
-                <Download className="mr-1.5 h-4 w-4" />
+                <Download className="size-4" />
               )}
               {t("export")}
             </Button>
           </Can>
           <Can permission="subscriptions:create">
-            <Button size="sm" asChild>
+            <Button className="shrink-0 whitespace-nowrap" asChild>
               <Link href="/subscriptions/new">
-                <Plus className="mr-1.5 h-4 w-4" />
+                <Plus className="size-4" />
                 {t("add")}
               </Link>
             </Button>
@@ -210,24 +212,26 @@ export function SubscriptionPageClient({
         </div>
       </div>
 
-      <SavedViewsBar
-        views={savedViews}
-        filter={query.filter}
-        sort={query.sort}
-        onApply={applyView}
-      />
-
-      <SubscriptionFilters
-        filter={query.filter}
-        sort={query.sort}
-        options={options}
-        onFilterChange={patchFilter}
-        onSortChange={setSort}
-        onReset={resetFilters}
-      />
+      <div className="border-border flex min-w-0 flex-col gap-4 rounded-md border p-4">
+        <SavedViewsBar
+          views={savedViews}
+          filter={query.filter}
+          sort={query.sort}
+          onApply={applyView}
+        />
+        <div className="border-border border-t" aria-hidden />
+        <SubscriptionFilters
+          filter={query.filter}
+          sort={query.sort}
+          options={options}
+          onFilterChange={patchFilter}
+          onSortChange={setSort}
+          onReset={resetFilters}
+        />
+      </div>
 
       {error && (
-        <div className="border-destructive/40 bg-destructive/5 text-destructive rounded-md border px-3 py-2 text-sm">
+        <div className="tonal-error rounded-md px-4 py-3 text-[0.9375rem]">
           {error}
         </div>
       )}

@@ -38,40 +38,24 @@ import { useRouter } from "next/navigation";
 import { useTransition } from "react";
 import { toast } from "sonner";
 
-/** Lane accent colours — light + dark safe. */
+/** Lane accent colours — Materio semantic tokens, light + dark safe. */
 export const LANE_STYLES: Record<
   PipelineLaneKey,
   { bar: string; chip: string; text: string }
 > = {
-  overdue: {
-    bar: "bg-rose-500",
-    chip: "bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300",
-    text: "text-rose-600 dark:text-rose-400",
-  },
-  week: {
-    bar: "bg-amber-500",
-    chip: "bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300",
-    text: "text-amber-600 dark:text-amber-400",
-  },
-  month: {
-    bar: "bg-primary",
-    chip: "bg-primary/10 text-primary",
-    text: "text-primary",
-  },
+  overdue: { bar: "bg-error", chip: "tonal-error", text: "text-error" },
+  week: { bar: "bg-warning", chip: "tonal-warning", text: "text-warning" },
+  month: { bar: "bg-primary", chip: "tonal-primary", text: "text-primary" },
   later: {
-    bar: "bg-muted-foreground/50",
-    chip: "bg-muted text-muted-foreground",
+    bar: "bg-neutral",
+    chip: "tonal-neutral",
     text: "text-muted-foreground",
   },
-  trialEnding: {
-    bar: "bg-violet-500",
-    chip: "bg-violet-50 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300",
-    text: "text-violet-600 dark:text-violet-400",
-  },
+  trialEnding: { bar: "bg-info", chip: "tonal-info", text: "text-info" },
   noticeDeadline: {
-    bar: "bg-orange-500",
-    chip: "bg-orange-50 text-orange-700 dark:bg-orange-950/60 dark:text-orange-300",
-    text: "text-orange-600 dark:text-orange-400",
+    bar: "bg-warning",
+    chip: "tonal-warning",
+    text: "text-warning",
   },
 };
 
@@ -119,13 +103,13 @@ export function RenewalPipelineCard({
     <article
       data-testid="pipeline-card"
       className={cn(
-        "bg-card group relative flex gap-3 rounded-lg border p-3 shadow-xs transition-shadow hover:shadow-md",
-        compact && "items-center py-2"
+        "bg-card group relative flex min-w-0 gap-3 overflow-hidden rounded-lg p-4 shadow-xs transition-shadow hover:shadow-md",
+        compact && "items-center py-3"
       )}
     >
       <span
         className={cn(
-          "absolute top-3 bottom-3 left-0 w-0.5 rounded-r",
+          "absolute top-4 bottom-4 left-0 w-1 rounded-r",
           style.bar
         )}
       />
@@ -135,47 +119,48 @@ export function RenewalPipelineCard({
           alt={card.appName}
           width={36}
           height={36}
-          className="h-9 w-9 shrink-0 rounded-md border object-contain"
+          className="bg-background size-10 shrink-0 rounded-md border object-contain p-0.5"
         />
       ) : (
-        <div className="bg-primary/10 text-primary flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-sm font-semibold">
+        <div className="tonal-primary flex size-10 shrink-0 items-center justify-center rounded-md text-[0.9375rem] font-medium">
           {card.appName.charAt(0).toUpperCase()}
         </div>
       )}
       <div className="min-w-0 flex-1">
-        <div className="flex items-start justify-between gap-2">
+        <div className="flex min-w-0 items-start justify-between gap-2">
           <Link
             href={`/subscriptions/${card.id}`}
-            className="truncate text-sm font-medium hover:underline"
+            className="text-foreground hover:text-primary min-w-0 truncate text-[0.9375rem] font-medium transition-colors"
+            title={card.appName}
           >
             {card.appName}
           </Link>
           <span
             className={cn(
-              "shrink-0 text-xs font-semibold tabular-nums",
-              style.text
+              "inline-flex h-5 shrink-0 items-center rounded-full px-2 text-[0.6875rem] font-medium whitespace-nowrap tabular-nums",
+              style.chip
             )}
           >
             {daysLabel}
           </span>
         </div>
-        <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs">
-          <span className="font-medium tabular-nums">
+        <div className="mt-1 flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1 text-[0.8125rem]">
+          <span className="text-foreground font-medium whitespace-nowrap tabular-nums">
             {formatMoney(card.amount, card.currency, locale)}
           </span>
           {card.currency !== baseCurrency && (
-            <span className="text-muted-foreground tabular-nums">
+            <span className="text-muted-foreground whitespace-nowrap tabular-nums">
               ≈ {formatMoney(card.monthlyBase, baseCurrency, locale)}{" "}
               {t("perMonth")}
             </span>
           )}
-          <span className="text-muted-foreground">
+          <span className="text-muted-foreground whitespace-nowrap">
             {format(new Date(card.dueDate), "MMM d")}
           </span>
           {card.isTrial && (
             <span
               className={cn(
-                "inline-flex items-center gap-0.5 rounded px-1 text-[10px]",
+                "inline-flex h-5 items-center gap-1 rounded-full px-2 text-[0.6875rem] font-medium whitespace-nowrap",
                 LANE_STYLES.trialEnding.chip
               )}
             >
@@ -185,8 +170,8 @@ export function RenewalPipelineCard({
           )}
         </div>
         {!compact && (card.owner || card.teamName) && (
-          <div className="text-muted-foreground mt-1 flex items-center gap-1 text-xs">
-            <User className="h-3 w-3" />
+          <div className="text-muted-foreground mt-2 flex min-w-0 items-center gap-1.5 text-[0.8125rem]">
+            <User className="size-3.5 shrink-0" />
             <span className="truncate">
               {card.owner?.name ?? card.teamName}
             </span>
@@ -199,7 +184,7 @@ export function RenewalPipelineCard({
             <Button
               variant="ghost"
               size="icon"
-              className="h-7 w-7 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+              className="-mt-1 -mr-2 size-8 shrink-0 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
               disabled={isPending}
               aria-label={t("quickActions", { appName: card.appName })}
             >

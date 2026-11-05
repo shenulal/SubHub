@@ -92,7 +92,7 @@ function ManualRateDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
-          <PencilLine className="mr-2 h-4 w-4" />
+          <PencilLine className="size-4" />
           {t("manualRate")}
         </Button>
       </DialogTrigger>
@@ -134,7 +134,7 @@ function ManualRateDialog({
             {tc("cancel")}
           </Button>
           <Button onClick={submit} disabled={isPending || !rate || !quote}>
-            {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isPending && <Loader2 className="size-4 animate-spin" />}
             {tc("save")}
           </Button>
         </DialogFooter>
@@ -202,7 +202,7 @@ export function CurrenciesPanel({ rows, canManage }: CurrenciesPanelProps) {
         description={t("description", { base })}
         action={
           canManage && (
-            <div className="flex gap-2">
+            <div className="flex flex-wrap gap-2">
               <ManualRateDialog
                 base={base}
                 codes={rows.filter((r) => !r.isBase).map((r) => r.code)}
@@ -210,9 +210,9 @@ export function CurrenciesPanel({ rows, canManage }: CurrenciesPanelProps) {
               />
               <Button size="sm" onClick={refresh} disabled={isPending}>
                 {isPending ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className="size-4 animate-spin" />
                 ) : (
-                  <RefreshCw className="mr-2 h-4 w-4" />
+                  <RefreshCw className="size-4" />
                 )}
                 {t("refreshNow")}
               </Button>
@@ -221,21 +221,23 @@ export function CurrenciesPanel({ rows, canManage }: CurrenciesPanelProps) {
         }
       />
       {staleCount > 0 && (
-        <div className="mb-4 flex items-center gap-2 rounded-md border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-sm text-amber-800 dark:text-amber-300">
-          <AlertTriangle className="h-4 w-4 shrink-0" />
-          {t("staleWarning", { count: staleCount })}
+        <div className="tonal-warning mb-4 flex items-center gap-2 rounded-md px-4 py-3 text-[0.9375rem]">
+          <AlertTriangle className="size-5 shrink-0" />
+          <span className="min-w-0">
+            {t("staleWarning", { count: staleCount })}
+          </span>
         </div>
       )}
       <Input
         value={query}
         onChange={(e) => setQuery(e.target.value)}
         placeholder={t("search")}
-        className="mb-3 max-w-xs"
+        className="mb-4 w-full sm:max-w-xs"
       />
       <div className="overflow-hidden rounded-md border">
         <Table>
           <TableHeader>
-            <TableRow className="bg-muted/40">
+            <TableRow className="hover:bg-transparent">
               <TableHead className="w-24">{tc("code")}</TableHead>
               <TableHead>{tc("name")}</TableHead>
               <TableHead className="text-right">
@@ -251,10 +253,10 @@ export function CurrenciesPanel({ rows, canManage }: CurrenciesPanelProps) {
                 key={row.code}
                 className={cn(!row.isEnabled && "text-muted-foreground")}
               >
-                <TableCell className="font-mono font-medium">
+                <TableCell className="font-mono font-medium whitespace-nowrap">
                   {row.code}
                   {row.isBase && (
-                    <span className="bg-primary/10 text-primary ml-2 rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase">
+                    <span className="tonal-primary ml-2 rounded px-1.5 py-0.5 font-sans text-[10px] font-medium uppercase">
                       {t("base")}
                     </span>
                   )}
@@ -268,22 +270,16 @@ export function CurrenciesPanel({ rows, canManage }: CurrenciesPanelProps) {
                 <TableCell className="text-right font-mono tabular-nums">
                   {row.isBase ? "1" : formatRate(row.rate)}
                 </TableCell>
-                <TableCell className="text-xs">
+                <TableCell className="text-[0.8125rem] whitespace-nowrap">
                   {row.isBase ? (
                     "—"
                   ) : row.rateAsOf ? (
-                    <span
-                      className={cn(
-                        row.stale && "text-amber-600 dark:text-amber-400"
-                      )}
-                    >
+                    <span className={cn(row.stale && "text-warning")}>
                       {new Date(row.rateAsOf).toLocaleDateString()} ·{" "}
                       {row.rateSource}
                     </span>
                   ) : (
-                    <span className="text-amber-600 dark:text-amber-400">
-                      {t("noRate")}
-                    </span>
+                    <span className="text-warning">{t("noRate")}</span>
                   )}
                 </TableCell>
                 <TableCell className="text-right">

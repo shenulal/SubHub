@@ -81,8 +81,8 @@ export default async function BlockEventsPage({
   const t = await getTranslations("reports.blockEvents");
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-bold tracking-tight">{t("page.title")}</h1>
+    <div className="space-y-6">
+      <h1 className="truncate text-2xl font-medium">{t("page.title")}</h1>
 
       <BlockEventsPageClient
         initialData={reportData.data}

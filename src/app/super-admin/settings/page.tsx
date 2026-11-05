@@ -24,14 +24,16 @@ export default async function SuperAdminSettingsPage() {
   const result = await getSystemSettings();
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">Platform settings</h1>
-        <p className="text-muted-foreground">
+      <div className="space-y-1">
+        <h1 className="text-foreground text-2xl font-medium">
+          Platform settings
+        </h1>
+        <p className="text-muted-foreground text-[0.9375rem]">
           Defaults that apply to every workspace unless an organisation
           overrides them.
         </p>
       </div>
-      <Card className="rounded-sm p-6">
+      <Card className="p-5 sm:p-6">
         {result.success && result.data ? (
           <WorkspaceSettingsForm
             payload={result.data}

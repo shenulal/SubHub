@@ -32,17 +32,17 @@ export default async function AdminsPage() {
 
   if (noTenant) {
     return (
-      <div className="space-y-8">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight">관리자 관리</h1>
-          <p className="text-muted-foreground">
+      <div className="space-y-6">
+        <div className="space-y-1">
+          <h1 className="text-foreground text-2xl font-medium">관리자 관리</h1>
+          <p className="text-muted-foreground text-[0.9375rem]">
             테넌트 관리자를 초대하고 역할을 관리합니다.
           </p>
         </div>
 
-        <Card className="border-dashed">
+        <Card>
           <CardContent className="flex flex-col items-center justify-center gap-4 py-16 text-center">
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground text-[0.9375rem]">
               관리자를 초대하려면 먼저 테넌트를 생성해야 합니다.
             </p>
             <Button asChild>
@@ -55,10 +55,10 @@ export default async function AdminsPage() {
   }
 
   return (
-    <div className="space-y-8">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">관리자 관리</h1>
-        <p className="text-muted-foreground">
+    <div className="space-y-6">
+      <div className="space-y-1">
+        <h1 className="text-foreground text-2xl font-medium">관리자 관리</h1>
+        <p className="text-muted-foreground text-[0.9375rem]">
           테넌트 관리자를 초대하고 역할을 관리합니다.
         </p>
       </div>
@@ -84,7 +84,7 @@ export default async function AdminsPage() {
             발송된 초대 현황입니다. 대기 중인 초대는 재발송할 수 있습니다.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-0">
           {invitationsResult.success && invitationsResult.data ? (
             <InvitationsHistoryTable invitations={invitationsResult.data} />
           ) : (
@@ -103,7 +103,7 @@ export default async function AdminsPage() {
             현재 ADMIN 역할을 가진 사용자 목록입니다.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="px-0">
           {result.success && result.data ? (
             <AdminsTable admins={result.data} />
           ) : (

@@ -61,15 +61,18 @@ function getStatusBadge(
     IntegrationDetailProps["status"],
     {
       label: string;
-      variant: "default" | "secondary" | "destructive" | "outline";
+      variant: "success" | "warning" | "secondary" | "error";
     }
   > = {
-    ACTIVE: { label: t("integrations.status.active"), variant: "default" },
-    PENDING: { label: t("integrations.status.pending"), variant: "secondary" },
-    ERROR: { label: t("integrations.status.error"), variant: "destructive" },
+    ACTIVE: { label: t("integrations.status.active"), variant: "success" },
+    PENDING: { label: t("integrations.status.pending"), variant: "warning" },
+    ERROR: {
+      label: t("integrations.status.error"),
+      variant: "error",
+    },
     DISCONNECTED: {
       label: t("integrations.status.disconnected"),
-      variant: "outline",
+      variant: "secondary",
     },
   };
   const config = statusConfig[status];
@@ -96,26 +99,29 @@ export function IntegrationDetailCard({
   };
 
   return (
-    <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
+    <Card>
       <CardHeader>
-        <div className="flex items-start justify-between">
-          <div className="flex items-center gap-3">
-            <div className="bg-primary/10 flex h-12 w-12 items-center justify-center rounded-lg">
-              <Link2 className="text-primary h-6 w-6" />
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="flex min-w-0 items-center gap-4">
+            <div className="tonal-primary flex size-12 shrink-0 items-center justify-center rounded-md">
+              <Link2 className="size-6" />
             </div>
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                {getIntegrationTypeName(integration.type, t)}
+            <div className="min-w-0">
+              <CardTitle className="flex min-w-0 items-center gap-2">
+                <span className="truncate">
+                  {getIntegrationTypeName(integration.type, t)}
+                </span>
                 {getStatusBadge(integration.status, t)}
               </CardTitle>
               {integration.metadata.domain && (
-                <p className="text-muted-foreground text-sm">
+                <p className="text-muted-foreground truncate text-[0.8125rem]">
                   {integration.metadata.domain}
                 </p>
               )}
             </div>
           </div>
           <Button
+            className="shrink-0"
             variant="outline"
             onClick={handleSync}
             disabled={
@@ -136,53 +142,55 @@ export function IntegrationDetailCard({
       <CardContent>
         <div className="grid gap-6 md:grid-cols-2">
           {/* 동기화 정보 */}
-          <div className="space-y-4">
-            <div>
-              <p className="text-muted-foreground text-sm">
+          <div className="min-w-0 space-y-4">
+            <div className="min-w-0">
+              <p className="text-muted-foreground truncate text-[0.8125rem]">
                 {t("integrations.detail.lastSync")}
               </p>
-              <p className="font-medium">
+              <p className="text-foreground truncate font-medium tabular-nums">
                 {integration.lastSyncAt
                   ? formatKoreanDateTime(integration.lastSyncAt)
                   : "-"}
               </p>
             </div>
-            <div>
-              <p className="text-muted-foreground text-sm">
+            <div className="min-w-0">
+              <p className="text-muted-foreground truncate text-[0.8125rem]">
                 {t("integrations.detail.totalSyncCount")}
               </p>
-              <p className="font-medium">{integration.syncCount}</p>
+              <p className="text-foreground font-medium tabular-nums">
+                {integration.syncCount}
+              </p>
             </div>
           </div>
 
           {/* 마지막 동기화 결과 */}
           {integration.lastSyncResult && (
-            <div className="space-y-4">
-              <p className="text-muted-foreground text-sm">
+            <div className="min-w-0 space-y-4">
+              <p className="text-muted-foreground text-[0.8125rem]">
                 {t("integrations.detail.lastSyncResult")}
               </p>
               <div className="grid grid-cols-3 gap-4">
-                <div className="bg-purple-gray rounded-lg p-3 text-center">
-                  <p className="text-muted-foreground text-xs">
+                <div className="bg-muted min-w-0 rounded-md p-3 text-center">
+                  <p className="text-muted-foreground truncate text-xs">
                     {t("integrations.detail.itemsFound")}
                   </p>
-                  <p className="text-2xl font-semibold tabular-nums">
+                  <p className="text-foreground truncate text-2xl font-medium tabular-nums">
                     {integration.lastSyncResult.itemsFound}
                   </p>
                 </div>
-                <div className="bg-purple-gray rounded-lg p-3 text-center">
-                  <p className="text-muted-foreground text-xs">
+                <div className="bg-muted min-w-0 rounded-md p-3 text-center">
+                  <p className="text-muted-foreground truncate text-xs">
                     {t("integrations.detail.itemsCreated")}
                   </p>
-                  <p className="text-2xl font-semibold text-emerald-700 tabular-nums dark:text-emerald-400">
+                  <p className="text-success truncate text-2xl font-medium tabular-nums">
                     {integration.lastSyncResult.itemsCreated}
                   </p>
                 </div>
-                <div className="bg-purple-gray rounded-lg p-3 text-center">
-                  <p className="text-muted-foreground text-xs">
+                <div className="bg-muted min-w-0 rounded-md p-3 text-center">
+                  <p className="text-muted-foreground truncate text-xs">
                     {t("integrations.detail.itemsUpdated")}
                   </p>
-                  <p className="text-2xl font-semibold text-blue-700 tabular-nums dark:text-blue-400">
+                  <p className="text-info truncate text-2xl font-medium tabular-nums">
                     {integration.lastSyncResult.itemsUpdated}
                   </p>
                 </div>
@@ -193,11 +201,11 @@ export function IntegrationDetailCard({
 
         {/* 오류 메시지 */}
         {integration.lastError && (
-          <div className="bg-destructive/10 text-destructive mt-4 rounded-lg p-3">
+          <div className="tonal-error mt-4 rounded-md px-4 py-3">
             <p className="text-sm font-medium">
               {t("integrations.detail.error")}
             </p>
-            <p className="text-sm">{integration.lastError}</p>
+            <p className="text-sm break-words">{integration.lastError}</p>
           </div>
         )}
       </CardContent>

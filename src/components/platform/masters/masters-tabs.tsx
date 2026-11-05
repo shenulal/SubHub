@@ -66,7 +66,7 @@ export function MastersTabs({
       onValueChange={(v) => router.replace(`/settings/masters?tab=${v}`)}
       className="w-full"
     >
-      <TabsList className="mb-6 flex h-auto w-full flex-wrap justify-start gap-1 bg-transparent p-0">
+      <TabsList className="mb-4 flex h-auto w-full flex-wrap justify-start gap-2 overflow-visible border-b-0 bg-transparent p-0">
         {[
           { key: "currencies", icon: Coins },
           { key: "tax-rates", icon: Receipt },
@@ -77,9 +77,9 @@ export function MastersTabs({
           <TabsTrigger
             key={key}
             value={key}
-            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground gap-2 rounded-full border px-3 py-1.5 data-[state=active]:shadow-none"
+            className="text-foreground hover:bg-primary/10 hover:text-primary data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:hover:text-primary-foreground h-[38px] gap-2 rounded-md px-4 after:hidden data-[state=active]:shadow-xs"
           >
-            <Icon className="h-3.5 w-3.5" />
+            <Icon className="size-4" />
             {t(`tabs.${key}`)}
           </TabsTrigger>
         ))}

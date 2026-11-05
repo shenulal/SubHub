@@ -9,6 +9,10 @@ import { DomainManagement } from "./domain-management";
 import { OrganizationForm } from "./organization-form";
 import { TeamManagement } from "./team-management";
 
+/** Materio pill tab (account-settings style). */
+const PILL_TAB =
+  "text-foreground hover:bg-primary/10 hover:text-primary data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:hover:text-primary-foreground h-[38px] min-w-0 gap-2 rounded-md px-4 after:hidden data-[state=active]:shadow-xs";
+
 interface OrganizationTabsProps {
   organization: {
     name: string;
@@ -40,21 +44,21 @@ export function OrganizationTabs({ organization }: OrganizationTabsProps) {
   return (
     <Tabs defaultValue="info" className="w-full">
       <TabsList
-        className={`grid w-full max-w-2xl ${gridColsMap[tabCount] || "grid-cols-1"}`}
+        className={`grid h-auto w-full max-w-2xl gap-2 overflow-visible border-b-0 ${gridColsMap[tabCount] || "grid-cols-1"}`}
       >
-        <TabsTrigger value="info" className="gap-2">
-          <Building2 className="h-4 w-4" />
+        <TabsTrigger value="info" className={PILL_TAB}>
+          <Building2 className="size-4" />
           {t("settings.organization.tabs.info")}
         </TabsTrigger>
         {FEATURES.ORGANIZATION_TEAMS && (
-          <TabsTrigger value="teams" className="gap-2">
-            <Users className="h-4 w-4" />
+          <TabsTrigger value="teams" className={PILL_TAB}>
+            <Users className="size-4" />
             {t("settings.organization.tabs.teams")}
           </TabsTrigger>
         )}
         {FEATURES.ORGANIZATION_DOMAINS && (
-          <TabsTrigger value="domains" className="gap-2">
-            <Globe className="h-4 w-4" />
+          <TabsTrigger value="domains" className={PILL_TAB}>
+            <Globe className="size-4" />
             {t("settings.organization.tabs.domains")}
           </TabsTrigger>
         )}

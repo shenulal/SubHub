@@ -49,29 +49,29 @@ export function BuildsPageClient() {
     BuildStatus,
     {
       label: string;
-      variant: "default" | "secondary" | "destructive" | "outline";
+      variant: "secondary" | "info" | "success" | "error";
       icon: React.ComponentType<{ className?: string }>;
     }
   > = useMemo(
     () => ({
       PENDING: {
         label: t("builds.status.pending"),
-        variant: "outline",
+        variant: "secondary",
         icon: Clock,
       },
       BUILDING: {
         label: t("builds.status.building"),
-        variant: "secondary",
+        variant: "info",
         icon: Loader2,
       },
       COMPLETED: {
         label: t("builds.status.completed"),
-        variant: "default",
+        variant: "success",
         icon: CheckCircle,
       },
       FAILED: {
         label: t("builds.status.failed"),
-        variant: "destructive",
+        variant: "error",
         icon: AlertCircle,
       },
     }),
@@ -112,11 +112,16 @@ export function BuildsPageClient() {
 
   return (
     <div className="space-y-4">
-      <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
-        <CardContent className="p-0">
+      <Card className="border-border dark:border-border gap-0 overflow-hidden border py-0 shadow-none">
+        <CardContent className="px-0">
           {builds.length === 0 ? (
-            <div className="py-10 text-center">
-              <p className="text-muted-foreground">{t("builds.emptyTitle")}</p>
+            <div className="flex flex-col items-center gap-3 py-10 text-center">
+              <span className="tonal-neutral flex size-12 items-center justify-center rounded-md">
+                <Download className="size-[22px]" />
+              </span>
+              <p className="text-muted-foreground text-[0.9375rem]">
+                {t("builds.emptyTitle")}
+              </p>
             </div>
           ) : (
             <Table>
@@ -141,13 +146,15 @@ export function BuildsPageClient() {
                       <TableCell>
                         <Badge variant={config.variant}>
                           <StatusIcon
-                            className={`mr-1 h-3 w-3 ${build.status === "BUILDING" ? "animate-spin" : ""}`}
+                            className={`h-3 w-3 ${build.status === "BUILDING" ? "animate-spin" : ""}`}
                           />
                           {config.label}
                         </Badge>
                       </TableCell>
-                      <TableCell>{formatFileSize(build.fileSize)}</TableCell>
-                      <TableCell>
+                      <TableCell className="whitespace-nowrap tabular-nums">
+                        {formatFileSize(build.fileSize)}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground whitespace-nowrap tabular-nums">
                         {new Date(build.createdAt).toLocaleString(
                           locale === "en" ? "en-US" : "ko-KR"
                         )}

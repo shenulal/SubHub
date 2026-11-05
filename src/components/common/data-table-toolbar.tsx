@@ -98,9 +98,12 @@ export function DataTablePagination({
 
   return (
     <div
-      className={cn("flex items-center justify-between px-2 py-4", className)}
+      className={cn(
+        "flex flex-wrap items-center justify-between gap-3 px-2 py-4",
+        className
+      )}
     >
-      <div className="text-muted-foreground flex-1 text-sm">
+      <div className="text-muted-foreground min-w-0 flex-1 text-[0.8125rem] whitespace-nowrap">
         {selectedCount > 0 ? (
           <span>
             {selectedCount} of {totalItems} row(s) selected.
@@ -111,10 +114,12 @@ export function DataTablePagination({
           </span>
         )}
       </div>
-      <div className="flex items-center space-x-6 lg:space-x-8">
+      <div className="flex flex-wrap items-center gap-4 lg:gap-6">
         {onPageSizeChange && (
-          <div className="flex items-center space-x-2">
-            <p className="text-sm font-medium">Rows per page</p>
+          <div className="flex items-center gap-2">
+            <p className="text-muted-foreground text-[0.8125rem] whitespace-nowrap">
+              Rows per page
+            </p>
             <Select
               value={pageSize.toString()}
               onValueChange={(value) => onPageSizeChange(Number(value))}
@@ -132,8 +137,8 @@ export function DataTablePagination({
             </Select>
           </div>
         )}
-        <div className="flex items-center space-x-2">
-          <div className="flex w-[100px] items-center justify-center text-sm font-medium">
+        <div className="flex items-center gap-2">
+          <div className="text-foreground flex min-w-[100px] items-center justify-center text-[0.8125rem] whitespace-nowrap tabular-nums">
             Page {currentPage} of {totalPages}
           </div>
           <Button

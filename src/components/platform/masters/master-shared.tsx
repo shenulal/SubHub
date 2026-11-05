@@ -29,12 +29,18 @@ export function PanelHeader({
   action?: ReactNode;
 }) {
   return (
-    <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-      <div>
-        <h3 className="text-base font-semibold tracking-tight">{title}</h3>
-        <p className="text-muted-foreground text-sm">{description}</p>
+    <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+      <div className="min-w-0 space-y-1">
+        <h3 className="text-foreground text-lg leading-snug font-medium">
+          {title}
+        </h3>
+        <p className="text-muted-foreground text-[0.8125rem]">{description}</p>
       </div>
-      {action}
+      {action && (
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
+          {action}
+        </div>
+      )}
     </div>
   );
 }
@@ -43,18 +49,13 @@ export function StatusBadge({ active }: { active: boolean }) {
   const t = useTranslations("platform.masters.common");
   return (
     <Badge
-      variant="outline"
-      className={cn(
-        "gap-1.5 font-normal",
-        active
-          ? "border-emerald-500/40 text-emerald-700 dark:text-emerald-400"
-          : "text-muted-foreground"
-      )}
+      variant={active ? "success" : "secondary"}
+      className={cn("gap-1.5 font-medium", !active && "text-muted-foreground")}
     >
       <span
         className={cn(
-          "h-1.5 w-1.5 rounded-full",
-          active ? "bg-emerald-500" : "bg-muted-foreground/50"
+          "size-1.5 shrink-0 rounded-full",
+          active ? "bg-success" : "bg-muted-foreground/50"
         )}
       />
       {active ? t("active") : t("inactive")}
@@ -83,12 +84,12 @@ export function Field({
   hint?: string;
 }) {
   return (
-    <div className="space-y-1.5">
-      <Label htmlFor={id} className="text-xs font-medium">
+    <div className="min-w-0 space-y-1.5">
+      <Label htmlFor={id} className="text-[0.8125rem] font-medium">
         {label}
       </Label>
       {children}
-      {hint && <p className="text-muted-foreground text-[11px]">{hint}</p>}
+      {hint && <p className="text-muted-foreground text-[0.8125rem]">{hint}</p>}
     </div>
   );
 }
@@ -109,7 +110,7 @@ export function ConfirmDelete({
         <Button
           variant="ghost"
           size="icon"
-          className="text-muted-foreground hover:text-destructive h-8 w-8"
+          className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 size-8"
           aria-label={t("delete")}
           disabled={disabled}
         >

@@ -38,7 +38,7 @@ export function FleetDMInstallGuide({ onClose }: FleetDMInstallGuideProps) {
       onClick={() => copyToClipboard(command, id)}
     >
       {copiedCommand === id ? (
-        <Check className="h-3 w-3 text-green-500" />
+        <Check className="text-success h-3 w-3" />
       ) : (
         <Copy className="h-3 w-3" />
       )}
@@ -47,7 +47,7 @@ export function FleetDMInstallGuide({ onClose }: FleetDMInstallGuideProps) {
 
   const CommandBlock = ({ command, id }: { command: string; id: string }) => (
     <div className="bg-muted flex items-center justify-between gap-2 rounded-md p-3 font-mono text-sm">
-      <code className="overflow-x-auto break-all whitespace-pre-wrap">
+      <code className="min-w-0 overflow-x-auto break-all whitespace-pre-wrap">
         {command}
       </code>
       <CopyButton command={command} id={id} />
@@ -57,7 +57,7 @@ export function FleetDMInstallGuide({ onClose }: FleetDMInstallGuideProps) {
   return (
     <div className="flex flex-col gap-6 py-4">
       <div>
-        <h2 className="text-lg font-semibold">{t("title")}</h2>
+        <h2 className="text-foreground text-lg font-medium">{t("title")}</h2>
         <p className="text-muted-foreground text-sm">{t("description")}</p>
       </div>
 

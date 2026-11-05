@@ -8,23 +8,25 @@ import { useTheme } from "next-themes";
 import { useEffect, useMemo, useState } from "react";
 
 // 다크 모드 미리보기 색상
+// (Materio dark palette: paper #312D4B, text #E7E3FC, primary #8C57FF)
 const darkColors = {
-  background: "#171717",
-  foreground: "#ffffff",
-  primary: "#818cf8",
-  muted: "#262626",
-  mutedForeground: "#a4a4a4",
-  border: "#404040",
+  background: "#312d4b",
+  foreground: "#e7e3fc",
+  primary: "#8c57ff",
+  muted: "#3d3759",
+  mutedForeground: "#aaa5c4",
+  border: "#4a4466",
 };
 
 // 라이트 모드 미리보기 색상
+// (Materio light palette: paper #FFFFFF, text #2E263D, primary #8C57FF)
 const lightColors = {
   background: "#ffffff",
-  foreground: "#333333",
-  primary: "#6366f1",
-  muted: "#f8f8f8",
-  mutedForeground: "#6c727e",
-  border: "#e4e8ef",
+  foreground: "#2e263d",
+  primary: "#8c57ff",
+  muted: "#f4f5fa",
+  mutedForeground: "#8a8595",
+  border: "#e6e5e8",
 };
 
 export function AppearanceSettingsClient() {
@@ -78,7 +80,7 @@ export function AppearanceSettingsClient() {
           <div className="bg-muted h-4 w-20 rounded" />
           <div className="grid gap-4 sm:grid-cols-3">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-muted h-32 rounded-lg" />
+              <div key={i} className="bg-muted h-32 rounded-md" />
             ))}
           </div>
         </div>
@@ -89,22 +91,22 @@ export function AppearanceSettingsClient() {
   return (
     <div className="space-y-6">
       {/* Header Section */}
-      <div className="flex items-center gap-3">
-        <div className="bg-primary/10 rounded-lg p-2">
-          <Palette className="text-primary h-5 w-5" />
+      <div className="flex min-w-0 items-center gap-4 border-b pb-5">
+        <div className="tonal-primary flex size-10 shrink-0 items-center justify-center rounded-md">
+          <Palette className="size-5" />
         </div>
-        <div>
-          <h3 className="text-lg font-medium">
+        <div className="min-w-0 space-y-1">
+          <h3 className="text-foreground text-lg leading-snug font-medium">
             {t("settings.appearance.title")}
           </h3>
-          <p className="text-muted-foreground text-sm">
+          <p className="text-muted-foreground text-[0.8125rem]">
             {t("settings.appearance.description")}
           </p>
         </div>
       </div>
 
       {/* Theme Selection */}
-      <div className="grid gap-4 sm:grid-cols-3">
+      <div className="grid gap-5 sm:grid-cols-3">
         {themes.map((themeOption) => {
           const Icon = themeOption.icon;
           const isSelected = theme === themeOption.id;
@@ -115,30 +117,32 @@ export function AppearanceSettingsClient() {
               type="button"
               onClick={() => setTheme(themeOption.id)}
               className={cn(
-                "hover:bg-purple-gray relative flex flex-col items-center gap-3 rounded-lg border-2 p-4 transition-colors",
+                "focus-visible:ring-primary/20 relative flex min-w-0 flex-col items-center gap-3 rounded-md border-2 p-5 whitespace-normal transition-colors outline-none focus-visible:ring-[3px]",
                 isSelected
-                  ? "border-primary bg-accent"
-                  : "border-muted hover:border-muted-foreground"
+                  ? "border-primary bg-primary/[0.06]"
+                  : "border-border hover:border-primary/50"
               )}
             >
               <div
                 className={cn(
-                  "flex h-12 w-12 items-center justify-center rounded-full",
+                  "flex size-12 items-center justify-center rounded-md",
                   isSelected
-                    ? "bg-primary text-primary-foreground"
-                    : "bg-muted text-muted-foreground"
+                    ? "bg-primary text-primary-foreground shadow-xs"
+                    : "tonal-neutral"
                 )}
               >
-                <Icon className="h-6 w-6" />
+                <Icon className="size-6" />
               </div>
-              <div className="text-center">
-                <p className="font-medium">{themeOption.label}</p>
-                <p className="text-muted-foreground text-xs">
+              <div className="min-w-0 space-y-0.5 text-center">
+                <p className="text-foreground font-medium">
+                  {themeOption.label}
+                </p>
+                <p className="text-muted-foreground text-[0.8125rem]">
                   {themeOption.description}
                 </p>
               </div>
               {isSelected && (
-                <div className="bg-primary absolute top-2 right-2 h-2 w-2 rounded-full" />
+                <div className="bg-primary absolute top-3 right-3 size-2 rounded-full" />
               )}
             </button>
           );
@@ -147,11 +151,11 @@ export function AppearanceSettingsClient() {
 
       {/* 테마 미리보기 - 선택한 테마에 따라 색상 변경 */}
       <div className="space-y-4">
-        <Label className="text-base font-medium">
+        <Label className="text-[0.9375rem] font-medium">
           {t("settings.appearance.preview")}
         </Label>
         <div
-          className="rounded-lg border p-4 transition-colors"
+          className="rounded-md border p-5 shadow-xs transition-colors"
           style={{
             backgroundColor: previewColors.background,
             borderColor: previewColors.border,

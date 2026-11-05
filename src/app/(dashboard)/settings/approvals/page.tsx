@@ -28,10 +28,10 @@ export default async function ApprovalSettingsPage() {
     );
   }
   return (
-    <div className="space-y-8">
+    <div className="min-w-0 space-y-6">
       <PolicyManager policies={policies.data} options={options.data} />
       <Separator />
-      <div className="max-w-2xl">
+      <div className="max-w-3xl min-w-0">
         <TeamApproverSettings />
       </div>
     </div>

@@ -36,10 +36,10 @@ export function AppleSignInButton({
       <Button
         type="submit"
         variant="outline"
-        className={cn("w-full", className)}
+        className={cn("w-full whitespace-nowrap", className)}
         style={style}
       >
-        <AppleIcon className="mr-2.5 h-[18px] w-[18px]" />
+        <AppleIcon className="size-[18px] shrink-0" />
         {label}
       </Button>
     </form>

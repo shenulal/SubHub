@@ -26,14 +26,8 @@ export const MARKER_STYLES: Record<
   CalendarMarkerKind,
   { dot: string; label: string }
 > = {
-  trialEnd: {
-    dot: "bg-violet-500",
-    label: "text-violet-600 dark:text-violet-400",
-  },
-  cancellationDeadline: {
-    dot: "bg-orange-500",
-    label: "text-orange-600 dark:text-orange-400",
-  },
+  trialEnd: { dot: "bg-info", label: "text-info" },
+  cancellationDeadline: { dot: "bg-warning", label: "text-warning" },
 };
 
 const GRID_CELLS = 42;
@@ -78,28 +72,35 @@ export function RenewalCalendar({
     month === 12 ? onMonthChange(year + 1, 1) : onMonthChange(year, month + 1);
 
   return (
-    <Card className="border-border/50 rounded-sm shadow-sm">
+    <Card className="min-w-0">
       <CardHeader>
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <CardTitle className="flex items-center gap-2">
-            <CalendarDays className="h-5 w-5" />
-            {t("subscriptions.calendar.title")}
+        <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
+          <CardTitle className="flex min-w-0 items-center gap-3">
+            <span className="tonal-primary flex size-10 shrink-0 items-center justify-center rounded-md">
+              <CalendarDays className="size-5" />
+            </span>
+            <span className="truncate">
+              {t("subscriptions.calendar.title")}
+            </span>
           </CardTitle>
-          <div className="flex items-center gap-3">
+          <div className="flex max-w-full min-w-0 flex-wrap items-center gap-x-4 gap-y-2">
             <ul
-              className="text-muted-foreground hidden items-center gap-3 text-[11px] sm:flex"
+              className="text-muted-foreground hidden flex-wrap items-center gap-x-4 gap-y-1 text-[0.8125rem] sm:flex"
               aria-label={td("legend")}
             >
-              <li className="flex items-center gap-1">
-                <span className="bg-primary h-2 w-2 rounded-full" />
+              <li className="flex items-center gap-1.5 whitespace-nowrap">
+                <span className="bg-primary size-2.5 rounded-full" />
                 {td("renewal")}
               </li>
               {(Object.keys(MARKER_STYLES) as CalendarMarkerKind[]).map(
                 (kind) => (
-                  <li key={kind} className="flex items-center gap-1">
+                  <li
+                    key={kind}
+                    className="flex items-center gap-1.5 whitespace-nowrap"
+                  >
                     <span
                       className={cn(
-                        "h-2 w-2 rounded-full",
+                        "size-2.5 rounded-full",
                         MARKER_STYLES[kind].dot
                       )}
                     />
@@ -111,6 +112,7 @@ export function RenewalCalendar({
             <Button
               variant="outline"
               size="sm"
+              className="shrink-0 whitespace-nowrap"
               onClick={() =>
                 onMonthChange(today.getFullYear(), today.getMonth() + 1)
               }
@@ -121,27 +123,37 @@ export function RenewalCalendar({
         </div>
       </CardHeader>
       <CardContent>
-        <div className="mb-4 flex items-center justify-between">
-          <Button variant="ghost" size="sm" onClick={prev}>
-            <ChevronLeft className="mr-1 h-4 w-4" />
+        <div className="mb-4 flex items-center justify-between gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-muted-foreground hover:text-primary shrink-0 whitespace-nowrap"
+            onClick={prev}
+          >
+            <ChevronLeft className="size-4" />
             {t("subscriptions.calendar.prev")}
           </Button>
-          <h2 className="text-lg font-semibold">
+          <h2 className="text-foreground min-w-0 truncate text-center text-lg font-medium">
             {t("subscriptions.calendar.monthYear", { year, month: monthName })}
           </h2>
-          <Button variant="ghost" size="sm" onClick={next}>
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-muted-foreground hover:text-primary shrink-0 whitespace-nowrap"
+            onClick={next}
+          >
             {t("subscriptions.calendar.next")}
-            <ChevronRight className="ml-1 h-4 w-4" />
+            <ChevronRight className="size-4" />
           </Button>
         </div>
 
-        <div className="mb-2 grid grid-cols-7 gap-1">
+        <div className="mb-1 grid grid-cols-7 gap-1.5">
           {weekdays.map((day, index) => (
             <div
               key={day}
               className={cn(
-                "py-2 text-center text-sm font-medium",
-                index === 0 && "text-destructive",
+                "text-muted-foreground truncate py-2 text-center text-xs font-medium tracking-wide uppercase",
+                index === 0 && "text-error",
                 index === 6 && "text-primary"
               )}
             >
@@ -150,10 +162,15 @@ export function RenewalCalendar({
           ))}
         </div>
 
-        <div className="grid grid-cols-7 gap-1">
+        <div className="grid grid-cols-7 gap-1.5">
           {cells.map((day, index) => {
             if (day === null)
-              return <div key={`empty-${index}`} className="h-20 p-1" />;
+              return (
+                <div
+                  key={`empty-${index}`}
+                  className="bg-muted/40 h-20 rounded-md sm:h-24"
+                />
+              );
             const key = dateKey(day);
             const renewalCount = renewals[key]?.length ?? 0;
             const dayMarkers = markers[key] ?? [];
@@ -166,27 +183,34 @@ export function RenewalCalendar({
                 data-testid={`day-${day}`}
                 onClick={() => onDateSelect(key)}
                 className={cn(
-                  "hover:bg-muted relative h-20 rounded-sm border p-1 text-left transition-colors",
+                  "hover:bg-muted border-border relative flex h-20 min-w-0 flex-col items-start overflow-hidden rounded-md border p-1.5 text-left transition-colors sm:h-24 sm:p-2",
                   isToday(day) && "border-primary bg-primary/5",
                   key === selectedDate && "ring-primary ring-2",
                   hasAny && "hover:border-primary/50 cursor-pointer",
-                  dow === 0 && "text-destructive",
+                  dow === 0 && "text-error",
                   dow === 6 && "text-primary"
                 )}
               >
                 <span
                   className={cn(
-                    "text-sm font-medium",
-                    isToday(day) && "text-primary"
+                    "text-[0.9375rem] leading-none font-medium tabular-nums",
+                    isToday(day) &&
+                      "bg-primary text-primary-foreground inline-flex size-6 items-center justify-center rounded-full text-[0.8125rem]"
                   )}
                 >
                   {day}
                 </span>
                 {renewalCount > 0 && (
+                  <span
+                    aria-hidden
+                    className="bg-primary absolute right-2 bottom-2 size-2 rounded-full sm:hidden"
+                  />
+                )}
+                {renewalCount > 0 && (
                   <Badge
                     data-testid="renewal-badge"
-                    variant="secondary"
-                    className="bg-primary/10 text-primary absolute right-1 bottom-1 text-xs"
+                    variant="primary"
+                    className="absolute right-1.5 bottom-1.5 hidden max-w-[calc(100%-0.75rem)] truncate px-2 text-[0.6875rem] sm:inline-flex md:max-w-[calc(100%-3rem)]"
                   >
                     {t("subscriptions.calendar.renewalCount", {
                       count: renewalCount,
@@ -195,7 +219,7 @@ export function RenewalCalendar({
                 )}
                 {dayMarkers.length > 0 && (
                   <span
-                    className="absolute bottom-1.5 left-1.5 flex gap-1"
+                    className="absolute bottom-2 left-2 flex gap-1"
                     data-testid="calendar-markers"
                   >
                     {dayMarkers.slice(0, 4).map((m) => (

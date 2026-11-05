@@ -34,7 +34,10 @@ export function CategoryBadge({
   return (
     <Badge
       variant="outline"
-      className={cn("bg-background/60 gap-1.5 pl-1.5 font-medium", className)}
+      className={cn(
+        "bg-background/60 text-foreground max-w-full justify-start gap-1.5 pl-1.5 font-medium",
+        className
+      )}
       style={{ borderColor: `color-mix(in oklab, ${color} 45%, transparent)` }}
       title={parentName ? `${parentName} › ${category.name}` : category.name}
     >
@@ -47,11 +50,13 @@ export function CategoryBadge({
         }}
       />
       {parentName && (
-        <span className="text-muted-foreground font-normal">
+        <span className="text-muted-foreground min-w-0 truncate font-normal">
           {parentName} ›
         </span>
       )}
-      <span>{category.name}</span>
+      <span className="max-w-full min-w-0 shrink-0 truncate">
+        {category.name}
+      </span>
     </Badge>
   );
 }

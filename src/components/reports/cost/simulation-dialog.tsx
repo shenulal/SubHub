@@ -2,7 +2,6 @@
 "use client";
 
 import { simulateSeatReduction } from "@/actions/seat-optimization";
-import { Card, CardContent } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -12,7 +11,7 @@ import {
 } from "@/components/ui/dialog";
 import { Slider } from "@/components/ui/slider";
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table";
-import { DEFAULT_BASE_CURRENCY } from "@/lib/fx/convert";
+import { DEFAULT_BASE_CURRENCY, formatMoney } from "@/lib/fx/convert";
 import type {
   SeatOptimizationItem,
   SimulationResult,
@@ -21,9 +20,7 @@ import { Loader2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 
 function formatCurrency(value: number, currency = DEFAULT_BASE_CURRENCY) {
-  return new Intl.NumberFormat("ko-KR", { style: "currency", currency }).format(
-    value
-  );
+  return formatMoney(value, currency);
 }
 
 export function SimulationDialog({
@@ -73,7 +70,7 @@ export function SimulationDialog({
           <div className="space-y-3">
             <div className="flex justify-between text-sm">
               <span>목표 Seat 수</span>
-              <span className="font-bold">{targetSeats}</span>
+              <span className="font-medium tabular-nums">{targetSeats}</span>
             </div>
             <Slider
               min={1}
@@ -94,42 +91,40 @@ export function SimulationDialog({
             </div>
           ) : simulation ? (
             <div className="space-y-4">
-              <div className="grid grid-cols-2 gap-3">
-                <Card className="border-border/50 rounded-sm shadow-sm">
-                  <CardContent className="pt-4">
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="bg-muted min-w-0 rounded-md p-4">
+                  <div>
                     <p className="text-muted-foreground text-xs">현재 비용</p>
-                    <p className="text-2xl font-bold tabular-nums">
+                    <p className="truncate text-xl font-medium tabular-nums">
                       {formatCurrency(simulation.currentMonthlyCost)}
                       <span className="text-muted-foreground text-xs font-normal">
                         /월
                       </span>
                     </p>
-                  </CardContent>
-                </Card>
-                <Card className="border-border/50 rounded-sm shadow-sm">
-                  <CardContent className="pt-4">
+                  </div>
+                </div>
+                <div className="bg-muted min-w-0 rounded-md p-4">
+                  <div>
                     <p className="text-muted-foreground text-xs">목표 비용</p>
-                    <p className="text-2xl font-bold tabular-nums">
+                    <p className="truncate text-xl font-medium tabular-nums">
                       {formatCurrency(simulation.targetMonthlyCost)}
                       <span className="text-muted-foreground text-xs font-normal">
                         /월
                       </span>
                     </p>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
               </div>
 
-              <Card className="rounded-sm border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-900/30">
-                <CardContent className="pt-4">
-                  <p className="text-sm font-medium text-emerald-700 dark:text-emerald-400">
-                    절감 가능 금액
-                  </p>
-                  <p className="text-2xl font-bold text-emerald-700 tabular-nums dark:text-emerald-400">
+              <div className="tonal-success min-w-0 rounded-md p-4">
+                <div>
+                  <p className="text-sm font-medium">절감 가능 금액</p>
+                  <p className="text-xl font-medium tabular-nums">
                     {formatCurrency(simulation.monthlySavings)}/월 (
                     {formatCurrency(simulation.annualSavings)}/년)
                   </p>
-                </CardContent>
-              </Card>
+                </div>
+              </div>
 
               {simulation.affectedUsers.length > 0 && (
                 <div>

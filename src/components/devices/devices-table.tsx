@@ -53,11 +53,13 @@ export function DevicesTable({
   if (!hasDevices && !isPending) {
     return (
       <div className="flex flex-col items-center justify-center py-16">
-        <div className="bg-muted mb-4 rounded-full p-4">
-          <Laptop className="text-muted-foreground h-8 w-8" />
+        <div className="tonal-neutral mb-4 flex size-14 items-center justify-center rounded-md">
+          <Laptop className="size-7" />
         </div>
-        <h3 className="mb-2 text-lg font-semibold">{t("table.empty.title")}</h3>
-        <p className="text-muted-foreground mb-6 max-w-md text-center">
+        <h3 className="text-foreground mb-2 text-lg font-medium">
+          {t("table.empty.title")}
+        </h3>
+        <p className="text-muted-foreground mb-6 max-w-md text-center text-[0.9375rem]">
           {t("table.empty.descriptionLine1")}
           <br />
           {t("table.empty.descriptionLine2")}
@@ -70,7 +72,7 @@ export function DevicesTable({
   }
 
   return (
-    <div className="rounded-lg border">
+    <div className="overflow-hidden rounded-md border">
       <Table>
         <TableHeader>
           <TableRow>
@@ -94,14 +96,20 @@ export function DevicesTable({
             devices.map((device) => (
               <TableRow key={device.id}>
                 <TableCell>
-                  <div className="font-medium">{device.hostname}</div>
-                  <div className="text-muted-foreground text-xs">
-                    {device.hardwareModel ?? device.osVersion}
+                  <div className="max-w-[240px] min-w-0">
+                    <div className="text-foreground truncate font-medium">
+                      {device.hostname}
+                    </div>
+                    <div className="text-muted-foreground truncate text-xs">
+                      {device.hardwareModel ?? device.osVersion}
+                    </div>
                   </div>
                 </TableCell>
                 <TableCell>
-                  <div className="flex items-center gap-2">
-                    {platformIcons[device.platform]}
+                  <div className="flex items-center gap-2 whitespace-nowrap">
+                    <span className="tonal-primary flex size-7 shrink-0 items-center justify-center rounded-md">
+                      {platformIcons[device.platform]}
+                    </span>
                     <span className="text-sm">
                       {t(`platform.${device.platform}`)}
                     </span>
@@ -115,9 +123,11 @@ export function DevicesTable({
                 </TableCell>
                 <TableCell>
                   {device.user ? (
-                    <div>
-                      <div className="font-medium">{device.user.name}</div>
-                      <div className="text-muted-foreground text-xs">
+                    <div className="max-w-[220px] min-w-0">
+                      <div className="text-foreground truncate font-medium">
+                        {device.user.name}
+                      </div>
+                      <div className="text-muted-foreground truncate text-xs">
                         {device.user.email}
                       </div>
                     </div>
@@ -136,7 +146,7 @@ export function DevicesTable({
                 </TableCell>
                 <TableCell>
                   {device.lastSeenAt ? (
-                    <span className="text-sm">
+                    <span className="text-muted-foreground text-sm whitespace-nowrap">
                       {new Intl.DateTimeFormat(locale, {
                         dateStyle: "medium",
                         timeStyle: "short",
@@ -167,7 +177,7 @@ function StatusBadge({
   return (
     <Badge
       variant="outline"
-      className={cn("font-normal", statusBadgeVariants[status])}
+      className={cn("font-medium", statusBadgeVariants[status])}
     >
       {status === "ONLINE" && <Wifi className="mr-1 h-3 w-3" />}
       {status === "OFFLINE" && <WifiOff className="mr-1 h-3 w-3" />}

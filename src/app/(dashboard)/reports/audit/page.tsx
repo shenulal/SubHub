@@ -88,9 +88,9 @@ export default async function AuditLogPage({
   const t = await getTranslations("reports.audit");
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">{t("page.title")}</h1>
+    <div className="space-y-6">
+      <div className="min-w-0">
+        <h1 className="truncate text-2xl font-medium">{t("page.title")}</h1>
       </div>
 
       <AuditLogPageClient

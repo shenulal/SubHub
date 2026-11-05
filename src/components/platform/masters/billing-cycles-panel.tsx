@@ -72,7 +72,7 @@ export function BillingCyclesPanel({
       <div className="overflow-hidden rounded-md border">
         <Table>
           <TableHeader>
-            <TableRow className="bg-muted/40">
+            <TableRow className="hover:bg-transparent">
               <TableHead className="w-36">{t("cycle")}</TableHead>
               <TableHead>{t("label")}</TableHead>
               <TableHead className="w-32">{t("months")}</TableHead>
@@ -87,7 +87,7 @@ export function BillingCyclesPanel({
           <TableBody>
             {drafts.map((row) => (
               <TableRow key={row.cycle}>
-                <TableCell className="font-mono text-xs font-semibold">
+                <TableCell className="font-mono text-xs font-medium">
                   {row.cycle}
                 </TableCell>
                 <TableCell>
@@ -132,9 +132,9 @@ export function BillingCyclesPanel({
                       onClick={() => save(row)}
                     >
                       {isPending ? (
-                        <Loader2 className="mr-1.5 h-3.5 w-3.5 animate-spin" />
+                        <Loader2 className="size-3.5 animate-spin" />
                       ) : (
-                        <Check className="mr-1.5 h-3.5 w-3.5" />
+                        <Check className="size-3.5" />
                       )}
                       {tc("save")}
                     </Button>

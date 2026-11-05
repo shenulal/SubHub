@@ -169,19 +169,19 @@ export function CommandSearch({
     <>
       <Button
         variant="outline"
-        className="bg-muted/50 text-muted-foreground relative h-9 w-full justify-start rounded-md text-sm font-normal shadow-none sm:pr-12 md:w-64 lg:w-80"
+        className="text-muted-foreground hover:text-foreground relative h-10 w-full justify-start gap-3 rounded-md border-transparent bg-transparent px-2 text-[0.9375rem] font-normal shadow-none hover:border-transparent hover:bg-transparent sm:pr-14 md:w-64 lg:w-80 [&_svg:not([class*='size-'])]:size-5"
         onClick={() => setOpen(true)}
         aria-label={t("open")}
       >
-        <Search className="mr-2 h-4 w-4" />
-        {t("placeholder")}
-        <kbd className="bg-muted pointer-events-none absolute top-1.5 right-1.5 hidden h-6 items-center gap-1 rounded border px-1.5 font-mono text-[10px] font-medium select-none sm:flex">
+        <Search className="size-5" />
+        <span className="truncate">{t("placeholder")}</span>
+        <kbd className="tonal-neutral pointer-events-none absolute top-1/2 right-2 hidden h-6 -translate-y-1/2 items-center gap-0.5 rounded px-1.5 font-sans text-[11px] font-medium select-none sm:flex">
           <span className="text-xs">⌘</span>K
         </kbd>
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent
-          className="overflow-hidden p-0 sm:max-w-xl"
+          className="gap-0 overflow-hidden rounded-lg p-0 shadow-xl sm:max-w-2xl"
           showCloseButton={false}
         >
           <DialogHeader className="sr-only">
@@ -191,7 +191,7 @@ export function CommandSearch({
           {/* Server results are already ranked; disable cmdk's client filter. */}
           <Command
             shouldFilter={false}
-            className="[&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-group-heading]]:px-2 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group]]:px-2 [&_[cmdk-input]]:h-12 [&_[cmdk-item]]:px-2 [&_[cmdk-item]]:py-2.5"
+            className="[&_[cmdk-group-heading]]:text-muted-foreground [&_[cmdk-item][data-selected=true]]:bg-primary/[0.08] [&_[cmdk-item][data-selected=true]]:text-primary [&_[cmdk-group-heading]]:px-3 [&_[cmdk-group-heading]]:pt-3 [&_[cmdk-group-heading]]:pb-1.5 [&_[cmdk-group-heading]]:text-xs [&_[cmdk-group-heading]]:font-medium [&_[cmdk-group-heading]]:tracking-wide [&_[cmdk-group-heading]]:uppercase [&_[cmdk-group]]:px-2 [&_[cmdk-input-wrapper]_svg]:size-5 [&_[cmdk-input]]:h-14 [&_[cmdk-input]]:text-[0.9375rem] [&_[cmdk-item]]:rounded-md [&_[cmdk-item]]:px-3 [&_[cmdk-item]]:py-2.5 [&_[cmdk-item]]:text-[0.9375rem] [&_[cmdk-list]]:max-h-[min(60vh,420px)] [&_[cmdk-list]]:pb-2"
           >
             <CommandInput
               placeholder={t("inputPlaceholder")}
@@ -202,10 +202,10 @@ export function CommandSearch({
             <CommandList>
               {isPending && (
                 <div
-                  className="text-muted-foreground flex items-center gap-2 px-3 py-2 text-xs"
+                  className="text-muted-foreground flex items-center gap-2 px-4 py-2.5 text-[0.8125rem]"
                   data-testid="search-pending"
                 >
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  <Loader2 className="text-primary size-3.5 animate-spin" />
                   {t("searching")}
                 </div>
               )}
@@ -225,7 +225,7 @@ export function CommandSearch({
                       onSelect={() => setQuery(term)}
                       className="cursor-pointer"
                     >
-                      <History className="text-muted-foreground mr-2 h-4 w-4" />
+                      <History className="text-muted-foreground mr-1 size-4" />
                       {term}
                     </CommandItem>
                   ))}
@@ -242,25 +242,27 @@ export function CommandSearch({
                           key={`${group.key}-${item.id}`}
                           value={`${group.key}-${item.id}`}
                           onSelect={() => handleSelect(item)}
-                          className="cursor-pointer gap-2"
+                          className="group/item min-w-0 cursor-pointer gap-3"
                         >
                           {item.imageUrl ? (
                             // eslint-disable-next-line @next/next/no-img-element
                             <img
                               src={item.imageUrl}
                               alt=""
-                              className="h-5 w-5 rounded-sm object-contain"
+                              className="size-8 shrink-0 rounded-md object-contain"
                             />
                           ) : (
-                            <Icon className="text-muted-foreground h-4 w-4" />
+                            <span className="tonal-neutral group-data-[selected=true]/item:tonal-primary flex size-8 shrink-0 items-center justify-center rounded-md">
+                              <Icon className="size-4" />
+                            </span>
                           )}
-                          <span className="truncate">
+                          <span className="min-w-0 truncate">
                             {item.labelKey
                               ? t(`catalog.${item.labelKey}`)
                               : item.title}
                           </span>
                           {item.subtitle && (
-                            <span className="text-muted-foreground ml-auto truncate text-xs">
+                            <span className="text-muted-foreground ml-auto max-w-[40%] shrink-0 truncate text-[0.8125rem]">
                               {item.subtitle}
                             </span>
                           )}

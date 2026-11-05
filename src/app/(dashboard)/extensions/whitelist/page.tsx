@@ -23,7 +23,7 @@ function PageSkeleton() {
 export default function WhitelistPage() {
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold tracking-tight">화이트리스트</h1>
+      <h1 className="text-foreground text-xl font-medium">화이트리스트</h1>
       <Suspense fallback={<PageSkeleton />}>
         <WhitelistPageClient />
       </Suspense>

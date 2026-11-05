@@ -28,7 +28,7 @@ export function SubscriptionFormRenewal({
   const t = useTranslations("subscriptions.form");
 
   return (
-    <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
+    <Card>
       <CardHeader>
         <CardTitle>{t("autoRenewal.title")}</CardTitle>
         <CardDescription>{t("autoRenewal.description")}</CardDescription>

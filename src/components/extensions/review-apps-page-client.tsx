@@ -217,14 +217,14 @@ export function ReviewAppsPageClient() {
   function getTypeBadge(type: ReviewAppType) {
     if (type === "malicious") {
       return (
-        <Badge variant="destructive" className="gap-1">
+        <Badge variant="error" className="gap-1">
           <ShieldAlert className="h-3 w-3" />
           {t("reviewApps.typeBadge.malicious")}
         </Badge>
       );
     }
     return (
-      <Badge variant="secondary" className="gap-1">
+      <Badge variant="info" className="gap-1">
         <AppWindow className="h-3 w-3" />
         {t("reviewApps.typeBadge.saas")}
       </Badge>
@@ -258,30 +258,30 @@ export function ReviewAppsPageClient() {
   return (
     <div className="space-y-4">
       {/* Scan schedule status card */}
-      <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
-        <CardContent className="px-4 py-3">
-          <div className="grid grid-cols-3 gap-4 text-center">
-            <div>
-              <p className="text-muted-foreground text-xs">
+      <Card className="bg-muted gap-0 py-4 shadow-none">
+        <CardContent>
+          <div className="divide-border grid grid-cols-3 gap-4 divide-x text-center">
+            <div className="min-w-0 px-2">
+              <p className="text-muted-foreground truncate text-xs tracking-wide uppercase">
                 {t("reviewApps.scanSchedule.totalScanned")}
               </p>
-              <p className="text-lg font-semibold tabular-nums">
+              <p className="text-foreground truncate text-lg font-medium tabular-nums">
                 {scheduleStatus?.totalScannedCount.toLocaleString() ?? "-"}
               </p>
             </div>
-            <div>
-              <p className="text-muted-foreground text-xs">
+            <div className="min-w-0 px-2">
+              <p className="text-muted-foreground truncate text-xs tracking-wide uppercase">
                 {t("reviewApps.scanSchedule.pending")}
               </p>
-              <p className="text-lg font-semibold tabular-nums">
+              <p className="text-foreground truncate text-lg font-medium tabular-nums">
                 {scheduleStatus?.pendingScanCount.toLocaleString() ?? "-"}
               </p>
             </div>
-            <div>
-              <p className="text-muted-foreground text-xs">
+            <div className="min-w-0 px-2">
+              <p className="text-muted-foreground truncate text-xs tracking-wide uppercase">
                 {t("reviewApps.scanSchedule.nextScan")}
               </p>
-              <p className="text-sm font-medium">
+              <p className="text-foreground truncate pt-1 text-sm font-medium tabular-nums">
                 {scheduleStatus
                   ? formatNextScan(scheduleStatus.nextScanAt)
                   : "-"}
@@ -293,22 +293,22 @@ export function ReviewAppsPageClient() {
 
       {/* Filter badge CTAs and bulk actions */}
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={() => handleFilterToggle("malicious")}
-            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+            className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium whitespace-nowrap transition-colors ${
               filter === "malicious"
-                ? "bg-red-600 text-white"
-                : "bg-red-100 text-red-700 hover:bg-red-200 dark:bg-red-950 dark:text-red-400 dark:hover:bg-red-900"
+                ? "bg-error text-white shadow-sm"
+                : "tonal-error hover:bg-error/25"
             }`}
           >
             <ShieldAlert className="h-3.5 w-3.5" />
             {t("reviewApps.filterMalicious")}
             <span
-              className={`rounded-full px-1.5 py-0.5 text-xs font-semibold ${
+              className={`rounded-full px-1.5 py-0.5 text-xs font-medium tabular-nums ${
                 filter === "malicious"
-                  ? "bg-red-500 text-white"
-                  : "bg-red-200 text-red-800 dark:bg-red-900 dark:text-red-300"
+                  ? "bg-white/25 text-white"
+                  : "bg-error/20"
               }`}
             >
               {stats.maliciousCount}
@@ -316,26 +316,24 @@ export function ReviewAppsPageClient() {
           </button>
           <button
             onClick={() => handleFilterToggle("saas")}
-            className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium transition-colors ${
+            className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-medium whitespace-nowrap transition-colors ${
               filter === "saas"
-                ? "bg-blue-600 text-white"
-                : "bg-blue-100 text-blue-700 hover:bg-blue-200 dark:bg-blue-950 dark:text-blue-400 dark:hover:bg-blue-900"
+                ? "bg-info text-white shadow-sm"
+                : "tonal-info hover:bg-info/25"
             }`}
           >
             <AppWindow className="h-3.5 w-3.5" />
             {t("reviewApps.filterSaas")}
             <span
-              className={`rounded-full px-1.5 py-0.5 text-xs font-semibold ${
-                filter === "saas"
-                  ? "bg-blue-500 text-white"
-                  : "bg-blue-200 text-blue-800 dark:bg-blue-900 dark:text-blue-300"
+              className={`rounded-full px-1.5 py-0.5 text-xs font-medium tabular-nums ${
+                filter === "saas" ? "bg-white/25 text-white" : "bg-info/20"
               }`}
             >
               {stats.saasCount}
             </span>
           </button>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {selectedIds.size > 0 && (
             <>
               <Button variant="default" size="sm" onClick={handleBulkRegister}>
@@ -356,11 +354,11 @@ export function ReviewAppsPageClient() {
       </div>
 
       {/* Review apps table */}
-      <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
-        <CardContent className="p-0">
+      <Card className="border-border dark:border-border gap-0 overflow-hidden border py-0 shadow-none">
+        <CardContent className="px-0">
           {items.length === 0 ? (
             <div className="py-10 text-center">
-              <p className="text-muted-foreground">
+              <p className="text-muted-foreground text-[0.9375rem]">
                 {t("reviewApps.emptyTitle")}
               </p>
               <p className="text-muted-foreground mt-2 text-sm">
@@ -397,9 +395,7 @@ export function ReviewAppsPageClient() {
                   <TableRow
                     key={item.id}
                     className={
-                      item.type === "malicious"
-                        ? "bg-red-50/50 dark:bg-red-950/20"
-                        : ""
+                      item.type === "malicious" ? "bg-error/[0.05]" : ""
                     }
                   >
                     <TableCell>
@@ -409,21 +405,26 @@ export function ReviewAppsPageClient() {
                       />
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-sm">{item.domain}</span>
+                      <div className="flex max-w-[240px] min-w-0 items-center gap-2">
+                        <span
+                          className="truncate font-mono text-sm"
+                          title={item.domain}
+                        >
+                          {item.domain}
+                        </span>
                         {item.website && (
                           <a
                             href={item.website}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="text-muted-foreground hover:text-foreground"
+                            className="text-muted-foreground hover:text-primary shrink-0"
                           >
                             <ExternalLink className="h-3 w-3" />
                           </a>
                         )}
                       </div>
                       {item.serviceName && (
-                        <p className="text-muted-foreground text-xs">
+                        <p className="text-muted-foreground max-w-[240px] truncate text-xs">
                           {item.serviceName}
                         </p>
                       )}
@@ -432,26 +433,26 @@ export function ReviewAppsPageClient() {
                     <TableCell>
                       <span className="text-sm">{item.reason}</span>
                       {item.type === "saas" && item.confidence && (
-                        <Badge variant="outline" className="ml-2 text-xs">
+                        <Badge variant="secondary" className="ml-2 text-xs">
                           {t("reviewApps.confidence", {
                             value: formatConfidence(item.confidence),
                           })}
                         </Badge>
                       )}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right tabular-nums">
                       {item.visitCount.toLocaleString()}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="text-right tabular-nums">
                       {item.uniqueUsers}
                     </TableCell>
                     <TableCell>
-                      <span className="text-muted-foreground text-sm">
+                      <span className="text-muted-foreground text-sm whitespace-nowrap">
                         {new Date(item.lastSeenAt).toLocaleDateString()}
                       </span>
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-1">
+                      <div className="flex items-center gap-1 whitespace-nowrap">
                         <Button
                           size="sm"
                           variant="default"

@@ -57,24 +57,24 @@ export function DeleteAccountSection() {
   const isConfirmValid = confirmText === confirmTextLabel;
 
   return (
-    <div className="border-destructive/50 bg-destructive/10 hover:bg-destructive/15 rounded-lg border p-6 transition-colors">
-      <div className="flex items-start gap-4">
-        <div className="bg-destructive/20 rounded-lg p-2.5">
-          <AlertTriangle className="text-destructive h-5 w-5" />
+    <div className="border-destructive/40 rounded-md border p-5">
+      <div className="flex min-w-0 items-start gap-4">
+        <div className="tonal-error flex size-10 shrink-0 items-center justify-center rounded-md">
+          <AlertTriangle className="size-5" />
         </div>
-        <div className="flex-1 space-y-3">
-          <div>
-            <h3 className="text-destructive text-lg font-semibold">
+        <div className="min-w-0 flex-1 space-y-4">
+          <div className="space-y-1">
+            <h3 className="text-destructive text-lg leading-snug font-medium">
               {t("settings.delete.title")}
             </h3>
-            <p className="text-muted-foreground mt-1 text-sm">
+            <p className="text-muted-foreground text-[0.8125rem]">
               {t("settings.delete.description")}
             </p>
           </div>
 
           <AlertDialog open={isOpen} onOpenChange={handleOpenChange}>
             <AlertDialogTrigger asChild>
-              <Button variant="destructive">
+              <Button variant="destructive" className="shrink-0">
                 {t("settings.delete.action")}
               </Button>
             </AlertDialogTrigger>

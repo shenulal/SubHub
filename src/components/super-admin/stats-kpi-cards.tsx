@@ -1,11 +1,19 @@
 // src/components/super-admin/stats-kpi-cards.tsx
 import type { SuperAdminStats } from "@/actions/super-admin/dashboard";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Box, DollarSign, UserCheck, Users } from "lucide-react";
 
 interface StatsKpiCardsProps {
   stats: SuperAdminStats;
 }
+
+/** Materio card-statistics tile colours, in card order. */
+const TONES = [
+  "tonal-primary",
+  "tonal-success",
+  "tonal-warning",
+  "tonal-info",
+] as const;
 
 export function StatsKpiCards({ stats }: StatsKpiCardsProps) {
   const formatCurrency = (amount: number, currency: string) => {
@@ -46,16 +54,32 @@ export function StatsKpiCards({ stats }: StatsKpiCardsProps) {
   ];
 
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      {cards.map((card) => (
+    <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
+      {cards.map((card, index) => (
         <Card key={card.title}>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">{card.title}</CardTitle>
-            <card.icon className="text-muted-foreground h-4 w-4" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{card.value}</div>
-            <p className="text-muted-foreground text-xs">{card.description}</p>
+          <CardContent className="flex min-w-0 flex-col gap-3">
+            <div
+              className={`flex size-10 items-center justify-center rounded-md ${TONES[index % TONES.length]}`}
+            >
+              <card.icon className="size-[22px]" />
+            </div>
+            <div className="min-w-0 space-y-1">
+              <p
+                className="text-muted-foreground truncate text-[0.8125rem]"
+                title={card.title}
+              >
+                {card.title}
+              </p>
+              <div className="kpi-value text-foreground" title={card.value}>
+                {card.value}
+              </div>
+              <p
+                className="text-muted-foreground truncate text-[0.8125rem]"
+                title={card.description}
+              >
+                {card.description}
+              </p>
+            </div>
           </CardContent>
         </Card>
       ))}

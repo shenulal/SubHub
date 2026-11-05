@@ -217,7 +217,7 @@ export function AuditLogPageClient({
   );
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       {/* 필터 바 */}
       <AdvancedFilterBar
         searchValue={searchQuery}
@@ -253,11 +253,7 @@ export function AuditLogPageClient({
         {canExport && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                className="dark:!bg-transparent"
-              >
+              <Button variant="outline" className="h-10 shrink-0">
                 <Download className="mr-2 h-4 w-4" />
                 {t("reports.audit.export.button")}
               </Button>
@@ -281,7 +277,7 @@ export function AuditLogPageClient({
       </AdvancedFilterBar>
 
       {/* 테이블 */}
-      <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
+      <Card className="gap-0 overflow-hidden py-0">
         <CardContent className="p-0">
           <AuditLogTable
             logs={initialLogs}

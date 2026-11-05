@@ -65,9 +65,9 @@ export function MultiSelectPopover({
           size="sm"
           aria-label={label}
           className={cn(
-            "h-8 gap-1.5 border-dashed font-normal",
+            "h-10 shrink-0 gap-2 border-dashed px-4 text-[0.9375rem] font-normal whitespace-nowrap",
             selected.length > 0 &&
-              "border-primary/50 bg-primary/5 border-solid",
+              "border-primary/50 bg-primary/5 text-primary border-solid",
             className
           )}
         >
@@ -75,12 +75,12 @@ export function MultiSelectPopover({
           {selected.length > 0 && (
             <Badge
               variant="secondary"
-              className="bg-primary/15 text-primary ml-0.5 h-5 min-w-5 rounded-full px-1.5 text-[11px]"
+              className="tonal-primary h-5 min-w-5 rounded-full px-1.5 text-[0.6875rem]"
             >
               {selected.length}
             </Badge>
           )}
-          <ChevronDown className="text-muted-foreground h-3.5 w-3.5" />
+          <ChevronDown className="text-muted-foreground size-4" />
         </Button>
       </PopoverTrigger>
       <PopoverContent align="start" className="w-64 p-0">
@@ -167,15 +167,16 @@ export function SingleSelectPopover({
           size="sm"
           aria-label={label}
           className={cn(
-            "h-8 max-w-56 gap-1.5 border-dashed font-normal",
-            current && "border-primary/50 bg-primary/5 border-solid",
+            "h-10 max-w-64 min-w-0 gap-2 border-dashed px-4 text-[0.9375rem] font-normal whitespace-nowrap",
+            current &&
+              "border-primary/50 bg-primary/5 text-primary border-solid",
             className
           )}
         >
           <span className="truncate">
             {current ? `${label}: ${current.name}` : label}
           </span>
-          <ChevronDown className="text-muted-foreground h-3.5 w-3.5 shrink-0" />
+          <ChevronDown className="text-muted-foreground size-4 shrink-0" />
         </Button>
       </PopoverTrigger>
       <PopoverContent align="start" className="w-64 p-0">

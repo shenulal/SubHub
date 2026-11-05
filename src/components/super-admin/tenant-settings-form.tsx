@@ -57,11 +57,11 @@ export function TenantSettingsForm({ tenant }: TenantSettingsFormProps) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="max-w-3xl space-y-5 [&_[data-slot=label]]:text-[0.9375rem]">
       {/* 회사명 */}
       <div className="space-y-2">
         <Label htmlFor="name">회사명</Label>
-        <div className="flex gap-2">
+        <div className="flex min-w-0 gap-2 [&>button]:h-10 [&>button]:shrink-0 [&>button]:px-[18px] [&>input]:min-w-0 [&>input]:flex-1">
           <Input
             id="name"
             value={name}
@@ -81,7 +81,7 @@ export function TenantSettingsForm({ tenant }: TenantSettingsFormProps) {
       {/* 도메인 */}
       <div className="space-y-2">
         <Label htmlFor="domain">도메인</Label>
-        <div className="flex gap-2">
+        <div className="flex min-w-0 gap-2 [&>button]:h-10 [&>button]:shrink-0 [&>button]:px-[18px] [&>input]:min-w-0 [&>input]:flex-1">
           <Input
             id="domain"
             value={domain}
@@ -96,7 +96,7 @@ export function TenantSettingsForm({ tenant }: TenantSettingsFormProps) {
             {loading === "domain" ? "저장 중..." : "저장"}
           </Button>
         </div>
-        <p className="text-muted-foreground text-xs">
+        <p className="text-muted-foreground text-[0.8125rem]">
           예: example.com (https:// 제외)
         </p>
       </div>
@@ -104,7 +104,7 @@ export function TenantSettingsForm({ tenant }: TenantSettingsFormProps) {
       {/* 로고 URL */}
       <div className="space-y-2">
         <Label htmlFor="logo">로고 URL</Label>
-        <div className="flex gap-2">
+        <div className="flex min-w-0 gap-2 [&>button]:h-10 [&>button]:shrink-0 [&>button]:px-[18px] [&>input]:min-w-0 [&>input]:flex-1">
           <Input
             id="logo"
             value={logoUrl}
@@ -124,7 +124,7 @@ export function TenantSettingsForm({ tenant }: TenantSettingsFormProps) {
           <img
             src={logoUrl}
             alt="로고 미리보기"
-            className="h-12 w-auto rounded border object-contain p-1"
+            className="h-12 w-auto max-w-full rounded-md border object-contain p-1"
             onError={(e) => {
               (e.target as HTMLImageElement).style.display = "none";
             }}

@@ -69,19 +69,22 @@ export function TeamManagement({ initialTeams }: TeamManagementProps) {
   };
 
   return (
-    <div className="max-w-lg space-y-4">
-      <Card className="border-border rounded-sm shadow-sm transition-shadow hover:shadow-md">
+    <div className="grid min-w-0 items-start gap-6 xl:grid-cols-2">
+      <Card className="border-border dark:border-border rounded-md shadow-none">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Users className="h-5 w-5" />
+          <CardTitle className="flex min-w-0 items-center gap-3">
+            <span className="tonal-primary flex size-10 shrink-0 items-center justify-center rounded-md">
+              <Users className="size-5" />
+            </span>
             {t("settings.team.title")}
           </CardTitle>
           <CardDescription>{t("settings.team.description")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* 팀 추가 입력 */}
-          <div className="flex gap-2">
+          <div className="flex min-w-0 gap-2">
             <Input
+              className="min-w-0 flex-1"
               placeholder={t("settings.team.new.placeholder")}
               value={newTeam}
               onChange={(e) => setNewTeam(e.target.value)}
@@ -103,12 +106,14 @@ export function TeamManagement({ initialTeams }: TeamManagementProps) {
 
           {/* 팀 목록 */}
           {teams.length === 0 ? (
-            <div className="flex flex-col items-center justify-center rounded-lg border border-dashed py-8 text-center">
-              <Users className="text-muted-foreground mb-2 h-8 w-8" />
-              <p className="text-muted-foreground text-sm">
+            <div className="bg-muted flex flex-col items-center justify-center gap-1 rounded-md py-8 text-center">
+              <span className="tonal-neutral mb-2 flex size-10 items-center justify-center rounded-md">
+                <Users className="size-5" />
+              </span>
+              <p className="text-muted-foreground text-[0.9375rem]">
                 {t("settings.team.empty.title")}
               </p>
-              <p className="text-muted-foreground text-xs">
+              <p className="text-muted-foreground text-[0.8125rem]">
                 {t("settings.team.empty.description")}
               </p>
             </div>
@@ -117,10 +122,16 @@ export function TeamManagement({ initialTeams }: TeamManagementProps) {
               {teams.map((team) => (
                 <div
                   key={team}
-                  className="hover:bg-purple-gray flex items-center justify-between rounded-lg border p-3 transition-colors"
+                  className="hover:bg-accent/60 flex min-w-0 items-center justify-between gap-2 rounded-md border px-3 py-2 transition-colors"
                 >
-                  <div className="flex items-center gap-2">
-                    <Badge variant="secondary">{team}</Badge>
+                  <div className="flex min-w-0 items-center gap-2">
+                    <Badge
+                      variant="primary"
+                      className="max-w-full truncate"
+                      title={team}
+                    >
+                      {team}
+                    </Badge>
                   </div>
                   <Button
                     type="button"
@@ -139,7 +150,7 @@ export function TeamManagement({ initialTeams }: TeamManagementProps) {
 
           {/* 팀 수 표시 */}
           {teams.length > 0 && (
-            <p className="text-muted-foreground text-xs">
+            <p className="text-muted-foreground text-[0.8125rem]">
               {t("settings.team.count", { count: teams.length })}
             </p>
           )}

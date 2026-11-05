@@ -193,8 +193,9 @@ export function ApprovalsInboxClient({
 
   return (
     <div className="space-y-6">
-      <PageHeader title={t("title")}>
-        <div className="flex items-center gap-2">
+      <div className="flex min-w-0 flex-wrap items-center justify-between gap-3">
+        <PageHeader title={t("title")} className="min-w-0" />
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
           <Can permission="approvals:export">
             <Button
               variant="outline"
@@ -213,9 +214,9 @@ export function ApprovalsInboxClient({
             </Button>
           </Can>
         </div>
-      </PageHeader>
+      </div>
 
-      <KpiCardsGrid>
+      <KpiCardsGrid columns={3}>
         <KpiCard
           title={ts("count")}
           value={summary.data?.count ?? "—"}
@@ -252,9 +253,9 @@ export function ApprovalsInboxClient({
             resetPage();
           }}
         />
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-start">
+        <div className="flex flex-col gap-3 xl:flex-row xl:items-start">
           <FilterBar
-            className="flex-1"
+            className="min-w-0 flex-1"
             searchPlaceholder={t("filters.search")}
             searchValue={search}
             onSearchChange={(v) => {
@@ -275,7 +276,7 @@ export function ApprovalsInboxClient({
               resetPage();
             }}
           />
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2">
             <Input
               type="date"
               aria-label={t("filters.dateFrom")}

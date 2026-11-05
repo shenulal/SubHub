@@ -253,7 +253,7 @@ function MatchBadges({
   return (
     <div className="flex flex-wrap gap-1">
       {s.status === "DUPLICATE" ? (
-        <Badge className="gap-1 bg-sky-100 text-sky-800 hover:bg-sky-100 dark:bg-sky-900/40 dark:text-sky-200">
+        <Badge variant="info" className="gap-1">
           <Copy className="h-3 w-3" aria-hidden />
           {t("duplicate", { name: s.matchedSubscription.appName })}
         </Badge>
@@ -264,7 +264,7 @@ function MatchBadges({
         </Badge>
       )}
       {drift && (
-        <Badge className="gap-1 bg-amber-100 text-amber-900 hover:bg-amber-100 dark:bg-amber-900/40 dark:text-amber-200">
+        <Badge variant="warning" className="gap-1">
           <ArrowUpDown className="h-3 w-3" aria-hidden />
           {t("priceChange", { amount: matchedMoney ?? "" })}
         </Badge>

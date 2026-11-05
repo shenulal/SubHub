@@ -15,11 +15,11 @@ export default async function ExtensionOnboardingPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">
+      <div className="min-w-0">
+        <h1 className="text-foreground text-xl font-medium">
           {t("extensions.onboarding.page.title")}
         </h1>
-        <p className="text-muted-foreground mt-1">
+        <p className="text-muted-foreground mt-1 text-[0.9375rem]">
           {t("extensions.onboarding.page.description")}
         </p>
       </div>

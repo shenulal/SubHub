@@ -67,7 +67,7 @@ export function SubscriptionComments({
   };
 
   return (
-    <Card className="border-border/50 rounded-sm shadow-sm">
+    <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <MessageSquareText className="text-muted-foreground h-4 w-4" />

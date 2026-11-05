@@ -120,8 +120,13 @@ function CsvUploadPanel({
   return (
     <div className="space-y-5">
       {/* 템플릿 다운로드 */}
-      <div className="flex items-center gap-3">
-        <Button variant="outline" size="sm" onClick={downloadTemplate}>
+      <div className="flex flex-wrap items-center gap-3">
+        <Button
+          variant="outline"
+          size="sm"
+          className="shrink-0"
+          onClick={downloadTemplate}
+        >
           <Download className="mr-2 h-4 w-4" />
           템플릿 다운로드
         </Button>
@@ -132,10 +137,10 @@ function CsvUploadPanel({
 
       {/* 드래그 앤 드롭 업로드 영역 */}
       <div
-        className={`relative rounded-sm border-2 border-dashed p-8 text-center transition-colors ${
+        className={`relative rounded-md border-2 border-dashed p-8 text-center transition-colors ${
           dragActive
-            ? "border-primary bg-purple-tertiary"
-            : "border-muted-foreground/25 hover:border-muted-foreground/50"
+            ? "border-primary bg-primary/[0.08]"
+            : "border-border hover:border-primary/60"
         }`}
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
@@ -148,7 +153,9 @@ function CsvUploadPanel({
           onChange={handleFileChange}
           className="absolute inset-0 cursor-pointer opacity-0"
         />
-        <Icon className="text-muted-foreground mx-auto mb-3 h-10 w-10" />
+        <div className="tonal-primary mx-auto mb-3 flex size-12 items-center justify-center rounded-md">
+          <Icon className="size-6" />
+        </div>
         <p className="mb-1 font-medium">
           {label} CSV 파일을 드래그하거나 클릭하여 선택
         </p>
@@ -157,9 +164,11 @@ function CsvUploadPanel({
 
       {/* 선택된 파일 */}
       {file && (
-        <div className="bg-purple-gray flex items-center justify-between rounded-sm px-4 py-3">
-          <div>
-            <p className="text-sm font-medium">{file.name}</p>
+        <div className="bg-muted flex min-w-0 items-center justify-between gap-3 rounded-md px-4 py-3">
+          <div className="min-w-0">
+            <p className="truncate text-sm font-medium" title={file.name}>
+              {file.name}
+            </p>
             <p className="text-muted-foreground text-xs">
               {(file.size / 1024).toFixed(2)} KB
             </p>
@@ -167,6 +176,7 @@ function CsvUploadPanel({
           <Button
             variant="ghost"
             size="sm"
+            className="shrink-0"
             onClick={() => {
               setFile(null);
               setResult(null);
@@ -264,17 +274,17 @@ export function OrgSyncForm() {
   return (
     <Tabs defaultValue="csv" className="w-full">
       {/* 연동 방식 선택 탭 */}
-      <TabsList className="mb-6 grid w-full grid-cols-3">
+      <TabsList className="mb-6">
         <TabsTrigger value="csv">CSV 파일</TabsTrigger>
         <TabsTrigger value="ad" disabled>
           Active Directory
-          <Badge variant="secondary" className="ml-2 text-xs">
+          <Badge variant="secondary" className="ml-2">
             준비 중
           </Badge>
         </TabsTrigger>
         <TabsTrigger value="hr" disabled>
           HR 시스템
-          <Badge variant="secondary" className="ml-2 text-xs">
+          <Badge variant="secondary" className="ml-2">
             준비 중
           </Badge>
         </TabsTrigger>
@@ -287,12 +297,12 @@ export function OrgSyncForm() {
           <Info className="h-4 w-4" />
           <AlertTitle>권장 업로드 순서</AlertTitle>
           <AlertDescription>
-            <div className="mt-2 flex items-center gap-3">
-              <span className="bg-primary/10 text-primary rounded-sm px-3 py-1.5 text-sm font-medium">
+            <div className="mt-2 flex flex-wrap items-center gap-3">
+              <span className="tonal-primary rounded-md px-3 py-1.5 text-sm font-medium whitespace-nowrap">
                 Step 1. 조직 구조 CSV 업로드
               </span>
               <ArrowRight className="text-muted-foreground h-4 w-4 shrink-0" />
-              <span className="bg-primary/10 text-primary rounded-sm px-3 py-1.5 text-sm font-medium">
+              <span className="tonal-primary rounded-md px-3 py-1.5 text-sm font-medium whitespace-nowrap">
                 Step 2. 사용자 CSV 업로드
               </span>
             </div>
@@ -311,10 +321,12 @@ export function OrgSyncForm() {
           </TabsList>
 
           <TabsContent value="org-struct">
-            <Card className="border-l-primary/50 border-border/50 rounded-sm border-l-4 shadow-sm transition-shadow hover:shadow-md">
+            <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <Building2 className="h-4 w-4" />
+                <CardTitle className="flex min-w-0 items-center gap-3">
+                  <span className="tonal-primary flex size-10 shrink-0 items-center justify-center rounded-md">
+                    <Building2 className="size-5" />
+                  </span>
                   조직 구조 CSV 업로드
                 </CardTitle>
                 <CardDescription>
@@ -336,10 +348,12 @@ export function OrgSyncForm() {
           </TabsContent>
 
           <TabsContent value="user-sync">
-            <Card className="border-l-primary/50 border-border/50 rounded-sm border-l-4 shadow-sm transition-shadow hover:shadow-md">
+            <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2 text-base">
-                  <Users className="h-4 w-4" />
+                <CardTitle className="flex min-w-0 items-center gap-3">
+                  <span className="tonal-primary flex size-10 shrink-0 items-center justify-center rounded-md">
+                    <Users className="size-5" />
+                  </span>
                   사용자 연동 CSV 업로드
                 </CardTitle>
                 <CardDescription>
@@ -364,11 +378,13 @@ export function OrgSyncForm() {
 
       {/* ── Tab 2: Active Directory (비활성) ── */}
       <TabsContent value="ad">
-        <Card className="border-l-primary/50 border-border/50 rounded-sm border-l-4 shadow-sm transition-shadow hover:shadow-md">
+        <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>Active Directory / LDAP 연동</CardTitle>
-              <Badge variant="secondary">준비 중</Badge>
+            <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
+              <CardTitle className="min-w-0">
+                Active Directory / LDAP 연동
+              </CardTitle>
+              <Badge variant="warning">준비 중</Badge>
             </div>
             <CardDescription>
               AD 연동은 추후 업데이트에서 지원 예정입니다
@@ -422,11 +438,11 @@ export function OrgSyncForm() {
 
       {/* ── Tab 3: HR 시스템 (비활성) ── */}
       <TabsContent value="hr">
-        <Card className="border-l-primary/50 border-border/50 rounded-sm border-l-4 shadow-sm transition-shadow hover:shadow-md">
+        <Card>
           <CardHeader>
-            <div className="flex items-center justify-between">
-              <CardTitle>HR 시스템 연동</CardTitle>
-              <Badge variant="secondary">준비 중</Badge>
+            <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
+              <CardTitle className="min-w-0">HR 시스템 연동</CardTitle>
+              <Badge variant="warning">준비 중</Badge>
             </div>
             <CardDescription>
               HR 시스템 연동은 추후 업데이트에서 지원 예정입니다

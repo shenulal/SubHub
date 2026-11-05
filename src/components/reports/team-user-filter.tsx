@@ -54,8 +54,8 @@ export function TeamUserFilter({
   const userValue = userId ?? "all";
 
   return (
-    <Card className="rounded-sm border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
-      <CardContent className="flex flex-wrap items-center gap-3 rounded-sm">
+    <Card className="py-4">
+      <CardContent className="flex flex-wrap items-center gap-3 px-4">
         <Select
           value={teamValue}
           onValueChange={(value) =>
@@ -63,7 +63,7 @@ export function TeamUserFilter({
           }
           disabled={teamLocked}
         >
-          <SelectTrigger className="w-[200px]">
+          <SelectTrigger className="h-10 w-full min-w-0 sm:w-[220px]">
             <SelectValue placeholder={t("teamPlaceholder")} />
           </SelectTrigger>
           <SelectContent>
@@ -85,7 +85,7 @@ export function TeamUserFilter({
           }
           disabled={!teamId || availableUsers.length === 0}
         >
-          <SelectTrigger className="w-[240px]">
+          <SelectTrigger className="h-10 w-full min-w-0 sm:w-[240px]">
             <SelectValue placeholder={t("userPlaceholder")} />
           </SelectTrigger>
           <SelectContent>

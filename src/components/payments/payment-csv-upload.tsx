@@ -366,7 +366,7 @@ export function PaymentCsvUpload() {
   return (
     <div className="space-y-6">
       {/* 템플릿 다운로드 */}
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <Button
           variant="outline"
           size="sm"
@@ -404,10 +404,10 @@ export function PaymentCsvUpload() {
 
       {/* 파일 업로드 영역 */}
       <div
-        className={`relative rounded-sm border-2 border-dashed p-8 text-center transition-colors ${
+        className={`relative rounded-md border-2 border-dashed p-8 text-center transition-colors ${
           dragActive
             ? "border-primary bg-primary/5"
-            : "border-muted-foreground/25"
+            : "border-muted-foreground/25 hover:border-primary/50 hover:bg-primary/[0.03]"
         }`}
         onDragEnter={handleDrag}
         onDragLeave={handleDrag}
@@ -420,8 +420,12 @@ export function PaymentCsvUpload() {
           onChange={handleFileChange}
           className="absolute inset-0 cursor-pointer opacity-0"
         />
-        <FileUp className="text-muted-foreground mx-auto mb-4 h-10 w-10" />
-        <p className="mb-1 font-medium">{t("payments.upload.dragDrop")}</p>
+        <span className="tonal-primary mx-auto mb-4 flex size-12 items-center justify-center rounded-md">
+          <FileUp className="size-6" />
+        </span>
+        <p className="text-foreground mb-1 font-medium">
+          {t("payments.upload.dragDrop")}
+        </p>
         <p className="text-muted-foreground text-sm">
           {t("payments.upload.fileTypeHint")}
         </p>
@@ -429,8 +433,10 @@ export function PaymentCsvUpload() {
 
       {/* 선택된 파일 표시 */}
       {file && (
-        <div className="bg-purple-gray rounded-sm p-4">
-          <p className="font-medium">{file.name}</p>
+        <div className="bg-muted rounded-md p-4">
+          <p className="text-foreground truncate font-medium" title={file.name}>
+            {file.name}
+          </p>
           <p className="text-muted-foreground text-sm">
             {(file.size / 1024).toFixed(2)} KB
           </p>
@@ -439,8 +445,8 @@ export function PaymentCsvUpload() {
 
       {/* DA-84: 포맷 감지 결과 + 커스텀 매핑 버튼 */}
       {file && detectedFormat && (
-        <div className="flex items-center gap-3 rounded-sm border p-3">
-          <div className="flex-1">
+        <div className="flex flex-wrap items-center gap-3 rounded-md border p-3">
+          <div className="min-w-0 flex-1">
             <p className="text-sm font-medium">
               {detectedFormat === "UNKNOWN"
                 ? "포맷을 자동으로 인식할 수 없습니다"
@@ -470,7 +476,7 @@ export function PaymentCsvUpload() {
 
       {/* SMP-78: Team/User 배정 선택 */}
       {file && (
-        <div className="space-y-4 rounded-sm border p-4">
+        <div className="space-y-4 rounded-md border p-4">
           <div>
             <Label className="text-sm font-medium">
               {t("payments.upload.assignment.title")}
@@ -599,7 +605,7 @@ export function PaymentCsvUpload() {
 
       {/* 실시간 프로그레스 표시 */}
       {isUploading && (progress || isSaving) && (
-        <div className="bg-purple-gray space-y-3 rounded-sm p-4">
+        <div className="bg-muted space-y-3 rounded-md p-4">
           <div className="flex items-center justify-between text-sm">
             <span className="max-w-[60%] truncate font-medium">
               {isSaving ? "저장 중..." : progress?.merchantName || "분석 중..."}

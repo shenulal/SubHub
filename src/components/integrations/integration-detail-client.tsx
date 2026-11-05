@@ -130,7 +130,7 @@ export function IntegrationDetailClient({
         </div>
 
         {/* Detail Card Skeleton */}
-        <Card className="border-border/50 rounded-sm shadow-sm">
+        <Card>
           <CardHeader>
             <div className="flex items-start justify-between">
               <div className="flex items-center gap-3">
@@ -191,7 +191,7 @@ export function IntegrationDetailClient({
   const typeName = getIntegrationTypeName(integrationDetail.type);
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <PageHeader
         title={t("integrations.detail.title", { typeName })}
         description={t("integrations.detail.description")}
@@ -251,7 +251,7 @@ export function IntegrationDetailClient({
 
       <IntegrationDetailCard integration={integrationDetail} />
 
-      <div className="grid gap-6 lg:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-2 [&>*]:min-w-0">
         <IntegrationSettingsForm
           integrationId={integrationDetail.id}
           initialSettings={initialSettings}

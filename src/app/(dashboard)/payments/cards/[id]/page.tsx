@@ -93,7 +93,7 @@ export default async function CardDetailPage({ params }: Props) {
   const getSyncStatus = () => {
     if (card.lastError) {
       return (
-        <Badge variant="destructive" className="gap-1">
+        <Badge variant="error" className="gap-1">
           <XCircle className="h-3 w-3" />
           {t("syncStatus.error")}
         </Badge>
@@ -101,14 +101,14 @@ export default async function CardDetailPage({ params }: Props) {
     }
     if (card.lastSyncAt) {
       return (
-        <Badge variant="secondary" className="gap-1">
+        <Badge variant="success" className="gap-1">
           <CheckCircle className="h-3 w-3" />
           {t("syncStatus.synced")}
         </Badge>
       );
     }
     return (
-      <Badge variant="outline" className="gap-1">
+      <Badge variant="warning" className="gap-1">
         <Clock className="h-3 w-3" />
         {t("syncStatus.pending")}
       </Badge>
@@ -118,56 +118,60 @@ export default async function CardDetailPage({ params }: Props) {
   return (
     <div className="space-y-6">
       {/* 헤더 */}
-      <div className="flex items-center gap-4">
-        <div className="flex-1">
-          <h1 className="flex items-center gap-2 text-3xl font-bold tracking-tight">
-            <CreditCard className="h-8 w-8" />
+      <div className="flex flex-wrap items-center gap-4">
+        <span className="tonal-primary flex size-12 shrink-0 items-center justify-center rounded-md">
+          <CreditCard className="size-6" />
+        </span>
+        <div className="min-w-0 flex-1">
+          <h1 className="text-foreground truncate text-2xl font-medium">
             {card.cardNm || cardCompany}
           </h1>
-          <p className="text-muted-foreground">
+          <p className="text-muted-foreground truncate text-[0.9375rem] tabular-nums">
             {cardCompany} **** {card.cardLast4 || "****"}
           </p>
         </div>
-        {getSyncStatus()}
+        <div className="shrink-0">{getSyncStatus()}</div>
       </div>
 
       {/* 카드 정보 요약 */}
-      <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
+      <Card className="border-border dark:border-border border shadow-none">
         <CardHeader>
           <CardTitle>{t("cardInfo")}</CardTitle>
           <CardDescription>{t("cardInfoDescription")}</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <div>
-              <div className="text-muted-foreground text-sm">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <div className="bg-muted/60 min-w-0 rounded-md px-4 py-3">
+              <div className="text-muted-foreground truncate text-[0.8125rem]">
                 {t("cardCompany")}
               </div>
-              <div className="font-medium">{cardCompany}</div>
+              <div className="text-foreground truncate font-medium">
+                {cardCompany}
+              </div>
             </div>
-            <div>
-              <div className="text-muted-foreground text-sm">
+            <div className="bg-muted/60 min-w-0 rounded-md px-4 py-3">
+              <div className="text-muted-foreground truncate text-[0.8125rem]">
                 {t("cardNumber")}
               </div>
-              <div className="font-medium">
+              <div className="text-foreground truncate font-medium tabular-nums">
                 **** **** **** {card.cardLast4 || "****"}
               </div>
             </div>
-            <div>
-              <div className="text-muted-foreground text-sm">
+            <div className="bg-muted/60 min-w-0 rounded-md px-4 py-3">
+              <div className="text-muted-foreground truncate text-[0.8125rem]">
                 {t("loginMethod")}
               </div>
-              <div className="font-medium">
+              <div className="text-foreground truncate font-medium">
                 {card.loginMethod === "ID"
                   ? t("loginMethodId")
                   : t("loginMethodCert")}
               </div>
             </div>
-            <div>
-              <div className="text-muted-foreground text-sm">
+            <div className="bg-muted/60 min-w-0 rounded-md px-4 py-3">
+              <div className="text-muted-foreground truncate text-[0.8125rem]">
                 {t("lastSync")}
               </div>
-              <div className="font-medium">
+              <div className="text-foreground truncate font-medium">
                 {card.lastSyncAt
                   ? formatDistanceToNow(new Date(card.lastSyncAt), {
                       addSuffix: true,
@@ -178,7 +182,7 @@ export default async function CardDetailPage({ params }: Props) {
             </div>
           </div>
           {card.lastError && (
-            <div className="mt-4 rounded-md bg-red-50 p-3 text-sm text-red-700">
+            <div className="tonal-error mt-4 rounded-md p-3 text-sm break-words">
               <strong>{t("lastError")}</strong> {card.lastError}
             </div>
           )}
@@ -189,7 +193,7 @@ export default async function CardDetailPage({ params }: Props) {
       <SyncHistoryPanel corporateCardId={id} limit={10} />
 
       {/* 거래내역 테이블 */}
-      <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
+      <Card className="border-border dark:border-border border shadow-none">
         <CardHeader>
           <CardTitle>{t("transactions")}</CardTitle>
           <CardDescription>

@@ -61,23 +61,57 @@ import { useCallback, useEffect, useState } from "react";
 import { toast } from "sonner";
 
 const statusConfig = {
-  active: { label: "활성", variant: "default" as const, color: "bg-green-500" },
+  active: {
+    label: "활성",
+    variant: "success" as const,
+    color: "bg-success",
+  },
   inactive: {
     label: "비활성",
-    variant: "secondary" as const,
-    color: "bg-yellow-500",
+    variant: "warning" as const,
+    color: "bg-warning",
   },
   pending: {
     label: "대기",
-    variant: "outline" as const,
-    color: "bg-gray-400",
+    variant: "neutral" as const,
+    color: "bg-muted-foreground",
   },
   revoked: {
     label: "해제",
-    variant: "destructive" as const,
-    color: "bg-red-500",
+    variant: "error" as const,
+    color: "bg-error",
   },
 };
+
+function StatTile({
+  icon: Icon,
+  tone,
+  label,
+  children,
+}: {
+  icon: typeof Monitor;
+  tone: string;
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <Card className="border-border dark:border-border gap-0 border px-5 shadow-none">
+      <div className="flex min-w-0 items-center gap-4">
+        <span
+          className={`${tone} flex size-10 shrink-0 items-center justify-center rounded-md`}
+        >
+          <Icon className="size-5" />
+        </span>
+        <div className="min-w-0">
+          <CardTitle className="text-muted-foreground truncate text-[0.8125rem] font-normal">
+            {label}
+          </CardTitle>
+          <div className="kpi-value text-foreground">{children}</div>
+        </div>
+      </div>
+    </Card>
+  );
+}
 
 function formatRelativeTime(dateStr: string | null): string {
   if (!dateStr) return "-";
@@ -96,52 +130,22 @@ function formatRelativeTime(dateStr: string | null): string {
 
 function StatsCards({ stats }: { stats: ExtensionStatusStats }) {
   return (
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">전체 디바이스</CardTitle>
-          <Monitor className="text-muted-foreground h-4 w-4" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{stats.total}</div>
-        </CardContent>
-      </Card>
-      <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">활성</CardTitle>
-          <Activity className="h-4 w-4 text-green-500" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold text-green-600">
-            {stats.active}
-          </div>
-        </CardContent>
-      </Card>
-      <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">비활성</CardTitle>
-          <Clock className="text-muted-foreground h-4 w-4" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold text-yellow-600">
-            {stats.inactive}
-          </div>
-        </CardContent>
-      </Card>
-      <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">대기 / 해제</CardTitle>
-          <UserX className="text-muted-foreground h-4 w-4" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">
-            {stats.pending}{" "}
-            <span className="text-muted-foreground text-sm font-normal">
-              / {stats.revoked}
-            </span>
-          </div>
-        </CardContent>
-      </Card>
+    <div className="grid gap-4 sm:grid-cols-2 2xl:grid-cols-4">
+      <StatTile icon={Monitor} tone="tonal-primary" label="전체 디바이스">
+        {stats.total}
+      </StatTile>
+      <StatTile icon={Activity} tone="tonal-success" label="활성">
+        <span className="text-success">{stats.active}</span>
+      </StatTile>
+      <StatTile icon={Clock} tone="tonal-warning" label="비활성">
+        <span className="text-warning">{stats.inactive}</span>
+      </StatTile>
+      <StatTile icon={UserX} tone="tonal-neutral" label="대기 / 해제">
+        {stats.pending}{" "}
+        <span className="text-muted-foreground text-sm font-normal">
+          / {stats.revoked}
+        </span>
+      </StatTile>
     </div>
   );
 }
@@ -225,23 +229,23 @@ export default function ExtensionStatusPage() {
   };
 
   return (
-    <div className="space-y-4">
-      <h1 className="text-2xl font-bold tracking-tight">
+    <div className="space-y-6">
+      <h1 className="text-foreground text-xl font-medium">
         Extension 상태 모니터링
       </h1>
 
       <StatsCards stats={stats} />
 
       {/* 비활성 임계값 설정 */}
-      <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
-        <CardHeader className="pb-3">
-          <CardTitle className="text-base">비활성 임계값 설정</CardTitle>
+      <Card className="border-border dark:border-border gap-4 border shadow-none">
+        <CardHeader>
+          <CardTitle>비활성 임계값 설정</CardTitle>
           <CardDescription>
             마지막 접속 후 지정된 시간이 지나면 비활성으로 표시됩니다.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             <Input
               type="number"
               value={thresholdInput}
@@ -269,8 +273,8 @@ export default function ExtensionStatusPage() {
       </Card>
 
       {/* 필터 */}
-      <div className="flex items-center gap-4">
-        <div className="relative max-w-sm flex-1">
+      <div className="flex flex-wrap items-center gap-4">
+        <div className="relative max-w-sm min-w-[200px] flex-1">
           <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
           <Input
             placeholder="이름, 이메일, 디바이스 ID 검색..."
@@ -303,8 +307,8 @@ export default function ExtensionStatusPage() {
       </div>
 
       {/* 테이블 */}
-      <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
-        <CardContent className="p-0">
+      <Card className="border-border dark:border-border gap-0 overflow-hidden border py-0 shadow-none">
+        <CardContent className="px-0">
           <Table>
             <TableHeader>
               <TableRow>
@@ -339,11 +343,11 @@ export default function ExtensionStatusPage() {
                   return (
                     <TableRow key={device.id}>
                       <TableCell>
-                        <div>
-                          <div className="font-medium">
+                        <div className="max-w-[240px] min-w-0">
+                          <div className="text-foreground truncate font-medium">
                             {device.userName || "-"}
                           </div>
-                          <div className="text-muted-foreground text-xs">
+                          <div className="text-muted-foreground truncate text-xs">
                             {device.userEmail || device.onboardingEmail || "-"}
                           </div>
                         </div>
@@ -353,13 +357,13 @@ export default function ExtensionStatusPage() {
                           {statusInfo.label}
                         </Badge>
                       </TableCell>
-                      <TableCell className="text-sm">
+                      <TableCell className="text-sm whitespace-nowrap">
                         {device.extensionVersion || "-"}
                       </TableCell>
-                      <TableCell className="text-sm">
+                      <TableCell className="max-w-[200px] truncate text-sm">
                         {device.browserInfo || "-"}
                       </TableCell>
-                      <TableCell className="text-sm">
+                      <TableCell className="text-sm whitespace-nowrap">
                         {formatRelativeTime(device.lastSeenAt)}
                       </TableCell>
                       <TableCell>

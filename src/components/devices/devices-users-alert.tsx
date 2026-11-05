@@ -27,23 +27,27 @@ export function DevicesUsersAlert({
   }
 
   return (
-    <div className="mx-6 mt-6 rounded-lg border border-orange-200 bg-orange-50 p-4">
-      <div className="flex items-center gap-2 text-base font-medium text-orange-800">
-        <UserX className="h-5 w-5" />
-        {t("title", { count: usersWithoutAgent.length })}
+    <div className="border-warning/40 bg-warning/[0.08] mx-5 mt-5 rounded-md border p-4 sm:mx-6">
+      <div className="text-foreground flex items-center gap-3 text-[0.9375rem] font-medium">
+        <span className="tonal-warning flex size-8 shrink-0 items-center justify-center rounded-md">
+          <UserX className="size-[18px]" />
+        </span>
+        <span className="min-w-0">
+          {t("title", { count: usersWithoutAgent.length })}
+        </span>
       </div>
       <div className="mt-3 mb-3 flex flex-wrap gap-2">
         {usersWithoutAgent.slice(0, 5).map((user) => (
           <Badge
             key={user.id}
             variant="outline"
-            className="border-orange-300 bg-white"
+            className="bg-card border-warning/40 max-w-[220px] truncate"
           >
             {user.name || user.email}
           </Badge>
         ))}
         {usersWithoutAgent.length > 5 && (
-          <Badge variant="outline" className="border-orange-300 bg-white">
+          <Badge variant="outline" className="bg-card border-warning/40">
             {t("more", { count: usersWithoutAgent.length - 5 })}
           </Badge>
         )}
@@ -52,7 +56,7 @@ export function DevicesUsersAlert({
         variant="outline"
         size="sm"
         onClick={onShowInstallGuide}
-        className="border-orange-300 text-orange-800 hover:bg-orange-100"
+        className="border-warning/50 text-warning hover:bg-warning/10 hover:text-warning bg-card"
       >
         {t("action")}
       </Button>

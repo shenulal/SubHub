@@ -26,9 +26,9 @@ interface SidebarWrapperProps {
  */
 function SidebarSkeleton() {
   return (
-    <div className="bg-sidebar flex h-screen w-full">
+    <div className="bg-background flex h-screen w-full">
       {/* 사이드바 스켈레톤 */}
-      <div className="hidden w-64 p-4 md:block">
+      <div className="hidden w-[260px] p-5 md:block">
         <div className="space-y-4">
           <Skeleton className="h-8 w-32" />
           <div className="space-y-2">
@@ -39,8 +39,8 @@ function SidebarSkeleton() {
         </div>
       </div>
       {/* 메인 콘텐츠 스켈레톤 (inset 스타일) */}
-      <div className="bg-background m-2 ml-0 flex flex-1 flex-col rounded-xl shadow-sm">
-        <div className="h-[55px] px-4">
+      <div className="mx-auto flex w-full max-w-[1440px] flex-1 flex-col px-6">
+        <div className="h-16">
           <Skeleton className="mt-4 h-8 w-48" />
         </div>
         <div className="flex-1 p-6">
@@ -74,12 +74,13 @@ export function SidebarWrapper({
 
   return (
     <SidebarProvider defaultOpen={defaultOpen}>
-      <AppSidebar variant="inset" role={role} user={user} />
-      <SidebarInset>
+      <AppSidebar variant="sidebar" role={role} user={user} />
+      <SidebarInset className="bg-background min-w-0">
         <AppHeader />
         {/* Workspace | Personal scope switch (6.4) — hidden when personal mode is off */}
         <ScopeBar />
         <MainContent>{children}</MainContent>
+        <AppFooter />
       </SidebarInset>
       {/* AI Agent — Read Tool + Write Tool + 승인 플로우 */}
       <AiAgentProvider />
@@ -90,7 +91,7 @@ export function SidebarWrapper({
 /** Thin bar under the header hosting the workspace/personal switch. */
 function ScopeBar() {
   return (
-    <div className="bg-muted flex items-center justify-end px-4 pt-3 empty:hidden">
+    <div className="mx-auto flex w-full max-w-[1440px] items-center justify-end px-6 pt-1 empty:hidden">
       <WorkspaceScopeSwitch />
     </div>
   );
@@ -104,10 +105,26 @@ function MainContent({ children }: { children: React.ReactNode }) {
 
   return (
     <main
-      className="bg-muted flex-1 p-4 transition-[padding] duration-300"
+      className="bg-background min-w-0 flex-1 transition-[padding] duration-300"
       style={{ paddingRight: isOpen ? 416 : undefined }}
     >
-      {children}
+      {/* Materio content area: compact width, 24px gutters */}
+      <div className="mx-auto w-full max-w-[1440px] min-w-0 px-4 py-5 sm:px-6 sm:py-6">
+        {children}
+      </div>
     </main>
+  );
+}
+
+/** Materio-style footer. Bottom padding keeps the last line clear of the AI button. */
+function AppFooter() {
+  return (
+    <footer className="text-muted-foreground mx-auto flex w-full max-w-[1440px] flex-wrap items-center justify-between gap-2 px-6 pt-2 pb-20 text-[0.8125rem]">
+      <span>
+        © {new Date().getFullYear()} SubHub ·{" "}
+        <span className="text-primary font-medium">HelloPixels</span>
+      </span>
+      <span>Subscription management for GCC enterprises</span>
+    </footer>
   );
 }

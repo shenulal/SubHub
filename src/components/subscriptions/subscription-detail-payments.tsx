@@ -24,10 +24,12 @@ export function SubscriptionDetailPayments({
   isLoading,
 }: SubscriptionDetailPaymentsProps) {
   return (
-    <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
+    <Card>
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <CreditCard className="h-5 w-5" />
+        <CardTitle className="flex items-center gap-3">
+          <span className="tonal-primary flex size-9 shrink-0 items-center justify-center rounded-md">
+            <CreditCard className="size-5" />
+          </span>
           연결된 결제 내역
           {linkedPayments.length > 0 && (
             <Badge variant="secondary">{linkedPayments.length}건</Badge>
@@ -49,16 +51,18 @@ export function SubscriptionDetailPayments({
             {linkedPayments.map((payment) => (
               <div
                 key={payment.id}
-                className="flex items-center justify-between rounded-sm border p-3"
+                className="bg-muted/60 flex min-w-0 items-center justify-between gap-4 rounded-md p-3"
               >
-                <div className="space-y-1">
-                  <div className="font-medium">{payment.merchantName}</div>
+                <div className="min-w-0 space-y-1">
+                  <div className="text-foreground truncate font-medium">
+                    {payment.merchantName}
+                  </div>
                   <div className="text-muted-foreground text-xs">
                     {formatDate(payment.transactionDate)}
                     {payment.cardLast4 && ` · 카드 ****${payment.cardLast4}`}
                   </div>
                 </div>
-                <div className="text-right font-medium">
+                <div className="shrink-0 text-right font-medium whitespace-nowrap tabular-nums">
                   {formatCurrency(payment.amount, payment.currency)}
                 </div>
               </div>
@@ -68,7 +72,7 @@ export function SubscriptionDetailPayments({
               <span className="text-muted-foreground text-sm">
                 총 결제 금액
               </span>
-              <span className="font-semibold">
+              <span className="text-foreground font-medium tabular-nums">
                 {formatCurrency(
                   linkedPayments.reduce((sum, p) => sum + p.amount, 0),
                   linkedPayments[0].currency

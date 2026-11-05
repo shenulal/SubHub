@@ -22,13 +22,13 @@ const statusConfig: Record<
   string,
   {
     label: string;
-    variant: "default" | "secondary" | "destructive" | "outline";
+    variant: "secondary" | "destructive" | "outline" | "success" | "warning";
   }
 > = {
-  PENDING: { label: "대기 중", variant: "default" },
-  ACCEPTED: { label: "수락됨", variant: "secondary" },
+  PENDING: { label: "대기 중", variant: "warning" },
+  ACCEPTED: { label: "수락됨", variant: "success" },
   EXPIRED: { label: "만료됨", variant: "destructive" },
-  CANCELLED: { label: "취소됨", variant: "outline" },
+  CANCELLED: { label: "취소됨", variant: "secondary" },
 };
 
 interface InvitationsHistoryTableProps {
@@ -94,9 +94,11 @@ export function InvitationsHistoryTable({
 
           return (
             <TableRow key={inv.id}>
-              <TableCell className="font-medium">{inv.email}</TableCell>
+              <TableCell className="text-foreground font-medium">
+                {inv.email}
+              </TableCell>
               <TableCell>
-                <Badge variant="secondary">
+                <Badge variant="primary">
                   {inv.role === "ADMIN" ? "관리자" : inv.role}
                 </Badge>
               </TableCell>

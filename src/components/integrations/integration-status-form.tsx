@@ -89,7 +89,7 @@ export function IntegrationStatusForm({
   });
 
   return (
-    <Card className="border-border/50 shadow-sm transition-shadow hover:shadow-md">
+    <Card>
       <CardHeader>
         <CardTitle>{t("integrations.form.editStatus.title")}</CardTitle>
         <CardDescription>

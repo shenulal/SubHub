@@ -266,7 +266,7 @@ export function SubscriptionForm({
   return (
     <form onSubmit={onSubmit} id={formId}>
       {!hideActions && (
-        <div className="mb-6 flex items-center justify-end gap-3">
+        <div className="mb-6 flex flex-wrap items-center justify-end gap-3 [&>button]:whitespace-nowrap">
           <Button type="button" variant="outline" onClick={handleCancel}>
             {t("subscriptions.actions.cancel")}
           </Button>
@@ -346,7 +346,7 @@ export function SubscriptionForm({
           />
         )}
 
-        <Card className="border-border/50 rounded-sm shadow-sm transition-shadow hover:shadow-md">
+        <Card>
           <CardHeader>
             <CardTitle>{t("subscriptions.form.basicInfo.notes")}</CardTitle>
           </CardHeader>

@@ -4,47 +4,34 @@
 import type { DepartmentInsights } from "@/actions/department-insights";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useTranslations } from "next-intl";
+import { DEFAULT_BASE_CURRENCY } from "@/lib/fx/convert";
+import {
+  formatMoney,
+  formatMoneyCompact,
+} from "@/lib/services/discovery/money";
+import { Users } from "lucide-react";
+import { useLocale, useTranslations } from "next-intl";
 import { useMemo } from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
 
-/**
- * Figma 디자인 기준 도넛 차트 색상
- * - globals.css 변수와 동일한 값 사용
- * - 개발팀: purple-primary (#6474F3)
- * - 기획팀: magenta-primary (#D165D3)
- * - 기타: Yellow (#F5D063)
- * - 영업팀: Orange (#F7A362)
- * - 데이터 분석팀: Gray (#D4D4D8)
- */
+import { DashboardEmptyState } from "./dashboard-empty-state";
+
+/** Donut colours: Materio chart tokens (primary, info, success, warning, error). */
 const DONUT_COLORS = [
-  "#6474F3", // 개발팀 (purple-primary)
-  "#D165D3", // 기획팀 (magenta-primary)
-  "#F5D063", // 기타
-  "#F7A362", // 영업팀
-  "#D4D4D8", // 데이터 분석팀
+  "var(--chart-1)",
+  "var(--chart-2)",
+  "var(--chart-3)",
+  "var(--chart-4)",
+  "var(--chart-5)",
 ];
+
+const CARD_CLASSES = "h-[440px] gap-4 overflow-clip px-5";
 
 interface DepartmentSpendChartProps {
   data: DepartmentInsights;
   isLoading?: boolean;
-}
-
-/**
- * 금액 포맷 (만원 단위로 축약)
- */
-function formatAmount(amount: number): string {
-  if (amount >= 100000000) {
-    // 1억 이상
-    const value = amount / 100000000;
-    return `${value.toLocaleString("ko-KR", { maximumFractionDigits: 1 })}억`;
-  }
-  if (amount >= 10000) {
-    // 1만원 이상
-    const value = amount / 10000;
-    return `${value.toLocaleString("ko-KR", { maximumFractionDigits: 0 })}만`;
-  }
-  return `${amount.toLocaleString("ko-KR")}`;
+  /** Organisation base currency (department totals are already in it). */
+  currency?: string;
 }
 
 /**
@@ -56,8 +43,10 @@ function formatAmount(amount: number): string {
 export function DepartmentSpendChart({
   data,
   isLoading,
+  currency = DEFAULT_BASE_CURRENCY,
 }: DepartmentSpendChartProps) {
   const t = useTranslations("dashboardV2Seat.department");
+  const locale = useLocale();
 
   // 비용 순 정렬, 상위 5개 부서
   const chartData = useMemo(() => {
@@ -83,7 +72,7 @@ export function DepartmentSpendChart({
   // 로딩 상태
   if (isLoading) {
     return (
-      <Card className="bg-card flex h-[450px] flex-col gap-5 rounded border-none p-5 shadow-[0px_2px_8px_0px_rgba(0,0,0,0.1)]">
+      <Card className={CARD_CLASSES}>
         <Skeleton className="h-6 w-32" />
         <div className="flex h-[180px] shrink-0 items-center justify-center">
           <Skeleton className="h-[180px] w-[180px] rounded-full" />
@@ -100,19 +89,27 @@ export function DepartmentSpendChart({
   // 데이터 없음 상태
   if (chartData.length === 0) {
     return (
-      <Card className="bg-card flex h-[450px] flex-col gap-5 rounded border-none p-5 shadow-[0px_2px_8px_0px_rgba(0,0,0,0.1)]">
-        <p className="text-foreground text-base font-semibold">{t("title")}</p>
-        <div className="flex flex-1 items-center justify-center">
-          <span className="text-muted-foreground text-sm">{t("noData")}</span>
-        </div>
+      <Card className={CARD_CLASSES}>
+        <p
+          className="text-foreground truncate text-lg font-medium"
+          title={t("title")}
+        >
+          {t("title")}
+        </p>
+        <DashboardEmptyState icon={Users} message={t("noData")} />
       </Card>
     );
   }
 
   return (
-    <Card className="bg-card flex h-[450px] flex-col gap-5 overflow-clip rounded border-none p-5 shadow-[0px_2px_8px_0px_rgba(0,0,0,0.1)]">
+    <Card className={CARD_CLASSES}>
       {/* 타이틀 */}
-      <p className="text-foreground text-base font-semibold">{t("title")}</p>
+      <p
+        className="text-foreground truncate text-lg font-medium"
+        title={t("title")}
+      >
+        {t("title")}
+      </p>
 
       {/* 콘텐츠 영역 */}
       <div className="flex min-h-0 flex-1 flex-col gap-3">
@@ -127,7 +124,7 @@ export function DepartmentSpendChart({
                 innerRadius="80%"
                 outerRadius="90%"
                 dataKey="totalCost"
-                stroke="none"
+                stroke="var(--card)"
                 paddingAngle={2}
               >
                 {dataWithPercent.map((_, index) => (
@@ -141,47 +138,53 @@ export function DepartmentSpendChart({
           </ResponsiveContainer>
 
           {/* 중앙 텍스트 */}
-          <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
-            <span className="text-muted-foreground text-xs">
+          <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-8 text-center">
+            <span className="text-muted-foreground max-w-[8.5rem] truncate text-xs">
               {t("monthlyTotal")}
             </span>
-            <span className="text-muted-foreground text-3xl font-semibold">
-              {formatAmount(totalCost)}
+            <span
+              className="text-foreground max-w-[8.5rem] truncate text-xl font-medium tabular-nums"
+              title={formatMoney(totalCost, currency, locale)}
+            >
+              {formatMoneyCompact(totalCost, currency, locale)}
             </span>
           </div>
         </div>
 
         {/* 테이블 영역 */}
-        <div className="flex flex-1 flex-col overflow-y-auto">
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
           {dataWithPercent.map((item, index) => (
             <div
               key={item.department}
-              className="border-border flex items-center border-t px-2 py-1.5"
+              className="border-border flex min-w-0 items-center gap-2 border-t px-2 py-2"
             >
               {/* 부서 이름 + 색상 점 */}
-              <div className="flex flex-1 items-center gap-1">
+              <div className="flex min-w-0 flex-1 items-center gap-2">
                 <div
-                  className="h-[10px] w-[10px] shrink-0 rounded-full"
+                  className="size-2.5 shrink-0 rounded-full"
                   style={{
                     backgroundColor: DONUT_COLORS[index % DONUT_COLORS.length],
                   }}
                 />
-                <span className="text-muted-foreground text-xs">
+                <span
+                  className="text-foreground truncate text-[0.8125rem]"
+                  title={item.department}
+                >
                   {item.department}
                 </span>
               </div>
 
               {/* 인원수 */}
-              <div className="w-[60px] text-right">
-                <span className="text-muted-foreground text-xs">
+              <div className="w-14 shrink-0 text-right">
+                <span className="text-muted-foreground text-xs tabular-nums">
                   {item.headcount}
                   {t("countUnit")}
                 </span>
               </div>
 
               {/* 퍼센트 */}
-              <div className="w-[60px] text-right">
-                <span className="text-muted-foreground text-xs">
+              <div className="w-12 shrink-0 text-right">
+                <span className="text-foreground text-xs font-medium tabular-nums">
                   {item.percentage}%
                 </span>
               </div>

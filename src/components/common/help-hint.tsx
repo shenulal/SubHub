@@ -49,7 +49,7 @@ export function HelpHint({
           aria-label={ariaLabel}
           title={title ?? ariaLabel}
           className={cn(
-            "text-muted-foreground hover:text-foreground focus-visible:ring-ring inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full transition-colors focus-visible:ring-2 focus-visible:outline-none",
+            "text-muted-foreground hover:text-primary focus-visible:ring-primary/30 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full transition-colors focus-visible:ring-2 focus-visible:outline-none",
             className
           )}
         >
@@ -58,7 +58,7 @@ export function HelpHint({
       </PopoverTrigger>
       <PopoverContent
         side={side}
-        className="w-72 space-y-2 p-3 text-sm leading-relaxed shadow-lg"
+        className="w-72 space-y-2 p-4 text-[0.8125rem] leading-relaxed shadow-lg"
       >
         {title && <p className="text-foreground font-medium">{title}</p>}
         <div className="text-muted-foreground">{content}</div>

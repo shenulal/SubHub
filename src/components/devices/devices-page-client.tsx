@@ -145,41 +145,39 @@ export function DevicesPageClient({ role }: DevicesPageClientProps) {
   const devices = deviceResult?.devices ?? [];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <PageHeader title={t("page.title")} />
 
-      {/* 메인 콘텐츠 카드 */}
-      <Card>
-        <CardContent className="p-0">
-          {/* KPI 카드 */}
-          <div className="p-6 pb-0">
-            <KpiCardsGrid>
-              <KpiCard
-                title={t("kpi.totalDevices")}
-                value={stats?.totalDevices ?? 0}
-                icon={Laptop}
-              />
-              <KpiCard
-                title={t("kpi.online")}
-                value={stats?.onlineDevices ?? 0}
-                icon={Wifi}
-                description={t("kpi.onlineDescription")}
-              />
-              <KpiCard
-                title={t("kpi.installationRate")}
-                value={`${Math.round((stats?.installationRate ?? 0) * 100)}%`}
-                icon={CheckCircle}
-                description={t("kpi.installationDescription")}
-              />
-              <KpiCard
-                title={t("kpi.shadowIT")}
-                value={stats?.shadowITApps ?? 0}
-                icon={AlertTriangle}
-                description={t("kpi.shadowITDescription")}
-              />
-            </KpiCardsGrid>
-          </div>
+      {/* KPI 카드 */}
+      <KpiCardsGrid>
+        <KpiCard
+          title={t("kpi.totalDevices")}
+          value={stats?.totalDevices ?? 0}
+          icon={Laptop}
+        />
+        <KpiCard
+          title={t("kpi.online")}
+          value={stats?.onlineDevices ?? 0}
+          icon={Wifi}
+          description={t("kpi.onlineDescription")}
+        />
+        <KpiCard
+          title={t("kpi.installationRate")}
+          value={`${Math.round((stats?.installationRate ?? 0) * 100)}%`}
+          icon={CheckCircle}
+          description={t("kpi.installationDescription")}
+        />
+        <KpiCard
+          title={t("kpi.shadowIT")}
+          value={stats?.shadowITApps ?? 0}
+          icon={AlertTriangle}
+          description={t("kpi.shadowITDescription")}
+        />
+      </KpiCardsGrid>
 
+      {/* 메인 콘텐츠 카드 */}
+      <Card className="gap-0 py-0">
+        <CardContent className="px-0 pb-5">
           {/* 미설치 사용자 알림 */}
           <DevicesUsersAlert
             usersWithoutAgent={usersWithoutAgent}
@@ -187,7 +185,7 @@ export function DevicesPageClient({ role }: DevicesPageClientProps) {
           />
 
           {/* 탭 */}
-          <div className="p-6 pb-0">
+          <div className="px-5 pt-5 sm:px-6">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList>
                 <TabsTrigger value="devices">{t("tabs.devices")}</TabsTrigger>
@@ -199,15 +197,15 @@ export function DevicesPageClient({ role }: DevicesPageClientProps) {
               {/* 디바이스 목록 탭 */}
               <TabsContent value="devices" className="mt-4 space-y-4">
                 {/* 필터 */}
-                <div className="rounded-lg border p-4">
-                  <div className="flex flex-wrap gap-4">
+                <div className="bg-muted/60 rounded-md p-4">
+                  <div className="flex flex-wrap items-center gap-4">
                     <div className="relative min-w-[200px] flex-1">
                       <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
                       <Input
                         placeholder={t("filters.searchPlaceholder")}
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="pl-9"
+                        className="bg-card pl-9"
                       />
                     </div>
                     <Select
@@ -300,7 +298,10 @@ export function DevicesPageClient({ role }: DevicesPageClientProps) {
 
       {/* 설치 가이드 Sheet */}
       <Sheet open={showInstallGuide} onOpenChange={setShowInstallGuide}>
-        <SheetContent side="right" className="w-[500px] overflow-y-auto">
+        <SheetContent
+          side="right"
+          className="w-full overflow-y-auto sm:w-[500px] sm:max-w-[500px]"
+        >
           <SheetHeader>
             <SheetTitle>{t("installGuide.title")}</SheetTitle>
           </SheetHeader>
