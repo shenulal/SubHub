@@ -1,10 +1,10 @@
 // src/types/dashboard.ts
-// 대시보드 관련 통합 타입 정의 (Phase 4: dashboard-v3.ts + dashboard2 Seat 타입 병합)
+// Consolidated dashboard types (Phase 4: merged dashboard-v3.ts + dashboard2 Seat types)
 
-// ─── 기본 대시보드 타입 ───
+// ─── Base dashboard types ───
 
 /**
- * 대시보드 통계 데이터
+ * Dashboard statistics
  */
 export interface DashboardStats {
   totalApps: number;
@@ -15,7 +15,7 @@ export interface DashboardStats {
 }
 
 /**
- * 다가오는 갱신 구독 정보
+ * Upcoming subscription renewal
  */
 export interface UpcomingRenewal {
   id: string;
@@ -35,7 +35,7 @@ export interface UpcomingRenewal {
 }
 
 /**
- * 카테고리별 앱 분포
+ * App distribution by category
  */
 export interface CategoryDistribution {
   category: string;
@@ -44,7 +44,7 @@ export interface CategoryDistribution {
 }
 
 /**
- * 최근 활동 항목
+ * Recent activity item
  */
 export interface RecentActivityItem {
   id: string;
@@ -58,7 +58,7 @@ export interface RecentActivityItem {
 }
 
 /**
- * 리포트용 갱신 목록 조회 데이터
+ * Renewal list data for reports
  */
 export interface RenewalReportData {
   within7Days: UpcomingRenewal[];
@@ -68,10 +68,10 @@ export interface RenewalReportData {
   totalCount: number;
 }
 
-// ─── V3 대시보드 레이아웃 타입 (구 dashboard-v3.ts) ───
+// ─── V3 dashboard layout types (formerly dashboard-v3.ts) ───
 
 /**
- * OptimizationHero 컴포넌트 데이터
+ * OptimizationHero component data
  */
 export interface OptimizationHeroData {
   monthlySavings: number;
@@ -85,7 +85,7 @@ export interface OptimizationHeroData {
 }
 
 /**
- * UpcomingRenewals 컴포넌트 아이템 타입
+ * UpcomingRenewals component item type
  */
 export interface RenewalItem {
   id: string;
@@ -183,10 +183,10 @@ export interface DashboardV3Data {
   renewals: RenewalItem[];
 }
 
-// ─── Seat/License 타입 (구 dashboard2.ts에서 이동) ───
+// ─── Seat/License types (moved from dashboard2.ts) ───
 
 /**
- * 월별 Seat 배정 추이
+ * Monthly seat assignment trend
  */
 export interface LicenseUsageTrend {
   month: string;
@@ -196,7 +196,7 @@ export interface LicenseUsageTrend {
 }
 
 /**
- * Seat 활용률 하위 앱
+ * Apps with the lowest seat utilisation
  */
 export interface LowUtilizationApp {
   appId: string;
@@ -207,7 +207,7 @@ export interface LowUtilizationApp {
 }
 
 /**
- * 개별 라이선스 앱 (Top)
+ * Individually licensed apps (top)
  */
 export interface TopLicenseApp {
   appId: string;
@@ -218,7 +218,7 @@ export interface TopLicenseApp {
 }
 
 /**
- * Seat 위젯 데이터
+ * Seat widget data
  */
 export interface SeatWidgetData {
   lowUtilizationApps: LowUtilizationApp[];

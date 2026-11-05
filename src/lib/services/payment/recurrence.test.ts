@@ -116,7 +116,9 @@ describe("analyzeSaaSSubscriptionPatterns", () => {
     expect(hint).toBeDefined();
     expect(hint!.monthCount).toBe(6);
     expect(hint!.score).toBeGreaterThanOrEqual(80);
-    expect(hint!.reasons.some((r) => r.includes("6개월 이상"))).toBe(true);
+    expect(hint!.reasons.some((r) => r.includes("6+ consecutive months"))).toBe(
+      true
+    );
   });
 
   it("ignores merchants with only one month of transactions", () => {
@@ -134,9 +136,9 @@ describe("analyzeSaaSSubscriptionPatterns", () => {
       { useDt: "20250225", useStore: "Irregular Vendor", useAmt: "50000" },
     ]);
 
-    // 금액 편차가 너무 크고 일자 편차도 크면 낮은 점수
+    // Large amount and day variation produce a low score
     const hint = result.get(key);
-    // 점수가 20 미만이면 null 반환됨
+    // Returns null when the score is below 20
     expect(hint === undefined || hint.score < 50).toBe(true);
   });
 
@@ -175,7 +177,7 @@ describe("analyzeSaaSSubscriptionPatterns", () => {
         { useDt: "20250315", useStore: "Custom Options Test", useAmt: "14000" },
       ],
       {
-        amountTolerance: 0.05, // 더 엄격한 5% 허용
+        amountTolerance: 0.05, // Stricter 5% tolerance
         minMonthCount: 3,
         dayTolerance: 2,
       }
@@ -183,7 +185,7 @@ describe("analyzeSaaSSubscriptionPatterns", () => {
 
     const hint = result.get(key);
     expect(hint).toBeDefined();
-    // 금액 편차가 5%를 초과하므로 최고 점수 아님
+    // Amount variation exceeds 5%, so not the top score
     expect(hint!.score).toBeLessThan(100);
   });
 
@@ -228,7 +230,7 @@ describe("formatSaaSHintForLLM", () => {
   it("formats hint with all fields", () => {
     const hint = {
       score: 85,
-      reasons: ["6개월 이상 연속 결제", "금액 일관성 높음"],
+      reasons: ["Paid for 6+ consecutive months", "High amount consistency"],
       monthCount: 6,
       avgAmount: 10000,
       amountVariation: 0.05,
@@ -241,7 +243,7 @@ describe("formatSaaSHintForLLM", () => {
     expect(formatted).toContain("avg_amount=10000");
     expect(formatted).toContain("amount_var=5.0%");
     expect(formatted).toContain("patterns=");
-    expect(formatted).toContain("6개월 이상 연속 결제");
+    expect(formatted).toContain("Paid for 6+ consecutive months");
   });
 
   it("handles empty reasons array", () => {
@@ -274,7 +276,7 @@ describe("analyzePaymentIntervals", () => {
     expect(pattern!.isRecurring).toBe(true);
     expect(pattern!.billingCycle).toBe("MONTHLY");
     expect(pattern!.avgIntervalDays).toBeGreaterThanOrEqual(28);
-    expect(pattern!.avgIntervalDays).toBeLessThanOrEqual(31); // ~30일 간격
+    expect(pattern!.avgIntervalDays).toBeLessThanOrEqual(31); // ~30-day interval
     expect(pattern!.intervalStdDev).toBeLessThan(5);
     expect(pattern!.nextPaymentDate).toBeDefined();
     expect(pattern!.transactionCount).toBe(3);
@@ -314,8 +316,8 @@ describe("analyzePaymentIntervals", () => {
     const key = normalizeMerchantName("Irregular Vendor");
     const result = analyzePaymentIntervals([
       { useDt: "20250101", useStore: "Irregular Vendor", useAmt: "5000" },
-      { useDt: "20250115", useStore: "Irregular Vendor", useAmt: "5000" }, // 14일 간격
-      { useDt: "20250301", useStore: "Irregular Vendor", useAmt: "5000" }, // 44일 간격
+      { useDt: "20250115", useStore: "Irregular Vendor", useAmt: "5000" }, // 14-day interval
+      { useDt: "20250301", useStore: "Irregular Vendor", useAmt: "5000" }, // 44-day interval
     ]);
 
     const pattern = result.get(key);
@@ -338,9 +340,9 @@ describe("analyzePaymentIntervals", () => {
     expect(pattern).toBeDefined();
     expect(pattern!.nextPaymentDate).toBeDefined();
 
-    // 마지막 결제일 2025-03-16에서 약 30일 후
+    // About 30 days after the last payment on 2025-03-16
     const nextDate = pattern!.nextPaymentDate!;
-    expect(nextDate.getMonth()).toBeGreaterThanOrEqual(3); // 4월(3) 또는 그 이후
+    expect(nextDate.getMonth()).toBeGreaterThanOrEqual(3); // April (3) or later
   });
 
   it("handles single transaction (no interval possible)", () => {
@@ -348,7 +350,7 @@ describe("analyzePaymentIntervals", () => {
       { useDt: "20250115", useStore: "Single Payment", useAmt: "10000" },
     ]);
 
-    // 단일 거래는 minTransactionCount 미달로 제외
+    // A single transaction is excluded (below minTransactionCount)
     expect(result.size).toBe(0);
   });
 
@@ -363,18 +365,18 @@ describe("analyzePaymentIntervals", () => {
 
   it("uses custom stdDev threshold", () => {
     const key = normalizeMerchantName("Custom Threshold");
-    // 표준편차가 ~10일인 결제
+    // Payments with a ~10-day standard deviation
     const result = analyzePaymentIntervals(
       [
         { useDt: "20250110", useStore: "Custom Threshold", useAmt: "10000" },
-        { useDt: "20250215", useStore: "Custom Threshold", useAmt: "10000" }, // 36일
-        { useDt: "20250310", useStore: "Custom Threshold", useAmt: "10000" }, // 23일
+        { useDt: "20250215", useStore: "Custom Threshold", useAmt: "10000" }, // 36 days
+        { useDt: "20250310", useStore: "Custom Threshold", useAmt: "10000" }, // 23 days
       ],
-      { stdDevThreshold: 15 } // 더 관대한 임계값
+      { stdDevThreshold: 15 } // More lenient threshold
     );
 
     const pattern = result.get(key);
     expect(pattern).toBeDefined();
-    expect(pattern!.isRecurring).toBe(true); // 15일 임계값에서는 recurring
+    expect(pattern!.isRecurring).toBe(true); // Recurring with a 15-day threshold
   });
 });

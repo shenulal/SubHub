@@ -1,5 +1,5 @@
 // src/services/subscription.service.test.ts
-// TDD RED → GREEN: Subscription 서비스 레이어 테스트
+// TDD RED → GREEN: Subscription service layer tests
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/fx/base-currency", () => ({
@@ -44,7 +44,7 @@ describe("SubscriptionService", () => {
 
   // ==================== createSubscription ====================
   describe("createSubscription", () => {
-    it("정상적으로 구독을 생성해야 한다", async () => {
+    it("creates a subscription successfully", async () => {
       vi.mocked(prisma.app.findFirst).mockResolvedValue({
         id: "app-1",
         name: "Slack",
@@ -68,7 +68,7 @@ describe("SubscriptionService", () => {
       expect(prisma.auditLog.create).toHaveBeenCalledOnce();
     });
 
-    it("존재하지 않는 앱이면 실패해야 한다", async () => {
+    it("fails when the app does not exist", async () => {
       vi.mocked(prisma.app.findFirst).mockResolvedValue(null);
 
       const result = await createSubscription(mockCtx, {
@@ -79,10 +79,10 @@ describe("SubscriptionService", () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.message).toContain("앱을 찾을 수 없습니다");
+      expect(result.message).toContain("App not found");
     });
 
-    it("VIEWER 권한이면 실패해야 한다", async () => {
+    it("fails for a VIEWER role", async () => {
       const viewerCtx = { ...mockCtx, role: "VIEWER" };
 
       const result = await createSubscription(viewerCtx, {
@@ -93,10 +93,10 @@ describe("SubscriptionService", () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.message).toContain("권한");
+      expect(result.message).toContain("permission");
     });
 
-    it("선택 필드를 포함하여 생성해야 한다", async () => {
+    it("creates with optional fields included", async () => {
       vi.mocked(prisma.app.findFirst).mockResolvedValue({
         id: "app-1",
         name: "Slack",
@@ -117,7 +117,7 @@ describe("SubscriptionService", () => {
         endDate: "2027-03-31",
         totalLicenses: 50,
         autoRenewal: false,
-        notes: "연간 계약",
+        notes: "Annual contract",
       });
 
       expect(result.success).toBe(true);
@@ -130,7 +130,7 @@ describe("SubscriptionService", () => {
             currency: "USD",
             totalLicenses: 50,
             autoRenewal: false,
-            notes: "연간 계약",
+            notes: "Annual contract",
           }),
         })
       );
@@ -139,7 +139,7 @@ describe("SubscriptionService", () => {
 
   // ==================== updateSubscription ====================
   describe("updateSubscription", () => {
-    it("정상적으로 구독을 수정해야 한다", async () => {
+    it("updates a subscription successfully", async () => {
       vi.mocked(prisma.subscription.findFirst).mockResolvedValue({
         id: "sub-1",
         appId: "app-1",
@@ -163,7 +163,7 @@ describe("SubscriptionService", () => {
       expect(prisma.subscription.update).toHaveBeenCalledOnce();
     });
 
-    it("존재하지 않는 구독이면 실패해야 한다", async () => {
+    it("fails when the subscription does not exist", async () => {
       vi.mocked(prisma.subscription.findFirst).mockResolvedValue(null);
 
       const result = await updateSubscription(mockCtx, "nonexistent", {
@@ -171,10 +171,10 @@ describe("SubscriptionService", () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.message).toContain("찾을 수 없습니다");
+      expect(result.message).toContain("not found");
     });
 
-    it("ADMIN이 아니면 실패해야 한다", async () => {
+    it("fails when the user is not an ADMIN", async () => {
       const memberCtx = { ...mockCtx, role: "MEMBER" };
 
       const result = await updateSubscription(memberCtx, "sub-1", {
@@ -182,10 +182,10 @@ describe("SubscriptionService", () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.message).toContain("권한");
+      expect(result.message).toContain("permission");
     });
 
-    it("상태 변경이 가능해야 한다", async () => {
+    it("allows changing the status", async () => {
       vi.mocked(prisma.subscription.findFirst).mockResolvedValue({
         id: "sub-1",
         appId: "app-1",
@@ -214,7 +214,7 @@ describe("SubscriptionService", () => {
 
   // ==================== deleteSubscription ====================
   describe("deleteSubscription", () => {
-    it("정상적으로 구독을 삭제해야 한다", async () => {
+    it("deletes a subscription successfully", async () => {
       vi.mocked(prisma.subscription.findFirst).mockResolvedValue({
         id: "sub-1",
         organizationId: "org-1",
@@ -230,22 +230,22 @@ describe("SubscriptionService", () => {
       expect(prisma.auditLog.create).toHaveBeenCalledOnce();
     });
 
-    it("존재하지 않는 구독이면 실패해야 한다", async () => {
+    it("fails when the subscription does not exist", async () => {
       vi.mocked(prisma.subscription.findFirst).mockResolvedValue(null);
 
       const result = await deleteSubscription(mockCtx, "nonexistent");
 
       expect(result.success).toBe(false);
-      expect(result.message).toContain("찾을 수 없습니다");
+      expect(result.message).toContain("not found");
     });
 
-    it("ADMIN이 아니면 실패해야 한다", async () => {
+    it("fails when the user is not an ADMIN", async () => {
       const memberCtx = { ...mockCtx, role: "MEMBER" };
 
       const result = await deleteSubscription(memberCtx, "sub-1");
 
       expect(result.success).toBe(false);
-      expect(result.message).toContain("권한");
+      expect(result.message).toContain("permission");
     });
   });
 });

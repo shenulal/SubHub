@@ -105,15 +105,15 @@ describe("IntegrationsPageClient", () => {
     mockUseCan.mockReturnValue({ data: { can: true } });
   });
 
-  it("헤더와 KPI 카드를 표시한다", () => {
+  it("shows the header and KPI cards", () => {
     render(<IntegrationsPageClient canManage role="ADMIN" />);
 
-    expect(screen.getByText("연동 관리")).toBeInTheDocument();
-    expect(screen.getByText("전체 연동")).toBeInTheDocument();
-    expect(screen.getByText("활성 연동")).toBeInTheDocument();
+    expect(screen.getByText("Integration management")).toBeInTheDocument();
+    expect(screen.getByText("Total integrations")).toBeInTheDocument();
+    expect(screen.getByText("Active integrations")).toBeInTheDocument();
   });
 
-  it("연동 목록이 없으면 안내 메시지를 보여준다", () => {
+  it("shows a notice when there are no integrations", () => {
     mockUseList.mockReturnValueOnce({
       query: {
         data: { data: [], total: 0 },
@@ -125,35 +125,37 @@ describe("IntegrationsPageClient", () => {
 
     render(<IntegrationsPageClient canManage role="ADMIN" />);
 
-    expect(screen.getByText(/연동된 서비스가 없습니다/)).toBeInTheDocument();
+    expect(screen.getByText(/No integrations/)).toBeInTheDocument();
   });
 
-  it("연동 유형과 상태를 카드에 표시한다", () => {
+  it("shows the integration type and status on the card", () => {
     render(<IntegrationsPageClient canManage role="ADMIN" />);
 
     expect(
       screen.getAllByText(/Google Workspace/).length
     ).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText(/활성/).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/Active/).length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText(/Okta/).length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText(/대기/).length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText(/Pending/).length).toBeGreaterThanOrEqual(1);
   });
 
-  it("관리자가 아니면 연동 추가 버튼이 비활성화된다", () => {
+  it("disables the add integration button for non-admins", () => {
     mockUseCan.mockReturnValueOnce({ data: { can: false } });
     mockUseCan.mockReturnValueOnce({ data: { can: false } });
     render(<IntegrationsPageClient canManage={false} role="VIEWER" />);
 
-    // 연동 추가는 버튼으로 렌더링됨 (PageHeader actions)
-    const addButton = screen.getByRole("button", { name: /연동 추가/ });
+    // Add integration renders as a button (PageHeader actions)
+    const addButton = screen.getByRole("button", { name: /Add integration/ });
     expect(addButton).toBeDisabled();
   });
 
-  it("필터 입력 컨트롤이 노출된다", async () => {
+  it("exposes the filter input controls", async () => {
     const user = userEvent.setup();
     render(<IntegrationsPageClient canManage role="ADMIN" />);
 
-    const searchInput = screen.getByPlaceholderText(/도메인 또는 키워드 검색/);
+    const searchInput = screen.getByPlaceholderText(
+      /Search by domain or keyword/
+    );
     expect(searchInput).toBeInTheDocument();
 
     await user.type(searchInput, "workspace");

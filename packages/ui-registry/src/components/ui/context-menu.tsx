@@ -5,13 +5,13 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * 🎯 목적: ContextMenu Root 컴포넌트
- * 📝 주의사항: Radix UI ContextMenu.Root primitive는 ref를 지원하지 않음
+ * 🎯 Purpose: ContextMenu Root component
+ * 📝 Note: Radix UI ContextMenu.Root primitive does not support ref
  */
 const ContextMenu = ContextMenuPrimitive.Root;
 
 /**
- * 🎯 목적: ContextMenuTrigger 컴포넌트에 forwardRef 적용
+ * 🎯 Purpose: Apply forwardRef to the ContextMenuTrigger component
  */
 const ContextMenuTrigger = React.forwardRef<
   React.ElementRef<typeof ContextMenuPrimitive.Trigger>,
@@ -28,7 +28,7 @@ const ContextMenuTrigger = React.forwardRef<
 ContextMenuTrigger.displayName = "ContextMenuTrigger";
 
 /**
- * 🎯 목적: ContextMenuGroup 컴포넌트에 forwardRef 적용
+ * 🎯 Purpose: Apply forwardRef to the ContextMenuGroup component
  */
 const ContextMenuGroup = React.forwardRef<
   React.ElementRef<typeof ContextMenuPrimitive.Group>,
@@ -45,19 +45,19 @@ const ContextMenuGroup = React.forwardRef<
 ContextMenuGroup.displayName = "ContextMenuGroup";
 
 /**
- * 🎯 목적: ContextMenuPortal 컴포넌트
- * 📝 주의사항: Portal은 ref를 지원하지 않음
+ * 🎯 Purpose: ContextMenuPortal component
+ * 📝 Note: Portal does not support ref
  */
 const ContextMenuPortal = ContextMenuPrimitive.Portal;
 
 /**
- * 🎯 목적: ContextMenuSub 컴포넌트
- * 📝 주의사항: Sub는 ref를 지원하지 않음
+ * 🎯 Purpose: ContextMenuSub component
+ * 📝 Note: Sub does not support ref
  */
 const ContextMenuSub = ContextMenuPrimitive.Sub;
 
 /**
- * 🎯 목적: ContextMenuRadioGroup 컴포넌트에 forwardRef 적용
+ * 🎯 Purpose: Apply forwardRef to the ContextMenuRadioGroup component
  */
 const ContextMenuRadioGroup = React.forwardRef<
   React.ElementRef<typeof ContextMenuPrimitive.RadioGroup>,
@@ -74,8 +74,8 @@ const ContextMenuRadioGroup = React.forwardRef<
 ContextMenuRadioGroup.displayName = "ContextMenuRadioGroup";
 
 /**
- * 🎯 목적: ContextMenuSubTrigger 컴포넌트에 forwardRef 적용
- * 📝 주의사항: inset prop, ChevronRightIcon 포함
+ * 🎯 Purpose: Apply forwardRef to the ContextMenuSubTrigger component
+ * 📝 Note: Supports the inset prop; includes ChevronRightIcon
  */
 const ContextMenuSubTrigger = React.forwardRef<
   React.ElementRef<typeof ContextMenuPrimitive.SubTrigger>,
@@ -102,7 +102,7 @@ const ContextMenuSubTrigger = React.forwardRef<
 ContextMenuSubTrigger.displayName = "ContextMenuSubTrigger";
 
 /**
- * 🎯 목적: ContextMenuSubContent 컴포넌트에 forwardRef 적용
+ * 🎯 Purpose: Apply forwardRef to the ContextMenuSubContent component
  */
 const ContextMenuSubContent = React.forwardRef<
   React.ElementRef<typeof ContextMenuPrimitive.SubContent>,
@@ -123,8 +123,8 @@ const ContextMenuSubContent = React.forwardRef<
 ContextMenuSubContent.displayName = "ContextMenuSubContent";
 
 /**
- * 🎯 목적: ContextMenuContent 컴포넌트에 forwardRef 적용
- * 📝 주의사항: Portal 내부에서 렌더링
+ * 🎯 Purpose: Apply forwardRef to the ContextMenuContent component
+ * 📝 Note: Renders inside a Portal
  */
 const ContextMenuContent = React.forwardRef<
   React.ElementRef<typeof ContextMenuPrimitive.Content>,
@@ -147,8 +147,8 @@ const ContextMenuContent = React.forwardRef<
 ContextMenuContent.displayName = "ContextMenuContent";
 
 /**
- * 🎯 목적: ContextMenuItem 컴포넌트에 forwardRef 적용
- * 📝 주의사항: inset prop, variant prop (default/destructive)
+ * 🎯 Purpose: Apply forwardRef to the ContextMenuItem component
+ * 📝 Note: Supports the inset prop and variant prop (default/destructive)
  */
 const ContextMenuItem = React.forwardRef<
   React.ElementRef<typeof ContextMenuPrimitive.Item>,
@@ -174,8 +174,8 @@ const ContextMenuItem = React.forwardRef<
 ContextMenuItem.displayName = "ContextMenuItem";
 
 /**
- * 🎯 목적: ContextMenuCheckboxItem 컴포넌트에 forwardRef 적용
- * 📝 주의사항: CheckIcon indicator 포함
+ * 🎯 Purpose: Apply forwardRef to the ContextMenuCheckboxItem component
+ * 📝 Note: Includes the CheckIcon indicator
  */
 const ContextMenuCheckboxItem = React.forwardRef<
   React.ElementRef<typeof ContextMenuPrimitive.CheckboxItem>,
@@ -204,8 +204,8 @@ const ContextMenuCheckboxItem = React.forwardRef<
 ContextMenuCheckboxItem.displayName = "ContextMenuCheckboxItem";
 
 /**
- * 🎯 목적: ContextMenuRadioItem 컴포넌트에 forwardRef 적용
- * 📝 주의사항: CircleIcon indicator 포함
+ * 🎯 Purpose: Apply forwardRef to the ContextMenuRadioItem component
+ * 📝 Note: Includes the CircleIcon indicator
  */
 const ContextMenuRadioItem = React.forwardRef<
   React.ElementRef<typeof ContextMenuPrimitive.RadioItem>,
@@ -233,8 +233,8 @@ const ContextMenuRadioItem = React.forwardRef<
 ContextMenuRadioItem.displayName = "ContextMenuRadioItem";
 
 /**
- * 🎯 목적: ContextMenuLabel 컴포넌트에 forwardRef 적용
- * 📝 주의사항: inset prop 지원
+ * 🎯 Purpose: Apply forwardRef to the ContextMenuLabel component
+ * 📝 Note: Supports the inset prop
  */
 const ContextMenuLabel = React.forwardRef<
   React.ElementRef<typeof ContextMenuPrimitive.Label>,
@@ -258,7 +258,7 @@ const ContextMenuLabel = React.forwardRef<
 ContextMenuLabel.displayName = "ContextMenuLabel";
 
 /**
- * 🎯 목적: ContextMenuSeparator 컴포넌트에 forwardRef 적용
+ * 🎯 Purpose: Apply forwardRef to the ContextMenuSeparator component
  */
 const ContextMenuSeparator = React.forwardRef<
   React.ElementRef<typeof ContextMenuPrimitive.Separator>,
@@ -276,8 +276,8 @@ const ContextMenuSeparator = React.forwardRef<
 ContextMenuSeparator.displayName = "ContextMenuSeparator";
 
 /**
- * 🎯 목적: ContextMenuShortcut 컴포넌트에 forwardRef 적용
- * 📝 주의사항: HTML span 요소 사용
+ * 🎯 Purpose: Apply forwardRef to the ContextMenuShortcut component
+ * 📝 Note: Uses an HTML span element
  */
 const ContextMenuShortcut = React.forwardRef<
   HTMLSpanElement,

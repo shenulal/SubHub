@@ -1,7 +1,7 @@
 // src/app/api/cron/send-reports/route.ts
 /**
- * 예약된 리포트 발송 Cron Job
- * Vercel Cron으로 매시간 실행
+ * Scheduled report delivery cron job
+ * Runs hourly via Vercel Cron
  */
 
 import { prisma } from "@/lib/db";
@@ -14,8 +14,8 @@ import { NextRequest, NextResponse } from "next/server";
 export const GET = withCronAuth(
   withLogging("cron:send-reports", async (request: NextRequest) => {
     const now = new Date();
-    // 멱등성 보장: 1시간 이내 중복 실행 방지
-    const idempotencyWindow = new Date(now.getTime() - 60 * 60 * 1000); // 1시간 전
+    // Idempotency: prevent duplicate runs within 1 hour
+    const idempotencyWindow = new Date(now.getTime() - 60 * 60 * 1000); // 1 hour ago
 
     const results: {
       id: string;
@@ -24,14 +24,14 @@ export const GET = withCronAuth(
     }[] = [];
 
     try {
-      // 발송 예정인 스케줄 조회 (멱등성 체크 포함)
+      // Fetch due schedules (with idempotency check)
       const dueSchedules = await prisma.reportSchedule.findMany({
         where: {
           isActive: true,
           nextSendAt: {
             lte: now,
           },
-          // 멱등성: 1시간 이내에 이미 발송된 스케줄 제외
+          // Idempotency: exclude schedules already sent within the last hour
           OR: [{ lastSentAt: null }, { lastSentAt: { lt: idempotencyWindow } }],
         },
         include: {
@@ -43,10 +43,10 @@ export const GET = withCronAuth(
 
       logger.info(`Found ${dueSchedules.length} schedules to process`);
 
-      // 각 스케줄 처리
+      // Process each schedule
       for (const schedule of dueSchedules) {
         try {
-          // 멱등성 재확인 (경합 조건 방지)
+          // Re-check idempotency (prevents race conditions)
           const freshSchedule = await prisma.reportSchedule.findUnique({
             where: { id: schedule.id },
             select: { lastSentAt: true },
@@ -63,10 +63,10 @@ export const GET = withCronAuth(
             continue;
           }
 
-          // 다음 발송 시간 계산 (먼저 계산해두기)
+          // Calculate the next send time (up front)
           const nextSendAt = calculateNextSendAt(schedule);
 
-          // 먼저 스케줄 업데이트 (발송 전 잠금 효과)
+          // Update the schedule first (acts as a lock before sending)
           await prisma.reportSchedule.update({
             where: { id: schedule.id },
             data: {
@@ -75,7 +75,7 @@ export const GET = withCronAuth(
             },
           });
 
-          // 리포트 생성 및 이메일 발송
+          // Generate the report and send the email
           await sendReportEmail({
             scheduleId: schedule.id,
             organizationId: schedule.organizationId,
@@ -120,7 +120,7 @@ export const GET = withCronAuth(
 );
 
 /**
- * 다음 발송 시간 계산
+ * Calculate the next send time
  */
 function calculateNextSendAt(schedule: {
   frequency: string;
@@ -132,17 +132,17 @@ function calculateNextSendAt(schedule: {
   const now = new Date();
   const next = new Date(now);
 
-  // 기본적으로 발송 시간 설정
+  // Set the send time by default
   next.setHours(schedule.hour, 0, 0, 0);
 
   switch (schedule.frequency) {
     case "DAILY":
-      // 다음 날
+      // Next day
       next.setDate(next.getDate() + 1);
       break;
 
     case "WEEKLY":
-      // 다음 주 같은 요일
+      // Same weekday next week
       const daysUntilNext =
         schedule.dayOfWeek !== null
           ? (schedule.dayOfWeek - now.getDay() + 7) % 7 || 7
@@ -151,7 +151,7 @@ function calculateNextSendAt(schedule: {
       break;
 
     case "MONTHLY":
-      // 다음 달 같은 날
+      // Same day next month
       next.setMonth(next.getMonth() + 1);
       if (schedule.dayOfMonth !== null) {
         const lastDay = new Date(
@@ -164,7 +164,7 @@ function calculateNextSendAt(schedule: {
       break;
 
     default:
-      // 기본값: 다음 주
+      // Default: next week
       next.setDate(next.getDate() + 7);
   }
 

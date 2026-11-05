@@ -122,7 +122,7 @@ describe("appDiscovery", () => {
           },
           tokens: [
             {
-              clientId: "app-client-1", // 같은 앱
+              clientId: "app-client-1", // Same app
               displayText: "Test App 1",
               kind: "admin#directory#token",
               scopes: ["email", "profile"],
@@ -190,7 +190,7 @@ describe("appDiscovery", () => {
 
       const result = processDiscoveredApps(usersWithTokens);
 
-      // google.com은 필터링됨
+      // google.com is filtered out
       expect(result).toHaveLength(1);
       expect(result[0].name).toBe("Third Party App");
     });

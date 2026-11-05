@@ -43,13 +43,13 @@ describe("Extension Usage Actions", () => {
 
   describe("getUsageAnalytics", () => {
     it("should return login-based usage analytics for today", async () => {
-      // Whitelist 패턴 mock
+      // Mock whitelist patterns
       mockPrisma.extensionWhitelist.findMany.mockResolvedValue([
         { pattern: "slack.com" },
         { pattern: "notion.so" },
       ] as never);
 
-      // 로그인 이벤트 mock
+      // Mock login events
       mockPrisma.extensionLoginEvent.findMany.mockResolvedValue([
         {
           id: "1",
@@ -82,12 +82,12 @@ describe("Extension Usage Actions", () => {
     });
 
     it("should filter by whitelist domains", async () => {
-      // Whitelist에 slack.com만 포함
+      // Whitelist contains only slack.com
       mockPrisma.extensionWhitelist.findMany.mockResolvedValue([
         { pattern: "slack.com" },
       ] as never);
 
-      // 로그인 이벤트에 whitelist 외 도메인 포함
+      // Login events include a domain outside the whitelist
       mockPrisma.extensionLoginEvent.findMany.mockResolvedValue([
         {
           id: "1",
@@ -106,13 +106,13 @@ describe("Extension Usage Actions", () => {
       const result = await getUsageAnalytics("today");
 
       expect(result.success).toBe(true);
-      expect(result.data?.totalLogins).toBe(1); // github.com은 필터링됨
+      expect(result.data?.totalLogins).toBe(1); // github.com is filtered out
       expect(result.data?.topDomains).toHaveLength(1);
       expect(result.data?.topDomains[0].domain).toBe("slack.com");
     });
 
     it("should support wildcard patterns", async () => {
-      // 와일드카드 패턴 테스트
+      // Wildcard pattern test
       mockPrisma.extensionWhitelist.findMany.mockResolvedValue([
         { pattern: "*.google.com" },
       ] as never);
@@ -141,12 +141,12 @@ describe("Extension Usage Actions", () => {
       const result = await getUsageAnalytics("today");
 
       expect(result.success).toBe(true);
-      expect(result.data?.totalLogins).toBe(2); // google.com 서브도메인만
+      expect(result.data?.totalLogins).toBe(2); // google.com subdomains only
       expect(result.data?.topDomains).toHaveLength(2);
     });
 
     it("should extract domain from full URL format", async () => {
-      // URL 형식 도메인 테스트 (https://...)
+      // URL-form domain test (https://...)
       mockPrisma.extensionWhitelist.findMany.mockResolvedValue([
         { pattern: "*.google.com" },
       ] as never);
@@ -175,12 +175,12 @@ describe("Extension Usage Actions", () => {
       const result = await getUsageAnalytics("today");
 
       expect(result.success).toBe(true);
-      expect(result.data?.totalLogins).toBe(2); // google.com 서브도메인만
+      expect(result.data?.totalLogins).toBe(2); // google.com subdomains only
       expect(result.data?.topDomains).toHaveLength(2);
     });
 
     it("should extract domain from domain with path format", async () => {
-      // 경로 포함 도메인 테스트 (domain.com/path)
+      // Domain-with-path test (domain.com/path)
       mockPrisma.extensionWhitelist.findMany.mockResolvedValue([
         { pattern: "slack.com" },
       ] as never);
@@ -224,7 +224,7 @@ describe("Extension Usage Actions", () => {
       const result = await getUsageAnalytics("today");
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe("인증이 필요합니다");
+      expect(result.error).toBe("Authentication required");
     });
 
     it("should support week period", async () => {
@@ -283,8 +283,8 @@ describe("Extension Usage Actions", () => {
       const result = await getUsageAnalytics("today");
 
       expect(result.success).toBe(true);
-      expect(result.data?.topDomains[0].domain).toBe("slack.com"); // 3회
-      expect(result.data?.topDomains[1].domain).toBe("notion.so"); // 1회
+      expect(result.data?.topDomains[0].domain).toBe("slack.com"); // 3 times
+      expect(result.data?.topDomains[1].domain).toBe("notion.so"); // 1 time
     });
   });
 
@@ -331,9 +331,7 @@ describe("Extension Usage Actions", () => {
       const result = await getDomainLoginEvents("slack.com", "2024-01-15");
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe(
-        "해당 도메인은 whitelist에 등록되지 않았습니다"
-      );
+      expect(result.error).toBe("This domain is not on the whitelist");
     });
 
     it("should return empty events when no logins on date", async () => {
@@ -356,7 +354,7 @@ describe("Extension Usage Actions", () => {
       const result = await getDomainLoginEvents("slack.com", "2024-01-15");
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe("인증이 필요합니다");
+      expect(result.error).toBe("Authentication required");
     });
   });
 });

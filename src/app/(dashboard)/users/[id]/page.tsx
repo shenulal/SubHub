@@ -16,13 +16,13 @@ export async function generateMetadata({
 
   if (!user) {
     return {
-      title: "사용자를 찾을 수 없습니다 | SaaS 관리 플랫폼",
+      title: "User not found",
     };
   }
 
   return {
-    title: `${user.name || user.email} | SaaS 관리 플랫폼`,
-    description: `${user.name || user.email}의 상세 정보 및 앱 접근 권한`,
+    title: `${user.name || user.email}`,
+    description: `Details and app access for ${user.name || user.email}`,
   };
 }
 

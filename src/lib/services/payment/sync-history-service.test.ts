@@ -1,7 +1,7 @@
 import { SyncStatus, SyncType } from "@prisma/client";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-// Prisma 모킹
+// Mock Prisma
 vi.mock("@/lib/db", () => ({
   prisma: {
     syncHistory: {
@@ -70,7 +70,7 @@ describe("sync-history-service", () => {
   });
 
   describe("createSyncHistory", () => {
-    it("올바른 필드로 레코드를 생성하고 생성된 엔티티를 반환해야 한다", async () => {
+    it("creates the record with the correct fields and returns the created entity", async () => {
       mockSyncHistoryCreate.mockResolvedValue(mockSyncHistory);
 
       const input = {
@@ -100,7 +100,7 @@ describe("sync-history-service", () => {
   });
 
   describe("completeSyncHistory", () => {
-    it("status, counts, completedAt를 업데이트해야 한다", async () => {
+    it("updates status, counts and completedAt", async () => {
       const completedHistory = {
         ...mockSyncHistory,
         status: SyncStatus.SUCCESS,
@@ -136,11 +136,11 @@ describe("sync-history-service", () => {
       expect(result).toEqual(completedHistory);
     });
 
-    it("FAILED status일 때 errorMessage와 errorDetails를 설정해야 한다", async () => {
+    it("sets errorMessage and errorDetails when the status is FAILED", async () => {
       const failedHistory = {
         ...mockSyncHistory,
         status: SyncStatus.FAILED,
-        errorMessage: "카드사 API 오류",
+        errorMessage: "Card company API error",
         errorDetails: { code: "API_ERROR", statusCode: 500 },
         completedAt: new Date("2026-03-18T01:00:00Z"),
       };
@@ -154,13 +154,13 @@ describe("sync-history-service", () => {
         failedCount: 0,
         matchedCount: 0,
         unmatchedCount: 0,
-        errorMessage: "카드사 API 오류",
+        errorMessage: "Card company API error",
         errorDetails: { code: "API_ERROR", statusCode: 500 },
       });
 
       const callArg = mockSyncHistoryUpdate.mock.calls[0][0];
       expect(callArg.data.status).toBe(SyncStatus.FAILED);
-      expect(callArg.data.errorMessage).toBe("카드사 API 오류");
+      expect(callArg.data.errorMessage).toBe("Card company API error");
       expect(callArg.data.errorDetails).toEqual({
         code: "API_ERROR",
         statusCode: 500,
@@ -169,7 +169,7 @@ describe("sync-history-service", () => {
   });
 
   describe("updateCardFailCount", () => {
-    it("success=false일 때 consecutiveFailCount를 1 증가시켜야 한다", async () => {
+    it("increments consecutiveFailCount by 1 when success=false", async () => {
       mockCorporateCardUpdate.mockResolvedValue({ consecutiveFailCount: 3 });
 
       const result = await updateCardFailCount("card-1", false);
@@ -185,7 +185,7 @@ describe("sync-history-service", () => {
       expect(result).toEqual({ consecutiveFailCount: 3 });
     });
 
-    it("success=true일 때 consecutiveFailCount를 0으로 초기화해야 한다", async () => {
+    it("resets consecutiveFailCount to 0 when success=true", async () => {
       mockCorporateCardUpdate.mockResolvedValue({ consecutiveFailCount: 0 });
 
       const result = await updateCardFailCount("card-1", true);
@@ -203,7 +203,7 @@ describe("sync-history-service", () => {
   });
 
   describe("getSyncHistories", () => {
-    it("organizationId로 필터링된 페이지네이션 결과를 반환해야 한다", async () => {
+    it("returns paginated results filtered by organizationId", async () => {
       mockSyncHistoryFindMany.mockResolvedValue([mockSyncHistory]);
       mockSyncHistoryCount.mockResolvedValue(1);
 
@@ -215,7 +215,7 @@ describe("sync-history-service", () => {
       expect(result.total).toBe(1);
     });
 
-    it("corporateCardId가 제공되면 해당 필터를 적용해야 한다", async () => {
+    it("applies the corporateCardId filter when provided", async () => {
       mockSyncHistoryFindMany.mockResolvedValue([mockSyncHistory]);
       mockSyncHistoryCount.mockResolvedValue(1);
 
@@ -231,7 +231,7 @@ describe("sync-history-service", () => {
       });
     });
 
-    it("type이 제공되면 해당 필터를 적용해야 한다", async () => {
+    it("applies the type filter when provided", async () => {
       mockSyncHistoryFindMany.mockResolvedValue([mockSyncHistory]);
       mockSyncHistoryCount.mockResolvedValue(1);
 
@@ -247,7 +247,7 @@ describe("sync-history-service", () => {
       });
     });
 
-    it("기본값으로 limit=20, offset=0이 적용되고 startedAt desc 정렬이 되어야 한다", async () => {
+    it("defaults to limit=20, offset=0 and sorts by startedAt desc", async () => {
       mockSyncHistoryFindMany.mockResolvedValue([]);
       mockSyncHistoryCount.mockResolvedValue(0);
 

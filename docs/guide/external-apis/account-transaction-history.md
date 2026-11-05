@@ -1,116 +1,116 @@
-# 기업계좌 거래내역 조회 API 가이드
+# Corporate Account Transaction History API Guide
 
-기업 은행 계좌의 거래내역을 조회하기 위한 Hyphen 기업계좌 조회 API 연동 가이드입니다.
+This guide covers integrating the Hyphen Corporate Account Inquiry API to retrieve the transaction history of corporate bank accounts.
 
-## 목차
+## Table of Contents
 
-1. [개요](#1-개요)
-2. [사전 준비](#2-사전-준비)
-3. [인증 (OAuth 2.0)](#3-인증-oauth-20)
-4. [API 명세](#4-api-명세)
-5. [은행 코드표](#5-은행-코드표)
-6. [활용 시나리오](#6-활용-시나리오)
-7. [에러 처리 및 주의사항](#7-에러-처리-및-주의사항)
-
----
-
-## 1. 개요
-
-### 1.1 기업계좌 조회 API란?
-
-Hyphen의 기업계좌 조회 API는 법인/개인사업자의 은행 계좌 정보를 조회할 수 있는 스크래핑 기반 API입니다. 인터넷/기업뱅킹 인증 정보를 이용하여 계좌 잔액, 거래내역, 보유 계좌 목록 등을 조회할 수 있습니다.
-
-```
-[조회 가능 정보]
-- 보유 계좌 목록 (전계좌조회)
-- 계좌별 실시간 잔액 및 출금가능액
-- 입출금 거래내역 (거래일시, 금액, 거래처명, 적요)
-- 이체 결과 확인
-```
-
-### 1.2 Hyphen 기업계좌 조회 API
-
-[Hyphen](https://hyphen.im)의 기업계좌 조회 API를 통해 다양한 은행의 계좌 정보를 통합 조회할 수 있습니다.
-
-- **API 문서**: https://hyphen.im/product-api/view?seq=54
-- **지원 은행**: 국내 주요 은행 20개+ (1금융권, 2금융권 포함)
-- **인증 보안**: ISMS 정보보호 관리체계 인증
-
-### 1.3 SaaS 관리 플랫폼에서의 활용
-
-| 활용 목적          | 설명                                         |
-| ------------------ | -------------------------------------------- |
-| **SaaS 결제 추적** | 계좌이체로 결제된 SaaS 구독료 내역 자동 수집 |
-| **자금 현황 파악** | 실시간 계좌 잔액으로 현금흐름 모니터링       |
-| **결제 이력 통합** | 법인카드 + 계좌이체 결제 통합 관리           |
-| **비용 분석**      | 거래처명 기반 SaaS 서비스별 비용 집계        |
-| **이상 거래 탐지** | 예상치 못한 출금 내역 알림                   |
-
-### 1.4 제공 API 목록
-
-| API                       | Endpoint             | 기능                      | 주요 활용           |
-| ------------------------- | -------------------- | ------------------------- | ------------------- |
-| 기업계좌 잔액조회         | `POST /in0087000482` | 계좌 잔액/출금가능액 조회 | 실시간 자금 현황    |
-| **기업계좌 거래내역조회** | `POST /in0087000483` | 입출금 거래내역 조회      | SaaS 결제 내역 확인 |
-| 기업계좌 전계좌조회       | `POST /in0087000519` | 보유 계좌 목록 조회       | 관리 대상 계좌 파악 |
-| 기업계좌 이체결과조회     | `POST /in0087001420` | 이체 결과 확인            | 결제 상태 추적      |
+1. [Overview](#1-overview)
+2. [Prerequisites](#2-prerequisites)
+3. [Authentication (OAuth 2.0)](#3-authentication-oauth-20)
+4. [API Specification](#4-api-specification)
+5. [Bank Code Table](#5-bank-code-table)
+6. [Use Cases](#6-use-cases)
+7. [Error Handling and Considerations](#7-error-handling-and-considerations)
 
 ---
 
-## 2. 사전 준비
+## 1. Overview
 
-### 2.1 Hyphen 회원가입 및 상품 신청
+### 1.1 What Is the Corporate Account Inquiry API?
 
-1. [Hyphen 회원가입](https://hyphen.im/user/sign-up)
-2. 로그인 후 "기업계좌 조회" 상품 신청
-3. 인증 정보 발급 (이메일로 Hkey 전달)
-
-### 2.2 요금제 선택
-
-| 요금제          | 특징                  | 결제 방식                  |
-| --------------- | --------------------- | -------------------------- |
-| **TR 슬림**     | 계약서 없이 즉시 사용 | 비즈머니 충전 후 선불 차감 |
-| **TR 시그니처** | 계약서 필요           | 후불 청구                  |
-
-> **테스트**: 일 100건, 월 100건 무료 테스트 제공
-
-### 2.3 인증 정보 준비
+Hyphen's Corporate Account Inquiry API is a scraping-based API that retrieves bank account information for corporations and sole proprietors. Using internet/corporate banking credentials, it can retrieve account balances, transaction history, the list of held accounts, and more.
 
 ```
-user_id: 회원가입 시 생성된 ID
-hkey: 회원가입 후 이메일로 전달받은 보안키
+[Available information]
+- List of held accounts (all-accounts inquiry)
+- Real-time balance and withdrawable amount per account
+- Deposit/withdrawal transaction history (date/time, amount, counterparty name, memo)
+- Transfer result confirmation
 ```
 
-### 2.4 은행 인증 정보
+### 1.2 Hyphen Corporate Account Inquiry API
 
-기업계좌 조회를 위해서는 해당 은행의 인터넷/기업뱅킹 인증 정보가 필요합니다.
+[Hyphen](https://hyphen.im)'s Corporate Account Inquiry API provides a consolidated view of account information across multiple banks.
 
-#### ID 로그인 방식
+- **API documentation**: https://hyphen.im/product-api/view?seq=54
+- **Supported banks**: 20+ major Korean banks (including commercial banks and non-bank financial institutions)
+- **Security certification**: ISMS (Information Security Management System) certified
+
+### 1.3 Use in SubHub
+
+| Purpose                          | Description                                                        |
+| -------------------------------- | ------------------------------------------------------------------ |
+| **SaaS payment tracking**        | Automatically collect SaaS subscription fees paid by bank transfer |
+| **Cash position visibility**     | Monitor cash flow using real-time account balances                 |
+| **Unified payment history**      | Manage corporate card and bank transfer payments in one place      |
+| **Cost analysis**                | Aggregate costs per SaaS service based on counterparty name        |
+| **Anomalous transaction alerts** | Alert on unexpected withdrawals                                    |
+
+### 1.4 Available APIs
+
+| API                                       | Endpoint             | Function                                       | Primary Use                 |
+| ----------------------------------------- | -------------------- | ---------------------------------------------- | --------------------------- |
+| Corporate Account Balance Inquiry         | `POST /in0087000482` | Retrieve account balance / withdrawable amount | Real-time cash position     |
+| **Corporate Account Transaction History** | `POST /in0087000483` | Retrieve deposit/withdrawal history            | Confirm SaaS payments       |
+| Corporate All-Accounts Inquiry            | `POST /in0087000519` | Retrieve list of held accounts                 | Identify accounts to manage |
+| Corporate Account Transfer Result Inquiry | `POST /in0087001420` | Confirm transfer results                       | Track payment status        |
+
+---
+
+## 2. Prerequisites
+
+### 2.1 Hyphen Sign-Up and Product Application
+
+1. [Sign up for Hyphen](https://hyphen.im/user/sign-up)
+2. After logging in, apply for the "Corporate Account Inquiry" product
+3. Credentials are issued (the Hkey is delivered by email)
+
+### 2.2 Choose a Pricing Plan
+
+| Plan             | Characteristics                       | Billing Method                            |
+| ---------------- | ------------------------------------- | ----------------------------------------- |
+| **TR Slim**      | Use immediately, no contract required | Prepaid; deducted from topped-up BizMoney |
+| **TR Signature** | Contract required                     | Postpaid invoicing                        |
+
+> **Testing**: Free testing is provided for 100 calls per day and 100 calls per month
+
+### 2.3 Prepare Credentials
+
+```
+user_id: The ID created at sign-up
+hkey: The security key delivered by email after sign-up
+```
+
+### 2.4 Bank Credentials
+
+Querying a corporate account requires the internet/corporate banking credentials for the relevant bank.
+
+#### ID Login Method
 
 ```typescript
 interface IdLoginCredential {
-  loginType: "ID"; // 로그인 유형
-  userId: string; // 은행 사이트 ID
-  userPw: string; // 은행 사이트 비밀번호
+  loginType: "ID"; // Login type
+  userId: string; // Bank website ID
+  userPw: string; // Bank website password
 }
 ```
 
-#### 인증서 로그인 방식
+#### Certificate Login Method
 
 ```typescript
 interface CertLoginCredential {
-  loginType: "CERT"; // 로그인 유형
-  signCert: string; // 공동인증서 (Base64)
-  signPri: string; // 개인키 (Base64)
-  signPw: string; // 인증서 비밀번호
+  loginType: "CERT"; // Login type
+  signCert: string; // Korean joint certificate (Base64)
+  signPri: string; // Private key (Base64)
+  signPw: string; // Certificate password
 }
 ```
 
 ---
 
-## 3. 인증 (OAuth 2.0)
+## 3. Authentication (OAuth 2.0)
 
-### 3.1 Access Token 발급
+### 3.1 Issue an Access Token
 
 **Endpoint**
 
@@ -136,11 +136,11 @@ POST https://api.hyphen.im/oauth/token
 ```typescript
 {
   "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6...",
-  "expiresIn": 604800  // 7일 (초 단위)
+  "expiresIn": 604800  // 7 days (in seconds)
 }
 ```
 
-### 3.2 토큰 관리
+### 3.2 Token Management
 
 ```typescript
 // lib/hyphen-auth.ts
@@ -152,7 +152,7 @@ interface TokenInfo {
 let tokenCache: TokenInfo | null = null;
 
 export async function getAccessToken(): Promise<string> {
-  // 토큰이 없거나 만료 임박 시 재발급
+  // Re-issue if there is no token or it is about to expire
   if (!tokenCache || isExpiringSoon(tokenCache.expiresAt)) {
     tokenCache = await refreshToken();
   }
@@ -160,7 +160,7 @@ export async function getAccessToken(): Promise<string> {
 }
 
 function isExpiringSoon(expiresAt: Date): boolean {
-  const buffer = 60 * 60 * 1000; // 1시간 전 미리 갱신
+  const buffer = 60 * 60 * 1000; // Refresh 1 hour ahead of expiry
   return Date.now() > expiresAt.getTime() - buffer;
 }
 
@@ -182,16 +182,16 @@ async function refreshToken(): Promise<TokenInfo> {
 }
 ```
 
-### 3.3 API 호출 시 인증 헤더
+### 3.3 Authentication Headers for API Calls
 
 ```typescript
-// Bearer Token 방식
+// Bearer token method
 const headers = {
   "Content-Type": "application/json",
   Authorization: `Bearer ${accessToken}`,
 };
 
-// 또는 직접 인증 방식
+// Or the direct authentication method
 const headers = {
   "Content-Type": "application/json",
   "user-id": "your_user_id",
@@ -201,11 +201,11 @@ const headers = {
 
 ---
 
-## 4. API 명세
+## 4. API Specification
 
-### 4.1 기업계좌 잔액조회
+### 4.1 Corporate Account Balance Inquiry
 
-계좌의 현재 잔액과 출금가능액을 조회합니다.
+Retrieves the current balance and withdrawable amount of an account.
 
 **Endpoint**
 
@@ -217,17 +217,17 @@ POST https://api.hyphen.im/in0087000482
 
 ```typescript
 interface BalanceRequest {
-  // 은행 인증 정보
-  bankCd: string; // 은행코드 (예: "004" 국민은행)
-  loginType: "ID" | "CERT"; // 로그인 방식
-  userId?: string; // ID 로그인 시
-  userPw?: string; // ID 로그인 시
-  signCert?: string; // 인증서 로그인 시
-  signPri?: string; // 인증서 로그인 시
-  signPw?: string; // 인증서 로그인 시
+  // Bank credentials
+  bankCd: string; // Bank code (e.g. "004" KB Kookmin Bank)
+  loginType: "ID" | "CERT"; // Login method
+  userId?: string; // For ID login
+  userPw?: string; // For ID login
+  signCert?: string; // For certificate login
+  signPri?: string; // For certificate login
+  signPw?: string; // For certificate login
 
-  // 조회 정보
-  acctNo: string; // 계좌번호 (숫자만)
+  // Query details
+  acctNo: string; // Account number (digits only)
 }
 ```
 
@@ -235,24 +235,24 @@ interface BalanceRequest {
 
 ```typescript
 interface BalanceResponse {
-  code: string; // 결과코드 ("00000": 성공)
-  message: string; // 결과메시지
+  code: string; // Result code ("00000": success)
+  message: string; // Result message
   data: {
-    bankCd: string; // 은행코드
-    acctNo: string; // 계좌번호
-    acctNm: string; // 계좌명
-    balance: string; // 현재잔액
-    availableAmt: string; // 출금가능액
-    lastTrDt: string; // 최종거래일 (YYYYMMDD)
-    lastTrTm: string; // 최종거래시간 (HHmmss)
+    bankCd: string; // Bank code
+    acctNo: string; // Account number
+    acctNm: string; // Account name
+    balance: string; // Current balance
+    availableAmt: string; // Withdrawable amount
+    lastTrDt: string; // Last transaction date (YYYYMMDD)
+    lastTrTm: string; // Last transaction time (HHmmss)
   };
 }
 ```
 
-**예제**
+**Example**
 
 ```typescript
-// 잔액 조회 함수
+// Balance inquiry function
 async function getAccountBalance(
   bankCd: string,
   acctNo: string,
@@ -276,24 +276,24 @@ async function getAccountBalance(
   return response.json();
 }
 
-// 사용 예시
+// Usage example
 const balance = await getAccountBalance("004", "12345678901234", {
   loginType: "ID",
   userId: "bank_user",
   userPw: "bank_password",
 });
 
-console.log(`잔액: ${Number(balance.data.balance).toLocaleString()}원`);
+console.log(`Balance: ${Number(balance.data.balance).toLocaleString()} KRW`);
 console.log(
-  `출금가능액: ${Number(balance.data.availableAmt).toLocaleString()}원`
+  `Withdrawable amount: ${Number(balance.data.availableAmt).toLocaleString()} KRW`
 );
 ```
 
 ---
 
-### 4.2 기업계좌 거래내역조회 (핵심)
+### 4.2 Corporate Account Transaction History (Core)
 
-지정 기간의 입출금 거래내역을 조회합니다. SaaS 결제 추적의 핵심 API입니다.
+Retrieves deposit/withdrawal transactions for a specified period. This is the core API for SaaS payment tracking.
 
 **Endpoint**
 
@@ -305,22 +305,22 @@ POST https://api.hyphen.im/in0087000483
 
 ```typescript
 interface TransactionRequest {
-  // 은행 인증 정보
-  bankCd: string; // 은행코드
-  loginType: "ID" | "CERT"; // 로그인 방식
-  userId?: string; // ID 로그인 시
-  userPw?: string; // ID 로그인 시
-  signCert?: string; // 인증서 로그인 시
-  signPri?: string; // 인증서 로그인 시
-  signPw?: string; // 인증서 로그인 시
+  // Bank credentials
+  bankCd: string; // Bank code
+  loginType: "ID" | "CERT"; // Login method
+  userId?: string; // For ID login
+  userPw?: string; // For ID login
+  signCert?: string; // For certificate login
+  signPri?: string; // For certificate login
+  signPw?: string; // For certificate login
 
-  // 조회 조건
-  acctNo: string; // 계좌번호
-  startDt: string; // 조회시작일 (YYYYMMDD)
-  endDt: string; // 조회종료일 (YYYYMMDD)
-  trType?: string; // 거래유형 ("A": 전체, "I": 입금, "O": 출금)
-  pageNo?: string; // 페이지번호
-  pageSize?: string; // 페이지크기
+  // Query conditions
+  acctNo: string; // Account number
+  startDt: string; // Query start date (YYYYMMDD)
+  endDt: string; // Query end date (YYYYMMDD)
+  trType?: string; // Transaction type ("A": all, "I": deposits, "O": withdrawals)
+  pageNo?: string; // Page number
+  pageSize?: string; // Page size
 }
 ```
 
@@ -328,34 +328,34 @@ interface TransactionRequest {
 
 ```typescript
 interface TransactionResponse {
-  code: string; // 결과코드 ("00000": 성공)
-  message: string; // 결과메시지
+  code: string; // Result code ("00000": success)
+  message: string; // Result message
   data: {
-    totalCount: string; // 전체 건수
+    totalCount: string; // Total record count
     list: TransactionItem[];
   };
 }
 
 interface TransactionItem {
-  trDt: string; // 거래일자 (YYYYMMDD)
-  trTm: string; // 거래시간 (HHmmss)
-  trNo: string; // 거래번호
-  trType: string; // 거래유형 ("I": 입금, "O": 출금)
-  inAmt: string; // 입금금액
-  outAmt: string; // 출금금액
-  balance: string; // 거래후잔액
-  trNm: string; // 거래처명 (입금자/수취인)
-  memo: string; // 적요
-  branchNm?: string; // 거래점명
-  recvAcctNo?: string; // 상대계좌번호
-  recvAcctHolder?: string; // 상대예금주명
+  trDt: string; // Transaction date (YYYYMMDD)
+  trTm: string; // Transaction time (HHmmss)
+  trNo: string; // Transaction number
+  trType: string; // Transaction type ("I": deposit, "O": withdrawal)
+  inAmt: string; // Deposit amount
+  outAmt: string; // Withdrawal amount
+  balance: string; // Balance after transaction
+  trNm: string; // Counterparty name (depositor/payee)
+  memo: string; // Memo (transaction description)
+  branchNm?: string; // Transacting branch name
+  recvAcctNo?: string; // Counterparty account number
+  recvAcctHolder?: string; // Counterparty account holder name
 }
 ```
 
-**예제**
+**Example**
 
 ```typescript
-// 거래내역 조회 함수
+// Transaction history inquiry function
 async function getTransactions(
   bankCd: string,
   acctNo: string,
@@ -387,7 +387,7 @@ async function getTransactions(
   return response.json();
 }
 
-// 사용 예시: 이번 달 출금 내역 조회
+// Usage example: retrieve this month's withdrawals
 const today = new Date();
 const startDt = `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, "0")}01`;
 const endDt = `${today.getFullYear()}${String(today.getMonth() + 1).padStart(2, "0")}${String(today.getDate()).padStart(2, "0")}`;
@@ -398,22 +398,22 @@ const transactions = await getTransactions(
   startDt,
   endDt,
   { loginType: "ID", userId: "bank_user", userPw: "bank_password" },
-  { trType: "O" } // 출금만
+  { trType: "O" } // Withdrawals only
 );
 
-// 거래 내역 출력
+// Print the transactions
 transactions.data.list.forEach((tr) => {
   console.log(
-    `${tr.trDt} ${tr.trTm} | ${tr.trNm} | -${Number(tr.outAmt).toLocaleString()}원`
+    `${tr.trDt} ${tr.trTm} | ${tr.trNm} | -${Number(tr.outAmt).toLocaleString()} KRW`
   );
 });
 ```
 
 ---
 
-### 4.3 기업계좌 전계좌조회
+### 4.3 Corporate All-Accounts Inquiry
 
-등록된 은행 인증 정보로 보유한 모든 계좌 목록을 조회합니다.
+Retrieves the list of all accounts held under the registered bank credentials.
 
 **Endpoint**
 
@@ -425,14 +425,14 @@ POST https://api.hyphen.im/in0087000519
 
 ```typescript
 interface AllAccountsRequest {
-  // 은행 인증 정보
-  bankCd: string; // 은행코드
-  loginType: "ID" | "CERT"; // 로그인 방식
-  userId?: string; // ID 로그인 시
-  userPw?: string; // ID 로그인 시
-  signCert?: string; // 인증서 로그인 시
-  signPri?: string; // 인증서 로그인 시
-  signPw?: string; // 인증서 로그인 시
+  // Bank credentials
+  bankCd: string; // Bank code
+  loginType: "ID" | "CERT"; // Login method
+  userId?: string; // For ID login
+  userPw?: string; // For ID login
+  signCert?: string; // For certificate login
+  signPri?: string; // For certificate login
+  signPw?: string; // For certificate login
 }
 ```
 
@@ -440,29 +440,29 @@ interface AllAccountsRequest {
 
 ```typescript
 interface AllAccountsResponse {
-  code: string; // 결과코드
-  message: string; // 결과메시지
+  code: string; // Result code
+  message: string; // Result message
   data: {
     list: AccountInfo[];
   };
 }
 
 interface AccountInfo {
-  bankCd: string; // 은행코드
-  bankNm: string; // 은행명
-  acctNo: string; // 계좌번호
-  acctNm: string; // 계좌명 (예: 보통예금, 기업자유예금)
-  acctType: string; // 계좌유형
-  balance: string; // 현재잔액
-  availableAmt: string; // 출금가능액
-  regDt?: string; // 개설일자
+  bankCd: string; // Bank code
+  bankNm: string; // Bank name
+  acctNo: string; // Account number
+  acctNm: string; // Account name (e.g. ordinary savings, corporate free savings)
+  acctType: string; // Account type
+  balance: string; // Current balance
+  availableAmt: string; // Withdrawable amount
+  regDt?: string; // Account opening date
 }
 ```
 
-**예제**
+**Example**
 
 ```typescript
-// 전계좌 조회 함수
+// All-accounts inquiry function
 async function getAllAccounts(
   bankCd: string,
   credential: IdLoginCredential | CertLoginCredential
@@ -484,26 +484,26 @@ async function getAllAccounts(
   return response.json();
 }
 
-// 사용 예시
+// Usage example
 const accounts = await getAllAccounts("004", {
   loginType: "ID",
   userId: "bank_user",
   userPw: "bank_password",
 });
 
-console.log("보유 계좌 목록:");
+console.log("Held accounts:");
 accounts.data.list.forEach((acct) => {
   console.log(
-    `- ${acct.acctNm} (${acct.acctNo}): ${Number(acct.balance).toLocaleString()}원`
+    `- ${acct.acctNm} (${acct.acctNo}): ${Number(acct.balance).toLocaleString()} KRW`
   );
 });
 ```
 
 ---
 
-### 4.4 기업계좌 이체결과조회
+### 4.4 Corporate Account Transfer Result Inquiry
 
-특정 이체 거래의 결과를 조회합니다.
+Retrieves the result of a specific transfer transaction.
 
 **Endpoint**
 
@@ -515,19 +515,19 @@ POST https://api.hyphen.im/in0087001420
 
 ```typescript
 interface TransferResultRequest {
-  // 은행 인증 정보
-  bankCd: string; // 은행코드
-  loginType: "ID" | "CERT"; // 로그인 방식
+  // Bank credentials
+  bankCd: string; // Bank code
+  loginType: "ID" | "CERT"; // Login method
   userId?: string;
   userPw?: string;
   signCert?: string;
   signPri?: string;
   signPw?: string;
 
-  // 조회 조건
-  acctNo: string; // 출금계좌번호
-  trDt: string; // 이체일자 (YYYYMMDD)
-  trNo?: string; // 거래번호 (선택)
+  // Query conditions
+  acctNo: string; // Debit (withdrawal) account number
+  trDt: string; // Transfer date (YYYYMMDD)
+  trNo?: string; // Transaction number (optional)
 }
 ```
 
@@ -543,118 +543,118 @@ interface TransferResultResponse {
 }
 
 interface TransferResult {
-  trDt: string; // 이체일자
-  trTm: string; // 이체시간
-  trNo: string; // 거래번호
-  outAcctNo: string; // 출금계좌번호
-  recvBankCd: string; // 입금은행코드
-  recvAcctNo: string; // 입금계좌번호
-  recvAcctHolder: string; // 수취인명
-  trAmt: string; // 이체금액
-  trStatus: string; // 이체상태 ("S": 성공, "F": 실패, "P": 처리중)
-  trStatusNm: string; // 이체상태명
-  memo: string; // 적요
+  trDt: string; // Transfer date
+  trTm: string; // Transfer time
+  trNo: string; // Transaction number
+  outAcctNo: string; // Debit account number
+  recvBankCd: string; // Beneficiary bank code
+  recvAcctNo: string; // Beneficiary account number
+  recvAcctHolder: string; // Payee name
+  trAmt: string; // Transfer amount
+  trStatus: string; // Transfer status ("S": success, "F": failed, "P": processing)
+  trStatusNm: string; // Transfer status name
+  memo: string; // Memo (transaction description)
 }
 ```
 
 ---
 
-## 5. 은행 코드표
+## 5. Bank Code Table
 
-### 5.1 1금융권
+### 5.1 Primary Financial Institutions
 
-| 코드 | 은행명   | 코드 | 은행명     |
-| ---- | -------- | ---- | ---------- |
-| 002  | 산업은행 | 003  | 기업은행   |
-| 004  | 국민은행 | 007  | 수협은행   |
-| 011  | 농협은행 | 012  | 지역농협   |
-| 020  | 우리은행 | 023  | SC제일은행 |
-| 027  | 씨티은행 | 031  | 대구은행   |
-| 032  | 부산은행 | 034  | 광주은행   |
-| 035  | 제주은행 | 037  | 전북은행   |
-| 039  | 경남은행 | 045  | 새마을금고 |
-| 048  | 신협     | 071  | 우체국     |
-| 081  | 하나은행 | 088  | 신한은행   |
+| Code | Bank Name                  | Code | Bank Name                        |
+| ---- | -------------------------- | ---- | -------------------------------- |
+| 002  | KDB Korea Development Bank | 003  | IBK Industrial Bank of Korea     |
+| 004  | KB Kookmin Bank            | 007  | Sh Suhyup Bank                   |
+| 011  | NH NongHyup Bank           | 012  | Local NongHyup cooperatives      |
+| 020  | Woori Bank                 | 023  | SC First Bank                    |
+| 027  | Citibank Korea             | 031  | iM Bank (formerly Daegu Bank)    |
+| 032  | Busan Bank                 | 034  | Kwangju Bank                     |
+| 035  | Jeju Bank                  | 037  | Jeonbuk Bank                     |
+| 039  | Kyongnam Bank              | 045  | MG Community Credit Cooperatives |
+| 048  | Shinhyup Credit Union      | 071  | Korea Post                       |
+| 081  | Hana Bank                  | 088  | Shinhan Bank                     |
 
-### 5.2 인터넷전문은행
+### 5.2 Internet-Only Banks
 
-| 코드 | 은행명     |
-| ---- | ---------- |
-| 089  | K뱅크      |
-| 090  | 카카오뱅크 |
-| 092  | 토스뱅크   |
+| Code | Bank Name |
+| ---- | --------- |
+| 089  | K Bank    |
+| 090  | KakaoBank |
+| 092  | Toss Bank |
 
-### 5.3 TypeScript 상수
+### 5.3 TypeScript Constants
 
 ```typescript
 // constants/bank-codes.ts
 export const BANK_CODES = {
-  // 1금융권
-  KDB: "002", // 산업은행
-  IBK: "003", // 기업은행
-  KB: "004", // 국민은행
-  SUHYUP: "007", // 수협은행
-  NH: "011", // 농협은행
-  LOCALNF: "012", // 지역농협
-  WOORI: "020", // 우리은행
-  SC: "023", // SC제일은행
-  CITI: "027", // 씨티은행
-  DAEGU: "031", // 대구은행
-  BUSAN: "032", // 부산은행
-  GWANGJU: "034", // 광주은행
-  JEJU: "035", // 제주은행
-  JEONBUK: "037", // 전북은행
-  GYEONGNAM: "039", // 경남은행
-  SAEMAUL: "045", // 새마을금고
-  SHINHYUP: "048", // 신협
-  POST: "071", // 우체국
-  HANA: "081", // 하나은행
-  SHINHAN: "088", // 신한은행
-  // 인터넷전문은행
-  KBANK: "089", // K뱅크
-  KAKAO: "090", // 카카오뱅크
-  TOSS: "092", // 토스뱅크
+  // Primary financial institutions
+  KDB: "002", // KDB Korea Development Bank
+  IBK: "003", // IBK Industrial Bank of Korea
+  KB: "004", // KB Kookmin Bank
+  SUHYUP: "007", // Sh Suhyup Bank
+  NH: "011", // NH NongHyup Bank
+  LOCALNF: "012", // Local NongHyup cooperatives
+  WOORI: "020", // Woori Bank
+  SC: "023", // SC First Bank
+  CITI: "027", // Citibank Korea
+  DAEGU: "031", // iM Bank (formerly Daegu Bank)
+  BUSAN: "032", // Busan Bank
+  GWANGJU: "034", // Kwangju Bank
+  JEJU: "035", // Jeju Bank
+  JEONBUK: "037", // Jeonbuk Bank
+  GYEONGNAM: "039", // Kyongnam Bank
+  SAEMAUL: "045", // MG Community Credit Cooperatives
+  SHINHYUP: "048", // Shinhyup Credit Union
+  POST: "071", // Korea Post
+  HANA: "081", // Hana Bank
+  SHINHAN: "088", // Shinhan Bank
+  // Internet-only banks
+  KBANK: "089", // K Bank
+  KAKAO: "090", // KakaoBank
+  TOSS: "092", // Toss Bank
 } as const;
 
 export const BANK_NAMES: Record<string, string> = {
-  "002": "산업은행",
-  "003": "기업은행",
-  "004": "국민은행",
-  "007": "수협은행",
-  "011": "농협은행",
-  "012": "지역농협",
-  "020": "우리은행",
-  "023": "SC제일은행",
-  "027": "씨티은행",
-  "031": "대구은행",
-  "032": "부산은행",
-  "034": "광주은행",
-  "035": "제주은행",
-  "037": "전북은행",
-  "039": "경남은행",
-  "045": "새마을금고",
-  "048": "신협",
-  "071": "우체국",
-  "081": "하나은행",
-  "088": "신한은행",
-  "089": "K뱅크",
-  "090": "카카오뱅크",
-  "092": "토스뱅크",
+  "002": "KDB Korea Development Bank",
+  "003": "IBK Industrial Bank of Korea",
+  "004": "KB Kookmin Bank",
+  "007": "Sh Suhyup Bank",
+  "011": "NH NongHyup Bank",
+  "012": "Local NongHyup cooperatives",
+  "020": "Woori Bank",
+  "023": "SC First Bank",
+  "027": "Citibank Korea",
+  "031": "iM Bank (formerly Daegu Bank)",
+  "032": "Busan Bank",
+  "034": "Kwangju Bank",
+  "035": "Jeju Bank",
+  "037": "Jeonbuk Bank",
+  "039": "Kyongnam Bank",
+  "045": "MG Community Credit Cooperatives",
+  "048": "Shinhyup Credit Union",
+  "071": "Korea Post",
+  "081": "Hana Bank",
+  "088": "Shinhan Bank",
+  "089": "K Bank",
+  "090": "KakaoBank",
+  "092": "Toss Bank",
 };
 ```
 
 ---
 
-## 6. 활용 시나리오
+## 6. Use Cases
 
-### 6.1 SaaS 결제 내역 자동 수집
+### 6.1 Automatic Collection of SaaS Payments
 
-계좌 거래내역에서 SaaS 서비스 결제를 자동으로 식별하고 수집합니다.
+Automatically identifies and collects SaaS service payments from account transaction history.
 
 ```typescript
 // lib/services/account-saas-detector.ts
 
-// SaaS 서비스 패턴 정의
+// SaaS service pattern definitions
 const SAAS_PATTERNS = [
   { pattern: /AWS|AMAZON WEB SERVICES/i, service: "AWS" },
   { pattern: /GOOGLE\s*(CLOUD|GCP)/i, service: "Google Cloud" },
@@ -693,10 +693,10 @@ export function detectSaaSPayments(
   const detected: DetectedSaaSPayment[] = [];
 
   for (const tr of transactions) {
-    // 출금 거래만 분석
+    // Analyse withdrawals only
     if (tr.trType !== "O" || Number(tr.outAmt) === 0) continue;
 
-    // 거래처명 또는 적요에서 SaaS 패턴 매칭
+    // Match SaaS patterns against the counterparty name or memo
     const searchText = `${tr.trNm} ${tr.memo}`;
 
     for (const { pattern, service } of SAAS_PATTERNS) {
@@ -709,7 +709,7 @@ export function detectSaaSPayments(
           originalTransactionName: tr.trNm,
           memo: tr.memo,
         });
-        break; // 첫 번째 매칭만 사용
+        break; // Use the first match only
       }
     }
   }
@@ -717,7 +717,7 @@ export function detectSaaSPayments(
   return detected;
 }
 
-// 사용 예시
+// Usage example
 const transactions = await getTransactions(
   "004",
   "12345678901234",
@@ -728,17 +728,17 @@ const transactions = await getTransactions(
 );
 
 const saasPayments = detectSaaSPayments(transactions.data.list);
-console.log(`발견된 SaaS 결제: ${saasPayments.length}건`);
+console.log(`SaaS payments found: ${saasPayments.length}`);
 saasPayments.forEach((p) => {
   console.log(
-    `- ${p.serviceName}: ${p.amount.toLocaleString()}원 (${p.transactionDate})`
+    `- ${p.serviceName}: ${p.amount.toLocaleString()} KRW (${p.transactionDate})`
   );
 });
 ```
 
-### 6.2 법인카드 + 계좌이체 통합 관리
+### 6.2 Unified Management of Corporate Card and Bank Transfer Payments
 
-법인카드 사용내역과 계좌이체 내역을 통합하여 전체 SaaS 비용을 관리합니다.
+Combines corporate card usage history and bank transfer history to manage total SaaS spend.
 
 ```typescript
 // lib/services/unified-payment-tracker.ts
@@ -766,21 +766,21 @@ export async function getUnifiedPaymentSummary(
   startDt: string,
   endDt: string
 ): Promise<PaymentSummary> {
-  // 1. 법인카드 사용내역 조회 (법인카드-사용내역.md 참조)
+  // 1. Retrieve corporate card usage history (see the Corporate Card Usage History guide)
   const cardPayments = await getCardSaaSPayments(
     organizationId,
     startDt,
     endDt
   );
 
-  // 2. 계좌이체 내역 조회
+  // 2. Retrieve bank transfer history
   const accountPayments = await getAccountSaaSPayments(
     organizationId,
     startDt,
     endDt
   );
 
-  // 3. 통합 정리
+  // 3. Consolidate
   const payments: UnifiedPayment[] = [
     ...cardPayments.map((p) => ({
       date: p.approvalDate,
@@ -800,7 +800,7 @@ export async function getUnifiedPaymentSummary(
     })),
   ];
 
-  // 4. 집계
+  // 4. Aggregate
   const byService: Record<string, number> = {};
   let cardAmount = 0;
   let transferAmount = 0;
@@ -824,19 +824,19 @@ export async function getUnifiedPaymentSummary(
 }
 ```
 
-### 6.3 현금흐름 모니터링
+### 6.3 Cash Flow Monitoring
 
-실시간 계좌 잔액과 일별 입출금 추이를 모니터링합니다.
+Monitors real-time account balances and daily deposit/withdrawal trends.
 
 ```typescript
 // lib/services/cashflow-monitor.ts
 
 interface DailyCashflow {
   date: string;
-  inflow: number; // 입금 합계
-  outflow: number; // 출금 합계
-  netflow: number; // 순유입 (입금 - 출금)
-  balance: number; // 잔액
+  inflow: number; // Total deposits
+  outflow: number; // Total withdrawals
+  netflow: number; // Net inflow (deposits - withdrawals)
+  balance: number; // Balance
 }
 
 interface CashflowReport {
@@ -863,7 +863,7 @@ export async function generateCashflowReport(
   startDt: string,
   endDt: string
 ): Promise<CashflowReport> {
-  // 조직의 등록된 모든 계좌 조회
+  // Retrieve all accounts registered to the organisation
   const registeredAccounts = await getRegisteredAccounts(organizationId);
 
   const accounts: AccountCashflow[] = [];
@@ -873,14 +873,14 @@ export async function generateCashflowReport(
   let totalOutflow = 0;
 
   for (const account of registeredAccounts) {
-    // 잔액 조회
+    // Balance inquiry
     const balance = await getAccountBalance(
       account.bankCd,
       account.acctNo,
       account.credential
     );
 
-    // 거래내역 조회
+    // Transaction history inquiry
     const transactions = await getTransactions(
       account.bankCd,
       account.acctNo,
@@ -899,7 +899,7 @@ export async function generateCashflowReport(
       periodInflow += inAmt;
       periodOutflow += outAmt;
 
-      // 일별 집계
+      // Daily aggregation
       const daily = dailyMap.get(tr.trDt) || {
         date: tr.trDt,
         inflow: 0,
@@ -929,7 +929,7 @@ export async function generateCashflowReport(
     totalOutflow += periodOutflow;
   }
 
-  // 일별 추이 정렬
+  // Sort the daily trend
   const dailyTrend = Array.from(dailyMap.values()).sort((a, b) =>
     a.date.localeCompare(b.date)
   );
@@ -945,9 +945,9 @@ export async function generateCashflowReport(
 }
 ```
 
-### 6.4 Server Action 예제
+### 6.4 Server Action Example
 
-Next.js Server Action으로 거래내역 조회를 구현합니다.
+Implements the transaction history inquiry as a Next.js Server Action.
 
 ```typescript
 // actions/account.ts
@@ -985,12 +985,12 @@ export async function queryAccountTransactions(
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
-      return { success: false, error: "인증이 필요합니다" };
+      return { success: false, error: "Authentication is required" };
     }
 
     const validated = transactionQuerySchema.parse(input);
 
-    // 계좌 정보 조회 (조직 소속 확인)
+    // Retrieve account details (confirm it belongs to the organisation)
     const account = await prisma.bankAccount.findFirst({
       where: {
         id: validated.accountId,
@@ -999,13 +999,13 @@ export async function queryAccountTransactions(
     });
 
     if (!account) {
-      return { success: false, error: "계좌를 찾을 수 없습니다" };
+      return { success: false, error: "Account not found" };
     }
 
-    // 은행 인증 정보 복호화
+    // Decrypt the bank credentials
     const credential = await decryptCredential(account.encryptedCredential);
 
-    // Hyphen API 호출
+    // Call the Hyphen API
     const response = await getTransactions(
       account.bankCd,
       account.acctNo,
@@ -1019,7 +1019,7 @@ export async function queryAccountTransactions(
       return { success: false, error: response.message };
     }
 
-    // 집계 계산
+    // Calculate totals
     let totalInflow = 0;
     let totalOutflow = 0;
 
@@ -1041,39 +1041,39 @@ export async function queryAccountTransactions(
       },
     };
   } catch (error) {
-    console.error("계좌 거래내역 조회 실패:", error);
-    return { success: false, error: "거래내역 조회에 실패했습니다" };
+    console.error("Account transaction history inquiry failed:", error);
+    return { success: false, error: "Failed to retrieve transaction history" };
   }
 }
 ```
 
 ---
 
-## 7. 에러 처리 및 주의사항
+## 7. Error Handling and Considerations
 
-### 7.1 공통 에러 코드
+### 7.1 Common Error Codes
 
-| 코드  | 설명               | 대응 방법                   |
-| ----- | ------------------ | --------------------------- |
-| 00000 | 성공               | -                           |
-| 10001 | 인증 실패          | Access Token 재발급         |
-| 10002 | 권한 없음          | 상품 신청 확인              |
-| 20001 | 필수 파라미터 누락 | Request 파라미터 확인       |
-| 20002 | 파라미터 형식 오류 | 날짜/계좌번호 형식 확인     |
-| 30001 | 은행 로그인 실패   | ID/PW 또는 인증서 확인      |
-| 30002 | 계좌 조회 실패     | 계좌번호 확인               |
-| 30003 | 조회 기간 초과     | 조회 기간 단축 (최대 3개월) |
-| 40001 | 시스템 오류        | 잠시 후 재시도              |
-| 40002 | 은행 점검 중       | 은행 점검 시간 확인         |
+| Code  | Description                | Resolution                                  |
+| ----- | -------------------------- | ------------------------------------------- |
+| 00000 | Success                    | -                                           |
+| 10001 | Authentication failed      | Re-issue the access token                   |
+| 10002 | Not authorised             | Confirm the product application             |
+| 20001 | Required parameter missing | Check the request parameters                |
+| 20002 | Invalid parameter format   | Check the date / account number format      |
+| 30001 | Bank login failed          | Check the ID/password or certificate        |
+| 30002 | Account inquiry failed     | Check the account number                    |
+| 30003 | Query period exceeded      | Shorten the query period (maximum 3 months) |
+| 40001 | System error               | Retry after a short while                   |
+| 40002 | Bank under maintenance     | Check the bank's maintenance window         |
 
-### 7.2 은행별 조회 제한
+### 7.2 Query Limits by Bank
 
-| 은행        | 최대 조회 기간 | 일일 조회 한도 | 비고           |
-| ----------- | -------------- | -------------- | -------------- |
-| 대부분 은행 | 3개월          | 무제한         | -              |
-| 일부 은행   | 1개월          | -              | 분할 조회 필요 |
+| Bank       | Maximum Query Period | Daily Query Limit | Notes                  |
+| ---------- | -------------------- | ----------------- | ---------------------- |
+| Most banks | 3 months             | Unlimited         | -                      |
+| Some banks | 1 month              | -                 | Split queries required |
 
-### 7.3 에러 핸들링 예제
+### 7.3 Error Handling Example
 
 ```typescript
 // lib/hyphen-error-handler.ts
@@ -1102,7 +1102,7 @@ export async function withRetry<T>(
     try {
       const result = await operation();
 
-      // 응답 코드 확인
+      // Check the response code
       if (typeof result === "object" && result !== null && "code" in result) {
         const response = result as { code: string; message: string };
 
@@ -1110,7 +1110,7 @@ export async function withRetry<T>(
           const isRetryable = RETRYABLE_ERRORS.includes(response.code);
 
           if (isRetryable && attempt < maxRetries) {
-            await delay(delayMs * attempt); // 지수 백오프
+            await delay(delayMs * attempt); // Exponential backoff
             continue;
           }
 
@@ -1136,14 +1136,14 @@ export async function withRetry<T>(
     }
   }
 
-  throw lastError || new Error("알 수 없는 오류");
+  throw lastError || new Error("Unknown error");
 }
 
 function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-// 사용 예시
+// Usage example
 const result = await withRetry(
   () => getTransactions(bankCd, acctNo, startDt, endDt, credential),
   3,
@@ -1151,41 +1151,41 @@ const result = await withRetry(
 );
 ```
 
-### 7.4 보안 주의사항
+### 7.4 Security Considerations
 
 ```typescript
-// ⚠️ 보안 체크리스트
+// ⚠️ Security checklist
 
-// 1. 인증 정보 암호화 저장
-// ❌ 평문 저장 금지
-const credential = { userId: "user", userPw: "password" }; // 절대 금지
+// 1. Store credentials encrypted
+// ❌ Never store in plain text
+const credential = { userId: "user", userPw: "password" }; // Strictly prohibited
 
-// ✅ 암호화 저장
+// ✅ Store encrypted
 const encryptedCredential = await encrypt(JSON.stringify(credential));
 await prisma.bankAccount.create({
   data: {
     bankCd,
     acctNo,
-    encryptedCredential, // AES-256-GCM 등으로 암호화
+    encryptedCredential, // Encrypted with AES-256-GCM or similar
     organizationId,
   },
 });
 
-// 2. 환경 변수로 키 관리
+// 2. Manage keys via environment variables
 // .env.local
 HYPHEN_USER_ID = your_user_id;
 HYPHEN_HKEY = your_hkey;
 ENCRYPTION_KEY = your_32_byte_key;
 
-// 3. 로깅 시 민감 정보 마스킹
+// 3. Mask sensitive information when logging
 function maskAccountNo(acctNo: string): string {
   if (acctNo.length <= 4) return "****";
   return acctNo.slice(0, 4) + "*".repeat(acctNo.length - 4);
 }
 
-console.log(`계좌 조회: ${maskAccountNo("1234567890")}`); // "1234******"
+console.log(`Account inquiry: ${maskAccountNo("1234567890")}`); // "1234******"
 
-// 4. 접근 권한 검증
+// 4. Verify access permissions
 async function queryTransactions(accountId: string, userId: string) {
   const account = await prisma.bankAccount.findFirst({
     where: {
@@ -1199,16 +1199,16 @@ async function queryTransactions(accountId: string, userId: string) {
   });
 
   if (!account) {
-    throw new Error("접근 권한이 없습니다");
+    throw new Error("You do not have permission to access this account");
   }
   // ...
 }
 ```
 
-### 7.5 성능 최적화
+### 7.5 Performance Optimisation
 
 ```typescript
-// 1. 조회 기간 분할 (장기간 조회 시)
+// 1. Split the query period (for long date ranges)
 async function getTransactionsInChunks(
   bankCd: string,
   acctNo: string,
@@ -1237,7 +1237,7 @@ async function getTransactionsInChunks(
   return allTransactions;
 }
 
-// 2. 캐싱 (자주 조회하는 잔액 정보)
+// 2. Caching (frequently queried balance information)
 import { unstable_cache } from "next/cache";
 
 const getCachedBalance = unstable_cache(
@@ -1245,10 +1245,10 @@ const getCachedBalance = unstable_cache(
     return getAccountBalance(bankCd, acctNo, credential);
   },
   ["account-balance"],
-  { revalidate: 300 } // 5분 캐시
+  { revalidate: 300 } // 5-minute cache
 );
 
-// 3. 병렬 조회 (여러 계좌 동시 조회)
+// 3. Parallel queries (query multiple accounts concurrently)
 async function getAllAccountBalances(
   accounts: Account[]
 ): Promise<BalanceResponse[]> {
@@ -1262,8 +1262,8 @@ async function getAllAccountBalances(
 
 ---
 
-## 관련 문서
+## Related Documents
 
-- [법인카드 사용내역 조회 가이드](./법인카드-사용내역.md)
-- [통장인증 (1원 인증) 가이드](./통장인증.md)
-- [Hyphen API 공식 문서](https://hyphen.im/product-api/view?seq=54)
+- Corporate Card Usage History Guide (not included in this repository)
+- [Bank Account Verification (1-Won Verification) Guide](./bank-account-verification.md)
+- [Hyphen API Official Documentation](https://hyphen.im/product-api/view?seq=54)

@@ -2,7 +2,7 @@
 "use server";
 
 /**
- * User 수정/삭제 관련 Server Actions
+ * User update/delete Server Actions
  */
 
 import { requireOrganization } from "@/lib/auth/require-auth";
@@ -17,7 +17,7 @@ import { isLastAdmin } from "./users-utils";
 import { updateUserSchema } from "./users.types";
 
 /**
- * 사용자 정보 수정
+ * Update user details
  */
 async function _updateUser(
   id: string,
@@ -35,7 +35,7 @@ async function _updateUser(
   });
 
   if (!existingUser) {
-    return { success: false, message: "사용자를 찾을 수 없습니다" };
+    return { success: false, message: "User not found" };
   }
 
   // Parse and validate form data
@@ -58,7 +58,7 @@ async function _updateUser(
   if (!validationResult.success) {
     return {
       success: false,
-      message: "입력 데이터가 올바르지 않습니다",
+      message: "The input data is invalid",
       errors: validationResult.error.flatten().fieldErrors,
     };
   }
@@ -110,18 +110,18 @@ async function _updateUser(
 
     return {
       success: true,
-      message: "사용자 정보가 수정되었습니다",
+      message: "User details updated",
       data: { id: updated.id },
     };
   } catch (error) {
     logger.error({ err: error }, "Failed to update user");
-    return { success: false, message: "사용자 수정에 실패했습니다" };
+    return { success: false, message: "Failed to update the user" };
   }
 }
 export const updateUser = withLogging("updateUser", _updateUser);
 
 /**
- * 사용자 특정 앱 접근 권한 회수
+ * Revoke a user's access to a specific app
  */
 async function _revokeUserAppAccess(
   userIdToRevoke: string,
@@ -144,16 +144,16 @@ async function _revokeUserAppAccess(
   });
 
   if (!user) {
-    return { success: false, message: "사용자를 찾을 수 없습니다" };
+    return { success: false, message: "User not found" };
   }
 
   const access = user.appAccesses[0];
   if (!access) {
-    return { success: false, message: "접근 권한을 찾을 수 없습니다" };
+    return { success: false, message: "Access grant not found" };
   }
 
   try {
-    // 해당 앱의 구독에 배정된 SubscriptionUser 조회
+    // Fetch SubscriptionUser rows assigned to that app's subscriptions
     const affectedSubscriptionUsers = await prisma.subscriptionUser.findMany({
       where: {
         userId: userIdToRevoke,
@@ -165,7 +165,7 @@ async function _revokeUserAppAccess(
       (su) => su.subscriptionId
     );
 
-    // UserAppAccess 삭제 + SubscriptionUser 삭제 + usedLicenses 재계산
+    // Delete UserAppAccess + delete SubscriptionUser + recalculate usedLicenses
     await prisma.$transaction(async (tx) => {
       await tx.userAppAccess.delete({
         where: { id: access.id },
@@ -213,11 +213,11 @@ async function _revokeUserAppAccess(
 
     return {
       success: true,
-      message: `${access.app.name} 접근 권한이 회수되었습니다`,
+      message: `Access to ${access.app.name} has been revoked`,
     };
   } catch (error) {
     logger.error({ err: error }, "Failed to revoke access");
-    return { success: false, message: "접근 권한 회수에 실패했습니다" };
+    return { success: false, message: "Failed to revoke access" };
   }
 }
 export const revokeUserAppAccess = withLogging(
@@ -226,7 +226,7 @@ export const revokeUserAppAccess = withLogging(
 );
 
 /**
- * 사용자 모든 앱 접근 권한 회수
+ * Revoke all of a user's app access
  */
 async function _revokeAllUserAppAccess(
   userIdToRevoke: string
@@ -246,23 +246,23 @@ async function _revokeAllUserAppAccess(
   });
 
   if (!user) {
-    return { success: false, message: "사용자를 찾을 수 없습니다" };
+    return { success: false, message: "User not found" };
   }
 
   const appAccessCount = user.appAccesses.length;
   const subscriptionAssignmentCount = user.subscriptionAssignments.length;
 
   if (appAccessCount + subscriptionAssignmentCount === 0) {
-    return { success: false, message: "회수할 접근 권한이 없습니다" };
+    return { success: false, message: "There is no access to revoke" };
   }
 
   try {
-    // 삭제 전 영향받는 구독 ID 수집
+    // Collect affected subscription IDs before deletion
     const affectedSubscriptionIds = user.subscriptionAssignments.map(
       (sa) => sa.subscriptionId
     );
 
-    // Interactive 트랜잭션: 삭제 후 usedLicenses 재계산
+    // Interactive transaction: recalculate usedLicenses after deletion
     const {
       appAccessCount: revokedAppAccessCount,
       subscriptionCount: revokedSubscriptionCount,
@@ -275,7 +275,7 @@ async function _revokeAllUserAppAccess(
         where: { userId: userIdToRevoke },
       });
 
-      // 영향받는 구독의 usedLicenses 재계산
+      // Recalculate usedLicenses of affected subscriptions
       for (const subscriptionId of affectedSubscriptionIds) {
         const count = await tx.subscriptionUser.count({
           where: { subscriptionId },
@@ -321,11 +321,11 @@ async function _revokeAllUserAppAccess(
 
     return {
       success: true,
-      message: `${totalRevoked}개의 접근 권한이 회수되었습니다`,
+      message: `Revoked ${totalRevoked} access grant(s)`,
     };
   } catch (error) {
     logger.error({ err: error }, "Failed to revoke all access");
-    return { success: false, message: "접근 권한 회수에 실패했습니다" };
+    return { success: false, message: "Failed to revoke access" };
   }
 }
 export const revokeAllUserAppAccess = withLogging(
@@ -334,8 +334,8 @@ export const revokeAllUserAppAccess = withLogging(
 );
 
 /**
- * Admin 권한 이관
- * 현재 ADMIN이 대상자에게 ADMIN 역할을 이관하고, 본인은 newSelfRole로 변경
+ * Transfer the Admin role
+ * The current ADMIN transfers the ADMIN role to the target and switches to newSelfRole
  */
 async function _transferAdminRole(
   targetUserId: string,
@@ -344,11 +344,11 @@ async function _transferAdminRole(
   const { organizationId, userId, role } = await requireOrganization();
 
   if (role !== "ADMIN") {
-    return { success: false, message: "관리자만 권한을 이관할 수 있습니다" };
+    return { success: false, message: "Only admins can transfer admin rights" };
   }
 
   if (targetUserId === userId) {
-    return { success: false, message: "본인에게 이관할 수 없습니다" };
+    return { success: false, message: "You cannot transfer to yourself" };
   }
 
   const targetUser = await prisma.user.findFirst({
@@ -359,20 +359,20 @@ async function _transferAdminRole(
   });
 
   if (!targetUser) {
-    return { success: false, message: "대상 사용자를 찾을 수 없습니다" };
+    return { success: false, message: "Target user not found" };
   }
 
   if (targetUser.status !== "ACTIVE") {
     return {
       success: false,
-      message: "활성 상태의 사용자에게만 이관할 수 있습니다",
+      message: "Admin rights can only be transferred to an active user",
     };
   }
 
   if (targetUser.role === "ADMIN") {
     return {
       success: false,
-      message: "대상 사용자가 이미 관리자입니다",
+      message: "The target user is already an admin",
     };
   }
 
@@ -417,11 +417,11 @@ async function _transferAdminRole(
 
     return {
       success: true,
-      message: "관리자 권한이 이관되었습니다",
+      message: "Admin rights transferred",
     };
   } catch (error) {
     logger.error({ err: error }, "Failed to transfer admin role");
-    return { success: false, message: "관리자 권한 이관에 실패했습니다" };
+    return { success: false, message: "Failed to transfer admin rights" };
   }
 }
 export const transferAdminRole = withLogging(
@@ -430,21 +430,21 @@ export const transferAdminRole = withLogging(
 );
 
 /**
- * Admin 주도 사용자 퇴사 처리 (Offboard)
- * 사용자 상태를 TERMINATED로 변경하고 세션/계정을 무효화.
- * 관련 데이터(앱 소유, 카드, 트랜잭션 등)는 유지하여 offboarded 페이지에서 관리 가능.
+ * Admin-initiated user offboarding
+ * Sets the user status to TERMINATED and invalidates sessions/accounts.
+ * Related data (owned apps, cards, transactions, etc.) is kept so it can be managed on the offboarded page.
  */
 async function _offboardUser(targetUserId: string): Promise<ActionState> {
   const { organizationId, userId, role } = await requireOrganization();
 
   if (role !== "ADMIN") {
-    return { success: false, message: "관리자만 퇴사 처리할 수 있습니다" };
+    return { success: false, message: "Only admins can offboard users" };
   }
 
   if (targetUserId === userId) {
     return {
       success: false,
-      message: "본인은 퇴사 처리할 수 없습니다.",
+      message: "You cannot offboard yourself.",
     };
   }
 
@@ -464,40 +464,40 @@ async function _offboardUser(targetUserId: string): Promise<ActionState> {
   });
 
   if (!targetUser) {
-    return { success: false, message: "사용자를 찾을 수 없습니다" };
+    return { success: false, message: "User not found" };
   }
 
   if (targetUser.role === "ADMIN") {
     return {
       success: false,
       message:
-        "관리자는 퇴사 처리할 수 없습니다. 먼저 관리자 권한을 다른 멤버에게 이관하세요.",
+        "Admins cannot be offboarded. Transfer the admin role to another member first.",
     };
   }
 
   if (targetUser.status === "TERMINATED") {
     return {
       success: false,
-      message: "이미 퇴사 처리된 사용자입니다.",
+      message: "This user has already been offboarded.",
     };
   }
 
   try {
     await prisma.$transaction([
-      // 사용자 상태를 TERMINATED로 변경
+      // Set the user status to TERMINATED
       prisma.user.update({
         where: { id: targetUserId },
         data: { status: "TERMINATED", terminatedAt: new Date() },
       }),
-      // 세션 삭제 (로그인 차단)
+      // Delete sessions (blocks sign-in)
       prisma.session.deleteMany({
         where: { userId: targetUserId },
       }),
-      // 계정 삭제 (OAuth 연동 해제)
+      // Delete accounts (unlinks OAuth)
       prisma.account.deleteMany({
         where: { userId: targetUserId },
       }),
-      // 초대 레코드 삭제 (재초대 가능하도록)
+      // Delete invitation records (so the user can be re-invited)
       prisma.invitation.deleteMany({
         where: {
           email: targetUser.email,
@@ -506,7 +506,7 @@ async function _offboardUser(targetUserId: string): Promise<ActionState> {
       }),
     ]);
 
-    // 감사 로그 기록
+    // Write the audit log
     await prisma.auditLog.create({
       data: {
         action: "OFFBOARD_USER",
@@ -530,18 +530,18 @@ async function _offboardUser(targetUserId: string): Promise<ActionState> {
 
     return {
       success: true,
-      message: "사용자가 퇴사 처리되었습니다",
+      message: "The user has been offboarded",
     };
   } catch (error) {
     logger.error({ err: error }, "Failed to offboard user");
-    return { success: false, message: "퇴사 처리에 실패했습니다" };
+    return { success: false, message: "Failed to offboard the user" };
   }
 }
 export const offboardUser = withLogging("offboardUser", _offboardUser);
 
 /**
- * 퇴사 처리된 사용자 영구 삭제 (Permanent Delete)
- * TERMINATED 상태인 사용자만 대상. 관련 데이터 null 재배정 후 cascade 삭제.
+ * Permanently delete an offboarded user
+ * Only TERMINATED users. Related data is reassigned to null, then cascade-deleted.
  */
 async function _permanentlyDeleteUser(
   targetUserId: string
@@ -551,14 +551,14 @@ async function _permanentlyDeleteUser(
   if (role !== "ADMIN") {
     return {
       success: false,
-      message: "관리자만 사용자를 영구 삭제할 수 있습니다",
+      message: "Only admins can permanently delete users",
     };
   }
 
   if (targetUserId === userId) {
     return {
       success: false,
-      message: "본인은 삭제할 수 없습니다.",
+      message: "You cannot delete yourself.",
     };
   }
 
@@ -578,19 +578,19 @@ async function _permanentlyDeleteUser(
   });
 
   if (!targetUser) {
-    return { success: false, message: "사용자를 찾을 수 없습니다" };
+    return { success: false, message: "User not found" };
   }
 
   if (targetUser.status !== "TERMINATED") {
     return {
       success: false,
       message:
-        "퇴사 처리된 사용자만 영구 삭제할 수 있습니다. 먼저 퇴사 처리하세요.",
+        "Only offboarded users can be permanently deleted. Offboard the user first.",
     };
   }
 
   try {
-    // 감사 로그 기록 (삭제 전)
+    // Write the audit log (before deletion)
     await prisma.auditLog.create({
       data: {
         action: "PERMANENTLY_DELETE_USER",
@@ -608,7 +608,7 @@ async function _permanentlyDeleteUser(
       },
     });
 
-    // 삭제 전 영향받는 구독 ID 수집
+    // Collect affected subscription IDs before deletion
     const affectedSubscriptions = await prisma.subscriptionUser.findMany({
       where: { userId: targetUserId },
       select: { subscriptionId: true },
@@ -617,41 +617,41 @@ async function _permanentlyDeleteUser(
       (s) => s.subscriptionId
     );
 
-    // 관련 데이터 재배정/해제 + 삭제를 interactive 트랜잭션으로 처리
+    // Reassign/release related data and delete in one interactive transaction
     await prisma.$transaction(async (tx) => {
-      // 소유 앱 → 소유자 해제
+      // Owned apps → clear owner
       await tx.app.updateMany({
         where: { ownerId: targetUserId },
         data: { ownerId: null },
       });
-      // 배정 카드 → 배정자 해제
+      // Assigned cards → clear assignee
       await tx.corporateCard.updateMany({
         where: { assignedUserId: targetUserId },
         data: { assignedUserId: null },
       });
-      // 배정 트랜잭션 → 배정자 해제
+      // Assigned transactions → clear assignee
       await tx.cardTransaction.updateMany({
         where: { userId: targetUserId },
         data: { userId: null },
       });
-      // 직속 부하 → 매니저 해제
+      // Direct reports → clear manager
       await tx.user.updateMany({
         where: { managerId: targetUserId },
         data: { managerId: null },
       });
-      // 초대 레코드 삭제 (재초대 가능하도록)
+      // Delete invitation records (so the user can be re-invited)
       await tx.invitation.deleteMany({
         where: {
           email: targetUser.email,
           organizationId,
         },
       });
-      // User 삭제 (cascade: accounts, sessions, appAccesses, subscriptionAssignments 등)
+      // Delete the User (cascade: accounts, sessions, appAccesses, subscriptionAssignments, etc.)
       await tx.user.delete({
         where: { id: targetUserId },
       });
 
-      // 영향받는 구독의 usedLicenses 재계산
+      // Recalculate usedLicenses of affected subscriptions
       for (const subscriptionId of affectedSubscriptionIds) {
         const count = await tx.subscriptionUser.count({
           where: { subscriptionId },
@@ -673,11 +673,11 @@ async function _permanentlyDeleteUser(
 
     return {
       success: true,
-      message: "사용자가 영구 삭제되었습니다",
+      message: "The user has been permanently deleted",
     };
   } catch (error) {
     logger.error({ err: error }, "Failed to permanently delete user");
-    return { success: false, message: "사용자 영구 삭제에 실패했습니다" };
+    return { success: false, message: "Failed to permanently delete the user" };
   }
 }
 export const permanentlyDeleteUser = withLogging(

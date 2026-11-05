@@ -64,7 +64,7 @@ export function ProgressDemo() {
 }
 
 /**
- * Progress 진행률 업데이트를 테스트합니다.
+ * Tests Progress value updates.
  */
 export const ShouldUpdateProgressValue: Story = {
   name: "when progress value changes, should update progress bar width",
@@ -110,13 +110,13 @@ export const ShouldUpdateProgressValue: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    // 🎯 목적: Progress 컴포넌트가 버튼 클릭에 따라 진행률이 업데이트되는지 확인
+    // 🎯 Purpose: Verify the Progress component updates its value on button clicks
 
-    // 초기 상태 확인 (0%)
+    // Check the initial state (0%)
     const progressBar = canvas.getByTestId("progress-bar");
     await expect(progressBar).toBeInTheDocument();
 
-    // 25% 버튼 클릭
+    // Click the 25% button
     const button25 = canvas.getByRole("button", { name: /25%/i });
     await userEvent.click(button25);
 
@@ -125,7 +125,7 @@ export const ShouldUpdateProgressValue: Story = {
       expect(currentText).toBeInTheDocument();
     });
 
-    // 50% 버튼 클릭
+    // Click the 50% button
     const button50 = canvas.getByRole("button", { name: /50%/i });
     await userEvent.click(button50);
 
@@ -134,7 +134,7 @@ export const ShouldUpdateProgressValue: Story = {
       expect(currentText).toBeInTheDocument();
     });
 
-    // 75% 버튼 클릭
+    // Click the 75% button
     const button75 = canvas.getByRole("button", { name: /75%/i });
     await userEvent.click(button75);
 
@@ -143,7 +143,7 @@ export const ShouldUpdateProgressValue: Story = {
       expect(currentText).toBeInTheDocument();
     });
 
-    // 100% 버튼 클릭
+    // Click the 100% button
     const button100 = canvas.getByRole("button", { name: /100%/i });
     await userEvent.click(button100);
 

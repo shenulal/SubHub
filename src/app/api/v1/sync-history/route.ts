@@ -6,7 +6,7 @@ import type { SyncType } from "@prisma/client";
 
 /**
  * GET /api/v1/sync-history
- * 동기화 이력 목록 조회 (페이지네이션)
+ * List sync history (paginated)
  */
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const session = await auth();
@@ -16,7 +16,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
 
   if (!session.user.organizationId) {
     return NextResponse.json(
-      { message: "조직 정보가 필요합니다" },
+      { message: "Organization information is required" },
       { status: 401 }
     );
   }
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     });
   } catch (error) {
     return NextResponse.json(
-      { message: "동기화 이력 조회 중 오류가 발생했습니다" },
+      { message: "An error occurred while fetching sync history" },
       { status: 500 }
     );
   }

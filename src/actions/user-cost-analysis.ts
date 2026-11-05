@@ -21,8 +21,8 @@ function extractDecimal(val: unknown): number {
 }
 
 /**
- * 유저별 비용 Breakdown
- * SubscriptionUser → Subscription(PER_SEAT) → perSeatPrice 집계
+ * Cost breakdown per user
+ * Aggregates SubscriptionUser → Subscription(PER_SEAT) → perSeatPrice
  */
 export async function getUserCostBreakdown(options?: {
   teamId?: string;
@@ -34,7 +34,7 @@ export async function getUserCostBreakdown(options?: {
     const thresholdDate = new Date(now);
     thresholdDate.setDate(thresholdDate.getDate() - INACTIVE_DAYS_THRESHOLD);
 
-    // 유저별 PER_SEAT 구독 배정 조회
+    // Fetch PER_SEAT subscription assignments per user
     const subscriptionUsers = await prisma.subscriptionUser.findMany({
       where: {
         subscription: {
@@ -65,7 +65,7 @@ export async function getUserCostBreakdown(options?: {
       },
     });
 
-    // UserAppAccess lastUsedAt 배치 조회
+    // Batch-fetch UserAppAccess lastUsedAt
     const userAppPairs = subscriptionUsers.map((su) => ({
       userId: su.userId,
       appId: su.subscription.appId,
@@ -89,7 +89,7 @@ export async function getUserCostBreakdown(options?: {
       accessMap.set(`${a.userId}:${a.appId}`, a.lastUsedAt);
     }
 
-    // 유저별 집계
+    // Aggregate per user
     const userMap = new Map<string, UserCostItem>();
 
     for (const su of subscriptionUsers) {
@@ -136,13 +136,13 @@ export async function getUserCostBreakdown(options?: {
 
     return { success: true, data: { users, totalMonthlyCost } };
   } catch (error) {
-    console.error("유저별 비용 분석 오류:", error);
-    return { success: false, error: "유저별 비용 분석에 실패했습니다" };
+    console.error("Per-user cost analysis error:", error);
+    return { success: false, error: "Per-user cost analysis failed" };
   }
 }
 
 /**
- * 팀별 비용 비교
+ * Team cost comparison
  */
 export async function getTeamCostComparison(): Promise<
   ActionState<TeamCostComparisonResult>
@@ -153,7 +153,7 @@ export async function getTeamCostComparison(): Promise<
     const thresholdDate = new Date();
     thresholdDate.setDate(thresholdDate.getDate() - INACTIVE_DAYS_THRESHOLD);
 
-    // 팀 목록 조회
+    // Fetch teams
     const teams = await prisma.team.findMany({
       where: { organizationId },
       select: {
@@ -163,7 +163,7 @@ export async function getTeamCostComparison(): Promise<
       },
     });
 
-    // PER_SEAT 구독 유저 배정 (팀 매핑)
+    // PER_SEAT subscription user assignments (team mapping)
     const subscriptionUsers = await prisma.subscriptionUser.findMany({
       where: {
         subscription: {
@@ -183,7 +183,7 @@ export async function getTeamCostComparison(): Promise<
       },
     });
 
-    // UserAppAccess 배치 조회
+    // Batch-fetch UserAppAccess
     const userIds = [...new Set(subscriptionUsers.map((su) => su.userId))];
     const appIds = [
       ...new Set(subscriptionUsers.map((su) => su.subscription.appId)),
@@ -205,7 +205,7 @@ export async function getTeamCostComparison(): Promise<
       accessMap.set(`${a.userId}:${a.appId}`, a.lastUsedAt);
     }
 
-    // 팀별 집계
+    // Aggregate per team
     const teamCostMap = new Map<
       string,
       { totalCost: number; activeCount: number; totalAssignments: number }
@@ -253,7 +253,7 @@ export async function getTeamCostComparison(): Promise<
 
     return { success: true, data: { teams: result } };
   } catch (error) {
-    console.error("팀별 비용 비교 오류:", error);
-    return { success: false, error: "팀별 비용 비교에 실패했습니다" };
+    console.error("Team cost comparison error:", error);
+    return { success: false, error: "Team cost comparison failed" };
   }
 }

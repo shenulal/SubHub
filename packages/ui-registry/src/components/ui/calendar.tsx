@@ -12,9 +12,9 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 /**
- * 🎯 목적: Calendar 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: react-day-picker의 DayPicker를 래핑하며, rootRef를 통해 ref 전달
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the Calendar component for React 18/19 compatibility
+ * 📝 Note: Wraps react-day-picker's DayPicker and forwards the ref via rootRef
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const Calendar = React.forwardRef<
   HTMLDivElement,
@@ -142,12 +142,12 @@ const Calendar = React.forwardRef<
               <div
                 data-slot="calendar"
                 ref={(el) => {
-                  // 🎯 rootRef와 forwardRef 모두에 ref 전달
+                  // 🎯 Pass the ref to both rootRef and the forwarded ref
                   if (rootRef) {
                     if (typeof rootRef === "function") {
                       rootRef(el);
                     } else {
-                      // React 18 호환성: ref.current는 read-only이므로 타입 단언 사용
+                      // React 18 compatibility: ref.current is read-only, so a type assertion is used
                       (
                         rootRef as React.MutableRefObject<HTMLDivElement | null>
                       ).current = el;
@@ -157,7 +157,7 @@ const Calendar = React.forwardRef<
                     if (typeof ref === "function") {
                       ref(el);
                     } else {
-                      // React 18 호환성: ref.current는 read-only이므로 타입 단언 사용
+                      // React 18 compatibility: ref.current is read-only, so a type assertion is used
                       (
                         ref as React.MutableRefObject<HTMLDivElement | null>
                       ).current = el;

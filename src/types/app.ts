@@ -1,10 +1,10 @@
 // src/types/app.ts
-// 앱 관리 관련 타입 정의
+// App management types
 
 import type { AppSource, AppStatus } from "@prisma/client";
 
 /**
- * 앱 목록 아이템
+ * App list item
  */
 export interface AppListItem {
   id: string;
@@ -20,12 +20,12 @@ export interface AppListItem {
   userAccessCount: number;
   createdAt: Date;
   updatedAt: Date;
-  // Team 다중 배정
+  // Multiple team assignment
   teams: { id: string; name: string }[];
 }
 
 /**
- * 앱 상세 정보
+ * App details
  */
 export interface AppDetail extends AppListItem {
   catalogId: string | null;
@@ -37,7 +37,7 @@ export interface AppDetail extends AppListItem {
 }
 
 /**
- * 앱 생성 입력
+ * App create input
  */
 export interface CreateAppInput {
   name: string;
@@ -52,7 +52,7 @@ export interface CreateAppInput {
 }
 
 /**
- * 앱 수정 입력
+ * App update input
  */
 export interface UpdateAppInput {
   name?: string;
@@ -67,7 +67,7 @@ export interface UpdateAppInput {
 }
 
 /**
- * 앱 필터 옵션
+ * App filter options
  */
 export interface AppFilterOptions {
   search?: string;
@@ -79,7 +79,7 @@ export interface AppFilterOptions {
 }
 
 /**
- * 앱 정렬 옵션
+ * App sort options
  */
 export interface AppSortOptions {
   sortBy?: "name" | "createdAt" | "updatedAt" | "category";

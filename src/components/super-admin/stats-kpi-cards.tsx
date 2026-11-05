@@ -17,7 +17,7 @@ const TONES = [
 
 export function StatsKpiCards({ stats }: StatsKpiCardsProps) {
   const formatCurrency = (amount: number, currency: string) => {
-    return new Intl.NumberFormat("ko-KR", {
+    return new Intl.NumberFormat("en-US", {
       style: "currency",
       currency,
       maximumFractionDigits: 0,
@@ -26,29 +26,29 @@ export function StatsKpiCards({ stats }: StatsKpiCardsProps) {
 
   const cards = [
     {
-      title: "총 사용자",
-      value: stats.totalUsers.toLocaleString("ko-KR"),
-      description: `활성: ${stats.activeUsers.toLocaleString("ko-KR")}명`,
+      title: "Total Users",
+      value: stats.totalUsers.toLocaleString("en-US"),
+      description: `Active: ${stats.activeUsers.toLocaleString("en-US")}`,
       icon: Users,
     },
     {
-      title: "활성 구독",
-      value: `${stats.totalSubscriptions}개`,
-      description: "현재 활성 구독 수",
+      title: "Active Subscriptions",
+      value: `${stats.totalSubscriptions}`,
+      description: "Current number of active subscriptions",
       icon: UserCheck,
     },
     {
-      title: "이번 달 총 비용",
+      title: "Total Cost This Month",
       value: formatCurrency(stats.monthlyTotalCost, stats.currency),
-      description: "월 환산 구독 비용",
+      description: "Monthly-equivalent subscription cost",
       icon: DollarSign,
     },
     {
-      title: "Extension 최신 빌드",
-      value: stats.latestBuildVersion ? `v${stats.latestBuildVersion}` : "없음",
+      title: "Latest Extension Build",
+      value: stats.latestBuildVersion ? `v${stats.latestBuildVersion}` : "None",
       description: stats.latestBuildDate
-        ? `빌드일: ${new Date(stats.latestBuildDate).toLocaleDateString("ko-KR")}`
-        : "빌드 기록 없음",
+        ? `Built: ${new Date(stats.latestBuildDate).toLocaleDateString("en-US")}`
+        : "No build history",
       icon: Box,
     },
   ];

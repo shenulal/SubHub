@@ -11,7 +11,7 @@ import { getBaseCurrency } from "@/lib/fx/base-currency";
 import { DEFAULT_BASE_CURRENCY } from "@/lib/fx/convert";
 import { AlarmClock, CalendarClock, CalendarSync, Wallet } from "lucide-react";
 import type { Metadata } from "next";
-import { getLocale, getTranslations } from "next-intl/server";
+import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
 import { ExportButtons } from "./_components/export-buttons";
 
@@ -23,26 +23,19 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-function formatCurrency(
-  amount: number,
-  currency: string,
-  locale: string = "ko"
-): string {
-  return new Intl.NumberFormat(locale === "ko" ? "ko-KR" : "en-US", {
+function formatCurrency(amount: number, currency: string): string {
+  return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency,
     maximumFractionDigits: 0,
   }).format(amount);
 }
 
-function formatDate(date: Date, locale: string = "ko"): string {
-  return new Date(date).toLocaleDateString(
-    locale === "ko" ? "ko-KR" : "en-US",
-    {
-      month: "2-digit",
-      day: "2-digit",
-    }
-  );
+function formatDate(date: Date): string {
+  return new Date(date).toLocaleDateString("en-US", {
+    month: "2-digit",
+    day: "2-digit",
+  });
 }
 
 interface PageProps {
@@ -54,7 +47,6 @@ interface PageProps {
 
 export default async function RenewalReportPage({ searchParams }: PageProps) {
   const t = await getTranslations("reports.renewal");
-  const locale = await getLocale();
   const session = await auth();
 
   if (!session?.user) {
@@ -129,12 +121,12 @@ export default async function RenewalReportPage({ searchParams }: PageProps) {
                     {item.appName}
                   </p>
                   <p className="text-muted-foreground truncate text-[0.8125rem]">
-                    {formatDate(item.renewalDate, locale)} ·{" "}
+                    {formatDate(item.renewalDate)} ·{" "}
                     {t("daysLeft", { days: item.daysUntilRenewal })}
                   </p>
                 </div>
                 <div className="shrink-0 text-[0.9375rem] font-medium tabular-nums">
-                  {formatCurrency(item.amount, item.currency, locale)}
+                  {formatCurrency(item.amount, item.currency)}
                 </div>
               </li>
             ))}
@@ -146,7 +138,7 @@ export default async function RenewalReportPage({ searchParams }: PageProps) {
 
   return (
     <div className="space-y-6">
-      {/* 헤더 */}
+      {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="min-w-0">
           <h1 className="truncate text-2xl font-medium">{t("page.title")}</h1>
@@ -159,7 +151,7 @@ export default async function RenewalReportPage({ searchParams }: PageProps) {
         )}
       </div>
 
-      {/* 핵심 지표 - Bento 스타일 KPI 카드 */}
+      {/* Key metrics - Bento-style KPI cards */}
       <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
         <ReportStatCard
           icon={CalendarSync}
@@ -171,7 +163,7 @@ export default async function RenewalReportPage({ searchParams }: PageProps) {
           icon={Wallet}
           tone="info"
           title={t("stats.totalCost")}
-          value={formatCurrency(data.totalRenewalCost, baseCurrency, locale)}
+          value={formatCurrency(data.totalRenewalCost, baseCurrency)}
         />
         <ReportStatCard
           icon={AlarmClock}
@@ -199,12 +191,12 @@ export default async function RenewalReportPage({ searchParams }: PageProps) {
         teamLocked={isRestricted}
       />
 
-      {/* 캘린더 기반 갱신 일정 */}
+      {/* Calendar-based renewal schedule */}
       <RenewalCalendarSection
         renewals={[...data.within7Days, ...data.within30Days]}
       />
 
-      {/* 기간별 갱신 리스트 */}
+      {/* Renewals by period */}
       <div className="grid gap-6 xl:grid-cols-2 2xl:grid-cols-3 xl:[&>*:last-child]:col-span-2 2xl:[&>*:last-child]:col-span-1">
         {renderRenewalList(
           t("sections.within7Days"),

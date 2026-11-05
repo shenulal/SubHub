@@ -10,8 +10,8 @@ import {
 } from "recharts/types/component/DefaultTooltipContent";
 
 // Format: { THEME_NAME: CSS_SELECTOR }
-// 🎯 목적: Storybook의 14개 테마 지원 (7가지 색상 × light/dark)
-// 📝 주의: preview.ts의 withThemeByClassName themes와 동일한 키 사용
+// 🎯 Purpose: Support Storybook's 14 themes (7 colors × light/dark)
+// 📝 Note: Uses the same keys as the withThemeByClassName themes in preview.ts
 const THEMES = {
   "default-light": ".theme-default-light",
   "default-dark": ".theme-default-dark",
@@ -56,9 +56,9 @@ function useChart() {
 }
 
 /**
- * 🎯 목적: ChartContainer 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: recharts의 ResponsiveContainer 사용, Context Provider 내부 구조 유지
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the ChartContainer component for React 18/19 compatibility
+ * 📝 Note: Uses recharts' ResponsiveContainer; keep the internal Context Provider structure
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const ChartContainer = React.forwardRef<
   HTMLDivElement,
@@ -128,15 +128,15 @@ ${colorConfig
 };
 
 /**
- * 🎯 목적: ChartTooltip 컴포넌트
- * 📝 주의사항: Recharts Tooltip primitive 직접 할당, ref 지원하지 않음
+ * 🎯 Purpose: ChartTooltip component
+ * 📝 Note: Directly assigns the Recharts Tooltip primitive; does not support ref
  */
 const ChartTooltip = RechartsPrimitive.Tooltip;
 
 /**
- * 🎯 목적: ChartTooltipContent 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: Recharts Tooltip의 커스텀 컨텐츠 래퍼
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the ChartTooltipContent component for React 18/19 compatibility
+ * 📝 Note: Custom content wrapper for the Recharts Tooltip
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const ChartTooltipContent = React.forwardRef<
   HTMLDivElement,
@@ -296,15 +296,15 @@ const ChartTooltipContent = React.forwardRef<
 ChartTooltipContent.displayName = "ChartTooltipContent";
 
 /**
- * 🎯 목적: ChartLegend 컴포넌트
- * 📝 주의사항: Recharts Legend primitive 직접 할당, ref 지원하지 않음
+ * 🎯 Purpose: ChartLegend component
+ * 📝 Note: Directly assigns the Recharts Legend primitive; does not support ref
  */
 const ChartLegend = RechartsPrimitive.Legend;
 
 /**
- * 🎯 목적: ChartLegendContent 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: Recharts Legend의 커스텀 컨텐츠 래퍼
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the ChartLegendContent component for React 18/19 compatibility
+ * 📝 Note: Custom content wrapper for the Recharts Legend
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const ChartLegendContent = React.forwardRef<
   HTMLDivElement,

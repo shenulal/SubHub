@@ -54,18 +54,18 @@ describe("cost-analytics actions", () => {
   });
 
   describe("getCostStatistics", () => {
-    it("인증되지 않은 사용자는 에러를 반환해야 한다", async () => {
+    it("returns an error for an unauthenticated user", async () => {
       vi.mocked(auth).mockResolvedValue(null as never);
 
       const result = await getCostStatistics({});
 
       expect(result).toEqual({
         success: false,
-        message: "인증이 필요합니다",
+        message: "Authentication required",
       });
     });
 
-    it("조직 ID가 없는 사용자는 에러를 반환해야 한다", async () => {
+    it("returns an error for a user without an organization ID", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: null, role: "ADMIN" },
       } as never);
@@ -74,65 +74,65 @@ describe("cost-analytics actions", () => {
 
       expect(result).toEqual({
         success: false,
-        message: "조직 정보가 필요합니다",
+        message: "Organization information is required",
       });
     });
 
-    it("비용 통계를 올바르게 계산해야 한다", async () => {
+    it("calculates cost statistics correctly", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
 
-      // 현재 기간 PaymentRecord 집계 (SaaS)
+      // Current-period PaymentRecord aggregate (SaaS)
       vi.mocked(prisma.paymentRecord.aggregate).mockResolvedValueOnce({
         _sum: { amount: { toNumber: () => 1000000 } },
         _count: { id: 10 },
       } as never);
 
-      // 현재 기간 CardTransaction 집계 (SaaS)
+      // Current-period CardTransaction aggregate (SaaS)
       vi.mocked(prisma.cardTransaction.aggregate).mockResolvedValueOnce({
         _sum: { useAmt: null },
         _count: { id: 0 },
       } as never);
 
-      // 전체 비용 PaymentRecord 집계 (SaaS + Non-SaaS)
+      // Total-cost PaymentRecord aggregate (SaaS + Non-SaaS)
       vi.mocked(prisma.paymentRecord.aggregate).mockResolvedValueOnce({
         _sum: { amount: { toNumber: () => 1500000 } },
       } as never);
 
-      // 전체 비용 CardTransaction 집계 (SaaS + Non-SaaS)
+      // Total-cost CardTransaction aggregate (SaaS + Non-SaaS)
       vi.mocked(prisma.cardTransaction.aggregate).mockResolvedValueOnce({
         _sum: { useAmt: null },
       } as never);
 
-      // 이전 기간 PaymentRecord 집계 (전월 대비 비교용)
+      // Previous-period PaymentRecord aggregate (for period-over-period comparison)
       vi.mocked(prisma.paymentRecord.aggregate).mockResolvedValueOnce({
         _sum: { amount: { toNumber: () => 800000 } },
         _count: { id: 8 },
       } as never);
 
-      // 이전 기간 CardTransaction 집계
+      // Previous-period CardTransaction aggregate
       vi.mocked(prisma.cardTransaction.aggregate).mockResolvedValueOnce({
         _sum: { useAmt: null },
         _count: { id: 0 },
       } as never);
 
-      // 전체 기간 PaymentRecord 집계 (월 평균용)
+      // All-time PaymentRecord aggregate (for the monthly average)
       vi.mocked(prisma.paymentRecord.aggregate).mockResolvedValueOnce({
         _sum: { amount: { toNumber: () => 3000000 } },
       } as never);
 
-      // 가장 오래된 PaymentRecord
+      // Oldest PaymentRecord
       vi.mocked(prisma.paymentRecord.findFirst).mockResolvedValueOnce({
         transactionDate: new Date("2023-10-01"),
       } as never);
 
-      // 전체 기간 CardTransaction 집계 (월 평균용)
+      // All-time CardTransaction aggregate (for the monthly average)
       vi.mocked(prisma.cardTransaction.aggregate).mockResolvedValueOnce({
         _sum: { useAmt: null },
       } as never);
 
-      // 가장 오래된 CardTransaction
+      // Oldest CardTransaction
       vi.mocked(prisma.cardTransaction.findFirst).mockResolvedValueOnce(
         null as never
       );
@@ -146,73 +146,73 @@ describe("cost-analytics actions", () => {
       expect(result.data?.statistics.totalCost).toBe(1000000);
       expect(result.data?.statistics.transactionCount).toBe(10);
       expect(result.data?.statistics.costChange).toBe(25); // (1000000 - 800000) / 800000 * 100 = 25%
-      // 월 평균: 전체 기간 기준 (totalCost와 다른 값)
+      // Monthly average: over the whole period (differs from totalCost)
       expect(result.data?.statistics.monthlyAverage).toBeDefined();
       expect(result.data?.statistics.monthlyAverage).not.toBe(
         result.data?.statistics.totalCost
       );
-      // totalCostAll >= totalCost (전체 >= SaaS)
+      // totalCostAll >= totalCost (all >= SaaS)
       expect(result.data?.statistics.totalCostAll).toBe(1500000);
       expect(result.data?.statistics.totalCostAll).toBeGreaterThanOrEqual(
         result.data?.statistics.totalCost ?? 0
       );
     });
 
-    it("이전 데이터가 없을 때 증감률은 0이어야 한다", async () => {
+    it("returns a change rate of 0 when there is no previous data", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
 
-      // 현재 기간 PaymentRecord 집계 (SaaS)
+      // Current-period PaymentRecord aggregate (SaaS)
       vi.mocked(prisma.paymentRecord.aggregate).mockResolvedValueOnce({
         _sum: { amount: { toNumber: () => 500000 } },
         _count: { id: 5 },
       } as never);
 
-      // 현재 기간 CardTransaction 집계 (SaaS)
+      // Current-period CardTransaction aggregate (SaaS)
       vi.mocked(prisma.cardTransaction.aggregate).mockResolvedValueOnce({
         _sum: { useAmt: null },
         _count: { id: 0 },
       } as never);
 
-      // 전체 비용 PaymentRecord 집계 (SaaS + Non-SaaS)
+      // Total-cost PaymentRecord aggregate (SaaS + Non-SaaS)
       vi.mocked(prisma.paymentRecord.aggregate).mockResolvedValueOnce({
         _sum: { amount: { toNumber: () => 500000 } },
       } as never);
 
-      // 전체 비용 CardTransaction 집계 (SaaS + Non-SaaS)
+      // Total-cost CardTransaction aggregate (SaaS + Non-SaaS)
       vi.mocked(prisma.cardTransaction.aggregate).mockResolvedValueOnce({
         _sum: { useAmt: null },
       } as never);
 
-      // 이전 기간 PaymentRecord 집계 (데이터 없음)
+      // Previous-period PaymentRecord aggregate (no data)
       vi.mocked(prisma.paymentRecord.aggregate).mockResolvedValueOnce({
         _sum: { amount: null },
         _count: { id: 0 },
       } as never);
 
-      // 이전 기간 CardTransaction 집계
+      // Previous-period CardTransaction aggregate
       vi.mocked(prisma.cardTransaction.aggregate).mockResolvedValueOnce({
         _sum: { useAmt: null },
         _count: { id: 0 },
       } as never);
 
-      // 전체 기간 PaymentRecord 집계 (월 평균용)
+      // All-time PaymentRecord aggregate (for the monthly average)
       vi.mocked(prisma.paymentRecord.aggregate).mockResolvedValueOnce({
         _sum: { amount: { toNumber: () => 500000 } },
       } as never);
 
-      // 가장 오래된 PaymentRecord
+      // Oldest PaymentRecord
       vi.mocked(prisma.paymentRecord.findFirst).mockResolvedValueOnce(
         null as never
       );
 
-      // 전체 기간 CardTransaction 집계 (월 평균용)
+      // All-time CardTransaction aggregate (for the monthly average)
       vi.mocked(prisma.cardTransaction.aggregate).mockResolvedValueOnce({
         _sum: { useAmt: null },
       } as never);
 
-      // 가장 오래된 CardTransaction
+      // Oldest CardTransaction
       vi.mocked(prisma.cardTransaction.findFirst).mockResolvedValueOnce(
         null as never
       );
@@ -223,12 +223,12 @@ describe("cost-analytics actions", () => {
       expect(result.data?.statistics.costChange).toBe(0);
     });
 
-    it("월 평균 비용은 전체 기간 기준으로 계산되어야 한다", async () => {
+    it("calculates the monthly average cost over the whole period", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
 
-      // 현재 기간 (30일) totalCost = 1,000,000 (SaaS)
+      // Current period (30 days) totalCost = 1,000,000 (SaaS)
       vi.mocked(prisma.paymentRecord.aggregate).mockResolvedValueOnce({
         _sum: { amount: { toNumber: () => 1000000 } },
         _count: { id: 10 },
@@ -238,7 +238,7 @@ describe("cost-analytics actions", () => {
         _count: { id: 0 },
       } as never);
 
-      // 전체 비용 (SaaS + Non-SaaS)
+      // Total cost (SaaS + Non-SaaS)
       vi.mocked(prisma.paymentRecord.aggregate).mockResolvedValueOnce({
         _sum: { amount: { toNumber: () => 1200000 } },
       } as never);
@@ -246,7 +246,7 @@ describe("cost-analytics actions", () => {
         _sum: { useAmt: null },
       } as never);
 
-      // 이전 기간
+      // Previous period
       vi.mocked(prisma.paymentRecord.aggregate).mockResolvedValueOnce({
         _sum: { amount: null },
         _count: { id: 0 },
@@ -256,12 +256,12 @@ describe("cost-analytics actions", () => {
         _count: { id: 0 },
       } as never);
 
-      // 전체 기간 allTimeTotal = 5,000,000 (5개월간 총액)
+      // All-time allTimeTotal = 5,000,000 (total over 5 months)
       vi.mocked(prisma.paymentRecord.aggregate).mockResolvedValueOnce({
         _sum: { amount: { toNumber: () => 5000000 } },
       } as never);
 
-      // 가장 오래된 거래: 정확히 150일 전 (ceil(150/30.44) = 5개월)
+      // Oldest transaction: exactly 150 days ago (ceil(150/30.44) = 5 months)
       const msPerMonth = 30.44 * 24 * 60 * 60 * 1000;
       const fiveMonthsAgo = new Date(Date.now() - 150 * 24 * 60 * 60 * 1000);
       vi.mocked(prisma.paymentRecord.findFirst).mockResolvedValueOnce({
@@ -278,9 +278,9 @@ describe("cost-analytics actions", () => {
       const result = await getCostStatistics({});
 
       expect(result.success).toBe(true);
-      // totalCost = 1,000,000 (현재 기간)
+      // totalCost = 1,000,000 (current period)
       expect(result.data?.statistics.totalCost).toBe(1000000);
-      // 전체 기간 기준 월 평균 계산
+      // Monthly average over the whole period
       const expectedMonths = Math.max(
         1,
         Math.ceil((Date.now() - fiveMonthsAgo.getTime()) / msPerMonth)
@@ -289,12 +289,12 @@ describe("cost-analytics actions", () => {
       expect(result.data?.statistics.monthlyAverage).toBe(expectedAvg);
     });
 
-    it("teamId 필터가 결제 집계에 반영되어야 한다", async () => {
+    it("applies the teamId filter to payment aggregation", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
 
-      // 현재 기간 (SaaS)
+      // Current period (SaaS)
       vi.mocked(prisma.paymentRecord.aggregate).mockResolvedValueOnce({
         _sum: { amount: { toNumber: () => 0 } },
         _count: { id: 0 },
@@ -304,7 +304,7 @@ describe("cost-analytics actions", () => {
         _count: { id: 0 },
       } as never);
 
-      // 전체 비용 (SaaS + Non-SaaS)
+      // Total cost (SaaS + Non-SaaS)
       vi.mocked(prisma.paymentRecord.aggregate).mockResolvedValueOnce({
         _sum: { amount: null },
       } as never);
@@ -312,7 +312,7 @@ describe("cost-analytics actions", () => {
         _sum: { useAmt: null },
       } as never);
 
-      // 이전 기간
+      // Previous period
       vi.mocked(prisma.paymentRecord.aggregate).mockResolvedValueOnce({
         _sum: { amount: null },
         _count: { id: 0 },
@@ -322,7 +322,7 @@ describe("cost-analytics actions", () => {
         _count: { id: 0 },
       } as never);
 
-      // 전체 기간 mocks (월 평균용)
+      // All-time mocks (for the monthly average)
       vi.mocked(prisma.paymentRecord.aggregate).mockResolvedValueOnce({
         _sum: { amount: null },
       } as never);
@@ -363,12 +363,12 @@ describe("cost-analytics actions", () => {
       );
     });
 
-    it("userId 필터가 결제 집계에 반영되어야 한다", async () => {
+    it("applies the userId filter to payment aggregation", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
 
-      // 현재 기간 (SaaS)
+      // Current period (SaaS)
       vi.mocked(prisma.paymentRecord.aggregate).mockResolvedValueOnce({
         _sum: { amount: { toNumber: () => 0 } },
         _count: { id: 0 },
@@ -378,7 +378,7 @@ describe("cost-analytics actions", () => {
         _count: { id: 0 },
       } as never);
 
-      // 전체 비용 (SaaS + Non-SaaS)
+      // Total cost (SaaS + Non-SaaS)
       vi.mocked(prisma.paymentRecord.aggregate).mockResolvedValueOnce({
         _sum: { amount: null },
       } as never);
@@ -386,7 +386,7 @@ describe("cost-analytics actions", () => {
         _sum: { useAmt: null },
       } as never);
 
-      // 이전 기간
+      // Previous period
       vi.mocked(prisma.paymentRecord.aggregate).mockResolvedValueOnce({
         _sum: { amount: null },
         _count: { id: 0 },
@@ -396,7 +396,7 @@ describe("cost-analytics actions", () => {
         _count: { id: 0 },
       } as never);
 
-      // 전체 기간 mocks (월 평균용)
+      // All-time mocks (for the monthly average)
       vi.mocked(prisma.paymentRecord.aggregate).mockResolvedValueOnce({
         _sum: { amount: null },
       } as never);
@@ -429,12 +429,12 @@ describe("cost-analytics actions", () => {
       );
     });
 
-    it("matchStatus 필터에 PENDING과 UNMATCHED가 포함되어야 한다", async () => {
+    it("includes PENDING and UNMATCHED in the matchStatus filter", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
 
-      // 현재 기간 (SaaS)
+      // Current period (SaaS)
       vi.mocked(prisma.paymentRecord.aggregate).mockResolvedValueOnce({
         _sum: { amount: { toNumber: () => 0 } },
         _count: { id: 0 },
@@ -444,7 +444,7 @@ describe("cost-analytics actions", () => {
         _count: { id: 0 },
       } as never);
 
-      // 전체 비용 (SaaS + Non-SaaS)
+      // Total cost (SaaS + Non-SaaS)
       vi.mocked(prisma.paymentRecord.aggregate).mockResolvedValueOnce({
         _sum: { amount: null },
       } as never);
@@ -452,7 +452,7 @@ describe("cost-analytics actions", () => {
         _sum: { useAmt: null },
       } as never);
 
-      // 이전 기간
+      // Previous period
       vi.mocked(prisma.paymentRecord.aggregate).mockResolvedValueOnce({
         _sum: { amount: null },
         _count: { id: 0 },
@@ -462,7 +462,7 @@ describe("cost-analytics actions", () => {
         _count: { id: 0 },
       } as never);
 
-      // 전체 기간 mocks (월 평균용)
+      // All-time mocks (for the monthly average)
       vi.mocked(prisma.paymentRecord.aggregate).mockResolvedValueOnce({
         _sum: { amount: null },
       } as never);
@@ -478,10 +478,10 @@ describe("cost-analytics actions", () => {
 
       await getCostStatistics({});
 
-      // 현재 기간 + 전체 비용 + 이전 기간 + 전체 기간 aggregate 호출 확인
+      // Verify aggregate calls for current period + total cost + previous period + all time
       expect(prisma.paymentRecord.aggregate).toHaveBeenCalledTimes(4);
 
-      // 현재 기간
+      // Current period
       expect(prisma.paymentRecord.aggregate).toHaveBeenNthCalledWith(
         1,
         expect.objectContaining({
@@ -493,7 +493,7 @@ describe("cost-analytics actions", () => {
         })
       );
 
-      // 이전 기간
+      // Previous period
       expect(prisma.paymentRecord.aggregate).toHaveBeenNthCalledWith(
         2,
         expect.objectContaining({
@@ -506,12 +506,12 @@ describe("cost-analytics actions", () => {
       );
     });
 
-    it("SaaS 매칭된 결제만 집계하기 위해 matchedAppId 필터가 포함되어야 한다", async () => {
+    it("includes the matchedAppId filter to aggregate only SaaS-matched payments", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
 
-      // 현재 기간 (SaaS)
+      // Current period (SaaS)
       vi.mocked(prisma.paymentRecord.aggregate).mockResolvedValueOnce({
         _sum: { amount: { toNumber: () => 0 } },
         _count: { id: 0 },
@@ -521,7 +521,7 @@ describe("cost-analytics actions", () => {
         _count: { id: 0 },
       } as never);
 
-      // 전체 비용 (SaaS + Non-SaaS) — matchedAppId 필터 없음
+      // Total cost (SaaS + Non-SaaS) — no matchedAppId filter
       vi.mocked(prisma.paymentRecord.aggregate).mockResolvedValueOnce({
         _sum: { amount: null },
       } as never);
@@ -529,7 +529,7 @@ describe("cost-analytics actions", () => {
         _sum: { useAmt: null },
       } as never);
 
-      // 이전 기간
+      // Previous period
       vi.mocked(prisma.paymentRecord.aggregate).mockResolvedValueOnce({
         _sum: { amount: null },
         _count: { id: 0 },
@@ -539,7 +539,7 @@ describe("cost-analytics actions", () => {
         _count: { id: 0 },
       } as never);
 
-      // 전체 기간 mocks (월 평균용)
+      // All-time mocks (for the monthly average)
       vi.mocked(prisma.paymentRecord.aggregate).mockResolvedValueOnce({
         _sum: { amount: null },
       } as never);
@@ -555,8 +555,8 @@ describe("cost-analytics actions", () => {
 
       await getCostStatistics({});
 
-      // PaymentRecord: 1=현재(SaaS), 2=전체비용, 3=이전(SaaS), 4=전체기간(월평균)
-      // 현재 기간 (SaaS) — matchedAppId 필터 있음
+      // PaymentRecord: 1=current (SaaS), 2=total cost, 3=previous (SaaS), 4=all time (monthly average)
+      // Current period (SaaS) — with matchedAppId filter
       expect(prisma.paymentRecord.aggregate).toHaveBeenNthCalledWith(
         1,
         expect.objectContaining({
@@ -566,7 +566,7 @@ describe("cost-analytics actions", () => {
         })
       );
 
-      // 전체 비용 (call 2) — matchedAppId 필터 없음
+      // Total cost (call 2) — no matchedAppId filter
       expect(prisma.paymentRecord.aggregate).toHaveBeenNthCalledWith(
         2,
         expect.objectContaining({
@@ -576,7 +576,7 @@ describe("cost-analytics actions", () => {
         })
       );
 
-      // 이전 기간 (SaaS) — matchedAppId 필터 있음
+      // Previous period (SaaS) — with matchedAppId filter
       expect(prisma.paymentRecord.aggregate).toHaveBeenNthCalledWith(
         3,
         expect.objectContaining({
@@ -586,7 +586,7 @@ describe("cost-analytics actions", () => {
         })
       );
 
-      // 전체 기간 (월 평균용) — matchedAppId 필터 있음
+      // All time (for the monthly average) — with matchedAppId filter
       expect(prisma.paymentRecord.aggregate).toHaveBeenNthCalledWith(
         4,
         expect.objectContaining({
@@ -596,8 +596,8 @@ describe("cost-analytics actions", () => {
         })
       );
 
-      // CardTransaction: 1=현재(SaaS), 2=전체비용, 3=이전(SaaS), 4=전체기간(월평균)
-      // 현재 기간 (SaaS) — matchedAppId 필터 있음
+      // CardTransaction: 1=current (SaaS), 2=total cost, 3=previous (SaaS), 4=all time (monthly average)
+      // Current period (SaaS) — with matchedAppId filter
       expect(prisma.cardTransaction.aggregate).toHaveBeenNthCalledWith(
         1,
         expect.objectContaining({
@@ -607,7 +607,7 @@ describe("cost-analytics actions", () => {
         })
       );
 
-      // 전체 비용 (call 2) — matchedAppId 필터 없음
+      // Total cost (call 2) — no matchedAppId filter
       expect(prisma.cardTransaction.aggregate).toHaveBeenNthCalledWith(
         2,
         expect.objectContaining({
@@ -617,7 +617,7 @@ describe("cost-analytics actions", () => {
         })
       );
 
-      // 이전 기간 (SaaS) — matchedAppId 필터 있음
+      // Previous period (SaaS) — with matchedAppId filter
       expect(prisma.cardTransaction.aggregate).toHaveBeenNthCalledWith(
         3,
         expect.objectContaining({
@@ -627,7 +627,7 @@ describe("cost-analytics actions", () => {
         })
       );
 
-      // 전체 기간 (월 평균용) — matchedAppId 필터 있음
+      // All time (for the monthly average) — with matchedAppId filter
       expect(prisma.cardTransaction.aggregate).toHaveBeenNthCalledWith(
         4,
         expect.objectContaining({
@@ -640,7 +640,7 @@ describe("cost-analytics actions", () => {
   });
 
   describe("getTopCostApps", () => {
-    it("비용 상위 앱 목록을 반환해야 한다 (PaymentRecord + CardTransaction 통합)", async () => {
+    it("returns the top-cost app list (PaymentRecord + CardTransaction combined)", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
@@ -658,7 +658,7 @@ describe("cost-analytics actions", () => {
         },
       ] as never);
 
-      // CardTransaction groupBy: app-1에 추가 200000
+      // CardTransaction groupBy: additional 200000 for app-1
       vi.mocked(prisma.cardTransaction.groupBy).mockResolvedValue([
         {
           matchedAppId: "app-1",
@@ -679,12 +679,12 @@ describe("cost-analytics actions", () => {
       expect(result.data?.apps[0].appName).toBe("Slack");
       // PaymentRecord 500000 + CardTransaction 200000 = 700000
       expect(result.data?.apps[0].totalCost).toBe(700000);
-      // 전체: 700000 + 300000 = 1000000
+      // Total: 700000 + 300000 = 1000000
       expect(result.data?.totalCost).toBe(1000000);
       expect(result.data?.apps[0].percentage).toBeCloseTo(70);
     });
 
-    it("matchStatus 5종이 사용되어야 한다", async () => {
+    it("uses the 5 matchStatus values", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
@@ -706,7 +706,7 @@ describe("cost-analytics actions", () => {
       );
     });
 
-    it("데이터가 없을 때 빈 배열을 반환해야 한다", async () => {
+    it("returns an empty array when there is no data", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
@@ -722,15 +722,15 @@ describe("cost-analytics actions", () => {
       expect(result.data?.totalCost).toBe(0);
     });
 
-    it("CardTransaction만 있는 앱도 포함되어야 한다", async () => {
+    it("includes apps that only have CardTransactions", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
 
-      // PaymentRecord: 없음
+      // PaymentRecord: none
       vi.mocked(prisma.paymentRecord.groupBy).mockResolvedValue([]);
 
-      // CardTransaction: app-3에 100000
+      // CardTransaction: 100000 for app-3
       vi.mocked(prisma.cardTransaction.groupBy).mockResolvedValue([
         {
           matchedAppId: "app-3",
@@ -754,15 +754,15 @@ describe("cost-analytics actions", () => {
   });
 
   describe("getMonthlyCostTrend", () => {
-    it("최근 6개월 월별 추세를 반환해야 한다", async () => {
+    it("returns the monthly trend for the last 6 months", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
 
-      // CardTransaction mock (빈 배열 - 카드 데이터 없음)
+      // CardTransaction mock (empty array - no card data)
       vi.mocked(prisma.cardTransaction.findMany).mockResolvedValue([]);
 
-      // 월별 그룹 결과 모킹
+      // Mock monthly group results
       vi.mocked(prisma.paymentRecord.findMany).mockResolvedValue([
         {
           transactionDate: new Date("2024-01-15"),
@@ -785,18 +785,18 @@ describe("cost-analytics actions", () => {
       expect(result.data?.trends.length).toBeGreaterThanOrEqual(0);
     });
 
-    it("UNMATCHED 상태의 Non-SaaS 비용이 정상 집계되어야 한다", async () => {
+    it("aggregates Non-SaaS cost in UNMATCHED status correctly", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
 
-      // CardTransaction mock (빈 배열)
+      // CardTransaction mock (empty array)
       vi.mocked(prisma.cardTransaction.findMany).mockResolvedValue([]);
 
       const now = new Date();
       const currentMonth = new Date(now.getFullYear(), now.getMonth(), 15);
 
-      // SaaS 매칭된 결제 + Non-SaaS(UNMATCHED) 결제 혼합
+      // Mix of SaaS-matched payments and Non-SaaS (UNMATCHED) payments
       vi.mocked(prisma.paymentRecord.findMany).mockResolvedValue([
         {
           transactionDate: currentMonth,
@@ -822,7 +822,7 @@ describe("cost-analytics actions", () => {
       expect(result.data!.trends.length).toBe(1);
 
       const monthData = result.data!.trends[0];
-      // Non-SaaS 비용이 0이 아니어야 함
+      // Non-SaaS cost must not be 0
       expect(monthData.nonSaasCost).toBe(80000); // 50000 + 30000
       expect(monthData.saasCost).toBe(100000);
       expect(monthData.totalCost).toBe(180000);
@@ -830,7 +830,7 @@ describe("cost-analytics actions", () => {
       expect(monthData.saasTransactionCount).toBe(1);
     });
 
-    it("matchStatus 필터에 PENDING과 UNMATCHED가 포함되어야 한다", async () => {
+    it("includes PENDING and UNMATCHED in the matchStatus filter", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
@@ -851,7 +851,7 @@ describe("cost-analytics actions", () => {
       );
     });
 
-    it("PENDING 상태 레코드가 Non-SaaS 비용으로 집계되어야 한다", async () => {
+    it("aggregates PENDING records as Non-SaaS cost", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
@@ -884,12 +884,12 @@ describe("cost-analytics actions", () => {
       expect(monthData!.nonSaasTransactionCount).toBe(2);
     });
 
-    it("기본 months는 6이어야 한다", async () => {
+    it("defaults months to 6", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
 
-      // CardTransaction mock (빈 배열)
+      // CardTransaction mock (empty array)
       vi.mocked(prisma.cardTransaction.findMany).mockResolvedValue([]);
 
       vi.mocked(prisma.paymentRecord.findMany).mockResolvedValue([]);
@@ -897,18 +897,18 @@ describe("cost-analytics actions", () => {
       const result = await getMonthlyCostTrend({});
 
       expect(result.success).toBe(true);
-      // 6개월치 빈 데이터 반환
+      // Returns 6 months of empty data
       expect(result.data?.trends).toBeDefined();
     });
 
-    it("averageCost 계산 시 데이터가 없는 월(0원)은 분모에서 제외해야 한다", async () => {
+    it("excludes months without data (0) from the averageCost denominator", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
 
       vi.mocked(prisma.cardTransaction.findMany).mockResolvedValue([]);
 
-      // 3개월 중 1개월만 데이터 있음
+      // Only 1 of 3 months has data
       const now = new Date();
       const currentMonth = new Date(now.getFullYear(), now.getMonth(), 15);
 
@@ -923,12 +923,12 @@ describe("cost-analytics actions", () => {
       const result = await getMonthlyCostTrend({ months: 3 });
 
       expect(result.success).toBe(true);
-      // 3개월 중 1개월만 데이터가 있으므로 평균 = 300000 / 1 = 300000
-      // (이전 방식: 300000 / 3 = 100000 — 잘못됨)
+      // Only 1 of 3 months has data, so average = 300000 / 1 = 300000
+      // (old approach: 300000 / 3 = 100000 — wrong)
       expect(result.data?.averageCost).toBe(300000);
     });
 
-    it("모든 월에 데이터가 없으면 averageCost는 0이어야 한다", async () => {
+    it("returns averageCost 0 when no month has data", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
@@ -944,18 +944,18 @@ describe("cost-analytics actions", () => {
   });
 
   describe("getUnmatchedPaymentCount", () => {
-    it("미매칭 결제 건수를 반환해야 한다", async () => {
+    it("returns the unmatched payment count", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
 
-      // CardTransaction mock (모든 카드 결제는 미매칭 처리됨)
+      // CardTransaction mock (all card payments are treated as unmatched)
       vi.mocked(prisma.cardTransaction.aggregate).mockResolvedValue({
         _count: { id: 5 },
         _sum: { useAmt: 500000 },
       } as never);
 
-      // CardTransaction findFirst - 최신 카드 거래일
+      // CardTransaction findFirst - latest card transaction date
       vi.mocked(prisma.cardTransaction.findFirst).mockResolvedValue({
         useDt: "20240125",
       } as never);
@@ -966,7 +966,7 @@ describe("cost-analytics actions", () => {
         _sum: { amount: { toNumber: () => 750000 } },
       } as never);
 
-      // PaymentRecord findFirst - 최신 CSV 결제일
+      // PaymentRecord findFirst - latest CSV payment date
       vi.mocked(prisma.paymentRecord.findFirst).mockResolvedValue({
         transactionDate: new Date("2024-01-25"),
       } as never);
@@ -974,31 +974,31 @@ describe("cost-analytics actions", () => {
       const result = await getUnmatchedPaymentCount();
 
       expect(result.success).toBe(true);
-      // 카드 5건 + CSV 10건 = 15건
+      // 5 card + 10 CSV = 15
       expect(result.data?.count).toBe(15);
     });
 
-    it("미매칭 결제가 없으면 0을 반환해야 한다", async () => {
+    it("returns 0 when there are no unmatched payments", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
 
-      // CardTransaction mock (없음)
+      // CardTransaction mock (none)
       vi.mocked(prisma.cardTransaction.aggregate).mockResolvedValue({
         _count: { id: 0 },
         _sum: { useAmt: null },
       } as never);
 
-      // CardTransaction findFirst - 없음
+      // CardTransaction findFirst - none
       vi.mocked(prisma.cardTransaction.findFirst).mockResolvedValue(null);
 
-      // PaymentRecord mock (없음)
+      // PaymentRecord mock (none)
       vi.mocked(prisma.paymentRecord.aggregate).mockResolvedValue({
         _count: { id: 0 },
         _sum: { amount: null },
       } as never);
 
-      // PaymentRecord findFirst - 없음
+      // PaymentRecord findFirst - none
       vi.mocked(prisma.paymentRecord.findFirst).mockResolvedValue(null);
 
       const result = await getUnmatchedPaymentCount();
@@ -1011,18 +1011,18 @@ describe("cost-analytics actions", () => {
   });
 
   describe("detectCostAnomalies", () => {
-    it("비용 급증 앱을 감지해야 한다", async () => {
+    it("detects apps with cost spikes", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
 
-      // 현재 월 데이터
+      // Current-month data
       vi.mocked(prisma.paymentRecord.groupBy).mockResolvedValueOnce([
         { matchedAppId: "app-1", _sum: { amount: { toNumber: () => 300000 } } },
         { matchedAppId: "app-2", _sum: { amount: { toNumber: () => 100000 } } },
       ] as never);
 
-      // 이전 월 데이터
+      // Previous-month data
       vi.mocked(prisma.paymentRecord.groupBy).mockResolvedValueOnce([
         { matchedAppId: "app-1", _sum: { amount: { toNumber: () => 100000 } } },
         { matchedAppId: "app-2", _sum: { amount: { toNumber: () => 90000 } } },
@@ -1037,7 +1037,7 @@ describe("cost-analytics actions", () => {
 
       expect(result.success).toBe(true);
       expect(result.data?.hasAnomalies).toBe(true);
-      // app-1은 200% 증가 (100000 -> 300000)
+      // app-1 rose 200% (100000 -> 300000)
       expect(result.data?.anomalies.some((a) => a.appId === "app-1")).toBe(
         true
       );
@@ -1046,7 +1046,7 @@ describe("cost-analytics actions", () => {
       ).toBe("high");
     });
 
-    it("이상이 없으면 빈 배열을 반환해야 한다", async () => {
+    it("returns an empty array when there are no anomalies", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
@@ -1072,7 +1072,7 @@ describe("cost-analytics actions", () => {
   });
 
   describe("getForecastedCost", () => {
-    it("구독 기반 예측 비용을 반환해야 한다", async () => {
+    it("returns the subscription-based forecast cost", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
@@ -1094,7 +1094,7 @@ describe("cost-analytics actions", () => {
         },
       ] as never);
 
-      // 실제 결제 내역
+      // Actual payment records
       vi.mocked(prisma.paymentRecord.aggregate).mockResolvedValue({
         _sum: { amount: { toNumber: () => 95000 } },
       } as never);
@@ -1106,7 +1106,7 @@ describe("cost-analytics actions", () => {
       expect(result.data?.forecast.subscriptionBreakdown).toBeDefined();
     });
 
-    it("구독이 없으면 예측 비용은 0이어야 한다", async () => {
+    it("returns a forecast cost of 0 when there are no subscriptions", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);

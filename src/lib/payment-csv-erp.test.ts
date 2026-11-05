@@ -1,5 +1,7 @@
 // src/lib/payment-csv-erp.test.ts
-// DA-83: detectCSVFormat ERP 세분화 + 기존 포맷 회귀 테스트
+// DA-83: detectCSVFormat ERP sub-format detection + regression tests for existing formats
+// Korean header names and values below are functional test input: they match the columns of
+// Korean card company and ERP exports that the parser must recognise.
 import { describe, expect, it } from "vitest";
 import {
   detectCSVFormat,
@@ -8,9 +10,9 @@ import {
   parsePaymentDate,
 } from "./payment-csv";
 
-describe("payment-csv - DA-83 ERP 포맷 세분화", () => {
+describe("payment-csv - DA-83 ERP sub-formats", () => {
   describe("isERPFormat", () => {
-    it("ERP 계열 포맷 true", () => {
+    it("returns true for ERP formats", () => {
       expect(isERPFormat("ERP")).toBe(true);
       expect(isERPFormat("ERP_DUZON_ICUBE")).toBe(true);
       expect(isERPFormat("ERP_SAP_FI")).toBe(true);
@@ -19,15 +21,15 @@ describe("payment-csv - DA-83 ERP 포맷 세분화", () => {
       expect(isERPFormat("CUSTOM")).toBe(true);
     });
 
-    it("비-ERP 포맷 false", () => {
+    it("returns false for non-ERP formats", () => {
       expect(isERPFormat("CARD_COMPANY")).toBe(false);
       expect(isERPFormat("CARD_COMPANY_EN")).toBe(false);
       expect(isERPFormat("UNKNOWN")).toBe(false);
     });
   });
 
-  describe("detectCSVFormat - 기존 포맷 회귀", () => {
-    it("카드사 한글 포맷 감지", () => {
+  describe("detectCSVFormat - existing format regression", () => {
+    it("detects the Korean card company format", () => {
       const headers = [
         "결제일",
         "가맹점명",
@@ -38,25 +40,25 @@ describe("payment-csv - DA-83 ERP 포맷 세분화", () => {
       expect(detectCSVFormat(headers)).toBe("CARD_COMPANY");
     });
 
-    it("카드사 영문 포맷 감지", () => {
+    it("detects the English card company format", () => {
       const headers = ["Transaction Date", "Merchant", "Amount", "Card Number"];
       expect(detectCSVFormat(headers)).toBe("CARD_COMPANY_EN");
     });
 
-    it("범용 ERP 포맷 감지 (계정과목 포함 시 이카운트 우선 매칭)", () => {
-      // 거래처명 + 계정과목 조합이 이카운트 감지 조건과 매칭
+    it("detects generic ERP format (ECOUNT matches first when the account column is present)", () => {
+      // The vendor name + account combination matches the ECOUNT detection rule
       const headers = ["거래일자", "거래처명", "출금액", "계정과목", "비고"];
       expect(detectCSVFormat(headers)).toBe("ERP_ECOUNT");
     });
 
-    it("범용 ERP 포맷 감지 (계정과목 없으면 ERP)", () => {
+    it("detects generic ERP format (ERP when there is no account column)", () => {
       const headers = ["거래일자", "거래처명", "출금액", "비고"];
       expect(detectCSVFormat(headers)).toBe("ERP");
     });
   });
 
-  describe("detectCSVFormat - ERP 벤더 세분화", () => {
-    it("더존 iCUBE 감지 (관리번호 포함)", () => {
+  describe("detectCSVFormat - ERP vendor sub-formats", () => {
+    it("detects Douzone iCUBE (with management number)", () => {
       const headers = [
         "전표일자",
         "차변계정코드",
@@ -69,7 +71,7 @@ describe("payment-csv - DA-83 ERP 포맷 세분화", () => {
       expect(detectCSVFormat(headers)).toBe("ERP_DUZON_ICUBE");
     });
 
-    it("더존 WEHAGO 감지 (관리번호 없음)", () => {
+    it("detects Douzone WEHAGO (without management number)", () => {
       const headers = [
         "전표일자",
         "차변계정코드",
@@ -80,7 +82,7 @@ describe("payment-csv - DA-83 ERP 포맷 세분화", () => {
       expect(detectCSVFormat(headers)).toBe("ERP_DUZON_WEHAGO");
     });
 
-    it("SAP FI 감지", () => {
+    it("detects SAP FI", () => {
       const headers = [
         "PostingDate",
         "GLAccount",
@@ -90,7 +92,7 @@ describe("payment-csv - DA-83 ERP 포맷 세분화", () => {
       expect(detectCSVFormat(headers)).toBe("ERP_SAP_FI");
     });
 
-    it("Oracle Journal 감지", () => {
+    it("detects Oracle Journal", () => {
       const headers = [
         "AccountingDate",
         "EnteredDebit",
@@ -100,33 +102,33 @@ describe("payment-csv - DA-83 ERP 포맷 세분화", () => {
       expect(detectCSVFormat(headers)).toBe("ERP_ORACLE_JOURNAL");
     });
 
-    it("인식 불가 포맷은 UNKNOWN", () => {
+    it("returns UNKNOWN for unrecognised formats", () => {
       const headers = ["col1", "col2", "col3"];
       expect(detectCSVFormat(headers)).toBe("UNKNOWN");
     });
   });
 
-  describe("parsePaymentAmount - 기존 회귀", () => {
-    it("한국어 금액 파싱", () => {
+  describe("parsePaymentAmount - regression", () => {
+    it("parses KRW amounts", () => {
       expect(parsePaymentAmount("150,000")).toBe(150000);
       expect(parsePaymentAmount("₩89,000")).toBe(89000);
     });
 
-    it("영문 금액 파싱", () => {
+    it("parses USD amounts", () => {
       expect(parsePaymentAmount("$1,234.56")).toBe(1234.56);
     });
 
-    it("회계 괄호 표기 (음수)", () => {
+    it("parses accounting parentheses (negative)", () => {
       expect(parsePaymentAmount("(1,000)")).toBe(-1000);
     });
 
-    it("빈 값은 0", () => {
+    it("returns 0 for empty values", () => {
       expect(parsePaymentAmount("")).toBe(0);
       expect(parsePaymentAmount("  ")).toBe(0);
     });
   });
 
-  describe("parsePaymentDate - 기존 회귀", () => {
+  describe("parsePaymentDate - regression", () => {
     it("YYYY-MM-DD", () => {
       const d = parsePaymentDate("2026-04-01");
       expect(d).not.toBeNull();
@@ -140,7 +142,7 @@ describe("payment-csv - DA-83 ERP 포맷 세분화", () => {
       expect(d!.getUTCDate()).toBe(1);
     });
 
-    it("한글 날짜", () => {
+    it("parses Korean-format dates", () => {
       const d = parsePaymentDate("2026년 4월 1일");
       expect(d).not.toBeNull();
     });

@@ -59,7 +59,7 @@ export function SuggestionUserAssignment({
   const [popoverOpen, setPopoverOpen] = useState(false);
   const [teamPopoverOpen, setTeamPopoverOpen] = useState(false);
 
-  // 팀별 그룹핑
+  // Group by team
   const teamGroups = useMemo<TeamGroup[]>(() => {
     const map = new Map<string, TeamGroup>();
 
@@ -75,7 +75,7 @@ export function SuggestionUserAssignment({
       map.get(key)!.users.push(user);
     }
 
-    // 팀 그룹을 먼저, 미배정을 마지막에 정렬
+    // Sort team groups first and the unassigned group last
     const groups = Array.from(map.values());
     groups.sort((a, b) => {
       if (a.teamId === null) return 1;
@@ -86,16 +86,16 @@ export function SuggestionUserAssignment({
     return groups;
   }, [availableUsers]);
 
-  // 팀이 있는 그룹만 (미배정 제외)
+  // Groups that have a team (excluding unassigned)
   const namedTeamGroups = useMemo(
     () => teamGroups.filter((g) => g.teamId !== null),
     [teamGroups]
   );
 
-  // 팀 선택 Select는 namedTeamGroups가 2개 이상일 때만 표시
+  // Show the team Select only when there are 2+ namedTeamGroups
   const showTeamSelect = namedTeamGroups.length >= 2;
 
-  // 선택된 사용자 객체 목록
+  // Selected user objects
   const selectedUsers = useMemo(
     () => availableUsers.filter((u) => selectedUserIds.includes(u.id)),
     [availableUsers, selectedUserIds]
@@ -135,13 +135,13 @@ export function SuggestionUserAssignment({
     if (!group) return;
 
     if (isTeamAllSelected(group)) {
-      // 전체 선택 상태면 팀 멤버 전원 제거
+      // If the whole team is selected, remove every team member
       const teamUserIds = new Set(group.users.map((u) => u.id));
       onSelectedUserIdsChange(
         selectedUserIds.filter((id) => !teamUserIds.has(id))
       );
     } else {
-      // 부분 또는 미선택 상태면 팀 멤버 전원 추가
+      // If partially or not selected, add every team member
       const newIds = group.users
         .map((u) => u.id)
         .filter((id) => !selectedUserIds.includes(id));
@@ -163,12 +163,12 @@ export function SuggestionUserAssignment({
   const getGroupHeading = (group: TeamGroup): string => {
     const name =
       group.teamId === null ? t("unassigned") : (group.teamName ?? "");
-    return `${name} (${group.users.length}명)`;
+    return `${name} (${group.users.length})`;
   };
 
   return (
     <div className="space-y-2">
-      {/* 팀 전체 선택 Popover (팀 2개 이상일 때만 표시) */}
+      {/* Select-whole-team Popover (only when there are 2+ teams) */}
       {showTeamSelect && (
         <Popover open={teamPopoverOpen} onOpenChange={setTeamPopoverOpen}>
           <PopoverTrigger asChild>
@@ -202,7 +202,7 @@ export function SuggestionUserAssignment({
                         checked={partial ? "indeterminate" : allSelected}
                         className="mr-2"
                       />
-                      {`${group.teamName} (${group.users.length}명)`}
+                      {`${group.teamName} (${group.users.length})`}
                     </CommandItem>
                   );
                 })}
@@ -223,7 +223,7 @@ export function SuggestionUserAssignment({
                           checked={partial ? "indeterminate" : allSelected}
                           className="mr-2"
                         />
-                        {`${t("unassigned")} (${unassignedGroup.users.length}명)`}
+                        {`${t("unassigned")} (${unassignedGroup.users.length})`}
                       </CommandItem>
                     );
                   })()}
@@ -233,7 +233,7 @@ export function SuggestionUserAssignment({
         </Popover>
       )}
 
-      {/* 사용자 선택 Popover + Command */}
+      {/* User selection Popover + Command */}
       <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
         <PopoverTrigger asChild>
           <button
@@ -316,7 +316,7 @@ export function SuggestionUserAssignment({
         </PopoverContent>
       </Popover>
 
-      {/* 선택된 사용자 Badge 목록 */}
+      {/* Selected user badges */}
       {selectedUsers.length > 0 && (
         <div className="flex flex-wrap gap-1">
           {selectedUsers.map((user) => (

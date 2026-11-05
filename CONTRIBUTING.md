@@ -1,4 +1,4 @@
-# Contributing to saaslens
+# Contributing to SubHub
 
 Thanks for your interest. Please read this before opening a PR.
 

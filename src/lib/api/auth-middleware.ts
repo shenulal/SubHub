@@ -1,9 +1,9 @@
 // src/lib/api/auth-middleware.ts
 /**
- * API 라우트 인증 미들웨어
+ * API route authentication middleware
  *
- * Server Actions의 세션 체크에만 의존하지 않고,
- * API 레벨에서 방어적으로 인증을 검증합니다 (Defense-in-depth).
+ * Rather than relying only on the session check in Server Actions,
+ * authentication is verified defensively at the API level (defense in depth).
  */
 
 import { getCachedSession } from "@/lib/auth/require-auth";
@@ -11,7 +11,7 @@ import type { PermissionKey } from "@/lib/rbac/permissions";
 import { getUserPermissionSet, hasAll, hasAny } from "@/lib/rbac/service";
 import { NextRequest, NextResponse } from "next/server";
 
-// 인증된 세션 타입
+// Authenticated session type
 export type AuthenticatedSession = NonNullable<
   Awaited<ReturnType<typeof getCachedSession>>
 > & {
@@ -24,22 +24,22 @@ export type AuthenticatedSession = NonNullable<
   };
 };
 
-// 인증된 핸들러 타입
+// Authenticated handler type
 export type AuthenticatedHandler = (
   request: NextRequest,
   context: { session: AuthenticatedSession }
 ) => Promise<NextResponse>;
 
-// 역할 타입
+// Role type
 export type Role = "SUPER_ADMIN" | "ADMIN" | "APPROVER" | "MEMBER" | "VIEWER";
 
-// 미들웨어 옵션
+// Middleware options
 export interface ApiAuthOptions {
-  /** ADMIN 역할 필수 여부 (deprecated: allowRoles 사용 권장) */
+  /** Whether the ADMIN role is required (deprecated: prefer allowRoles) */
   requireAdmin?: boolean;
-  /** 허용되는 역할 목록 (지정 시 해당 역할만 허용) */
+  /** Allowed roles (when set, only these roles are allowed) */
   allowRoles?: Role[];
-  /** VIEWER 차단 여부 (기본: false) */
+  /** Whether to block VIEWER (default: false) */
   blockViewer?: boolean;
   /** SubHub RBAC: required permission key(s) (checked after role options) */
   permission?: PermissionKey | PermissionKey[];
@@ -50,7 +50,7 @@ export interface ApiAuthOptions {
 import { logger } from "@/lib/logger";
 
 /**
- * API 라우트 인증을 적용하는 HOF (Higher-Order Function)
+ * HOF (higher-order function) that applies API route authentication
  *
  * @example
  * ```typescript
@@ -67,43 +67,46 @@ export function withApiAuth(
   return async (request: NextRequest): Promise<NextResponse> => {
     const session = await getCachedSession();
 
-    // 세션 검증
+    // Validate the session
     if (!session?.user) {
-      return NextResponse.json({ error: "인증이 필요합니다" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      );
     }
 
-    // 조직 검증 (SUPER_ADMIN은 조직 없이도 허용)
+    // Validate the organization (SUPER_ADMIN is allowed without one)
     const userRole = session.user.role as Role;
     if (!session.user.organizationId && userRole !== "SUPER_ADMIN") {
       return NextResponse.json(
-        { error: "조직 정보가 필요합니다" },
+        { error: "Organization information is required" },
         { status: 403 }
       );
     }
 
-    // 역할 기반 권한 검증
-    // allowRoles 옵션: 특정 역할만 허용
+    // Role-based permission check
+    // allowRoles option: allow only specific roles
     if (options.allowRoles && options.allowRoles.length > 0) {
       if (!options.allowRoles.includes(userRole)) {
         return NextResponse.json(
-          { error: "이 작업에 대한 권한이 없습니다" },
+          { error: "You do not have permission to perform this action" },
           { status: 403 }
         );
       }
     }
 
-    // requireAdmin 옵션 (하위 호환성)
+    // requireAdmin option (backward compatibility)
     if (options.requireAdmin && userRole !== "ADMIN") {
       return NextResponse.json(
-        { error: "관리자 권한이 필요합니다" },
+        { error: "Admin permission required" },
         { status: 403 }
       );
     }
 
-    // blockViewer 옵션: VIEWER 차단
+    // blockViewer option: block VIEWER
     if (options.blockViewer && userRole === "VIEWER") {
       return NextResponse.json(
-        { error: "읽기 전용 사용자는 이 작업을 수행할 수 없습니다" },
+        { error: "Read-only users cannot perform this action" },
         { status: 403 }
       );
     }
@@ -126,7 +129,7 @@ export function withApiAuth(
       }
     }
 
-    // 인증 컨텍스트 로깅
+    // Log the authentication context
     logger.debug(
       {
         userId: session.user.id,
@@ -136,7 +139,7 @@ export function withApiAuth(
       "authenticated"
     );
 
-    // 핸들러 호출
+    // Invoke the handler
     return handler(request, {
       session: session as unknown as AuthenticatedSession,
     });

@@ -1,5 +1,5 @@
 // src/lib/dashboard-layout.ts
-// 대시보드 위젯의 동적 레이아웃 계산 유틸리티
+// Utilities for computing dynamic dashboard widget layouts
 
 export type WidgetSlot = {
   key: string;
@@ -7,7 +7,7 @@ export type WidgetSlot = {
 };
 
 /**
- * 대시보드 섹션별 레이아웃 정의 (12컬럼 기준)
+ * Layout definitions per dashboard section (12-column grid)
  */
 export const DASHBOARD_LAYOUT = {
   topRow: [
@@ -37,12 +37,12 @@ export const DASHBOARD_LAYOUT = {
 } as const;
 
 /**
- * visibility 상태에 따라 보이는 위젯들의 col-span을 동적으로 계산
+ * Dynamically compute the col-span of visible widgets based on visibility state
  *
- * - 모두 보일 때: 기본 비율 유지 (예: 6:6, 8:4)
- * - 일부 숨김: 나머지 위젯이 12칸을 비율 기반으로 재분배
- * - 하나만 보일 때: 전체 너비 (12)
- * - 모두 숨김: 빈 Map 반환
+ * - all visible: keep the default ratio (e.g. 6:6, 8:4)
+ * - some hidden: remaining widgets share the 12 columns proportionally
+ * - only one visible: full width (12)
+ * - all hidden: returns an empty Map
  */
 export function getRowSpans(
   widgets: readonly WidgetSlot[],
@@ -60,7 +60,7 @@ export function getRowSpans(
     result.set(w.key, Math.round((w.baseSpan / totalBase) * 12));
   }
 
-  // 반올림 오차 보정: 마지막 위젯에 나머지 할당
+  // Correct rounding error: assign the remainder to the last widget
   const assigned = [...result.values()].reduce((a, b) => a + b, 0);
   if (assigned !== 12) {
     const lastKey = visible[visible.length - 1].key;
@@ -71,14 +71,14 @@ export function getRowSpans(
 }
 
 /**
- * col-span 값을 반응형 Tailwind 클래스로 변환
- * 인라인 스타일 대신 클래스를 사용하여 반응형 브레이크포인트가 정상 동작하도록 함
+ * Convert a col-span value into responsive Tailwind classes
+ * Uses classes instead of inline styles so responsive breakpoints work correctly
  *
- * 지원 breakpoint: 'lg' (1024px+), 'xl' (1280px+)
- * 지원 span: 4, 6, 8, 12
+ * Supported breakpoints: 'lg' (1024px+), 'xl' (1280px+)
+ * Supported spans: 4, 6, 8, 12
  */
 
-// Tailwind 정적 분석을 위해 모든 가능한 클래스를 명시적으로 매핑
+// Map every possible class explicitly so Tailwind's static analysis picks them up
 // lg:col-span-4 lg:col-span-6 lg:col-span-8 lg:col-span-12
 // xl:col-span-4 xl:col-span-6 xl:col-span-8 xl:col-span-12
 const LG_SPAN: Record<number, string> = {

@@ -5,13 +5,13 @@ import { auth } from "@/lib/auth";
 
 /**
  * GET /api/v1/apps/[id]
- * - 앱 상세 조회
+ * - Get app details
  */
 import { withLogging } from "@/lib/logging";
 
 /**
  * GET /api/v1/apps/[id]
- * - 앱 상세 조회
+ * - Get app details
  */
 export const GET = withLogging(
   "GET /api/v1/apps/:id",
@@ -36,14 +36,14 @@ export const GET = withLogging(
 
 /**
  * PUT /api/v1/apps/[id]
- * - 앱 수정
- * - 권한: ADMIN만
+ * - Update an app
+ * - Permission: ADMIN only
  */
 
 /**
  * PUT /api/v1/apps/[id]
- * - 앱 수정
- * - 권한: ADMIN만
+ * - Update an app
+ * - Permission: ADMIN only
  */
 export const PUT = withLogging(
   "PUT /api/v1/apps/:id",
@@ -56,10 +56,10 @@ export const PUT = withLogging(
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    // ADMIN만 수정 가능
+    // Only ADMIN can update
     if (session.user.role !== "ADMIN") {
       return NextResponse.json(
-        { message: "앱 수정 권한이 없습니다" },
+        { message: "You do not have permission to edit this app" },
         { status: 403 }
       );
     }
@@ -88,14 +88,14 @@ export const PUT = withLogging(
 
 /**
  * DELETE /api/v1/apps/[id]
- * - 앱 삭제
- * - 권한: ADMIN만
+ * - Delete an app
+ * - Permission: ADMIN only
  */
 
 /**
  * DELETE /api/v1/apps/[id]
- * - 앱 삭제
- * - 권한: ADMIN만
+ * - Delete an app
+ * - Permission: ADMIN only
  */
 export const DELETE = withLogging(
   "DELETE /api/v1/apps/:id",
@@ -108,10 +108,10 @@ export const DELETE = withLogging(
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    // ADMIN만 삭제 가능
+    // Only ADMIN can delete
     if (session.user.role !== "ADMIN") {
       return NextResponse.json(
-        { message: "앱 삭제 권한이 없습니다" },
+        { message: "You do not have permission to delete this app" },
         { status: 403 }
       );
     }

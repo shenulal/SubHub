@@ -11,11 +11,11 @@ export interface LlmMatchParams extends SaaSInferenceInput {
   userId?: string;
 }
 
-// Prisma MatchSource enum을 그대로 사용 (PATTERN, CATALOG, LLM, MANUAL, IMPORT)
+// Uses the Prisma MatchSource enum as-is (PATTERN, CATALOG, LLM, MANUAL, IMPORT)
 export type MatchSource = PrismaMatchSource | null;
 
 export interface BatchMatchMerchant {
-  id: string; // 트랜잭션 식별자
+  id: string; // Transaction identifier
   merchantName: string;
   memo?: string | null;
   storeBizNo?: string | null;

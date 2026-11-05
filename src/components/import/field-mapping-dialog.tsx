@@ -24,45 +24,45 @@ import { Switch } from "@/components/ui/switch";
 import { AlertCircle, Check, Settings2 } from "lucide-react";
 import { useCallback, useMemo, useState } from "react";
 
-// SMP PaymentRecord 필드 정의
+// SubHub PaymentRecord field definitions
 const PAYMENT_FIELDS = [
-  { key: "date", label: "날짜 (필수)", required: true },
-  { key: "merchant", label: "SaaS명/거래처 (필수)", required: true },
-  { key: "amount", label: "금액 (필수)", required: true },
-  { key: "category", label: "계정과목", required: false },
-  { key: "memo", label: "적요/비고", required: false },
-  { key: "cardLast4", label: "카드번호 끝4자리", required: false },
-  { key: "approvalNumber", label: "승인번호", required: false },
+  { key: "date", label: "Date (required)", required: true },
+  { key: "merchant", label: "SaaS name / merchant (required)", required: true },
+  { key: "amount", label: "Amount (required)", required: true },
+  { key: "category", label: "Account", required: false },
+  { key: "memo", label: "Description / memo", required: false },
+  { key: "cardLast4", label: "Card last 4 digits", required: false },
+  { key: "approvalNumber", label: "Approval number", required: false },
 ] as const;
 
 type PaymentFieldKey = (typeof PAYMENT_FIELDS)[number]["key"];
 
-/** 필드 매핑 결과 */
+/** Field mapping result */
 export interface FieldMappingResult {
-  /** CSV 컬럼 → PaymentRecord 필드 매핑 */
+  /** CSV column → PaymentRecord field mapping */
   fieldMappings: Record<string, PaymentFieldKey | "">;
-  /** 복식부기 활성화 여부 */
+  /** Whether double-entry mode is enabled */
   doubleEntryEnabled: boolean;
-  /** 복식부기 설정 */
+  /** Double-entry settings */
   doubleEntryConfig?: {
     debitAccountColumn: string;
     creditAccountColumn: string;
     expensePrefix: string;
   };
-  /** 프로필 이름 (저장 시) */
+  /** Profile name (when saving) */
   profileName?: string;
 }
 
 interface FieldMappingDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** CSV 헤더 목록 */
+  /** CSV headers */
   csvHeaders: string[];
-  /** CSV 샘플 데이터 (최대 3행) */
+  /** CSV sample data (up to 3 rows) */
   sampleRows: Record<string, string>[];
-  /** 매핑 확정 콜백 */
+  /** Callback when the mapping is confirmed */
   onConfirm: (mapping: FieldMappingResult) => void;
-  /** 기존 매핑 (편집 시) */
+  /** Existing mapping (when editing) */
   initialMapping?: Partial<FieldMappingResult>;
 }
 
@@ -74,7 +74,7 @@ export function FieldMappingDialog({
   onConfirm,
   initialMapping,
 }: FieldMappingDialogProps) {
-  // 필드 매핑 상태: { csvColumn: paymentField }
+  // Field mapping state: { csvColumn: paymentField }
   const [mappings, setMappings] = useState<
     Record<string, PaymentFieldKey | "">
   >(() => initialMapping?.fieldMappings ?? {});
@@ -92,7 +92,7 @@ export function FieldMappingDialog({
     initialMapping?.doubleEntryConfig?.expensePrefix ?? "8"
   );
 
-  // 이미 매핑된 필드 추적 (중복 방지)
+  // Track already-mapped fields (prevents duplicates)
   const usedPaymentFields = useMemo(() => {
     const used = new Set<string>();
     for (const field of Object.values(mappings)) {
@@ -101,7 +101,7 @@ export function FieldMappingDialog({
     return used;
   }, [mappings]);
 
-  // 필수 필드 매핑 완료 여부
+  // Whether all required fields are mapped
   const requiredFieldsMapped = useMemo(() => {
     const requiredKeys = PAYMENT_FIELDS.filter((f) => f.required).map(
       (f) => f.key
@@ -138,17 +138,17 @@ export function FieldMappingDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Settings2 className="h-5 w-5" />
-            CSV 필드 매핑
+            CSV field mapping
           </DialogTitle>
           <DialogDescription>
-            CSV 컬럼을 SMP 결제 데이터 필드에 매핑하세요. 필수 필드(날짜,
-            SaaS명, 금액)는 반드시 매핑해야 합니다.
+            Map the CSV columns to SubHub payment fields. The required fields
+            (date, SaaS name, amount) must be mapped.
           </DialogDescription>
         </DialogHeader>
 
-        {/* 샘플 데이터 미리보기 */}
+        {/* Sample data preview */}
         <div className="space-y-2">
-          <Label className="text-sm font-medium">CSV 데이터 미리보기</Label>
+          <Label className="text-sm font-medium">CSV data preview</Label>
           <div className="overflow-x-auto rounded-md border">
             <table className="w-full text-xs">
               <thead className="bg-muted/50">
@@ -181,9 +181,9 @@ export function FieldMappingDialog({
           </div>
         </div>
 
-        {/* 필드 매핑 */}
+        {/* Field mapping */}
         <div className="space-y-2">
-          <Label className="text-sm font-medium">필드 매핑</Label>
+          <Label className="text-sm font-medium">Field mapping</Label>
           <div className="space-y-2">
             {csvHeaders.map((csvColumn) => (
               <div
@@ -204,10 +204,10 @@ export function FieldMappingDialog({
                   }
                 >
                   <SelectTrigger className="w-[220px]">
-                    <SelectValue placeholder="매핑 안 함" />
+                    <SelectValue placeholder="Do not map" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="__none__">매핑 안 함</SelectItem>
+                    <SelectItem value="__none__">Do not map</SelectItem>
                     {PAYMENT_FIELDS.map((field) => (
                       <SelectItem
                         key={field.key}
@@ -225,7 +225,7 @@ export function FieldMappingDialog({
                 {mappings[csvColumn] && (
                   <Badge variant="secondary" className="text-xs">
                     <Check className="mr-1 h-3 w-3" />
-                    매핑됨
+                    Mapped
                   </Badge>
                 )}
               </div>
@@ -233,13 +233,13 @@ export function FieldMappingDialog({
           </div>
         </div>
 
-        {/* 복식부기 설정 */}
+        {/* Double-entry settings */}
         <div className="space-y-3 rounded-md border p-4">
           <div className="flex items-center justify-between">
             <div>
-              <Label className="text-sm font-medium">복식부기 모드</Label>
+              <Label className="text-sm font-medium">Double-entry mode</Label>
               <p className="text-muted-foreground text-xs">
-                차변/대변 구조의 ERP 데이터인 경우 활성화하세요
+                Enable this for ERP data with a debit/credit structure
               </p>
             </div>
             <Switch
@@ -252,10 +252,10 @@ export function FieldMappingDialog({
             <div className="space-y-3 pt-2">
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1">
-                  <Label className="text-xs">차변 계정 컬럼</Label>
+                  <Label className="text-xs">Debit account column</Label>
                   <Select value={debitColumn} onValueChange={setDebitColumn}>
                     <SelectTrigger>
-                      <SelectValue placeholder="선택" />
+                      <SelectValue placeholder="Select" />
                     </SelectTrigger>
                     <SelectContent>
                       {csvHeaders.map((h) => (
@@ -267,10 +267,10 @@ export function FieldMappingDialog({
                   </Select>
                 </div>
                 <div className="space-y-1">
-                  <Label className="text-xs">대변 계정 컬럼</Label>
+                  <Label className="text-xs">Credit account column</Label>
                   <Select value={creditColumn} onValueChange={setCreditColumn}>
                     <SelectTrigger>
-                      <SelectValue placeholder="선택" />
+                      <SelectValue placeholder="Select" />
                     </SelectTrigger>
                     <SelectContent>
                       {csvHeaders.map((h) => (
@@ -283,11 +283,13 @@ export function FieldMappingDialog({
                 </div>
               </div>
               <div className="space-y-1">
-                <Label className="text-xs">비용 계정 접두사 (쉼표 구분)</Label>
+                <Label className="text-xs">
+                  Expense account prefixes (comma-separated)
+                </Label>
                 <Input
                   value={expensePrefix}
                   onChange={(e) => setExpensePrefix(e.target.value)}
-                  placeholder="예: 8, 6 (8xxx, 6xxx 계정만 추출)"
+                  placeholder="e.g. 8, 6 (extracts 8xxx and 6xxx accounts only)"
                   className="text-sm"
                 />
               </div>
@@ -295,31 +297,31 @@ export function FieldMappingDialog({
           )}
         </div>
 
-        {/* 매핑 상태 요약 */}
+        {/* Mapping status summary */}
         <div className="flex items-center gap-2 text-sm">
           {requiredFieldsMapped ? (
             <Badge variant="success">
               <Check className="mr-1 h-3 w-3" />
-              필수 필드 매핑 완료
+              All required fields mapped
             </Badge>
           ) : (
             <Badge variant="destructive">
               <AlertCircle className="mr-1 h-3 w-3" />
-              필수 필드를 모두 매핑하세요
+              Map all required fields
             </Badge>
           )}
           <span className="text-muted-foreground">
             {Object.values(mappings).filter(Boolean).length}/{csvHeaders.length}{" "}
-            컬럼 매핑됨
+            columns mapped
           </span>
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            취소
+            Cancel
           </Button>
           <Button onClick={handleConfirm} disabled={!requiredFieldsMapped}>
-            매핑 적용
+            Apply mapping
           </Button>
         </DialogFooter>
       </DialogContent>

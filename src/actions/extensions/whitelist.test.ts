@@ -79,7 +79,7 @@ describe("Extension Whitelist Actions", () => {
       const result = await getWhitelists();
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe("인증이 필요합니다");
+      expect(result.error).toBe("Authentication required");
     });
 
     it("should support pagination", async () => {
@@ -130,7 +130,7 @@ describe("Extension Whitelist Actions", () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain("도메인 패턴");
+      expect(result.error).toContain("domain pattern");
     });
   });
 
@@ -165,7 +165,7 @@ describe("Extension Whitelist Actions", () => {
       const result = await updateWhitelist("non-existent", { enabled: false });
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain("찾을 수 없습니다");
+      expect(result.error).toContain("not found");
     });
   });
 
@@ -196,7 +196,7 @@ describe("Extension Whitelist Actions", () => {
       const result = await deleteWhitelist("non-existent");
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain("찾을 수 없습니다");
+      expect(result.error).toContain("not found");
     });
   });
 });

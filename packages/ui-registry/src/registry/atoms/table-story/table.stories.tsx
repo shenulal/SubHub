@@ -116,7 +116,7 @@ type Story = StoryObj<typeof meta>;
 export const Default: Story = {};
 
 /**
- * 테이블 정렬 기능을 테스트합니다.
+ * Tests table sorting.
  */
 export const ShouldSortTableByColumn: Story = {
   name: "when user clicks column header, should sort table data by that column",
@@ -215,36 +215,36 @@ export const ShouldSortTableByColumn: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    // 🎯 목적: 테이블 컬럼 헤더 클릭 시 해당 컬럼으로 정렬되는지 확인
+    // 🎯 Purpose: Verify clicking a column header sorts the table by that column
 
-    // Invoice 컬럼으로 정렬
+    // Sort by the Invoice column
     const invoiceHeader = canvas.getByRole("button", { name: /Invoice/i });
     await expect(invoiceHeader).toBeInTheDocument();
     await userEvent.click(invoiceHeader);
 
-    // 정렬 표시(↑) 확인
+    // Check the sort indicator (↑)
     await expect(invoiceHeader).toHaveTextContent("↑");
 
-    // 첫 번째 행이 INV001인지 확인 (오름차순)
+    // Verify the first row is INV001 (ascending)
     const cells = canvas.getAllByRole("cell");
     await expect(cells[0]).toHaveTextContent("INV001");
 
-    // 다시 클릭하여 내림차순 정렬
+    // Click again to sort descending
     await userEvent.click(invoiceHeader);
     await expect(invoiceHeader).toHaveTextContent("↓");
 
-    // 첫 번째 행이 INV007인지 확인 (내림차순)
+    // Verify the first row is INV007 (descending)
     const cellsDesc = canvas.getAllByRole("cell");
     await expect(cellsDesc[0]).toHaveTextContent("INV007");
 
-    // Amount 컬럼으로 정렬
+    // Sort by the Amount column
     const amountHeader = canvas.getByRole("button", { name: /Amount/i });
     await userEvent.click(amountHeader);
 
-    // Amount로 정렬 표시 확인
+    // Check the Amount sort indicator
     await expect(amountHeader).toHaveTextContent("↑");
 
-    // 첫 번째 행이 $150.00인지 확인 (가장 작은 금액)
+    // Verify the first row is $150.00 (smallest amount)
     const amountCells = canvas.getAllByRole("cell");
     const firstAmountCell = amountCells.find((cell: HTMLElement) =>
       cell.textContent?.includes("$"),

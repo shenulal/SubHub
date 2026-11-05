@@ -5,10 +5,10 @@ export const runtime = "nodejs";
 /**
  * Next.js Instrumentation
  *
- * onRequestError Hook: 모든 서버 에러 자동 캡처
+ * onRequestError hook: automatically captures every server error
  * - API Routes
  * - Server Actions
- * - SSR 에러
+ * - SSR errors
  */
 export const onRequestError: Instrumentation.onRequestError = async (
   err,

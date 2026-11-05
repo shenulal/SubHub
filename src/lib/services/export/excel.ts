@@ -1,7 +1,7 @@
 // src/lib/services/export/excel.ts
 /**
- * Excel 내보내기 서비스
- * exceljs를 사용하여 Excel 파일 생성
+ * Excel export service
+ * Generates Excel files with exceljs
  */
 
 import ExcelJS from "exceljs";
@@ -44,13 +44,13 @@ const DEFAULT_TITLE_STYLE: Partial<ExcelJS.Style> = {
 };
 
 /**
- * Excel 워크북 생성
+ * Creates an Excel workbook
  */
 export async function generateExcelWorkbook<T>(
   config: ExcelSheetConfig<T>
 ): Promise<ExcelJS.Workbook> {
   const workbook = new ExcelJS.Workbook();
-  workbook.creator = "SaaS Management Platform";
+  workbook.creator = "SubHub";
   workbook.created = new Date();
 
   addWorksheetToWorkbook(workbook, config);
@@ -59,7 +59,7 @@ export async function generateExcelWorkbook<T>(
 }
 
 /**
- * 워크북에 워크시트 추가
+ * Adds a worksheet to the workbook
  */
 export function addWorksheetToWorkbook<T>(
   workbook: ExcelJS.Workbook,
@@ -75,7 +75,7 @@ export function addWorksheetToWorkbook<T>(
 
   const worksheet = workbook.addWorksheet(sheetName);
 
-  // 열 너비 설정
+  // Set column widths
   columns.forEach((col, index) => {
     const column = worksheet.getColumn(index + 1);
     if (col.width) {
@@ -85,18 +85,18 @@ export function addWorksheetToWorkbook<T>(
 
   let currentRow = 1;
 
-  // 제목 행 추가 (있는 경우)
+  // Add a title row (if provided)
   if (title) {
     const titleRow = worksheet.getRow(currentRow);
     titleRow.getCell(1).value = title;
     titleRow.getCell(1).style = DEFAULT_TITLE_STYLE;
 
-    // 제목 셀 병합
+    // Merge the title cells
     worksheet.mergeCells(currentRow, 1, currentRow, columns.length);
     currentRow++;
   }
 
-  // 헤더 행 추가
+  // Add the header row
   const headerRow = worksheet.getRow(currentRow);
   columns.forEach((col, index) => {
     const cell = headerRow.getCell(index + 1);
@@ -106,7 +106,7 @@ export function addWorksheetToWorkbook<T>(
   headerRow.height = 25;
   currentRow++;
 
-  // 데이터 행 추가
+  // Add the data rows
   data.forEach((rowData) => {
     const row = worksheet.getRow(currentRow);
 
@@ -114,17 +114,17 @@ export function addWorksheetToWorkbook<T>(
       const cell = row.getCell(index + 1);
       const value = rowData[col.key as keyof T];
 
-      // formatter가 있으면 적용
+      // Apply the formatter if present
       cell.value = col.formatter
         ? (col.formatter(value, rowData) as ExcelJS.CellValue)
         : (value as ExcelJS.CellValue);
 
-      // 셀 스타일 적용
+      // Apply cell styles
       if (col.style) {
         cell.style = col.style;
       }
 
-      // 기본 테두리
+      // Default border
       cell.border = {
         top: { style: "thin", color: { argb: "FFD0D0D0" } },
         left: { style: "thin", color: { argb: "FFD0D0D0" } },
@@ -136,7 +136,7 @@ export function addWorksheetToWorkbook<T>(
     currentRow++;
   });
 
-  // 필터 활성화 (헤더에)
+  // Enable filters (on the header)
   if (data.length > 0) {
     const headerRowNum = title ? 2 : 1;
     worksheet.autoFilter = {
@@ -149,7 +149,7 @@ export function addWorksheetToWorkbook<T>(
 }
 
 /**
- * 워크북을 Buffer로 변환
+ * Converts the workbook to a Buffer
  */
 export async function workbookToBuffer(
   workbook: ExcelJS.Workbook
@@ -159,7 +159,7 @@ export async function workbookToBuffer(
 }
 
 /**
- * 워크북을 Blob으로 변환 (클라이언트 사이드)
+ * Converts the workbook to a Blob (client side)
  */
 export async function workbookToBlob(
   workbook: ExcelJS.Workbook
@@ -171,7 +171,7 @@ export async function workbookToBlob(
 }
 
 /**
- * Excel 다운로드 트리거 (클라이언트 사이드)
+ * Triggers an Excel download (client side)
  */
 export async function downloadExcel(
   workbook: ExcelJS.Workbook,

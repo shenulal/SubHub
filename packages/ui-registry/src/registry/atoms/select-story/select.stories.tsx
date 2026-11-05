@@ -71,8 +71,8 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 /**
- * 기본 Select 드롭다운입니다. 버튼을 클릭하면 옵션 목록이 표시되며,
- * 사용자가 하나의 항목을 선택할 수 있습니다. 폼에서 단일 선택이 필요할 때 사용합니다.
+ * The default Select dropdown. Clicking the button shows a list of options
+ * from which the user picks one. Use it when a form needs a single selection.
  */
 export const Default: Story = {
   render: (args) => (
@@ -95,8 +95,8 @@ export const Default: Story = {
 };
 
 /**
- * 비활성화된 Select입니다. disabled prop을 사용하여 선택을 막고 흐릿하게 표시하며,
- * 현재 선택할 수 없는 상태임을 시각적으로 나타냅니다. 조건부 폼 필드에 사용됩니다.
+ * A disabled Select. The disabled prop blocks selection and dims the control,
+ * showing visually that it cannot be used right now. Used in conditional form fields.
  */
 export const Disabled: Story = {
   args: {
@@ -120,8 +120,8 @@ export const Disabled: Story = {
 };
 
 /**
- * 스크롤 가능한 Select입니다. 많은 옵션을 SelectGroup으로 분류하여 표시하며,
- * 스크롤로 모든 항목을 탐색할 수 있습니다. 시간대, 국가 등 긴 목록 선택에 적합합니다.
+ * A scrollable Select. Many options are grouped with SelectGroup
+ * and can be browsed by scrolling. Suited to long lists such as time zones or countries.
  */
 export const Scrollable: Story = {
   render: () => (
@@ -309,8 +309,8 @@ export function SelectForm() {
 }
 
 /**
- * Form과 통합된 Select입니다. react-hook-form과 zod를 사용하여 유효성 검사를 수행하며,
- * FormField로 감싸 에러 메시지와 설명을 제공합니다. 검증이 필요한 폼 입력에 적합합니다.
+ * A Select integrated with a Form. It validates with react-hook-form and zod,
+ * and is wrapped in FormField to provide error messages and descriptions. Suited to validated form inputs.
  */
 export const WithForm: Story = {
   render: () => <SelectForm />,

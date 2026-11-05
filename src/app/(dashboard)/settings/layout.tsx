@@ -27,16 +27,16 @@ export default async function SettingsLayout({
         </h2>
       </div>
 
-      {/* 사이드바와 콘텐츠 영역 */}
+      {/* Sidebar and content area */}
       <div className="flex min-w-0 flex-col gap-6 xl:flex-row xl:items-start">
-        {/* 좌측 사이드바 메뉴 - Card */}
+        {/* Left sidebar menu - Card */}
         <aside className="min-w-0 xl:sticky xl:top-20 xl:w-[260px] xl:shrink-0">
           <Card className="gap-0 p-2">
             <SettingsSidebar isAdmin={isAdmin} />
           </Card>
         </aside>
 
-        {/* 우측 콘텐츠 영역 - Card */}
+        {/* Right content area - Card */}
         <main className="min-w-0 flex-1">
           <Card className="min-w-0 gap-0 p-5 sm:p-6">{children}</Card>
         </main>

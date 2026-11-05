@@ -8,23 +8,23 @@ import { NextResponse } from "next/server";
 export const GET = withCronAuth(
   withLogging("cron:renewal-alerts", async () => {
     try {
-      logger.info("[Cron] 갱신 알림 처리 시작");
+      logger.info("[Cron] Renewal alert processing started");
 
       const result = await processRenewalAlerts();
 
-      logger.info({ result }, "[Cron] 갱신 알림 처리 완료");
+      logger.info({ result }, "[Cron] Renewal alert processing completed");
 
       return NextResponse.json({
         success: true,
         ...result,
       });
     } catch (error) {
-      logger.error({ err: error }, "[Cron] 갱신 알림 처리 오류");
+      logger.error({ err: error }, "[Cron] Renewal alert processing error");
 
       return NextResponse.json(
         {
           success: false,
-          error: error instanceof Error ? error.message : "알 수 없는 오류",
+          error: error instanceof Error ? error.message : "Unknown error",
         },
         { status: 500 }
       );

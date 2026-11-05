@@ -1,7 +1,7 @@
 /**
- * 사이드바 프리뷰 레이아웃 (인증 불필요)
+ * Sidebar preview layout (no auth required)
  * URL: /sidebar-preview
- * 로컬에서 사이드바 메뉴 구조 확인 전용
+ * Local-only, for checking the sidebar menu structure
  */
 import { SidebarWrapper } from "@/components/layouts/sidebar-wrapper";
 

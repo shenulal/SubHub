@@ -1,6 +1,6 @@
 // src/lib/services/payment/recurrence-detection.ts
 /**
- * 월 단위 반복 결제 감지
+ * Detects monthly recurring payments
  */
 import { normalizeMerchantName } from "./merchant-matcher";
 import type { MinimalPurchase, MonthlyRecurrence } from "./recurrence.types";
@@ -11,13 +11,13 @@ import {
 } from "./recurrence.utils";
 
 /**
- * 월 단위 반복 결제 감지
- * - 동일 가맹점이 매월 동일 일자·시각(±1분)으로 2회 이상 발생하면 recurrence로 간주
+ * Detects monthly recurring payments
+ * - Treated as recurring when the same merchant appears 2+ times on the same day and time (±1 minute) each month
  */
 export function detectMonthlyRecurrence(
   purchases: MinimalPurchase[]
 ): Map<string, MonthlyRecurrence> {
-  // key: normalized|day|minuteSlot (minuteSlot는 ±1분 오차 허용을 위해 세 개의 슬롯에 모두 적재)
+  // key: normalized|day|minuteSlot (stored in three slots to allow a ±1 minute tolerance)
   const bucketMap = new Map<
     string,
     {
@@ -57,7 +57,7 @@ export function detectMonthlyRecurrence(
     }
   }
 
-  // bucket별 월 중복을 기준으로 상위 결과만 남김
+  // Keep only the top results by month coverage per bucket
   const result = new Map<string, MonthlyRecurrence>();
 
   for (const bucket of bucketMap.values()) {

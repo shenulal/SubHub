@@ -11,64 +11,64 @@ import type { ActionState } from "@/types";
 import { z } from "zod";
 
 const requestResetSchema = z.object({
-  email: z.string().email("유효한 이메일을 입력하세요"),
+  email: z.string().email("Please enter a valid email address"),
 });
 
 const resetPasswordSchema = z.object({
-  token: z.string().min(1, "토큰이 필요합니다"),
+  token: z.string().min(1, "Token is required"),
   password: passwordSchema,
 });
 
 /**
- * 비밀번호 재설정 요청
- * 1. 이메일로 사용자 확인
- * 2. 재설정 토큰 생성 (1시간 유효)
- * 3. 이메일 발송
+ * Request a password reset
+ * 1. Look up the user by email
+ * 2. Create a reset token (valid for 1 hour)
+ * 3. Send the email
  *
- * 보안상 사용자 존재 여부와 관계없이 같은 응답 반환
+ * For security, returns the same response whether or not the user exists
  */
 async function _requestPasswordReset(
   input: { email: string } | FormData
 ): Promise<ActionState> {
   try {
-    // FormData 또는 객체에서 데이터 추출
+    // Extract data from FormData or a plain object
     const rawData =
       input instanceof FormData ? { email: input.get("email") } : input;
 
-    // 유효성 검사
+    // Validate
     const parsed = requestResetSchema.safeParse(rawData);
     if (!parsed.success) {
       return {
         success: false,
         message:
           parsed.error.flatten().fieldErrors.email?.[0] ||
-          "유효한 이메일을 입력하세요",
+          "Please enter a valid email address",
       };
     }
 
     const { email } = parsed.data;
 
-    // 사용자 조회
+    // Look up the user
     const user = await prisma.user.findUnique({
       where: { email },
       select: { id: true, name: true, passwordHash: true },
     });
 
-    // 사용자가 없거나 비밀번호가 설정되지 않은 경우 (OAuth 전용 계정)
-    // 보안상 같은 응답 반환
+    // No user, or no password set (OAuth-only account)
+    // Return the same response for security
     if (!user || !user.passwordHash) {
       return {
         success: true,
-        message: "이메일이 발송되었습니다. 메일함을 확인해주세요.",
+        message: "Email sent. Please check your inbox.",
       };
     }
 
-    // 기존 토큰 삭제
+    // Delete existing tokens
     await prisma.passwordResetToken.deleteMany({
       where: { email },
     });
 
-    // 새 토큰 생성 (1시간 유효)
+    // Create a new token (valid for 1 hour)
     const token = crypto.randomUUID();
     const expires = new Date();
     expires.setHours(expires.getHours() + 1);
@@ -81,7 +81,7 @@ async function _requestPasswordReset(
       },
     });
 
-    // 이메일 발송
+    // Send the email
     await sendPasswordResetEmail({
       to: email,
       token,
@@ -90,13 +90,13 @@ async function _requestPasswordReset(
 
     return {
       success: true,
-      message: "이메일이 발송되었습니다. 메일함을 확인해주세요.",
+      message: "Email sent. Please check your inbox.",
     };
   } catch (error) {
-    logger.error({ err: error }, "비밀번호 재설정 요청 오류");
+    logger.error({ err: error }, "Password reset request error");
     return {
       success: false,
-      message: "비밀번호 재설정 요청 중 오류가 발생했습니다",
+      message: "An error occurred while requesting a password reset",
     };
   }
 }
@@ -106,30 +106,30 @@ export const requestPasswordReset = withLogging(
 );
 
 /**
- * 비밀번호 재설정 실행
- * 1. 토큰 검증
- * 2. 만료 확인
- * 3. 비밀번호 해싱 및 업데이트
- * 4. 토큰 삭제
+ * Reset the password
+ * 1. Verify the token
+ * 2. Check expiry
+ * 3. Hash and update the password
+ * 4. Delete the token
  */
 async function _resetPassword(
   input: { token: string; password: string } | FormData
 ): Promise<ActionState> {
   try {
-    // FormData 또는 객체에서 데이터 추출
+    // Extract data from FormData or a plain object
     const rawData =
       input instanceof FormData
         ? { token: input.get("token"), password: input.get("password") }
         : input;
 
-    // 유효성 검사
+    // Validate
     const parsed = resetPasswordSchema.safeParse(rawData);
     if (!parsed.success) {
       const fieldErrors = parsed.error.flatten().fieldErrors;
       const firstError =
         fieldErrors.token?.[0] ||
         fieldErrors.password?.[0] ||
-        "입력값을 확인해주세요";
+        "Please check your input";
 
       return {
         success: false,
@@ -140,7 +140,7 @@ async function _resetPassword(
 
     const { token, password } = parsed.data;
 
-    // 토큰 조회
+    // Look up the token
     const resetToken = await prisma.passwordResetToken.findUnique({
       where: { token },
     });
@@ -148,46 +148,47 @@ async function _resetPassword(
     if (!resetToken) {
       return {
         success: false,
-        message: "유효하지 않은 재설정 링크입니다",
+        message: "Invalid reset link",
       };
     }
 
-    // 만료 확인
+    // Check expiry
     if (new Date() > resetToken.expires) {
-      // 만료된 토큰 삭제
+      // Delete the expired token
       await prisma.passwordResetToken.delete({
         where: { id: resetToken.id },
       });
 
       return {
         success: false,
-        message: "재설정 링크가 만료되었습니다. 다시 요청해주세요.",
+        message: "The reset link has expired. Please request a new one.",
       };
     }
 
-    // 비밀번호 해싱
+    // Hash the password
     const passwordHash = await hashPassword(password);
 
-    // 비밀번호 업데이트
+    // Update the password
     await prisma.user.update({
       where: { email: resetToken.email },
       data: { passwordHash },
     });
 
-    // 사용된 토큰 삭제
+    // Delete the used token
     await prisma.passwordResetToken.delete({
       where: { id: resetToken.id },
     });
 
     return {
       success: true,
-      message: "비밀번호가 변경되었습니다. 새 비밀번호로 로그인해주세요.",
+      message:
+        "Your password has been changed. Please sign in with your new password.",
     };
   } catch (error) {
-    logger.error({ err: error }, "비밀번호 재설정 오류");
+    logger.error({ err: error }, "Password reset error");
     return {
       success: false,
-      message: "비밀번호 재설정 중 오류가 발생했습니다",
+      message: "An error occurred while resetting the password",
     };
   }
 }

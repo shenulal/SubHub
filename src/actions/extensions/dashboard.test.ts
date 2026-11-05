@@ -89,7 +89,7 @@ describe("Extension Dashboard Actions", () => {
       const result = await getExtensionDashboard();
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe("인증이 필요합니다");
+      expect(result.error).toBe("Authentication required");
     });
   });
 });

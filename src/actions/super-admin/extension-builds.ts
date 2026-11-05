@@ -21,8 +21,8 @@ export interface ExtensionBuildSummary {
 }
 
 /**
- * 현재 테넌트의 Extension 빌드 목록 조회
- * @param input.organizationId - 조회할 테넌트 ID (없으면 첫 번째 org, Phase 2 확장성)
+ * Fetch the current tenant's extension builds
+ * @param input.organizationId - Tenant ID to query (defaults to the first org; Phase 2 extensibility)
  */
 async function _listExtensionBuilds(input?: {
   organizationId?: string;
@@ -41,7 +41,7 @@ async function _listExtensionBuilds(input?: {
       });
 
   if (!org) {
-    return { success: false, message: "테넌트 정보를 찾을 수 없습니다." };
+    return { success: false, message: "Tenant information not found." };
   }
 
   const builds = await prisma.extensionBuild.findMany({
@@ -50,7 +50,7 @@ async function _listExtensionBuilds(input?: {
     take: 20,
   });
 
-  // 가장 최신 COMPLETED 빌드 ID 찾기
+  // Find the latest COMPLETED build ID
   const latestCompleted = builds.find((b) => b.status === "COMPLETED");
 
   return {
@@ -75,8 +75,8 @@ export const listExtensionBuilds = withLogging(
 );
 
 /**
- * Extension 빌드 트리거
- * @param input.organizationId - 빌드할 테넌트 ID (없으면 첫 번째 org, Phase 2 확장성)
+ * Trigger an extension build
+ * @param input.organizationId - Tenant ID to build for (defaults to the first org; Phase 2 extensibility)
  */
 async function _triggerExtensionBuild(input?: {
   organizationId?: string;
@@ -95,10 +95,10 @@ async function _triggerExtensionBuild(input?: {
       });
 
   if (!org) {
-    return { success: false, message: "테넌트 정보를 찾을 수 없습니다." };
+    return { success: false, message: "Tenant information not found." };
   }
 
-  // 현재 버전 계산 (최신 빌드 버전 + 1)
+  // Compute the version (latest build version + 1)
   const latestBuild = await prisma.extensionBuild.findFirst({
     where: { organizationId: org.id },
     orderBy: { createdAt: "desc" },
@@ -112,7 +112,7 @@ async function _triggerExtensionBuild(input?: {
     nextVersion = parts.join(".");
   }
 
-  // 1. PENDING 레코드 먼저 생성
+  // 1. Create the PENDING record first
   const build = await prisma.extensionBuild.create({
     data: {
       organizationId: org.id,
@@ -122,8 +122,8 @@ async function _triggerExtensionBuild(input?: {
     },
   });
 
-  // 2. x-internal-secret 인증으로 올바른 endpoint 호출 (fire-and-forget)
-  // 내부 호출은 localhost 사용 (Pod 내부에서 외부 URL 호출 시 DNS/TLS 이슈)
+  // 2. Call the correct endpoint with x-internal-secret auth (fire-and-forget)
+  // Internal calls use localhost (calling the external URL from inside the pod causes DNS/TLS issues)
   const internalSecret = process.env.AUTH_SECRET || "dev-secret-123";
   const baseUrl = `http://localhost:${process.env.PORT || 3000}`;
 
@@ -143,16 +143,16 @@ async function _triggerExtensionBuild(input?: {
     prisma.extensionBuild
       .update({
         where: { id: build.id },
-        data: { status: "FAILED", errorMessage: "빌드 요청 실패" },
+        data: { status: "FAILED", errorMessage: "Build request failed" },
       })
       .catch(() => {});
   });
 
-  // 3. 즉시 성공 반환 (fire-and-forget)
+  // 3. Return success immediately (fire-and-forget)
   revalidatePath("/super-admin/extension-builds");
   return {
     success: true,
-    message: `빌드가 시작되었습니다. (v${nextVersion})`,
+    message: `Build started. (v${nextVersion})`,
     data: { buildId: build.id, version: nextVersion },
   };
 }

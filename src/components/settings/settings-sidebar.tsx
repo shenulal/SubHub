@@ -158,7 +158,7 @@ export function SettingsSidebar({ isAdmin = false }: SettingsSidebarProps) {
   return (
     <nav className="flex min-w-0 gap-1 overflow-x-auto pb-1 xl:flex-col xl:overflow-visible xl:pb-0">
       {settingsMenuItems.map((item) => {
-        // 관리자 전용 항목 처리
+        // Handle admin-only items
         if (item.adminOnly && !isAdmin) {
           return null;
         }

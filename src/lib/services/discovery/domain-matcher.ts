@@ -1,7 +1,7 @@
 // src/lib/services/discovery/domain-matcher.ts
 /**
- * 도메인-앱 매칭 서비스
- * 브라우저 확장프로그램에서 캡처한 로그인 도메인을 등록된 앱과 매칭
+ * Domain-to-app matching service
+ * Matches login domains captured by the browser extension to registered apps
  */
 
 import { prisma } from "@/lib/db";
@@ -19,12 +19,12 @@ export interface DomainMatchResult {
 }
 
 /**
- * 도메인을 조직 내 등록된 앱과 매칭
+ * Matches a domain to an app registered in the organization
  *
- * 3단계 매칭 알고리즘:
- * 1. Tier 1 (confidence 1.0): App.customWebsite 도메인 정확 매칭
- * 2. Tier 2 (confidence 0.95): SaaSCatalog.website → App.catalogId 경유 매칭
- * 3. Tier 3 (confidence = pattern.confidence): SaaSPattern (DOMAIN) 패턴 매칭
+ * Three-tier matching algorithm:
+ * 1. Tier 1 (confidence 1.0): exact domain match on App.customWebsite
+ * 2. Tier 2 (confidence 0.95): match via SaaSCatalog.website → App.catalogId
+ * 3. Tier 3 (confidence = pattern.confidence): SaaSPattern (DOMAIN) pattern match
  */
 export async function matchDomainToApp(
   domain: string,
@@ -40,7 +40,7 @@ export async function matchDomainToApp(
 
   const domainBase = extractDomainBase(mainDomain);
 
-  // Tier 1: App.customWebsite에서 도메인 정확 매칭
+  // Tier 1: exact domain match on App.customWebsite
   const tier1Result = await matchByCustomWebsite(
     mainDomain,
     domainBase,
@@ -48,7 +48,7 @@ export async function matchDomainToApp(
   );
   if (tier1Result) return tier1Result;
 
-  // Tier 2: SaaSCatalog.website → App.catalogId 경유 매칭
+  // Tier 2: match via SaaSCatalog.website → App.catalogId
   const tier2Result = await matchByCatalogWebsite(
     mainDomain,
     domainBase,
@@ -56,7 +56,7 @@ export async function matchDomainToApp(
   );
   if (tier2Result) return tier2Result;
 
-  // Tier 3: SaaSPattern (DOMAIN) 패턴 매칭
+  // Tier 3: SaaSPattern (DOMAIN) pattern match
   const tier3Result = await matchBySaaSPattern(
     mainDomain,
     domainBase,
@@ -69,7 +69,7 @@ export async function matchDomainToApp(
 }
 
 /**
- * Tier 1: App.customWebsite 도메인 매칭
+ * Tier 1: App.customWebsite domain match
  * confidence: 1.0
  */
 async function matchByCustomWebsite(
@@ -96,7 +96,7 @@ async function matchByCustomWebsite(
     const appDomain = extractMainDomain(app.customWebsite);
     if (!appDomain) continue;
 
-    // 정확한 도메인 매칭
+    // Exact domain match
     if (appDomain === mainDomain) {
       return {
         appId: app.id,
@@ -106,7 +106,7 @@ async function matchByCustomWebsite(
       };
     }
 
-    // TLD 변형 매칭 (atlassian.net vs atlassian.com)
+    // TLD variant match (atlassian.net vs atlassian.com)
     const appBase = extractDomainBase(appDomain);
     if (appBase === domainBase && appBase.length > 2) {
       return {
@@ -122,7 +122,7 @@ async function matchByCustomWebsite(
 }
 
 /**
- * Tier 2: SaaSCatalog.website → App.catalogId 매칭
+ * Tier 2: SaaSCatalog.website → App.catalogId match
  * confidence: 0.95
  */
 async function matchByCatalogWebsite(
@@ -154,7 +154,7 @@ async function matchByCatalogWebsite(
     const catalogDomain = extractMainDomain(catalogWebsite);
     if (!catalogDomain) continue;
 
-    // 정확한 도메인 매칭
+    // Exact domain match
     if (catalogDomain === mainDomain) {
       return {
         appId: app.id,
@@ -164,7 +164,7 @@ async function matchByCatalogWebsite(
       };
     }
 
-    // TLD 변형 매칭
+    // TLD variant match
     const catalogBase = extractDomainBase(catalogDomain);
     if (catalogBase === domainBase && catalogBase.length > 2) {
       return {
@@ -180,7 +180,7 @@ async function matchByCatalogWebsite(
 }
 
 /**
- * Tier 3: SaaSPattern (DOMAIN) 패턴 매칭
+ * Tier 3: SaaSPattern (DOMAIN) pattern match
  * confidence: pattern.confidence
  */
 async function matchBySaaSPattern(
@@ -188,7 +188,7 @@ async function matchBySaaSPattern(
   domainBase: string,
   organizationId: string
 ): Promise<DomainMatchResult | null> {
-  // DOMAIN 타입 패턴 조회
+  // Load DOMAIN-type patterns
   const patterns = await prisma.saaSPattern.findMany({
     where: {
       matchType: "DOMAIN",
@@ -210,7 +210,7 @@ async function matchBySaaSPattern(
 
     if (!isMatch) continue;
 
-    // 이 카탈로그를 사용하는 조직 내 ACTIVE 앱 찾기
+    // Find the organization's ACTIVE app that uses this catalog entry
     const app = await prisma.app.findFirst({
       where: {
         organizationId,

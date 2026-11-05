@@ -57,8 +57,8 @@ const extractData = <TData>(body: unknown): TData => {
 
 /**
  * Refine DataProvider
- * - REST 엔드포인트(`/api/v1`) 호출
- * - 인증은 쿠키 기반(NextAuth 세션)으로 위임
+ * - Calls the REST endpoints (`/api/v1`)
+ * - Authentication is delegated to cookies (NextAuth session)
  */
 export const dataProvider: DataProvider = {
   getApiUrl: () => API_BASE,

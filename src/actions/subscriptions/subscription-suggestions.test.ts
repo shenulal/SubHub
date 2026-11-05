@@ -16,6 +16,9 @@ vi.mock("@/lib/utils/renewal-date", () => ({
 
 vi.mock("@/lib/db", () => ({
   prisma: {
+    taxRate: {
+      findFirst: vi.fn(),
+    },
     subscription: {
       findMany: vi.fn(),
       findFirst: vi.fn(),
@@ -95,6 +98,9 @@ const mockedAuth = auth as any;
 describe("subscription-suggestions (Phase 3)", () => {
   beforeEach(() => {
     vi.resetAllMocks();
+    vi.mocked(prisma.taxRate.findFirst).mockResolvedValue({
+      ratePercent: 5,
+    } as never);
     mockRedirect.mockClear();
   });
 
@@ -113,7 +119,7 @@ describe("subscription-suggestions (Phase 3)", () => {
       });
     });
 
-    it("카드 거래가 없으면 빈 배열을 반환해야 한다", async () => {
+    it("returns an empty array when there are no card transactions", async () => {
       vi.mocked(prisma.subscription.findMany).mockResolvedValue([]);
       vi.mocked(prisma.cardTransaction.groupBy).mockResolvedValue([]);
 
@@ -123,7 +129,7 @@ describe("subscription-suggestions (Phase 3)", () => {
       expect(result.data).toEqual([]);
     });
 
-    it("이미 구독이 있는 앱은 제외해야 한다", async () => {
+    it("excludes apps that already have a subscription", async () => {
       vi.mocked(prisma.subscription.findMany).mockResolvedValue([
         { appId: "app-existing" },
       ] as never);
@@ -143,7 +149,7 @@ describe("subscription-suggestions (Phase 3)", () => {
       expect(result.data).toEqual([]);
     });
 
-    it("거래가 2건 미만인 앱은 건너뛰어야 한다", async () => {
+    it("skips apps with fewer than 2 transactions", async () => {
       vi.mocked(prisma.subscription.findMany).mockResolvedValue([]);
       vi.mocked(prisma.cardTransaction.groupBy).mockResolvedValue([
         {
@@ -161,10 +167,10 @@ describe("subscription-suggestions (Phase 3)", () => {
       expect(result.data).toEqual([]);
     });
 
-    it("dominant card의 teamId와 availableUsers를 포함해야 한다", async () => {
+    it("includes the dominant card's teamId and availableUsers", async () => {
       vi.mocked(prisma.subscription.findMany).mockResolvedValue([]);
 
-      // 첫 번째 호출: 앱별 그룹화
+      // First call: group by app
       vi.mocked(prisma.cardTransaction.groupBy)
         .mockResolvedValueOnce([
           {
@@ -175,7 +181,7 @@ describe("subscription-suggestions (Phase 3)", () => {
             _max: { useDt: "20250301" },
           },
         ] as never)
-        // 두 번째 호출: dominant card 조회
+        // Second call: load the dominant card
         .mockResolvedValueOnce([
           { corporateCardId: "card-1", _count: { id: 3 } },
         ] as never);
@@ -191,10 +197,10 @@ describe("subscription-suggestions (Phase 3)", () => {
         id: "card-1",
         team: {
           id: "team-marketing",
-          name: "마케팅팀",
+          name: "Marketing",
           members: [
-            { id: "user-1", name: "홍길동", email: "hong@test.com" },
-            { id: "user-2", name: "김철수", email: "kim@test.com" },
+            { id: "user-1", name: "Ahmed Hassan", email: "hong@test.com" },
+            { id: "user-2", name: "Omar Khalid", email: "kim@test.com" },
           ],
         },
         assignedUser: null,
@@ -227,7 +233,7 @@ describe("subscription-suggestions (Phase 3)", () => {
         },
       ] as never);
 
-      // appendUnassignedUsers: teamId=null 사용자 없음
+      // appendUnassignedUsers: no users with teamId=null
       vi.mocked(prisma.user.findMany).mockResolvedValue([]);
 
       const result = await suggestFromCardTransactions();
@@ -235,12 +241,12 @@ describe("subscription-suggestions (Phase 3)", () => {
       expect(result.success).toBe(true);
       expect(result.data).toHaveLength(1);
       expect(result.data![0].teamId).toBe("team-marketing");
-      expect(result.data![0].teamName).toBe("마케팅팀");
+      expect(result.data![0].teamName).toBe("Marketing");
       expect(result.data![0].availableUsers).toHaveLength(2);
       expect(result.data![0].source).toBe("card_transaction");
     });
 
-    it("카드에 팀이 없고 거래에도 팀/유저가 없으면 teamId가 null이고 availableUsers에 조직 전체 멤버가 포함되어야 한다", async () => {
+    it("sets teamId to null and includes all organization members in availableUsers when neither the card nor the transactions have a team/user", async () => {
       vi.mocked(prisma.subscription.findMany).mockResolvedValue([]);
 
       vi.mocked(prisma.cardTransaction.groupBy)
@@ -297,9 +303,9 @@ describe("subscription-suggestions (Phase 3)", () => {
         },
       ] as never);
 
-      // SMP-156: 조직 전체 멤버 fallback
+      // SMP-156: fall back to all organization members
       vi.mocked(prisma.user.findMany).mockResolvedValue([
-        { id: "user-1", name: "유저1", email: "user1@test.com" },
+        { id: "user-1", name: "User 1", email: "user1@test.com" },
       ] as never);
 
       const result = await suggestFromCardTransactions();
@@ -308,11 +314,11 @@ describe("subscription-suggestions (Phase 3)", () => {
       expect(result.data).toHaveLength(1);
       expect(result.data![0].teamId).toBeNull();
       expect(result.data![0].teamName).toBeNull();
-      // SMP-156: 팀/유저 미배정 시 조직 전체 멤버로 fallback
+      // SMP-156: fall back to all organization members when no team/user is assigned
       expect(result.data![0].availableUsers).toHaveLength(1);
     });
 
-    it("organizationId로 필터링해야 한다 (multi-tenant)", async () => {
+    it("filters by organizationId (multi-tenant)", async () => {
       vi.mocked(prisma.subscription.findMany).mockResolvedValue([]);
       vi.mocked(prisma.cardTransaction.groupBy).mockResolvedValue([]);
 
@@ -344,30 +350,30 @@ describe("subscription-suggestions (Phase 3)", () => {
       lastPaymentDate: new Date("2025-03-01"),
       confidence: 0.85,
       teamId: "team-marketing",
-      teamName: "마케팅팀",
+      teamName: "Marketing",
       assignedUserId: null,
       assignedUserName: null,
       availableUsers: [
         {
           id: "user-1",
-          name: "홍길동",
+          name: "Ahmed Hassan",
           email: "hong@test.com",
           teamId: "team-marketing",
-          teamName: "마케팅팀",
+          teamName: "Marketing",
         },
         {
           id: "user-2",
-          name: "김철수",
+          name: "Omar Khalid",
           email: "kim@test.com",
           teamId: "team-marketing",
-          teamName: "마케팅팀",
+          teamName: "Marketing",
         },
       ],
       source: "card_transaction",
-      // SMP-123: 추가 필드
+      // SMP-123: additional fields
       suggestedAction: "create",
       unmatchedTransactionIds: ["tx-1", "tx-2", "tx-3"],
-      // SMP-134: Seat 구독제 판단
+      // SMP-134: seat-based subscription detection
       billingType: "PER_SEAT",
       perSeatPrice: null,
       suggestedSeats: null,
@@ -383,7 +389,7 @@ describe("subscription-suggestions (Phase 3)", () => {
         },
         expires: "",
       });
-      // SMP-123: 공통 mock 설정 (ensureAppTeamAssignment용)
+      // SMP-123: shared mock setup (for ensureAppTeamAssignment)
       vi.mocked(prisma.appTeam.findFirst).mockResolvedValue({
         id: "app-team-1",
         appId: "app-1",
@@ -394,7 +400,7 @@ describe("subscription-suggestions (Phase 3)", () => {
       } as never);
     });
 
-    it("suggestion의 teamId를 포함하여 구독을 생성해야 한다", async () => {
+    it("creates the subscription including the suggestion's teamId", async () => {
       vi.mocked(prisma.app.findFirst).mockResolvedValue({
         id: "app-1",
         name: "Slack",
@@ -419,7 +425,7 @@ describe("subscription-suggestions (Phase 3)", () => {
       });
     });
 
-    it("선택된 사용자에 대해 SubscriptionUser 레코드를 생성해야 한다", async () => {
+    it("creates SubscriptionUser records for the selected users", async () => {
       vi.mocked(prisma.app.findFirst).mockResolvedValue({
         id: "app-1",
         name: "Slack",
@@ -448,11 +454,11 @@ describe("subscription-suggestions (Phase 3)", () => {
           { subscriptionId: "sub-1", userId: "user-1", assignedBy: mockUserId },
           { subscriptionId: "sub-1", userId: "user-2", assignedBy: mockUserId },
         ],
-        skipDuplicates: true, // SMP-123: skipDuplicates 추가됨
+        skipDuplicates: true, // SMP-123: skipDuplicates added
       });
     });
 
-    it("ADMIN이 아닌 경우 사용자 배정을 거부해야 한다", async () => {
+    it("rejects user assignment for non-ADMIN users", async () => {
       mockedAuth.mockResolvedValue({
         user: {
           id: mockUserId,
@@ -469,10 +475,10 @@ describe("subscription-suggestions (Phase 3)", () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("사용자 배정은 관리자만 가능합니다");
+      expect(result.message).toBe("Only admins can assign users");
     });
 
-    it("사용자 미선택 시 ADMIN이 아니어도 허용해야 한다", async () => {
+    it("allows non-ADMIN users when no users are selected", async () => {
       mockedAuth.mockResolvedValue({
         user: {
           id: mockUserId,
@@ -500,7 +506,7 @@ describe("subscription-suggestions (Phase 3)", () => {
       expect(result.success).toBe(true);
     });
 
-    it("이미 구독이 있으면 거부해야 한다", async () => {
+    it("rejects when a subscription already exists", async () => {
       vi.mocked(prisma.app.findFirst).mockResolvedValue({
         id: "app-1",
         name: "Slack",
@@ -515,10 +521,10 @@ describe("subscription-suggestions (Phase 3)", () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("이미 해당 앱에 대한 구독이 있습니다");
+      expect(result.message).toBe("A subscription for this app already exists");
     });
 
-    it("유효하지 않은 사용자가 포함되면 거부해야 한다", async () => {
+    it("rejects when invalid users are included", async () => {
       vi.mocked(prisma.app.findFirst).mockResolvedValue({
         id: "app-1",
         name: "Slack",
@@ -534,10 +540,10 @@ describe("subscription-suggestions (Phase 3)", () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("유효하지 않은 사용자가 포함되어 있습니다");
+      expect(result.message).toBe("One or more users are invalid");
     });
 
-    it("teamId가 null이어도 동작해야 한다", async () => {
+    it("works when teamId is null", async () => {
       const suggestionWithoutTeam: CardTransactionSuggestion = {
         ...baseSuggestion,
         teamId: null,
@@ -568,7 +574,7 @@ describe("subscription-suggestions (Phase 3)", () => {
       });
     });
 
-    it("감사 로그에 card_transaction_suggestion 소스를 기록해야 한다", async () => {
+    it("records the card_transaction_suggestion source in the audit log", async () => {
       vi.mocked(prisma.app.findFirst).mockResolvedValue({
         id: "app-1",
         name: "Slack",
@@ -596,7 +602,7 @@ describe("subscription-suggestions (Phase 3)", () => {
   });
 });
 
-// ==================== SMP-107: CSV 결제 내역 업로드 시 구독 추천 플로우 개선 ====================
+// ==================== SMP-107: improved subscription suggestion flow for CSV payment uploads ====================
 
 describe("SMP-107: ensureAppTeamAssignment", () => {
   const mockOrgId = "org-123";
@@ -615,7 +621,7 @@ describe("SMP-107: ensureAppTeamAssignment", () => {
     });
   });
 
-  it("기존 AppTeam이 있으면 새로 생성하지 않아야 한다", async () => {
+  it("does not create a new AppTeam when one already exists", async () => {
     vi.mocked(prisma.appTeam.findFirst).mockResolvedValue({
       id: "app-team-existing",
       appId: "app-1",
@@ -629,7 +635,7 @@ describe("SMP-107: ensureAppTeamAssignment", () => {
     expect(prisma.appTeam.create).not.toHaveBeenCalled();
   });
 
-  it("AppTeam이 없으면 새로 생성해야 한다", async () => {
+  it("creates a new AppTeam when none exists", async () => {
     vi.mocked(prisma.appTeam.findFirst).mockResolvedValue(null);
     vi.mocked(prisma.appTeam.create).mockResolvedValue({
       id: "app-team-new",
@@ -651,7 +657,7 @@ describe("SMP-107: ensureAppTeamAssignment", () => {
     });
   });
 
-  it("생성 시 감사 로그가 기록되어야 한다", async () => {
+  it("writes an audit log on creation", async () => {
     vi.mocked(prisma.appTeam.findFirst).mockResolvedValue(null);
     vi.mocked(prisma.appTeam.create).mockResolvedValue({
       id: "app-team-new",
@@ -675,7 +681,7 @@ describe("SMP-107: ensureAppTeamAssignment", () => {
     });
   });
 
-  it("teamId가 null이면 아무 작업도 하지 않아야 한다", async () => {
+  it("does nothing when teamId is null", async () => {
     const result = await ensureAppTeamAssignment("app-1", null);
 
     expect(result.success).toBe(true);
@@ -685,11 +691,14 @@ describe("SMP-107: ensureAppTeamAssignment", () => {
   });
 });
 
-describe("SMP-107: suggestSubscriptionsFromPayments - 확장된 추천 로직", () => {
+describe("SMP-107: suggestSubscriptionsFromPayments - extended suggestion logic", () => {
   const mockOrgId = "org-123";
 
   beforeEach(() => {
     vi.resetAllMocks();
+    vi.mocked(prisma.taxRate.findFirst).mockResolvedValue({
+      ratePercent: 5,
+    } as never);
     mockedAuth.mockResolvedValue({
       user: {
         id: "user-123",
@@ -701,7 +710,7 @@ describe("SMP-107: suggestSubscriptionsFromPayments - 확장된 추천 로직", 
     });
   });
 
-  it("기존 구독이 있어도 연결 안 된 결제내역이 있으면 suggestedAction: link로 포함해야 한다", async () => {
+  it("includes suggestedAction: link when a subscription exists but some payment records are unlinked", async () => {
     vi.mocked(prisma.subscription.findMany).mockResolvedValue([
       { appId: "app-1", id: "sub-existing" },
     ] as never);
@@ -723,7 +732,7 @@ describe("SMP-107: suggestSubscriptionsFromPayments - 확장된 추천 로직", 
       catalog: { logoUrl: "https://slack.com/logo.png" },
     } as never);
 
-    // 결제내역 중 일부는 연결됨, 일부는 연결 안 됨
+    // Some payment records are linked, some are not
     vi.mocked(prisma.paymentRecord.findMany).mockResolvedValue([
       {
         id: "pr-1",
@@ -732,7 +741,7 @@ describe("SMP-107: suggestSubscriptionsFromPayments - 확장된 추천 로직", 
         currency: "KRW",
         teamId: "team-1",
         userId: null,
-        linkedSubscriptionId: "sub-existing", // 연결됨
+        linkedSubscriptionId: "sub-existing", // linked
       },
       {
         id: "pr-2",
@@ -741,7 +750,7 @@ describe("SMP-107: suggestSubscriptionsFromPayments - 확장된 추천 로직", 
         currency: "KRW",
         teamId: "team-1",
         userId: null,
-        linkedSubscriptionId: null, // 연결 안 됨
+        linkedSubscriptionId: null, // not linked
       },
       {
         id: "pr-3",
@@ -750,17 +759,17 @@ describe("SMP-107: suggestSubscriptionsFromPayments - 확장된 추천 로직", 
         currency: "KRW",
         teamId: "team-1",
         userId: null,
-        linkedSubscriptionId: null, // 연결 안 됨
+        linkedSubscriptionId: null, // not linked
       },
     ] as never);
 
     vi.mocked(prisma.team.findUnique).mockResolvedValue({
       id: "team-1",
-      name: "마케팅팀",
+      name: "Marketing",
       members: [],
     } as never);
 
-    // appendUnassignedUsers: teamId=null 사용자 없음
+    // appendUnassignedUsers: no users with teamId=null
     vi.mocked(prisma.user.findMany).mockResolvedValue([]);
 
     const result = await suggestSubscriptionsFromPayments();
@@ -772,7 +781,7 @@ describe("SMP-107: suggestSubscriptionsFromPayments - 확장된 추천 로직", 
     expect(result.data![0].unmatchedPaymentIds).toEqual(["pr-2", "pr-3"]);
   });
 
-  it("기존 구독이 있고 모든 결제내역이 연결되어 있으면 제외해야 한다", async () => {
+  it("excludes the app when a subscription exists and all payment records are linked", async () => {
     vi.mocked(prisma.subscription.findMany).mockResolvedValue([
       { appId: "app-1", id: "sub-existing" },
     ] as never);
@@ -794,7 +803,7 @@ describe("SMP-107: suggestSubscriptionsFromPayments - 확장된 추천 로직", 
       catalog: null,
     } as never);
 
-    // 모든 결제내역이 연결됨
+    // All payment records are linked
     vi.mocked(prisma.paymentRecord.findMany).mockResolvedValue([
       {
         id: "pr-1",
@@ -822,7 +831,7 @@ describe("SMP-107: suggestSubscriptionsFromPayments - 확장된 추천 로직", 
     expect(result.data).toEqual([]);
   });
 
-  it("기존 구독이 없으면 suggestedAction: create여야 한다", async () => {
+  it("uses suggestedAction: create when no subscription exists", async () => {
     vi.mocked(prisma.subscription.findMany).mockResolvedValue([]);
 
     vi.mocked(prisma.paymentRecord.groupBy).mockResolvedValue([
@@ -874,19 +883,19 @@ describe("SMP-107: suggestSubscriptionsFromPayments - 확장된 추천 로직", 
 
     vi.mocked(prisma.user.findUnique).mockResolvedValue({
       id: "user-1",
-      name: "홍길동",
+      name: "Ahmed Hassan",
       email: "hong@test.com",
-      team: { id: "team-1", name: "개발팀" },
+      team: { id: "team-1", name: "Engineering" },
     } as never);
 
-    // SMP-134: 팀 멤버 조회 (dominantUserId가 있을 때 availableUsers 채우기)
+    // SMP-134: load team members (fills availableUsers when dominantUserId is set)
     vi.mocked(prisma.team.findUnique).mockResolvedValue({
       id: "team-1",
-      name: "개발팀",
-      members: [{ id: "user-1", name: "홍길동", email: "hong@test.com" }],
+      name: "Engineering",
+      members: [{ id: "user-1", name: "Ahmed Hassan", email: "hong@test.com" }],
     } as never);
 
-    // appendUnassignedUsers: teamId=null 사용자 없음
+    // appendUnassignedUsers: no users with teamId=null
     vi.mocked(prisma.user.findMany).mockResolvedValue([]);
 
     const result = await suggestSubscriptionsFromPayments();
@@ -903,7 +912,7 @@ describe("SMP-107: suggestSubscriptionsFromPayments - 확장된 추천 로직", 
   });
 });
 
-describe("SMP-107: createSubscriptionFromPaymentSuggestion - 확장된 생성/연결 로직", () => {
+describe("SMP-107: createSubscriptionFromPaymentSuggestion - extended create/link logic", () => {
   const mockOrgId = "org-123";
   const mockUserId = "user-123";
 
@@ -932,20 +941,20 @@ describe("SMP-107: createSubscriptionFromPaymentSuggestion - 확장된 생성/�
     lastPaymentDate: new Date("2025-03-01"),
     confidence: 0.85,
     teamId: "team-marketing",
-    teamName: "마케팅팀",
+    teamName: "Marketing",
     assignedUserId: "user-kim",
-    assignedUserName: "김철수",
+    assignedUserName: "Omar Khalid",
     availableUsers: [],
     source: "payment_record",
     suggestedAction: "create",
     unmatchedPaymentIds: ["pr-1", "pr-2", "pr-3"],
-    // SMP-134: Seat 구독제 판단
+    // SMP-134: seat-based subscription detection
     billingType: "PER_SEAT",
     perSeatPrice: null,
     suggestedSeats: null,
   };
 
-  it("suggestedAction: create일 때 새 구독을 생성하고 PaymentRecord를 연결해야 한다", async () => {
+  it("creates a new subscription and links PaymentRecords for suggestedAction: create", async () => {
     vi.mocked(prisma.app.findFirst).mockResolvedValue({
       id: "app-1",
       name: "Slack",
@@ -982,7 +991,7 @@ describe("SMP-107: createSubscriptionFromPaymentSuggestion - 확장된 생성/�
     });
   });
 
-  it("suggestedAction: link일 때 새 구독을 생성하지 않고 기존 구독에 연결만 해야 한다", async () => {
+  it("only links to the existing subscription without creating one for suggestedAction: link", async () => {
     const linkSuggestion: PaymentRecordSuggestion = {
       ...baseSuggestion,
       suggestedAction: "link",
@@ -1016,7 +1025,7 @@ describe("SMP-107: createSubscriptionFromPaymentSuggestion - 확장된 생성/�
     });
   });
 
-  it("App-Team 자동 배정이 수행되어야 한다", async () => {
+  it("performs App-Team auto-assignment", async () => {
     vi.mocked(prisma.app.findFirst).mockResolvedValue({
       id: "app-1",
       name: "Slack",
@@ -1053,7 +1062,7 @@ describe("SMP-107: createSubscriptionFromPaymentSuggestion - 확장된 생성/�
     });
   });
 
-  it("SubscriptionUser 생성 시 skipDuplicates: true가 적용되어야 한다", async () => {
+  it("applies skipDuplicates: true when creating SubscriptionUser records", async () => {
     vi.mocked(prisma.app.findFirst).mockResolvedValue({
       id: "app-1",
       name: "Slack",
@@ -1088,7 +1097,7 @@ describe("SMP-107: createSubscriptionFromPaymentSuggestion - 확장된 생성/�
     });
   });
 
-  it("assignedUserId가 있으면 SubscriptionUser에 자동 배정되어야 한다", async () => {
+  it("auto-assigns assignedUserId to SubscriptionUser when present", async () => {
     vi.mocked(prisma.app.findFirst).mockResolvedValue({
       id: "app-1",
       name: "Slack",
@@ -1113,10 +1122,10 @@ describe("SMP-107: createSubscriptionFromPaymentSuggestion - 확장된 생성/�
 
     await createSubscriptionFromPaymentSuggestion({
       suggestion: baseSuggestion,
-      selectedUserIds: [], // 수동 선택 없음
+      selectedUserIds: [], // no manual selection
     });
 
-    // assignedUserId가 자동으로 포함되어야 함
+    // assignedUserId should be included automatically
     expect(prisma.subscriptionUser.createMany).toHaveBeenCalledWith({
       data: expect.arrayContaining([
         expect.objectContaining({ userId: "user-kim" }),
@@ -1126,7 +1135,7 @@ describe("SMP-107: createSubscriptionFromPaymentSuggestion - 확장된 생성/�
   });
 });
 
-// SMP-134: availableUsers 항상 채우기 테스트
+// SMP-134: always populate availableUsers
 describe("SMP-134: availableUsers population fix", () => {
   const mockOrgId = "org-123";
 
@@ -1143,8 +1152,8 @@ describe("SMP-134: availableUsers population fix", () => {
     });
   });
 
-  describe("suggestSubscriptionsFromPayments - dominantUserId가 있을 때 availableUsers 채우기", () => {
-    it("dominantUserId가 있고 팀이 있으면 팀 멤버로 availableUsers를 채워야 한다", async () => {
+  describe("suggestSubscriptionsFromPayments - populating availableUsers when dominantUserId is set", () => {
+    it("fills availableUsers with team members when dominantUserId has a team", async () => {
       vi.mocked(prisma.subscription.findMany).mockResolvedValue([]);
 
       vi.mocked(prisma.paymentRecord.groupBy).mockResolvedValue([
@@ -1194,25 +1203,25 @@ describe("SMP-134: availableUsers population fix", () => {
         },
       ] as never);
 
-      // dominantUser 조회
+      // Load the dominant user
       vi.mocked(prisma.user.findUnique).mockResolvedValue({
         id: "user-kim",
-        name: "김철수",
+        name: "Omar Khalid",
         email: "kim@test.com",
-        team: { id: "team-dev", name: "개발팀" },
+        team: { id: "team-dev", name: "Engineering" },
       } as never);
 
-      // 팀 멤버 조회 (SMP-134 새로 추가된 쿼리)
+      // Load team members (query added in SMP-134)
       vi.mocked(prisma.team.findUnique).mockResolvedValue({
         id: "team-dev",
-        name: "개발팀",
+        name: "Engineering",
         members: [
-          { id: "user-kim", name: "김철수", email: "kim@test.com" },
-          { id: "user-lee", name: "이영희", email: "lee@test.com" },
+          { id: "user-kim", name: "Omar Khalid", email: "kim@test.com" },
+          { id: "user-lee", name: "Sara Ali", email: "lee@test.com" },
         ],
       } as never);
 
-      // appendUnassignedUsers: teamId=null 사용자 없음
+      // appendUnassignedUsers: no users with teamId=null
       vi.mocked(prisma.user.findMany).mockResolvedValue([]);
 
       const result = await suggestSubscriptionsFromPayments();
@@ -1221,7 +1230,7 @@ describe("SMP-134: availableUsers population fix", () => {
       expect(result.data).toHaveLength(1);
       expect(result.data![0].assignedUserId).toBe("user-kim");
       expect(result.data![0].teamId).toBe("team-dev");
-      // SMP-134: availableUsers가 팀 멤버로 채워져야 함
+      // SMP-134: availableUsers should be filled with team members
       expect(result.data![0].availableUsers).toHaveLength(2);
       expect(result.data![0].availableUsers).toEqual(
         expect.arrayContaining([
@@ -1231,7 +1240,7 @@ describe("SMP-134: availableUsers population fix", () => {
       );
     });
 
-    it("dominantUserId가 있고 팀이 없으면 조직 전체 멤버로 fallback해야 한다", async () => {
+    it("falls back to all organization members when dominantUserId has no team", async () => {
       vi.mocked(prisma.subscription.findMany).mockResolvedValue([]);
 
       vi.mocked(prisma.paymentRecord.groupBy).mockResolvedValue([
@@ -1281,18 +1290,18 @@ describe("SMP-134: availableUsers population fix", () => {
         },
       ] as never);
 
-      // 유저에 팀 없음
+      // User has no team
       vi.mocked(prisma.user.findUnique).mockResolvedValue({
         id: "user-solo",
-        name: "나혼자",
+        name: "Solo User",
         email: "solo@test.com",
         team: null,
       } as never);
 
-      // 조직 전체 멤버 fallback
+      // Fall back to all organization members
       vi.mocked(prisma.user.findMany).mockResolvedValue([
-        { id: "user-solo", name: "나혼자", email: "solo@test.com" },
-        { id: "user-other", name: "다른사람", email: "other@test.com" },
+        { id: "user-solo", name: "Solo User", email: "solo@test.com" },
+        { id: "user-other", name: "Other User", email: "other@test.com" },
       ] as never);
 
       const result = await suggestSubscriptionsFromPayments();
@@ -1301,13 +1310,13 @@ describe("SMP-134: availableUsers population fix", () => {
       expect(result.data).toHaveLength(1);
       expect(result.data![0].assignedUserId).toBe("user-solo");
       expect(result.data![0].teamId).toBeNull();
-      // SMP-134: availableUsers가 조직 전체 멤버로 채워져야 함
+      // SMP-134: availableUsers should be filled with all organization members
       expect(result.data![0].availableUsers).toHaveLength(2);
     });
   });
 
-  describe("suggestFromCardTransactions - assignedUser가 있을 때 availableUsers 채우기", () => {
-    it("카드 assignedUser의 팀 멤버로 availableUsers를 채워야 한다", async () => {
+  describe("suggestFromCardTransactions - populating availableUsers when assignedUser is set", () => {
+    it("fills availableUsers with the card assignedUser's team members", async () => {
       vi.mocked(prisma.subscription.findMany).mockResolvedValue([]);
 
       vi.mocked(prisma.cardTransaction.groupBy)
@@ -1336,19 +1345,19 @@ describe("SMP-134: availableUsers population fix", () => {
         team: null,
         assignedUser: {
           id: "user-kim",
-          name: "김철수",
+          name: "Omar Khalid",
           email: "kim@test.com",
-          team: { id: "team-dev", name: "개발팀" },
+          team: { id: "team-dev", name: "Engineering" },
         },
       } as never);
 
-      // SMP-134: 팀 멤버 조회
+      // SMP-134: load team members
       vi.mocked(prisma.team.findUnique).mockResolvedValue({
         id: "team-dev",
-        name: "개발팀",
+        name: "Engineering",
         members: [
-          { id: "user-kim", name: "김철수", email: "kim@test.com" },
-          { id: "user-park", name: "박지성", email: "park@test.com" },
+          { id: "user-kim", name: "Omar Khalid", email: "kim@test.com" },
+          { id: "user-park", name: "Khalid Mansour", email: "park@test.com" },
         ],
       } as never);
 
@@ -1379,7 +1388,7 @@ describe("SMP-134: availableUsers population fix", () => {
         },
       ] as never);
 
-      // appendUnassignedUsers: teamId=null 사용자 없음
+      // appendUnassignedUsers: no users with teamId=null
       vi.mocked(prisma.user.findMany).mockResolvedValue([]);
 
       const result = await suggestFromCardTransactions();
@@ -1388,7 +1397,7 @@ describe("SMP-134: availableUsers population fix", () => {
       expect(result.data).toHaveLength(1);
       expect(result.data![0].assignedUserId).toBe("user-kim");
       expect(result.data![0].teamId).toBe("team-dev");
-      // SMP-134: availableUsers가 팀 멤버로 채워져야 함
+      // SMP-134: availableUsers should be filled with team members
       expect(result.data![0].availableUsers).toHaveLength(2);
       expect(result.data![0].availableUsers).toEqual(
         expect.arrayContaining([
@@ -1398,7 +1407,7 @@ describe("SMP-134: availableUsers population fix", () => {
       );
     });
 
-    it("카드 assignedUser에 팀이 없으면 조직 전체 멤버로 fallback해야 한다", async () => {
+    it("falls back to all organization members when the card assignedUser has no team", async () => {
       vi.mocked(prisma.subscription.findMany).mockResolvedValue([]);
 
       vi.mocked(prisma.cardTransaction.groupBy)
@@ -1422,22 +1431,22 @@ describe("SMP-134: availableUsers population fix", () => {
         catalog: null,
       } as never);
 
-      // 유저에 팀 없음
+      // User has no team
       vi.mocked(prisma.corporateCard.findUnique).mockResolvedValue({
         id: "card-1",
         team: null,
         assignedUser: {
           id: "user-solo",
-          name: "나혼자",
+          name: "Solo User",
           email: "solo@test.com",
           team: null,
         },
       } as never);
 
-      // SMP-134: 조직 전체 멤버 fallback
+      // SMP-134: fall back to all organization members
       vi.mocked(prisma.user.findMany).mockResolvedValue([
-        { id: "user-solo", name: "나혼자", email: "solo@test.com" },
-        { id: "user-other", name: "다른사람", email: "other@test.com" },
+        { id: "user-solo", name: "Solo User", email: "solo@test.com" },
+        { id: "user-other", name: "Other User", email: "other@test.com" },
       ] as never);
 
       vi.mocked(prisma.cardTransaction.findMany).mockResolvedValue([
@@ -1473,14 +1482,14 @@ describe("SMP-134: availableUsers population fix", () => {
       expect(result.data).toHaveLength(1);
       expect(result.data![0].assignedUserId).toBe("user-solo");
       expect(result.data![0].teamId).toBeNull();
-      // SMP-134: availableUsers가 조직 전체 멤버로 채워져야 함
+      // SMP-134: availableUsers should be filled with all organization members
       expect(result.data![0].availableUsers).toHaveLength(2);
     });
   });
 });
 
-// SMP-199: availableUsers에 teamId/teamName 포함 테스트
-describe("SMP-199: availableUsers teamId/teamName 포함", () => {
+// SMP-199: availableUsers include teamId/teamName
+describe("SMP-199: availableUsers include teamId/teamName", () => {
   const mockOrgId = "org-123";
 
   beforeEach(() => {
@@ -1496,8 +1505,8 @@ describe("SMP-199: availableUsers teamId/teamName 포함", () => {
     });
   });
 
-  describe("suggestSubscriptionsFromPayments - availableUsers에 teamId/teamName 포함", () => {
-    it("팀 소속 사용자의 availableUsers 항목에 teamId와 teamName이 포함되어야 한다", async () => {
+  describe("suggestSubscriptionsFromPayments - availableUsers include teamId/teamName", () => {
+    it("includes teamId and teamName in availableUsers entries for team members", async () => {
       vi.mocked(prisma.subscription.findMany).mockResolvedValue([]);
 
       vi.mocked(prisma.paymentRecord.groupBy).mockResolvedValue([
@@ -1549,21 +1558,21 @@ describe("SMP-199: availableUsers teamId/teamName 포함", () => {
 
       vi.mocked(prisma.user.findUnique).mockResolvedValue({
         id: "user-kim",
-        name: "김철수",
+        name: "Omar Khalid",
         email: "kim@test.com",
-        team: { id: "team-dev", name: "개발팀" },
+        team: { id: "team-dev", name: "Engineering" },
       } as never);
 
       vi.mocked(prisma.team.findUnique).mockResolvedValue({
         id: "team-dev",
-        name: "개발팀",
+        name: "Engineering",
         members: [
-          { id: "user-kim", name: "김철수", email: "kim@test.com" },
-          { id: "user-lee", name: "이영희", email: "lee@test.com" },
+          { id: "user-kim", name: "Omar Khalid", email: "kim@test.com" },
+          { id: "user-lee", name: "Sara Ali", email: "lee@test.com" },
         ],
       } as never);
 
-      // appendUnassignedUsers: teamId=null 사용자 없음
+      // appendUnassignedUsers: no users with teamId=null
       vi.mocked(prisma.user.findMany).mockResolvedValue([]);
 
       const result = await suggestSubscriptionsFromPayments();
@@ -1572,16 +1581,16 @@ describe("SMP-199: availableUsers teamId/teamName 포함", () => {
       expect(result.data).toHaveLength(1);
       const users = result.data![0].availableUsers;
       expect(users).toHaveLength(2);
-      // SMP-199: 팀 소속 사용자는 teamId와 teamName이 non-null이어야 한다
+      // SMP-199: team members must have non-null teamId and teamName
       users.forEach((user) => {
         expect(user).toHaveProperty("teamId");
         expect(user).toHaveProperty("teamName");
         expect(user.teamId).toBe("team-dev");
-        expect(user.teamName).toBe("개발팀");
+        expect(user.teamName).toBe("Engineering");
       });
     });
 
-    it("팀 미소속(fallback) 사용자의 availableUsers 항목에 teamId와 teamName이 null이어야 한다", async () => {
+    it("sets teamId and teamName to null in availableUsers entries for users without a team (fallback)", async () => {
       vi.mocked(prisma.subscription.findMany).mockResolvedValue([]);
 
       vi.mocked(prisma.paymentRecord.groupBy).mockResolvedValue([
@@ -1631,18 +1640,18 @@ describe("SMP-199: availableUsers teamId/teamName 포함", () => {
         },
       ] as never);
 
-      // 유저에 팀 없음
+      // User has no team
       vi.mocked(prisma.user.findUnique).mockResolvedValue({
         id: "user-solo",
-        name: "나혼자",
+        name: "Solo User",
         email: "solo@test.com",
         team: null,
       } as never);
 
-      // 조직 전체 멤버 fallback (팀 미소속)
+      // Fall back to all organization members (no team)
       vi.mocked(prisma.user.findMany).mockResolvedValue([
-        { id: "user-solo", name: "나혼자", email: "solo@test.com" },
-        { id: "user-other", name: "다른사람", email: "other@test.com" },
+        { id: "user-solo", name: "Solo User", email: "solo@test.com" },
+        { id: "user-other", name: "Other User", email: "other@test.com" },
       ] as never);
 
       const result = await suggestSubscriptionsFromPayments();
@@ -1651,7 +1660,7 @@ describe("SMP-199: availableUsers teamId/teamName 포함", () => {
       expect(result.data).toHaveLength(1);
       const users = result.data![0].availableUsers;
       expect(users).toHaveLength(2);
-      // SMP-199: 팀 미소속 사용자는 teamId와 teamName이 null이어야 한다
+      // SMP-199: users without a team must have null teamId and teamName
       users.forEach((user) => {
         expect(user).toHaveProperty("teamId");
         expect(user).toHaveProperty("teamName");
@@ -1661,8 +1670,8 @@ describe("SMP-199: availableUsers teamId/teamName 포함", () => {
     });
   });
 
-  describe("suggestFromCardTransactions - availableUsers에 teamId/teamName 포함", () => {
-    it("카드 팀 멤버의 availableUsers 항목에 teamId와 teamName이 포함되어야 한다", async () => {
+  describe("suggestFromCardTransactions - availableUsers include teamId/teamName", () => {
+    it("includes teamId and teamName in availableUsers entries for card team members", async () => {
       vi.mocked(prisma.subscription.findMany).mockResolvedValue([]);
 
       vi.mocked(prisma.cardTransaction.groupBy)
@@ -1690,10 +1699,10 @@ describe("SMP-199: availableUsers teamId/teamName 포함", () => {
         id: "card-1",
         team: {
           id: "team-marketing",
-          name: "마케팅팀",
+          name: "Marketing",
           members: [
-            { id: "user-1", name: "홍길동", email: "hong@test.com" },
-            { id: "user-2", name: "김철수", email: "kim@test.com" },
+            { id: "user-1", name: "Ahmed Hassan", email: "hong@test.com" },
+            { id: "user-2", name: "Omar Khalid", email: "kim@test.com" },
           ],
         },
         assignedUser: null,
@@ -1726,7 +1735,7 @@ describe("SMP-199: availableUsers teamId/teamName 포함", () => {
         },
       ] as never);
 
-      // appendUnassignedUsers: teamId=null 사용자 없음
+      // appendUnassignedUsers: no users with teamId=null
       vi.mocked(prisma.user.findMany).mockResolvedValue([]);
 
       const result = await suggestFromCardTransactions();
@@ -1735,16 +1744,16 @@ describe("SMP-199: availableUsers teamId/teamName 포함", () => {
       expect(result.data).toHaveLength(1);
       const users = result.data![0].availableUsers;
       expect(users).toHaveLength(2);
-      // SMP-199: 팀 소속 사용자는 teamId와 teamName이 non-null이어야 한다
+      // SMP-199: team members must have non-null teamId and teamName
       users.forEach((user) => {
         expect(user).toHaveProperty("teamId");
         expect(user).toHaveProperty("teamName");
         expect(user.teamId).toBe("team-marketing");
-        expect(user.teamName).toBe("마케팅팀");
+        expect(user.teamName).toBe("Marketing");
       });
     });
 
-    it("카드에 팀이 없고 fallback 사용자의 availableUsers 항목에 teamId와 teamName이 null이어야 한다", async () => {
+    it("sets teamId and teamName to null in availableUsers entries for fallback users when the card has no team", async () => {
       vi.mocked(prisma.subscription.findMany).mockResolvedValue([]);
 
       vi.mocked(prisma.cardTransaction.groupBy)
@@ -1801,10 +1810,10 @@ describe("SMP-199: availableUsers teamId/teamName 포함", () => {
         },
       ] as never);
 
-      // SMP-156: 조직 전체 멤버 fallback (팀 미소속)
+      // SMP-156: fall back to all organization members (no team)
       vi.mocked(prisma.user.findMany).mockResolvedValue([
-        { id: "user-1", name: "유저1", email: "user1@test.com" },
-        { id: "user-2", name: "유저2", email: "user2@test.com" },
+        { id: "user-1", name: "User 1", email: "user1@test.com" },
+        { id: "user-2", name: "User 2", email: "user2@test.com" },
       ] as never);
 
       const result = await suggestFromCardTransactions();
@@ -1813,7 +1822,7 @@ describe("SMP-199: availableUsers teamId/teamName 포함", () => {
       expect(result.data).toHaveLength(1);
       const users = result.data![0].availableUsers;
       expect(users).toHaveLength(2);
-      // SMP-199: 팀 미소속 사용자는 teamId와 teamName이 null이어야 한다
+      // SMP-199: users without a team must have null teamId and teamName
       users.forEach((user) => {
         expect(user).toHaveProperty("teamId");
         expect(user).toHaveProperty("teamName");
@@ -1824,7 +1833,7 @@ describe("SMP-199: availableUsers teamId/teamName 포함", () => {
   });
 });
 
-// SMP-134: assignedUserId가 availableUsers에 반드시 포함되는지 검증
+// SMP-134: verify assignedUserId is always included in availableUsers
 describe("SMP-134: assignedUserId inclusion guarantee in availableUsers", () => {
   const mockOrgId = "org-123";
 
@@ -1841,7 +1850,7 @@ describe("SMP-134: assignedUserId inclusion guarantee in availableUsers", () => 
     });
   });
 
-  it("suggestSubscriptionsFromPayments: assignedUserId가 팀 멤버에 없어도 availableUsers에 포함되어야 한다", async () => {
+  it("suggestSubscriptionsFromPayments: includes assignedUserId in availableUsers even when missing from team members", async () => {
     vi.mocked(prisma.subscription.findMany).mockResolvedValue([]);
 
     vi.mocked(prisma.paymentRecord.groupBy).mockResolvedValue([
@@ -1891,24 +1900,24 @@ describe("SMP-134: assignedUserId inclusion guarantee in availableUsers", () => 
       },
     ] as never);
 
-    // dominantUser는 팀이 있지만, 팀 멤버에 자기 자신이 빠진 경우
+    // The dominant user has a team, but is missing from the team member list
     vi.mocked(prisma.user.findUnique).mockResolvedValue({
       id: "user-kim",
-      name: "김철수",
+      name: "Omar Khalid",
       email: "kim@test.com",
-      team: { id: "team-dev", name: "개발팀" },
+      team: { id: "team-dev", name: "Engineering" },
     } as never);
 
     vi.mocked(prisma.team.findUnique).mockResolvedValue({
       id: "team-dev",
-      name: "개발팀",
+      name: "Engineering",
       members: [
-        // user-kim이 멤버 목록에 없음 (예: 상태 변경 등)
-        { id: "user-lee", name: "이영희", email: "lee@test.com" },
+        // user-kim is missing from the member list (e.g. after a status change)
+        { id: "user-lee", name: "Sara Ali", email: "lee@test.com" },
       ],
     } as never);
 
-    // appendUnassignedUsers: teamId=null 사용자 없음
+    // appendUnassignedUsers: no users with teamId=null
     vi.mocked(prisma.user.findMany).mockResolvedValue([]);
 
     const result = await suggestSubscriptionsFromPayments();
@@ -1916,17 +1925,17 @@ describe("SMP-134: assignedUserId inclusion guarantee in availableUsers", () => 
     expect(result.success).toBe(true);
     expect(result.data).toHaveLength(1);
     expect(result.data![0].assignedUserId).toBe("user-kim");
-    // assignedUserId가 availableUsers에 반드시 포함
+    // assignedUserId must be included in availableUsers
     expect(
       result.data![0].availableUsers.some((u) => u.id === "user-kim")
     ).toBe(true);
-    // 기존 팀 멤버도 포함
+    // Existing team members are also included
     expect(
       result.data![0].availableUsers.some((u) => u.id === "user-lee")
     ).toBe(true);
   });
 
-  it("suggestFromCardTransactions: assignedUserId가 팀 멤버에 없어도 availableUsers에 포함되어야 한다", async () => {
+  it("suggestFromCardTransactions: includes assignedUserId in availableUsers even when missing from team members", async () => {
     vi.mocked(prisma.subscription.findMany).mockResolvedValue([]);
 
     vi.mocked(prisma.cardTransaction.groupBy)
@@ -1955,23 +1964,25 @@ describe("SMP-134: assignedUserId inclusion guarantee in availableUsers", () => 
       team: null,
       assignedUser: {
         id: "user-kim",
-        name: "김철수",
+        name: "Omar Khalid",
         email: "kim@test.com",
-        team: { id: "team-dev", name: "개발팀" },
+        team: { id: "team-dev", name: "Engineering" },
       },
     } as never);
 
-    // 팀 멤버에 assignedUser가 빠진 경우
+    // assignedUser is missing from the team members
     vi.mocked(prisma.team.findUnique).mockResolvedValue({
       id: "team-dev",
-      name: "개발팀",
-      members: [{ id: "user-park", name: "박지성", email: "park@test.com" }],
+      name: "Engineering",
+      members: [
+        { id: "user-park", name: "Khalid Mansour", email: "park@test.com" },
+      ],
     } as never);
 
-    // assignedUser 단독 조회 (safety fallback)
+    // Load assignedUser on its own (safety fallback)
     vi.mocked(prisma.user.findUnique).mockResolvedValue({
       id: "user-kim",
-      name: "김철수",
+      name: "Omar Khalid",
       email: "kim@test.com",
     } as never);
 
@@ -2002,7 +2013,7 @@ describe("SMP-134: assignedUserId inclusion guarantee in availableUsers", () => 
       },
     ] as never);
 
-    // appendUnassignedUsers: teamId=null 사용자 없음
+    // appendUnassignedUsers: no users with teamId=null
     vi.mocked(prisma.user.findMany).mockResolvedValue([]);
 
     const result = await suggestFromCardTransactions();
@@ -2010,18 +2021,18 @@ describe("SMP-134: assignedUserId inclusion guarantee in availableUsers", () => 
     expect(result.success).toBe(true);
     expect(result.data).toHaveLength(1);
     expect(result.data![0].assignedUserId).toBe("user-kim");
-    // assignedUserId가 availableUsers에 반드시 포함
+    // assignedUserId must be included in availableUsers
     expect(
       result.data![0].availableUsers.some((u) => u.id === "user-kim")
     ).toBe(true);
-    // 기존 팀 멤버도 포함
+    // Existing team members are also included
     expect(
       result.data![0].availableUsers.some((u) => u.id === "user-park")
     ).toBe(true);
   });
 });
 
-// SMP-156: Regression - 팀/유저 미배정 시 조직 전체 멤버 fallback 테스트
+// SMP-156: regression - fall back to all organization members when no team/user is assigned
 describe("SMP-156: availableUsers fallback to org members when no team/user assigned", () => {
   const mockOrgId = "org-123";
 
@@ -2038,8 +2049,8 @@ describe("SMP-156: availableUsers fallback to org members when no team/user assi
     });
   });
 
-  describe("suggestSubscriptionsFromPayments - dominantUserId와 dominantTeamId가 둘 다 null일 때", () => {
-    it("결제내역에 팀/유저 미배정 시 availableUsers에 조직 전체 활성 멤버가 포함되어야 한다", async () => {
+  describe("suggestSubscriptionsFromPayments - when dominantUserId and dominantTeamId are both null", () => {
+    it("includes all active organization members in availableUsers when payment records have no team/user", async () => {
       vi.mocked(prisma.subscription.findMany).mockResolvedValue([]);
 
       vi.mocked(prisma.paymentRecord.groupBy).mockResolvedValue([
@@ -2059,7 +2070,7 @@ describe("SMP-156: availableUsers fallback to org members when no team/user assi
         catalog: null,
       } as never);
 
-      // 결제내역에 teamId와 userId가 모두 null
+      // Payment records have both teamId and userId null
       vi.mocked(prisma.paymentRecord.findMany).mockResolvedValue([
         {
           id: "pr-1",
@@ -2090,21 +2101,21 @@ describe("SMP-156: availableUsers fallback to org members when no team/user assi
         },
       ] as never);
 
-      // 조직 전체 활성 멤버 mock
+      // Mock all active organization members
       vi.mocked(prisma.user.findMany).mockResolvedValue([
-        { id: "user-a", name: "유저A", email: "a@test.com" },
-        { id: "user-b", name: "유저B", email: "b@test.com" },
-        { id: "user-c", name: "유저C", email: "c@test.com" },
+        { id: "user-a", name: "User A", email: "a@test.com" },
+        { id: "user-b", name: "User B", email: "b@test.com" },
+        { id: "user-c", name: "User C", email: "c@test.com" },
       ] as never);
 
       const result = await suggestSubscriptionsFromPayments();
 
       expect(result.success).toBe(true);
       expect(result.data).toHaveLength(1);
-      // 팀/유저 미배정이므로 teamId와 assignedUserId는 null
+      // No team/user assigned, so teamId and assignedUserId are null
       expect(result.data![0].teamId).toBeNull();
       expect(result.data![0].assignedUserId).toBeNull();
-      // SMP-156 수정: availableUsers에 조직 전체 멤버가 포함되어야 함
+      // SMP-156 fix: availableUsers must include all organization members
       expect(result.data![0].availableUsers).toHaveLength(3);
       expect(result.data![0].availableUsers).toEqual(
         expect.arrayContaining([
@@ -2115,7 +2126,7 @@ describe("SMP-156: availableUsers fallback to org members when no team/user assi
       );
     });
 
-    it("기존 동작 유지: dominantUserId가 있으면 팀 멤버로 채워야 한다", async () => {
+    it("keeps existing behaviour: fills with team members when dominantUserId is set", async () => {
       vi.mocked(prisma.subscription.findMany).mockResolvedValue([]);
 
       vi.mocked(prisma.paymentRecord.groupBy).mockResolvedValue([
@@ -2135,7 +2146,7 @@ describe("SMP-156: availableUsers fallback to org members when no team/user assi
         catalog: null,
       } as never);
 
-      // 결제내역에 userId가 있음
+      // Payment records have a userId
       vi.mocked(prisma.paymentRecord.findMany).mockResolvedValue([
         {
           id: "pr-1",
@@ -2168,21 +2179,21 @@ describe("SMP-156: availableUsers fallback to org members when no team/user assi
 
       vi.mocked(prisma.user.findUnique).mockResolvedValue({
         id: "user-kim",
-        name: "김철수",
+        name: "Omar Khalid",
         email: "kim@test.com",
-        team: { id: "team-dev", name: "개발팀" },
+        team: { id: "team-dev", name: "Engineering" },
       } as never);
 
       vi.mocked(prisma.team.findUnique).mockResolvedValue({
         id: "team-dev",
-        name: "개발팀",
+        name: "Engineering",
         members: [
-          { id: "user-kim", name: "김철수", email: "kim@test.com" },
-          { id: "user-lee", name: "이영희", email: "lee@test.com" },
+          { id: "user-kim", name: "Omar Khalid", email: "kim@test.com" },
+          { id: "user-lee", name: "Sara Ali", email: "lee@test.com" },
         ],
       } as never);
 
-      // appendUnassignedUsers: teamId=null 사용자 없음
+      // appendUnassignedUsers: no users with teamId=null
       vi.mocked(prisma.user.findMany).mockResolvedValueOnce([]);
 
       const result = await suggestSubscriptionsFromPayments();
@@ -2190,15 +2201,15 @@ describe("SMP-156: availableUsers fallback to org members when no team/user assi
       expect(result.success).toBe(true);
       expect(result.data).toHaveLength(1);
       expect(result.data![0].assignedUserId).toBe("user-kim");
-      // 기존 동작 유지: 팀 멤버로 availableUsers 채우기
+      // Existing behaviour: fill availableUsers with team members
       expect(result.data![0].availableUsers).toHaveLength(2);
-      // appendUnassignedUsers를 위해 user.findMany가 1회 호출됨 (조직 전체 fallback 아님)
+      // user.findMany is called once for appendUnassignedUsers (not the organization-wide fallback)
       expect(prisma.user.findMany).toHaveBeenCalledTimes(1);
     });
   });
 
-  describe("suggestFromCardTransactions - 카드 미배정 및 거래 팀/유저 미배정 시", () => {
-    it("카드 팀/유저 미배정이고 거래에도 팀/유저 미배정 시 availableUsers에 조직 전체 활성 멤버가 포함되어야 한다", async () => {
+  describe("suggestFromCardTransactions - card and transactions without team/user assignment", () => {
+    it("includes all active organization members in availableUsers when neither the card nor the transactions have a team/user", async () => {
       vi.mocked(prisma.subscription.findMany).mockResolvedValue([]);
 
       vi.mocked(prisma.cardTransaction.groupBy)
@@ -2222,14 +2233,14 @@ describe("SMP-156: availableUsers fallback to org members when no team/user assi
         catalog: null,
       } as never);
 
-      // 카드에 팀/유저 미배정
+      // Card has no team/user
       vi.mocked(prisma.corporateCard.findUnique).mockResolvedValue({
         id: "card-1",
         team: null,
         assignedUser: null,
       } as never);
 
-      // 거래에도 teamId/userId가 모두 null
+      // Transactions also have teamId/userId null
       vi.mocked(prisma.cardTransaction.findMany).mockResolvedValue([
         {
           id: "tx-1",
@@ -2257,20 +2268,20 @@ describe("SMP-156: availableUsers fallback to org members when no team/user assi
         },
       ] as never);
 
-      // 조직 전체 활성 멤버 mock
+      // Mock all active organization members
       vi.mocked(prisma.user.findMany).mockResolvedValue([
-        { id: "user-a", name: "유저A", email: "a@test.com" },
-        { id: "user-b", name: "유저B", email: "b@test.com" },
+        { id: "user-a", name: "User A", email: "a@test.com" },
+        { id: "user-b", name: "User B", email: "b@test.com" },
       ] as never);
 
       const result = await suggestFromCardTransactions();
 
       expect(result.success).toBe(true);
       expect(result.data).toHaveLength(1);
-      // 팀/유저 미배정이므로 모두 null
+      // No team/user assigned, so everything is null
       expect(result.data![0].teamId).toBeNull();
       expect(result.data![0].assignedUserId).toBeNull();
-      // SMP-156 수정: availableUsers에 조직 전체 멤버가 포함되어야 함
+      // SMP-156 fix: availableUsers must include all organization members
       expect(result.data![0].availableUsers).toHaveLength(2);
       expect(result.data![0].availableUsers).toEqual(
         expect.arrayContaining([
@@ -2280,7 +2291,7 @@ describe("SMP-156: availableUsers fallback to org members when no team/user assi
       );
     });
 
-    it("기존 동작 유지: 카드 team 배정이 있으면 해당 팀 멤버로 availableUsers를 채워야 한다", async () => {
+    it("keeps existing behaviour: fills availableUsers with the team members when the card has a team", async () => {
       vi.mocked(prisma.subscription.findMany).mockResolvedValue([]);
 
       vi.mocked(prisma.cardTransaction.groupBy)
@@ -2304,15 +2315,15 @@ describe("SMP-156: availableUsers fallback to org members when no team/user assi
         catalog: null,
       } as never);
 
-      // 카드에 팀 배정됨
+      // Card has a team assigned
       vi.mocked(prisma.corporateCard.findUnique).mockResolvedValue({
         id: "card-1",
         team: {
           id: "team-marketing",
-          name: "마케팅팀",
+          name: "Marketing",
           members: [
-            { id: "user-1", name: "홍길동", email: "hong@test.com" },
-            { id: "user-2", name: "김철수", email: "kim@test.com" },
+            { id: "user-1", name: "Ahmed Hassan", email: "hong@test.com" },
+            { id: "user-2", name: "Omar Khalid", email: "kim@test.com" },
           ],
         },
         assignedUser: null,
@@ -2345,7 +2356,7 @@ describe("SMP-156: availableUsers fallback to org members when no team/user assi
         },
       ] as never);
 
-      // appendUnassignedUsers: teamId=null 사용자 없음
+      // appendUnassignedUsers: no users with teamId=null
       vi.mocked(prisma.user.findMany).mockResolvedValueOnce([]);
 
       const result = await suggestFromCardTransactions();
@@ -2353,22 +2364,22 @@ describe("SMP-156: availableUsers fallback to org members when no team/user assi
       expect(result.success).toBe(true);
       expect(result.data).toHaveLength(1);
       expect(result.data![0].teamId).toBe("team-marketing");
-      // 기존 동작 유지: 팀 멤버로 채워야 함
+      // Existing behaviour: fill with team members
       expect(result.data![0].availableUsers).toHaveLength(2);
-      // appendUnassignedUsers를 위해 user.findMany가 1회 호출됨 (조직 전체 fallback 아님)
+      // user.findMany is called once for appendUnassignedUsers (not the organization-wide fallback)
       expect(prisma.user.findMany).toHaveBeenCalledTimes(1);
     });
   });
 });
 
-// Phase 2 추가: 법인카드 유저 배정 시 구독 자동 배정 테스트
+// Phase 2: auto-assign subscriptions when a corporate card has an assigned user
 describe("subscription-suggestions (Phase 2 - User Assignment)", () => {
   beforeEach(() => {
     vi.resetAllMocks();
     mockRedirect.mockClear();
   });
 
-  describe("suggestFromCardTransactions - assignedUser 처리", () => {
+  describe("suggestFromCardTransactions - assignedUser handling", () => {
     const mockOrgId = "org-123";
 
     beforeEach(() => {
@@ -2383,7 +2394,7 @@ describe("subscription-suggestions (Phase 2 - User Assignment)", () => {
       });
     });
 
-    it("카드에 assignedUser가 있으면 assignedUserId와 유저 정보를 포함해야 한다", async () => {
+    it("includes assignedUserId and user details when the card has an assignedUser", async () => {
       vi.mocked(prisma.subscription.findMany).mockResolvedValue([]);
 
       vi.mocked(prisma.cardTransaction.groupBy)
@@ -2407,26 +2418,28 @@ describe("subscription-suggestions (Phase 2 - User Assignment)", () => {
         catalog: { logoUrl: "https://slack.com/logo.png" },
       } as never);
 
-      // 카드에 assignedUser가 있고, team은 없는 경우
+      // Card has an assignedUser and no team
       vi.mocked(prisma.corporateCard.findUnique).mockResolvedValue({
         id: "card-1",
         team: null,
         assignedUser: {
           id: "user-kim",
-          name: "김철수",
+          name: "Omar Khalid",
           email: "kim@test.com",
-          team: { id: "team-dev", name: "개발팀" },
+          team: { id: "team-dev", name: "Engineering" },
         },
       } as never);
 
-      // SMP-134: 팀 멤버 조회 (assignedUser의 팀 멤버로 availableUsers 채우기)
+      // SMP-134: load team members (fill availableUsers with the assignedUser's team members)
       vi.mocked(prisma.team.findUnique).mockResolvedValue({
         id: "team-dev",
-        name: "개발팀",
-        members: [{ id: "user-kim", name: "김철수", email: "kim@test.com" }],
+        name: "Engineering",
+        members: [
+          { id: "user-kim", name: "Omar Khalid", email: "kim@test.com" },
+        ],
       } as never);
 
-      // appendUnassignedUsers: teamId=null 사용자 없음
+      // appendUnassignedUsers: no users with teamId=null
       vi.mocked(prisma.user.findMany).mockResolvedValueOnce([]);
 
       vi.mocked(prisma.cardTransaction.findMany).mockResolvedValue([
@@ -2460,17 +2473,17 @@ describe("subscription-suggestions (Phase 2 - User Assignment)", () => {
 
       expect(result.success).toBe(true);
       expect(result.data).toHaveLength(1);
-      // assignedUserId가 있어야 함
+      // assignedUserId must be set
       expect(result.data![0].assignedUserId).toBe("user-kim");
-      expect(result.data![0].assignedUserName).toBe("김철수");
-      // 유저 배정 시, 해당 유저의 팀 정보를 teamId/teamName에 설정
+      expect(result.data![0].assignedUserName).toBe("Omar Khalid");
+      // When a user is assigned, set teamId/teamName from that user's team
       expect(result.data![0].teamId).toBe("team-dev");
-      expect(result.data![0].teamName).toBe("개발팀");
-      // SMP-134: availableUsers가 채워져야 함
+      expect(result.data![0].teamName).toBe("Engineering");
+      // SMP-134: availableUsers must be populated
       expect(result.data![0].availableUsers).toHaveLength(1);
     });
 
-    it("카드에 team 배정만 있고 assignedUser가 없으면 assignedUserId가 null이어야 한다", async () => {
+    it("sets assignedUserId to null when the card has only a team and no assignedUser", async () => {
       vi.mocked(prisma.subscription.findMany).mockResolvedValue([]);
 
       vi.mocked(prisma.cardTransaction.groupBy)
@@ -2494,18 +2507,20 @@ describe("subscription-suggestions (Phase 2 - User Assignment)", () => {
         catalog: null,
       } as never);
 
-      // 카드에 team만 배정된 경우
+      // Card has only a team assigned
       vi.mocked(prisma.corporateCard.findUnique).mockResolvedValue({
         id: "card-1",
         team: {
           id: "team-marketing",
-          name: "마케팅팀",
-          members: [{ id: "user-1", name: "홍길동", email: "hong@test.com" }],
+          name: "Marketing",
+          members: [
+            { id: "user-1", name: "Ahmed Hassan", email: "hong@test.com" },
+          ],
         },
         assignedUser: null,
       } as never);
 
-      // appendUnassignedUsers: teamId=null 사용자 없음
+      // appendUnassignedUsers: no users with teamId=null
       vi.mocked(prisma.user.findMany).mockResolvedValueOnce([]);
 
       vi.mocked(prisma.cardTransaction.findMany).mockResolvedValue([
@@ -2544,7 +2559,7 @@ describe("subscription-suggestions (Phase 2 - User Assignment)", () => {
       expect(result.data![0].teamId).toBe("team-marketing");
     });
 
-    it("카드에 team과 assignedUser 둘 다 없으면 teamId/assignedUserId는 null이고 availableUsers에 조직 전체 멤버가 포함되어야 한다", async () => {
+    it("sets teamId/assignedUserId to null and includes all organization members in availableUsers when the card has neither team nor assignedUser", async () => {
       vi.mocked(prisma.subscription.findMany).mockResolvedValue([]);
 
       vi.mocked(prisma.cardTransaction.groupBy)
@@ -2568,7 +2583,7 @@ describe("subscription-suggestions (Phase 2 - User Assignment)", () => {
         catalog: null,
       } as never);
 
-      // 카드에 배정 없음
+      // Card has no assignment
       vi.mocked(prisma.corporateCard.findUnique).mockResolvedValue({
         id: "card-1",
         team: null,
@@ -2602,10 +2617,10 @@ describe("subscription-suggestions (Phase 2 - User Assignment)", () => {
         },
       ] as never);
 
-      // SMP-156: 조직 전체 멤버 fallback
+      // SMP-156: fall back to all organization members
       vi.mocked(prisma.user.findMany).mockResolvedValue([
-        { id: "user-1", name: "유저1", email: "user1@test.com" },
-        { id: "user-2", name: "유저2", email: "user2@test.com" },
+        { id: "user-1", name: "User 1", email: "user1@test.com" },
+        { id: "user-2", name: "User 2", email: "user2@test.com" },
       ] as never);
 
       const result = await suggestFromCardTransactions();
@@ -2614,12 +2629,12 @@ describe("subscription-suggestions (Phase 2 - User Assignment)", () => {
       expect(result.data).toHaveLength(1);
       expect(result.data![0].assignedUserId).toBeNull();
       expect(result.data![0].teamId).toBeNull();
-      // SMP-156: 팀/유저 미배정 시 조직 전체 멤버로 fallback
+      // SMP-156: fall back to all organization members when no team/user is assigned
       expect(result.data![0].availableUsers).toHaveLength(2);
     });
   });
 
-  describe("createSubscriptionFromCardSuggestion - assignedUserId 자동 배정", () => {
+  describe("createSubscriptionFromCardSuggestion - automatic assignedUserId assignment", () => {
     const mockOrgId = "org-123";
     const mockUserId = "user-123";
 
@@ -2635,7 +2650,7 @@ describe("subscription-suggestions (Phase 2 - User Assignment)", () => {
       });
     });
 
-    it("assignedUserId가 있으면 자동으로 SubscriptionUser에 배정해야 한다", async () => {
+    it("automatically assigns assignedUserId to SubscriptionUser when present", async () => {
       const suggestionWithAssignedUser: CardTransactionSuggestion = {
         appId: "app-1",
         appName: "Slack",
@@ -2648,9 +2663,9 @@ describe("subscription-suggestions (Phase 2 - User Assignment)", () => {
         lastPaymentDate: new Date("2025-03-01"),
         confidence: 0.85,
         teamId: "team-dev",
-        teamName: "개발팀",
+        teamName: "Engineering",
         assignedUserId: "user-kim",
-        assignedUserName: "김철수",
+        assignedUserName: "Omar Khalid",
         availableUsers: [],
         source: "card_transaction",
         suggestedAction: "create",
@@ -2665,7 +2680,7 @@ describe("subscription-suggestions (Phase 2 - User Assignment)", () => {
         name: "Slack",
       } as never);
       vi.mocked(prisma.subscription.findFirst).mockResolvedValue(null);
-      // SMP-123: ensureAppTeamAssignment를 위한 mock 추가
+      // SMP-123: added mock for ensureAppTeamAssignment
       vi.mocked(prisma.appTeam.findFirst).mockResolvedValue({
         id: "app-team-1",
         appId: "app-1",
@@ -2680,26 +2695,26 @@ describe("subscription-suggestions (Phase 2 - User Assignment)", () => {
       vi.mocked(prisma.subscriptionUser.createMany).mockResolvedValue({
         count: 1,
       } as never);
-      // SMP-123: cardTransaction.updateMany mock 추가
+      // SMP-123: added cardTransaction.updateMany mock
       vi.mocked(prisma.cardTransaction.updateMany).mockResolvedValue({
         count: 2,
       } as never);
       vi.mocked(prisma.auditLog.create).mockResolvedValue({} as never);
 
-      // selectedUserIds 비어 있어도 assignedUserId가 있으면 자동 배정
+      // Auto-assign when assignedUserId is set even if selectedUserIds is empty
       const result = await createSubscriptionFromCardSuggestion({
         suggestion: suggestionWithAssignedUser,
         selectedUserIds: [],
       });
 
       expect(result.success).toBe(true);
-      // subscription.teamId는 유저의 팀으로 설정
+      // subscription.teamId is set to the user's team
       expect(prisma.subscription.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           teamId: "team-dev",
         }),
       });
-      // SubscriptionUser에 assignedUserId 자동 배정
+      // assignedUserId is auto-assigned to SubscriptionUser
       expect(prisma.subscriptionUser.createMany).toHaveBeenCalledWith({
         data: [
           {
@@ -2708,11 +2723,11 @@ describe("subscription-suggestions (Phase 2 - User Assignment)", () => {
             assignedBy: mockUserId,
           },
         ],
-        skipDuplicates: true, // SMP-123: skipDuplicates 추가됨
+        skipDuplicates: true, // SMP-123: skipDuplicates added
       });
     });
 
-    it("selectedUserIds와 assignedUserId 모두 처리해야 한다", async () => {
+    it("handles both selectedUserIds and assignedUserId", async () => {
       const suggestionWithBoth: CardTransactionSuggestion = {
         appId: "app-1",
         appName: "Slack",
@@ -2725,16 +2740,16 @@ describe("subscription-suggestions (Phase 2 - User Assignment)", () => {
         lastPaymentDate: new Date("2025-03-01"),
         confidence: 0.85,
         teamId: "team-dev",
-        teamName: "개발팅",
+        teamName: "Engineering",
         assignedUserId: "user-kim",
-        assignedUserName: "김철수",
+        assignedUserName: "Omar Khalid",
         availableUsers: [
           {
             id: "user-lee",
-            name: "이영희",
+            name: "Sara Ali",
             email: "lee@test.com",
             teamId: "team-dev",
-            teamName: "개발팅",
+            teamName: "Engineering",
           },
         ],
         source: "card_transaction",
@@ -2750,7 +2765,7 @@ describe("subscription-suggestions (Phase 2 - User Assignment)", () => {
         name: "Slack",
       } as never);
       vi.mocked(prisma.subscription.findFirst).mockResolvedValue(null);
-      // SMP-123: ensureAppTeamAssignment를 위한 mock 추가
+      // SMP-123: added mock for ensureAppTeamAssignment
       vi.mocked(prisma.appTeam.findFirst).mockResolvedValue({
         id: "app-team-1",
         appId: "app-1",
@@ -2766,7 +2781,7 @@ describe("subscription-suggestions (Phase 2 - User Assignment)", () => {
       vi.mocked(prisma.subscriptionUser.createMany).mockResolvedValue({
         count: 2,
       } as never);
-      // SMP-123: cardTransaction.updateMany mock 추가
+      // SMP-123: added cardTransaction.updateMany mock
       vi.mocked(prisma.cardTransaction.updateMany).mockResolvedValue({
         count: 1,
       } as never);
@@ -2778,19 +2793,19 @@ describe("subscription-suggestions (Phase 2 - User Assignment)", () => {
       });
 
       expect(result.success).toBe(true);
-      // assignedUserId + selectedUserIds 모두 배정 (중복 제거)
+      // assignedUserId + selectedUserIds are all assigned (deduplicated)
       expect(prisma.subscriptionUser.createMany).toHaveBeenCalledWith({
         data: expect.arrayContaining([
           expect.objectContaining({ userId: "user-kim" }),
           expect.objectContaining({ userId: "user-lee" }),
         ]),
-        skipDuplicates: true, // SMP-123: skipDuplicates 추가됨
+        skipDuplicates: true, // SMP-123: skipDuplicates added
       });
     });
   });
 
-  describe("suggestSubscriptionsFromPayments - 에러 핸들링", () => {
-    it("requireOrganization이 일반 에러를 throw하면 { success: false }를 반환해야 한다", async () => {
+  describe("suggestSubscriptionsFromPayments - error handling", () => {
+    it("returns { success: false } when requireOrganization throws a generic error", async () => {
       mockedAuth.mockRejectedValue(new Error("Auth service unavailable"));
 
       const result = await suggestSubscriptionsFromPayments();
@@ -2799,7 +2814,7 @@ describe("subscription-suggestions (Phase 2 - User Assignment)", () => {
       expect(result.error).toBe("Auth service unavailable");
     });
 
-    it("Prisma 쿼리 실패 시 { success: false }를 반환해야 한다", async () => {
+    it("returns { success: false } when a Prisma query fails", async () => {
       mockedAuth.mockResolvedValue({
         user: {
           id: "user-123",
@@ -2819,7 +2834,7 @@ describe("subscription-suggestions (Phase 2 - User Assignment)", () => {
       expect(result.error).toBe("DB connection failed");
     });
 
-    it("redirect 에러는 그대로 rethrow해야 한다", async () => {
+    it("rethrows redirect errors as-is", async () => {
       mockedAuth.mockImplementation(() => {
         const error = new Error("NEXT_REDIRECT:/login");
         (error as Error & { digest: string }).digest = "NEXT_REDIRECT:/login";

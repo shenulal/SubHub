@@ -1,13 +1,13 @@
 import { logger } from "@/lib/logger";
 
 /**
- * 통합 로깅 래퍼 (API Routes + Server Actions 공용)
+ * Unified logging wrapper (shared by API Routes and Server Actions)
  *
- * 모든 백엔드 함수(API Route handler, Server Action)를 감싸서
- * 시작/완료/에러를 일관된 포맷으로 로깅합니다.
+ * Wraps every backend function (API Route handler, Server Action) and
+ * logs start/done/error in a consistent format.
  *
- * API Route: NextRequest/NextResponse 자동 감지 → method, path, status
- * Server Action: payload 캡처, ActionState 결과 요약, success:false → warn
+ * API Route: NextRequest/NextResponse auto-detected → method, path, status
+ * Server Action: payload captured, ActionState result summarised, success:false → warn
  *
  * @example API Route
  * ```ts
@@ -23,9 +23,9 @@ import { logger } from "@/lib/logger";
  * ```
  */
 
-// ─── 헬퍼 함수 ───
+// ─── Helpers ───
 
-/** URL에서 query params 추출 → { page: "1", limit: "20" } */
+/** Extract query params from the URL → { page: "1", limit: "20" } */
 function extractQueryParams(url: string): Record<string, string> | undefined {
   try {
     const { searchParams } = new URL(url);
@@ -40,7 +40,7 @@ function extractQueryParams(url: string): Record<string, string> | undefined {
   }
 }
 
-/** HTTP 요청 body 추출 (clone → json, POST/PUT/PATCH/DELETE만) */
+/** Extract the HTTP request body (clone → json; POST/PUT/PATCH/DELETE only) */
 async function extractRequestBody(req: unknown): Promise<unknown> {
   if (!req || typeof req !== "object") return undefined;
   const r = req as {
@@ -58,7 +58,7 @@ async function extractRequestBody(req: unknown): Promise<unknown> {
   }
 }
 
-/** 응답 body의 대형 배열 → "[Array: N items]" 으로 요약 */
+/** Summarise large arrays in the response body as "[Array: N items]" */
 function summarizeBody(body: unknown): unknown {
   if (!body || typeof body !== "object" || Array.isArray(body)) return body;
 
@@ -71,7 +71,7 @@ function summarizeBody(body: unknown): unknown {
   return obj;
 }
 
-/** HTTP 응답 body 추출 (clone → json → 배열 요약) */
+/** Extract the HTTP response body (clone → json → summarise arrays) */
 async function extractResponseBody(res: unknown): Promise<unknown> {
   if (!res || typeof res !== "object") return undefined;
   const r = res as { clone?: () => { json(): Promise<unknown> } };
@@ -85,7 +85,7 @@ async function extractResponseBody(res: unknown): Promise<unknown> {
   }
 }
 
-/** FormData → plain object 변환 (다중 값 지원, File 메타데이터만) */
+/** Convert FormData to a plain object (supports multiple values; File metadata only) */
 function formDataToObject(fd: FormData): Record<string, unknown> {
   const obj: Record<string, unknown> = {};
   fd.forEach((value, key) => {
@@ -102,7 +102,7 @@ function formDataToObject(fd: FormData): Record<string, unknown> {
   return obj;
 }
 
-/** HTTP 요청 객체 감지 (NextRequest-like) */
+/** Detect an HTTP request object (NextRequest-like) */
 function isHttpRequest(val: unknown): boolean {
   return (
     val !== null &&
@@ -112,7 +112,7 @@ function isHttpRequest(val: unknown): boolean {
   );
 }
 
-/** ActionState 감지 ({ success: boolean } 패턴) */
+/** Detect an ActionState ({ success: boolean } pattern) */
 function isActionState(val: unknown): boolean {
   return (
     val !== null &&
@@ -123,10 +123,10 @@ function isActionState(val: unknown): boolean {
 }
 
 /**
- * args에서 로깅용 payload 추출
- * - prevState(ActionState) 제외
- * - NextRequest 제외
- * - FormData → plain object 변환
+ * Extract the payload to log from args
+ * - excludes prevState (ActionState)
+ * - excludes NextRequest
+ * - converts FormData to a plain object
  */
 function sanitizeArgs(args: unknown[]): unknown {
   if (args.length === 0) return undefined;
@@ -144,9 +144,9 @@ function sanitizeArgs(args: unknown[]): unknown {
 }
 
 /**
- * ActionState 결과 요약
- * - data 필드 제외 (크기 이슈) → hasData: true만 표시
- * - success, message, error, errors 포함
+ * Summarise an ActionState result
+ * - omits the data field (size concerns) → shows hasData: true only
+ * - includes success, message, error, errors
  */
 function summarizeResult(result: unknown): Record<string, unknown> | undefined {
   if (!result || typeof result !== "object") return undefined;
@@ -167,9 +167,9 @@ function summarizeResult(result: unknown): Record<string, unknown> | undefined {
 }
 
 /**
- * 에러 객체를 로깅용으로 정리
- * - PrismaClientKnownRequestError: 맹글링된 소스 코드 제거, 핵심 정보만 추출
- * - 일반 에러: 그대로 반환
+ * Normalise an error object for logging
+ * - PrismaClientKnownRequestError: strips mangled source code, keeps only the key details
+ * - other errors: returned as-is
  */
 function sanitizeError(error: unknown): unknown {
   if (!(error instanceof Error)) return error;
@@ -180,9 +180,9 @@ function sanitizeError(error: unknown): unknown {
     clientVersion?: string;
   };
 
-  // Prisma 에러 감지: code 필드 존재 + "P"로 시작
+  // Detect Prisma errors: has a code field starting with "P"
   if (typeof e.code === "string" && e.code.startsWith("P")) {
-    // message에서 실제 에러 내용만 추출 (소스 코드 스니펫, 맹글링 경로 제거)
+    // Keep only the actual error text from message (strip source snippets and mangled paths)
     const lines = e.message.split("\n").filter((l) => l.trim());
     const meaningfulLine =
       lines.findLast(
@@ -205,11 +205,11 @@ function sanitizeError(error: unknown): unknown {
     };
   }
 
-  // 일반 에러는 Pino 기본 직렬화
+  // Other errors use Pino's default serialisation
   return error;
 }
 
-/** Next.js redirect/notFound error 감지 */
+/** Detect Next.js redirect/notFound errors */
 function isNextRedirectError(error: unknown): boolean {
   if (!(error instanceof Error)) return false;
   const digest = (error as { digest?: string }).digest;
@@ -229,7 +229,7 @@ export function withLogging<T extends (...args: any[]) => Promise<any>>(
   return (async (...args: Parameters<T>): Promise<ReturnType<T>> => {
     const start = Date.now();
 
-    // NextRequest 자동 감지 → method, path 추출
+    // Auto-detect NextRequest → extract method, path
     const req = args[0];
     const isHttp = isHttpRequest(req);
     const method = isHttp ? (req as { method: string }).method : undefined;
@@ -237,13 +237,13 @@ export function withLogging<T extends (...args: any[]) => Promise<any>>(
       ? new URL((req as { url: string }).url).pathname
       : undefined;
 
-    // HTTP → query params, request body 추출
+    // HTTP → extract query params and request body
     const query = isHttp
       ? extractQueryParams((req as { url: string }).url)
       : undefined;
     const body = isHttp ? await extractRequestBody(req) : undefined;
 
-    // Server Action → payload 추출
+    // Server Action → extract payload
     const payload = !isHttp ? sanitizeArgs(args as unknown[]) : undefined;
 
     logger.info({ name, method, path, query, body, payload }, "start");
@@ -252,21 +252,21 @@ export function withLogging<T extends (...args: any[]) => Promise<any>>(
       const result = await fn(...args);
       const durationMs = Date.now() - start;
 
-      // NextResponse 자동 감지 → status 추출
+      // Auto-detect NextResponse → extract status
       const status =
         result && typeof result === "object" && "status" in result
           ? (result as { status: number }).status
           : undefined;
 
-      // HTTP → response body 추출 (배열 자동 요약)
+      // HTTP → extract response body (arrays summarised automatically)
       const responseBody = isHttp
         ? await extractResponseBody(result)
         : undefined;
 
-      // ActionState 결과 요약
+      // Summarise ActionState result
       const resultSummary = summarizeResult(result);
 
-      // 로그 레벨 결정:
+      // Decide the log level:
       // HTTP 4xx/5xx → warn
       // ActionState success:false → warn
       const isHttpError = status !== undefined && status >= 400;
@@ -292,7 +292,7 @@ export function withLogging<T extends (...args: any[]) => Promise<any>>(
     } catch (error) {
       const durationMs = Date.now() - start;
 
-      // Next.js redirect는 정상 흐름 → 에러 로깅 제외
+      // Next.js redirects are normal flow → not logged as errors
       if (isNextRedirectError(error)) {
         logger.info({ name, durationMs, method, path }, "redirect");
         throw error;

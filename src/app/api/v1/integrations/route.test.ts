@@ -17,7 +17,7 @@ const mockAuth = vi.mocked(auth);
 const mockGetIntegrations = vi.mocked(getIntegrations);
 const mockCreateIntegration = vi.mocked(createIntegration);
 
-describe("/api/v1/integrations 계약", () => {
+describe("/api/v1/integrations contract", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
@@ -31,7 +31,7 @@ describe("/api/v1/integrations 계약", () => {
       const json = await res.json();
 
       expect(res.status).toBe(401);
-      expect(json).toEqual({ error: "인증이 필요합니다" });
+      expect(json).toEqual({ error: "Authentication required" });
     });
 
     it("GET 403 when organizationId missing", async () => {
@@ -44,7 +44,7 @@ describe("/api/v1/integrations 계약", () => {
       const json = await res.json();
 
       expect(res.status).toBe(403);
-      expect(json).toEqual({ error: "조직 정보가 필요합니다" });
+      expect(json).toEqual({ error: "Organization information is required" });
     });
 
     it("GET 200 with items/total", async () => {
@@ -83,7 +83,7 @@ describe("/api/v1/integrations 계약", () => {
       const json = await res.json();
 
       expect(res.status).toBe(401);
-      expect(json).toEqual({ error: "인증이 필요합니다" });
+      expect(json).toEqual({ error: "Authentication required" });
     });
 
     it("POST 403 when not admin", async () => {
@@ -99,7 +99,7 @@ describe("/api/v1/integrations 계약", () => {
       const json = await res.json();
 
       expect(res.status).toBe(403);
-      expect(json).toEqual({ error: "관리자 권한이 필요합니다" });
+      expect(json).toEqual({ error: "Admin permission required" });
     });
 
     it("POST 200 on success", async () => {

@@ -17,16 +17,16 @@ import { useMemo } from "react";
 
 interface UserListProps {
   users: UserListItem[];
-  // 외부에서 컬럼 가시성 상태 제어 시 사용
+  // Used when column visibility is controlled externally
   columnVisibility?: Record<string, boolean>;
   onColumnVisibilityChange?: (columnId: string, visible: boolean) => void;
   hideToolbar?: boolean;
-  // 외부에서 선택 행 상태 제어 시 사용
+  // Used when row selection is controlled externally
   selectedRows?: Set<string>;
   onSelectedRowsChange?: (rows: Set<string>) => void;
 }
 
-// URL이 유효한 이미지 URL인지 확인
+// Check whether the URL is a valid image URL
 function isValidImageUrl(url: string | null | undefined): boolean {
   if (!url) return false;
   try {
@@ -53,7 +53,7 @@ const roleVariants: Record<UserRole, TonalBadgeVariant> = {
   VIEWER: "secondary",
 };
 
-// 컬럼 가시성 드롭다운에서 사용할 컬럼 정의 (외부 노출용) - 함수로 변환
+// Column definitions for the column-visibility dropdown (exported) - built by a function
 export function getUserListColumns(t: ReturnType<typeof useTranslations>) {
   return [
     { id: "user", header: t("users.table.columns.user") },
@@ -99,7 +99,7 @@ export function UserList({
     VIEWER: t("users.role.viewer"),
   };
 
-  // 외부 상태가 제공되면 외부 상태 사용, 아니면 내부 상태 사용
+  // Use external state when provided, otherwise internal state
   const columnVisibility = externalColumnVisibility ?? internalColumnVisibility;
   const handleColumnVisibilityChange =
     externalOnColumnVisibilityChange ?? internalHandleColumnVisibilityChange;
@@ -107,7 +107,7 @@ export function UserList({
   const setSelectedRows =
     externalOnSelectedRowsChange ?? internalSetSelectedRows;
 
-  // 컬럼 정의
+  // Column definitions
   const columns: DataTableColumn<UserListItem>[] = useMemo(
     () => [
       {
@@ -191,7 +191,7 @@ export function UserList({
     [t, statusLabels, roleLabels]
   );
 
-  // 정렬된 데이터
+  // Sorted data
   const sortedData = useMemo(() => {
     if (!sortState) return users;
 
@@ -227,7 +227,7 @@ export function UserList({
     });
   }, [users, sortState]);
 
-  // 페이지네이션된 데이터
+  // Paginated data
   const paginatedData = useMemo(() => {
     const start = pagination.pageIndex * pagination.pageSize;
     return sortedData.slice(start, start + pagination.pageSize);
@@ -246,24 +246,24 @@ export function UserList({
       data={paginatedData}
       columns={columns}
       getRowId={(row) => row.id}
-      // 행 선택
+      // Row selection
       enableRowSelection
       selectedRows={selectedRows}
       onSelectedRowsChange={setSelectedRows}
-      // 컬럼 가시성
+      // Column visibility
       enableColumnVisibility
       columnVisibility={columnVisibility}
       onColumnVisibilityChange={handleColumnVisibilityChange}
-      // 정렬
+      // Sorting
       enableSorting
       sortState={sortState}
       onSortChange={setSortState}
-      // 페이지네이션
+      // Pagination
       enablePagination
       pagination={pagination}
       onPaginationChange={setPagination}
       totalCount={users.length}
-      // 기타
+      // Other
       emptyMessage={t("users.table.emptyMessage")}
       hideToolbar={hideToolbar}
     />

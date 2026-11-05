@@ -1,52 +1,52 @@
-# 09. 에러 처리 전략 가이드
+# 09. Error Handling Strategy Guide
 
-이 문서는 Server Actions 및 API Routes에서의 표준 에러 처리 패턴을 설명합니다.
+This document describes the standard error handling patterns for Server Actions and API Routes.
 
-## 목차
+## Table of Contents
 
-1. [ActionState 패턴](#1-actionstate-패턴)
-2. [에러 응답 결정 매트릭스](#2-에러-응답-결정-매트릭스)
-3. [Server Action 에러 처리](#3-server-action-에러-처리)
-4. [API Route 에러 처리](#4-api-route-에러-처리)
-5. [클라이언트 에러 처리](#5-클라이언트-에러-처리)
-6. [테스트 패턴](#6-테스트-패턴)
+1. [ActionState Pattern](#1-actionstate-pattern)
+2. [Error Response Decision Matrix](#2-error-response-decision-matrix)
+3. [Server Action Error Handling](#3-server-action-error-handling)
+4. [API Route Error Handling](#4-api-route-error-handling)
+5. [Client Error Handling](#5-client-error-handling)
+6. [Testing Patterns](#6-testing-patterns)
 
 ---
 
-## 1. ActionState 패턴
+## 1. ActionState Pattern
 
-### 1.1 타입 정의
+### 1.1 Type Definition
 
-**파일**: `src/types/index.ts`
+**File**: `src/types/index.ts`
 
 ```typescript
 export interface ActionState<T = null> {
-  success: boolean; // 성공 여부
-  message?: string; // 사용자에게 보여줄 메시지
-  data?: T; // 성공 시 반환 데이터
-  errors?: Record<string, string[]>; // 필드별 유효성 검사 오류
+  success: boolean; // Whether the action succeeded
+  message?: string; // Message to display to the user
+  data?: T; // Data returned on success
+  errors?: Record<string, string[]>; // Per-field validation errors
 }
 ```
 
-### 1.2 응답 유형
+### 1.2 Response Types
 
-#### 성공 응답
+#### Success Responses
 
 ```typescript
-// 데이터 없이 성공
+// Success without data
 return { success: true };
 
-// 데이터와 함께 성공
+// Success with data
 return { success: true, data: { id: app.id } };
 
-// 메시지와 함께 성공
-return { success: true, message: "앱이 생성되었습니다" };
+// Success with a message
+return { success: true, message: "The app has been created" };
 ```
 
-#### 유효성 검사 오류
+#### Validation Errors
 
 ```typescript
-// Zod 유효성 검사 실패
+// Zod validation failure
 const result = schema.safeParse(data);
 if (!result.success) {
   return {
@@ -56,51 +56,51 @@ if (!result.success) {
 }
 ```
 
-#### 비즈니스 규칙 오류
+#### Business Rule Errors
 
 ```typescript
-// 중복 검사 실패
+// Duplicate check failed
 if (existingApp) {
-  return { success: false, message: "이미 등록된 앱 이름입니다" };
+  return { success: false, message: "An app with this name already exists" };
 }
 
-// 권한 부족
+// Insufficient permissions
 if (role !== "ADMIN") {
-  return { success: false, message: "삭제 권한이 없습니다" };
+  return { success: false, message: "You do not have permission to delete" };
 }
 ```
 
 ---
 
-## 2. 에러 응답 결정 매트릭스
+## 2. Error Response Decision Matrix
 
-### 2.1 Server Action 에러 유형
+### 2.1 Server Action Error Types
 
-| 시나리오               | 응답 방식                 | 예시                    |
-| ---------------------- | ------------------------- | ----------------------- |
-| **세션 없음**          | `redirect('/login')`      | 로그인 필요             |
-| **조직 없음**          | `redirect('/onboarding')` | 온보딩 필요             |
-| **유효성 검사 실패**   | `ActionState.errors`      | 필드별 오류 메시지      |
-| **비즈니스 규칙 위반** | `ActionState.message`     | "중복된 이름입니다"     |
-| **리소스 없음**        | `ActionState.message`     | "앱을 찾을 수 없습니다" |
-| **권한 부족**          | `ActionState.message`     | "권한이 없습니다"       |
-| **DB/네트워크 오류**   | `ActionState.message`     | 일반 오류 메시지        |
+| Scenario                     | Response method           | Example                       |
+| ---------------------------- | ------------------------- | ----------------------------- |
+| **No session**               | `redirect('/login')`      | Sign-in required              |
+| **No organisation**          | `redirect('/onboarding')` | Onboarding required           |
+| **Validation failure**       | `ActionState.errors`      | Per-field error messages      |
+| **Business rule violation**  | `ActionState.message`     | "This name is already in use" |
+| **Resource not found**       | `ActionState.message`     | "App not found"               |
+| **Insufficient permissions** | `ActionState.message`     | "You do not have permission"  |
+| **DB/network error**         | `ActionState.message`     | Generic error message         |
 
-### 2.2 API Route 에러 유형
+### 2.2 API Route Error Types
 
-| 시나리오        | HTTP 상태        | 응답 형식                         |
-| --------------- | ---------------- | --------------------------------- |
-| **세션 없음**   | 401 Unauthorized | `{ error: "인증이 필요합니다" }`  |
-| **권한 부족**   | 403 Forbidden    | `{ error: "권한이 없습니다" }`    |
-| **리소스 없음** | 404 Not Found    | `{ error: "찾을 수 없습니다" }`   |
-| **유효성 오류** | 400 Bad Request  | `{ error: "...", errors: {...} }` |
-| **서버 오류**   | 500 Internal     | `{ error: "서버 오류" }`          |
+| Scenario                     | HTTP status      | Response format                           |
+| ---------------------------- | ---------------- | ----------------------------------------- |
+| **No session**               | 401 Unauthorized | `{ error: "Authentication required" }`    |
+| **Insufficient permissions** | 403 Forbidden    | `{ error: "You do not have permission" }` |
+| **Resource not found**       | 404 Not Found    | `{ error: "Not found" }`                  |
+| **Validation error**         | 400 Bad Request  | `{ error: "...", errors: {...} }`         |
+| **Server error**             | 500 Internal     | `{ error: "Server error" }`               |
 
 ---
 
-## 3. Server Action 에러 처리
+## 3. Server Action Error Handling
 
-### 3.1 기본 패턴
+### 3.1 Basic Pattern
 
 ```typescript
 "use server";
@@ -108,7 +108,7 @@ if (role !== "ADMIN") {
 import { requireOrganization } from "@/lib/auth/require-auth";
 import type { ActionState } from "@/types";
 
-// Redirect 에러 감지 헬퍼
+// Helper to detect redirect errors
 function isRedirectError(error: unknown): boolean {
   if (!(error instanceof Error)) return false;
 
@@ -128,16 +128,16 @@ export async function createApp(
   formData: FormData
 ): Promise<ActionState<{ id: string }>> {
   try {
-    // 1. 인증 확인 (자동 redirect)
+    // 1. Verify authentication (redirects automatically)
     const { organizationId, userId } = await requireOrganization();
 
-    // 2. 입력 데이터 파싱
+    // 2. Parse the input data
     const rawData = {
       name: formData.get("name") as string,
       category: formData.get("category") as string | null,
     };
 
-    // 3. 유효성 검사
+    // 3. Validate
     const result = createAppSchema.safeParse(rawData);
     if (!result.success) {
       return {
@@ -146,72 +146,78 @@ export async function createApp(
       };
     }
 
-    // 4. 비즈니스 규칙 검사
+    // 4. Check business rules
     const existing = await prisma.app.findFirst({
       where: { organizationId, name: result.data.name },
     });
     if (existing) {
-      return { success: false, message: "이미 등록된 앱 이름입니다" };
+      return {
+        success: false,
+        message: "An app with this name already exists",
+      };
     }
 
-    // 5. 데이터 생성
+    // 5. Create the record
     const app = await prisma.app.create({
       data: { ...result.data, organizationId },
     });
 
-    // 6. 캐시 무효화
+    // 6. Invalidate the cache
     revalidatePath("/apps");
 
-    // 7. 성공 응답
+    // 7. Success response
     return { success: true, data: { id: app.id } };
   } catch (error) {
-    // 8. Redirect 에러는 재throw (Next.js 필수)
+    // 8. Re-throw redirect errors (required by Next.js)
     if (isRedirectError(error)) throw error;
 
-    // 9. 로깅 및 일반 에러 응답
-    console.error("앱 생성 오류:", error);
-    return { success: false, message: "앱 생성 중 오류가 발생했습니다" };
+    // 9. Log and return a generic error response
+    console.error("App creation error:", error);
+    return {
+      success: false,
+      message: "An error occurred while creating the app",
+    };
   }
 }
 ```
 
-### 3.2 isRedirectError 필수 사용
+### 3.2 isRedirectError Is Mandatory
 
-Next.js의 `redirect()`는 특수한 에러를 throw합니다. 이를 잡아서 재throw하지 않으면 리다이렉트가 동작하지 않습니다.
+Next.js `redirect()` throws a special error. If you catch it and do not re-throw it, the redirect will not work.
 
 ```typescript
 try {
-  await requireOrganization(); // 내부에서 redirect() 호출 가능
+  await requireOrganization(); // May call redirect() internally
   // ...
 } catch (error) {
-  // ⚠️ 중요: Redirect 에러는 반드시 재throw
+  // ⚠️ Important: redirect errors must always be re-thrown
   if (isRedirectError(error)) throw error;
 
-  // 다른 에러만 처리
-  return { success: false, message: "오류가 발생했습니다" };
+  // Handle all other errors only
+  return { success: false, message: "An error occurred" };
 }
 ```
 
-### 3.3 에러 로깅
+### 3.3 Error Logging
 
 ```typescript
 catch (error) {
   if (isRedirectError(error)) throw error;
 
-  // 개발 환경: 전체 에러 출력
-  // 프로덕션: 에러 추적 서비스로 전송 (Sentry 등)
-  console.error("앱 생성 오류:", error);
+  // Development: print the full error
+  // Production: send to an error tracking service (Sentry, etc.)
+  console.error("App creation error:", error);
 
-  // 사용자에게는 일반적인 메시지
-  return { success: false, message: "앱 생성 중 오류가 발생했습니다" };
+  // Show the user a generic message
+  return { success: false, message: "An error occurred while creating the app" };
 }
 ```
 
 ---
 
-## 4. API Route 에러 처리
+## 4. API Route Error Handling
 
-### 4.1 기본 패턴
+### 4.1 Basic Pattern
 
 ```typescript
 // src/app/api/v1/apps/route.ts
@@ -220,25 +226,28 @@ import { NextResponse } from "next/server";
 
 export async function GET(request: Request) {
   try {
-    // 1. 인증 확인
+    // 1. Verify authentication
     const session = await auth();
     if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: "인증이 필요합니다" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      );
     }
 
-    // 2. 쿼리 파라미터 파싱
+    // 2. Parse query parameters
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get("page") || "1");
 
-    // 3. 데이터 조회
+    // 3. Fetch data
     const apps = await getApps({ page });
 
-    // 4. 성공 응답
+    // 4. Success response
     return NextResponse.json(apps);
   } catch (error) {
-    console.error("API 오류:", error);
+    console.error("API error:", error);
     return NextResponse.json(
-      { error: "서버 오류가 발생했습니다" },
+      { error: "A server error occurred" },
       { status: 500 }
     );
   }
@@ -248,13 +257,16 @@ export async function POST(request: Request) {
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: "인증이 필요합니다" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Authentication required" },
+        { status: 401 }
+      );
     }
 
-    // JSON 파싱
+    // Parse JSON
     const body = await request.json();
 
-    // Server Action 호출을 위한 FormData 변환
+    // Convert to FormData to call the Server Action
     const formData = new FormData();
     Object.entries(body).forEach(([key, value]) => {
       if (value !== null && value !== undefined) {
@@ -262,7 +274,7 @@ export async function POST(request: Request) {
       }
     });
 
-    // Server Action 호출
+    // Call the Server Action
     const result = await createApp({ success: false }, formData);
 
     if (!result.success) {
@@ -274,33 +286,33 @@ export async function POST(request: Request) {
 
     return NextResponse.json(result.data, { status: 201 });
   } catch (error) {
-    console.error("API 오류:", error);
+    console.error("API error:", error);
     return NextResponse.json(
-      { error: "서버 오류가 발생했습니다" },
+      { error: "A server error occurred" },
       { status: 500 }
     );
   }
 }
 ```
 
-### 4.2 HTTP 상태 코드 가이드
+### 4.2 HTTP Status Code Guide
 
-| 상태 코드                   | 사용 시점                     |
-| --------------------------- | ----------------------------- |
-| `200 OK`                    | GET 성공                      |
-| `201 Created`               | POST 성공 (리소스 생성)       |
-| `204 No Content`            | DELETE 성공                   |
-| `400 Bad Request`           | 유효성 검사 실패, 잘못된 요청 |
-| `401 Unauthorized`          | 인증 필요                     |
-| `403 Forbidden`             | 권한 부족                     |
-| `404 Not Found`             | 리소스 없음                   |
-| `500 Internal Server Error` | 서버 오류                     |
+| Status code                 | When to use                           |
+| --------------------------- | ------------------------------------- |
+| `200 OK`                    | Successful GET                        |
+| `201 Created`               | Successful POST (resource created)    |
+| `204 No Content`            | Successful DELETE                     |
+| `400 Bad Request`           | Validation failure, malformed request |
+| `401 Unauthorized`          | Authentication required               |
+| `403 Forbidden`             | Insufficient permissions              |
+| `404 Not Found`             | Resource not found                    |
+| `500 Internal Server Error` | Server error                          |
 
 ---
 
-## 5. 클라이언트 에러 처리
+## 5. Client Error Handling
 
-### 5.1 useActionState 사용
+### 5.1 Using useActionState
 
 ```tsx
 "use client";
@@ -316,14 +328,14 @@ export function AppForm() {
 
   return (
     <form action={formAction}>
-      {/* 일반 에러 메시지 */}
+      {/* General error message */}
       {!state.success && state.message && (
         <Alert variant="destructive">
           <AlertDescription>{state.message}</AlertDescription>
         </Alert>
       )}
 
-      {/* 필드별 에러 */}
+      {/* Per-field errors */}
       <div>
         <Input name="name" />
         {state.errors?.name && (
@@ -332,14 +344,14 @@ export function AppForm() {
       </div>
 
       <Button type="submit" disabled={isPending}>
-        {isPending ? "처리 중..." : "생성"}
+        {isPending ? "Processing..." : "Create"}
       </Button>
     </form>
   );
 }
 ```
 
-### 5.2 성공 후 리다이렉트
+### 5.2 Redirect After Success
 
 ```tsx
 "use client";
@@ -365,9 +377,9 @@ export function AppForm() {
 
 ---
 
-## 6. 테스트 패턴
+## 6. Testing Patterns
 
-### 6.1 성공 케이스 테스트
+### 6.1 Success Case Test
 
 ```typescript
 it("should create app successfully", async () => {
@@ -394,7 +406,7 @@ it("should create app successfully", async () => {
 });
 ```
 
-### 6.2 유효성 검사 오류 테스트
+### 6.2 Validation Error Test
 
 ```typescript
 it("should return validation errors for empty name", async () => {
@@ -404,17 +416,17 @@ it("should return validation errors for empty name", async () => {
   });
 
   const formData = new FormData();
-  formData.set("name", ""); // 빈 이름
+  formData.set("name", ""); // Empty name
 
   const result = await createApp({ success: false }, formData);
 
   expect(result.success).toBe(false);
   expect(result.errors?.name).toBeDefined();
-  expect(result.errors?.name[0]).toContain("2자 이상");
+  expect(result.errors?.name[0]).toContain("at least 2 characters");
 });
 ```
 
-### 6.3 비즈니스 규칙 오류 테스트
+### 6.3 Business Rule Error Test
 
 ```typescript
 it("should return error for duplicate name", async () => {
@@ -423,7 +435,7 @@ it("should return error for duplicate name", async () => {
     // ...
   });
 
-  // 이미 존재하는 앱
+  // An app that already exists
   vi.mocked(prisma.app.findFirst).mockResolvedValue({ id: "existing" } as any);
 
   const formData = new FormData();
@@ -432,15 +444,15 @@ it("should return error for duplicate name", async () => {
   const result = await createApp({ success: false }, formData);
 
   expect(result.success).toBe(false);
-  expect(result.message).toBe("이미 등록된 앱 이름입니다");
+  expect(result.message).toBe("An app with this name already exists");
 });
 ```
 
-### 6.4 리다이렉트 테스트
+### 6.4 Redirect Test
 
 ```typescript
 it("should redirect when not authenticated", async () => {
-  // redirect 에러를 throw하는 mock
+  // Mock that throws a redirect error
   vi.mocked(requireOrganization).mockImplementation(() => {
     const error = new Error("NEXT_REDIRECT");
     (error as any).digest = "NEXT_REDIRECT;/login";
@@ -450,7 +462,7 @@ it("should redirect when not authenticated", async () => {
   const formData = new FormData();
   formData.set("name", "Test");
 
-  // redirect 에러가 다시 throw되어야 함
+  // The redirect error must be re-thrown
   await expect(createApp({ success: false }, formData)).rejects.toThrow(
     "NEXT_REDIRECT"
   );
@@ -459,28 +471,28 @@ it("should redirect when not authenticated", async () => {
 
 ---
 
-## 체크리스트
+## Checklist
 
-### Server Action 구현 시
+### When Implementing a Server Action
 
-- [ ] `requireOrganization()` 또는 `requireAuth()` 호출
-- [ ] Zod 스키마로 유효성 검사 (safeParse 사용)
-- [ ] 비즈니스 규칙 검사 (중복, 권한 등)
-- [ ] try-catch로 에러 핸들링
-- [ ] `isRedirectError()` 체크 및 재throw
-- [ ] 일반 에러는 로깅 후 사용자 친화적 메시지 반환
+- [ ] Call `requireOrganization()` or `requireAuth()`
+- [ ] Validate with a Zod schema (use safeParse)
+- [ ] Check business rules (duplicates, permissions, etc.)
+- [ ] Handle errors with try-catch
+- [ ] Check `isRedirectError()` and re-throw
+- [ ] Log generic errors, then return a user-friendly message
 
-### API Route 구현 시
+### When Implementing an API Route
 
-- [ ] 세션 확인 및 401 응답
-- [ ] 적절한 HTTP 상태 코드 사용
-- [ ] JSON 응답 형식 일관성 유지
-- [ ] 에러 로깅
+- [ ] Verify the session and return 401 when absent
+- [ ] Use appropriate HTTP status codes
+- [ ] Keep the JSON response format consistent
+- [ ] Log errors
 
 ---
 
-## 관련 문서
+## Related Documents
 
-- [08-multi-tenant-patterns.md](./08-multi-tenant-patterns.md) - Multi-tenant 패턴
-- [10-form-data-patterns.md](./10-form-data-patterns.md) - FormData 패턴
-- [04-test-templates.md](./04-test-templates.md) - 테스트 템플릿
+- [08-multi-tenant-patterns.md](./08-multi-tenant-patterns.md) - Multi-tenant patterns
+- [10-form-data-patterns.md](./10-form-data-patterns.md) - FormData patterns
+- [04-test-templates.md](./04-test-templates.md) - Test templates

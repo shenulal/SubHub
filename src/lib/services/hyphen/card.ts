@@ -1,5 +1,5 @@
 /**
- * Hyphen 법인카드 API 서비스
+ * Hyphen corporate card API service
  */
 import { createAuthHeaders } from "./auth";
 import {
@@ -14,22 +14,22 @@ import {
 
 const HYPHEN_API_BASE = "https://api.hyphen.im";
 
-// API 엔드포인트
+// API endpoints
 const ENDPOINTS = {
-  CARD_APPROVAL: "/in0007000559", // 승인내역 조회
-  CARD_PURCHASE: "/in0007000561", // 매입내역 조회
+  CARD_APPROVAL: "/in0007000559", // Approval history inquiry
+  CARD_PURCHASE: "/in0007000561", // Purchase history inquiry
 };
 
 /**
- * Hyphen API 응답 처리
- * @param response API 응답
- * @throws HyphenApiError 에러 발생 시
+ * Handles a Hyphen API response
+ * @param response API response
+ * @throws HyphenApiError on error
  */
 function handleResponse<T>(response: HyphenApiResponse<T>): T {
   if (response.common.errYn === "Y") {
     throw new HyphenApiError(
       response.common.errCd || "UNKNOWN",
-      response.common.errMsg || "알 수 없는 오류가 발생했습니다",
+      response.common.errMsg || "An unknown error occurred",
       response.common
     );
   }
@@ -37,9 +37,9 @@ function handleResponse<T>(response: HyphenApiResponse<T>): T {
 }
 
 /**
- * 카드 승인내역 조회
- * @param request 조회 조건
- * @param credentials 카드사 인증 정보
+ * Fetches card approval history
+ * @param request Query conditions
+ * @param credentials Card company credentials
  */
 export async function getCardApprovals(
   request: ApprovalRequest,
@@ -48,7 +48,7 @@ export async function getCardApprovals(
   const body = {
     ...credentials,
     ...request,
-    // 카드번호에서 하이픈 제거
+    // Strip hyphens from the card number
     cardNo:
       credentials.cardNo?.replace(/-/g, "") ||
       request.cardNo?.replace(/-/g, ""),
@@ -67,20 +67,20 @@ export async function getCardApprovals(
   if (!response.ok) {
     throw new HyphenApiError(
       "API_REQUEST_FAILED",
-      `승인내역 조회 요청 실패: ${response.status} ${response.statusText}`
+      `Approval history request failed: ${response.status} ${response.statusText}`
     );
   }
 
-  // 에러 체크
+  // Error check
   handleResponse(data);
 
   return data;
 }
 
 /**
- * 카드 매입내역 조회
- * @param request 조회 조건
- * @param credentials 카드사 인증 정보
+ * Fetches card purchase history
+ * @param request Query conditions
+ * @param credentials Card company credentials
  */
 export async function getCardPurchases(
   request: PurchaseRequest,
@@ -89,7 +89,7 @@ export async function getCardPurchases(
   const body = {
     ...credentials,
     ...request,
-    // 카드번호에서 하이픈 제거
+    // Strip hyphens from the card number
     cardNo:
       credentials.cardNo?.replace(/-/g, "") ||
       request.cardNo?.replace(/-/g, ""),
@@ -108,19 +108,19 @@ export async function getCardPurchases(
   if (!response.ok) {
     throw new HyphenApiError(
       "API_REQUEST_FAILED",
-      `매입내역 조회 요청 실패: ${response.status} ${response.statusText}`
+      `Purchase history request failed: ${response.status} ${response.statusText}`
     );
   }
 
-  // 에러 체크
+  // Error check
   handleResponse(data);
 
   return data;
 }
 
 /**
- * 날짜 문자열 생성 (YYYYMMDD 형식)
- * @param date Date 객체
+ * Builds a date string (YYYYMMDD)
+ * @param date Date object
  */
 export function formatDateYYYYMMDD(date: Date): string {
   const year = date.getFullYear();
@@ -130,7 +130,7 @@ export function formatDateYYYYMMDD(date: Date): string {
 }
 
 /**
- * 이번 달 시작일 ~ 오늘 기간 반환
+ * Returns the period from the start of this month to today
  */
 export function getCurrentMonthRange(): { sdate: string; edate: string } {
   const now = new Date();
@@ -143,8 +143,8 @@ export function getCurrentMonthRange(): { sdate: string; edate: string } {
 }
 
 /**
- * 지난 N일 기간 반환
- * @param days 일수
+ * Returns the period covering the last N days
+ * @param days Number of days
  */
 export function getLastNDaysRange(days: number): {
   sdate: string;
@@ -161,10 +161,10 @@ export function getLastNDaysRange(days: number): {
 }
 
 /**
- * 재시도 로직이 포함된 API 호출 wrapper
- * @param operation 실행할 API 호출 함수
- * @param maxRetries 최대 재시도 횟수
- * @param delayMs 재시도 간 대기 시간
+ * API call wrapper with retry logic
+ * @param operation API call to execute
+ * @param maxRetries Maximum number of retries
+ * @param delayMs Delay between retries
  */
 export async function withRetry<T>(
   operation: () => Promise<T>,
@@ -179,7 +179,7 @@ export async function withRetry<T>(
     } catch (error) {
       lastError = error as Error;
 
-      // HyphenApiError이고 재시도 가능한 에러인 경우에만 재시도
+      // Retry only for retryable HyphenApiError codes
       if (error instanceof HyphenApiError) {
         const retryableCodes = ["TIMEOUT", "API_REQUEST_FAILED"];
         if (!retryableCodes.includes(error.code)) {
@@ -188,12 +188,12 @@ export async function withRetry<T>(
       }
 
       if (attempt < maxRetries) {
-        await delay(delayMs * attempt); // 지수 백오프
+        await delay(delayMs * attempt); // Linear backoff
       }
     }
   }
 
-  throw lastError || new Error("알 수 없는 오류");
+  throw lastError || new Error("Unknown error");
 }
 
 function delay(ms: number): Promise<void> {

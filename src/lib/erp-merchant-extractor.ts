@@ -1,12 +1,16 @@
 // src/lib/erp-merchant-extractor.ts
-// 다중 필드 SaaS명 추출 엔진
-// ERP 데이터에서 실제 SaaS/서비스 이름을 지능적으로 추출
+// Multi-field SaaS name extraction engine
+// Intelligently extracts the actual SaaS/service name from ERP data
+//
+// NOTE: the Korean skip patterns, memo keywords and field names in this file are functional.
+// They are matched against account names and memo text in Korean ERP exports and must
+// not be translated.
 
 import type { MerchantExtractConfig } from "./erp-format-presets";
 
-/** 기본 skipPatterns - 무의미한 거래처명/적요 */
+/** Default skipPatterns - meaningless vendor names / descriptions */
 const DEFAULT_SKIP_PATTERNS: string[] = [
-  // 한국어 일반
+  // Korean (general accounting terms)
   "카드결제",
   "법인카드",
   "미지급금",
@@ -21,7 +25,7 @@ const DEFAULT_SKIP_PATTERNS: string[] = [
   "부가세",
   "매입세액",
   "원천징수",
-  // 영문 일반
+  // English (general)
   "CLEARING",
   "PAYMENT",
   "BANK TRANSFER",
@@ -31,7 +35,7 @@ const DEFAULT_SKIP_PATTERNS: string[] = [
   "REVERSAL",
   "OPENING BALANCE",
   "CLOSING BALANCE",
-  // 패턴
+  // Korean patterns (transfers, payroll)
   "계좌이체",
   "자동이체",
   "급여",
@@ -40,18 +44,18 @@ const DEFAULT_SKIP_PATTERNS: string[] = [
 ];
 
 /**
- * 값이 skipPattern에 매칭되는지 확인
- * 대소문자 무시, 부분 매칭
+ * Check whether a value matches a skipPattern
+ * Case-insensitive, partial match
  */
 function shouldSkip(value: string, skipPatterns: string[]): boolean {
   if (!value || !value.trim()) return true;
 
   const lower = value.toLowerCase().trim();
 
-  // 너무 짧은 값 skip (1글자 이하)
+  // Skip values that are too short (1 character or less)
   if (lower.length <= 1) return true;
 
-  // 숫자만으로 구성된 값 skip
+  // Skip values made up of digits only
   if (/^\d+$/.test(lower)) return true;
 
   for (const pattern of skipPatterns) {
@@ -63,32 +67,32 @@ function shouldSkip(value: string, skipPatterns: string[]): boolean {
 }
 
 /**
- * 적요(memo)에서 SaaS명을 추출하는 고급 로직
+ * Advanced logic to extract the SaaS name from a memo (description)
  *
- * 패턴 예시:
- * - "3월 Slack 구독료" → "Slack"
- * - "Notion 팀플랜 결제" → "Notion"
- * - "AWS 서버 비용 4월분" → "AWS"
- * - "GitHub Enterprise 라이선스" → "GitHub Enterprise"
+ * Example patterns (Korean memo text, shown here in English):
+ * - "March Slack subscription fee" → "Slack"
+ * - "Notion team plan payment" → "Notion"
+ * - "AWS server cost for April" → "AWS"
+ * - "GitHub Enterprise licence" → "GitHub Enterprise"
  */
 function extractFromMemo(memo: string): string | null {
   if (!memo || !memo.trim()) return null;
 
   const cleaned = memo.trim();
 
-  // 패턴 1: "N월 {SaaS명} {설명}" 형태
+  // Pattern 1: "<N> month {SaaS name} {description}" (Korean month/keyword suffixes are functional)
   const monthPattern = cleaned.match(
     /\d{1,2}월\s+([A-Za-z][A-Za-z0-9\s.]+?)(?:\s+(?:구독|결제|라이[선센]스|비용|사용|이용|요금|플랜))/
   );
   if (monthPattern) return monthPattern[1].trim();
 
-  // 패턴 2: "{SaaS명} {설명}" 형태 (영문 시작)
+  // Pattern 2: "{SaaS name} {description}" (starts with English; Korean keywords are functional)
   const englishStartPattern = cleaned.match(
     /^([A-Za-z][A-Za-z0-9\s.]{1,30}?)(?:\s+(?:구독|결제|라이[선센]스|비용|사용|이용|요금|플랜|서비스|월|년|연))/
   );
   if (englishStartPattern) return englishStartPattern[1].trim();
 
-  // 패턴 3: 적요 전체가 영문 (SaaS명 자체일 가능성)
+  // Pattern 3: the whole memo is English (likely the SaaS name itself)
   if (/^[A-Za-z][A-Za-z0-9\s.]+$/.test(cleaned) && cleaned.length <= 50) {
     return cleaned;
   }
@@ -97,23 +101,23 @@ function extractFromMemo(memo: string): string | null {
 }
 
 /**
- * CSV 행에서 merchantName (SaaS명)을 추출
+ * Extract the merchantName (SaaS name) from a CSV row
  *
- * @param row - CSV 행 데이터
- * @param config - MerchantExtractConfig (프리셋에서 가져옴)
- * @returns 추출된 SaaS명 또는 null
+ * @param row - CSV row data
+ * @param config - MerchantExtractConfig (taken from the preset)
+ * @returns The extracted SaaS name, or null
  */
 export function extractMerchantName(
   row: Record<string, string>,
   config: MerchantExtractConfig
 ): string | null {
   const allSkipPatterns = [...config.skipPatterns, ...DEFAULT_SKIP_PATTERNS];
-  // 중복 제거
+  // Remove duplicates
   const uniqueSkipPatterns = [...new Set(allSkipPatterns)];
 
-  // 우선순위 순서대로 필드를 시도
+  // Try fields in priority order
   for (const fieldName of config.fieldPriority) {
-    // 대소문자 무시하여 필드 매칭
+    // Match fields case-insensitively
     const matchedKey = Object.keys(row).find(
       (k) => k.toLowerCase().trim() === fieldName.toLowerCase().trim()
     );
@@ -123,10 +127,10 @@ export function extractMerchantName(
     const value = row[matchedKey];
     if (!value || !value.trim()) continue;
 
-    // skip 패턴에 매칭되면 다음 필드로
+    // Move to the next field when a skip pattern matches
     if (shouldSkip(value, uniqueSkipPatterns)) continue;
 
-    // 적요 필드인 경우 고급 추출 시도
+    // For memo fields, try advanced extraction (Korean memo column names are functional)
     const isMemoField = [
       "적요",
       "메모",
@@ -141,15 +145,15 @@ export function extractMerchantName(
       if (extracted && !shouldSkip(extracted, uniqueSkipPatterns)) {
         return extracted;
       }
-      // 적요에서 추출 실패 시 다음 필드로
+      // If extraction from the memo fails, move to the next field
       continue;
     }
 
-    // 일반 필드: 값 그대로 반환
+    // Regular field: return the value as-is
     return value.trim();
   }
 
-  // 모든 필드에서 추출 실패 시, fallback으로 첫 번째 비-skip 값 반환
+  // If every field fails, fall back to the first non-skip value
   for (const fieldName of config.fieldPriority) {
     const matchedKey = Object.keys(row).find(
       (k) => k.toLowerCase().trim() === fieldName.toLowerCase().trim()
@@ -165,7 +169,7 @@ export function extractMerchantName(
 }
 
 /**
- * 배치 추출: 여러 행에서 merchantName을 일괄 추출
+ * Batch extraction: extract merchantName from multiple rows
  */
 export function extractMerchantNames(
   rows: Record<string, string>[],

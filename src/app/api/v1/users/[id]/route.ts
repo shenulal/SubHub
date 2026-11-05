@@ -7,7 +7,7 @@ import { withLogging } from "@/lib/logging";
 
 /**
  * GET /api/v1/users/[id]
- * - 사용자 상세 조회
+ * - Get user details
  */
 export const GET = withLogging(
   "GET /api/v1/users/:id",
@@ -33,8 +33,8 @@ export const GET = withLogging(
 
 /**
  * DELETE /api/v1/users/[id]
- * - 사용자 퇴사 처리 (Offboard, ADMIN 전용)
- * - ?permanent=true 쿼리 시 영구 삭제
+ * - Offboard a user (ADMIN only)
+ * - Permanently deletes when ?permanent=true
  */
 export const DELETE = withLogging(
   "DELETE /api/v1/users/:id",

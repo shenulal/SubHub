@@ -5,17 +5,17 @@ export interface AppTemplate {
   name: string;
   category: string;
   website: string;
-  logoPath: string; // public 폴더 기준 경로
+  logoPath: string; // path relative to the public folder
   tags?: Record<string, string>;
 }
 
-// 카테고리 타입 정의
+// Category type
 export type AppCategory = "collaboration" | "design" | "ai";
 
-// 카테고리 표시명 매핑
+// Category display names
 export const CATEGORY_LABELS: Record<AppCategory, string> = {
-  collaboration: "협업",
-  design: "디자인",
+  collaboration: "Collaboration",
+  design: "Design",
   ai: "AI",
 };
 
@@ -27,7 +27,6 @@ export const APP_TEMPLATES: AppTemplate[] = [
     website: "https://slack.com",
     logoPath: "/app-logos/slack.svg",
     tags: {
-      ko: "협업, 커뮤니케이션, 메시징",
       en: "Collaboration, Communication, Messaging",
     },
   },
@@ -38,7 +37,6 @@ export const APP_TEMPLATES: AppTemplate[] = [
     website: "https://claude.ai",
     logoPath: "/app-logos/claude.svg",
     tags: {
-      ko: "AI, 생성형AI, 챗봇",
       en: "AI, Generative AI, Chatbot",
     },
   },
@@ -49,7 +47,6 @@ export const APP_TEMPLATES: AppTemplate[] = [
     website: "https://chat.openai.com",
     logoPath: "/app-logos/openai.svg",
     tags: {
-      ko: "AI, 생성형AI, 챗봇, OpenAI",
       en: "AI, Generative AI, Chatbot, OpenAI",
     },
   },
@@ -60,7 +57,6 @@ export const APP_TEMPLATES: AppTemplate[] = [
     website: "https://cursor.com",
     logoPath: "/app-logos/cursor.svg",
     tags: {
-      ko: "개발, IDE, AI, 코딩",
       en: "Development, IDE, AI, Coding",
     },
   },

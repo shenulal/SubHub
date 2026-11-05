@@ -16,7 +16,7 @@ describe("dataProvider", () => {
       json: () => Promise.resolve(body),
     });
 
-  it("getList - items/total 형태를 반환하면 그대로 매핑한다", async () => {
+  it("getList - maps an items/total response as-is", async () => {
     vi.spyOn(global, "fetch").mockImplementation(
       fetchMock as unknown as typeof fetch
     );
@@ -33,7 +33,7 @@ describe("dataProvider", () => {
     });
   });
 
-  it("getOne - 404 응답 시 예외를 던진다", async () => {
+  it("getOne - throws on a 404 response", async () => {
     vi.spyOn(global, "fetch").mockImplementation(
       fetchMock as unknown as typeof fetch
     );
@@ -46,7 +46,7 @@ describe("dataProvider", () => {
     ).rejects.toMatchObject({ statusCode: 404 });
   });
 
-  it("create - data 래퍼가 있으면 data를 추출한다", async () => {
+  it("create - extracts data when wrapped in a data envelope", async () => {
     vi.spyOn(global, "fetch").mockImplementation(
       fetchMock as unknown as typeof fetch
     );

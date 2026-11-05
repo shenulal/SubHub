@@ -1,28 +1,28 @@
-# Playwright MCP 테스트 가이드
+# Playwright MCP Testing Guide
 
-## 개요
+## Overview
 
-이 문서는 Playwright MCP(멀티-에이전트 제어 프로토콜)를 활용하여 로컬 혹은 원격
-개발 서버 페이지를 점검하는 절차를 정리한 것입니다.
-`@executeautomation/playwright-mcp-server`가 설치돼 있다는 가정 하에, 브라우저
-준비부터 페이지 네비게이션, 스크린샷 캡처까지의 흐름을 다룹니다.
+This document sets out the procedure for inspecting local or remote development
+server pages using Playwright MCP (Multi-agent Control Protocol). Assuming
+`@executeautomation/playwright-mcp-server` is installed, it covers the flow from
+browser preparation through page navigation to screenshot capture.
 
-## Claude Code 통합 설정 (권장)
+## Claude Code Integration Setup (Recommended)
 
-### 🚀 빠른 시작 - Claude Code 사용자
+### 🚀 Quick Start - Claude Code Users
 
-Claude Code를 사용하는 경우, MCP 서버를 설정 파일에 추가하면 자동으로
-관리됩니다.
+If you use Claude Code, adding the MCP server to the settings file means it is
+managed automatically.
 
-#### 1. 설정 파일 위치 확인
+#### 1. Locate the Settings File
 
 ```bash
 ~/.claude/settings.json
 ```
 
-#### 2. MCP 서버 설정 추가
+#### 2. Add the MCP Server Configuration
 
-기존 설정 파일에 `mcpServers` 섹션을 추가합니다:
+Add a `mcpServers` section to the existing settings file:
 
 ```json
 {
@@ -37,165 +37,171 @@ Claude Code를 사용하는 경우, MCP 서버를 설정 파일에 추가하면 
 }
 ```
 
-**주의**: 기존 설정을 유지하면서 `mcpServers` 섹션만 추가하세요.
+**Caution**: Keep your existing settings and add only the `mcpServers` section.
 
-#### 3. Claude Code 재시작
+#### 3. Restart Claude Code
 
-MCP 서버가 로드되도록 Claude Code를 재시작합니다:
+Restart Claude Code so that the MCP server is loaded:
 
-- **방법 1**: Claude Code 애플리케이션 완전 종료 후 재시작
-- **방법 2**: Command Palette (Cmd+Shift+P) → "Reload Window"
+- **Option 1**: Fully quit the Claude Code application and restart it
+- **Option 2**: Command Palette (Cmd+Shift+P) → "Reload Window"
 
-#### 4. 연결 확인
+#### 4. Verify the Connection
 
-재시작 후 다음 방법으로 MCP 연결을 확인할 수 있습니다:
+After restarting, you can verify the MCP connection in either of these ways:
 
-- Claude에게 "playwright MCP가 연결되었는지 확인해줘"라고 요청
-- `ListMcpResourcesTool`로 "playwright" 서버 확인
+- Ask Claude: "Please check whether the playwright MCP is connected"
+- Check for the "playwright" server with `ListMcpResourcesTool`
 
-#### 5. 브라우저 설치
+#### 5. Install the Browser
 
-Chromium 브라우저가 없다면 설치합니다:
+If the Chromium browser is not present, install it:
 
 ```bash
 npx playwright install chromium
 ```
 
-시스템 기본 경로(`~/Library/Caches/ms-playwright`)에 자동으로 설치됩니다.
+It is installed automatically to the system default path
+(`~/Library/Caches/ms-playwright`).
 
-### 🔧 수동 설정 (고급 사용자)
+### 🔧 Manual Setup (Advanced Users)
 
-Claude Code를 사용하지 않거나 수동으로 MCP 서버를 관리하려는 경우, 아래 "필수
-실행 순서" 섹션을 참조하세요.
+If you do not use Claude Code, or prefer to manage the MCP server manually,
+refer to the "Mandatory Execution Sequence" section below.
 
-## 필수 실행 순서 (Playwright MCP 호출이 2분 이상 응답하지 않을 때)
+## Mandatory Execution Sequence (When a Playwright MCP Call Has Not Responded for More Than 2 Minutes)
 
-1. **목표 서비스 상태 확인**: 점검하려는 웹 애플리케이션이 기동되어 있는지
-   재확인합니다. 필요한 경우 로컬 개발 서버나 미리보기 서버를 재시작하고,
-   브라우저로 직접 접속해 응답을 확인합니다.
-2. **MCP 서버 재기동**: `npx -y @executeautomation/playwright-mcp-server`로 MCP
-   서버를 다시 실행해 세션을 초기화합니다. 이미 실행 중이었다면 종료 후
-   재시작합니다.
-3. **Playwright 브라우저 재설치**: MCP가 참조하는 `PLAYWRIGHT_BROWSERS_PATH`
-   환경 변수를 지정한 뒤 `npx playwright install chromium`을 실행해 최신
-   바이너리를 받습니다. 경로는 MCP 서버의
-   `node_modules/playwright-core/.local-browsers` 등을 사용하면 됩니다.
-4. **버전 디렉터리 동기화**: MCP가 특정 폴더명(예: `chromium-1179`)을
-   기대한다면, 새로 설치된 버전 경로와 일치하도록 심볼릭 링크를 갱신하거나 설정
-   파일을 수정합니다.
-5. **명령 재실행 및 모니터링**: 위 단계를 모두 끝낸 뒤 Playwright MCP 명령을
-   다시 실행합니다. 여전히 지연된다면 네트워크 방화벽, 프록시, 인증 정보 등 환경
-   변수를 추가로 점검합니다.
+1. **Check the target service status**: Re-confirm that the web application you
+   are inspecting is running. If necessary, restart the local development server
+   or preview server, and open it directly in a browser to confirm it responds.
+2. **Restart the MCP server**: Run the MCP server again with
+   `npx -y @executeautomation/playwright-mcp-server` to reset the session. If it
+   was already running, stop it and then restart it.
+3. **Reinstall the Playwright browser**: Set the `PLAYWRIGHT_BROWSERS_PATH`
+   environment variable that the MCP refers to, then run
+   `npx playwright install chromium` to download the latest binary. For the
+   path, you can use the MCP server's
+   `node_modules/playwright-core/.local-browsers` or a similar location.
+4. **Synchronise the version directory**: If the MCP expects a specific folder
+   name (e.g. `chromium-1179`), update the symbolic link or modify the
+   configuration file so that it matches the newly installed version path.
+5. **Re-run the command and monitor**: After completing all of the steps above,
+   run the Playwright MCP command again. If it is still delayed, additionally
+   check environment variables such as network firewall, proxy and credential
+   settings.
 
-이 다섯 단계는 다른 프로젝트에서도 동일하게 적용됩니다. 특히 2분 이상 응답이
-없는 경우에는 반드시 위 순서를 차례대로 수행한 뒤 문제를 보고해야 합니다.
+These five steps apply equally to other projects. In particular, when there has
+been no response for more than 2 minutes, you must carry out the steps above in
+order before reporting the issue.
 
-## 일반 준비 단계
+## General Preparation Steps
 
-### 방법 1: 시스템 기본 경로 사용 (권장)
+### Option 1: Use the System Default Path (Recommended)
 
-가장 간단한 방법입니다. Playwright가 시스템 기본 경로를 자동으로 사용합니다.
+This is the simplest approach. Playwright uses the system default path
+automatically.
 
-1. **브라우저 바이너리 설치**
+1. **Install the browser binary**
 
    ```bash
    npx playwright install chromium
    ```
 
-   자동으로 다음 경로에 설치됩니다:
+   It is installed automatically to the following path:
    - **macOS**: `~/Library/Caches/ms-playwright/`
    - **Linux**: `~/.cache/ms-playwright/`
    - **Windows**: `%USERPROFILE%\AppData\Local\ms-playwright\`
 
-### 방법 2: 커스텀 경로 지정 (고급)
+### Option 2: Specify a Custom Path (Advanced)
 
-특정 경로에 브라우저를 설치하려면 `PLAYWRIGHT_BROWSERS_PATH` 환경변수를
-사용합니다.
+To install the browser to a specific path, use the `PLAYWRIGHT_BROWSERS_PATH`
+environment variable.
 
-1. **브라우저 바이너리 설치 (커스텀 경로)**
+1. **Install the browser binary (custom path)**
 
    ```bash
    PLAYWRIGHT_BROWSERS_PATH=<mcp-install-path>/node_modules/playwright-core/.local-browsers \
      npx playwright install chromium
    ```
 
-2. **버전 폴더 맞춤 (필요 시)**
+2. **Align the version folder (if required)**
 
-   MCP 서버가 특정 버전을 기대하는 경우 심볼릭 링크를 생성합니다:
+   If the MCP server expects a specific version, create a symbolic link:
 
    ```bash
-   ln -sfn <브라우저-실제-경로>/chromium-<설치버전> <브라우저-기대-경로>/chromium-<기존버전>
+   ln -sfn <actual-browser-path>/chromium-<installed-version> <expected-browser-path>/chromium-<previous-version>
    ```
 
-**참고**: 대부분의 경우 방법 1 (시스템 기본 경로)로 충분합니다.
+**Note**: In most cases, Option 1 (system default path) is sufficient.
 
-## 테스트 절차
+## Test Procedure
 
-1. **페이지 접속**  
-   `playwright_navigate` 도구를 사용해 검사 대상 URL로 이동합니다.
+1. **Open the page**  
+   Use the `playwright_navigate` tool to navigate to the URL under inspection.
    ```json
    { "url": "http://<host>:<port>/<path>", "timeout": 120000 }
    ```
-2. **버튼 클릭 / 입력 상호작용**
-   - 버튼 클릭: `playwright_click`
+2. **Button click / input interactions**
+   - Click a button: `playwright_click`
      ```json
      { "selector": "button.primary" }
      ```
-   - 텍스트 입력: `playwright_fill`
+   - Enter text: `playwright_fill`
      ```json
      {
        "selector": "input[name=\"httpUrl\"]",
        "value": "http://<api-host>:<port>"
      }
      ```
-   - 선택 상자 변경: `playwright_select`
+   - Change a select box: `playwright_select`
      ```json
      { "selector": "select[name=\"authType\"]", "value": "<option-value>" }
      ```
 
-3. **스크린샷 캡처**  
-   전체 페이지 스크린샷은 `playwright_screenshot`으로 저장합니다.
+3. **Capture a screenshot**  
+   Save a full-page screenshot with `playwright_screenshot`.
    ```json
    { "name": "playwright-capture", "fullPage": true }
    ```
-4. **텍스트 확인(선택)**  
-   `playwright_get_visible_text`를 호출하면 현재 화면의 주요 텍스트를 확인할 수
-   있습니다.
+4. **Check text (optional)**  
+   Calling `playwright_get_visible_text` lets you check the main text on the
+   current screen.
    ```json
    {}
    ```
-5. **콘솔 로그 확인(필요 시)**  
-   브라우저 콘솔 메시지가 필요할 경우 `playwright_console_logs`를 활용합니다.
+5. **Check console logs (if required)**  
+   If you need browser console messages, use `playwright_console_logs`.
 
-## 참고
+## Notes
 
-- MCP 서버는 `npx -y @executeautomation/playwright-mcp-server`로 실행됩니다.
-- 모든 Playwright 명령은 MCP 연결을 통해 실행되므로, 별도의 Playwright 테스트
-  파일을 작성할 필요가 없습니다.
-- 브라우저 초기화 오류가 발생하면 `npx playwright install` 또는 기본 경로의
-  심볼릭 링크를 확인하세요.
+- The MCP server is run with `npx -y @executeautomation/playwright-mcp-server`.
+- All Playwright commands run through the MCP connection, so there is no need to
+  write separate Playwright test files.
+- If a browser initialisation error occurs, run `npx playwright install` or
+  check the symbolic link in the default path.
 
-### 예시 1: shadcn-storybook-registry 프로젝트 (현재 프로젝트)
+### Example 1: shadcn-storybook-registry Project (Current Project)
 
-#### 환경 정보
+#### Environment Information
 
-- **Playwright 버전**: 1.56.0
-- **MCP 서버**: @executeautomation/playwright-mcp-server@1.0.6
-- **Chromium 버전**: 141.0.7390.37 (build v1194)
-- **브라우저 설치 경로**: `~/Library/Caches/ms-playwright/chromium-1194`
-- **개발 서버**: Storybook (http://localhost:6006)
+- **Playwright version**: 1.56.0
+- **MCP server**: @executeautomation/playwright-mcp-server@1.0.6
+- **Chromium version**: 141.0.7390.37 (build v1194)
+- **Browser installation path**: `~/Library/Caches/ms-playwright/chromium-1194`
+- **Development server**: Storybook (http://localhost:6006)
 
-#### 설정 방법
+#### Setup
 
-1. **브라우저 설치** (시스템 기본 경로 사용 - 권장)
+1. **Install the browser** (using the system default path - recommended)
 
    ```bash
    npx playwright install chromium
    ```
 
-   자동으로 `~/Library/Caches/ms-playwright/chromium-1194`에 설치됩니다.
+   It is installed automatically to
+   `~/Library/Caches/ms-playwright/chromium-1194`.
 
-2. **Claude Code 설정**
+2. **Claude Code configuration**
 
    ```json
    {
@@ -209,14 +215,14 @@ Claude Code를 사용하지 않거나 수동으로 MCP 서버를 관리하려는
    }
    ```
 
-3. **Storybook 서버 실행**
+3. **Run the Storybook server**
    ```bash
    npm run storybook
    ```
 
-#### 테스트 예시
+#### Test Examples
 
-**Color Story 페이지 테스트**:
+**Color Story page test**:
 
 ```json
 {
@@ -225,13 +231,13 @@ Claude Code를 사용하지 않거나 수동으로 MCP 서버를 관리하려는
 }
 ```
 
-**스크린샷 캡처**:
+**Screenshot capture**:
 
 ```json
 { "name": "color-story-screenshot", "fullPage": true }
 ```
 
-**특정 스토리로 이동**:
+**Navigate to a specific story**:
 
 ```json
 {
@@ -240,35 +246,35 @@ Claude Code를 사용하지 않거나 수동으로 MCP 서버를 관리하려는
 }
 ```
 
-### 예시 2: neo-flow-viz 프로젝트
+### Example 2: neo-flow-viz Project
 
-#### 환경 정보
+#### Environment Information
 
-- **개발 서버**: Vite Preview (http://127.0.0.1:4173)
-- **브라우저 설치**: 커스텀 경로 사용
+- **Development server**: Vite Preview (http://127.0.0.1:4173)
+- **Browser installation**: Custom path
 
-#### 설정 방법
+#### Setup
 
-- 브라우저 설치 경로 예시 (커스텀 경로 지정)
+- Example browser installation path (custom path specified)
 
   ```bash
   PLAYWRIGHT_BROWSERS_PATH=/Users/tw.kim/.nvm/versions/node/v22.14.0/lib/node_modules/@executeautomation/playwright-mcp-server/node_modules/playwright-core/.local-browsers \
     npx playwright install chromium
   ```
 
-- MCP가 `chromium-1179` 경로를 기대할 때 심볼릭 링크 예시
+- Example symbolic link when the MCP expects the `chromium-1179` path
   ```bash
   ln -sfn /Users/tw.kim/.nvm/.../.local-browsers/chromium-1193 \
          /Users/tw.kim/.nvm/.../.local-browsers/chromium-1179
   ```
 
-#### 테스트 예시
+#### Test Examples
 
-- 자주 사용하는 Playwright MCP 호출 예시
+- Frequently used Playwright MCP call example
   ```json
   { "url": "http://127.0.0.1:4173/test-6", "timeout": 120000 }
   ```
-- 샘플 입력/선택자 예시
+- Sample input/selector examples
   ```json
   { "selector": "input[name=\"httpUrl\"]", "value": "http://localhost:7474" }
   ```

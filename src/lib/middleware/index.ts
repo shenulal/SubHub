@@ -1,6 +1,6 @@
 // src/lib/middleware/index.ts
 /**
- * 미들웨어 배럴 export
+ * Middleware barrel export
  */
 
 export { withCronAuth } from "./cron-auth";

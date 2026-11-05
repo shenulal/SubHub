@@ -1,16 +1,16 @@
 // src/config/features.ts
 /**
  * Feature Flags
- * MVP 범위 외 기능을 제어하기 위한 feature flag 설정
+ * Feature flags controlling features outside the MVP scope
  */
 
 export const FEATURES = {
-  /** 조직 설정 - 팀/부서 관리 기능 (V2) */
+  /** Organisation settings - team/department management (V2) */
   ORGANIZATION_TEAMS: false,
 
-  /** 조직 설정 - 로고 URL 설정 기능 (V2) */
+  /** Organisation settings - logo URL setting (V2) */
   ORGANIZATION_LOGO: false,
 
-  /** 조직 설정 - 멀티도메인 관리 기능 */
+  /** Organisation settings - multi-domain management */
   ORGANIZATION_DOMAINS: true,
 } as const;

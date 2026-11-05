@@ -6,9 +6,9 @@ import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { RecentActivityItem } from "@/types/dashboard";
 import { formatDistanceToNow } from "date-fns";
-import { enUS, ko } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 import { History } from "lucide-react";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 
 import { DashboardEmptyState } from "./dashboard-empty-state";
@@ -21,23 +21,22 @@ interface RecentActivityProps {
 }
 
 /**
- * 최근 활동 목록 컴포넌트
- * - Figma 디자인 적용: 카드형 아이템 레이아웃
- * - 배경: purple-gray (rgba(100, 116, 243, 0.05))
- * - 아바타: 40x40 원형
- * - 높이: h-[450px] (카테고리별앱과 동일)
+ * Recent activity list component
+ * - Figma design: card-style item layout
+ * - Background: purple-gray (rgba(100, 116, 243, 0.05))
+ * - Avatar: 40x40 circle
+ * - Height: h-[450px] (same as Apps by category)
  */
 export function RecentActivity({ activities, isLoading }: RecentActivityProps) {
   const t = useTranslations();
-  const locale = useLocale();
-  const dateLocale = locale === "en" ? enUS : ko;
+  const dateLocale = enUS;
 
-  // 최근 5개 활동만 표시
+  // Show only the 5 most recent activities
   const displayActivities = useMemo(() => {
     return activities.slice(0, 5);
   }, [activities]);
 
-  // 로딩 상태
+  // Loading state
   if (isLoading) {
     return (
       <Card className={CARD_CLASSES}>
@@ -51,7 +50,7 @@ export function RecentActivity({ activities, isLoading }: RecentActivityProps) {
     );
   }
 
-  // 빈 상태
+  // Empty state
   if (!displayActivities || displayActivities.length === 0) {
     return (
       <Card className={CARD_CLASSES}>
@@ -68,12 +67,12 @@ export function RecentActivity({ activities, isLoading }: RecentActivityProps) {
 
   return (
     <Card className={CARD_CLASSES}>
-      {/* 타이틀 */}
+      {/* Title */}
       <p className="text-foreground truncate text-lg font-medium">
         {t("dashboard.sections.recentActivity.title")}
       </p>
 
-      {/* 활동 목록 */}
+      {/* Activity list */}
       <div className="flex min-h-0 flex-1 flex-col gap-1 overflow-y-auto">
         {displayActivities.map((activity) => {
           const displayName =
@@ -96,14 +95,14 @@ export function RecentActivity({ activities, isLoading }: RecentActivityProps) {
               key={activity.id}
               className="hover:bg-muted flex min-w-0 items-center gap-3 rounded-md p-2 transition-colors"
             >
-              {/* 아바타 */}
+              {/* Avatar */}
               <Avatar className="h-10 w-10 shrink-0">
                 <AvatarFallback className="bg-primary/15 text-primary text-xs font-medium">
                   {initials}
                 </AvatarFallback>
               </Avatar>
 
-              {/* 내용 */}
+              {/* Content */}
               <div className="flex min-w-0 flex-1 flex-col gap-0.5 py-1">
                 <p className="text-foreground truncate text-sm font-medium">
                   {displayName}

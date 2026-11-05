@@ -1,7 +1,7 @@
 // src/types/audit.ts
 
 /**
- * Audit Log (감사 로그) 관련 타입 정의
+ * Audit log types
  */
 
 export interface AuditLogFilters {
@@ -9,8 +9,8 @@ export interface AuditLogFilters {
   userId?: string;
   teamId?: string;
   entityType?: string;
-  startDate?: string; // ISO 8601 문자열
-  endDate?: string; // ISO 8601 문자열
+  startDate?: string; // ISO 8601 string
+  endDate?: string; // ISO 8601 string
   search?: string;
   page?: number;
   limit?: number;
@@ -28,7 +28,7 @@ export interface AuditLogEntry {
   metadata: Record<string, unknown> | null;
   ipAddress: string | null;
   userAgent: string | null;
-  createdAt: string; // ISO 8601 문자열
+  createdAt: string; // ISO 8601 string
 }
 
 export interface AuditLogListResponse {

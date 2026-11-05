@@ -27,7 +27,7 @@ describe("subscription-calendar", () => {
 
   describe("getRenewalCalendar", () => {
     it("should show recurring renewals for current/future months", async () => {
-      // Arrange: 현재/미래 달 - 반복 갱신 로직 적용
+      // Arrange: current/future month - recurring renewal logic applies
       const mockSubscriptions = [
         {
           id: "sub-1",
@@ -67,26 +67,26 @@ describe("subscription-calendar", () => {
         mockSubscriptions as never
       );
 
-      // Act: 미래 달 조회
+      // Act: query a future month
       const result = await getRenewalCalendar(2099, 3);
 
       // Assert
       expect(result.year).toBe(2099);
       expect(result.month).toBe(3);
 
-      // 2월 15일 구독 → 3월 15일에도 표시 (반복 갱신)
+      // Subscription from 15 Feb → also shown on 15 Mar (recurring renewal)
       expect(result.renewals["2099-03-15"]).toBeDefined();
       expect(result.renewals["2099-03-15"]).toHaveLength(1);
       expect(result.renewals["2099-03-15"][0].appName).toBe("Slack");
 
-      // 3월 20일 구독 → 3월 20일에 표시
+      // Subscription from 20 Mar → shown on 20 Mar
       expect(result.renewals["2099-03-20"]).toBeDefined();
       expect(result.renewals["2099-03-20"]).toHaveLength(1);
       expect(result.renewals["2099-03-20"][0].appName).toBe("Notion");
     });
 
     it("should show only actual DB records for past months", async () => {
-      // Arrange: 과거 달 - DB 실제 데이터만 표시
+      // Arrange: past month - only actual DB data is shown
       const mockSubscriptions = [
         {
           id: "sub-1",
@@ -110,21 +110,21 @@ describe("subscription-calendar", () => {
         mockSubscriptions as never
       );
 
-      // Act: 과거 달 조회
+      // Act: query a past month
       const result = await getRenewalCalendar(2020, 1);
 
       // Assert
       expect(result.year).toBe(2020);
       expect(result.month).toBe(1);
 
-      // DB에 실제로 있는 날짜만 표시
+      // Only dates that actually exist in the DB are shown
       expect(result.renewals["2020-01-15"]).toBeDefined();
       expect(result.renewals["2020-01-15"]).toHaveLength(1);
       expect(result.renewals["2020-01-15"][0].appName).toBe("Slack");
     });
 
     it("should group multiple subscriptions on the same calculated date", async () => {
-      // Arrange: 미래 달, 두 구독 모두 매월 15일에 갱신
+      // Arrange: future month, both subscriptions renew on the 15th monthly
       const mockSubscriptions = [
         {
           id: "sub-1",
@@ -168,7 +168,7 @@ describe("subscription-calendar", () => {
     });
 
     it("should handle yearly renewals correctly", async () => {
-      // Arrange: 매년 3월 15일에 갱신되는 구독
+      // Arrange: subscription renewing every year on 15 March
       const mockSubscriptions = [
         {
           id: "sub-1",
@@ -190,16 +190,16 @@ describe("subscription-calendar", () => {
       );
 
       // Act
-      const result = await getRenewalCalendar(2099, 3); // 2099년 3월
+      const result = await getRenewalCalendar(2099, 3); // March 2099
 
-      // Assert: 2099년 3월 15일에 표시되어야 함
+      // Assert: should appear on 15 March 2099
       expect(result.renewals["2099-03-15"]).toBeDefined();
       expect(result.renewals["2099-03-15"]).toHaveLength(1);
       expect(result.renewals["2099-03-15"][0].appName).toBe("Slack");
     });
 
     it("should not show yearly renewals in wrong months", async () => {
-      // Arrange: 매년 3월 15일에 갱신되는 구독
+      // Arrange: subscription renewing every year on 15 March
       const mockSubscriptions = [
         {
           id: "sub-1",
@@ -221,9 +221,9 @@ describe("subscription-calendar", () => {
       );
 
       // Act
-      const result = await getRenewalCalendar(2099, 4); // 2099년 4월 (갱신 월 아님)
+      const result = await getRenewalCalendar(2099, 4); // April 2099 (not a renewal month)
 
-      // Assert: 4월에는 표시되지 않아야 함
+      // Assert: should not appear in April
       expect(result.renewals).toEqual({});
     });
 
@@ -241,7 +241,7 @@ describe("subscription-calendar", () => {
     });
 
     it("should not include subscriptions that start after the query month", async () => {
-      // Arrange: 4월에 시작하는 구독은 3월에 표시되지 않아야 함
+      // Arrange: a subscription starting in April should not appear in March
       const mockSubscriptions = [
         {
           id: "sub-1",
@@ -270,7 +270,7 @@ describe("subscription-calendar", () => {
     });
 
     it("should not include subscriptions that ended before the query month", async () => {
-      // Arrange: 2월에 종료된 구독은 3월에 표시되지 않아야 함
+      // Arrange: a subscription that ended in February should not appear in March
       const mockSubscriptions = [
         {
           id: "sub-1",
@@ -299,7 +299,7 @@ describe("subscription-calendar", () => {
     });
 
     it("should handle monthly renewals on day 31 in months with 30 days", async () => {
-      // Arrange: 1월 31일 구독 → 2월에는 28일에 표시되어야 함
+      // Arrange: subscription from 31 Jan → should appear on the 28th in February
       const mockSubscriptions = [
         {
           id: "sub-1",
@@ -321,7 +321,7 @@ describe("subscription-calendar", () => {
       );
 
       // Act
-      const result = await getRenewalCalendar(2099, 2); // 2월 (28일까지)
+      const result = await getRenewalCalendar(2099, 2); // February (28 days)
 
       // Assert
       expect(result.renewals["2099-02-28"]).toBeDefined();
@@ -332,7 +332,7 @@ describe("subscription-calendar", () => {
 
   describe("getRenewalsByDate", () => {
     it("should return renewals for a past date from DB", async () => {
-      // Arrange: 과거 날짜 - DB에서 직접 조회
+      // Arrange: past date - queried directly from the DB
       const mockSubscriptions = [
         {
           id: "sub-1",
@@ -367,7 +367,7 @@ describe("subscription-calendar", () => {
     });
 
     it("should return calculated renewals for a future date (monthly billing)", async () => {
-      // Arrange: 미래 날짜 - 계산 로직 적용
+      // Arrange: future date - calculation logic applies
       const mockSubscriptions = [
         {
           id: "sub-1",
@@ -391,7 +391,7 @@ describe("subscription-calendar", () => {
         mockSubscriptions as never
       );
 
-      // Act: 미래 날짜 조회 (2월 15일 구독 → 3월 15일에도 표시되어야 함)
+      // Act: query a future date (subscription from 15 Feb → should also appear on 15 Mar)
       const result = await getRenewalsByDate("2099-03-15");
 
       // Assert
@@ -403,7 +403,7 @@ describe("subscription-calendar", () => {
     });
 
     it("should return calculated renewals for a future date (yearly billing)", async () => {
-      // Arrange: 미래 날짜, 연간 갱신
+      // Arrange: future date, yearly renewal
       const mockSubscriptions = [
         {
           id: "sub-1",
@@ -427,7 +427,7 @@ describe("subscription-calendar", () => {
         mockSubscriptions as never
       );
 
-      // Act: 2099년 3월 15일 조회 (연간 갱신일)
+      // Act: query 15 March 2099 (yearly renewal date)
       const result = await getRenewalsByDate("2099-03-15");
 
       // Assert
@@ -438,7 +438,7 @@ describe("subscription-calendar", () => {
     });
 
     it("should return empty array when no renewals match the future date", async () => {
-      // Arrange: 미래 날짜지만 해당 날짜에 갱신되는 구독 없음
+      // Arrange: future date with no subscription renewing on that day
       const mockSubscriptions = [
         {
           id: "sub-1",
@@ -459,7 +459,7 @@ describe("subscription-calendar", () => {
         mockSubscriptions as never
       );
 
-      // Act: 3월 15일 조회 (구독은 매월 20일에 갱신)
+      // Act: query 15 March (subscription renews on the 20th monthly)
       const result = await getRenewalsByDate("2099-03-15");
 
       // Assert

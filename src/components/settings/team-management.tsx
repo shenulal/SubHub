@@ -81,7 +81,7 @@ export function TeamManagement({ initialTeams }: TeamManagementProps) {
           <CardDescription>{t("settings.team.description")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* 팀 추가 입력 */}
+          {/* Add-team input */}
           <div className="flex min-w-0 gap-2">
             <Input
               className="min-w-0 flex-1"
@@ -104,7 +104,7 @@ export function TeamManagement({ initialTeams }: TeamManagementProps) {
             </Button>
           </div>
 
-          {/* 팀 목록 */}
+          {/* Team list */}
           {teams.length === 0 ? (
             <div className="bg-muted flex flex-col items-center justify-center gap-1 rounded-md py-8 text-center">
               <span className="tonal-neutral mb-2 flex size-10 items-center justify-center rounded-md">
@@ -148,7 +148,7 @@ export function TeamManagement({ initialTeams }: TeamManagementProps) {
             </div>
           )}
 
-          {/* 팀 수 표시 */}
+          {/* Team count */}
           {teams.length > 0 && (
             <p className="text-muted-foreground text-[0.8125rem]">
               {t("settings.team.count", { count: teams.length })}

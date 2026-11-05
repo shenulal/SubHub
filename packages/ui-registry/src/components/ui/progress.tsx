@@ -6,9 +6,9 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * 🎯 목적: Progress 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: Radix UI Progress primitive 사용, value prop 전달 필수
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the Progress component for React 18/19 compatibility
+ * 📝 Note: Uses the Radix UI Progress primitive; the value prop is required
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const Progress = React.forwardRef<
   React.ElementRef<typeof ProgressPrimitive.Root>,

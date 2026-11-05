@@ -90,7 +90,7 @@ function periodToDateRange(period: string): {
   return { startDate, endDate };
 }
 
-// 순위 배지 컴포넌트
+// Rank badge component
 function RankBadge({ rank }: { rank: number }) {
   const isFirst = rank === 1;
   return (
@@ -105,7 +105,7 @@ function RankBadge({ rank }: { rank: number }) {
   );
 }
 
-// 활용률 막대 그래프 컴포넌트
+// Utilisation bar component
 function UsageBars({ efficiency }: { efficiency: number }) {
   const filledBars = Math.ceil(efficiency / 20);
   return (
@@ -178,7 +178,7 @@ export function CostAppsTable({
 
   return (
     <Card className={cn("h-[400px] gap-4 px-5", className)}>
-      {/* 헤더: 타이틀 + 기간 탭 */}
+      {/* Header: title + period tabs */}
       <div className="flex min-w-0 items-center justify-between gap-3">
         <p
           className="text-foreground min-w-0 truncate text-lg font-medium"
@@ -204,7 +204,7 @@ export function CostAppsTable({
         </ToggleGroup>
       </div>
 
-      {/* 테이블 영역 */}
+      {/* Table area */}
       {filteredData.length === 0 ? (
         <DashboardEmptyState icon={Trophy} message={tEmpty("noData")} />
       ) : (

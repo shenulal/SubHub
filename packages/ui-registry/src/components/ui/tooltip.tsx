@@ -6,9 +6,9 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * 🎯 목적: TooltipProvider 컴포넌트 (Radix UI Provider primitive)
- * 📝 주의사항: Provider primitive는 ref를 지원하지 않음
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support 검토 (ref 미지원 확인)
+ * 🎯 Purpose: TooltipProvider component (Radix UI Provider primitive)
+ * 📝 Note: Provider primitive does not support ref
+ * 🔄 History: 2025-10-11 - Reviewed for React 18/19 dual support (confirmed ref is not supported)
  */
 function TooltipProvider({
   delayDuration = 0,
@@ -24,9 +24,9 @@ function TooltipProvider({
 }
 
 /**
- * 🎯 목적: Tooltip 컴포넌트 (Radix UI Root primitive)
- * 📝 주의사항: Root primitive는 ref를 지원하지 않음
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support 검토 (ref 미지원 확인)
+ * 🎯 Purpose: Tooltip component (Radix UI Root primitive)
+ * 📝 Note: Root primitive does not support ref
+ * 🔄 History: 2025-10-11 - Reviewed for React 18/19 dual support (confirmed ref is not supported)
  */
 function Tooltip({
   ...props
@@ -39,9 +39,9 @@ function Tooltip({
 }
 
 /**
- * 🎯 목적: TooltipTrigger 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: Radix UI Trigger primitive 사용
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the TooltipTrigger component for React 18/19 compatibility
+ * 📝 Note: Uses the Radix UI Trigger primitive
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const TooltipTrigger = React.forwardRef<
   React.ElementRef<typeof TooltipPrimitive.Trigger>,
@@ -58,9 +58,9 @@ const TooltipTrigger = React.forwardRef<
 TooltipTrigger.displayName = "TooltipTrigger";
 
 /**
- * 🎯 목적: TooltipContent 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: Radix UI Content primitive 사용, Portal로 래핑됨, Arrow 포함
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the TooltipContent component for React 18/19 compatibility
+ * 📝 Note: Uses the Radix UI Content primitive; wrapped in a Portal; includes an Arrow
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const TooltipContent = React.forwardRef<
   React.ElementRef<typeof TooltipPrimitive.Content>,

@@ -4,8 +4,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Suspense } from "react";
 
 export const metadata = {
-  title: "블랙리스트 | SaaS Management Platform",
-  description: "차단 도메인 관리",
+  title: "Blacklist",
+  description: "Manage blocked domains",
 };
 
 function PageSkeleton() {
@@ -23,7 +23,7 @@ function PageSkeleton() {
 export default function BlacklistPage() {
   return (
     <div className="space-y-6">
-      <h1 className="text-foreground text-xl font-medium">블랙리스트</h1>
+      <h1 className="text-foreground text-xl font-medium">Blacklist</h1>
       <Suspense fallback={<PageSkeleton />}>
         <BlacklistPageClient />
       </Suspense>

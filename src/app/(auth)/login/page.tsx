@@ -1,5 +1,5 @@
 // src/app/(auth)/login/page.tsx
-// 로그인 페이지 (이메일/OTP + Google OAuth)
+// Login page (email/OTP + Google OAuth)
 
 import { AppleSignInButton } from "@/components/auth/apple-sign-in-button";
 import { LoginForm } from "@/components/auth/login-form";
@@ -19,19 +19,19 @@ interface LoginPageProps {
 }
 
 /**
- * 로그인 페이지
- * 이메일/OTP 및 Google OAuth를 통한 로그인 지원
- * 이미 로그인된 사용자는 적절한 페이지로 리다이렉트
+ * Login page
+ * Supports login via email/OTP and Google OAuth
+ * Redirects already signed-in users to the appropriate page
  */
 export default async function LoginPage({ searchParams }: LoginPageProps) {
   const t = await getTranslations();
   const { error } = await searchParams;
 
-  // 이미 로그인된 사용자 체크
+  // Check for an already signed-in user
   const session = await auth();
 
   if (session?.user) {
-    // 조직이 있으면 /dashboard로, 없으면 /onboarding으로
+    // To /dashboard if the user has an organization, otherwise /onboarding
     if (session.user.organizationId) {
       redirect("/dashboard");
     } else {
@@ -41,14 +41,14 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
   const { appleEnabled, enforceSso } = await getSignInOptions();
 
-  // 에러/안내 메시지 처리
+  // Handle error/info messages
   const errorMessage = error
     ? error === "CredentialsSignin"
       ? t("auth.login.errors.invalidOtp")
       : t("auth.login.errors.default")
     : null;
 
-  /** credentials 로그인 Server Action */
+  /** Credentials login Server Action */
   async function loginAction(formData: FormData) {
     "use server";
     const email = formData.get("email") as string;
@@ -70,7 +70,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
   return (
     <div data-testid="login-page" className="flex w-full flex-col gap-5">
-      {/* 헤더 */}
+      {/* Header */}
       <div className="flex flex-col gap-1">
         <h2 className="text-foreground text-2xl font-medium">
           {t("auth.login.title")}
@@ -80,14 +80,14 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         </p>
       </div>
 
-      {/* 에러 메시지 */}
+      {/* Error message */}
       {errorMessage && (
         <Alert variant="destructive">
           <AlertDescription>{errorMessage}</AlertDescription>
         </Alert>
       )}
 
-      {/* Google 로그인 버튼 (소셜 먼저) */}
+      {/* Google login button (social first) */}
       <form
         data-testid="login-form"
         action={async () => {
@@ -105,7 +105,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         </Button>
       </form>
 
-      {/* Apple 로그인 (APPLE_CLIENT_ID 설정 시에만) */}
+      {/* Apple login (only when APPLE_CLIENT_ID is set) */}
       {appleEnabled && (
         <div className="-mt-2">
           <AppleSignInButton
@@ -124,7 +124,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         </p>
       ) : (
         <>
-          {/* 구분선 */}
+          {/* Divider */}
           <div className="flex items-center gap-3">
             <div className="bg-border h-px flex-1" />
             <p className="text-foreground/70 shrink-0 text-[0.9375rem]">
@@ -133,7 +133,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             <div className="bg-border h-px flex-1" />
           </div>
 
-          {/* 이메일/OTP 폼 */}
+          {/* Email/OTP form */}
           <LoginForm
             action={loginAction}
             translations={{
@@ -165,7 +165,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 }
 
 /**
- * Google 아이콘 컴포넌트
+ * Google icon component
  */
 function GoogleIcon({ className }: { className?: string }) {
   return (

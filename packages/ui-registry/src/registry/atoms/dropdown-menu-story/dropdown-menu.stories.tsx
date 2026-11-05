@@ -182,14 +182,14 @@ export const ShouldOpenAndSelectMenuItem: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    // 🎯 목적: Dropdown Menu가 트리거 버튼 클릭으로 열리고, 메뉴 아이템 선택이 가능한지 확인
+    // 🎯 Purpose: Verify the Dropdown Menu opens from the trigger button and menu items can be selected
     const triggerButton = canvas.getByRole("button", { name: /open/i });
     await expect(triggerButton).toBeInTheDocument();
 
-    // 트리거 버튼 클릭하여 드롭다운 메뉴 열기
+    // Click the trigger button to open the dropdown menu
     await userEvent.click(triggerButton);
 
-    // 메뉴가 열렸는지 확인 (메뉴 아이템 확인)
+    // Verify the menu is open (check the menu items)
     const profileItem = await waitFor(async () => {
       return await canvas.findByRole("menuitem", {
         name: /profile/i,
@@ -197,14 +197,14 @@ export const ShouldOpenAndSelectMenuItem: Story = {
     });
     await expect(profileItem).toBeInTheDocument();
 
-    // 다른 메뉴 아이템들도 확인
+    // Check the other menu items too
     const billingItem = canvas.getByRole("menuitem", { name: /billing/i });
     const settingsItem = canvas.getByRole("menuitem", { name: /settings/i });
 
     await expect(billingItem).toBeInTheDocument();
     await expect(settingsItem).toBeInTheDocument();
 
-    // 메뉴 아이템 클릭
+    // Click a menu item
     await userEvent.click(profileItem);
   },
 };

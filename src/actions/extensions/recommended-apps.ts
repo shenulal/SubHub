@@ -12,7 +12,7 @@ import type { ActionState } from "@/types";
 import { revalidatePath } from "next/cache";
 
 /**
- * 추천 앱 아이템 타입
+ * Recommended app item type
  */
 export type RecommendedAppItem = {
   id: string;
@@ -28,7 +28,7 @@ export type RecommendedAppItem = {
 };
 
 /**
- * 추천 앱 리스트 응답 타입
+ * Recommended app list response type
  */
 export type RecommendedAppsResponse = {
   items: RecommendedAppItem[];
@@ -40,8 +40,8 @@ export type RecommendedAppsResponse = {
 };
 
 /**
- * 추천 앱 리스트 조회
- * - SaaS로 식별된 미등록 도메인 목록
+ * Fetch the recommended app list
+ * - Unregistered domains identified as SaaS
  */
 export async function getRecommendedApps(params: {
   page?: number;
@@ -51,13 +51,13 @@ export async function getRecommendedApps(params: {
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
-      return { success: false, error: "인증이 필요합니다" };
+      return { success: false, error: "Authentication required" };
     }
 
     const { page = 1, limit = 20, search } = params;
     const skip = (page - 1) * limit;
 
-    // SaaS로 식별된 스캔 히스토리 조회 (등록되지 않은 것만)
+    // Fetch scan history identified as SaaS (unregistered only)
     const whereClause = {
       organizationId: session.user.organizationId,
       isSaaS: true,
@@ -89,19 +89,19 @@ export async function getRecommendedApps(params: {
       getUnscannedDomainCount(session.user.organizationId),
     ]);
 
-    // 등록된 앱 패턴 목록 조회
+    // Fetch registered app patterns
     const registeredPatterns = await getRegisteredPatterns(
       session.user.organizationId
     );
 
-    // 등록된 앱 제외
+    // Exclude registered apps
     const filteredHistory = scanHistory.filter((item) => {
       return !registeredPatterns.some((p) =>
         matchDomainPattern(p, item.domain)
       );
     });
 
-    // 방문 통계 조회
+    // Fetch visit statistics
     const domainStats = await getDomainVisitStats(
       session.user.organizationId,
       filteredHistory.map((h) => h.domain)
@@ -140,14 +140,16 @@ export async function getRecommendedApps(params: {
     return {
       success: false,
       error:
-        error instanceof Error ? error.message : "추천 앱 리스트 조회 실패",
+        error instanceof Error
+          ? error.message
+          : "Failed to fetch recommended apps",
     };
   }
 }
 
 /**
- * 미스캔 도메인 스캔 실행
- * - 접속 로그에서 미등록/미스캔 도메인을 추출하여 SaaS 여부 판별
+ * Scan unscanned domains
+ * - Extracts unregistered/unscanned domains from access logs and classifies whether they are SaaS
  */
 export async function scanUnregisteredDomains(params: {
   batchSize?: number;
@@ -155,12 +157,12 @@ export async function scanUnregisteredDomains(params: {
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
-      return { success: false, error: "인증이 필요합니다" };
+      return { success: false, error: "Authentication required" };
     }
 
     const { batchSize = 10 } = params;
 
-    // 미스캔 도메인 추출
+    // Extract unscanned domains
     const unscannedDomains = await getUnscannedDomains(
       session.user.organizationId,
       batchSize
@@ -170,13 +172,13 @@ export async function scanUnregisteredDomains(params: {
       return {
         success: true,
         data: { scanned: 0, saasFound: 0 },
-        message: "스캔할 새 도메인이 없습니다.",
+        message: "No new domains to scan.",
       };
     }
 
     let saasFound = 0;
 
-    // 각 도메인에 대해 SaaS 분류 수행
+    // Classify each domain as SaaS or not
     for (const domain of unscannedDomains) {
       try {
         const result = await classifyMerchantWithLLM({
@@ -186,7 +188,7 @@ export async function scanUnregisteredDomains(params: {
 
         const inference = result.inference;
 
-        // 스캔 결과 저장
+        // Save the scan result
         await prisma.saaSDomainScanHistory.create({
           data: {
             organizationId: session.user.organizationId,
@@ -208,7 +210,7 @@ export async function scanUnregisteredDomains(params: {
           `[scanUnregisteredDomains] Error scanning ${domain}:`,
           error
         );
-        // 에러가 발생해도 non-SaaS로 저장하여 재스캔 방지
+        // On error, still save as non-SaaS to avoid rescanning
         await prisma.saaSDomainScanHistory.create({
           data: {
             organizationId: session.user.organizationId,
@@ -228,19 +230,19 @@ export async function scanUnregisteredDomains(params: {
         scanned: unscannedDomains.length,
         saasFound,
       },
-      message: `${unscannedDomains.length}개 도메인 스캔 완료, ${saasFound}개 SaaS 발견`,
+      message: `Scanned ${unscannedDomains.length} domains, found ${saasFound} SaaS`,
     };
   } catch (error) {
     console.error("[scanUnregisteredDomains] Error:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "스캔 실패",
+      error: error instanceof Error ? error.message : "Scan failed",
     };
   }
 }
 
 /**
- * 추천 앱을 등록 앱으로 추가
+ * Add a recommended app as a registered app
  */
 export async function registerRecommendedApp(
   scanHistoryId: string
@@ -248,10 +250,10 @@ export async function registerRecommendedApp(
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
-      return { success: false, error: "인증이 필요합니다" };
+      return { success: false, error: "Authentication required" };
     }
 
-    // 스캔 히스토리 조회
+    // Fetch scan history
     const scanHistory = await prisma.saaSDomainScanHistory.findUnique({
       where: { id: scanHistoryId },
       include: { catalog: true },
@@ -261,10 +263,10 @@ export async function registerRecommendedApp(
       !scanHistory ||
       scanHistory.organizationId !== session.user.organizationId
     ) {
-      return { success: false, error: "추천 앱을 찾을 수 없습니다" };
+      return { success: false, error: "Recommended app not found" };
     }
 
-    // 앱 생성
+    // Create the app
     const app = await prisma.app.create({
       data: {
         organizationId: session.user.organizationId,
@@ -277,7 +279,7 @@ export async function registerRecommendedApp(
       },
     });
 
-    // 화이트리스트에 추가
+    // Add to the whitelist
     const pattern = `*.${scanHistory.domain}`;
     await prisma.extensionWhitelist.upsert({
       where: {
@@ -303,19 +305,19 @@ export async function registerRecommendedApp(
     return {
       success: true,
       data: { appId: app.id },
-      message: "앱이 등록되었습니다",
+      message: "App registered",
     };
   } catch (error) {
     console.error("[registerRecommendedApp] Error:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "등록 실패",
+      error: error instanceof Error ? error.message : "Registration failed",
     };
   }
 }
 
 /**
- * 추천 앱 무시 (SaaS가 아닌 것으로 표시)
+ * Ignore a recommended app (mark as non-SaaS)
  */
 export async function dismissRecommendedApp(
   scanHistoryId: string
@@ -323,10 +325,10 @@ export async function dismissRecommendedApp(
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
-      return { success: false, error: "인증이 필요합니다" };
+      return { success: false, error: "Authentication required" };
     }
 
-    // 스캔 히스토리에서 isSaaS를 false로 변경
+    // Set isSaaS to false in scan history
     await prisma.saaSDomainScanHistory.update({
       where: { id: scanHistoryId },
       data: { isSaaS: false, reasoning: "Dismissed by user" },
@@ -334,12 +336,12 @@ export async function dismissRecommendedApp(
 
     revalidatePath("/extensions/recommended-apps");
 
-    return { success: true, message: "무시되었습니다" };
+    return { success: true, message: "Ignored" };
   } catch (error) {
     console.error("[dismissRecommendedApp] Error:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "처리 실패",
+      error: error instanceof Error ? error.message : "Processing failed",
     };
   }
 }
@@ -347,7 +349,7 @@ export async function dismissRecommendedApp(
 // ==================== Helper Functions ====================
 
 /**
- * 등록된 앱 패턴 목록 조회
+ * Fetch registered app patterns
  */
 async function getRegisteredPatterns(
   organizationId: string
@@ -360,12 +362,12 @@ async function getRegisteredPatterns(
 }
 
 /**
- * 미스캔 도메인 수 조회
+ * Count unscanned domains
  */
 async function getUnscannedDomainCount(
   organizationId: string
 ): Promise<number> {
-  // 최근 30일 브라우징 로그에서 고유 도메인 추출
+  // Extract unique domains from the last 30 days of browsing logs
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
@@ -386,14 +388,14 @@ async function getUnscannedDomainCount(
     }
   }
 
-  // 이미 스캔된 도메인 제외
+  // Exclude domains that were already scanned
   const scannedDomains = await prisma.saaSDomainScanHistory.findMany({
     where: { organizationId },
     select: { domain: true },
   });
   const scannedSet = new Set(scannedDomains.map((s) => s.domain));
 
-  // 등록된 앱 패턴 조회
+  // Fetch registered app patterns
   const registeredPatterns = await getRegisteredPatterns(organizationId);
 
   let unscannedCount = 0;
@@ -407,7 +409,7 @@ async function getUnscannedDomainCount(
 }
 
 /**
- * 미스캔 도메인 목록 조회
+ * Fetch unscanned domains
  */
 async function getUnscannedDomains(
   organizationId: string,
@@ -416,7 +418,7 @@ async function getUnscannedDomains(
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-  // 브라우징 로그에서 도메인별 방문 횟수로 정렬
+  // Sort browsing log domains by visit count
   const domainStats = await prisma.extensionBrowsingLog.groupBy({
     by: ["domain"],
     where: {
@@ -425,10 +427,10 @@ async function getUnscannedDomains(
     },
     _count: { domain: true },
     orderBy: { _count: { domain: "desc" } },
-    take: 500, // 상위 500개 도메인만 검사
+    take: 500, // Check only the top 500 domains
   });
 
-  // 메인 도메인 추출
+  // Extract the root domain
   const mainDomainCounts = new Map<string, number>();
   for (const stat of domainStats) {
     const mainDomain = extractMainDomain(stat.domain);
@@ -438,17 +440,17 @@ async function getUnscannedDomains(
     }
   }
 
-  // 이미 스캔된 도메인 제외
+  // Exclude domains that were already scanned
   const scannedDomains = await prisma.saaSDomainScanHistory.findMany({
     where: { organizationId },
     select: { domain: true },
   });
   const scannedSet = new Set(scannedDomains.map((s) => s.domain));
 
-  // 등록된 앱 패턴 조회
+  // Fetch registered app patterns
   const registeredPatterns = await getRegisteredPatterns(organizationId);
 
-  // 필터링 및 정렬
+  // Filter and sort
   const unscannedDomains = Array.from(mainDomainCounts.entries())
     .filter(([domain]) => {
       if (scannedSet.has(domain)) return false;
@@ -456,7 +458,7 @@ async function getUnscannedDomains(
         return false;
       return true;
     })
-    .sort((a, b) => b[1] - a[1]) // 방문 횟수 내림차순
+    .sort((a, b) => b[1] - a[1]) // Visit count, descending
     .slice(0, limit)
     .map(([domain]) => domain);
 
@@ -464,7 +466,7 @@ async function getUnscannedDomains(
 }
 
 /**
- * 도메인별 방문 통계 조회
+ * Fetch visit statistics per domain
  */
 async function getDomainVisitStats(
   organizationId: string,

@@ -32,7 +32,7 @@ export {
 } from "./merchant-matcher.utils";
 
 /**
- * 카탈로그에서 매칭되는 항목 찾기
+ * Finds a matching catalog entry
  */
 export function findMatchingCatalog(
   merchantName: string,
@@ -45,7 +45,7 @@ export function findMatchingCatalog(
   let bestConfidence = 0;
 
   for (const catalog of catalogs) {
-    // 카탈로그 이름과 직접 비교
+    // Compare directly with the catalog name
     const nameConfidence = calculateMatchConfidence(normalized, catalog.name);
     if (nameConfidence >= threshold && nameConfidence > bestConfidence) {
       bestMatch = {
@@ -56,7 +56,7 @@ export function findMatchingCatalog(
       bestConfidence = nameConfidence;
     }
 
-    // 패턴 매칭
+    // Pattern matching
     for (const pattern of catalog.patterns) {
       const patternConfidence = calculateMatchConfidence(
         normalized,
@@ -77,7 +77,7 @@ export function findMatchingCatalog(
       }
     }
 
-    // slug와 비교
+    // Compare with the slug
     const slugConfidence = calculateMatchConfidence(normalized, catalog.slug);
     if (slugConfidence >= threshold && slugConfidence > bestConfidence) {
       bestMatch = {
@@ -93,7 +93,7 @@ export function findMatchingCatalog(
 }
 
 /**
- * 가맹점명으로 앱 매칭
+ * Matches an app by merchant name
  */
 export function matchMerchantToApp(
   merchantName: string,
@@ -103,7 +103,7 @@ export function matchMerchantToApp(
 ): MerchantMatchResult | null {
   const normalized = normalizeMerchantName(merchantName);
 
-  // 0. 글로벌 SaaS 패턴 매칭 (AWS, Slack, Notion 등)
+  // 0. Global SaaS pattern matching (AWS, Slack, Notion, etc.)
   for (const { pattern, appName, confidence } of GLOBAL_SAAS_PATTERNS) {
     if (pattern.test(merchantName) || pattern.test(normalized)) {
       const matchedApp = apps.find(
@@ -123,11 +123,11 @@ export function matchMerchantToApp(
     }
   }
 
-  // 1. 카탈로그를 통한 매칭 시도
+  // 1. Try matching via the catalog
   const catalogMatch = findMatchingCatalog(merchantName, catalogs, threshold);
 
   if (catalogMatch) {
-    // 카탈로그와 연결된 앱 찾기
+    // Find the app linked to the catalog entry
     const matchedApp = apps.find(
       (app) => app.catalogId === catalogMatch.catalogId
     );
@@ -144,7 +144,7 @@ export function matchMerchantToApp(
     }
   }
 
-  // 2. 앱 이름으로 직접 매칭 시도
+  // 2. Try matching directly by app name
   let bestAppMatch: MerchantMatchResult | null = null;
   let bestConfidence = 0;
 
@@ -169,7 +169,7 @@ export function matchMerchantToApp(
 }
 
 /**
- * 여러 가맹점명을 한번에 매칭
+ * Matches multiple merchant names at once
  */
 export function batchMatchMerchants(
   merchantNames: string[],
@@ -187,13 +187,13 @@ export function batchMatchMerchants(
   return results;
 }
 
-// ==================== 4-Layer 통합 매칭 파이프라인 ====================
+// ==================== 4-layer unified matching pipeline ====================
 
 /**
- * Layer 1: 정확 매칭 (패턴 + 카탈로그)
- * - 글로벌 SaaS 패턴
- * - 카탈로그 EXACT 패턴
- * - 앱 이름 정확 일치
+ * Layer 1: exact matching (patterns + catalog)
+ * - Global SaaS patterns
+ * - Catalog EXACT patterns
+ * - Exact app name match
  */
 function matchLayer1Exact(
   normalized: string,
@@ -201,7 +201,7 @@ function matchLayer1Exact(
   apps: AppMatch[],
   catalogs: CatalogWithPatterns[]
 ): FourLayerMatchResult | null {
-  // 1-1. 글로벌 SaaS 패턴 매칭
+  // 1-1. Global SaaS pattern matching
   for (const { pattern, appName, confidence } of GLOBAL_SAAS_PATTERNS) {
     if (pattern.test(merchantName) || pattern.test(normalized)) {
       const matchedApp = apps.find(
@@ -218,7 +218,7 @@ function matchLayer1Exact(
           normalized,
         };
       }
-      // 앱은 없지만 SaaS로 인식됨
+      // No app, but recognised as SaaS
       return {
         appId: null,
         appName,
@@ -230,7 +230,7 @@ function matchLayer1Exact(
     }
   }
 
-  // 1-2. 카탈로그 EXACT 패턴 매칭
+  // 1-2. Catalog EXACT pattern matching
   for (const catalog of catalogs) {
     for (const pattern of catalog.patterns) {
       if (pattern.matchType === "EXACT") {
@@ -253,7 +253,7 @@ function matchLayer1Exact(
     }
   }
 
-  // 1-3. 앱 이름 정확 일치
+  // 1-3. Exact app name match
   for (const app of apps) {
     if (normalized === app.name.toUpperCase()) {
       return {
@@ -272,9 +272,9 @@ function matchLayer1Exact(
 }
 
 /**
- * Layer 2: 부분 매칭 (LIKE 검색)
- * - 가맹점명이 앱 이름을 포함하거나
- * - 앱 이름이 가맹점명을 포함
+ * Layer 2: partial matching (LIKE search)
+ * - The merchant name contains the app name, or
+ * - The app name contains the merchant name
  */
 function matchLayer2Partial(
   normalized: string,
@@ -284,7 +284,7 @@ function matchLayer2Partial(
   let bestMatch: FourLayerMatchResult | null = null;
   let bestConfidence = 0;
 
-  // 2-1. 앱 이름 부분 매칭
+  // 2-1. Partial app name matching
   for (const app of apps) {
     const appNameUpper = app.name.toUpperCase();
     if (
@@ -293,7 +293,7 @@ function matchLayer2Partial(
     ) {
       const shorter = Math.min(normalized.length, appNameUpper.length);
       const longer = Math.max(normalized.length, appNameUpper.length);
-      const confidence = (shorter / longer) * 0.85; // 부분 매칭은 최대 0.85
+      const confidence = (shorter / longer) * 0.85; // Partial matches score at most 0.85
 
       if (confidence > bestConfidence && confidence >= 0.5) {
         bestMatch = {
@@ -310,7 +310,7 @@ function matchLayer2Partial(
     }
   }
 
-  // 2-2. 카탈로그 이름/slug 부분 매칭
+  // 2-2. Partial catalog name/slug matching
   for (const catalog of catalogs) {
     const catalogNameUpper = catalog.name.toUpperCase();
     const catalogSlugUpper = catalog.slug.toUpperCase();
@@ -346,8 +346,8 @@ function matchLayer2Partial(
 }
 
 /**
- * Layer 3: 퍼지 매칭 (Levenshtein 유사도)
- * - 80% 이상 유사도
+ * Layer 3: fuzzy matching (Levenshtein similarity)
+ * - 80% or higher similarity
  */
 function matchLayer3Fuzzy(
   normalized: string,
@@ -358,7 +358,7 @@ function matchLayer3Fuzzy(
   let bestMatch: FourLayerMatchResult | null = null;
   let bestSimilarity = 0;
 
-  // 3-1. 앱 이름과 유사도 계산
+  // 3-1. Similarity against app names
   for (const app of apps) {
     const similarity = calculateSimilarity(normalized, app.name);
     if (similarity >= threshold && similarity > bestSimilarity) {
@@ -375,7 +375,7 @@ function matchLayer3Fuzzy(
     }
   }
 
-  // 3-2. 카탈로그 이름과 유사도 계산
+  // 3-2. Similarity against catalog names
   for (const catalog of catalogs) {
     const similarity = calculateSimilarity(normalized, catalog.name);
     if (similarity >= threshold && similarity > bestSimilarity) {
@@ -392,7 +392,7 @@ function matchLayer3Fuzzy(
       bestSimilarity = similarity;
     }
 
-    // 카탈로그 패턴과도 유사도 계산
+    // Also compute similarity against catalog patterns
     for (const pattern of catalog.patterns) {
       const patternSimilarity = calculateSimilarity(
         normalized,
@@ -422,8 +422,8 @@ function matchLayer3Fuzzy(
 }
 
 /**
- * 4-Layer 통합 매칭 (Layer 1~3만, LLM 제외)
- * Layer 4 (LLM)는 별도 호출 필요
+ * 4-layer unified matching (Layers 1–3 only, LLM excluded)
+ * Layer 4 (LLM) must be called separately
  */
 export function matchMerchant4LayerSync(
   input: FourLayerMatchInput,
@@ -433,7 +433,7 @@ export function matchMerchant4LayerSync(
 ): FourLayerMatchResult | null {
   const normalized = normalizeMerchantName(input.merchantName);
 
-  // Layer 1: 정확 매칭
+  // Layer 1: exact matching
   const layer1Result = matchLayer1Exact(
     normalized,
     input.merchantName,
@@ -444,13 +444,13 @@ export function matchMerchant4LayerSync(
     return layer1Result;
   }
 
-  // Layer 2: 부분 매칭
+  // Layer 2: partial matching
   const layer2Result = matchLayer2Partial(normalized, apps, catalogs);
   if (layer2Result) {
     return layer2Result;
   }
 
-  // Layer 3: 퍼지 매칭
+  // Layer 3: fuzzy matching
   const layer3Result = matchLayer3Fuzzy(
     normalized,
     apps,
@@ -461,7 +461,7 @@ export function matchMerchant4LayerSync(
     return layer3Result;
   }
 
-  // 매칭 실패 (Layer 4 LLM은 별도 호출)
+  // No match (Layer 4 LLM is called separately)
   return {
     appId: null,
     appName: null,

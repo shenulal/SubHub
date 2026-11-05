@@ -1,12 +1,12 @@
 /**
- * SMP-204: 서버 측 Pending Action Store
+ * SMP-204: Server-side Pending Action Store
  *
- * AI Write Tool 승인 보안 강화:
- * - 서버 측 저장 (인메모리 Map)
- * - TTL 검증 (5분)
- * - 1회 사용 후 폐기
- * - 변조 감지 (params 해시 비교)
- * - 권한 검증 (organizationId + userId)
+ * Hardened approval security for the AI Write Tool:
+ * - Server-side storage (in-memory Map)
+ * - TTL check (5 minutes)
+ * - Discarded after a single use
+ * - Tamper detection (params hash comparison)
+ * - Permission check (organizationId + userId)
  */
 
 import { createHash } from "crypto";
@@ -28,17 +28,17 @@ export type ValidateResult =
 
 // ==================== Constants ====================
 
-/** TTL: 5분 (밀리초) */
+/** TTL: 5 minutes (milliseconds) */
 const TTL_MS = 5 * 60 * 1000;
 
-/** 만료 정리 간격: 60초 */
+/** Expiry cleanup interval: 60 seconds */
 const CLEANUP_INTERVAL_MS = 60 * 1000;
 
 // ==================== Store ====================
 
 const store = new Map<string, StoredPendingAction>();
 
-// 주기적 만료 정리
+// Periodic expiry cleanup
 let cleanupTimer: ReturnType<typeof setInterval> | null = null;
 
 function startCleanup() {
@@ -52,7 +52,7 @@ function startCleanup() {
     }
   }, CLEANUP_INTERVAL_MS);
 
-  // Node.js에서 프로세스 종료를 방해하지 않도록
+  // So it does not keep the Node.js process alive
   if (
     cleanupTimer &&
     typeof cleanupTimer === "object" &&
@@ -65,8 +65,8 @@ function startCleanup() {
 // ==================== Public API ====================
 
 /**
- * params 객체의 해시를 생성한다.
- * 클라이언트가 전송한 params와 저장된 params를 비교하여 변조를 감지한다.
+ * Creates a hash of the params object.
+ * Detects tampering by comparing the params sent by the client with the stored params.
  */
 export function hashParams(params: Record<string, unknown>): string {
   const sorted = JSON.stringify(params, Object.keys(params).sort());
@@ -74,8 +74,8 @@ export function hashParams(params: Record<string, unknown>): string {
 }
 
 /**
- * Pending action을 서버 store에 저장한다.
- * POST /api/ai/chat에서 Write Tool이 pending_approval을 반환할 때 호출.
+ * Saves a pending action in the server store.
+ * Called from POST /api/ai/chat when the Write Tool returns pending_approval.
  */
 export function storePendingAction(
   id: string,
@@ -97,14 +97,14 @@ export function storePendingAction(
 }
 
 /**
- * Pending action을 검증하고, 유효하면 store에서 삭제(1회 소비)한다.
- * PUT /api/ai/write에서 승인 실행 시 호출.
+ * Validates a pending action and, if valid, removes it from the store (single use).
+ * Called from PUT /api/ai/write when an approval is executed.
  *
- * 검증 항목:
- * 1. 존재 여부 (만료/미등록)
- * 2. TTL 초과
- * 3. organizationId + userId 일치
- * 4. params 해시 일치 (변조 감지)
+ * Checks:
+ * 1. Existence (expired/unregistered)
+ * 2. TTL exceeded
+ * 3. organizationId + userId match
+ * 4. params hash match (tamper detection)
  */
 export function validateAndConsume(
   id: string,
@@ -114,59 +114,63 @@ export function validateAndConsume(
 ): ValidateResult {
   const stored = store.get(id);
 
-  // 1. 존재 여부
+  // 1. Existence
   if (!stored) {
     return {
       valid: false,
-      error: "만료되었거나 유효하지 않은 승인 요청입니다. 다시 요청해주세요.",
+      error:
+        "This approval request has expired or is invalid. Please submit the request again.",
       status: 400,
     };
   }
 
-  // 2. TTL 초과
+  // 2. TTL exceeded
   if (Date.now() - stored.createdAt > TTL_MS) {
     store.delete(id);
     return {
       valid: false,
-      error: "승인 시간이 초과되었습니다. 다시 요청해주세요.",
+      error:
+        "The approval request has timed out. Please submit the request again.",
       status: 400,
     };
   }
 
-  // 3. 권한 검증
+  // 3. Permission check
   if (stored.organizationId !== organizationId || stored.userId !== userId) {
     return {
       valid: false,
-      error: "승인 권한이 없습니다.",
+      error:
+        "Permission denied: you are not authorized to approve this request.",
       status: 403,
     };
   }
 
-  // 4. 변조 감지
+  // 4. Tamper detection
   const currentHash = hashParams(params);
   if (stored.paramsHash !== currentHash) {
     store.delete(id);
     return {
       valid: false,
-      error: "요청 내용이 변조되었습니다. 다시 요청해주세요.",
+      error:
+        "The request content has been tampered with. Please submit the request again.",
       status: 400,
     };
   }
 
-  // 검증 통과 → 1회 소비 (삭제)
+  // Checks passed -> consume once (delete)
   store.delete(id);
   return { valid: true };
 }
 
 /**
- * Store 크기 반환 (테스트/디버깅용)
+ * Returns the store size (for tests/debugging)
  */
 export function getStoreSize(): number {
   return store.size;
 }
 
 /**
- * Store 초기화 (테스트용)
+ * Clears the store (for tests)
  */
 export function clearStore(): void {
   store.clear();

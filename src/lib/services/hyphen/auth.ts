@@ -1,11 +1,11 @@
 /**
- * Hyphen OAuth 토큰 관리
+ * Hyphen OAuth token management
  */
 import { HyphenApiError, OAuthTokenResponse } from "./types";
 
 const HYPHEN_API_BASE = "https://api.hyphen.im";
 
-/** 토큰 캐시 */
+/** Token cache */
 interface TokenCache {
   accessToken: string;
   expiresAt: Date;
@@ -14,28 +14,28 @@ interface TokenCache {
 let tokenCache: TokenCache | null = null;
 
 /**
- * Hyphen Access Token 발급/조회
- * - 캐시된 토큰이 유효하면 재사용
- * - 만료 1시간 전에 갱신
+ * Issues/returns the Hyphen access token
+ * - Reuses the cached token while it is valid
+ * - Refreshes it 1 hour before expiry
  */
 export async function getHyphenAccessToken(): Promise<string> {
-  // 캐시된 토큰이 유효하면 반환
+  // Return the cached token if still valid
   if (tokenCache && tokenCache.expiresAt > new Date()) {
     return tokenCache.accessToken;
   }
 
-  // 환경변수 확인
+  // Check environment variables
   const userId = process.env.HYPHEN_USER_ID;
   const hkey = process.env.HYPHEN_HKEY;
 
   if (!userId || !hkey) {
     throw new HyphenApiError(
       "AUTH_CONFIG_ERROR",
-      "HYPHEN_USER_ID 또는 HYPHEN_HKEY 환경변수가 설정되지 않았습니다"
+      "HYPHEN_USER_ID or HYPHEN_HKEY environment variable is not set"
     );
   }
 
-  // 토큰 발급
+  // Issue the token
   const response = await fetch(`${HYPHEN_API_BASE}/oauth/token`, {
     method: "POST",
     headers: {
@@ -50,7 +50,7 @@ export async function getHyphenAccessToken(): Promise<string> {
   if (!response.ok) {
     throw new HyphenApiError(
       "AUTH_FAILED",
-      `Hyphen 토큰 발급 실패: ${response.status} ${response.statusText}`
+      `Hyphen token request failed: ${response.status} ${response.statusText}`
     );
   }
 
@@ -59,11 +59,11 @@ export async function getHyphenAccessToken(): Promise<string> {
   if (!data.access_token) {
     throw new HyphenApiError(
       "AUTH_FAILED",
-      "Hyphen 토큰 발급 응답에 access_token이 없습니다"
+      "Hyphen token response does not contain an access_token"
     );
   }
 
-  // 캐시 저장 (만료 1시간 전까지 유효)
+  // Cache the token (valid until 1 hour before expiry)
   tokenCache = {
     accessToken: data.access_token,
     expiresAt: new Date(Date.now() + (data.expires_in - 3600) * 1000),
@@ -73,15 +73,15 @@ export async function getHyphenAccessToken(): Promise<string> {
 }
 
 /**
- * 토큰 캐시 초기화 (테스트용)
+ * Clears the token cache (for tests)
  */
 export function clearTokenCache(): void {
   tokenCache = null;
 }
 
 /**
- * 인증 헤더 생성 (카드 API용)
- * @description User-Id와 Hkey 헤더만 사용 (Bearer 토큰 불필요)
+ * Builds auth headers (for the card API)
+ * @description Uses only the User-Id and Hkey headers (no Bearer token required)
  */
 export function createAuthHeaders(): Record<string, string> {
   return {
@@ -93,7 +93,7 @@ export function createAuthHeaders(): Record<string, string> {
 }
 
 /**
- * 직접 인증 헤더 생성 (토큰 없이 user-id, Hkey 사용)
+ * Builds direct auth headers (user-id and Hkey, no token)
  */
 export function createDirectAuthHeaders(): Record<string, string> {
   const userId = process.env.HYPHEN_USER_ID;
@@ -102,7 +102,7 @@ export function createDirectAuthHeaders(): Record<string, string> {
   if (!userId || !hkey) {
     throw new HyphenApiError(
       "AUTH_CONFIG_ERROR",
-      "HYPHEN_USER_ID 또는 HYPHEN_HKEY 환경변수가 설정되지 않았습니다"
+      "HYPHEN_USER_ID or HYPHEN_HKEY environment variable is not set"
     );
   }
 

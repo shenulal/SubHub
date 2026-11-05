@@ -8,23 +8,23 @@ import { getTranslations } from "next-intl/server";
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("tasks");
   return {
-    title: `${t("page.title")} | SaaS 관리 플랫폼`,
+    title: `${t("page.title")}`,
     description: t("page.description"),
   };
 }
 
 export default async function TasksPage() {
-  // 환경변수로 V2 기능 활성화 제어 (기본: 비활성화)
+  // V2 features are toggled by an environment variable (default: disabled)
   if (process.env.ENABLE_V2_FEATURES !== "true") {
     return (
       <V2ComingSoon
-        feature="작업 관리"
-        description="SaaS 관리 관련 작업을 추적하고 관리합니다."
+        feature="Task management"
+        description="Track and manage SaaS management tasks."
       />
     );
   }
 
-  // V2 활성화 시 기존 로직
+  // Existing logic when V2 is enabled
   const { role } = await requireOrganization();
   const canManage = role === "ADMIN" || role === "MEMBER";
 

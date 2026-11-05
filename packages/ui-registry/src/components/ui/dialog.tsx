@@ -5,13 +5,13 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * 🎯 목적: Dialog Root 컴포넌트
- * 📝 주의사항: Radix UI Dialog.Root primitive는 ref를 지원하지 않음
+ * 🎯 Purpose: Dialog Root component
+ * 📝 Note: Radix UI Dialog.Root primitive does not support ref
  */
 const Dialog = DialogPrimitive.Root;
 
 /**
- * 🎯 목적: DialogTrigger 컴포넌트에 forwardRef 적용
+ * 🎯 Purpose: Apply forwardRef to the DialogTrigger component
  */
 const DialogTrigger = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Trigger>,
@@ -24,13 +24,13 @@ const DialogTrigger = React.forwardRef<
 DialogTrigger.displayName = "DialogTrigger";
 
 /**
- * 🎯 목적: DialogPortal 컴포넌트
- * 📝 주의사항: Portal은 ref를 지원하지 않음
+ * 🎯 Purpose: DialogPortal component
+ * 📝 Note: Portal does not support ref
  */
 const DialogPortal = DialogPrimitive.Portal;
 
 /**
- * 🎯 목적: DialogClose 컴포넌트에 forwardRef 적용
+ * 🎯 Purpose: Apply forwardRef to the DialogClose component
  */
 const DialogClose = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Close>,
@@ -43,8 +43,8 @@ const DialogClose = React.forwardRef<
 DialogClose.displayName = "DialogClose";
 
 /**
- * 🎯 목적: DialogOverlay 컴포넌트에 forwardRef 적용
- * 📝 주의사항: 배경 어둡게 처리 (bg-black/50), 애니메이션 적용
+ * 🎯 Purpose: Apply forwardRef to the DialogOverlay component
+ * 📝 Note: Dims the background (bg-black/50); animated
  */
 const DialogOverlay = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Overlay>,
@@ -65,8 +65,8 @@ const DialogOverlay = React.forwardRef<
 DialogOverlay.displayName = "DialogOverlay";
 
 /**
- * 🎯 목적: DialogContent 컴포넌트에 forwardRef 적용
- * 📝 주의사항: Portal 내부에서 Overlay와 함께 렌더링, showCloseButton prop으로 닫기 버튼 제어
+ * 🎯 Purpose: Apply forwardRef to the DialogContent component
+ * 📝 Note: Renders inside a Portal together with the Overlay; the showCloseButton prop controls the close button
  */
 const DialogContent = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Content>,
@@ -103,8 +103,8 @@ const DialogContent = React.forwardRef<
 DialogContent.displayName = "DialogContent";
 
 /**
- * 🎯 목적: DialogHeader 컴포넌트에 forwardRef 적용
- * 📝 주의사항: HTML div 요소 사용
+ * 🎯 Purpose: Apply forwardRef to the DialogHeader component
+ * 📝 Note: Uses an HTML div element
  */
 const DialogHeader = React.forwardRef<
   HTMLDivElement,
@@ -122,8 +122,8 @@ const DialogHeader = React.forwardRef<
 DialogHeader.displayName = "DialogHeader";
 
 /**
- * 🎯 목적: DialogFooter 컴포넌트에 forwardRef 적용
- * 📝 주의사항: HTML div 요소 사용
+ * 🎯 Purpose: Apply forwardRef to the DialogFooter component
+ * 📝 Note: Uses an HTML div element
  */
 const DialogFooter = React.forwardRef<
   HTMLDivElement,
@@ -144,7 +144,7 @@ const DialogFooter = React.forwardRef<
 DialogFooter.displayName = "DialogFooter";
 
 /**
- * 🎯 목적: DialogTitle 컴포넌트에 forwardRef 적용
+ * 🎯 Purpose: Apply forwardRef to the DialogTitle component
  */
 const DialogTitle = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Title>,
@@ -162,7 +162,7 @@ const DialogTitle = React.forwardRef<
 DialogTitle.displayName = "DialogTitle";
 
 /**
- * 🎯 목적: DialogDescription 컴포넌트에 forwardRef 적용
+ * 🎯 Purpose: Apply forwardRef to the DialogDescription component
  */
 const DialogDescription = React.forwardRef<
   React.ElementRef<typeof DialogPrimitive.Description>,

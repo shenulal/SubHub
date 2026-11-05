@@ -1,5 +1,5 @@
 // src/services/app.service.ts
-// SMP-203: App CRUD 비즈니스 로직 — Server Action + Write Tool 공용 서비스 레이어
+// SMP-203: App CRUD business logic — service layer shared by Server Actions and the Write Tool
 
 import { prisma } from "@/lib/db";
 import { matchPaymentsToNewApp } from "@/lib/services/payment/payment-matching";
@@ -49,20 +49,23 @@ export async function createApp(
   ctx: AppServiceContext,
   input: CreateAppInput
 ): Promise<ServiceResult<{ id: string; matchedPaymentCount?: number }>> {
-  // 권한 검증
+  // Permission check
   if (ctx.role === "VIEWER") {
-    return { success: false, message: "앱 생성 권한이 없습니다" };
+    return {
+      success: false,
+      message: "You do not have permission to create apps",
+    };
   }
 
-  // 중복 이름 체크
+  // Duplicate name check
   const existingApp = await prisma.app.findFirst({
     where: { organizationId: ctx.organizationId, name: input.name },
   });
   if (existingApp) {
-    return { success: false, message: "이미 등록된 앱 이름입니다" };
+    return { success: false, message: "An app with this name already exists" };
   }
 
-  // ownerId 검증
+  // Validate ownerId
   if (input.ownerId) {
     const owner = await prisma.user.findFirst({
       where: { id: input.ownerId, organizationId: ctx.organizationId },
@@ -70,12 +73,12 @@ export async function createApp(
     if (!owner) {
       return {
         success: false,
-        message: "지정된 소유자가 조직에 속하지 않습니다",
+        message: "The specified owner does not belong to this organization",
       };
     }
   }
 
-  // teamIds 검증
+  // Validate teamIds
   if (input.teamIds && input.teamIds.length > 0) {
     const teams = await prisma.team.findMany({
       where: { id: { in: input.teamIds }, organizationId: ctx.organizationId },
@@ -83,12 +86,12 @@ export async function createApp(
     if (teams.length !== input.teamIds.length) {
       return {
         success: false,
-        message: "유효하지 않은 팀이 포함되어 있습니다",
+        message: "One or more teams are invalid",
       };
     }
   }
 
-  // 태그 파싱
+  // Parse tags
   const tags = input.tags
     ? input.tags
         .split(",")
@@ -96,7 +99,7 @@ export async function createApp(
         .filter(Boolean)
     : [];
 
-  // 앱 생성
+  // Create the app
   const app = await prisma.app.create({
     data: {
       name: input.name,
@@ -111,7 +114,7 @@ export async function createApp(
     },
   });
 
-  // AppTeam 레코드 생성
+  // Create AppTeam records
   if (input.teamIds && input.teamIds.length > 0) {
     await prisma.appTeam.createMany({
       data: input.teamIds.map((teamId) => ({
@@ -122,7 +125,7 @@ export async function createApp(
     });
   }
 
-  // 결제 매칭
+  // Payment matching
   let matchedPaymentCount = 0;
   try {
     const matchResult = await matchPaymentsToNewApp(
@@ -132,10 +135,10 @@ export async function createApp(
     );
     matchedPaymentCount = matchResult.matchedCount;
   } catch {
-    // 실패해도 앱 생성은 성공
+    // App creation still succeeds if this fails
   }
 
-  // 감사 로그
+  // Audit log
   await prisma.auditLog.create({
     data: {
       action: "CREATE_APP",
@@ -157,20 +160,23 @@ export async function updateApp(
   id: string,
   input: UpdateAppInput
 ): Promise<ServiceResult<{ id: string }>> {
-  // 권한 검증
+  // Permission check
   if (ctx.role !== "ADMIN") {
-    return { success: false, message: "앱 수정 권한이 없습니다" };
+    return {
+      success: false,
+      message: "You do not have permission to edit this app",
+    };
   }
 
-  // 앱 존재 여부
+  // Ensure the app exists
   const existingApp = await prisma.app.findFirst({
     where: { id, organizationId: ctx.organizationId },
   });
   if (!existingApp) {
-    return { success: false, message: "앱을 찾을 수 없습니다" };
+    return { success: false, message: "App not found" };
   }
 
-  // 중복 이름 체크 (이름 변경 시)
+  // Duplicate name check (when renaming)
   if (input.name && input.name !== existingApp.name) {
     const duplicateApp = await prisma.app.findFirst({
       where: {
@@ -180,11 +186,14 @@ export async function updateApp(
       },
     });
     if (duplicateApp) {
-      return { success: false, message: "이미 등록된 앱 이름입니다" };
+      return {
+        success: false,
+        message: "An app with this name already exists",
+      };
     }
   }
 
-  // ownerId 검증
+  // Validate ownerId
   if (input.ownerId) {
     const owner = await prisma.user.findFirst({
       where: { id: input.ownerId, organizationId: ctx.organizationId },
@@ -192,12 +201,12 @@ export async function updateApp(
     if (!owner) {
       return {
         success: false,
-        message: "지정된 소유자가 조직에 속하지 않습니다",
+        message: "The specified owner does not belong to this organization",
       };
     }
   }
 
-  // teamIds 검증
+  // Validate teamIds
   if (input.teamIds && input.teamIds.length > 0) {
     const teams = await prisma.team.findMany({
       where: { id: { in: input.teamIds }, organizationId: ctx.organizationId },
@@ -205,12 +214,12 @@ export async function updateApp(
     if (teams.length !== input.teamIds.length) {
       return {
         success: false,
-        message: "유효하지 않은 팀이 포함되어 있습니다",
+        message: "One or more teams are invalid",
       };
     }
   }
 
-  // 태그 파싱
+  // Parse tags
   const tags = input.tags
     ? input.tags
         .split(",")
@@ -218,7 +227,7 @@ export async function updateApp(
         .filter(Boolean)
     : [];
 
-  // 앱 수정
+  // Update the app
   const app = await prisma.app.update({
     where: { id },
     data: {
@@ -240,7 +249,7 @@ export async function updateApp(
     },
   });
 
-  // AppTeam 동기화
+  // Sync AppTeam records
   if (input.teamIds !== undefined) {
     await prisma.appTeam.deleteMany({ where: { appId: id } });
     if (input.teamIds.length > 0) {
@@ -254,7 +263,7 @@ export async function updateApp(
     }
   }
 
-  // 감사 로그
+  // Audit log
   await prisma.auditLog.create({
     data: {
       action: "UPDATE_APP",
@@ -275,23 +284,23 @@ export async function deleteApp(
   ctx: AppServiceContext,
   id: string
 ): Promise<ServiceResult> {
-  // 권한 검증
+  // Permission check
   if (ctx.role !== "ADMIN") {
-    return { success: false, message: "관리자 권한이 필요합니다" };
+    return { success: false, message: "Admin permission required" };
   }
 
-  // 앱 존재 여부
+  // Ensure the app exists
   const existingApp = await prisma.app.findFirst({
     where: { id, organizationId: ctx.organizationId },
   });
   if (!existingApp) {
-    return { success: false, message: "앱을 찾을 수 없습니다" };
+    return { success: false, message: "App not found" };
   }
 
-  // 삭제
+  // Delete
   await prisma.app.delete({ where: { id } });
 
-  // 감사 로그
+  // Audit log
   await prisma.auditLog.create({
     data: {
       action: "DELETE_APP",

@@ -28,7 +28,7 @@ import {
   Search,
   Users,
 } from "lucide-react";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
@@ -54,7 +54,6 @@ export function RegisteredAppUsagePageClient({
   const router = useRouter();
   const searchParams = useSearchParams();
   const t = useTranslations("reports.registeredAppUsage");
-  const locale = useLocale();
 
   const [filters, setFilters] = useState(initialFilters);
 
@@ -94,7 +93,7 @@ export function RegisteredAppUsagePageClient({
   }
 
   function formatDateTime(date: Date): string {
-    return new Date(date).toLocaleString(locale === "ko" ? "ko-KR" : "en-US", {
+    return new Date(date).toLocaleString("en-US", {
       year: "numeric",
       month: "2-digit",
       day: "2-digit",
@@ -108,7 +107,7 @@ export function RegisteredAppUsagePageClient({
 
   return (
     <div className="space-y-6">
-      {/* Filter Bar - 1행: 검색(좌) + 기간·내보내기(우) */}
+      {/* Filter bar - row 1: search (left) + period/export (right) */}
       <div className="flex flex-wrap items-center gap-3">
         <div className="relative w-full min-w-0 sm:w-72">
           <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />

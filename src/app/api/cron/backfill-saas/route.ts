@@ -1,11 +1,11 @@
 /**
- * SaaS 매칭 백필 Cron
+ * SaaS matching backfill cron
  *
- * - 미매칭/저신뢰 결제 내역을 LLM으로 재매칭
- * - CardTransaction: matchedAppId가 없는 건만 처리
- * - PaymentRecord: matchedAppId가 없고 상태가 PENDING/UNMATCHED인 건만 처리
+ * - Re-matches unmatched/low-confidence payments using the LLM
+ * - CardTransaction: only records without matchedAppId
+ * - PaymentRecord: only records without matchedAppId and with status PENDING/UNMATCHED
  *
- * 사용: Vercel Cron 등에서 GET 호출 (CRON_SECRET 필요, dev에서는 패스)
+ * Usage: GET from Vercel Cron or similar (requires CRON_SECRET; skipped in dev)
  */
 
 import { prisma } from "@/lib/db";

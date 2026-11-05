@@ -1,6 +1,6 @@
 // src/lib/services/saas-classifier.types.ts
 /**
- * SaaS Classifier 타입 정의
+ * SaaS classifier types
  */
 
 export interface SaaSInferenceInput {
@@ -35,9 +35,9 @@ export interface SaaSInferencePayload {
   errorCode?: string;
 }
 
-// 배치 처리 관련 타입
+// Batch processing types
 export interface BatchMerchantInput {
-  id: string; // 거래 식별자 (apprNo 등)
+  id: string; // Transaction identifier (apprNo, etc.)
   merchantName: string;
   memo?: string | null;
   amount?: number | null;

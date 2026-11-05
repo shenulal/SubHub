@@ -3,10 +3,10 @@
 
 import Avatar from "boring-avatars";
 
-// 브랜드 컬러 팔레트 (5가지 색상)
+// Brand colour palette (5 colours)
 const AVATAR_COLORS = ["#0a0310", "#49007e", "#ff005b", "#ff7d10", "#ffb238"];
 
-// 사용 가능한 아바타 변형
+// Available avatar variants
 type AvatarVariant =
   | "marble"
   | "beam"
@@ -16,20 +16,20 @@ type AvatarVariant =
   | "bauhaus";
 
 interface UserAvatarProps {
-  /** 아바타 생성 시드 (이메일 또는 고유 식별자) */
+  /** Avatar seed (email or unique identifier) */
   name: string;
-  /** 아바타 크기 (픽셀) */
+  /** Avatar size (pixels) */
   size?: number;
-  /** 아바타 변형 스타일 */
+  /** Avatar variant style */
   variant?: AvatarVariant;
-  /** 커스텀 색상 팔레트 (5가지 색상) */
+  /** Custom colour palette (5 colours) */
   colors?: string[];
 }
 
 /**
- * boring-avatars 라이브러리를 활용한 랜덤 아바타 컴포넌트
- * - 동일한 name에 대해 항상 동일한 아바타 생성 (결정론적)
- * - 다양한 스타일 변형 지원
+ * Random avatar component built on the boring-avatars library
+ * - Always generates the same avatar for the same name (deterministic)
+ * - Supports multiple style variants
  */
 export function UserAvatar({
   name,
@@ -49,7 +49,7 @@ export function UserAvatar({
 }
 
 /**
- * 아바타 미리보기 컴포넌트 (모든 변형을 표시)
+ * Avatar preview component (shows every variant)
  */
 export function AvatarPreviewGrid({
   name,

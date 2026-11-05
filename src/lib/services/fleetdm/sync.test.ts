@@ -276,7 +276,7 @@ describe("FleetDM Sync Service", () => {
           updatedAt: expect.any(Date),
         },
       });
-      // Slack은 새로 생성됨
+      // Slack is newly created
       expect(prisma.deviceApp.create).toHaveBeenCalledTimes(1);
     });
 
@@ -362,7 +362,7 @@ describe("FleetDM Sync Service", () => {
       } as never);
       vi.mocked(prisma.deviceApp.findMany).mockResolvedValue([]);
       vi.mocked(prisma.deviceApp.create).mockResolvedValue({} as never);
-      // UserAppAccess 동기화 모킹 - 디바이스에 userId 없음
+      // Mock UserAppAccess sync - device has no userId
       vi.mocked(prisma.device.findUnique).mockResolvedValue({
         userId: null,
       } as never);

@@ -6,28 +6,28 @@ import { ClientProviders } from "@/components/providers/client-providers";
 import { getCachedSession } from "@/lib/auth/require-auth";
 
 /**
- * 대시보드 레이아웃
- * 인증된 사용자만 접근 가능한 페이지에 적용
- * 사이드바와 헤더를 포함한 메인 레이아웃
+ * Dashboard layout
+ * Applied to pages that only authenticated users can access
+ * Main layout including the sidebar and header
  */
 export default async function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // 쿠키에서 사이드바 상태 읽기
+  // Read the sidebar state from the cookie
   const cookieStore = await cookies();
   const defaultOpen = cookieStore.get("sidebar_state")?.value !== "false";
 
-  // 세션에서 role 가져오기
+  // Get the role from the session
   const session = await getCachedSession();
 
-  // 미인증 사용자는 로그인으로 리다이렉트
+  // Redirect unauthenticated users to login
   if (!session?.user) {
     redirect("/login");
   }
 
-  // 조직 없는 사용자는 온보딩으로 리다이렉트
+  // Redirect users without an organization to onboarding
   if (!session.user.organizationId) {
     redirect("/onboarding");
   }

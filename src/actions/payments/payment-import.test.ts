@@ -1,7 +1,7 @@
 // src/actions/payments/payment-import.test.ts
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-// Mock 설정 (import 전에 선언)
+// Mock setup (declared before imports)
 vi.mock("@/lib/auth", () => ({
   auth: vi.fn(),
 }));
@@ -104,17 +104,17 @@ describe("importPaymentCSV", () => {
     vi.mocked(completeSyncHistory).mockResolvedValue({} as never);
   });
 
-  describe("인증 검증", () => {
-    it("세션이 없으면 인증 오류 반환", async () => {
+  describe("authentication", () => {
+    it("returns an authentication error without a session", async () => {
       vi.mocked(auth).mockResolvedValue(null as never);
 
       const result = await importPaymentCSV("csv-content");
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("인증이 필요합니다");
+      expect(result.message).toBe("Authentication required");
     });
 
-    it("ADMIN이 아니면 권한 오류 반환", async () => {
+    it("returns a permission error for a non-ADMIN", async () => {
       vi.mocked(auth).mockResolvedValue({
         ...mockSession,
         user: { ...mockSession.user, role: "MEMBER" },
@@ -123,12 +123,12 @@ describe("importPaymentCSV", () => {
       const result = await importPaymentCSV("csv-content");
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("관리자만 결제 내역을 가져올 수 있습니다");
+      expect(result.message).toBe("Only admins can import payment records");
     });
   });
 
-  describe("SyncHistory 기록", () => {
-    it("가져오기 시작 시 SyncHistory를 RUNNING 상태로 생성", async () => {
+  describe("SyncHistory recording", () => {
+    it("creates SyncHistory in RUNNING status when the import starts", async () => {
       await importPaymentCSV("csv-content");
 
       expect(createSyncHistory).toHaveBeenCalledWith(
@@ -141,7 +141,7 @@ describe("importPaymentCSV", () => {
       );
     });
 
-    it("fileName 옵션이 있으면 SyncHistory에 fileName 포함", async () => {
+    it("includes fileName in SyncHistory when the fileName option is given", async () => {
       await importPaymentCSV("csv-content", { fileName: "payments.csv" });
 
       expect(createSyncHistory).toHaveBeenCalledWith(
@@ -151,7 +151,7 @@ describe("importPaymentCSV", () => {
       );
     });
 
-    it("성공 시 completeSyncHistory가 SUCCESS 상태로 호출됨", async () => {
+    it("calls completeSyncHistory with SUCCESS status on success", async () => {
       await importPaymentCSV("csv-content");
 
       expect(completeSyncHistory).toHaveBeenCalledWith(
@@ -160,7 +160,7 @@ describe("importPaymentCSV", () => {
       );
     });
 
-    it("성공 시 completeSyncHistory에 올바른 카운트 전달", async () => {
+    it("passes the correct counts to completeSyncHistory on success", async () => {
       vi.mocked(prisma.paymentRecord.createMany).mockResolvedValue({
         count: 1,
       } as never);
@@ -184,9 +184,9 @@ describe("importPaymentCSV", () => {
       );
     });
 
-    it("에러 발생 시 completeSyncHistory가 FAILED 상태로 호출됨", async () => {
+    it("calls completeSyncHistory with FAILED status on error", async () => {
       vi.mocked(prisma.paymentRecord.createMany).mockRejectedValue(
-        new Error("DB 저장 실패")
+        new Error("DB save failed")
       );
 
       await importPaymentCSV("csv-content");
@@ -195,37 +195,37 @@ describe("importPaymentCSV", () => {
         "sync-history-csv-1",
         expect.objectContaining({
           status: "FAILED",
-          errorMessage: "DB 저장 실패",
+          errorMessage: "DB save failed",
         })
       );
     });
 
-    it("createSyncHistory 실패해도 메인 가져오기 흐름은 계속 진행", async () => {
+    it("continues the main import flow even if createSyncHistory fails", async () => {
       vi.mocked(createSyncHistory).mockRejectedValue(
-        new Error("SyncHistory DB 오류")
+        new Error("SyncHistory DB error")
       );
 
       const result = await importPaymentCSV("csv-content");
 
-      // SyncHistory 실패해도 메인 가져오기는 성공
+      // The main import succeeds even if SyncHistory fails
       expect(result.success).toBe(true);
     });
   });
 
-  describe("CSV 파싱 오류 처리", () => {
-    it("CSV 파싱 실패 시 오류 반환", async () => {
+  describe("CSV parse error handling", () => {
+    it("returns an error when CSV parsing fails", async () => {
       vi.mocked(parsePaymentCSV).mockReturnValue({
         success: false,
-        error: "잘못된 CSV 형식",
+        error: "Invalid CSV format",
       } as never);
 
       const result = await importPaymentCSV("invalid-csv");
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("잘못된 CSV 형식");
+      expect(result.message).toBe("Invalid CSV format");
     });
 
-    it("데이터가 없으면 오류 반환", async () => {
+    it("returns an error when there is no data", async () => {
       vi.mocked(parsePaymentCSV).mockReturnValue({
         success: true,
         data: [],
@@ -234,12 +234,12 @@ describe("importPaymentCSV", () => {
       const result = await importPaymentCSV("empty-csv");
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("가져올 결제 내역이 없습니다");
+      expect(result.message).toBe("No payment records to import");
     });
   });
 
-  describe("정상 가져오기", () => {
-    it("성공적으로 결제 내역 가져오기", async () => {
+  describe("successful import", () => {
+    it("imports payment records successfully", async () => {
       const result = await importPaymentCSV("csv-content");
 
       expect(result.success).toBe(true);

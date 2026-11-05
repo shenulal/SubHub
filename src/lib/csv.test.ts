@@ -4,7 +4,7 @@ import { parseCSV, validateAppCSV, validateSubscriptionCSV } from "./csv";
 
 describe("CSV Utils", () => {
   describe("parseCSV", () => {
-    it("기본 CSV를 파싱해야 한다", () => {
+    it("should parse a basic CSV", () => {
       const csv = `name,category,vendor
 Slack,COLLABORATION,Slack Technologies
 Notion,PRODUCTIVITY,Notion Labs`;
@@ -24,7 +24,7 @@ Notion,PRODUCTIVITY,Notion Labs`;
       });
     });
 
-    it("쉼표가 포함된 인용 필드를 처리해야 한다", () => {
+    it("should handle quoted fields containing commas", () => {
       const csv = `name,description
 "Slack, Inc","Team messaging, file sharing"`;
 
@@ -36,7 +36,7 @@ Notion,PRODUCTIVITY,Notion Labs`;
       });
     });
 
-    it("빈 CSV는 빈 배열을 반환해야 한다", () => {
+    it("should return an empty array for an empty CSV", () => {
       const csv = `name,category`;
 
       const result = parseCSV(csv);
@@ -44,7 +44,7 @@ Notion,PRODUCTIVITY,Notion Labs`;
       expect(result).toHaveLength(0);
     });
 
-    it("헤더만 있는 CSV는 빈 배열을 반환해야 한다", () => {
+    it("should return an empty array for a header-only CSV", () => {
       const csv = `name,category,vendor
 `;
 
@@ -53,7 +53,7 @@ Notion,PRODUCTIVITY,Notion Labs`;
       expect(result).toHaveLength(0);
     });
 
-    it("줄바꿈을 올바르게 처리해야 한다", () => {
+    it("should handle line breaks correctly", () => {
       const csv = `name,category\r\nSlack,COLLABORATION\r\nNotion,PRODUCTIVITY`;
 
       const result = parseCSV(csv);
@@ -65,7 +65,7 @@ Notion,PRODUCTIVITY,Notion Labs`;
   });
 
   describe("validateAppCSV", () => {
-    it("유효한 앱 데이터를 검증해야 한다", () => {
+    it("should validate valid app data", () => {
       const rows: Record<string, string>[] = [
         { name: "Slack", category: "COLLABORATION", vendor: "Slack Inc" },
         { name: "Notion", category: "PRODUCTIVITY", vendor: "" },
@@ -77,7 +77,7 @@ Notion,PRODUCTIVITY,Notion Labs`;
       expect(result.errors).toHaveLength(0);
     });
 
-    it("필수 필드가 누락된 행을 에러로 처리해야 한다", () => {
+    it("should flag rows with missing required fields as errors", () => {
       const rows = [
         { name: "", category: "COLLABORATION" },
         { name: "Slack", category: "" },
@@ -88,22 +88,22 @@ Notion,PRODUCTIVITY,Notion Labs`;
       expect(result.valid).toHaveLength(0);
       expect(result.errors).toHaveLength(2);
       expect(result.errors[0].row).toBe(1);
-      expect(result.errors[0].message).toContain("이름");
+      expect(result.errors[0].message).toContain("name");
       expect(result.errors[1].row).toBe(2);
-      expect(result.errors[1].message).toContain("카테고리");
+      expect(result.errors[1].message).toContain("Category");
     });
 
-    it("잘못된 카테고리를 에러로 처리해야 한다", () => {
+    it("should flag an invalid category as an error", () => {
       const rows = [{ name: "Slack", category: "INVALID_CATEGORY" }];
 
       const result = validateAppCSV(rows);
 
       expect(result.valid).toHaveLength(0);
       expect(result.errors).toHaveLength(1);
-      expect(result.errors[0].message).toContain("카테고리");
+      expect(result.errors[0].message).toContain("category");
     });
 
-    it("유효한 카테고리를 허용해야 한다", () => {
+    it("should accept valid categories", () => {
       const validCategories = [
         "COLLABORATION",
         "PRODUCTIVITY",
@@ -131,7 +131,7 @@ Notion,PRODUCTIVITY,Notion Labs`;
   });
 
   describe("validateSubscriptionCSV", () => {
-    it("유효한 구독 데이터를 검증해야 한다", () => {
+    it("should validate valid subscription data", () => {
       const rows = [
         {
           appName: "Slack",
@@ -155,7 +155,7 @@ Notion,PRODUCTIVITY,Notion Labs`;
       expect(result.errors).toHaveLength(0);
     });
 
-    it("필수 필드가 누락된 행을 에러로 처리해야 한다", () => {
+    it("should flag rows with missing required fields as errors", () => {
       const rows = [
         { appName: "", planName: "Business", billingCycle: "MONTHLY" },
         { appName: "Slack", planName: "", billingCycle: "MONTHLY" },
@@ -167,7 +167,7 @@ Notion,PRODUCTIVITY,Notion Labs`;
       expect(result.errors).toHaveLength(2);
     });
 
-    it("잘못된 결제 주기를 에러로 처리해야 한다", () => {
+    it("should flag an invalid billing cycle as an error", () => {
       const rows = [
         { appName: "Slack", planName: "Business", billingCycle: "WEEKLY" },
       ];
@@ -175,10 +175,10 @@ Notion,PRODUCTIVITY,Notion Labs`;
       const result = validateSubscriptionCSV(rows);
 
       expect(result.valid).toHaveLength(0);
-      expect(result.errors[0].message).toContain("결제 주기");
+      expect(result.errors[0].message).toContain("billing cycle");
     });
 
-    it("잘못된 날짜 형식을 에러로 처리해야 한다", () => {
+    it("should flag an invalid date format as an error", () => {
       const rows = [
         {
           appName: "Slack",
@@ -191,10 +191,10 @@ Notion,PRODUCTIVITY,Notion Labs`;
       const result = validateSubscriptionCSV(rows);
 
       expect(result.valid).toHaveLength(0);
-      expect(result.errors[0].message).toContain("날짜");
+      expect(result.errors[0].message).toContain("date");
     });
 
-    it("숫자가 아닌 가격을 에러로 처리해야 한다", () => {
+    it("should flag a non-numeric price as an error", () => {
       const rows = [
         {
           appName: "Slack",
@@ -207,12 +207,12 @@ Notion,PRODUCTIVITY,Notion Labs`;
       const result = validateSubscriptionCSV(rows);
 
       expect(result.valid).toHaveLength(0);
-      expect(result.errors[0].message).toContain("가격");
+      expect(result.errors[0].message).toContain("Price");
     });
   });
 
   describe("validateUserCSV", () => {
-    it("유효한 사용자 CSV를 검증해야 한다", async () => {
+    it("should validate a valid user CSV", async () => {
       const { validateUserCSV } = await import("./csv");
       const rows = [
         {
@@ -242,11 +242,11 @@ Notion,PRODUCTIVITY,Notion Labs`;
       expect(result.valid[1].role).toBe("ADMIN");
     });
 
-    it("필수 필드 누락 시 에러를 반환해야 한다", async () => {
+    it("should return errors when required fields are missing", async () => {
       const { validateUserCSV } = await import("./csv");
       const rows = [
-        { email: "", name: "John", role: "MEMBER" }, // email 누락
-        { email: "jane@example.com", name: "Jane", role: "" }, // role 누락
+        { email: "", name: "John", role: "MEMBER" }, // missing email
+        { email: "jane@example.com", name: "Jane", role: "" }, // missing role
       ];
 
       const result = validateUserCSV(rows);
@@ -254,12 +254,12 @@ Notion,PRODUCTIVITY,Notion Labs`;
       expect(result.valid).toHaveLength(0);
       expect(result.errors).toHaveLength(2);
       expect(result.errors[0].field).toBe("email");
-      expect(result.errors[0].message).toContain("이메일");
+      expect(result.errors[0].message).toContain("Email");
       expect(result.errors[1].field).toBe("role");
-      expect(result.errors[1].message).toContain("역할");
+      expect(result.errors[1].message).toContain("Role");
     });
 
-    it("잘못된 역할 값에 에러를 반환해야 한다", async () => {
+    it("should return an error for an invalid role value", async () => {
       const { validateUserCSV } = await import("./csv");
       const rows = [
         { email: "john@example.com", name: "John", role: "SUPERADMIN" },
@@ -270,10 +270,10 @@ Notion,PRODUCTIVITY,Notion Labs`;
       expect(result.valid).toHaveLength(0);
       expect(result.errors).toHaveLength(1);
       expect(result.errors[0].field).toBe("role");
-      expect(result.errors[0].message).toContain("역할");
+      expect(result.errors[0].message).toContain("role");
     });
 
-    it("잘못된 이메일 형식에 에러를 반환해야 한다", async () => {
+    it("should return an error for an invalid email format", async () => {
       const { validateUserCSV } = await import("./csv");
       const rows = [
         { email: "invalid-email", name: "John", role: "MEMBER" },
@@ -285,10 +285,10 @@ Notion,PRODUCTIVITY,Notion Labs`;
       expect(result.valid).toHaveLength(0);
       expect(result.errors).toHaveLength(2);
       expect(result.errors[0].field).toBe("email");
-      expect(result.errors[0].message).toContain("이메일");
+      expect(result.errors[0].message).toContain("email");
     });
 
-    it("중복 이메일에 에러를 반환해야 한다", async () => {
+    it("should return an error for duplicate emails", async () => {
       const { validateUserCSV } = await import("./csv");
       const rows = [
         { email: "john@example.com", name: "John", role: "MEMBER" },
@@ -297,12 +297,12 @@ Notion,PRODUCTIVITY,Notion Labs`;
 
       const result = validateUserCSV(rows);
 
-      expect(result.valid).toHaveLength(1); // 첫 번째만 유효
-      expect(result.errors).toHaveLength(1); // 두 번째는 중복 에러
-      expect(result.errors[0].message).toContain("중복");
+      expect(result.valid).toHaveLength(1); // only the first is valid
+      expect(result.errors).toHaveLength(1); // the second is a duplicate error
+      expect(result.errors[0].message).toContain("Duplicate");
     });
 
-    it("유효한 역할을 허용해야 한다", async () => {
+    it("should accept valid roles", async () => {
       const { validateUserCSV } = await import("./csv");
       const validRoles = ["ADMIN", "MEMBER", "VIEWER"];
 
@@ -317,7 +317,7 @@ Notion,PRODUCTIVITY,Notion Labs`;
       });
     });
 
-    it("대소문자 구분 없이 역할을 허용해야 한다", async () => {
+    it("should accept roles case-insensitively", async () => {
       const { validateUserCSV } = await import("./csv");
       const rows = [
         { email: "john@example.com", name: "John", role: "member" },
@@ -331,7 +331,7 @@ Notion,PRODUCTIVITY,Notion Labs`;
       expect(result.valid[1].role).toBe("ADMIN");
     });
 
-    it("선택 필드가 없어도 유효해야 한다", async () => {
+    it("should be valid without optional fields", async () => {
       const { validateUserCSV } = await import("./csv");
       const rows = [{ email: "john@example.com", role: "MEMBER" }];
 

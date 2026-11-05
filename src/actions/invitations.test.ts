@@ -52,7 +52,7 @@ describe("invitations actions", () => {
   });
 
   describe("createInvitation", () => {
-    it("인증되지 않은 사용자는 에러를 반환해야 한다", async () => {
+    it("returns an error for an unauthenticated user", async () => {
       vi.mocked(auth).mockResolvedValue(null as never);
 
       const result = await createInvitation({
@@ -62,11 +62,11 @@ describe("invitations actions", () => {
 
       expect(result).toEqual({
         success: false,
-        message: "인증이 필요합니다",
+        message: "Authentication required",
       });
     });
 
-    it("조직 ID가 없는 사용자는 에러를 반환해야 한다", async () => {
+    it("returns an error for a user without an organization ID", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: null, role: "ADMIN" },
       } as never);
@@ -78,11 +78,11 @@ describe("invitations actions", () => {
 
       expect(result).toEqual({
         success: false,
-        message: "조직 정보가 필요합니다",
+        message: "Organization information is required",
       });
     });
 
-    it("ADMIN이 아닌 사용자는 초대할 수 없어야 한다", async () => {
+    it("prevents a non-ADMIN user from inviting", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "MEMBER" },
       } as never);
@@ -94,11 +94,11 @@ describe("invitations actions", () => {
 
       expect(result).toEqual({
         success: false,
-        message: "관리자만 팀원을 초대할 수 있습니다",
+        message: "Only admins can invite team members",
       });
     });
 
-    it("이미 조직에 속한 사용자는 초대할 수 없어야 한다", async () => {
+    it("cannot invite a user who already belongs to the organization", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
@@ -115,11 +115,11 @@ describe("invitations actions", () => {
 
       expect(result).toEqual({
         success: false,
-        message: "이미 조직에 속한 사용자입니다",
+        message: "This user already belongs to the organization",
       });
     });
 
-    it("대기 중인 초대가 있으면 에러를 반환해야 한다", async () => {
+    it("returns an error when a pending invitation exists", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
@@ -138,11 +138,11 @@ describe("invitations actions", () => {
 
       expect(result).toEqual({
         success: false,
-        message: "이미 대기 중인 초대가 있습니다",
+        message: "A pending invitation already exists",
       });
     });
 
-    it("새로운 초대를 생성해야 한다", async () => {
+    it("creates a new invitation", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
@@ -154,7 +154,7 @@ describe("invitations actions", () => {
         email: "newuser@example.com",
         role: "MEMBER",
         token: "test-token",
-        organization: { name: "테스트 조직" },
+        organization: { name: "Test Organization" },
         invitedBy: { name: "Admin User" },
       } as never);
       vi.mocked(sendInvitationEmail).mockResolvedValue({ success: true });
@@ -180,7 +180,7 @@ describe("invitations actions", () => {
       });
     });
 
-    it("초대 생성 후 이메일을 발송해야 한다", async () => {
+    it("sends an email after creating the invitation", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
@@ -192,7 +192,7 @@ describe("invitations actions", () => {
         email: "newuser@example.com",
         role: "MEMBER",
         token: "test-token",
-        organization: { name: "테스트 조직" },
+        organization: { name: "Test Organization" },
         invitedBy: { name: "Admin User" },
       } as never);
       vi.mocked(sendInvitationEmail).mockResolvedValue({ success: true });
@@ -210,7 +210,7 @@ describe("invitations actions", () => {
       );
     });
 
-    it("초대 생성 후 revalidatePath를 호출해야 한다", async () => {
+    it("calls revalidatePath after creating the invitation", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
@@ -221,7 +221,7 @@ describe("invitations actions", () => {
         id: "inv-1",
         email: "newuser@example.com",
         token: "test-token",
-        organization: { name: "테스트 조직" },
+        organization: { name: "Test Organization" },
         invitedBy: { name: "Admin User" },
       } as never);
       vi.mocked(sendInvitationEmail).mockResolvedValue({ success: true });
@@ -236,18 +236,18 @@ describe("invitations actions", () => {
   });
 
   describe("getInvitations", () => {
-    it("인증되지 않은 사용자는 에러를 반환해야 한다", async () => {
+    it("returns an error for an unauthenticated user", async () => {
       vi.mocked(auth).mockResolvedValue(null as never);
 
       const result = await getInvitations();
 
       expect(result).toEqual({
         success: false,
-        message: "인증이 필요합니다",
+        message: "Authentication required",
       });
     });
 
-    it("조직의 모든 초대를 반환해야 한다", async () => {
+    it("returns all invitations of the organization", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
@@ -276,18 +276,18 @@ describe("invitations actions", () => {
   });
 
   describe("cancelInvitation", () => {
-    it("인증되지 않은 사용자는 에러를 반환해야 한다", async () => {
+    it("returns an error for an unauthenticated user", async () => {
       vi.mocked(auth).mockResolvedValue(null as never);
 
       const result = await cancelInvitation("inv-1");
 
       expect(result).toEqual({
         success: false,
-        message: "인증이 필요합니다",
+        message: "Authentication required",
       });
     });
 
-    it("존재하지 않는 초대는 에러를 반환해야 한다", async () => {
+    it("returns an error for a non-existent invitation", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
@@ -298,11 +298,11 @@ describe("invitations actions", () => {
 
       expect(result).toEqual({
         success: false,
-        message: "초대를 찾을 수 없습니다",
+        message: "Invitation not found",
       });
     });
 
-    it("초대를 취소해야 한다", async () => {
+    it("cancels the invitation", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
@@ -329,18 +329,18 @@ describe("invitations actions", () => {
   });
 
   describe("resendInvitation", () => {
-    it("인증되지 않은 사용자는 에러를 반환해야 한다", async () => {
+    it("returns an error for an unauthenticated user", async () => {
       vi.mocked(auth).mockResolvedValue(null as never);
 
       const result = await resendInvitation("inv-1");
 
       expect(result).toEqual({
         success: false,
-        message: "인증이 필요합니다",
+        message: "Authentication required",
       });
     });
 
-    it("대기 중인 초대가 아니면 에러를 반환해야 한다", async () => {
+    it("returns an error for an invitation that is not pending", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
@@ -354,11 +354,11 @@ describe("invitations actions", () => {
 
       expect(result).toEqual({
         success: false,
-        message: "대기 중인 초대만 재발송할 수 있습니다",
+        message: "Only pending invitations can be resent",
       });
     });
 
-    it("초대 이메일을 재발송해야 한다", async () => {
+    it("resends the invitation email", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
@@ -369,7 +369,7 @@ describe("invitations actions", () => {
         token: "test-token",
         status: "PENDING",
         organizationId: "org-1",
-        organization: { name: "테스트 조직" },
+        organization: { name: "Test Organization" },
         invitedBy: { name: "Admin User" },
       } as never);
 
@@ -378,7 +378,7 @@ describe("invitations actions", () => {
         email: "user@example.com",
         token: "new-token",
         role: "MEMBER",
-        organization: { name: "테스트 조직" },
+        organization: { name: "Test Organization" },
         invitedBy: { name: "Admin User" },
       } as never);
 
@@ -390,7 +390,7 @@ describe("invitations actions", () => {
       expect(sendInvitationEmail).toHaveBeenCalled();
     });
 
-    it("FormData로 호출해도 재발송되어야 한다", async () => {
+    it("resends when called with FormData", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
@@ -401,7 +401,7 @@ describe("invitations actions", () => {
         token: "test-token",
         status: "PENDING",
         organizationId: "org-1",
-        organization: { name: "테스트 조직" },
+        organization: { name: "Test Organization" },
         invitedBy: { name: "Admin User" },
       } as never);
 
@@ -410,7 +410,7 @@ describe("invitations actions", () => {
         email: "user@example.com",
         token: "new-token",
         role: "MEMBER",
-        organization: { name: "테스트 조직" },
+        organization: { name: "Test Organization" },
         invitedBy: { name: "Admin User" },
       } as never);
 
@@ -427,18 +427,18 @@ describe("invitations actions", () => {
   });
 
   describe("acceptInvitation", () => {
-    it("유효하지 않은 토큰은 에러를 반환해야 한다", async () => {
+    it("returns an error for an invalid token", async () => {
       vi.mocked(prisma.invitation.findFirst).mockResolvedValue(null);
 
       const result = await acceptInvitation("invalid-token");
 
       expect(result).toEqual({
         success: false,
-        message: "유효하지 않은 초대입니다",
+        message: "Invalid invitation",
       });
     });
 
-    it("만료된 초대는 에러를 반환해야 한다", async () => {
+    it("returns an error for an expired invitation", async () => {
       const expiredDate = new Date();
       expiredDate.setDate(expiredDate.getDate() - 1);
 
@@ -453,11 +453,11 @@ describe("invitations actions", () => {
 
       expect(result).toEqual({
         success: false,
-        message: "초대가 만료되었습니다",
+        message: "The invitation has expired",
       });
     });
 
-    it("초대를 수락하고 사용자를 조직에 추가해야 한다", async () => {
+    it("accepts the invitation and adds the user to the organization", async () => {
       const futureDate = new Date();
       futureDate.setDate(futureDate.getDate() + 7);
 

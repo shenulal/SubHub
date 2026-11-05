@@ -72,13 +72,13 @@ describe("SubscriptionBulkBar", () => {
 
   it("offers select-all when the page is fully selected and more rows match", () => {
     const { onSelectAllMatching } = renderBar();
-    fireEvent.click(screen.getByText("일치하는 10개 모두 선택"));
+    fireEvent.click(screen.getByText("Select all 10 matching"));
     expect(onSelectAllMatching).toHaveBeenCalled();
   });
 
   it("archives the selection and clears it on success", async () => {
     const { bulkUpdate, onClear } = renderBar();
-    fireEvent.click(screen.getByRole("button", { name: "보관" }));
+    fireEvent.click(screen.getByRole("button", { name: "Archive" }));
     await waitFor(() =>
       expect(bulkUpdate).toHaveBeenCalledWith(["a", "b"], { archive: true })
     );
@@ -87,7 +87,7 @@ describe("SubscriptionBulkBar", () => {
 
   it("sets a category through the popover", async () => {
     const { bulkUpdate } = renderBar();
-    fireEvent.click(screen.getByRole("button", { name: "카테고리 설정" }));
+    fireEvent.click(screen.getByRole("button", { name: "Set category" }));
     fireEvent.click(screen.getByText("Productivity › Chat"));
     await waitFor(() =>
       expect(bulkUpdate).toHaveBeenCalledWith(["a", "b"], { categoryId: "c1" })
@@ -96,17 +96,17 @@ describe("SubscriptionBulkBar", () => {
 
   it("adds and removes tags in one patch (names for add, ids for remove)", async () => {
     const { bulkUpdate } = renderBar();
-    fireEvent.click(screen.getByRole("button", { name: "태그 추가" }));
+    fireEvent.click(screen.getByRole("button", { name: "Add tags" }));
     fireEvent.click(screen.getByText("trial"));
     fireEvent.keyDown(document.activeElement ?? document.body, {
       key: "Escape",
     });
-    fireEvent.click(screen.getByRole("button", { name: "태그 제거" }));
+    fireEvent.click(screen.getByRole("button", { name: "Remove tags" }));
     fireEvent.click(screen.getByText("core"));
     fireEvent.keyDown(document.activeElement ?? document.body, {
       key: "Escape",
     });
-    fireEvent.click(screen.getByRole("button", { name: "태그 적용" }));
+    fireEvent.click(screen.getByRole("button", { name: "Apply tags" }));
     await waitFor(() =>
       expect(bulkUpdate).toHaveBeenCalledWith(["a", "b"], {
         addTagNames: ["trial"],
@@ -121,7 +121,7 @@ describe("SubscriptionBulkBar", () => {
       data: { csv: "x", filename: "f.csv", rowCount: 2 },
     });
     renderBar();
-    fireEvent.click(screen.getByRole("button", { name: "선택 항목 내보내기" }));
+    fireEvent.click(screen.getByRole("button", { name: "Export selected" }));
     await waitFor(() =>
       expect(exportSubscriptionsCsv).toHaveBeenCalledWith({
         filter: { includeArchived: true },
@@ -134,7 +134,7 @@ describe("SubscriptionBulkBar", () => {
   it("surfaces failures without clearing the selection", async () => {
     const { bulkUpdate, onClear } = renderBar();
     bulkUpdate.mockResolvedValue({ success: false, error: "nope" });
-    fireEvent.click(screen.getByRole("button", { name: "보관" }));
+    fireEvent.click(screen.getByRole("button", { name: "Archive" }));
     await waitFor(() => expect(bulkUpdate).toHaveBeenCalled());
     expect(onClear).not.toHaveBeenCalled();
   });

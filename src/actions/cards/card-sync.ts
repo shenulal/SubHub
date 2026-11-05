@@ -38,13 +38,13 @@ import type { CardTransactionType, CorporateCard } from "@prisma/client";
 import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
-// ==================== 거래내역 동기화 ====================
+// ==================== Transaction sync ====================
 
 /**
- * 카드 거래내역 동기화 (수동) - 4-Layer 매칭 파이프라인
- * 1. 4-Layer 매칭 (카탈로그/정확/부분/퍼지) - CSV/cron과 동일
- * 2. Non-SaaS 캐시 필터링
- * 3. 개별 LLM 호출 (1건씩) - CSV/cron과 동일
+ * Sync card transactions (manual) - 4-layer matching pipeline
+ * 1. 4-layer matching (catalog/exact/partial/fuzzy) - same as CSV/cron
+ * 2. Non-SaaS cache filtering
+ * 3. Individual LLM calls (one at a time) - same as CSV/cron
  */
 async function _syncCardTransactions(
   cardId: string,
@@ -56,18 +56,18 @@ async function _syncCardTransactions(
 ): Promise<
   ActionState<{ created: number; updated: number; syncHistoryId?: string }>
 > {
-  // syncHistoryId는 에러 핸들러에서도 접근 가능해야 하므로 외부에 선언
+  // Declared outside so the error handler can access syncHistoryId
   let syncHistoryId: string | undefined;
 
   try {
     const session = await getCachedSession();
     if (!session?.user?.organizationId) {
-      return { success: false, message: "인증이 필요합니다" };
+      return { success: false, message: "Authentication required" };
     }
 
     const organizationId = session.user.organizationId;
 
-    // SyncHistory 생성 (보조 기능, 실패해도 메인 흐름에 영향 없음)
+    // Create SyncHistory (auxiliary; a failure does not affect the main flow)
     try {
       const syncHistory = await createSyncHistory({
         organizationId,
@@ -78,10 +78,13 @@ async function _syncCardTransactions(
       });
       syncHistoryId = syncHistory.id;
     } catch (syncHistoryError) {
-      logger.warn({ err: syncHistoryError }, "SyncHistory 생성 실패 (무시)");
+      logger.warn(
+        { err: syncHistoryError },
+        "SyncHistory creation failed (ignored)"
+      );
     }
 
-    // 카드 정보 조회
+    // Fetch the card
     const card = await prisma.corporateCard.findFirst({
       where: {
         id: cardId,
@@ -91,25 +94,25 @@ async function _syncCardTransactions(
     });
 
     if (!card) {
-      return { success: false, message: "카드를 찾을 수 없습니다" };
+      return { success: false, message: "Card not found" };
     }
 
-    // 인증 정보 복호화
+    // Decrypt credentials
     const credentials = decryptJson<CardCredentials>(card.encryptedCredentials);
 
-    // 조회 기간 설정 (기본: 최근 30일)
+    // Set the query period (default: last 30 days)
     const { sdate, edate } =
       options?.startDate && options?.endDate
         ? { sdate: options.startDate, edate: options.endDate }
         : getLastNDaysRange(30);
 
-    // 앱 목록 조회 (매칭용, catalogId 포함)
+    // Fetch apps (for matching, including catalogId)
     const apps: AppMatch[] = await prisma.app.findMany({
       where: { organizationId },
       select: { id: true, name: true, catalogId: true },
     });
 
-    // SaaS 카탈로그 데이터 로딩 (4-layer 매칭용)
+    // Load SaaS catalog data (for 4-layer matching)
     const catalogsRaw = await prisma.saaSCatalog.findMany({
       include: { patterns: true },
     });
@@ -124,7 +127,7 @@ async function _syncCardTransactions(
       })),
     }));
 
-    // 커스텀 매칭 패턴 조회
+    // Fetch custom match patterns
     const merchantPatterns = await prisma.merchantPattern.findMany({
       where: {
         organizationId,
@@ -144,13 +147,13 @@ async function _syncCardTransactions(
     let created = 0;
     let updated = 0;
 
-    // 승인내역 수집
+    // Collect approvals
     const approvalTransactions: Array<{
       item: ApprovalItem;
       transactionType: CardTransactionType;
     }> = [];
 
-    // 승인내역 조회
+    // Fetch approvals
     try {
       const approvalResponse = await withRetry(() =>
         getCardApprovals(
@@ -168,10 +171,12 @@ async function _syncCardTransactions(
         approvalTransactions.push({ item, transactionType: "APPROVAL" });
       }
     } catch (error) {
-      logger.error({ err: error }, "승인내역 조회 실패");
+      logger.error({ err: error }, "Failed to fetch card approvals");
     }
 
-    // 취소 거래 분리 (매칭 없이 저장)
+    // Separate cancelled transactions (saved without matching).
+    // The cancel marker below must stay Korean: it is matched against the
+    // useDiv value returned by the Korean Hyphen card API.
     const cancelledTransactions: typeof approvalTransactions = [];
     const activeTransactions: typeof approvalTransactions = [];
 
@@ -183,7 +188,7 @@ async function _syncCardTransactions(
       }
     }
 
-    // Phase 1: 4-Layer 매칭 (카탈로그/정확/부분/퍼지) - CSV/cron과 동일
+    // Phase 1: 4-layer matching (catalog/exact/partial/fuzzy) - same as CSV/cron
     const matched: Array<{
       item: ApprovalItem;
       transactionType: CardTransactionType;
@@ -197,7 +202,7 @@ async function _syncCardTransactions(
     }> = [];
 
     for (const tx of activeTransactions) {
-      // 커스텀 패턴 우선 체크 (조직별 사용자 정의 패턴)
+      // Check custom patterns first (organization-defined patterns)
       const customHit = customPatterns.find((p) =>
         tx.item.useStore.toLowerCase().includes(p.pattern.toLowerCase())
       );
@@ -210,7 +215,7 @@ async function _syncCardTransactions(
         continue;
       }
 
-      // 4-Layer 동기 매칭 (패턴/부분/퍼지)
+      // 4-layer synchronous matching (pattern/partial/fuzzy)
       const fourLayerResult = matchMerchant4LayerSync(
         { merchantName: tx.item.useStore, memo: tx.item.useDiv },
         apps,
@@ -232,7 +237,7 @@ async function _syncCardTransactions(
       }
     }
 
-    // Phase 2: Non-SaaS 캐시 필터링
+    // Phase 2: Non-SaaS cache filtering
     const normalizedNames = unmatched.map((tx) =>
       normalizeMerchantName(tx.item.useStore)
     );
@@ -268,7 +273,7 @@ async function _syncCardTransactions(
           normalizedName: normalized,
           originalName: tx.item.useStore,
           confidence: 1,
-          reasoning: `키워드 제외: ${keywordHit}`,
+          reasoning: `Keyword excluded: ${keywordHit}`,
         });
       } else {
         needsLLM.push(tx);
@@ -280,10 +285,10 @@ async function _syncCardTransactions(
     }
 
     console.log(
-      `[Sync] 승인 ${approvalTransactions.length}건 (활성 ${activeTransactions.length}건, 취소 ${cancelledTransactions.length}건) - 4-Layer매칭 ${matched.length}건, NonSaaS캐시 ${cachedNonSaaS.length}건, 키워드제외 ${keywordNonSaaS.length}건, LLM필요 ${needsLLM.length}건`
+      `[Sync] ${approvalTransactions.length} approvals (${activeTransactions.length} active, ${cancelledTransactions.length} cancelled) - 4-layer matched ${matched.length}, NonSaaS cache ${cachedNonSaaS.length}, keyword excluded ${keywordNonSaaS.length}, needs LLM ${needsLLM.length}`
     );
 
-    // Phase 3: 개별 LLM 호출 (1건씩) - CSV/cron과 동일
+    // Phase 3: individual LLM calls (one at a time) - same as CSV/cron
     const llmResultsMap = new Map<
       string,
       { appId: string | null; confidence: number; matchSource: MatchSource }
@@ -307,7 +312,7 @@ async function _syncCardTransactions(
       });
     }
 
-    // Phase 4: 모든 트랜잭션 저장
+    // Phase 4: save all transactions
     for (const tx of matched) {
       const result = await saveTransactionDirect(
         card,
@@ -342,7 +347,7 @@ async function _syncCardTransactions(
       const key = `${tx.item.apprNo}_${tx.item.useDt}`;
       const llmResult = llmResultsMap.get(key);
       const llmAppId = llmResult?.appId || null;
-      // 파이프라인 완료 후 appId가 없으면 UNMATCHED
+      // UNMATCHED if there is no appId after the pipeline
       const llmMatchStatus = llmAppId ? "AUTO_MATCHED" : "UNMATCHED";
       const result = await saveTransactionDirect(
         card,
@@ -358,7 +363,7 @@ async function _syncCardTransactions(
       else if (result === "updated") updated++;
     }
 
-    // 취소 거래 저장 (매칭 없이)
+    // Save cancelled transactions (without matching)
     for (const tx of cancelledTransactions) {
       const result = await saveTransactionDirect(
         card,
@@ -373,7 +378,7 @@ async function _syncCardTransactions(
       else if (result === "updated") updated++;
     }
 
-    // 카드 동기화 시간 업데이트
+    // Update the card sync time
     await prisma.corporateCard.update({
       where: { id: cardId },
       data: {
@@ -382,7 +387,7 @@ async function _syncCardTransactions(
       },
     });
 
-    // SMP-123: 동기화 감사 로그 기록
+    // SMP-123: record a sync audit log
     if (created > 0 || updated > 0) {
       await prisma.auditLog.create({
         data: {
@@ -406,7 +411,7 @@ async function _syncCardTransactions(
 
     revalidatePath("/payments/cards");
     revalidatePath(`/payments/cards/${cardId}`);
-    revalidatePath("/payments"); // SMP-123: 결제 내역 페이지도 갱신
+    revalidatePath("/payments"); // SMP-123: also refresh the payments page
 
     const totalRecords = created + updated;
     const matchedCount = matched.length;
@@ -414,7 +419,7 @@ async function _syncCardTransactions(
       needsLLM.length + nonSaaSResolved.length + cancelledTransactions.length;
     const failedCount = 0;
 
-    // SyncHistory 완료 처리 (보조 기능)
+    // Complete SyncHistory (auxiliary)
     try {
       if (syncHistoryId) {
         await completeSyncHistory(syncHistoryId, {
@@ -430,22 +435,22 @@ async function _syncCardTransactions(
     } catch (syncHistoryError) {
       logger.warn(
         { err: syncHistoryError },
-        "SyncHistory 완료 처리 실패 (무시)"
+        "SyncHistory completion update failed (ignored)"
       );
     }
 
     return { success: true, data: { created, updated, syncHistoryId } };
   } catch (error) {
-    logger.error({ err: error }, "거래내역 동기화 실패");
+    logger.error({ err: error }, "Transaction sync failed");
 
     await prisma.corporateCard.update({
       where: { id: cardId },
       data: {
-        lastError: error instanceof Error ? error.message : "알 수 없는 오류",
+        lastError: error instanceof Error ? error.message : "Unknown error",
       },
     });
 
-    // SyncHistory 실패 처리 (보조 기능)
+    // Mark SyncHistory as failed (auxiliary)
     try {
       if (syncHistoryId) {
         await completeSyncHistory(syncHistoryId, {
@@ -456,18 +461,18 @@ async function _syncCardTransactions(
           matchedCount: 0,
           unmatchedCount: 0,
           errorMessage:
-            error instanceof Error ? error.message : "알 수 없는 오류",
+            error instanceof Error ? error.message : "Unknown error",
         });
       }
       await updateCardFailCount(cardId, false);
     } catch (syncHistoryError) {
       logger.warn(
         { err: syncHistoryError },
-        "SyncHistory 실패 처리 오류 (무시)"
+        "SyncHistory failure update error (ignored)"
       );
     }
 
-    return { success: false, message: "거래내역 동기화에 실패했습니다" };
+    return { success: false, message: "Failed to sync transactions" };
   }
 }
 export const syncCardTransactions = withLogging(
@@ -476,8 +481,8 @@ export const syncCardTransactions = withLogging(
 );
 
 /**
- * 거래내역 직접 저장 헬퍼
- * SMP-123: matchStatus, teamId, userId 필드 추가
+ * Helper that saves a transaction directly
+ * SMP-123: adds matchStatus, teamId and userId fields
  */
 async function saveTransactionDirect(
   card: CorporateCard,
@@ -489,11 +494,11 @@ async function saveTransactionDirect(
   matchSource: MatchSource | null,
   matchStatusOverride?: "PENDING" | "AUTO_MATCHED" | "UNMATCHED"
 ): Promise<"created" | "updated"> {
-  // matchStatus 결정: override가 있으면 사용, 없으면 appId 기반 자동 결정
+  // Determine matchStatus: use the override if given, otherwise derive from appId
   const matchStatus: "PENDING" | "AUTO_MATCHED" | "UNMATCHED" =
     matchStatusOverride ?? (matchedAppId ? "AUTO_MATCHED" : "PENDING");
 
-  // SMP-179: 매칭된 앱의 ACTIVE 구독 자동 연결
+  // SMP-179: auto-link the matched app's ACTIVE subscription
   const linkedSubscriptionId = await findActiveSubscriptionForApp(
     matchedAppId,
     organizationId
@@ -519,9 +524,9 @@ async function saveTransactionDirect(
     matchedAppId,
     matchConfidence: matchConfidence || null,
     matchSource: matchSource || null,
-    matchStatus, // SMP-123: matchStatus 필드 추가
-    linkedSubscriptionId, // SMP-179: 구독 자동 연결
-    // SMP-123: CorporateCard에서 Team/User 배정 상속
+    matchStatus, // SMP-123: matchStatus field
+    linkedSubscriptionId, // SMP-179: auto-linked subscription
+    // SMP-123: inherit team/user assignment from the CorporateCard
     teamId: card.teamId || null,
     userId: card.assignedUserId || null,
     transactionType,
@@ -538,7 +543,7 @@ async function saveTransactionDirect(
   });
 
   if (existing) {
-    // SMP-123: 기존 레코드의 matchStatus가 AUTO_MATCHED/MANUAL이면 matchStatus 유지
+    // SMP-123: keep matchStatus if the existing record is AUTO_MATCHED/MANUAL
     const shouldPreserveMatchStatus =
       existing.matchStatus === "AUTO_MATCHED" ||
       existing.matchStatus === "MANUAL";
@@ -547,15 +552,15 @@ async function saveTransactionDirect(
       where: { id: existing.id },
       data: {
         ...transactionData,
-        // 기존에 자동/수동 매칭된 상태면 matchStatus 유지
+        // Keep matchStatus if already auto/manually matched
         matchStatus: shouldPreserveMatchStatus
           ? existing.matchStatus
           : transactionData.matchStatus,
-        // 기존에 수동 확인된 매칭이면 matchedAppId 유지
+        // Keep matchedAppId if the match was manually confirmed
         matchedAppId: shouldPreserveMatchStatus
           ? existing.matchedAppId
           : transactionData.matchedAppId,
-        // SMP-179: 기존에 자동/수동 매칭된 상태면 linkedSubscriptionId 보존
+        // SMP-179: preserve linkedSubscriptionId if already auto/manually matched
         linkedSubscriptionId: shouldPreserveMatchStatus
           ? existing.linkedSubscriptionId
           : transactionData.linkedSubscriptionId,

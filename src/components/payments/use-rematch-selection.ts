@@ -4,7 +4,7 @@
 import { useCallback, useState } from "react";
 
 /**
- * 재매칭을 위한 행 선택 상태 관리 훅
+ * Hook managing row selection state for rematching
  */
 export function useRematchSelection() {
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());

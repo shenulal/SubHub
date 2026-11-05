@@ -13,7 +13,7 @@ export interface RenewalItem {
   planName: string | null;
   amount: number;
   currency: string;
-  renewalDate: string; // ISO 8601 문자열
+  renewalDate: string; // ISO 8601 string
   status: "ACTIVE" | "EXPIRED" | "CANCELLED" | "PENDING";
 }
 
@@ -24,15 +24,15 @@ export interface CalendarData {
 }
 
 export interface RenewalsByDateResponse {
-  date: string; // ISO 8601 문자열
+  date: string; // ISO 8601 string
   renewals: RenewalItem[];
 }
 
 // ==================== Calendar Server Actions ====================
 
 /**
- * Date를 UTC 기준 YYYY-MM-DD 문자열로 변환
- * (타임존 이슈 방지: UTC 기준으로 통일하여 날짜 밀림 현상 해결)
+ * Convert a Date to a UTC YYYY-MM-DD string
+ * (avoids time-zone drift by normalising everything to UTC)
  */
 function formatLocalDateKey(date: Date): string {
   const year = date.getUTCFullYear();
@@ -42,7 +42,7 @@ function formatLocalDateKey(date: Date): string {
 }
 
 /**
- * 조회 월에 구독 갱신이 발생하는지 계산 (billingCycle 고려)
+ * Determine whether the subscription renews in the requested month (respects billingCycle)
  */
 function calculateRenewalDateInMonth(
   subscription: {
@@ -59,7 +59,7 @@ function calculateRenewalDateInMonth(
   const renewalDate = subscription.renewalDate;
   const renewalDay = renewalDate.getUTCDate();
 
-  // 조회 월의 시작/종료 시점
+  // Start/end of the requested month
   const monthStart = new Date(
     Date.UTC(targetYear, targetMonth - 1, 1, 0, 0, 0, 0)
   );
@@ -67,36 +67,36 @@ function calculateRenewalDateInMonth(
     Date.UTC(targetYear, targetMonth, 0, 23, 59, 59, 999)
   );
 
-  // 구독 시작일 이전이면 표시 안 함
+  // Skip if before the subscription start date
   if (subscription.startDate > monthEnd) {
     return null;
   }
 
-  // 구독 종료일 이후이면 표시 안 함
+  // Skip if after the subscription end date
   if (subscription.endDate && subscription.endDate < monthStart) {
     return null;
   }
 
-  // billingCycle에 따라 갱신일 계산
+  // Compute the renewal date from billingCycle
   if (subscription.billingCycle === "MONTHLY") {
-    // 매월 같은 날짜에 갱신 (예: 매월 25일)
+    // Renews on the same day each month (e.g. the 25th)
     const lastDayOfMonth = new Date(
       Date.UTC(targetYear, targetMonth, 0)
     ).getUTCDate();
-    const actualDay = Math.min(renewalDay, lastDayOfMonth); // 31일 → 30일로 조정
+    const actualDay = Math.min(renewalDay, lastDayOfMonth); // clamp 31 → 30 etc.
 
     const calculatedDate = new Date(
       Date.UTC(targetYear, targetMonth - 1, actualDay, 0, 0, 0, 0)
     );
 
-    // 구독 시작일 이전이거나 종료일 이후면 null
+    // null if before the start date or after the end date
     if (calculatedDate < subscription.startDate) return null;
     if (subscription.endDate && calculatedDate > subscription.endDate)
       return null;
 
     return calculatedDate;
   } else if (subscription.billingCycle === "YEARLY") {
-    // 매년 같은 월/일에 갱신
+    // Renews on the same month/day each year
     const renewalMonth = renewalDate.getUTCMonth() + 1; // 1-12
     if (renewalMonth === targetMonth) {
       const calculatedDate = new Date(
@@ -110,15 +110,15 @@ function calculateRenewalDateInMonth(
       return calculatedDate;
     }
   } else if (subscription.billingCycle === "QUARTERLY") {
-    // 3개월마다 갱신 (구현 생략, 필요 시 추가)
-    // TODO: 분기별 갱신 로직 구현
+    // Renews every 3 months (not implemented yet; add when needed)
+    // TODO: implement quarterly renewal logic
   }
 
   return null;
 }
 
 /**
- * 월별 갱신 캘린더 데이터 조회
+ * Get monthly renewal calendar data
  */
 export async function getRenewalCalendar(
   year: number,
@@ -126,7 +126,7 @@ export async function getRenewalCalendar(
 ): Promise<CalendarData> {
   const { organizationId } = await requireOrganization();
 
-  // 조회 월이 현재보다 과거인지 확인
+  // Check whether the requested month is in the past
   const now = new Date();
   const currentYear = now.getUTCFullYear();
   const currentMonth = now.getUTCMonth() + 1; // 1-12
@@ -134,11 +134,11 @@ export async function getRenewalCalendar(
   const currentDate = currentYear * 100 + currentMonth; // 202602
   const isPastMonth = queryDate < currentDate;
 
-  // 날짜별로 그룹화
+  // Group by date
   const renewals: Record<string, RenewalItem[]> = {};
 
   if (isPastMonth) {
-    // 과거 달: DB에 실제로 renewalDate가 있는 것만 표시
+    // Past months: show only rows that actually have a renewalDate in the DB
     const monthStart = new Date(Date.UTC(year, month - 1, 1, 0, 0, 0, 0));
     const monthEnd = new Date(Date.UTC(year, month, 0, 23, 59, 59, 999));
 
@@ -178,7 +178,7 @@ export async function getRenewalCalendar(
       });
     }
   } else {
-    // 현재/미래 달: 반복 갱신 로직 적용
+    // Current/future months: apply recurring renewal logic
     const subscriptions = await prisma.subscription.findMany({
       where: {
         organizationId,
@@ -193,7 +193,7 @@ export async function getRenewalCalendar(
     for (const sub of subscriptions) {
       if (!sub.renewalDate) continue;
 
-      // 조회 월에 갱신이 발생하는지 계산
+      // Check whether a renewal falls in the requested month
       const calculatedDate = calculateRenewalDateInMonth(
         {
           renewalDate: sub.renewalDate,
@@ -235,20 +235,20 @@ export async function getRenewalCalendar(
 }
 
 /**
- * 특정 날짜의 갱신 목록 조회
+ * Get renewals for a specific date
  */
 export async function getRenewalsByDate(
   date: string
 ): Promise<RenewalsByDateResponse> {
   const { organizationId } = await requireOrganization();
 
-  // 날짜 파싱 (YYYY-MM-DD)
+  // Parse the date (YYYY-MM-DD)
   const targetDate = new Date(date);
   const targetYear = targetDate.getUTCFullYear();
   const targetMonth = targetDate.getUTCMonth() + 1; // 1-12
   const targetDay = targetDate.getUTCDate();
 
-  // 현재 날짜와 비교
+  // Compare with today
   const now = new Date();
   const currentYear = now.getUTCFullYear();
   const currentMonth = now.getUTCMonth() + 1;
@@ -259,7 +259,7 @@ export async function getRenewalsByDate(
   const renewals: RenewalItem[] = [];
 
   if (isPastMonth) {
-    // 과거 달: DB에서 실제 renewalDate 조회
+    // Past months: query the actual renewalDate from the DB
     const startOfDay = new Date(
       Date.UTC(targetYear, targetMonth - 1, targetDay, 0, 0, 0, 0)
     );
@@ -295,7 +295,7 @@ export async function getRenewalsByDate(
       });
     }
   } else {
-    // 현재/미래 달: 반복 갱신 로직 적용
+    // Current/future months: apply recurring renewal logic
     const subscriptions = await prisma.subscription.findMany({
       where: {
         organizationId,
@@ -310,7 +310,7 @@ export async function getRenewalsByDate(
     for (const sub of subscriptions) {
       if (!sub.renewalDate) continue;
 
-      // 조회 월에 갱신이 발생하는지 계산
+      // Check whether a renewal falls in the requested month
       const calculatedDate = calculateRenewalDateInMonth(
         {
           renewalDate: sub.renewalDate,
@@ -324,7 +324,7 @@ export async function getRenewalsByDate(
 
       if (!calculatedDate) continue;
 
-      // 계산된 날짜가 요청한 날짜(일)와 일치하는지 확인
+      // Check that the computed date matches the requested day
       if (calculatedDate.getUTCDate() === targetDay) {
         renewals.push({
           subscriptionId: sub.id,
@@ -340,7 +340,7 @@ export async function getRenewalsByDate(
       }
     }
 
-    // 앱 이름 순으로 정렬
+    // Sort by app name
     renewals.sort((a, b) => a.appName.localeCompare(b.appName));
   }
 

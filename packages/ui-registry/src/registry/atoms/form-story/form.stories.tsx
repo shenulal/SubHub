@@ -133,12 +133,12 @@ export const ShouldShowErrorWhenInvalidInput: Story = {
 };
 
 /**
- * Ref 사용 예제: FormControl을 통해 Input에 ref를 전달하여 DOM 요소에 접근합니다.
- * react-hook-form의 register 대신 ref를 명시적으로 전달하는 방법을 보여줍니다.
+ * Ref example: pass a ref to an Input through FormControl to access the DOM element.
+ * Shows how to pass the ref explicitly instead of using react-hook-form's register.
  */
 export const WithRef: Story = {
   render: () => {
-    // 🎯 목적: react-hook-form과 함께 ref를 명시적으로 관리
+    // 🎯 Purpose: Manage the ref explicitly alongside react-hook-form
     const inputRef = useRef<HTMLInputElement>(null);
 
     const formSchema = z.object({
@@ -174,7 +174,7 @@ export const WithRef: Story = {
                     <Input
                       ref={(e) => {
                         ref(e);
-                        // React 18 호환성: ref.current는 read-only이므로 타입 단언 사용
+                        // React 18 compatibility: ref.current is read-only, so a type assertion is used
                         (
                           inputRef as React.MutableRefObject<HTMLInputElement | null>
                         ).current = e;
@@ -229,27 +229,27 @@ export const WithRef: Story = {
     );
   },
   play: async ({ canvasElement }) => {
-    // 🎯 목적: play function을 통해 form ref와 validation을 테스트
+    // 🎯 Purpose: Test the form ref and validation via a play function
     const canvas = within(canvasElement);
 
-    // "Focus Email Input" 버튼으로 email input에 focus
+    // Focus the email input with the "Focus Email Input" button
     const focusButton = canvas.getByRole("button", {
       name: "Focus Email Input",
     });
     await userEvent.click(focusButton);
 
-    // Email input이 포커스되었는지 확인
+    // Verify the Email input is focused
     const emailInput = canvas.getByLabelText("Email");
     await expect(emailInput).toHaveFocus();
 
-    // 잘못된 이메일 입력
+    // Enter an invalid email
     await userEvent.type(emailInput, "invalid-email");
 
-    // Submit 버튼 클릭
+    // Click the Submit button
     const submitButton = canvas.getByRole("button", { name: "Submit" });
     await userEvent.click(submitButton);
 
-    // Validation 에러 메시지 확인
+    // Check the validation error message
     const errorMessage = await canvas.findByText("Invalid email address.");
     await expect(errorMessage).toBeVisible();
   },

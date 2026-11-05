@@ -1,6 +1,6 @@
 // middleware.ts
-// 인증 미들웨어 - 공개 라우트만 허용, 나머지는 Server Components/Actions에서 처리
-// 주의: auth() 래퍼 사용하면 모든 요청마다 세션 검증 → DB 연결 풀 고갈 위험
+// Auth middleware - only allows public routes here; everything else is handled in Server Components/Actions
+// Note: the auth() wrapper validates the session on every request → risk of exhausting the DB connection pool
 
 import createIntlMiddleware from "next-intl/middleware";
 import { NextRequest, NextResponse } from "next/server";
@@ -16,7 +16,7 @@ const intlMiddleware = createIntlMiddleware({
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // /extensions → /extensions/usage 리다이렉트 (페이지 진입 전 처리)
+  // Redirect /extensions → /extensions/usage (before the page loads)
   if (pathname === "/extensions") {
     return NextResponse.redirect(new URL("/extensions/usage", request.url));
   }

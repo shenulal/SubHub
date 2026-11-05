@@ -41,10 +41,10 @@
       "feature2": "Automated subscription discovery",
       "feature3": "Usage-based optimization",
       "feature4": "insights",
-      "copyright": "© 2026 SaaS Management Platform. All rights reserved."
+      "copyright": "© 2026 SubHub. All rights reserved."
     },
     "login": {
-      "brand": "SaaS Management Platform",
+      "brand": "SubHub",
       "description": "Log in with your email verification code",
       "errors": {
         "credentials": "Email or password is incorrect",
@@ -92,7 +92,7 @@
     },
     "signup": {
       "title": "Sign up",
-      "description": "Create your SaaS Management Platform account",
+      "description": "Create your SubHub account",
       "errors": {
         "emailExistsGoogle": "This email is already registered with Google",
         "emailExistsCredentials": "This email is already registered",
@@ -528,7 +528,7 @@
     "page": {
       "title": "Device management",
       "description": "Review FleetDM devices and app usage status.",
-      "metaTitle": "Device management | SaaS Management Platform",
+      "metaTitle": "Device management",
       "metaDescription": "FleetDM device inventory and app usage status"
     },
     "kpi": {
@@ -1146,7 +1146,7 @@
       "pdf": {
         "title": "Dashboard report",
         "subtitle": "{range} | Generated: {date}",
-        "organization": "SaaS Management Platform",
+        "organization": "SubHub",
         "sections": {
           "kpis": "Key metrics",
           "securityDiscovery": "Security & discovery"
@@ -1275,7 +1275,7 @@
     "page": {
       "title": "Subscription List",
       "description": "Manage SaaS subscriptions and track costs",
-      "metaTitle": "Subscription management | SaaS Management Platform",
+      "metaTitle": "Subscription management",
       "metaDescription": "Manage SaaS subscriptions and track costs"
     },
     "kpi": {
@@ -1452,7 +1452,7 @@
       }
     },
     "newPage": {
-      "metaTitle": "Add Subscription | SaaS Management Platform",
+      "metaTitle": "Add Subscription",
       "metaDescription": "Register a new SaaS subscription",
       "title": "Add Subscription",
       "description": "Register a new SaaS subscription"
@@ -1541,7 +1541,7 @@
       "next": "Next",
       "monthYear": "{month} {year}",
       "description": "View subscription renewal schedules on the calendar",
-      "metaTitle": "Renewal calendar | SaaS Management Platform",
+      "metaTitle": "Renewal calendar",
       "metaDescription": "View subscription renewal schedules on the calendar",
       "selectDateHint": "Select a date to view\nscheduled subscription renewals.",
       "weekdays": {
@@ -1604,7 +1604,7 @@
     "page": {
       "title": "App management",
       "description": "Manage SaaS apps used in your organization",
-      "metaTitle": "App management | SaaS Management Platform",
+      "metaTitle": "App management",
       "metaDescription": "Manage SaaS apps used in your organization"
     },
     "kpi": {
@@ -1800,7 +1800,7 @@
     "page": {
       "title": "Integration management",
       "description": "Automatically discover SaaS apps and users through SSO/IdP integrations",
-      "metaTitle": "Integration management | SaaS Management Platform",
+      "metaTitle": "Integration management",
       "metaDescription": "Automatically discover SaaS apps and users through SSO/IdP integrations"
     },
     "kpi": {
@@ -1999,7 +1999,7 @@
     "page": {
       "title": "Reports",
       "description": "View SaaS usage, cost analysis, renewal schedules, and more",
-      "metaTitle": "Reports | SaaS Management Platform",
+      "metaTitle": "Reports",
       "metaDescription": "View SaaS usage, cost analysis, renewal schedules, and more"
     },
     "availableCount": "{count} reports available",
@@ -2063,7 +2063,7 @@
       "page": {
         "title": "Usage Report",
         "description": "Analyze SaaS app usage",
-        "metaTitle": "Usage Report | SaaS Management Platform",
+        "metaTitle": "Usage Report",
         "metaDescription": "Analyze SaaS app usage"
       },
       "filters": {
@@ -2151,7 +2151,7 @@
       "page": {
         "title": "Audit Log",
         "description": "View system activity history",
-        "metaTitle": "Audit Log | SaaS Management Platform",
+        "metaTitle": "Audit Log",
         "metaDescription": "View and search system activity logs"
       },
       "export": {
@@ -2248,7 +2248,7 @@
       "page": {
         "title": "Cost Analysis Report",
         "description": "Analyze SaaS subscription cost status and trends",
-        "metaTitle": "Cost Analysis Report | SaaS Management Platform",
+        "metaTitle": "Cost Analysis Report",
         "metaDescription": "SaaS subscription cost analysis report"
       },
       "stats": {
@@ -2385,7 +2385,7 @@
       "page": {
         "title": "Subscription Renewal Report",
         "description": "Check upcoming subscription renewals for the next 30 days",
-        "metaTitle": "Subscription Renewal Report | SaaS Management Platform",
+        "metaTitle": "Subscription Renewal Report",
         "metaDescription": "SaaS subscription renewal schedule report"
       },
       "daysLeft": "{days} days left",
@@ -2506,7 +2506,7 @@
       "page": {
         "title": "Browsing Usage Report",
         "description": "View user web browsing activity",
-        "metaTitle": "Browsing Usage Report | SaaS Management Platform",
+        "metaTitle": "Browsing Usage Report",
         "metaDescription": "View user web browsing activity report"
       },
       "filters": {
@@ -2551,7 +2551,7 @@
       "page": {
         "title": "Block Events Report",
         "description": "View access records blocked by blacklist",
-        "metaTitle": "Block Events Report | SaaS Management Platform",
+        "metaTitle": "Block Events Report",
         "metaDescription": "View blocked web access activity report"
       },
       "stats": {
@@ -2591,7 +2591,7 @@
       "page": {
         "title": "Registered App Usage",
         "description": "View user access records for registered apps",
-        "metaTitle": "Registered App Usage | SaaS Management Platform",
+        "metaTitle": "Registered App Usage",
         "metaDescription": "View user access activity for registered apps"
       },
       "stats": {
@@ -3436,7 +3436,7 @@
       "page": {
         "title": "Blocked Apps",
         "description": "Manage domains to block access from extensions.",
-        "metaTitle": "Blocked Apps | SaaS Management Platform",
+        "metaTitle": "Blocked Apps",
         "metaDescription": "Block domain management"
       },
       "addButton": "Add blocked app",
@@ -3519,7 +3519,7 @@
     "registeredApps": {
       "pageTitle": "Registered Apps",
       "pageDescription": "Manage URL patterns of apps registered in subscription management. The extension tracks access to these domains.",
-      "metaTitle": "Registered Apps | SaaS Management Platform",
+      "metaTitle": "Registered Apps",
       "metaDescription": "Manage whitelisted app URLs from subscriptions",
       "searchPlaceholder": "Search by app name or URL...",
       "syncButton": "Sync apps",
@@ -3550,7 +3550,7 @@
     },
     "builds": {
       "page": {
-        "metaTitle": "Download | SaaS Management Platform",
+        "metaTitle": "Download",
         "metaDescription": "Extension build management",
         "title": "Download",
         "description": "Manage and download extension builds."
@@ -3727,7 +3727,7 @@
     },
     "usage": {
       "page": {
-        "metaTitle": "Usage | SaaS Management Platform",
+        "metaTitle": "Usage",
         "metaDescription": "Analyze SaaS usage by domain",
         "title": "Usage",
         "description": "Analyze SaaS usage by domain."

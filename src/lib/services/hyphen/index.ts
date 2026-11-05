@@ -1,10 +1,10 @@
 /**
- * Hyphen API 서비스 모듈
+ * Hyphen API service module
  *
- * 법인카드 조회 API 연동
- * - OAuth 토큰 관리
- * - 승인내역/매입내역 조회
- * - SaaS 매칭
+ * Corporate card inquiry API integration
+ * - OAuth token management
+ * - Approval / purchase history inquiry
+ * - SaaS matching
  */
 
 export * from "./auth";

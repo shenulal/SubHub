@@ -50,21 +50,21 @@ describe("GoogleWorkspaceService", () => {
     it("should throw error with missing clientEmail", () => {
       const invalidCreds = { ...mockCredentials, clientEmail: "" };
       expect(() => new GoogleWorkspaceService(invalidCreds)).toThrow(
-        "서비스 계정 이메일이 필요합니다"
+        "Service account email is required"
       );
     });
 
     it("should throw error with missing privateKey", () => {
       const invalidCreds = { ...mockCredentials, privateKey: "" };
       expect(() => new GoogleWorkspaceService(invalidCreds)).toThrow(
-        "서비스 계정 Private Key가 필요합니다"
+        "Service account private key is required"
       );
     });
 
     it("should throw error with missing subject", () => {
       const invalidCreds = { ...mockCredentials, subject: "" };
       expect(() => new GoogleWorkspaceService(invalidCreds)).toThrow(
-        "관리자 이메일(subject)이 필요합니다"
+        "Admin email (subject) is required"
       );
     });
   });
@@ -238,7 +238,7 @@ describe("GoogleWorkspaceService", () => {
       service["adminClient"].tokens.list = mockList;
 
       await expect(service.listTokens("user@example.com")).rejects.toThrow(
-        "OAuth 토큰 조회 실패"
+        "Failed to fetch OAuth tokens"
       );
     });
   });
@@ -260,7 +260,7 @@ describe("GoogleWorkspaceService", () => {
       service["adminClient"].users.list = mockList;
 
       await expect(service.testConnection()).rejects.toThrow(
-        "Google API 오류: Auth failed"
+        "Google API error: Auth failed"
       );
     });
   });

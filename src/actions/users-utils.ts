@@ -2,13 +2,13 @@
 "use server";
 
 /**
- * User 관련 공통 유틸리티 함수
+ * Shared user utility functions
  */
 
 import { prisma } from "@/lib/db";
 
 /**
- * 해당 사용자가 조직의 마지막 ADMIN인지 확인
+ * Check whether the user is the organization's last ADMIN
  */
 export async function isLastAdmin(
   organizationId: string,
@@ -26,7 +26,7 @@ export async function isLastAdmin(
 }
 
 /**
- * 사용자와 연결된 데이터 건수 조회 (삭제 확인 다이얼로그용)
+ * Count data linked to a user (for the delete confirmation dialog)
  */
 export async function getUserRelatedDataCounts(userId: string): Promise<{
   ownedApps: number;

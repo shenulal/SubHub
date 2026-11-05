@@ -65,14 +65,14 @@ describe("SaaS Pattern Server Actions", () => {
   });
 
   describe("getMerchantPatterns", () => {
-    it("인증되지 않은 경우 /login으로 리다이렉트해야 한다", async () => {
+    it("redirects to /login when unauthenticated", async () => {
       mockedAuth.mockResolvedValue(null);
 
       await expect(getMerchantPatterns()).rejects.toThrow("NEXT_REDIRECT");
       expect(mockRedirect).toHaveBeenCalledWith("/login");
     });
 
-    it("가맹점 패턴 목록을 반환해야 한다", async () => {
+    it("returns the merchant pattern list", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1" },
         expires: "",
@@ -106,7 +106,7 @@ describe("SaaS Pattern Server Actions", () => {
   });
 
   describe("createMerchantPattern", () => {
-    it("관리자가 아니면 에러를 반환해야 한다", async () => {
+    it("returns an error for a non-admin", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "MEMBER" },
         expires: "",
@@ -119,10 +119,10 @@ describe("SaaS Pattern Server Actions", () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("관리자 권한이 필요합니다");
+      expect(result.message).toBe("Admin permission required");
     });
 
-    it("존재하지 않는 앱이면 에러를 반환해야 한다", async () => {
+    it("returns an error for a non-existent app", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
         expires: "",
@@ -137,10 +137,10 @@ describe("SaaS Pattern Server Actions", () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("앱을 찾을 수 없습니다");
+      expect(result.message).toBe("App not found");
     });
 
-    it("가맹점 패턴을 성공적으로 생성해야 한다", async () => {
+    it("creates a merchant pattern successfully", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
         expires: "",
@@ -172,7 +172,7 @@ describe("SaaS Pattern Server Actions", () => {
   });
 
   describe("updateMerchantPattern", () => {
-    it("가맹점 패턴을 수정해야 한다", async () => {
+    it("updates a merchant pattern", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
         expires: "",
@@ -201,7 +201,7 @@ describe("SaaS Pattern Server Actions", () => {
       );
     });
 
-    it("존재하지 않는 패턴은 에러를 반환해야 한다", async () => {
+    it("returns an error for a non-existent pattern", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
         expires: "",
@@ -214,12 +214,12 @@ describe("SaaS Pattern Server Actions", () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("패턴을 찾을 수 없습니다");
+      expect(result.message).toBe("Pattern not found");
     });
   });
 
   describe("deleteMerchantPattern", () => {
-    it("관리자가 아니면 에러를 반환해야 한다", async () => {
+    it("returns an error for a non-admin", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "MEMBER" },
         expires: "",
@@ -228,10 +228,10 @@ describe("SaaS Pattern Server Actions", () => {
       const result = await deleteMerchantPattern("pattern-1");
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("관리자 권한이 필요합니다");
+      expect(result.message).toBe("Admin permission required");
     });
 
-    it("가맹점 패턴을 삭제해야 한다", async () => {
+    it("deletes a merchant pattern", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
         expires: "",

@@ -30,14 +30,16 @@ describe("BudgetSettingsForm", () => {
   it("should render with default settings", () => {
     render(<BudgetSettingsForm initialSettings={DEFAULT_BUDGET_SETTINGS} />);
 
-    // 통화 선택 확인
-    expect(screen.getByText("통화 단위")).toBeInTheDocument();
+    // Currency selection
+    expect(screen.getByText("Currency")).toBeInTheDocument();
 
-    // 자동 설정 토글 확인
-    expect(screen.getByText("전월 지출 기준 자동 설정")).toBeInTheDocument();
+    // Auto-set toggle
+    expect(
+      screen.getByText("Auto set from last month spend")
+    ).toBeInTheDocument();
 
-    // 저장 버튼 확인
-    expect(screen.getByRole("button", { name: /저장/i })).toBeInTheDocument();
+    // Save button
+    expect(screen.getByRole("button", { name: /Save/i })).toBeInTheDocument();
   });
 
   it("should render with custom settings", () => {
@@ -49,9 +51,9 @@ describe("BudgetSettingsForm", () => {
 
     render(<BudgetSettingsForm initialSettings={customSettings} />);
 
-    // 월별 예산 입력 필드가 표시되어야 함 (자동 설정 해제)
-    expect(screen.getByLabelText(/월별 예산/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/월별 예산/i)).toHaveValue("5,000");
+    // Monthly budget input should be shown (auto mode off)
+    expect(screen.getByLabelText(/Monthly budget/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Monthly budget/i)).toHaveValue("5,000");
   });
 
   it("should toggle auto budget mode", async () => {
@@ -59,15 +61,15 @@ describe("BudgetSettingsForm", () => {
 
     render(<BudgetSettingsForm initialSettings={DEFAULT_BUDGET_SETTINGS} />);
 
-    // 초기에는 자동 설정이 켜져 있음 (monthlyBudget: null)
+    // Auto mode is on initially (monthlyBudget: null)
     const toggle = screen.getByRole("switch");
     expect(toggle).toBeChecked();
 
-    // 토글을 끄면 예산 입력 필드가 나타남
+    // Turning the toggle off reveals the budget input
     await user.click(toggle);
 
     expect(toggle).not.toBeChecked();
-    expect(screen.getByLabelText(/월별 예산/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Monthly budget/i)).toBeInTheDocument();
   });
 
   it("should call updateBudgetSettings on form submit", async () => {
@@ -82,30 +84,30 @@ describe("BudgetSettingsForm", () => {
 
     render(<BudgetSettingsForm initialSettings={settings} />);
 
-    const saveButton = screen.getByRole("button", { name: /저장/i });
+    const saveButton = screen.getByRole("button", { name: /Save/i });
     await user.click(saveButton);
 
     await waitFor(() => {
       expect(updateBudgetSettings).toHaveBeenCalled();
     });
 
-    expect(toast.success).toHaveBeenCalledWith("예산 설정이 저장되었습니다");
+    expect(toast.success).toHaveBeenCalledWith("Budget settings saved");
   });
 
   it("should show error toast on update failure", async () => {
     const user = userEvent.setup();
     vi.mocked(updateBudgetSettings).mockResolvedValue({
       success: false,
-      message: "관리자 권한이 필요합니다",
+      message: "Admin permission required",
     });
 
     render(<BudgetSettingsForm initialSettings={DEFAULT_BUDGET_SETTINGS} />);
 
-    const saveButton = screen.getByRole("button", { name: /저장/i });
+    const saveButton = screen.getByRole("button", { name: /Save/i });
     await user.click(saveButton);
 
     await waitFor(() => {
-      expect(toast.error).toHaveBeenCalledWith("관리자 권한이 필요합니다");
+      expect(toast.error).toHaveBeenCalledWith("Admin permission required");
     });
   });
 
@@ -120,13 +122,13 @@ describe("BudgetSettingsForm", () => {
 
     render(<BudgetSettingsForm initialSettings={settings} />);
 
-    const input = screen.getByLabelText(/월별 예산/i);
+    const input = screen.getByLabelText(/Monthly budget/i);
 
-    // 숫자 입력
+    // Type a number
     await user.clear(input);
     await user.type(input, "1000000");
 
-    // 포맷팅된 값 확인 (1,000,000)
+    // Formatted value (1,000,000)
     expect(input).toHaveValue("1,000,000");
   });
 
@@ -139,9 +141,9 @@ describe("BudgetSettingsForm", () => {
 
     render(<BudgetSettingsForm initialSettings={settings} />);
 
-    // 자동 설정 상태 메시지 확인
+    // Auto mode status message
     expect(
-      screen.getByText(/전월 카드 매입 승인 내역을 기준으로 예산이 설정됩니다/i)
+      screen.getByText(/Budget is set from last month's card approval total/i)
     ).toBeInTheDocument();
   });
 });

@@ -1,7 +1,7 @@
 // src/app/(dashboard)/dashboard/phase1-unused-code-cleanup.test.ts
-// Phase 1 RED: 미사용 코드 삭제 후 프로덕션 /dashboard 정상 동작 검증
-// - 삭제 대상 파일이 프로덕션 코드에서 import되지 않는지 검증
-// - 프로덕션 유지 대상 파일이 모두 존재하는지 검증
+// Phase 1 RED: verify production /dashboard still works after deleting unused code
+// - Verify files slated for deletion are not imported by production code
+// - Verify all production files to keep still exist
 
 import { existsSync, readFileSync, readdirSync } from "fs";
 import path from "path";
@@ -11,10 +11,10 @@ const SRC_ROOT = path.resolve(__dirname, "../../../");
 const PROJECT_ROOT = path.resolve(SRC_ROOT, "../");
 
 // ============================================================
-// 1. 삭제 대상 파일 목록 (Phase 1)
+// 1. Files to delete (Phase 1)
 // ============================================================
 
-/** dashboard-v3 디렉토리에서 삭제할 파일들 (DashboardAlertBanner만 유지) */
+/** Files to delete from the dashboard-v3 directory (only DashboardAlertBanner is kept) */
 const DASHBOARD_V3_FILES_TO_DELETE = [
   "src/components/dashboard-v3/dashboard-v3-client.tsx",
   "src/components/dashboard-v3/anomaly-kpi-card.tsx",
@@ -24,10 +24,10 @@ const DASHBOARD_V3_FILES_TO_DELETE = [
 ];
 
 /**
- * Phase 1에서 삭제된 구 dashboard 컴포넌트 파일들.
- * Phase 5에서 new-dashboard/ → dashboard/로 rename되어 경로가 충돌하므로,
- * Phase 3에서 이동되지 않은(프로덕션 미사용) 파일만 검증합니다.
- * upcoming-renewals 등은 Phase 3에서 이동되어 현재 dashboard/에 존재합니다.
+ * Old dashboard component files deleted in Phase 1.
+ * Phase 5 renamed new-dashboard/ → dashboard/, so the paths collide;
+ * only files not moved in Phase 3 (unused in production) are verified.
+ * upcoming-renewals and others were moved in Phase 3 and now live in dashboard/.
  */
 const DASHBOARD_FILES_TO_DELETE = [
   "src/components/dashboard/dashboard-page-client.tsx",
@@ -49,7 +49,7 @@ const DASHBOARD_FILES_TO_DELETE = [
   "src/components/dashboard/stats-cards.test.tsx",
   "src/components/dashboard/top-apps-cost-chart.tsx",
   "src/components/dashboard/top-apps-cost-chart.test.tsx",
-  // upcoming-renewals는 Phase 3에서 이동되어 현재 dashboard/에 존재 → 제외
+  // upcoming-renewals was moved in Phase 3 and now lives in dashboard/ → excluded
   "src/components/dashboard/cost-analytics-section.tsx",
   "src/components/dashboard/cost-anomaly-alert.tsx",
   "src/components/dashboard/cost-anomaly-alert.test.tsx",
@@ -61,7 +61,7 @@ const DASHBOARD_FILES_TO_DELETE = [
   "src/components/dashboard/grid/dashboard-grid-item.tsx",
 ];
 
-/** 타입/액션 삭제 대상 */
+/** Types/actions to delete */
 const TYPE_ACTION_FILES_TO_DELETE = [
   "src/types/dashboard-grid.ts",
   "src/types/dashboard-settings.ts",
@@ -76,12 +76,12 @@ const ALL_FILES_TO_DELETE = [
 ];
 
 // ============================================================
-// 2. 프로덕션 유지 대상 파일 목록
+// 2. Production files to keep
 // ============================================================
 
-/** 삭제하면 안 되는 프로덕션 필수 파일 */
+/** Required production files that must not be deleted */
 const PRODUCTION_MUST_KEEP_FILES = [
-  // new-dashboard (Phase 3 통합 후: 모든 컴포넌트가 여기에 위치)
+  // new-dashboard (after the Phase 3 consolidation: all components live here)
   "src/components/dashboard/new-dashboard-client.tsx",
   "src/components/dashboard/bento-kpi-cards.tsx",
   "src/components/dashboard/bento-optimization-hero.tsx",
@@ -95,18 +95,18 @@ const PRODUCTION_MUST_KEEP_FILES = [
   "src/components/dashboard/department-spend-chart.tsx",
   "src/components/dashboard/dashboard-alert-banner.tsx",
   "src/components/dashboard/index.ts",
-  // 페이지 파일
+  // Page files
   "src/app/(dashboard)/dashboard/page.tsx",
   "src/app/(dashboard)/dashboard/transforms.ts",
   "src/app/(dashboard)/dashboard/transforms.test.ts",
-  // 프로덕션 타입/액션 (Phase 4: dashboard-v3.ts → dashboard.ts 병합)
+  // Production types/actions (Phase 4: dashboard-v3.ts merged into dashboard.ts)
   "src/types/dashboard.ts",
   "src/actions/dashboard.ts",
   "src/actions/dashboard.test.ts",
 ];
 
 // ============================================================
-// Helper: 재귀적으로 .ts/.tsx 파일 수집
+// Helper: recursively collect .ts/.tsx files
 // ============================================================
 function collectTsFiles(dir: string): string[] {
   const results: string[] = [];
@@ -132,9 +132,9 @@ function collectTsFiles(dir: string): string[] {
 // Tests
 // ============================================================
 
-describe("Phase 1: 미사용 코드 삭제 안전성 검증", () => {
-  describe("삭제 대상 파일이 프로덕션 코드에서 import되지 않아야 한다", () => {
-    // 프로덕션 소스 디렉토리 (삭제 대상 제외)
+describe("Phase 1: unused code deletion safety checks", () => {
+  describe("files slated for deletion must not be imported by production code", () => {
+    // Production source directories (excluding deletion targets)
     const productionDirs = [
       path.join(SRC_ROOT, "app"),
       path.join(SRC_ROOT, "components/dashboard"),
@@ -145,7 +145,7 @@ describe("Phase 1: 미사용 코드 삭제 안전성 검증", () => {
       path.join(SRC_ROOT, "stores"),
     ];
 
-    // 삭제 대상에서 모듈 경로 추출
+    // Extract module paths from deletion targets
     const deletionModulePaths = ALL_FILES_TO_DELETE.filter(
       (f) => !f.endsWith(".test.ts") && !f.endsWith(".test.tsx")
     ).map((f) => {
@@ -156,13 +156,13 @@ describe("Phase 1: 미사용 코드 삭제 안전성 검증", () => {
       return withoutSrcAndExt;
     });
 
-    // 프로덕션 파일 수집
+    // Collect production files
     const productionFiles: string[] = [];
     for (const dir of productionDirs) {
       productionFiles.push(...collectTsFiles(dir));
     }
 
-    // 삭제 대상 파일 자체는 검사에서 제외
+    // Exclude the deletion targets themselves from the check
     const deleteAbsolutePaths = new Set(
       ALL_FILES_TO_DELETE.map((f) => path.resolve(PROJECT_ROOT, f))
     );
@@ -170,7 +170,7 @@ describe("Phase 1: 미사용 코드 삭제 안전성 검증", () => {
       (f) => !deleteAbsolutePaths.has(f)
     );
 
-    it("삭제 대상 모듈을 import하는 프로덕션 파일이 없어야 한다", () => {
+    it("has no production files importing modules slated for deletion", () => {
       const violations: { file: string; importPath: string; line: string }[] =
         [];
 
@@ -179,7 +179,7 @@ describe("Phase 1: 미사용 코드 삭제 안전성 검증", () => {
         const lines = content.split("\n");
 
         for (const line of lines) {
-          // import 문 감지
+          // Detect import statements
           if (!line.includes("from") || !line.includes("import")) continue;
 
           for (const modulePath of deletionModulePaths) {
@@ -197,13 +197,13 @@ describe("Phase 1: 미사용 코드 삭제 안전성 검증", () => {
 
       expect(
         violations,
-        `프로덕션 코드에서 삭제 대상 모듈을 import하는 파일이 발견됨:\n${violations
+        `Production files importing modules slated for deletion:\n${violations
           .map((v) => `  ${v.file} → ${v.importPath}\n    ${v.line}`)
           .join("\n")}`
       ).toHaveLength(0);
     });
 
-    it("dashboard-settings 관련 import가 프로덕션 코드에 없어야 한다", () => {
+    it("has no dashboard-settings imports in production code", () => {
       const settingsViolations: string[] = [];
 
       for (const filePath of filteredProductionFiles) {
@@ -218,11 +218,11 @@ describe("Phase 1: 미사용 코드 삭제 안전성 검증", () => {
 
       expect(
         settingsViolations,
-        `dashboard-settings를 import하는 프로덕션 파일:\n${settingsViolations.join("\n")}`
+        `Production files importing dashboard-settings:\n${settingsViolations.join("\n")}`
       ).toHaveLength(0);
     });
 
-    it("dashboard-grid 타입 import가 프로덕션 코드에 없어야 한다", () => {
+    it("has no dashboard-grid type imports in production code", () => {
       const gridViolations: string[] = [];
 
       for (const filePath of filteredProductionFiles) {
@@ -234,57 +234,57 @@ describe("Phase 1: 미사용 코드 삭제 안전성 검증", () => {
 
       expect(
         gridViolations,
-        `dashboard-grid를 import하는 프로덕션 파일:\n${gridViolations.join("\n")}`
+        `Production files importing dashboard-grid:\n${gridViolations.join("\n")}`
       ).toHaveLength(0);
     });
   });
 
-  describe("프로덕션 필수 파일이 모두 존재해야 한다", () => {
+  describe("all required production files must exist", () => {
     for (const filePath of PRODUCTION_MUST_KEEP_FILES) {
-      it(`${filePath} 이(가) 존재해야 한다`, () => {
+      it(`${filePath} exists`, () => {
         const absolutePath = path.resolve(PROJECT_ROOT, filePath);
         expect(
           existsSync(absolutePath),
-          `프로덕션 필수 파일이 누락됨: ${filePath}`
+          `Required production file is missing: ${filePath}`
         ).toBe(true);
       });
     }
   });
 
-  describe("삭제 대상 파일은 존재하지 않아야 한다 (삭제 후 검증)", () => {
+  describe("files slated for deletion must not exist (post-deletion check)", () => {
     for (const filePath of ALL_FILES_TO_DELETE) {
-      it(`${filePath} 이(가) 삭제되어야 한다`, () => {
+      it(`${filePath} is deleted`, () => {
         const absolutePath = path.resolve(PROJECT_ROOT, filePath);
         expect(
           existsSync(absolutePath),
-          `삭제 대상 파일이 아직 존재함: ${filePath}`
+          `File slated for deletion still exists: ${filePath}`
         ).toBe(false);
       });
     }
   });
 
-  describe("dashboard-v3 index.ts가 DashboardAlertBanner만 export해야 한다", () => {
-    it("dashboard-v3 index.ts에서 삭제된 컴포넌트를 export하지 않아야 한다", () => {
+  describe("dashboard-v3 index.ts exports only DashboardAlertBanner", () => {
+    it("does not export deleted components from dashboard-v3 index.ts", () => {
       const indexPath = path.resolve(
         PROJECT_ROOT,
         "src/components/dashboard-v3/index.ts"
       );
 
       if (!existsSync(indexPath)) {
-        // index.ts가 삭제된 경우 - 다른 방식으로 import해야 함
+        // If index.ts was deleted, imports must use another path
         return;
       }
 
       const content = readFileSync(indexPath, "utf-8");
 
-      // 삭제된 컴포넌트를 export하면 안 됨
+      // Deleted components must not be exported
       expect(content).not.toContain("dashboard-v3-client");
       expect(content).not.toContain("anomaly-kpi-card");
       expect(content).not.toContain("apps-without-sub-kpi-card");
       expect(content).not.toContain("total-cost-kpi-card");
       expect(content).not.toContain("terminated-kpi-card");
 
-      // DashboardAlertBanner는 유지
+      // DashboardAlertBanner is kept
       expect(content).toContain("dashboard-alert-banner");
     });
   });

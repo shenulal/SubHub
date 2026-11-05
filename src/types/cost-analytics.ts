@@ -1,158 +1,158 @@
 /**
- * 비용 분석 관련 타입 정의
- * Phase 10: 비용 분석 대시보드
+ * Cost analytics types
+ * Phase 10: cost analytics dashboard
  */
 
 /**
- * 비용 통계 요약
+ * Cost statistics summary
  */
 export interface CostStatistics {
-  /** 총 비용 (원화) */
+  /** Total cost (base currency) */
   totalCost: number;
-  /** 월 평균 비용 */
+  /** Average monthly cost */
   monthlyAverage: number;
-  /** 전월 대비 증감률 (%) - 양수: 증가, 음수: 감소 */
+  /** Month-over-month change (%) - positive: increase, negative: decrease */
   costChange: number;
-  /** 전월 대비 절대 금액 차이 (원화) - 양수: 증가, 음수: 감소 */
+  /** Month-over-month absolute difference (base currency) - positive: increase, negative: decrease */
   costDifference: number;
-  /** 거래 건수 */
+  /** Transaction count */
   transactionCount: number;
-  /** 통화 코드 */
+  /** Currency code */
   currency: string;
-  /** 분석 기간 시작일 */
+  /** Analysis period start date */
   periodStart: Date;
-  /** 분석 기간 종료일 */
+  /** Analysis period end date */
   periodEnd: Date;
-  /** 전체 비용 (SaaS + Non-SaaS 포함) */
+  /** Total cost (SaaS + non-SaaS) */
   totalCostAll: number;
 }
 
 /**
- * 앱별 비용 분포
+ * Cost distribution by app
  */
 export interface AppCostDistribution {
-  /** 앱 ID */
+  /** App ID */
   appId: string;
-  /** 앱 이름 */
+  /** App name */
   appName: string;
-  /** 앱 로고 URL (선택) */
+  /** App logo URL (optional) */
   appLogoUrl?: string;
-  /** 총 비용 */
+  /** Total cost */
   totalCost: number;
-  /** 전체 비용 대비 비율 (%) */
+  /** Share of total cost (%) */
   percentage: number;
-  /** 거래 건수 */
+  /** Transaction count */
   transactionCount: number;
 }
 
 /**
- * 월별 비용 추이
+ * Monthly cost trend
  */
 export interface MonthlyCostTrend {
-  /** 월 식별자 (YYYY-MM 형식) */
+  /** Month identifier (YYYY-MM) */
   month: string;
-  /** 표시용 라벨 (예: "2024년 1월") */
+  /** Display label (e.g. "Jan 2024") */
   displayLabel: string;
-  /** 해당 월 총 비용 (호환성 유지) */
+  /** Total cost for the month (kept for compatibility) */
   totalCost: number;
-  /** SaaS 비용 (앱과 매칭된 결제) */
+  /** SaaS cost (payments matched to an app) */
   saasCost: number;
-  /** Non-SaaS 비용 (미매칭 결제) */
+  /** Non-SaaS cost (unmatched payments) */
   nonSaasCost: number;
-  /** 해당 월 총 거래 건수 */
+  /** Total transaction count for the month */
   transactionCount: number;
-  /** SaaS 거래 건수 */
+  /** SaaS transaction count */
   saasTransactionCount: number;
-  /** Non-SaaS 거래 건수 */
+  /** Non-SaaS transaction count */
   nonSaasTransactionCount: number;
 }
 
 /**
- * 비용 분석 필터
+ * Cost analytics filter
  */
 export interface CostAnalyticsFilters {
-  /** 시작일 */
+  /** Start date */
   startDate?: Date;
-  /** 종료일 */
+  /** End date */
   endDate?: Date;
-  /** 특정 앱들만 필터링 (선택) */
+  /** Filter to specific apps (optional) */
   appIds?: string[];
-  /** 팀 필터 (선택) */
+  /** Team filter (optional) */
   teamId?: string;
-  /** 사용자 필터 (선택) */
+  /** User filter (optional) */
   userId?: string;
 }
 
 /**
- * 이상 비용 정보
+ * Cost anomaly
  */
 export interface CostAnomaly {
-  /** 앱 ID */
+  /** App ID */
   appId: string;
-  /** 앱 이름 */
+  /** App name */
   appName: string;
-  /** 현재 월 비용 */
+  /** Current month cost */
   currentCost: number;
-  /** 이전 월 비용 */
+  /** Previous month cost */
   previousCost: number;
-  /** 증감률 (%) */
+  /** Change rate (%) */
   changeRate: number;
-  /** 심각도 - low: 50-100%, medium: 100-200%, high: 200%+ */
+  /** Severity - low: 50-100%, medium: 100-200%, high: 200%+ */
   severity: "low" | "medium" | "high";
-  /** 감지 메시지 */
+  /** Detection message */
   message: string;
 }
 
 /**
- * 비용 예측 결과
+ * Cost forecast result
  */
 export interface ForecastResult {
-  /** 예측 대상 월 (YYYY-MM 형식) */
+  /** Forecast month (YYYY-MM) */
   targetMonth: string;
-  /** 표시용 라벨 */
+  /** Display label */
   displayLabel: string;
-  /** 예측 비용 (구독 기반) */
+  /** Forecast cost (subscription-based) */
   forecastedCost: number;
-  /** 실제 비용 (있는 경우) */
+  /** Actual cost (if available) */
   actualCost?: number;
-  /** 예측 대비 차이 (실제 - 예측) */
+  /** Variance from forecast (actual - forecast) */
   variance?: number;
-  /** 차이 비율 (%) */
+  /** Variance rate (%) */
   variancePercentage?: number;
-  /** 구독별 예측 내역 */
+  /** Forecast breakdown by subscription */
   subscriptionBreakdown: SubscriptionForecast[];
 }
 
 /**
- * 구독별 비용 예측
+ * Cost forecast per subscription
  */
 export interface SubscriptionForecast {
-  /** 구독 ID */
+  /** Subscription ID */
   subscriptionId: string;
-  /** 앱 이름 */
+  /** App name */
   appName: string;
-  /** 예상 비용 */
+  /** Expected cost */
   expectedCost: number;
-  /** 청구 주기 */
+  /** Billing cycle */
   billingCycle: "MONTHLY" | "YEARLY" | "QUARTERLY";
-  /** 다음 갱신일 */
+  /** Next renewal date */
   nextRenewalDate: Date | null;
 }
 
 /**
- * 미매칭 결제 현황
+ * Unmatched payment status
  */
 export interface UnmatchedPaymentSummary {
-  /** 미매칭 결제 건수 */
+  /** Unmatched payment count */
   count: number;
-  /** 미매칭 총 금액 */
+  /** Total unmatched amount */
   totalAmount: number;
-  /** 가장 최근 미매칭 결제 날짜 */
+  /** Most recent unmatched payment date */
   latestDate: Date | null;
 }
 
 /**
- * Server Actions 결과 타입들
+ * Server Action result types
  */
 export interface GetCostStatisticsResult {
   statistics: CostStatistics;

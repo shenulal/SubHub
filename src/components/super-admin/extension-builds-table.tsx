@@ -27,10 +27,10 @@ const STATUS_MAP: Record<
     variant: "secondary" | "destructive" | "outline" | "success" | "info";
   }
 > = {
-  COMPLETED: { label: "완료", variant: "success" },
-  BUILDING: { label: "빌드 중", variant: "info" },
-  PENDING: { label: "대기", variant: "secondary" },
-  FAILED: { label: "실패", variant: "destructive" },
+  COMPLETED: { label: "Completed", variant: "success" },
+  BUILDING: { label: "Building", variant: "info" },
+  PENDING: { label: "Pending", variant: "secondary" },
+  FAILED: { label: "Failed", variant: "destructive" },
 };
 
 const formatFileSize = (bytes: number | null) => {
@@ -57,11 +57,11 @@ export function ExtensionBuildsTable({
     setTriggering(false);
 
     if (result.success) {
-      toast.success(result.message ?? "빌드가 시작되었습니다.");
-      // 목록 새로고침
+      toast.success(result.message ?? "Build started.");
+      // Refresh the list
       handleRefresh();
     } else {
-      toast.error(result.message ?? "빌드 시작에 실패했습니다.");
+      toast.error(result.message ?? "Failed to start the build.");
     }
   };
 
@@ -79,7 +79,7 @@ export function ExtensionBuildsTable({
     <div className="space-y-4">
       <div className="flex flex-wrap items-center justify-between gap-3 px-5">
         <p className="text-muted-foreground text-[0.8125rem]">
-          최근 20개 빌드 표시
+          Showing the 20 most recent builds
         </p>
         <div className="flex flex-wrap gap-2">
           <Button
@@ -91,29 +91,29 @@ export function ExtensionBuildsTable({
             <RefreshCw
               className={`size-4 ${refreshing ? "animate-spin" : ""}`}
             />
-            새로고침
+            Refresh
           </Button>
           <Button size="sm" onClick={handleTriggerBuild} disabled={triggering}>
-            {triggering ? "빌드 시작 중..." : "새 빌드 생성"}
+            {triggering ? "Starting build..." : "Create New Build"}
           </Button>
         </div>
       </div>
 
       {builds.length === 0 ? (
         <div className="text-muted-foreground flex h-32 items-center justify-center text-sm">
-          빌드 기록이 없습니다.
+          No build history.
         </div>
       ) : (
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>버전</TableHead>
-              <TableHead>플랫폼</TableHead>
-              <TableHead>상태</TableHead>
-              <TableHead>파일 크기</TableHead>
-              <TableHead>생성일</TableHead>
-              <TableHead>완료일</TableHead>
-              <TableHead className="w-24">다운로드</TableHead>
+              <TableHead>Version</TableHead>
+              <TableHead>Platform</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead>File Size</TableHead>
+              <TableHead>Created</TableHead>
+              <TableHead>Completed</TableHead>
+              <TableHead className="w-24">Download</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -131,7 +131,7 @@ export function ExtensionBuildsTable({
                       </span>
                       {build.isLatest && (
                         <Badge variant="primary" className="text-xs">
-                          최신
+                          Latest
                         </Badge>
                       )}
                     </div>
@@ -146,11 +146,11 @@ export function ExtensionBuildsTable({
                     {formatFileSize(build.fileSize)}
                   </TableCell>
                   <TableCell className="text-muted-foreground text-sm">
-                    {new Date(build.createdAt).toLocaleDateString("ko-KR")}
+                    {new Date(build.createdAt).toLocaleDateString("en-US")}
                   </TableCell>
                   <TableCell className="text-muted-foreground text-sm">
                     {build.completedAt
-                      ? new Date(build.completedAt).toLocaleDateString("ko-KR")
+                      ? new Date(build.completedAt).toLocaleDateString("en-US")
                       : "-"}
                   </TableCell>
                   <TableCell>

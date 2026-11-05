@@ -21,13 +21,13 @@ import { Moon, Sun } from "lucide-react";
 import { useEffect, useState } from "react";
 
 /**
- * 🎯 목적: OKLCH 테마 미리보기 및 디자인 토큰 시각화
+ * 🎯 Purpose: OKLCH theme preview and design token visualization
  *
- * 이 스토리는 프로젝트에 적용된 OKLCH 색상 체계를 시각적으로 보여줍니다.
- * - OKLCH(Oklab Lightness Chroma Hue): 지각적으로 균일한 색 공간
- * - 더 넓은 색역(P3) 지원으로 더 생생한 색상 표현 가능
- * - 브라우저 호환성: 93% (PostCSS fallback으로 100%)
- * - Light/Dark 모드 전환 지원
+ * This story visually presents the OKLCH color system used in the project.
+ * - OKLCH (Oklab Lightness Chroma Hue): a perceptually uniform color space
+ * - Wider gamut (P3) support allows more vivid colors
+ * - Browser compatibility: 93% (100% with the PostCSS fallback)
+ * - Supports switching between Light and Dark modes
  */
 const meta = {
   title: "design/Theme Preview",
@@ -37,7 +37,7 @@ const meta = {
     docs: {
       description: {
         component:
-          "OKLCH 색상 체계를 사용한 전체 테마 미리보기. 모든 디자인 토큰과 실제 컴포넌트 적용 예시를 확인할 수 있습니다.",
+          "Full theme preview using the OKLCH color system. Shows every design token and examples applied to real components.",
       },
     },
   },
@@ -47,17 +47,17 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 /**
- * 🎨 전체 테마 미리보기
+ * 🎨 Full theme preview
  *
- * 프로젝트의 모든 색상 토큰을 시각적으로 표시합니다.
- * 우측 상단의 테마 전환 버튼으로 Light/Dark 모드를 전환할 수 있습니다.
+ * Visually displays every color token in the project.
+ * Use the theme toggle at the top right to switch between Light and Dark modes.
  */
 export const AllTokens: Story = {
   render: () => {
     const [theme, setTheme] = useState<"light" | "dark">("light");
 
-    // 🎯 목적: Storybook iframe의 실제 <html> 요소에 테마 클래스 적용
-    // <html>/<body> 태그를 직접 렌더링하지 않고 document.documentElement 조작
+    // 🎯 Purpose: Apply the theme class to the actual <html> element of the Storybook iframe
+    // Manipulates document.documentElement instead of rendering <html>/<body> tags directly
     useEffect(() => {
       document.documentElement.className =
         theme === "dark" ? "theme-default-dark" : "theme-default-light";
@@ -72,7 +72,7 @@ export const AllTokens: Story = {
               <Button variant="ghost" size="icon">
                 <Sun className="h-5 w-5 scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
                 <Moon className="absolute h-5 w-5 scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
-                <span className="sr-only">테마 전환</span>
+                <span className="sr-only">Toggle theme</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -81,27 +81,27 @@ export const AllTokens: Story = {
                 className={theme === "light" ? "bg-accent" : ""}
               >
                 <Sun className="mr-2 h-4 w-4" />
-                <span>라이트</span>
+                <span>Light</span>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => setTheme("dark")}
                 className={theme === "dark" ? "bg-accent" : ""}
               >
                 <Moon className="mr-2 h-4 w-4" />
-                <span>다크</span>
+                <span>Dark</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-        {/* 색상 팔레트 섹션 */}
+        {/* Color palette section */}
         <section>
-          <h2 className="mb-4 text-2xl font-bold">색상 팔레트</h2>
+          <h2 className="mb-4 text-2xl font-bold">Color Palette</h2>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {/* Background Colors */}
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Background</CardTitle>
-                <CardDescription>배경 색상</CardDescription>
+                <CardDescription>Background colors</CardDescription>
               </CardHeader>
               <CardContent className="space-y-2">
                 <div className="flex items-center gap-2">
@@ -119,7 +119,7 @@ export const AllTokens: Story = {
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Card</CardTitle>
-                <CardDescription>카드 색상</CardDescription>
+                <CardDescription>Card colors</CardDescription>
               </CardHeader>
               <CardContent className="space-y-2">
                 <div className="flex items-center gap-2">
@@ -137,7 +137,7 @@ export const AllTokens: Story = {
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Primary</CardTitle>
-                <CardDescription>주요 색상</CardDescription>
+                <CardDescription>Primary colors</CardDescription>
               </CardHeader>
               <CardContent className="space-y-2">
                 <div className="flex items-center gap-2">
@@ -155,7 +155,7 @@ export const AllTokens: Story = {
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Secondary</CardTitle>
-                <CardDescription>보조 색상</CardDescription>
+                <CardDescription>Secondary colors</CardDescription>
               </CardHeader>
               <CardContent className="space-y-2">
                 <div className="flex items-center gap-2">
@@ -173,7 +173,7 @@ export const AllTokens: Story = {
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Muted</CardTitle>
-                <CardDescription>약한 색상</CardDescription>
+                <CardDescription>Muted colors</CardDescription>
               </CardHeader>
               <CardContent className="space-y-2">
                 <div className="flex items-center gap-2">
@@ -191,7 +191,7 @@ export const AllTokens: Story = {
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Accent</CardTitle>
-                <CardDescription>강조 색상</CardDescription>
+                <CardDescription>Accent colors</CardDescription>
               </CardHeader>
               <CardContent className="space-y-2">
                 <div className="flex items-center gap-2">
@@ -209,7 +209,7 @@ export const AllTokens: Story = {
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Destructive</CardTitle>
-                <CardDescription>위험/삭제 색상</CardDescription>
+                <CardDescription>Destructive colors</CardDescription>
               </CardHeader>
               <CardContent className="space-y-2">
                 <div className="flex items-center gap-2">
@@ -227,7 +227,7 @@ export const AllTokens: Story = {
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Border & Input</CardTitle>
-                <CardDescription>테두리 & 입력 색상</CardDescription>
+                <CardDescription>Border & input colors</CardDescription>
               </CardHeader>
               <CardContent className="space-y-2">
                 <div className="flex items-center gap-2">
@@ -245,7 +245,7 @@ export const AllTokens: Story = {
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Ring</CardTitle>
-                <CardDescription>포커스 링 색상</CardDescription>
+                <CardDescription>Focus ring color</CardDescription>
               </CardHeader>
               <CardContent className="space-y-2">
                 <div className="flex items-center gap-2">
@@ -257,9 +257,9 @@ export const AllTokens: Story = {
           </div>
         </section>
 
-        {/* 차트 색상 섹션 */}
+        {/* Chart colors section */}
         <section>
-          <h2 className="mb-4 text-2xl font-bold">차트 색상</h2>
+          <h2 className="mb-4 text-2xl font-bold">Chart Colors</h2>
           <div className="grid gap-4 md:grid-cols-5">
             {[1, 2, 3, 4, 5].map((i) => (
               <Card key={i}>
@@ -280,15 +280,15 @@ export const AllTokens: Story = {
           </div>
         </section>
 
-        {/* 실제 컴포넌트 적용 예시 */}
+        {/* Examples applied to real components */}
         <section>
-          <h2 className="mb-4 text-2xl font-bold">컴포넌트 적용 예시</h2>
+          <h2 className="mb-4 text-2xl font-bold">Component Examples</h2>
           <div className="grid gap-4 md:grid-cols-2">
             <Card>
               <CardHeader>
-                <CardTitle>버튼 변형</CardTitle>
+                <CardTitle>Button Variants</CardTitle>
                 <CardDescription>
-                  다양한 버튼 스타일에 테마가 적용된 모습
+                  The theme applied to various button styles
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex flex-wrap gap-2">
@@ -302,9 +302,9 @@ export const AllTokens: Story = {
 
             <Card>
               <CardHeader>
-                <CardTitle>배지 변형</CardTitle>
+                <CardTitle>Badge Variants</CardTitle>
                 <CardDescription>
-                  다양한 배지 스타일에 테마가 적용된 모습
+                  The theme applied to various badge styles
                 </CardDescription>
               </CardHeader>
               <CardContent className="flex flex-wrap gap-2">
@@ -317,57 +317,58 @@ export const AllTokens: Story = {
 
             <Card className="md:col-span-2">
               <CardHeader>
-                <CardTitle>카드 예시</CardTitle>
+                <CardTitle>Card Example</CardTitle>
                 <CardDescription>
-                  카드 컴포넌트에서 background, card, border 토큰 사용
+                  The card component uses the background, card and border tokens
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <p className="text-muted-foreground text-sm">
-                  이 카드는 <code>--card</code>, <code>--card-foreground</code>,{" "}
-                  <code>--border</code> 색상을 사용합니다.
+                  This card uses the <code>--card</code>,{" "}
+                  <code>--card-foreground</code>, <code>--border</code> colors.
                 </p>
               </CardContent>
               <CardFooter>
-                <Button>액션</Button>
+                <Button>Action</Button>
               </CardFooter>
             </Card>
           </div>
         </section>
 
-        {/* OKLCH 정보 */}
+        {/* OKLCH information */}
         <section>
           <Card>
             <CardHeader>
-              <CardTitle>OKLCH 색상 체계에 대하여</CardTitle>
+              <CardTitle>About the OKLCH Color System</CardTitle>
               <CardDescription>
-                이 프로젝트는 OKLCH 색 공간을 사용합니다
+                This project uses the OKLCH color space
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <h3 className="mb-2 font-semibold">장점</h3>
+                <h3 className="mb-2 font-semibold">Benefits</h3>
                 <ul className="text-muted-foreground list-inside list-disc space-y-1 text-sm">
-                  <li>지각적으로 균일한 색상 표현 (HSL보다 자연스러움)</li>
-                  <li>더 넓은 색역(P3) 지원으로 더 생생한 색상</li>
-                  <li>Tailwind CSS v4의 기본 색상 형식</li>
-                  <li>일관된 밝기와 채도 조절</li>
+                  <li>Perceptually uniform colors (more natural than HSL)</li>
+                  <li>More vivid colors with wider gamut (P3) support</li>
+                  <li>The default color format in Tailwind CSS v4</li>
+                  <li>Consistent control of lightness and chroma</li>
                 </ul>
               </div>
               <div>
-                <h3 className="mb-2 font-semibold">브라우저 지원</h3>
+                <h3 className="mb-2 font-semibold">Browser Support</h3>
                 <p className="text-muted-foreground text-sm">
                   Chrome 111+, Firefox 113+, Safari 15.4+ (93%)
                   <br />
-                  PostCSS fallback 플러그인으로 구형 브라우저 100% 지원
+                  100% support for older browsers via the PostCSS fallback
+                  plugin
                 </p>
               </div>
               <div>
-                <h3 className="mb-2 font-semibold">형식</h3>
+                <h3 className="mb-2 font-semibold">Format</h3>
                 <code className="bg-muted block rounded-md p-2 text-sm">
                   oklch(lightness chroma hue)
                   <br />
-                  예: oklch(0.623 0.214 259.815)
+                  e.g. oklch(0.623 0.214 259.815)
                 </code>
               </div>
             </CardContent>
@@ -379,17 +380,17 @@ export const AllTokens: Story = {
 };
 
 /**
- * 🎨 컴포넌트별 색상 적용 예시
+ * 🎨 Color usage by component
  *
- * 각 shadcn/ui 컴포넌트가 테마 색상을 어떻게 사용하는지 보여줍니다.
- * 우측 상단의 테마 전환 버튼으로 Light/Dark 모드를 전환할 수 있습니다.
+ * Shows how each shadcn/ui component uses the theme colors.
+ * Use the theme toggle at the top right to switch between Light and Dark modes.
  */
 export const ComponentShowcase: Story = {
   render: () => {
     const [theme, setTheme] = useState<"light" | "dark">("light");
 
-    // 🎯 목적: Storybook iframe의 실제 <html> 요소에 테마 클래스 적용
-    // <html>/<body> 태그를 직접 렌더링하지 않고 document.documentElement 조작
+    // 🎯 Purpose: Apply the theme class to the actual <html> element of the Storybook iframe
+    // Manipulates document.documentElement instead of rendering <html>/<body> tags directly
     useEffect(() => {
       document.documentElement.className =
         theme === "dark" ? "theme-default-dark" : "theme-default-light";
@@ -404,7 +405,7 @@ export const ComponentShowcase: Story = {
               <Button variant="ghost" size="icon">
                 <Sun className="h-5 w-5 scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
                 <Moon className="absolute h-5 w-5 scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
-                <span className="sr-only">테마 전환</span>
+                <span className="sr-only">Toggle theme</span>
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
@@ -413,21 +414,21 @@ export const ComponentShowcase: Story = {
                 className={theme === "light" ? "bg-accent" : ""}
               >
                 <Sun className="mr-2 h-4 w-4" />
-                <span>라이트</span>
+                <span>Light</span>
               </DropdownMenuItem>
               <DropdownMenuItem
                 onClick={() => setTheme("dark")}
                 className={theme === "dark" ? "bg-accent" : ""}
               >
                 <Moon className="mr-2 h-4 w-4" />
-                <span>다크</span>
+                <span>Dark</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
 
         <div className="flex items-center justify-between">
-          <h2 className="text-2xl font-bold">컴포넌트 쇼케이스</h2>
+          <h2 className="text-2xl font-bold">Component Showcase</h2>
         </div>
 
         {/* Primary Actions */}
@@ -435,7 +436,7 @@ export const ComponentShowcase: Story = {
           <CardHeader>
             <CardTitle>Primary Actions</CardTitle>
             <CardDescription>
-              --primary와 --primary-foreground 사용
+              Uses --primary and --primary-foreground
             </CardDescription>
           </CardHeader>
           <CardContent className="flex gap-2">
@@ -450,7 +451,7 @@ export const ComponentShowcase: Story = {
           <CardHeader>
             <CardTitle>Secondary Actions</CardTitle>
             <CardDescription>
-              --secondary와 --secondary-foreground 사용
+              Uses --secondary and --secondary-foreground
             </CardDescription>
           </CardHeader>
           <CardContent className="flex gap-2">
@@ -465,7 +466,7 @@ export const ComponentShowcase: Story = {
           <CardHeader>
             <CardTitle>Destructive Actions</CardTitle>
             <CardDescription>
-              --destructive와 --destructive-foreground 사용
+              Uses --destructive and --destructive-foreground
             </CardDescription>
           </CardHeader>
           <CardContent className="flex gap-2">
@@ -479,14 +480,16 @@ export const ComponentShowcase: Story = {
         <Card>
           <CardHeader>
             <CardTitle>Muted Elements</CardTitle>
-            <CardDescription>--muted와 --muted-foreground 사용</CardDescription>
+            <CardDescription>
+              Uses --muted and --muted-foreground
+            </CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-muted-foreground text-sm">
-              이것은 muted foreground 색상을 사용한 보조 텍스트입니다.
+              This is secondary text using the muted foreground color.
             </p>
             <div className="bg-muted mt-4 rounded-md p-4">
-              <p className="text-sm">muted background를 사용한 영역</p>
+              <p className="text-sm">An area using the muted background</p>
             </div>
           </CardContent>
         </Card>

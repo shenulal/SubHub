@@ -8,7 +8,7 @@ import { Suspense } from "react";
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("extensions.reviewApps.page");
   return {
-    title: `${t("title")} | SaaS Management Platform`,
+    title: `${t("title")}`,
     description: t("description"),
   };
 }

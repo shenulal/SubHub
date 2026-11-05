@@ -24,24 +24,24 @@ vi.mock("next/cache", () => ({
 const mockedRequireAuth = requireAuth as unknown as ReturnType<typeof vi.fn>;
 
 describe("updateProfile", () => {
-  it("인증되지 않은 경우 /login으로 리다이렉트해야 한다", async () => {
+  it("redirects to /login when unauthenticated", async () => {
     mockedRequireAuth.mockRejectedValueOnce(new Error("NEXT_REDIRECT:/login"));
 
     const formData = new FormData();
-    formData.set("name", "테스트");
+    formData.set("name", "Test");
 
     await expect(updateProfile({ success: false }, formData)).rejects.toThrow(
       "NEXT_REDIRECT:/login"
     );
   });
 
-  it("유효하지 않은 값이면 에러를 반환해야 한다", async () => {
+  it("returns an error for invalid values", async () => {
     mockedRequireAuth.mockResolvedValueOnce({
       user: { id: "user-1" },
     });
 
     const formData = new FormData();
-    formData.set("name", ""); // 이름 누락
+    formData.set("name", ""); // missing name
 
     const result = await updateProfile({ success: false }, formData);
 
@@ -49,7 +49,7 @@ describe("updateProfile", () => {
     expect(result.errors?.name).toBeDefined();
   });
 
-  it("프로필을 업데이트하고 성공 메시지를 반환해야 한다", async () => {
+  it("updates the profile and returns a success message", async () => {
     mockedRequireAuth.mockResolvedValueOnce({
       user: { id: "user-1" },
     });
@@ -59,8 +59,8 @@ describe("updateProfile", () => {
     } as never);
 
     const formData = new FormData();
-    formData.set("name", "홍길동");
-    // title, department, avatarUrl은 주석 처리되어 전송하지 않음
+    formData.set("name", "Ahmed Hassan");
+    // title, department and avatarUrl are commented out and not sent
 
     const result = await updateProfile({ success: false }, formData);
 
@@ -69,8 +69,8 @@ describe("updateProfile", () => {
       expect.objectContaining({
         where: { id: "user-1" },
         data: expect.objectContaining({
-          name: "홍길동",
-          // jobTitle, department, avatarUrl은 주석 처리됨
+          name: "Ahmed Hassan",
+          // jobTitle, department and avatarUrl are commented out
         }),
       })
     );

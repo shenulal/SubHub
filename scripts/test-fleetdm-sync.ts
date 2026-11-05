@@ -1,5 +1,5 @@
-// FleetDM Integration 생성 및 동기화 테스트
-// 실행: npx tsx scripts/test-fleetdm-sync.ts
+// FleetDM integration creation and sync test
+// Run: npx tsx scripts/test-fleetdm-sync.ts
 
 import { prisma } from "../src/lib/db";
 import { FleetDMClient } from "../src/lib/services/fleetdm/client";
@@ -12,7 +12,7 @@ const FLEETDM_TOKEN =
 async function main() {
   console.log("=== FleetDM Integration Setup ===\n");
 
-  // 1. 조직 찾기 또는 생성
+  // 1. Find or create the organisation
   let org = await prisma.organization.findFirst();
 
   if (!org) {
@@ -29,7 +29,7 @@ async function main() {
     console.log("✅ Found organization:", org.id, org.name);
   }
 
-  // 2. FleetDM Integration 찾기 또는 생성
+  // 2. Find or create the FleetDM integration
   let integration = await prisma.integration.findFirst({
     where: {
       organizationId: org.id,
@@ -52,7 +52,7 @@ async function main() {
     });
     console.log("✅ Created FleetDM integration:", integration.id);
   } else {
-    // credentials 업데이트
+    // Update credentials
     integration = await prisma.integration.update({
       where: { id: integration.id },
       data: {
@@ -66,7 +66,7 @@ async function main() {
     console.log("✅ Updated FleetDM integration:", integration.id);
   }
 
-  // 3. FleetDM 클라이언트 연결 테스트
+  // 3. Test the FleetDM client connection
   console.log("\nTesting FleetDM connection...");
   const client = new FleetDMClient({
     baseUrl: FLEETDM_URL,
@@ -81,7 +81,7 @@ async function main() {
     process.exit(1);
   }
 
-  // 4. 동기화 실행
+  // 4. Run the sync
   console.log("\n=== Running Sync ===\n");
 
   const result = await syncAllFromFleetDM(client, org.id, {
@@ -101,7 +101,7 @@ async function main() {
     result.errors.forEach((e) => console.log(" -", e));
   }
 
-  // 5. 동기화된 Device 확인
+  // 5. Check the synced devices
   const devices = await prisma.device.findMany({
     where: { organizationId: org.id },
     include: {
@@ -135,7 +135,7 @@ async function main() {
     });
   }
 
-  // 6. DeviceApp 통계
+  // 6. DeviceApp statistics
   const totalApps = await prisma.deviceApp.count();
   const appsByStatus = await prisma.deviceApp.groupBy({
     by: ["approvalStatus"],
@@ -148,7 +148,7 @@ async function main() {
     console.log(" ", stat.approvalStatus + ":", stat._count);
   });
 
-  // 7. Integration 상태 업데이트
+  // 7. Update the integration status
   await prisma.integration.update({
     where: { id: integration.id },
     data: {

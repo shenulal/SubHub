@@ -55,7 +55,7 @@ describe("Dashboard Server Actions", () => {
   });
 
   describe("getDashboardStats", () => {
-    it("인증되지 않은 경우 /login으로 리다이렉트해야 한다", async () => {
+    it("redirects to /login when unauthenticated", async () => {
       mockedRequireOrganization.mockRejectedValueOnce(
         new Error("NEXT_REDIRECT:/login")
       );
@@ -63,7 +63,7 @@ describe("Dashboard Server Actions", () => {
       await expect(getDashboardStats()).rejects.toThrow("NEXT_REDIRECT");
     });
 
-    it("조직이 없는 경우 /onboarding으로 리다이렉트해야 한다", async () => {
+    it("redirects to /onboarding when there is no organization", async () => {
       mockedRequireOrganization.mockRejectedValueOnce(
         new Error("NEXT_REDIRECT:/onboarding")
       );
@@ -71,7 +71,7 @@ describe("Dashboard Server Actions", () => {
       await expect(getDashboardStats()).rejects.toThrow("NEXT_REDIRECT");
     });
 
-    it("앱, 구독, 사용자, 비용 통계를 반환해야 한다", async () => {
+    it("returns app, subscription, user and cost statistics", async () => {
       mockedRequireOrganization.mockResolvedValue({
         organizationId: "org-1",
         role: "ADMIN",
@@ -93,12 +93,12 @@ describe("Dashboard Server Actions", () => {
       expect(result.totalApps).toBe(10);
       expect(result.activeSubscriptions).toBe(5);
       expect(result.totalUsers).toBe(20);
-      // 월간 비용: 100000 + (1200000/12) + (300000/3) = 100000 + 100000 + 100000 = 300000
+      // Monthly cost: 100000 + (1200000/12) + (300000/3) = 100000 + 100000 + 100000 = 300000
       expect(result.totalMonthlyCost).toBe(300000);
       expect(result.currency).toBe("KRW");
     });
 
-    it("빈 데이터일 때 0을 반환해야 한다", async () => {
+    it("returns 0 for empty data", async () => {
       mockedRequireOrganization.mockResolvedValue({
         organizationId: "org-1",
         role: "ADMIN",
@@ -121,7 +121,7 @@ describe("Dashboard Server Actions", () => {
   });
 
   describe("getTerminatedUsersCount", () => {
-    it("인증되지 않은 경우 /login으로 리다이렉트해야 한다", async () => {
+    it("redirects to /login when unauthenticated", async () => {
       mockedRequireOrganization.mockRejectedValueOnce(
         new Error("NEXT_REDIRECT:/login")
       );
@@ -129,7 +129,7 @@ describe("Dashboard Server Actions", () => {
       await expect(getTerminatedUsersCount()).rejects.toThrow("NEXT_REDIRECT");
     });
 
-    it("퇴사자 미회수 계정 수를 반환해야 한다", async () => {
+    it("returns the count of unrecovered accounts of terminated users", async () => {
       mockedRequireOrganization.mockResolvedValue({
         organizationId: "org-1",
         role: "ADMIN",
@@ -153,7 +153,7 @@ describe("Dashboard Server Actions", () => {
   });
 
   describe("getTerminatedUsersWithSubCount", () => {
-    it("인증되지 않은 경우 /login으로 리다이렉트해야 한다", async () => {
+    it("redirects to /login when unauthenticated", async () => {
       mockedRequireOrganization.mockRejectedValueOnce(
         new Error("NEXT_REDIRECT:/login")
       );
@@ -163,7 +163,7 @@ describe("Dashboard Server Actions", () => {
       );
     });
 
-    it("퇴사자 중 구독 배정이 남아있는 사용자 수를 반환해야 한다", async () => {
+    it("returns the count of terminated users who still have subscription assignments", async () => {
       mockedRequireOrganization.mockResolvedValue({
         organizationId: "org-1",
         role: "ADMIN",
@@ -185,7 +185,7 @@ describe("Dashboard Server Actions", () => {
       });
     });
 
-    it("해당 사용자가 없으면 0을 반환해야 한다", async () => {
+    it("returns 0 when there are no such users", async () => {
       mockedRequireOrganization.mockResolvedValue({
         organizationId: "org-1",
         role: "ADMIN",
@@ -202,7 +202,7 @@ describe("Dashboard Server Actions", () => {
   });
 
   describe("getTerminatedUsersSubAssignmentCount", () => {
-    it("인증되지 않은 경우 /login으로 리다이렉트해야 한다", async () => {
+    it("redirects to /login when unauthenticated", async () => {
       mockedRequireOrganization.mockRejectedValueOnce(
         new Error("NEXT_REDIRECT:/login")
       );
@@ -212,7 +212,7 @@ describe("Dashboard Server Actions", () => {
       );
     });
 
-    it("퇴사자의 미회수 구독 배정 건수를 반환해야 한다", async () => {
+    it("returns the count of unrecovered subscription assignments of terminated users", async () => {
       mockedRequireOrganization.mockResolvedValue({
         organizationId: "org-1",
         role: "ADMIN",
@@ -235,7 +235,7 @@ describe("Dashboard Server Actions", () => {
       });
     });
 
-    it("해당 건이 없으면 0을 반환해야 한다", async () => {
+    it("returns 0 when there are no such assignments", async () => {
       mockedRequireOrganization.mockResolvedValue({
         organizationId: "org-1",
         role: "ADMIN",
@@ -252,7 +252,7 @@ describe("Dashboard Server Actions", () => {
   });
 
   describe("getUpcomingRenewals", () => {
-    it("인증되지 않은 경우 /login으로 리다이렉트해야 한다", async () => {
+    it("redirects to /login when unauthenticated", async () => {
       mockedRequireOrganization.mockRejectedValueOnce(
         new Error("NEXT_REDIRECT:/login")
       );
@@ -260,7 +260,7 @@ describe("Dashboard Server Actions", () => {
       await expect(getUpcomingRenewals()).rejects.toThrow("NEXT_REDIRECT");
     });
 
-    it("30일 이내 갱신 예정 구독을 반환해야 한다", async () => {
+    it("returns subscriptions renewing within 30 days", async () => {
       mockedRequireOrganization.mockResolvedValue({
         organizationId: "org-1",
         role: "ADMIN",
@@ -292,7 +292,7 @@ describe("Dashboard Server Actions", () => {
       expect(result[0].daysUntilRenewal).toBeLessThanOrEqual(7);
     });
 
-    it("빈 데이터일 때 빈 배열을 반환해야 한다", async () => {
+    it("returns an empty array for empty data", async () => {
       mockedRequireOrganization.mockResolvedValue({
         organizationId: "org-1",
         role: "ADMIN",
@@ -309,7 +309,7 @@ describe("Dashboard Server Actions", () => {
   });
 
   describe("getRenewalReportData", () => {
-    it("팀 필터가 적용되어야 한다", async () => {
+    it("applies the team filter", async () => {
       mockedRequireOrganization.mockResolvedValue({
         organizationId: "org-1",
         role: "ADMIN",
@@ -333,7 +333,7 @@ describe("Dashboard Server Actions", () => {
       );
     });
 
-    it("사용자 필터가 적용되어야 한다", async () => {
+    it("applies the user filter", async () => {
       mockedRequireOrganization.mockResolvedValue({
         organizationId: "org-1",
         role: "ADMIN",
@@ -356,7 +356,7 @@ describe("Dashboard Server Actions", () => {
   });
 
   describe("getAppsByCategory", () => {
-    it("인증되지 않은 경우 /login으로 리다이렉트해야 한다", async () => {
+    it("redirects to /login when unauthenticated", async () => {
       mockedRequireOrganization.mockRejectedValueOnce(
         new Error("NEXT_REDIRECT:/login")
       );
@@ -364,7 +364,7 @@ describe("Dashboard Server Actions", () => {
       await expect(getAppsByCategory()).rejects.toThrow("NEXT_REDIRECT");
     });
 
-    it("카테고리별 앱 분포를 반환해야 한다", async () => {
+    it("returns app distribution by category", async () => {
       mockedRequireOrganization.mockResolvedValue({
         organizationId: "org-1",
         role: "ADMIN",
@@ -387,7 +387,7 @@ describe("Dashboard Server Actions", () => {
       expect(result[2].category).toBe("__UNCATEGORIZED__"); // null -> sentinel for i18n
     });
 
-    it("빈 데이터일 때 빈 배열을 반환해야 한다", async () => {
+    it("returns an empty array for empty data", async () => {
       mockedRequireOrganization.mockResolvedValue({
         organizationId: "org-1",
         role: "ADMIN",
@@ -404,7 +404,7 @@ describe("Dashboard Server Actions", () => {
   });
 
   describe("getRecentActivity", () => {
-    it("인증되지 않은 경우 /login으로 리다이렉트해야 한다", async () => {
+    it("redirects to /login when unauthenticated", async () => {
       mockedRequireOrganization.mockRejectedValueOnce(
         new Error("NEXT_REDIRECT:/login")
       );
@@ -412,7 +412,7 @@ describe("Dashboard Server Actions", () => {
       await expect(getRecentActivity()).rejects.toThrow("NEXT_REDIRECT");
     });
 
-    it("최근 활동 목록을 반환해야 한다", async () => {
+    it("returns the recent activity list", async () => {
       mockedRequireOrganization.mockResolvedValue({
         organizationId: "org-1",
         role: "ADMIN",
@@ -428,7 +428,7 @@ describe("Dashboard Server Actions", () => {
           entityType: "App",
           entityId: "app-1",
           createdAt: now,
-          user: { name: "홍길동", email: "hong@test.com" },
+          user: { name: "Ahmed Hassan", email: "hong@test.com" },
         },
         {
           id: "log-2",
@@ -444,12 +444,12 @@ describe("Dashboard Server Actions", () => {
 
       expect(result).toHaveLength(2);
       expect(result[0].action).toBe("CREATE_APP");
-      expect(result[0].userName).toBe("홍길동");
-      expect(result[0].description).toBe("앱을 추가했습니다");
+      expect(result[0].userName).toBe("Ahmed Hassan");
+      expect(result[0].description).toBe("Added an app");
       expect(result[1].userName).toBeUndefined();
     });
 
-    it("빈 데이터일 때 빈 배열을 반환해야 한다", async () => {
+    it("returns an empty array for empty data", async () => {
       mockedRequireOrganization.mockResolvedValue({
         organizationId: "org-1",
         role: "ADMIN",

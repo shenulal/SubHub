@@ -4,9 +4,9 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * 🎯 목적: Slider 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: Radix UI Slider primitive 사용, useMemo를 통한 values 계산 로직 유지
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the Slider component for React 18/19 compatibility
+ * 📝 Note: Uses the Radix UI Slider primitive; keep the useMemo-based values calculation
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const Slider = React.forwardRef<
   React.ElementRef<typeof SliderPrimitive.Root>,

@@ -11,7 +11,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "사용 현황 | Super Admin",
+  title: "Usage Overview | Super Admin",
 };
 
 export default async function SuperAdminHomePage() {
@@ -20,17 +20,17 @@ export default async function SuperAdminHomePage() {
     getResourceUsage(),
   ]);
 
-  // 테넌트 없는 경우 안내
+  // Guidance when there is no tenant
   const noTenant =
     !statsResult.success &&
-    statsResult.message === "테넌트 정보를 찾을 수 없습니다.";
+    statsResult.message === "Tenant information not found.";
 
   return (
     <div className="space-y-6">
       <div className="space-y-1">
-        <h1 className="text-foreground text-2xl font-medium">사용 현황</h1>
+        <h1 className="text-foreground text-2xl font-medium">Usage Overview</h1>
         <p className="text-muted-foreground text-[0.9375rem]">
-          테넌트 전체 현황을 확인합니다.
+          View the overall status of the tenant.
         </p>
       </div>
 
@@ -38,10 +38,10 @@ export default async function SuperAdminHomePage() {
         <Card>
           <CardContent className="flex flex-col items-center justify-center gap-4 py-16 text-center">
             <p className="text-muted-foreground text-[0.9375rem]">
-              아직 테넌트가 없습니다. 테넌트를 먼저 생성해주세요.
+              There is no tenant yet. Please create a tenant first.
             </p>
             <Button asChild>
-              <Link href="/super-admin/tenant">테넌트 생성하기</Link>
+              <Link href="/super-admin/tenant">Create tenant</Link>
             </Button>
           </CardContent>
         </Card>
@@ -51,20 +51,20 @@ export default async function SuperAdminHomePage() {
             <StatsKpiCards stats={statsResult.data} />
           ) : (
             <div className="tonal-error rounded-md p-4 text-[0.9375rem]">
-              {statsResult.message ?? "통계를 불러오는데 실패했습니다."}
+              {statsResult.message ?? "Failed to load statistics."}
             </div>
           )}
 
           <Card>
             <CardHeader>
-              <CardTitle>앱별 구독 현황</CardTitle>
+              <CardTitle>Subscriptions by App</CardTitle>
             </CardHeader>
             <CardContent className="px-0">
               {resourceResult.success && resourceResult.data ? (
                 <ResourceSummaryTable data={resourceResult.data} />
               ) : (
                 <div className="text-muted-foreground flex h-32 items-center justify-center text-sm">
-                  데이터를 불러올 수 없습니다.
+                  Unable to load data.
                 </div>
               )}
             </CardContent>

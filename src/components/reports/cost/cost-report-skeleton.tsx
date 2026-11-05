@@ -3,8 +3,8 @@ import { Separator } from "@/components/ui/separator";
 import { Skeleton } from "@/components/ui/skeleton";
 
 /**
- * KPI 카드 4개를 렌더링하는 스켈레톤 컴포넌트
- * 실제 KPI 카드 레이아웃과 동일한 구조를 가집니다
+ * Skeleton that renders four KPI cards
+ * Mirrors the structure of the real KPI card layout
  */
 export function KpiCardsSkeleton() {
   return (
@@ -13,15 +13,15 @@ export function KpiCardsSkeleton() {
         <Card key={i} className="transition-all">
           <CardContent className="flex h-full flex-col justify-between px-4 py-1.5">
             <div className="flex items-center gap-2">
-              {/* 아이콘 placeholder */}
+              {/* Icon placeholder */}
               <Skeleton className="size-10 rounded-md" />
-              {/* 라벨 */}
+              {/* Label */}
               <Skeleton className="h-4 w-20" />
             </div>
             <div className="mt-2">
-              {/* 값 (큰 숫자) */}
+              {/* Value (large number) */}
               <Skeleton className="h-8 w-24" />
-              {/* 서브텍스트 */}
+              {/* Subtext */}
               <Skeleton className="mt-1 h-3 w-16" />
             </div>
           </CardContent>
@@ -32,8 +32,8 @@ export function KpiCardsSkeleton() {
 }
 
 /**
- * 차트 카드 스켈레톤 (MonthlyTrendChart 로딩 상태용)
- * 헤더, 필터 영역, 차트 영역으로 구성됨
+ * Chart card skeleton (MonthlyTrendChart loading state)
+ * Made up of a header, filter area and chart area
  */
 export function ChartCardSkeleton() {
   return (
@@ -41,13 +41,13 @@ export function ChartCardSkeleton() {
       <CardHeader className="border-b pb-4">
         <div className="flex items-center justify-between">
           <div>
-            {/* 타이틀 */}
+            {/* Title */}
             <Skeleton className="h-6 w-32" />
-            {/* 설명 */}
+            {/* Description */}
             <Skeleton className="mt-2 h-4 w-48" />
           </div>
           <div className="flex items-center gap-2">
-            {/* 필터 토글 버튼들 */}
+            {/* Filter toggle buttons */}
             <Skeleton className="h-10 w-[130px]" />
             <Skeleton className="h-10 w-[130px]" />
             <Skeleton className="h-10 w-[70px]" />
@@ -55,7 +55,7 @@ export function ChartCardSkeleton() {
         </div>
       </CardHeader>
       <CardContent className="pt-6">
-        {/* 차트 영역 */}
+        {/* Chart area */}
         <Skeleton className="h-[300px] w-full" />
       </CardContent>
     </Card>
@@ -63,8 +63,8 @@ export function ChartCardSkeleton() {
 }
 
 /**
- * 테이블 카드 스켈레톤 (앱별 비용 분포, 비용 이상 감지 섹션용)
- * rowCount prop으로 행 개수 조절 가능
+ * Table card skeleton (cost-by-app distribution and cost anomaly sections)
+ * Row count is configurable via the rowCount prop
  */
 export function TableCardSkeleton({
   rowCount = 5,
@@ -78,9 +78,9 @@ export function TableCardSkeleton({
       {title && (
         <CardHeader className="border-b pb-4">
           <div>
-            {/* 타이틀 */}
+            {/* Title */}
             <Skeleton className="h-6 w-32" />
-            {/* 설명 */}
+            {/* Description */}
             <Skeleton className="mt-2 h-4 w-48" />
           </div>
         </CardHeader>
@@ -89,13 +89,13 @@ export function TableCardSkeleton({
         <div className="space-y-3">
           {Array.from({ length: rowCount }).map((_, i) => (
             <div key={i} className="flex items-center gap-4">
-              {/* 아이콘/체크박스 */}
+              {/* Icon/checkbox */}
               <Skeleton className="size-10 rounded-md" />
-              {/* 이름 */}
+              {/* Name */}
               <Skeleton className="h-4 w-32" />
               {/* Badge */}
               <Skeleton className="h-5 w-16" />
-              {/* 금액 */}
+              {/* Amount */}
               <Skeleton className="ml-auto h-4 w-20" />
             </div>
           ))}
@@ -106,37 +106,37 @@ export function TableCardSkeleton({
 }
 
 /**
- * 필터 바 스켈레톤 (TeamUserFilterRouter 로딩 상태용)
- * 팀 선택, 사용자 선택 필터 placeholder
+ * Filter bar skeleton (TeamUserFilterRouter loading state)
+ * Placeholders for the team and user filters
  */
 export function FilterBarSkeleton() {
   return (
     <div className="flex items-center gap-2">
-      {/* 팀 선택 */}
+      {/* Team picker */}
       <Skeleton className="h-10 w-[180px]" />
-      {/* 사용자 선택 */}
+      {/* User picker */}
       <Skeleton className="h-10 w-[180px]" />
     </div>
   );
 }
 
 /**
- * SeatAnalysisSection 전체 스켈레톤
- * 낭비 분석 + 최적화 제안 섹션 포함
+ * Full SeatAnalysisSection skeleton
+ * Includes the waste analysis and optimisation suggestion sections
  */
 export function SeatAnalysisSkeleton() {
   return (
     <div className="space-y-6">
-      {/* 구분선 */}
+      {/* Divider */}
       <Separator className="my-6" />
 
-      {/* 낭비 분석 섹션 헤더 */}
+      {/* Waste analysis section header */}
       <div>
         <Skeleton className="h-7 w-40" />
         <Skeleton className="mt-2 h-4 w-64" />
       </div>
 
-      {/* 낭비 KPI 카드 3개 */}
+      {/* Three waste KPI cards */}
       <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
         {[1, 2, 3].map((i) => (
           <Card key={i}>
@@ -148,16 +148,16 @@ export function SeatAnalysisSkeleton() {
         ))}
       </div>
 
-      {/* 낭비 테이블 */}
+      {/* Waste table */}
       <TableCardSkeleton rowCount={5} title={false} />
 
-      {/* 최적화 제안 섹션 헤더 */}
+      {/* Optimisation suggestions section header */}
       <div className="mt-8">
         <Skeleton className="h-7 w-40" />
         <Skeleton className="mt-2 h-4 w-64" />
       </div>
 
-      {/* 최적화 KPI 카드 3개 */}
+      {/* Three optimisation KPI cards */}
       <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
         {[1, 2, 3].map((i) => (
           <Card key={i}>
@@ -169,41 +169,41 @@ export function SeatAnalysisSkeleton() {
         ))}
       </div>
 
-      {/* 최적화 테이블 */}
+      {/* Optimisation table */}
       <TableCardSkeleton rowCount={5} title={false} />
     </div>
   );
 }
 
 /**
- * 전체 페이지 스켈레톤 (loading.tsx에서 사용)
- * 모든 스켈레톤 컴포넌트를 조합하여 전체 페이지 레이아웃 구성
+ * Full-page skeleton (used by loading.tsx)
+ * Combines all skeleton components into the full page layout
  */
 export function CostReportPageSkeleton() {
   return (
     <div className="space-y-4">
-      {/* 페이지 헤더 */}
+      {/* Page header */}
       <div className="flex items-center justify-between">
         <Skeleton className="h-8 w-48" />
         <Skeleton className="h-10 w-28" />
       </div>
 
-      {/* KPI 카드 */}
+      {/* KPI cards */}
       <KpiCardsSkeleton />
 
-      {/* 필터 바 */}
+      {/* Filter bar */}
       <FilterBarSkeleton />
 
-      {/* 월별 비용 추이 차트 */}
+      {/* Monthly cost trend chart */}
       <ChartCardSkeleton />
 
-      {/* 앱별 비용 분포 + 비용 이상 감지 */}
+      {/* Cost by app + cost anomalies */}
       <div className="grid gap-6 xl:grid-cols-2">
         <TableCardSkeleton rowCount={5} />
         <TableCardSkeleton rowCount={5} />
       </div>
 
-      {/* Seat 분석 섹션 */}
+      {/* Seat analysis section */}
       <SeatAnalysisSkeleton />
     </div>
   );

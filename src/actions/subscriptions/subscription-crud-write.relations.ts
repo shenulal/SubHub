@@ -100,7 +100,7 @@ export async function prepareAssignments(
       return {
         teamIds,
         userIds,
-        error: "유효하지 않은 사용자가 포함되어 있습니다",
+        error: "One or more users are invalid",
       };
     }
     for (const user of validUsers) {

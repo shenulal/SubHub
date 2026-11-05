@@ -1,9 +1,9 @@
 // src/lib/services/sso/userSync.ts
 /**
- * Google Workspace 사용자 동기화 서비스
- * Google Workspace 사용자를 DB User 테이블과 동기화
+ * Google Workspace user sync service
+ * Syncs Google Workspace users with the DB User table
  *
- * pgbouncer 호환: 긴 트랜잭션 대신 개별 쿼리 사용
+ * pgbouncer-compatible: uses individual queries instead of long transactions
  */
 
 import { prisma } from "@/lib/db";
@@ -17,8 +17,8 @@ import type { Integration, Prisma, UserStatus } from "@prisma/client";
 import { GoogleWorkspaceService } from "./googleWorkspace";
 
 /**
- * Google Workspace 사용자를 DB User 형식으로 매핑
- * @param teamMap orgUnitPath -> teamId 매핑 (선택)
+ * Maps a Google Workspace user to the DB User shape
+ * @param teamMap orgUnitPath -> teamId mapping (optional)
  */
 export function mapGoogleUserToDbUser(
   googleUser: GoogleWorkspaceUser,
@@ -36,20 +36,20 @@ export function mapGoogleUserToDbUser(
   lastLoginAt?: Date;
   isGoogleAdmin: boolean;
   teamId?: string;
-  /** Manager 이메일 (2차 패스에서 사용) */
+  /** Manager e-mail (used in the second pass) */
   _managerEmail?: string;
 } {
-  // 주요 조직 정보 추출
+  // Extract the primary organization details
   const primaryOrg =
     googleUser.organizations?.find((o) => o.primary) ||
     googleUser.organizations?.[0];
 
-  // Manager 이메일 추출
+  // Extract the manager e-mail
   const managerRelation = googleUser.relations?.find(
     (r) => r.type === "manager"
   );
 
-  // Team ID 조회 (orgUnitPath 기반)
+  // Look up the team ID (by orgUnitPath)
   const teamId =
     teamMap && googleUser.orgUnitPath
       ? teamMap.get(googleUser.orgUnitPath)
@@ -74,9 +74,9 @@ export function mapGoogleUserToDbUser(
 }
 
 /**
- * Google Workspace에서 사용자 동기화
- * pgbouncer 호환: 트랜잭션을 최소화하고 개별 쿼리로 처리
- * @param teamMap orgUnitPath -> teamId 매핑 (선택, Team 동기화 후 전달)
+ * Syncs users from Google Workspace
+ * pgbouncer-compatible: minimises transactions and uses individual queries
+ * @param teamMap orgUnitPath -> teamId mapping (optional, passed after team sync)
  */
 export async function syncUsersFromGoogle(
   integration: Integration,
@@ -98,11 +98,11 @@ export async function syncUsersFromGoogle(
   let itemsUpdated = 0;
   let syncLogId: string | undefined;
 
-  // Manager 관계 설정을 위한 매핑 (email -> managerEmail)
+  // Mapping for setting manager relationships (email -> managerEmail)
   const managerRelations: Map<string, string> = new Map();
 
   try {
-    // 1. 동기화 시작 로그 생성 (단일 쿼리)
+    // 1. Create the sync start log (single query)
     const syncLog = await prisma.syncLog.create({
       data: {
         integrationId: integration.id,
@@ -115,11 +115,11 @@ export async function syncUsersFromGoogle(
     });
     syncLogId = syncLog.id;
 
-    // 2. Google Workspace에서 사용자 목록 조회
+    // 2. List users from Google Workspace
     const googleUsers = await googleService.listUsers(orgUnitPath);
     itemsFound = googleUsers.length;
 
-    // 3. 1차 패스: 각 사용자 개별 처리 (트랜잭션 없이)
+    // 3. First pass: process each user individually (no transaction)
     for (const googleUser of googleUsers) {
       try {
         const userData = mapGoogleUserToDbUser(
@@ -128,13 +128,13 @@ export async function syncUsersFromGoogle(
           teamMap
         );
 
-        // Manager 관계 저장 (2차 패스에서 처리)
+        // Store the manager relationship (handled in the second pass)
         if (userData._managerEmail) {
           managerRelations.set(userData.email, userData._managerEmail);
         }
 
         if (createNew || updateExisting) {
-          // upsert: 없으면 생성, 있으면 업데이트
+          // upsert: create if missing, otherwise update
           const existingUser = await prisma.user.findUnique({
             where: { email: userData.email },
           });
@@ -158,7 +158,7 @@ export async function syncUsersFromGoogle(
             });
             itemsCreated++;
           } else if (existingUser && updateExisting) {
-            // 조직 ID가 일치하는 경우만 업데이트
+            // Update only when the organization ID matches
             if (existingUser.organizationId === integration.organizationId) {
               const updateData: Prisma.UserUncheckedUpdateInput = {
                 name: userData.name,
@@ -171,7 +171,7 @@ export async function syncUsersFromGoogle(
                 teamId: userData.teamId,
               };
 
-              // 퇴사자 감지가 활성화된 경우에만 상태 업데이트
+              // Update status only when offboarding detection is enabled
               if (detectTerminated) {
                 updateData.status = userData.status;
                 if (userData.status === "TERMINATED") {
@@ -198,10 +198,10 @@ export async function syncUsersFromGoogle(
       }
     }
 
-    // 4. 2차 패스: Manager 관계 설정 (개별 쿼리)
+    // 4. Second pass: set manager relationships (individual queries)
     for (const [userEmail, managerEmail] of managerRelations) {
       try {
-        // Manager 조회
+        // Look up the manager
         const manager = await prisma.user.findFirst({
           where: {
             email: managerEmail,
@@ -220,15 +220,15 @@ export async function syncUsersFromGoogle(
           });
         }
       } catch (managerError) {
-        // Manager 관계 설정 실패는 에러로 기록하지만 동기화는 계속 진행
+        // Record manager relationship failures as errors but continue the sync
         console.warn(
-          `Manager 관계 설정 실패: ${userEmail} -> ${managerEmail}`,
+          `Failed to set manager relationship: ${userEmail} -> ${managerEmail}`,
           managerError
         );
       }
     }
 
-    // 5. 동기화 완료 로그 업데이트 (단일 쿼리)
+    // 5. Update the sync log as completed (single query)
     const finalStatus = errors.length > 0 ? "PARTIAL" : "SUCCESS";
     await prisma.syncLog.update({
       where: { id: syncLogId },
@@ -243,7 +243,7 @@ export async function syncUsersFromGoogle(
       },
     });
 
-    // 6. Integration 마지막 동기화 시간 업데이트 (단일 쿼리)
+    // 6. Update the integration's last sync time (single query)
     await prisma.integration.update({
       where: { id: integration.id },
       data: {
@@ -262,11 +262,11 @@ export async function syncUsersFromGoogle(
       duration: Date.now() - startTime,
     };
   } catch (error) {
-    // 전체 동기화 실패
+    // Full sync failed
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error";
 
-    // 실패 로그 업데이트
+    // Update the failure log
     if (syncLogId) {
       await prisma.syncLog.update({
         where: { id: syncLogId },
@@ -278,7 +278,7 @@ export async function syncUsersFromGoogle(
       });
     }
 
-    // Integration 에러 업데이트
+    // Update the integration error
     await prisma.integration.update({
       where: { id: integration.id },
       data: {

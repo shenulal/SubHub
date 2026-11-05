@@ -44,7 +44,7 @@ describe("Organization Notification Settings Server Actions", () => {
   });
 
   describe("getOrganizationNotificationSettings", () => {
-    it("인증되지 않은 경우 login으로 리다이렉트해야 한다", async () => {
+    it("redirects to login when unauthenticated", async () => {
       mockedAuth.mockResolvedValue(null);
 
       const { getOrganizationNotificationSettings } =
@@ -54,7 +54,7 @@ describe("Organization Notification Settings Server Actions", () => {
       );
     });
 
-    it("조직 ID가 없는 사용자는 onboarding으로 리다이렉트해야 한다", async () => {
+    it("redirects a user without an organization ID to onboarding", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: null },
         expires: "",
@@ -67,7 +67,7 @@ describe("Organization Notification Settings Server Actions", () => {
       );
     });
 
-    it("조직 알림 설정을 반환해야 한다", async () => {
+    it("returns organization notification settings", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1" },
         expires: "",
@@ -103,7 +103,7 @@ describe("Organization Notification Settings Server Actions", () => {
       });
     });
 
-    it("설정이 없으면 기본값을 반환해야 한다", async () => {
+    it("returns defaults when there are no settings", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1" },
         expires: "",
@@ -129,7 +129,7 @@ describe("Organization Notification Settings Server Actions", () => {
       });
     });
 
-    it("조직이 없으면 기본값을 반환해야 한다", async () => {
+    it("returns defaults when there is no organization", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1" },
         expires: "",
@@ -154,7 +154,7 @@ describe("Organization Notification Settings Server Actions", () => {
   });
 
   describe("updateOrganizationNotificationSettings", () => {
-    it("인증되지 않은 경우 login으로 리다이렉트해야 한다", async () => {
+    it("redirects to login when unauthenticated", async () => {
       mockedAuth.mockResolvedValue(null);
 
       const { updateOrganizationNotificationSettings } =
@@ -164,7 +164,7 @@ describe("Organization Notification Settings Server Actions", () => {
       ).rejects.toThrow("NEXT_REDIRECT:/login");
     });
 
-    it("이메일 알림 설정을 업데이트해야 한다", async () => {
+    it("updates email notification settings", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
         expires: "",
@@ -225,7 +225,7 @@ describe("Organization Notification Settings Server Actions", () => {
       });
     });
 
-    it("갱신 알림 일수를 업데이트해야 한다", async () => {
+    it("updates renewal alert days", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
         expires: "",
@@ -286,7 +286,7 @@ describe("Organization Notification Settings Server Actions", () => {
       });
     });
 
-    it("퇴사자 알림 설정을 업데이트해야 한다", async () => {
+    it("updates terminated-user alert settings", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
         expires: "",
@@ -347,7 +347,7 @@ describe("Organization Notification Settings Server Actions", () => {
       });
     });
 
-    it("주간 요약 설정을 업데이트해야 한다", async () => {
+    it("updates weekly digest settings", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
         expires: "",
@@ -408,7 +408,7 @@ describe("Organization Notification Settings Server Actions", () => {
       });
     });
 
-    it("업데이트 후 revalidatePath를 호출해야 한다", async () => {
+    it("calls revalidatePath after updating", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
         expires: "",
@@ -441,7 +441,7 @@ describe("Organization Notification Settings Server Actions", () => {
       expect(revalidatePath).toHaveBeenCalledWith("/settings/notifications");
     });
 
-    it("Shadow IT 알림 설정을 업데이트해야 한다", async () => {
+    it("updates Shadow IT alert settings", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
         expires: "",
@@ -502,7 +502,7 @@ describe("Organization Notification Settings Server Actions", () => {
       });
     });
 
-    it("비용 이상 알림 임계값을 업데이트해야 한다", async () => {
+    it("updates the cost anomaly alert threshold", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
         expires: "",
@@ -563,7 +563,7 @@ describe("Organization Notification Settings Server Actions", () => {
       });
     });
 
-    it("관리자가 아닌 사용자는 에러를 반환해야 한다", async () => {
+    it("returns an error for a non-admin user", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "MEMBER" },
         expires: "",
@@ -577,7 +577,7 @@ describe("Organization Notification Settings Server Actions", () => {
 
       expect(result).toEqual({
         success: false,
-        message: "관리자 권한이 필요합니다",
+        message: "Admin permission required",
       });
     });
   });

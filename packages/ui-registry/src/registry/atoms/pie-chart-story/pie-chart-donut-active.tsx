@@ -78,7 +78,7 @@ export function ChartPieDonutActive() {
               nameKey="browser"
               innerRadius={60}
               strokeWidth={5}
-              // @ts-expect-error - activeIndex는 recharts 내부적으로 지원하지만 공식 타입 정의에는 없습니다
+              // @ts-expect-error - activeIndex is supported internally by recharts but is missing from its official type definitions
               activeIndex={0}
               activeShape={({
                 outerRadius = 0,

@@ -6,15 +6,15 @@ import { Drawer as DrawerPrimitive } from "vaul";
 import { cn } from "@/lib/utils";
 
 /**
- * 🎯 목적: Drawer Root 컴포넌트
- * 📝 주의사항: vaul의 Root primitive는 ref를 지원하지 않음
+ * 🎯 Purpose: Drawer Root component
+ * 📝 Note: vaul's Root primitive does not support ref
  */
 const Drawer = DrawerPrimitive.Root;
 
 /**
- * 🎯 목적: DrawerTrigger 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: vaul Drawer.Trigger primitive 사용
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the DrawerTrigger component for React 18/19 compatibility
+ * 📝 Note: Uses the vaul Drawer.Trigger primitive
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const DrawerTrigger = React.forwardRef<
   React.ElementRef<typeof DrawerPrimitive.Trigger>,
@@ -27,15 +27,15 @@ const DrawerTrigger = React.forwardRef<
 DrawerTrigger.displayName = "DrawerTrigger";
 
 /**
- * 🎯 목적: DrawerPortal 컴포넌트
- * 📝 주의사항: Portal은 ref를 지원하지 않음
+ * 🎯 Purpose: DrawerPortal component
+ * 📝 Note: Portal does not support ref
  */
 const DrawerPortal = DrawerPrimitive.Portal;
 
 /**
- * 🎯 목적: DrawerClose 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: vaul Drawer.Close primitive 사용
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the DrawerClose component for React 18/19 compatibility
+ * 📝 Note: Uses the vaul Drawer.Close primitive
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const DrawerClose = React.forwardRef<
   React.ElementRef<typeof DrawerPrimitive.Close>,
@@ -48,9 +48,9 @@ const DrawerClose = React.forwardRef<
 DrawerClose.displayName = "DrawerClose";
 
 /**
- * 🎯 목적: DrawerOverlay 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: vaul Drawer.Overlay primitive 사용
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the DrawerOverlay component for React 18/19 compatibility
+ * 📝 Note: Uses the vaul Drawer.Overlay primitive
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const DrawerOverlay = React.forwardRef<
   React.ElementRef<typeof DrawerPrimitive.Overlay>,
@@ -71,9 +71,9 @@ const DrawerOverlay = React.forwardRef<
 DrawerOverlay.displayName = "DrawerOverlay";
 
 /**
- * 🎯 목적: DrawerContent 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: vaul Drawer.Content primitive 사용, Portal 내부에서 렌더링
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the DrawerContent component for React 18/19 compatibility
+ * 📝 Note: Uses the vaul Drawer.Content primitive; renders inside a Portal
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const DrawerContent = React.forwardRef<
   React.ElementRef<typeof DrawerPrimitive.Content>,
@@ -104,9 +104,9 @@ const DrawerContent = React.forwardRef<
 DrawerContent.displayName = "DrawerContent";
 
 /**
- * 🎯 목적: DrawerHeader 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: HTML div 요소 사용
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the DrawerHeader component for React 18/19 compatibility
+ * 📝 Note: Uses an HTML div element
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const DrawerHeader = React.forwardRef<
   HTMLDivElement,
@@ -127,9 +127,9 @@ const DrawerHeader = React.forwardRef<
 DrawerHeader.displayName = "DrawerHeader";
 
 /**
- * 🎯 목적: DrawerFooter 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: HTML div 요소 사용
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the DrawerFooter component for React 18/19 compatibility
+ * 📝 Note: Uses an HTML div element
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const DrawerFooter = React.forwardRef<
   HTMLDivElement,
@@ -147,9 +147,9 @@ const DrawerFooter = React.forwardRef<
 DrawerFooter.displayName = "DrawerFooter";
 
 /**
- * 🎯 목적: DrawerTitle 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: vaul Drawer.Title primitive 사용
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the DrawerTitle component for React 18/19 compatibility
+ * 📝 Note: Uses the vaul Drawer.Title primitive
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const DrawerTitle = React.forwardRef<
   React.ElementRef<typeof DrawerPrimitive.Title>,
@@ -167,9 +167,9 @@ const DrawerTitle = React.forwardRef<
 DrawerTitle.displayName = "DrawerTitle";
 
 /**
- * 🎯 목적: DrawerDescription 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: vaul Drawer.Description primitive 사용
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the DrawerDescription component for React 18/19 compatibility
+ * 📝 Note: Uses the vaul Drawer.Description primitive
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const DrawerDescription = React.forwardRef<
   React.ElementRef<typeof DrawerPrimitive.Description>,

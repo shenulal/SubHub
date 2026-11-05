@@ -1,10 +1,10 @@
 /**
- * 결제 → 구독 자동 연동 서비스
+ * Payment → subscription auto-sync service
  *
- * PRD 요구사항:
- * - 반복 결제 패턴이 있는 경우만 Subscription 생성
- * - 2회+ 반복 패턴 → Subscription upsert
- * - 기존 Subscription 있으면 업데이트 (금액, 갱신일)
+ * PRD requirements:
+ * - Create a Subscription only when there is a recurring payment pattern
+ * - 2+ recurring occurrences → Subscription upsert
+ * - Update an existing Subscription (amount, renewal date)
  */
 
 import { prisma } from "@/lib/db";
@@ -31,8 +31,8 @@ interface SubscriptionSyncResult {
 }
 
 /**
- * BillingCycle 매핑 (recurrence -> Prisma enum)
- * Note: Prisma enum에는 SEMI_ANNUAL, ANNUAL이 없으므로 근사 매핑
+ * BillingCycle mapping (recurrence -> Prisma enum)
+ * Note: the Prisma enum has no SEMI_ANNUAL or ANNUAL, so these are approximated
  */
 function mapBillingCycle(cycle: BillingCycle): PrismaBillingCycle {
   switch (cycle) {
@@ -41,20 +41,20 @@ function mapBillingCycle(cycle: BillingCycle): PrismaBillingCycle {
     case "QUARTERLY":
       return "QUARTERLY";
     case "SEMI_ANNUAL":
-      return "QUARTERLY"; // Prisma에 SEMI_ANNUAL 없음, QUARTERLY로 근사
+      return "QUARTERLY"; // Prisma has no SEMI_ANNUAL; approximated as QUARTERLY
     case "ANNUAL":
-      return "YEARLY"; // Prisma에서는 YEARLY 사용
+      return "YEARLY"; // Prisma uses YEARLY
     default:
       return "MONTHLY";
   }
 }
 
 /**
- * 결제 내역에서 구독 정보 자동 동기화
+ * Automatically syncs subscription details from payment records
  *
- * @param organizationId 조직 ID
- * @param transactions 결제 내역 (matchedAppId가 있는 것만)
- * @returns 동기화 결과
+ * @param organizationId Organization ID
+ * @param transactions Payment records (only those with matchedAppId)
+ * @returns Sync result
  */
 export async function syncSubscriptionsFromPayments(
   organizationId: string,
@@ -67,14 +67,14 @@ export async function syncSubscriptionsFromPayments(
     errors: [],
   };
 
-  // 매칭된 앱이 있는 거래만 필터링
+  // Keep only transactions with a matched app
   const matchedTransactions = transactions.filter((tx) => tx.matchedAppId);
 
   if (matchedTransactions.length === 0) {
     return result;
   }
 
-  // 결제 간격 분석
+  // Analyse payment intervals
   const patterns = analyzePaymentIntervals(
     matchedTransactions.map((tx) => ({
       useDt: tx.useDt,
@@ -84,7 +84,7 @@ export async function syncSubscriptionsFromPayments(
     { stdDevThreshold: 5, minTransactionCount: 2 }
   );
 
-  // 가맹점 → App 매핑 생성
+  // Build the merchant → app mapping
   const merchantToApp = new Map<string, string>();
   for (const tx of matchedTransactions) {
     if (tx.matchedAppId) {
@@ -93,7 +93,7 @@ export async function syncSubscriptionsFromPayments(
     }
   }
 
-  // 반복 결제로 판정된 패턴에 대해 구독 생성/업데이트
+  // Create/update subscriptions for patterns classified as recurring
   for (const [merchant, pattern] of patterns) {
     if (!pattern.isRecurring) {
       result.skipped++;
@@ -122,14 +122,14 @@ export async function syncSubscriptionsFromPayments(
 }
 
 /**
- * 단일 구독 동기화
+ * Syncs a single subscription
  */
 async function syncSubscription(
   organizationId: string,
   appId: string,
   pattern: RecurrencePattern
 ): Promise<"created" | "updated" | "skipped"> {
-  // 기존 구독 조회
+  // Look up the existing subscription
   const existing = await prisma.subscription.findFirst({
     where: {
       organizationId,
@@ -145,7 +145,7 @@ async function syncSubscription(
   const startDate = pattern.lastPaymentDate || new Date();
 
   if (existing) {
-    // 기존 구독 업데이트 (금액, 갱신일만)
+    // Update the existing subscription (amount and renewal date only)
     await prisma.subscription.update({
       where: { id: existing.id },
       data: {
@@ -158,7 +158,7 @@ async function syncSubscription(
     return "updated";
   }
 
-  // 새 구독 생성
+  // Create a new subscription
   await prisma.subscription.create({
     data: {
       organizationId,
@@ -177,7 +177,7 @@ async function syncSubscription(
 }
 
 /**
- * 특정 앱에 대한 결제 내역으로 구독 동기화
+ * Syncs a subscription from a specific app's payment records
  */
 export async function syncAppSubscriptionFromPayments(
   organizationId: string,
@@ -188,17 +188,17 @@ export async function syncAppSubscriptionFromPayments(
     return "no_pattern";
   }
 
-  // 결제 간격 분석
+  // Analyse payment intervals
   const patterns = analyzePaymentIntervals(
     transactions.map((tx) => ({
       useDt: tx.useDt,
-      useStore: "dummy", // 단일 앱이므로 가맹점명 불필요
+      useStore: "dummy", // Single app, so the merchant name is not needed
       useAmt: tx.useAmt,
     })),
     { stdDevThreshold: 5, minTransactionCount: 2 }
   );
 
-  // 첫 번째 패턴 사용
+  // Use the first pattern
   const pattern = patterns.values().next().value as
     | RecurrencePattern
     | undefined;

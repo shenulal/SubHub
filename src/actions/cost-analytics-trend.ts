@@ -21,7 +21,7 @@ import {
 } from "./cost-analytics-utils";
 
 /**
- * 월별 비용 추세 조회
+ * Get the monthly cost trend
  */
 export async function getMonthlyCostTrend(options: {
   months?: number;
@@ -33,17 +33,20 @@ export async function getMonthlyCostTrend(options: {
     const session = await auth();
 
     if (!session?.user) {
-      return { success: false, message: "인증이 필요합니다" };
+      return { success: false, message: "Authentication required" };
     }
 
     if (!session.user.organizationId) {
-      return { success: false, message: "조직 정보가 필요합니다" };
+      return {
+        success: false,
+        message: "Organization information is required",
+      };
     }
 
     const { months = 6, appIds, teamId, userId } = options;
     const scope = resolveReportScope({ teamId, userId }, session.user);
 
-    // 기간 계산
+    // Calculate the period
     const now = new Date();
     const startDate = new Date(
       now.getFullYear(),
@@ -51,8 +54,8 @@ export async function getMonthlyCostTrend(options: {
       1
     );
 
-    // CardTransaction 조회 (앱 필터가 없을 때만 포함, 승인내역 기준)
-    // matchedAppId를 포함하여 SaaS/Non-SaaS 분류
+    // Fetch CardTransaction (only without an app filter, approvals only)
+    // Include matchedAppId to classify SaaS/Non-SaaS
     let cardPayments: Array<{
       transactionDate: Date;
       amount: number;
@@ -62,7 +65,7 @@ export async function getMonthlyCostTrend(options: {
       const startStr = startDate.toISOString().slice(0, 10).replace(/-/g, "");
       const cardWhere: Record<string, unknown> = {
         organizationId: session.user.organizationId,
-        transactionType: "APPROVAL", // 승인내역 기준 조회
+        transactionType: "APPROVAL", // based on approvals
         useDt: { gte: startStr },
       };
       applyCardTransactionScope(cardWhere, scope);
@@ -72,7 +75,7 @@ export async function getMonthlyCostTrend(options: {
         select: {
           useDt: true,
           useAmt: true,
-          matchedAppId: true, // SaaS 분류용
+          matchedAppId: true, // for SaaS classification
         },
       });
 
@@ -83,12 +86,12 @@ export async function getMonthlyCostTrend(options: {
           parseInt(tx.useDt.substring(6, 8))
         ),
         amount: Number(tx.useAmt),
-        isSaas: tx.matchedAppId !== null, // 앱과 매칭되면 SaaS
+        isSaas: tx.matchedAppId !== null, // SaaS when matched to an app
       }));
     }
 
-    // PaymentRecord 조회 (PENDING/UNMATCHED도 Non-SaaS 비용으로 집계)
-    // matchedAppId를 포함하여 SaaS/Non-SaaS 분류
+    // Fetch PaymentRecord (PENDING/UNMATCHED also count as Non-SaaS cost)
+    // Include matchedAppId to classify SaaS/Non-SaaS
     const paymentWhere: Record<string, unknown> = {
       organizationId: session.user.organizationId,
       matchStatus: {
@@ -104,21 +107,21 @@ export async function getMonthlyCostTrend(options: {
       select: {
         transactionDate: true,
         amount: true,
-        matchedAppId: true, // SaaS 분류용
+        matchedAppId: true, // for SaaS classification
       },
     });
 
-    // 통합 결제 목록 (isSaas 플래그 포함)
+    // Combined payment list (with the isSaas flag)
     const payments = [
       ...cardPayments,
       ...csvPayments.map((p) => ({
         transactionDate: p.transactionDate,
         amount: extractAmount(p.amount),
-        isSaas: p.matchedAppId !== null, // 앱과 매칭되면 SaaS
+        isSaas: p.matchedAppId !== null, // SaaS when matched to an app
       })),
     ];
 
-    // 월별 SaaS/Non-SaaS 분리 집계
+    // Aggregate SaaS/Non-SaaS separately per month
     const monthlyData = new Map<
       string,
       {
@@ -129,7 +132,7 @@ export async function getMonthlyCostTrend(options: {
       }
     >();
 
-    // 초기화: 모든 월에 대해 빈 데이터 생성
+    // Initialize: create empty data for every month
     for (let i = 0; i < months; i++) {
       const date = new Date(
         now.getFullYear(),
@@ -145,7 +148,7 @@ export async function getMonthlyCostTrend(options: {
       });
     }
 
-    // 데이터 집계 (SaaS/Non-SaaS 분리)
+    // Aggregate data (SaaS/Non-SaaS separately)
     payments.forEach((payment) => {
       const key = formatMonthKey(payment.transactionDate);
       const existing = monthlyData.get(key);
@@ -160,7 +163,7 @@ export async function getMonthlyCostTrend(options: {
       }
     });
 
-    // 결과 변환
+    // Convert results
     const trends: MonthlyCostTrend[] = [];
     let totalCost = 0;
 
@@ -179,7 +182,7 @@ export async function getMonthlyCostTrend(options: {
       totalCost += monthTotalCost;
     });
 
-    // 날짜순 정렬
+    // Sort by date
     trends.sort((a, b) => a.month.localeCompare(b.month));
 
     const monthsWithData = trends.filter((t) => t.totalCost > 0).length;
@@ -191,13 +194,16 @@ export async function getMonthlyCostTrend(options: {
       data: { trends, averageCost },
     };
   } catch (error) {
-    console.error("월별 추세 조회 오류:", error);
-    return { success: false, message: "월별 추세 조회 중 오류가 발생했습니다" };
+    console.error("Monthly trend error:", error);
+    return {
+      success: false,
+      message: "An error occurred while loading the monthly trend",
+    };
   }
 }
 
 /**
- * 미매칭 결제 건수 조회 (CardTransaction + PaymentRecord 통합)
+ * Count unmatched payments (CardTransaction + PaymentRecord combined)
  */
 export async function getUnmatchedPaymentCount(): Promise<
   ActionState<UnmatchedPaymentSummary>
@@ -206,24 +212,27 @@ export async function getUnmatchedPaymentCount(): Promise<
     const session = await auth();
 
     if (!session?.user) {
-      return { success: false, message: "인증이 필요합니다" };
+      return { success: false, message: "Authentication required" };
     }
 
     if (!session.user.organizationId) {
-      return { success: false, message: "조직 정보가 필요합니다" };
+      return {
+        success: false,
+        message: "Organization information is required",
+      };
     }
 
-    // CardTransaction 집계 (앱 매칭 필드 없음 = 전부 미매칭, 승인내역 기준)
+    // Aggregate CardTransaction (no app-match field = all unmatched, approvals only)
     const cardResult = await prisma.cardTransaction.aggregate({
       where: {
         organizationId: session.user.organizationId,
-        transactionType: "APPROVAL", // 승인내역 기준 조회
+        transactionType: "APPROVAL", // based on approvals
       },
       _count: { id: true },
       _sum: { useAmt: true },
     });
 
-    // PaymentRecord 미매칭 집계
+    // Aggregate unmatched PaymentRecord
     const csvResult = await prisma.paymentRecord.aggregate({
       where: {
         organizationId: session.user.organizationId,
@@ -233,12 +242,12 @@ export async function getUnmatchedPaymentCount(): Promise<
       _sum: { amount: true },
     });
 
-    // 가장 최근 미매칭 결제 조회 (CardTransaction과 PaymentRecord 둘 다)
+    // Fetch the most recent unmatched payment (both CardTransaction and PaymentRecord)
     const [latestCard, latestCsv] = await Promise.all([
       prisma.cardTransaction.findFirst({
         where: {
           organizationId: session.user.organizationId,
-          transactionType: "APPROVAL", // 승인내역 기준 조회
+          transactionType: "APPROVAL", // based on approvals
         },
         orderBy: { useDt: "desc" },
         select: { useDt: true },
@@ -253,7 +262,7 @@ export async function getUnmatchedPaymentCount(): Promise<
       }),
     ]);
 
-    // 최근 날짜 비교
+    // Compare the latest dates
     let latestDate: Date | null = null;
     if (latestCard?.useDt) {
       const cardDate = new Date(
@@ -283,10 +292,10 @@ export async function getUnmatchedPaymentCount(): Promise<
       },
     };
   } catch (error) {
-    console.error("미매칭 결제 조회 오류:", error);
+    console.error("Unmatched payments error:", error);
     return {
       success: false,
-      message: "미매칭 결제 조회 중 오류가 발생했습니다",
+      message: "An error occurred while loading unmatched payments",
     };
   }
 }

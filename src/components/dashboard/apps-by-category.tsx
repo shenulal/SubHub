@@ -9,20 +9,20 @@ import { useMemo } from "react";
 import { Cell, Pie, PieChart, ResponsiveContainer } from "recharts";
 
 /**
- * Figma 디자인 기준 도넛 차트 색상
- * - globals.css 변수와 동일한 값 사용
- * - 개발: purple-primary (#6474F3)
- * - 디자인: magenta-primary (#D165D3)
- * - 협업: Yellow (#F5D063)
- * - 기타: Orange (#F7A362)
- * - 데이터 분석: Gray (#D4D4D8)
+ * Donut chart colours per the Figma design
+ * - Same values as the globals.css variables
+ * - Development: purple-primary (#6474F3)
+ * - Design: magenta-primary (#D165D3)
+ * - Collaboration: Yellow (#F5D063)
+ * - Other: Orange (#F7A362)
+ * - Data analytics: Gray (#D4D4D8)
  */
 const DONUT_COLORS = [
-  "#6474F3", // 개발 (purple-primary)
-  "#D165D3", // 디자인 (magenta-primary)
-  "#F5D063", // 협업
-  "#F7A362", // 기타
-  "#D4D4D8", // 데이터 분석
+  "#6474F3", // Development (purple-primary)
+  "#D165D3", // Design (magenta-primary)
+  "#F5D063", // Collaboration
+  "#F7A362", // Other
+  "#D4D4D8", // Data analytics
 ];
 
 interface AppsByCategoryProps {
@@ -31,25 +31,25 @@ interface AppsByCategoryProps {
 }
 
 /**
- * 카테고리별 앱 분포 차트 컴포넌트
- * - Figma 디자인 적용: 얇은 도넛 차트 + 테이블 레이아웃
- * - 중앙: "전체 앱" + 총 개수
- * - 하단: 카테고리별 리스트 (색상 점 + 이름 + 개수 + 퍼센트)
+ * Apps-by-category distribution chart
+ * - Figma design: thin donut chart + table layout
+ * - Centre: "Total Apps" + total count
+ * - Bottom: per-category list (colour dot + name + count + percentage)
  */
 export function AppsByCategory({ data, isLoading }: AppsByCategoryProps) {
   const t = useTranslations("dashboard.appsByCategory");
 
-  // 상위 5개 카테고리만 표시
+  // Show only the top 5 categories
   const chartData = useMemo(() => {
     return [...data].slice(0, 5);
   }, [data]);
 
-  // 총 앱 개수 계산
+  // Compute total app count
   const totalApps = useMemo(() => {
     return chartData.reduce((sum, item) => sum + item.count, 0);
   }, [chartData]);
 
-  // 로딩 상태
+  // Loading state
   if (isLoading) {
     return (
       <Card className="h-[440px] gap-4 px-5">
@@ -68,12 +68,12 @@ export function AppsByCategory({ data, isLoading }: AppsByCategoryProps) {
 
   return (
     <Card className="h-[440px] gap-4 overflow-clip px-5">
-      {/* 타이틀 */}
+      {/* Title */}
       <p className="text-foreground text-base font-semibold">{t("title")}</p>
 
-      {/* 콘텐츠 영역 */}
+      {/* Content area */}
       <div className="flex min-h-0 flex-1 flex-col gap-3">
-        {/* 도넛 차트 + 중앙 텍스트 */}
+        {/* Donut chart + centre text */}
         <div className="relative flex h-[180px] shrink-0 items-center justify-center">
           <ResponsiveContainer width={180} height={180}>
             <PieChart>
@@ -97,7 +97,7 @@ export function AppsByCategory({ data, isLoading }: AppsByCategoryProps) {
             </PieChart>
           </ResponsiveContainer>
 
-          {/* 중앙 텍스트 */}
+          {/* Centre text */}
           <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
             <span className="text-muted-foreground text-xs">
               {t("totalApps")}
@@ -108,14 +108,14 @@ export function AppsByCategory({ data, isLoading }: AppsByCategoryProps) {
           </div>
         </div>
 
-        {/* 테이블 영역 */}
+        {/* Table area */}
         <div className="flex flex-1 flex-col overflow-y-auto">
           {chartData.map((item, index) => (
             <div
               key={item.category}
               className="border-border flex items-center border-t px-2 py-1.5"
             >
-              {/* 카테고리 이름 + 색상 점 */}
+              {/* Category name + colour dot */}
               <div className="flex flex-1 items-center gap-1">
                 <div
                   className="h-[10px] w-[10px] shrink-0 rounded-full"
@@ -128,7 +128,7 @@ export function AppsByCategory({ data, isLoading }: AppsByCategoryProps) {
                 </span>
               </div>
 
-              {/* 개수 */}
+              {/* Count */}
               <div className="w-[60px] text-right">
                 <span className="text-muted-foreground text-xs">
                   {item.count}
@@ -136,7 +136,7 @@ export function AppsByCategory({ data, isLoading }: AppsByCategoryProps) {
                 </span>
               </div>
 
-              {/* 퍼센트 */}
+              {/* Percentage */}
               <div className="w-[60px] text-right">
                 <span className="text-muted-foreground text-xs">
                   {item.percentage}%

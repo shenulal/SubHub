@@ -8,7 +8,7 @@ import type {
   DeviceStatus,
 } from "@prisma/client";
 
-// 디바이스 + 관계 타입
+// Device + relations type
 export type DeviceWithApps = Device & {
   user: { id: string; name: string | null; email: string } | null;
   deviceApps: (DeviceApp & {
@@ -21,7 +21,7 @@ export type DeviceListItem = Device & {
   _count: { deviceApps: number };
 };
 
-// 디바이스 통계 타입
+// Device statistics type
 export interface DeviceStats {
   totalDevices: number;
   onlineDevices: number;
@@ -29,10 +29,10 @@ export interface DeviceStats {
   pendingDevices: number;
   totalApps: number;
   shadowITApps: number;
-  installationRate: number; // 에이전트 설치율 (0-1)
+  installationRate: number; // Agent installation rate (0-1)
 }
 
-// Shadow IT 앱 요약 타입
+// Shadow IT app summary type
 export interface ShadowITAppSummary {
   name: string;
   deviceCount: number;
@@ -40,7 +40,7 @@ export interface ShadowITAppSummary {
   lastSeenAt?: Date;
 }
 
-// 필터 옵션
+// Filter options
 export interface DeviceFilterOptions {
   status?: DeviceStatus;
   platform?: DevicePlatform;
@@ -50,7 +50,7 @@ export interface DeviceFilterOptions {
   limit?: number;
 }
 
-// 페이지네이션 결과
+// Pagination result
 export interface DeviceListResult {
   devices: DeviceListItem[];
   total: number;
@@ -59,7 +59,7 @@ export interface DeviceListResult {
 }
 
 /**
- * 조직의 디바이스 목록 조회
+ * Lists the organization's devices
  */
 export async function getDevices(
   organizationId: string,
@@ -107,7 +107,7 @@ export async function getDevices(
 }
 
 /**
- * 디바이스 상세 조회 (앱 목록 포함)
+ * Gets device details (including apps)
  */
 export async function getDeviceById(
   deviceId: string,
@@ -134,7 +134,7 @@ export async function getDeviceById(
 }
 
 /**
- * 디바이스 통계 조회
+ * Gets device statistics
  */
 export async function getDeviceStats(
   organizationId: string
@@ -162,8 +162,8 @@ export async function getDeviceStats(
     }),
   ]);
 
-  // 설치율 계산: (온라인 + 오프라인) / 전체
-  // 대기 중(PENDING)인 디바이스는 설치 안 된 것으로 간주
+  // Installation rate: (online + offline) / total
+  // PENDING devices are treated as not installed
   const installedDevices = onlineDevices + offlineDevices;
   const installationRate =
     totalDevices > 0 ? installedDevices / totalDevices : 0;
@@ -180,7 +180,7 @@ export async function getDeviceStats(
 }
 
 /**
- * 디바이스에 설치된 앱 목록 조회
+ * Lists apps installed on a device
  */
 export async function getDeviceApps(
   deviceId: string
@@ -201,7 +201,7 @@ export async function getDeviceApps(
 }
 
 /**
- * 조직의 Shadow IT 앱 목록 조회 (그룹화)
+ * Lists the organization's Shadow IT apps (grouped)
  */
 export async function getShadowITApps(
   organizationId: string
@@ -222,14 +222,14 @@ export async function getShadowITApps(
 }
 
 /**
- * 앱 승인 상태 일괄 업데이트 (앱 이름 기준)
+ * Bulk-updates app approval status (by app name)
  */
 export async function updateDeviceAppApprovalStatus(
   organizationId: string,
   appName: string,
   status: DeviceAppApprovalStatus
 ): Promise<{ success: boolean; updatedCount: number }> {
-  // 해당 조직의 디바이스에 설치된 해당 앱 찾기
+  // Find the app installed on the organization's devices
   const appsToUpdate = await prisma.deviceApp.findMany({
     where: {
       name: appName,
@@ -242,7 +242,7 @@ export async function updateDeviceAppApprovalStatus(
     return { success: true, updatedCount: 0 };
   }
 
-  // 트랜잭션으로 일괄 업데이트
+  // Bulk update in a transaction
   await prisma.$transaction(
     appsToUpdate.map((app) =>
       prisma.deviceApp.update({
@@ -256,12 +256,12 @@ export async function updateDeviceAppApprovalStatus(
 }
 
 /**
- * 에이전트 미설치 사용자 목록 조회
+ * Lists users without the agent installed
  */
 export async function getUsersWithoutAgent(
   organizationId: string
 ): Promise<{ id: string; name: string | null; email: string }[]> {
-  // 디바이스가 연결된 사용자 ID 조회
+  // Get IDs of users with linked devices
   const devicesWithUsers = await prisma.device.findMany({
     where: {
       organizationId,
@@ -275,7 +275,7 @@ export async function getUsersWithoutAgent(
     devicesWithUsers.map((d) => d.userId).filter(Boolean)
   );
 
-  // 디바이스가 없는 활성 사용자 조회
+  // Find active users without devices
   const usersWithoutAgent = await prisma.user.findMany({
     where: {
       organizationId,

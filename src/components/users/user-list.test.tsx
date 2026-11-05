@@ -27,12 +27,12 @@ const mockUsers: UserListItem[] = [
   {
     id: "user-1",
     email: "admin@example.com",
-    name: "관리자",
+    name: "Admin",
     avatarUrl: "https://example.com/avatar1.png",
     role: "ADMIN",
     status: "ACTIVE",
-    department: "경영팀",
-    team: { id: "team-1", name: "경영팀" },
+    department: "Management",
+    team: { id: "team-1", name: "Management" },
     jobTitle: "CTO",
     lastLoginAt: new Date("2024-01-15"),
     terminatedAt: null,
@@ -43,13 +43,13 @@ const mockUsers: UserListItem[] = [
   {
     id: "user-2",
     email: "member@example.com",
-    name: "팀원",
+    name: "Teammate",
     avatarUrl: null,
     role: "MEMBER",
     status: "ACTIVE",
-    department: "개발팀",
-    team: { id: "team-2", name: "개발팀" },
-    jobTitle: "개발자",
+    department: "Engineering",
+    team: { id: "team-2", name: "Engineering" },
+    jobTitle: "Developer",
     lastLoginAt: new Date("2024-01-10"),
     terminatedAt: null,
     assignedAppCount: 5,
@@ -59,13 +59,13 @@ const mockUsers: UserListItem[] = [
   {
     id: "user-3",
     email: "terminated@example.com",
-    name: "퇴사자",
+    name: "Former Employee",
     avatarUrl: null,
     role: "MEMBER",
     status: "TERMINATED",
-    department: "개발팀",
+    department: "Engineering",
     team: null,
-    jobTitle: "개발자",
+    jobTitle: "Developer",
     lastLoginAt: new Date("2023-12-01"),
     terminatedAt: new Date("2024-01-05"),
     assignedAppCount: 3,
@@ -75,95 +75,95 @@ const mockUsers: UserListItem[] = [
 ];
 
 describe("UserList", () => {
-  it("사용자 목록이 비어있으면 안내 메시지를 표시해야 한다", () => {
+  it("shows an empty-state message when the user list is empty", () => {
     render(<UserList users={[]} />);
 
-    expect(screen.getByText("등록된 사용자가 없습니다")).toBeInTheDocument();
+    expect(screen.getByText("No users found")).toBeInTheDocument();
   });
 
-  it("사용자 목록이 있으면 테이블을 표시해야 한다", () => {
+  it("shows the table when users exist", () => {
     render(<UserList users={mockUsers} />);
 
-    // 관리자는 이름과 역할 배지 모두에 나타남
-    const adminElements = screen.getAllByText("관리자");
+    // "Admin" appears in both the name and the role badge
+    const adminElements = screen.getAllByText("Admin");
     expect(adminElements.length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByText("팀원")).toBeInTheDocument();
-    expect(screen.getByText("퇴사자")).toBeInTheDocument();
+    expect(screen.getByText("Teammate")).toBeInTheDocument();
+    expect(screen.getByText("Former Employee")).toBeInTheDocument();
   });
 
-  it("이메일을 사용자 상세 페이지 링크로 표시해야 한다", () => {
+  it("renders the email as a link to the user detail page", () => {
     render(<UserList users={mockUsers} />);
 
     const adminLink = screen.getByText("admin@example.com").closest("a");
     expect(adminLink).toHaveAttribute("href", "/users/user-1");
   });
 
-  it("사용자 상태에 따라 올바른 배지를 표시해야 한다", () => {
+  it("shows the correct badge for each user status", () => {
     render(<UserList users={mockUsers} />);
 
-    // 활성 사용자 2명
-    const activeElements = screen.getAllByText("활성");
+    // 2 active users
+    const activeElements = screen.getAllByText("Active");
     expect(activeElements.length).toBe(2);
 
-    // 퇴사자 1명
-    expect(screen.getByText("퇴사")).toBeInTheDocument();
+    // 1 terminated user
+    expect(screen.getByText("Terminated")).toBeInTheDocument();
   });
 
-  it("사용자 역할을 올바르게 표시해야 한다", () => {
+  it("shows user roles correctly", () => {
     render(<UserList users={mockUsers} />);
 
-    // "관리자"는 이름과 역할 배지 모두에 나타남
-    const adminElements = screen.getAllByText("관리자");
+    // "Admin" appears in both the name and the role badge
+    const adminElements = screen.getAllByText("Admin");
     expect(adminElements.length).toBeGreaterThanOrEqual(1);
-    // "멤버"는 역할 배지에 표시됨
-    const memberBadges = screen.getAllByText("멤버");
+    // "Member" is shown in the role badge
+    const memberBadges = screen.getAllByText("Member");
     expect(memberBadges.length).toBe(2);
   });
 
-  it("부서 정보를 표시해야 한다", () => {
+  it("shows department information", () => {
     render(<UserList users={mockUsers} />);
 
-    expect(screen.getByText("경영팀")).toBeInTheDocument();
-    // "개발팀"은 2명이 있음
-    const devDept = screen.getAllByText("개발팀");
+    expect(screen.getByText("Management")).toBeInTheDocument();
+    // "Engineering" has 2 users
+    const devDept = screen.getAllByText("Engineering");
     expect(devDept.length).toBe(2);
   });
 
-  it("앱 접근 수를 표시해야 한다", () => {
+  it("shows the app access count", () => {
     render(<UserList users={mockUsers} />);
 
-    // 여러 곳에서 같은 숫자가 표시될 수 있음
+    // The same number may appear in several places
     expect(screen.getAllByText("10").length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText("5").length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText("3").length).toBeGreaterThanOrEqual(1);
   });
 
-  it("마지막 로그인 날짜를 포맷하여 표시해야 한다", () => {
+  it("shows the formatted last login date", () => {
     render(<UserList users={mockUsers} />);
 
     expect(screen.getByText("2024.01.15")).toBeInTheDocument();
     expect(screen.getByText("2024.01.10")).toBeInTheDocument();
   });
 
-  it("아바타 URL이 있으면 이미지를 표시해야 한다", () => {
+  it("shows the image when an avatar URL exists", () => {
     render(<UserList users={mockUsers} />);
 
-    const avatarImg = screen.getByAltText("관리자");
+    const avatarImg = screen.getByAltText("Admin");
     expect(avatarImg).toHaveAttribute("src", "https://example.com/avatar1.png");
   });
 
-  it("아바타 URL이 없으면 이름 첫 글자를 표시해야 한다", () => {
+  it("shows the first letter of the name when there is no avatar URL", () => {
     render(<UserList users={mockUsers} />);
 
-    // "팀" (팀원의 첫 글자)
-    expect(screen.getByText("팀")).toBeInTheDocument();
+    // "T" (first letter of Teammate)
+    expect(screen.getByText("T")).toBeInTheDocument();
   });
 
-  it("이름을 클릭하면 사용자 상세 페이지로 이동해야 한다", () => {
+  it("navigates to the user detail page when the name is clicked", () => {
     render(<UserList users={mockUsers} />);
 
-    // "관리자"는 여러 곳에 나타나므로 첫 번째 요소 사용
-    const adminElements = screen.getAllByText("관리자");
+    // "Admin" appears in several places, so use the first element
+    const adminElements = screen.getAllByText("Admin");
     const nameLink = adminElements[0].closest("a");
     expect(nameLink).toHaveAttribute("href", "/users/user-1");
   });

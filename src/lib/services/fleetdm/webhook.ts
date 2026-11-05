@@ -1,4 +1,4 @@
-// FleetDM Webhook 처리 서비스
+// FleetDM webhook processing service
 import { prisma } from "@/lib/db";
 import type { DevicePlatform, DeviceStatus } from "@prisma/client";
 import crypto from "crypto";
@@ -13,7 +13,7 @@ import type {
 import { FLEETDM_PLATFORM_MAP, FLEETDM_STATUS_MAP } from "./types";
 
 /**
- * Webhook 서명 검증
+ * Verifies the webhook signature
  */
 export function verifyWebhookSignature(
   payload: string,
@@ -41,7 +41,7 @@ export function verifyWebhookSignature(
 }
 
 /**
- * Webhook 이벤트 타입 파싱
+ * Parses the webhook event type
  */
 export function parseWebhookEventType(
   type: string
@@ -64,7 +64,7 @@ export function parseWebhookEventType(
 }
 
 /**
- * 호스트 이벤트 처리
+ * Handles host events
  */
 export async function handleHostEvent(
   eventType: FleetDMWebhookEventType,
@@ -88,7 +88,7 @@ export async function handleHostEvent(
 }
 
 /**
- * 소프트웨어 이벤트 처리
+ * Handles software events
  */
 export async function handleSoftwareEvent(
   eventType: FleetDMWebhookEventType,
@@ -97,7 +97,7 @@ export async function handleSoftwareEvent(
 ): Promise<void> {
   const { host_id, software } = data;
 
-  // 해당 호스트의 디바이스 찾기
+  // Find the device for the host
   const device = await prisma.device.findFirst({
     where: {
       fleetId: String(host_id),
@@ -122,7 +122,7 @@ export async function handleSoftwareEvent(
 }
 
 /**
- * 디바이스 Upsert (Webhook에서)
+ * Upserts a device (from a webhook)
  */
 async function upsertDeviceFromWebhook(
   host: FleetDMHost,
@@ -167,7 +167,7 @@ async function upsertDeviceFromWebhook(
 }
 
 /**
- * 디바이스 RETIRED 처리
+ * Marks a device as RETIRED
  */
 async function markDeviceAsRetired(
   hostId: number,
@@ -186,7 +186,7 @@ async function markDeviceAsRetired(
 }
 
 /**
- * 소프트웨어 Upsert (Webhook에서)
+ * Upserts software (from a webhook)
  */
 async function upsertSoftwareFromWebhook(
   deviceId: string,
@@ -217,7 +217,7 @@ async function upsertSoftwareFromWebhook(
 }
 
 /**
- * 소프트웨어 삭제 (Webhook에서)
+ * Deletes software (from a webhook)
  */
 async function removeSoftwareFromWebhook(
   deviceId: string,
@@ -235,14 +235,14 @@ async function removeSoftwareFromWebhook(
 }
 
 /**
- * Webhook 페이로드에서 조직 ID 추출
- * FleetDM Team ID를 사용하여 조직 매핑
+ * Extracts the organization ID from the webhook payload
+ * Maps the organization using the FleetDM Team ID
  */
 export async function getOrganizationIdFromWebhook(
   teamId?: number
 ): Promise<string | null> {
   if (!teamId) {
-    // 기본 조직 사용 (단일 테넌트 모드)
+    // Use the default organization (single-tenant mode)
     const integration = await prisma.integration.findFirst({
       where: {
         type: "FLEETDM",
@@ -253,7 +253,7 @@ export async function getOrganizationIdFromWebhook(
     return integration?.organizationId ?? null;
   }
 
-  // Team ID로 조직 찾기
+  // Find the organization by Team ID
   const integration = await prisma.integration.findFirst({
     where: {
       type: "FLEETDM",
@@ -270,14 +270,14 @@ export async function getOrganizationIdFromWebhook(
 }
 
 /**
- * Webhook 이벤트 로깅
+ * Logs webhook events
  */
 export async function logWebhookEvent(
   eventType: string,
   success: boolean,
   error?: string
 ): Promise<void> {
-  // 감사 로그에 기록 (선택적)
+  // Record in the audit log (optional)
   console.log(
     `[FleetDM Webhook] ${eventType}: ${success ? "success" : "failed"}${error ? ` - ${error}` : ""}`
   );

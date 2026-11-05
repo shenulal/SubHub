@@ -1,11 +1,11 @@
 /**
  * @file utils.test.ts
- * @description 유틸리티 함수 테스트 - cn, getBaseUrl
+ * @description Utility function tests - cn, getBaseUrl
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { cn, getBaseUrl } from "./utils";
 
-describe("cn (className 병합 유틸리티)", () => {
+describe("cn (className merge utility)", () => {
   it("should merge multiple class names", () => {
     const result = cn("px-2", "py-1");
     expect(result).toBe("px-2 py-1");
@@ -23,7 +23,7 @@ describe("cn (className 병합 유틸리티)", () => {
   });
 
   it("should override conflicting Tailwind classes", () => {
-    // tailwind-merge가 충돌하는 클래스를 병합
+    // tailwind-merge resolves conflicting classes
     const result = cn("px-2", "px-4");
     expect(result).toBe("px-4");
   });

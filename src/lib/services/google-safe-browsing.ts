@@ -1,6 +1,6 @@
 // src/lib/services/google-safe-browsing.ts
 /**
- * Google Safe Browsing API v4 클라이언트
+ * Google Safe Browsing API v4 client
  * @see https://developers.google.com/safe-browsing/v4
  */
 
@@ -8,7 +8,7 @@ const SAFE_BROWSING_API_URL =
   "https://safebrowsing.googleapis.com/v4/threatMatches:find";
 
 /**
- * 위협 유형
+ * Threat types
  */
 export type ThreatType =
   | "MALWARE"
@@ -17,7 +17,7 @@ export type ThreatType =
   | "POTENTIALLY_HARMFUL_APPLICATION";
 
 /**
- * Safe Browsing API 검사 결과
+ * Safe Browsing API check result
  */
 export interface SafeBrowsingResult {
   isMalicious: boolean;
@@ -27,7 +27,7 @@ export interface SafeBrowsingResult {
 }
 
 /**
- * Safe Browsing API 요청 형식
+ * Safe Browsing API request format
  */
 interface SafeBrowsingRequest {
   client: {
@@ -43,7 +43,7 @@ interface SafeBrowsingRequest {
 }
 
 /**
- * Safe Browsing API 응답 형식
+ * Safe Browsing API response format
  */
 interface SafeBrowsingResponse {
   matches?: {
@@ -56,10 +56,10 @@ interface SafeBrowsingResponse {
 }
 
 /**
- * Google Safe Browsing API를 사용하여 URL 안전성 검사
+ * Checks URL safety with the Google Safe Browsing API
  *
- * @param urls - 검사할 URL 목록 (최대 500개)
- * @returns URL별 검사 결과 Map
+ * @param urls - URLs to check (up to 500)
+ * @returns Map of results per URL
  *
  * @example
  * const results = await checkUrlSafety(["https://malware.testing.google.test/testing/malware/"]);
@@ -70,7 +70,7 @@ export async function checkUrlSafety(
 ): Promise<Map<string, SafeBrowsingResult>> {
   const results = new Map<string, SafeBrowsingResult>();
 
-  // API 키가 없으면 모든 URL을 안전한 것으로 처리
+  // Without an API key, treat all URLs as safe
   const apiKey = process.env.GOOGLE_SAFE_BROWSING_API_KEY;
   if (!apiKey) {
     console.warn(
@@ -87,12 +87,12 @@ export async function checkUrlSafety(
     return results;
   }
 
-  // URL이 없으면 빈 Map 반환
+  // Return an empty Map when there are no URLs
   if (urls.length === 0) {
     return results;
   }
 
-  // API 제한: 최대 500개 URL
+  // API limit: up to 500 URLs
   const urlBatches = chunk(urls, 500);
 
   for (const batch of urlBatches) {
@@ -129,7 +129,7 @@ export async function checkUrlSafety(
           response.status,
           await response.text()
         );
-        // API 오류 시 해당 배치의 URL을 안전한 것으로 처리
+        // On an API error, treat the batch's URLs as safe
         for (const url of batch) {
           results.set(url, {
             isMalicious: false,
@@ -143,7 +143,7 @@ export async function checkUrlSafety(
 
       const data: SafeBrowsingResponse = await response.json();
 
-      // 기본값: 모든 URL을 안전한 것으로 설정
+      // Default: mark all URLs as safe
       for (const url of batch) {
         results.set(url, {
           isMalicious: false,
@@ -153,7 +153,7 @@ export async function checkUrlSafety(
         });
       }
 
-      // 위협이 발견된 URL 업데이트
+      // Update URLs where threats were found
       if (data.matches) {
         for (const match of data.matches) {
           results.set(match.threat.url, {
@@ -166,7 +166,7 @@ export async function checkUrlSafety(
       }
     } catch (error) {
       console.error("[SafeBrowsing] Request failed:", error);
-      // 네트워크 오류 시 해당 배치의 URL을 안전한 것으로 처리
+      // On a network error, treat the batch's URLs as safe
       for (const url of batch) {
         results.set(url, {
           isMalicious: false,
@@ -182,10 +182,10 @@ export async function checkUrlSafety(
 }
 
 /**
- * 단일 도메인 안전성 검사
+ * Checks the safety of a single domain
  *
- * @param domain - 검사할 도메인 (예: "google.com")
- * @returns 검사 결과
+ * @param domain - Domain to check (e.g. "google.com")
+ * @returns Check result
  */
 export async function checkDomainSafety(
   domain: string
@@ -203,7 +203,7 @@ export async function checkDomainSafety(
 }
 
 /**
- * 배열을 지정된 크기의 청크로 분할
+ * Splits an array into chunks of the given size
  */
 function chunk<T>(array: T[], size: number): T[][] {
   const chunks: T[][] = [];
@@ -214,19 +214,19 @@ function chunk<T>(array: T[], size: number): T[][] {
 }
 
 /**
- * 위협 유형에 대한 한글 설명
+ * Display label for a threat type
  */
 export function getThreatTypeLabel(threatType: ThreatType | null): string {
   switch (threatType) {
     case "MALWARE":
-      return "악성 소프트웨어";
+      return "Malware";
     case "SOCIAL_ENGINEERING":
-      return "피싱/사회공학";
+      return "Phishing / social engineering";
     case "UNWANTED_SOFTWARE":
-      return "원치 않는 소프트웨어";
+      return "Unwanted software";
     case "POTENTIALLY_HARMFUL_APPLICATION":
-      return "유해 가능성 앱";
+      return "Potentially harmful app";
     default:
-      return "알 수 없음";
+      return "Unknown";
   }
 }

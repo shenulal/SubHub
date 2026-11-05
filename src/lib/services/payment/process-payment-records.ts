@@ -1,7 +1,7 @@
 // src/lib/services/payment/process-payment-records.ts
 /**
- * 결제 레코드 처리 공용 함수
- * - Server Action(importPaymentCSV)과 SSE API Route(import-stream) 양쪽에서 사용
+ * Shared payment record processing
+ * - Used by both the server action (importPaymentCSV) and the SSE API route (import-stream)
  */
 
 import { getBaseCurrency } from "@/lib/fx/base-currency";
@@ -19,7 +19,7 @@ import {
 import type { MatchSource } from "@prisma/client";
 import { findActiveSubscriptionForApp } from "./subscription-auto-link";
 
-// 각 레코드 처리 시 호출되는 프로그레스 콜백
+// Progress callback invoked for each record
 export interface ProcessProgressEvent {
   index: number; // 0-based
   total: number;
@@ -55,9 +55,9 @@ export interface ProcessPaymentRecordsOutput {
 }
 
 /**
- * CSV 레코드 배열을 순서대로 처리하여 결제 레코드를 생성한다.
- * LLM 폴백이 각 레코드마다 호출될 수 있으므로 처리 중 onProgress 콜백을 제공하면
- * 실시간 진행 상황을 전달할 수 있다.
+ * Processes CSV records in order and creates payment records.
+ * The LLM fallback may be called for each record, so providing an onProgress callback
+ * allows real-time progress reporting.
  */
 export async function processPaymentRecords(
   input: ProcessPaymentRecordsInput
@@ -88,7 +88,7 @@ export async function processPaymentRecords(
     const row = newRows[i];
     const normalizedMerchant = normalizeMerchantName(row.merchantName);
 
-    // 프로그레스 콜백 호출 (LLM 호출 전에 호출하여 현재 처리 중인 레코드를 알림)
+    // Invoke the progress callback (before the LLM call, to report the record being processed)
     if (onProgress) {
       await onProgress({
         index: i,
@@ -98,7 +98,7 @@ export async function processPaymentRecords(
       });
     }
 
-    // 커스텀 패턴 먼저 확인 (정규화 적용)
+    // Check custom patterns first (with normalisation)
     let matchResult = null;
     let matchSource: MatchSource | null = null;
     for (const customPattern of customPatterns) {
@@ -122,7 +122,7 @@ export async function processPaymentRecords(
       }
     }
 
-    // 커스텀 패턴에서 찾지 못하면 4-Layer 매칭 (LLM 제외)
+    // If no custom pattern matches, use 4-layer matching (LLM excluded)
     if (!matchResult) {
       const catalogMatch = matchMerchant4LayerSync(
         {
@@ -147,7 +147,7 @@ export async function processPaymentRecords(
       }
     }
 
-    // LLM 폴백 (Non-SaaS 캐시에 있으면 스킵)
+    // LLM fallback (skipped if in the non-SaaS cache)
     if (!matchResult?.appId && !nonSaaSSet.has(normalizedMerchant)) {
       const llmMatch = await matchMerchantWithLLM({
         organizationId,
@@ -175,7 +175,7 @@ export async function processPaymentRecords(
       matchedCount++;
     }
 
-    // SMP-179: 매칭된 앱의 ACTIVE 구독 자동 연결
+    // SMP-179: auto-link the matched app's ACTIVE subscription
     const linkedSubscriptionId = await findActiveSubscriptionForApp(
       matchResult?.appId || null,
       organizationId
@@ -203,7 +203,7 @@ export async function processPaymentRecords(
     });
   }
 
-  // Non-SaaS 벤더 캐시 저장
+  // Save non-SaaS vendors to the cache
   if (newNonSaaSVendors.length > 0) {
     await saveNonSaaSVendors(organizationId, newNonSaaSVendors);
   }

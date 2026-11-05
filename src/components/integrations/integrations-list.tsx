@@ -41,7 +41,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useMemo, useTransition } from "react";
 import { toast } from "sonner";
 
-// 컬럼 가시성 드롭다운에서 사용할 컬럼 정의 (외부 노출용)
+// Column definitions for the column-visibility dropdown (exported)
 export function getIntegrationListColumns(t: (key: string) => string) {
   return [
     { id: "type", header: t("integrations.list.columns.type") },
@@ -57,7 +57,7 @@ interface IntegrationsListProps {
   canDelete?: boolean;
   isLoading?: boolean;
   onRefresh?: () => Promise<unknown> | void;
-  // 외부에서 컬럼 가시성 상태 제어 시 사용
+  // Used when column visibility is controlled externally
   columnVisibility?: Record<string, boolean>;
   onColumnVisibilityChange?: (columnId: string, visible: boolean) => void;
   hideToolbar?: boolean;
@@ -128,7 +128,7 @@ export function IntegrationsList({
     setPagination,
   } = useDataTable({ defaultPageSize: 10 });
 
-  // 외부 상태가 제공되면 외부 상태 사용, 아니면 내부 상태 사용
+  // Use external state when provided, otherwise internal state
   const columnVisibility = externalColumnVisibility ?? internalColumnVisibility;
   const handleColumnVisibilityChange =
     externalOnColumnVisibilityChange ?? internalHandleColumnVisibilityChange;
@@ -212,7 +212,7 @@ export function IntegrationsList({
 
   const isBusy = isPending;
 
-  // 컬럼 정의
+  // Column definitions
   const columns: DataTableColumn<Integration>[] = useMemo(
     () => [
       {
@@ -345,7 +345,7 @@ export function IntegrationsList({
     [canManage, canDelete, isBusy, handleSync, handleDelete, t]
   );
 
-  // 정렬된 데이터
+  // Sorted data
   const sortedData = useMemo(() => {
     if (!sortState) return integrations;
 
@@ -377,7 +377,7 @@ export function IntegrationsList({
     });
   }, [integrations, sortState, t]);
 
-  // 페이지네이션된 데이터
+  // Paginated data
   const paginatedData = useMemo(() => {
     const start = pagination.pageIndex * pagination.pageSize;
     return sortedData.slice(start, start + pagination.pageSize);
@@ -404,24 +404,24 @@ export function IntegrationsList({
       data={paginatedData}
       columns={columns}
       getRowId={(row) => row.id}
-      // 행 선택
+      // Row selection
       enableRowSelection={canManage}
       selectedRows={selectedRows}
       onSelectedRowsChange={setSelectedRows}
-      // 컬럼 가시성
+      // Column visibility
       enableColumnVisibility
       columnVisibility={columnVisibility}
       onColumnVisibilityChange={handleColumnVisibilityChange}
-      // 정렬
+      // Sorting
       enableSorting
       sortState={sortState}
       onSortChange={setSortState}
-      // 페이지네이션
+      // Pagination
       enablePagination
       pagination={pagination}
       onPaginationChange={setPagination}
       totalCount={integrations.length}
-      // 기타
+      // Other
       emptyMessage={t("integrations.list.empty")}
       isLoading={isLoading}
       hideToolbar={hideToolbar}

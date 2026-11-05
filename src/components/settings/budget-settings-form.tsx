@@ -38,13 +38,13 @@ export function BudgetSettingsForm({
     initialSettings.monthlyBudget === null
   );
 
-  // 숫자 포맷팅 (1000 -> 1,000)
+  // Number formatting (1000 -> 1,000)
   const formatNumber = useCallback((value: number | null): string => {
     if (value === null || value === 0) return "";
     return value.toLocaleString();
   }, []);
 
-  // 숫자 파싱 (1,000 -> 1000)
+  // Number parsing (1,000 -> 1000)
   const parseNumber = useCallback((value: string): number => {
     const cleaned = value.replace(/[^\d]/g, "");
     return parseInt(cleaned, 10) || 0;
@@ -90,7 +90,7 @@ export function BudgetSettingsForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      {/* 통화 단위 선택 */}
+      {/* Currency selection */}
       <div className="space-y-2">
         <Label htmlFor="currency">{t("settings.budget.currency.label")}</Label>
         <Select
@@ -118,7 +118,7 @@ export function BudgetSettingsForm({
         </Select>
       </div>
 
-      {/* 자동 예산 설정 토글 */}
+      {/* Auto budget toggle */}
       <div className="hover:bg-purple-gray flex items-center justify-between rounded-lg border p-4 transition-colors">
         <div className="space-y-0.5">
           <Label htmlFor="auto-budget" className="text-base">
@@ -135,7 +135,7 @@ export function BudgetSettingsForm({
         />
       </div>
 
-      {/* 자동 설정 상태 메시지 */}
+      {/* Auto mode status message */}
       {isAutoMode && (
         <div className="bg-muted flex items-start gap-3 rounded-lg p-4">
           <Info className="text-muted-foreground mt-0.5 h-4 w-4" />
@@ -146,7 +146,7 @@ export function BudgetSettingsForm({
         </div>
       )}
 
-      {/* 월별 예산 입력 (자동 모드가 아닐 때만) */}
+      {/* Monthly budget input (only when not in auto mode) */}
       {!isAutoMode && (
         <div className="space-y-2">
           <Label htmlFor="monthly-budget">
@@ -173,7 +173,7 @@ export function BudgetSettingsForm({
         </div>
       )}
 
-      {/* 알림 임계값 */}
+      {/* Alert threshold */}
       <div className="space-y-4">
         <div className="space-y-2">
           <Label>{t("settings.budget.threshold.label")}</Label>
@@ -200,7 +200,7 @@ export function BudgetSettingsForm({
         </div>
       </div>
 
-      {/* 현재 설정 요약 */}
+      {/* Current settings summary */}
       <div className="rounded-lg border p-4">
         <div className="flex items-center gap-2 text-sm font-medium">
           <Wallet className="h-4 w-4" />
@@ -232,7 +232,7 @@ export function BudgetSettingsForm({
         </div>
       </div>
 
-      {/* 저장 버튼 */}
+      {/* Save button */}
       <Button type="submit" disabled={isPending}>
         {isPending ? (
           <>

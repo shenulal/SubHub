@@ -12,23 +12,34 @@ import { BillingCycle } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { isRedirectError } from "./subscription-crud.types";
 
-// ==================== SMP-107: App-Team 배정 헬퍼 ====================
+// ==================== SMP-107: App-Team assignment helper ====================
+
+/** Load the organization's default active tax rate (percent) for seat-price tax removal. */
+async function getDefaultTaxRatePercent(
+  organizationId: string
+): Promise<number | undefined> {
+  const rate = await prisma.taxRate.findFirst({
+    where: { organizationId, isDefault: true, isActive: true },
+    select: { ratePercent: true },
+  });
+  return rate ? Number(rate.ratePercent) : undefined;
+}
 
 /**
- * SMP-107: App이 지정된 Team에 배정되어 있는지 확인하고, 미배정이면 자동 배정
+ * SMP-107: Ensure the app is assigned to the given team; assign it automatically if not
  */
 export async function ensureAppTeamAssignment(
   appId: string,
   teamId: string | null
 ): Promise<ActionState<{ created: boolean; appTeamId?: string }>> {
-  // teamId가 null이면 아무 작업도 하지 않음
+  // Do nothing when teamId is null
   if (!teamId) {
     return { success: true, data: { created: false } };
   }
 
   const { organizationId, userId } = await requireOrganization();
 
-  // 기존 AppTeam 확인
+  // Check for an existing AppTeam
   const existingAppTeam = await prisma.appTeam.findFirst({
     where: { appId, teamId },
   });
@@ -40,7 +51,7 @@ export async function ensureAppTeamAssignment(
     };
   }
 
-  // AppTeam 생성
+  // Create the AppTeam
   const appTeam = await prisma.appTeam.create({
     data: {
       appId,
@@ -49,7 +60,7 @@ export async function ensureAppTeamAssignment(
     },
   });
 
-  // 감사 로그 기록
+  // Write the audit log
   await prisma.auditLog.create({
     data: {
       action: "ASSIGN_APP_TEAM",
@@ -68,7 +79,7 @@ export async function ensureAppTeamAssignment(
   return { success: true, data: { created: true, appTeamId: appTeam.id } };
 }
 
-// ==================== 구독 추천 (결제 내역 기반) ====================
+// ==================== Subscription suggestions (from payment records) ====================
 
 export interface SubscriptionSuggestion {
   appId: string;
@@ -81,25 +92,25 @@ export interface SubscriptionSuggestion {
   firstPaymentDate: Date;
   lastPaymentDate: Date;
   confidence: number; // 0-1
-  // SMP-134: Seat 구독제 판단 필드
+  // SMP-134: fields for seat-based subscription detection
   billingType: BillingType;
   perSeatPrice: number | null;
   suggestedSeats: number | null;
-  // SMP-160: Seat 판단 메타 정보
+  // SMP-160: seat detection metadata
   seatDetectionMethod?: string;
   seatDetectionConfidence?: number;
 }
 
 /**
- * SMP-107: 구독 추천 액션 타입
- * - create: 새 구독 생성 필요
- * - link: 기존 구독에 결제내역 연결만 필요
- * - update: 기존 구독 정보 업데이트 필요
+ * SMP-107: subscription suggestion action type
+ * - create: a new subscription is needed
+ * - link: only link payment records to an existing subscription
+ * - update: the existing subscription needs updating
  */
 export type SuggestedAction = "create" | "link" | "update";
 
 /**
- * SMP-78/SMP-107: PaymentRecord 기반 구독 추천 타입 (Team/User 배정 정보 포함)
+ * SMP-78/SMP-107: PaymentRecord-based subscription suggestion type (includes team/user assignment)
  */
 export interface PaymentRecordSuggestion extends SubscriptionSuggestion {
   teamId: string | null;
@@ -114,25 +125,26 @@ export interface PaymentRecordSuggestion extends SubscriptionSuggestion {
     teamName: string | null;
   }[];
   source: "payment_record";
-  // SMP-107: 추가 필드
-  existingSubscriptionId?: string; // 기존 구독 ID (link 액션 시)
-  suggestedAction: SuggestedAction; // 추천 액션
-  unmatchedPaymentIds: string[]; // 연결 안 된 결제내역 ID들
+  // SMP-107: additional fields
+  existingSubscriptionId?: string; // existing subscription ID (for link actions)
+  suggestedAction: SuggestedAction; // suggested action
+  unmatchedPaymentIds: string[]; // IDs of unlinked payment records
 }
 
 /**
- * 결제 내역 기반 구독 추천 생성
- * - 동일 앱으로 매칭된 결제 내역에서 반복 패턴 감지
- * - SMP-107: 이미 구독이 있어도 연결 안 된 결제내역이 있으면 포함
- * - SMP-78: Team/User 배정 정보 포함
+ * Build subscription suggestions from payment records
+ * - Detects recurring patterns in payment records matched to the same app
+ * - SMP-107: includes apps that already have a subscription if they have unlinked payment records
+ * - SMP-78: includes team/user assignment
  */
 export async function suggestSubscriptionsFromPayments(): Promise<
   ActionState<PaymentRecordSuggestion[]>
 > {
   try {
     const { organizationId } = await requireOrganization();
+    const taxRatePercent = await getDefaultTaxRatePercent(organizationId);
 
-    // 1. SMP-107: 이미 구독이 있는 앱 ID와 구독 정보 조회 (ID 매핑 포함)
+    // 1. SMP-107: load app IDs that already have subscriptions, with subscription details (ID map)
     const existingSubscriptions = await prisma.subscription.findMany({
       where: { organizationId },
       select: { id: true, appId: true },
@@ -141,7 +153,7 @@ export async function suggestSubscriptionsFromPayments(): Promise<
       existingSubscriptions.map((s) => [s.appId, s.id])
     );
 
-    // 2. 앱별 결제 내역 집계 (최근 12개월)
+    // 2. Aggregate payment records per app (last 12 months)
     const twelveMonthsAgo = new Date();
     twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
 
@@ -159,7 +171,7 @@ export async function suggestSubscriptionsFromPayments(): Promise<
       _max: { transactionDate: true },
     });
 
-    // 3. 각 앱별로 상세 결제 내역 조회하여 패턴 분석
+    // 3. Load each app's payment records and analyse the pattern
     const suggestions: PaymentRecordSuggestion[] = [];
 
     for (const group of paymentsByApp) {
@@ -167,12 +179,12 @@ export async function suggestSubscriptionsFromPayments(): Promise<
         continue;
       }
 
-      // 최소 2건 이상의 결제가 있어야 패턴 분석 가능
+      // At least 2 payments are needed for pattern analysis
       if (group._count.id < 2) {
         continue;
       }
 
-      // 앱 정보 조회 (SMP-160: pricingModel, basePricePerSeat 포함)
+      // Load app details (SMP-160: includes pricingModel, basePricePerSeat)
       const app = await prisma.app.findUnique({
         where: { id: group.matchedAppId },
         include: {
@@ -188,7 +200,7 @@ export async function suggestSubscriptionsFromPayments(): Promise<
 
       if (!app) continue;
 
-      // SMP-107: 결제 내역 상세 조회 (linkedSubscriptionId 포함)
+      // SMP-107: load payment record details (includes linkedSubscriptionId)
       const payments = await prisma.paymentRecord.findMany({
         where: {
           organizationId,
@@ -198,47 +210,47 @@ export async function suggestSubscriptionsFromPayments(): Promise<
         },
         orderBy: { transactionDate: "asc" },
         select: {
-          id: true, // SMP-107: ID 필요
+          id: true, // SMP-107: ID required
           transactionDate: true,
           amount: true,
           currency: true,
           teamId: true,
           userId: true,
-          linkedSubscriptionId: true, // SMP-107: 연결 상태 확인
+          linkedSubscriptionId: true, // SMP-107: check link status
         },
       });
 
-      // SMP-107: 연결 안 된 결제내역 필터링
+      // SMP-107: filter unlinked payment records
       const unmatchedPayments = payments.filter(
         (p) => p.linkedSubscriptionId === null
       );
       const unmatchedPaymentIds = unmatchedPayments.map((p) => p.id);
 
-      // SMP-107: 기존 구독 확인
+      // SMP-107: check for an existing subscription
       const existingSubscriptionId = appToSubscriptionMap.get(
         group.matchedAppId
       );
       const hasExistingSubscription = !!existingSubscriptionId;
 
-      // SMP-107: 기존 구독이 있고 모든 결제내역이 연결되어 있으면 스킵
+      // SMP-107: skip if a subscription exists and all payment records are linked
       if (hasExistingSubscription && unmatchedPaymentIds.length === 0) {
         continue;
       }
 
-      // SMP-107: 기존 구독이 없으면 최소 2건 필요, 있으면 연결 안 된 건이 있으면 OK
+      // SMP-107: without a subscription at least 2 records are needed; with one, any unlinked record is enough
       if (!hasExistingSubscription && payments.length < 2) {
         continue;
       }
 
-      // 결제 주기 분석
+      // Analyse the billing cycle
       const { billingCycle, confidence } = analyzeBillingCycle(payments);
 
-      // 평균 금액 계산
+      // Calculate the average amount
       const avgAmount =
         payments.reduce((sum, p) => sum + Number(p.amount), 0) /
         payments.length;
 
-      // SMP-134/SMP-160: Seat 구독제 자동 판단 (카탈로그 정보 포함)
+      // SMP-134/SMP-160: auto-detect seat-based subscriptions (includes catalogue data)
       const paymentAmounts = payments.map((p) => Number(p.amount));
       const seatDetection = detectBillingType({
         appName: app.name,
@@ -247,16 +259,17 @@ export async function suggestSubscriptionsFromPayments(): Promise<
         catalogBasePricePerSeat: app.catalog?.basePricePerSeat
           ? Number(app.catalog.basePricePerSeat)
           : null,
+        taxRatePercent,
       });
 
-      // SMP-78: Dominant Team/User 분석 (가장 많이 배정된 Team 또는 User)
+      // SMP-78: dominant team/user analysis (the most frequently assigned team or user)
       let teamId: string | null = null;
       let teamName: string | null = null;
       let assignedUserId: string | null = null;
       let assignedUserName: string | null = null;
       let availableUsers: AvailableUserWithTeam[] = [];
 
-      // 배정된 결제 내역에서 dominant Team/User 계산
+      // Compute the dominant team/user from assigned payment records
       const teamCounts = new Map<string, number>();
       const userCounts = new Map<string, number>();
 
@@ -275,7 +288,7 @@ export async function suggestSubscriptionsFromPayments(): Promise<
         }
       }
 
-      // Dominant Team 결정
+      // Determine the dominant team
       let maxTeamCount = 0;
       let dominantTeamId: string | null = null;
       for (const [tid, count] of teamCounts) {
@@ -285,7 +298,7 @@ export async function suggestSubscriptionsFromPayments(): Promise<
         }
       }
 
-      // Dominant User 결정
+      // Determine the dominant user
       let maxUserCount = 0;
       let dominantUserId: string | null = null;
       for (const [uid, count] of userCounts) {
@@ -295,7 +308,7 @@ export async function suggestSubscriptionsFromPayments(): Promise<
         }
       }
 
-      // User 배정이 Team 배정보다 우선 (더 구체적인 배정)
+      // User assignment takes precedence over team assignment (more specific)
       if (dominantUserId) {
         const user = await prisma.user.findUnique({
           where: { id: dominantUserId },
@@ -312,7 +325,7 @@ export async function suggestSubscriptionsFromPayments(): Promise<
           if (user.team) {
             teamId = user.team.id;
             teamName = user.team.name;
-            // SMP-134: 유저의 팀 멤버를 availableUsers에 채우기
+            // SMP-134: fill availableUsers with the user's team members
             const teamWithMembers = await prisma.team.findUnique({
               where: { id: user.team.id },
               include: {
@@ -334,7 +347,7 @@ export async function suggestSubscriptionsFromPayments(): Promise<
               );
             }
           } else {
-            // SMP-134: 팀이 없는 경우 조직 전체 멤버로 fallback
+            // SMP-134: fall back to all organization members when there is no team
             const allUsers = await prisma.user.findMany({
               where: { organizationId, status: "ACTIVE" },
               select: {
@@ -372,7 +385,7 @@ export async function suggestSubscriptionsFromPayments(): Promise<
           );
         }
       } else {
-        // SMP-156: 팀/유저 배정이 없는 경우 조직 전체 활성 멤버로 fallback
+        // SMP-156: fall back to all active organization members when there is no team/user assignment
         const allUsers = await prisma.user.findMany({
           where: { organizationId, status: "ACTIVE" },
           select: {
@@ -386,7 +399,7 @@ export async function suggestSubscriptionsFromPayments(): Promise<
         availableUsers = mapUsersWithOwnTeam(allUsers);
       }
 
-      // SMP-134: assignedUserId가 availableUsers에 반드시 포함되도록 보장
+      // SMP-134: ensure assignedUserId is always included in availableUsers
       if (
         assignedUserId &&
         !availableUsers.some((u) => u.id === assignedUserId)
@@ -415,9 +428,9 @@ export async function suggestSubscriptionsFromPayments(): Promise<
         }
       }
 
-      // confidence가 0.5 이상인 경우만 추천
+      // Only suggest when confidence is 0.5 or higher
       if (confidence >= 0.5) {
-        // SMP-107: suggestedAction 결정
+        // SMP-107: determine suggestedAction
         const suggestedAction: SuggestedAction = existingSubscriptionId
           ? "link"
           : "create";
@@ -434,20 +447,20 @@ export async function suggestSubscriptionsFromPayments(): Promise<
           firstPaymentDate: group._min.transactionDate!,
           lastPaymentDate: group._max.transactionDate!,
           confidence,
-          // SMP-134/SMP-160: Seat 구독제 판단
+          // SMP-134/SMP-160: seat-based subscription detection
           billingType: seatDetection.billingType,
           perSeatPrice: seatDetection.perSeatPrice,
           suggestedSeats: seatDetection.suggestedSeats,
           seatDetectionMethod: seatDetection.method,
           seatDetectionConfidence: seatDetection.confidence,
-          // SMP-78: Team/User 배정 정보
+          // SMP-78: team/user assignment
           teamId,
           teamName,
           assignedUserId,
           assignedUserName,
           availableUsers,
           source: "payment_record",
-          // SMP-107: 추가 필드
+          // SMP-107: additional fields
           existingSubscriptionId,
           suggestedAction,
           unmatchedPaymentIds,
@@ -455,7 +468,7 @@ export async function suggestSubscriptionsFromPayments(): Promise<
       }
     }
 
-    // confidence 높은 순으로 정렬
+    // Sort by confidence, highest first
     suggestions.sort((a, b) => b.confidence - a.confidence);
 
     return { success: true, data: suggestions };
@@ -466,12 +479,12 @@ export async function suggestSubscriptionsFromPayments(): Promise<
       error:
         error instanceof Error
           ? error.message
-          : "구독 추천 분석 중 오류가 발생했습니다",
+          : "An error occurred while analysing subscription suggestions",
     };
   }
 }
 
-// ==================== availableUser 매핑 헬퍼 ====================
+// ==================== availableUser mapping helpers ====================
 
 type AvailableUserWithTeam = {
   id: string;
@@ -482,7 +495,7 @@ type AvailableUserWithTeam = {
 };
 
 /**
- * 팀 멤버 목록을 AvailableUserWithTeam 배열로 변환 (팀 정보를 명시적으로 지정)
+ * Convert team members to an AvailableUserWithTeam array (team info set explicitly)
  */
 function mapMembersToAvailableUsers(
   members: { id: string; name: string | null; email: string }[],
@@ -499,7 +512,7 @@ function mapMembersToAvailableUsers(
 }
 
 /**
- * 조직 전체 사용자 목록을 AvailableUserWithTeam 배열로 변환 (각 사용자의 팀 정보를 개별 사용)
+ * Convert all organization users to an AvailableUserWithTeam array (uses each user's own team)
  */
 function mapUsersWithOwnTeam(
   users: {
@@ -520,8 +533,8 @@ function mapUsersWithOwnTeam(
 }
 
 /**
- * availableUsers에 미배정(teamId=null) 사용자를 추가
- * 이미 포함된 사용자는 중복 추가하지 않음
+ * Append unassigned (teamId=null) users to availableUsers
+ * Users already included are not added again
  */
 async function appendUnassignedUsers(
   availableUsers: AvailableUserWithTeam[],
@@ -546,7 +559,7 @@ async function appendUnassignedUsers(
 }
 
 /**
- * 결제 주기 분석 헬퍼 함수
+ * Billing cycle analysis helper
  */
 function analyzeBillingCycle(
   payments: { transactionDate: Date; amount: unknown }[]
@@ -558,7 +571,7 @@ function analyzeBillingCycle(
     return { billingCycle: "MONTHLY", confidence: 0 };
   }
 
-  // 결제 간격 계산 (일 단위)
+  // Payment intervals (in days)
   const intervals: number[] = [];
   for (let i = 1; i < payments.length; i++) {
     const days = Math.round(
@@ -569,16 +582,16 @@ function analyzeBillingCycle(
     intervals.push(days);
   }
 
-  // 평균 간격 계산
+  // Average interval
   const avgInterval = intervals.reduce((a, b) => a + b, 0) / intervals.length;
 
-  // 간격 표준편차 계산 (일관성 측정용)
+  // Interval standard deviation (measures consistency)
   const variance =
     intervals.reduce((sum, i) => sum + Math.pow(i - avgInterval, 2), 0) /
     intervals.length;
   const stdDev = Math.sqrt(variance);
 
-  // 결제 주기 판단
+  // Determine the billing cycle
   let billingCycle: BillingCycle;
   let expectedInterval: number;
 
@@ -596,7 +609,7 @@ function analyzeBillingCycle(
     expectedInterval = avgInterval;
   }
 
-  // confidence 계산: 표준편차가 작을수록, 결제 건수가 많을수록 높음
+  // Confidence: higher with a smaller standard deviation and more payments
   const intervalAccuracy = Math.max(
     0,
     1 - Math.abs(avgInterval - expectedInterval) / expectedInterval
@@ -611,7 +624,7 @@ function analyzeBillingCycle(
 }
 
 /**
- * 추천에서 구독 생성
+ * Create a subscription from a suggestion
  */
 async function _createSubscriptionFromSuggestion(
   suggestion: SubscriptionSuggestion
@@ -623,7 +636,7 @@ async function _createSubscriptionFromSuggestion(
   });
 
   if (!app) {
-    return { success: false, message: "앱을 찾을 수 없습니다" };
+    return { success: false, message: "App not found" };
   }
 
   const existingSubscription = await prisma.subscription.findFirst({
@@ -631,7 +644,10 @@ async function _createSubscriptionFromSuggestion(
   });
 
   if (existingSubscription) {
-    return { success: false, message: "이미 해당 앱에 대한 구독이 있습니다" };
+    return {
+      success: false,
+      message: "A subscription for this app already exists",
+    };
   }
 
   const renewalDate = calculateNextRenewalDate(
@@ -649,12 +665,12 @@ async function _createSubscriptionFromSuggestion(
       amount: suggestion.suggestedAmount,
       perSeatPrice: suggestion.perSeatPrice, // SMP-134
       currency: suggestion.currency,
-      totalLicenses: null, // SMP-160: suggestedSeats 자동 채움 제거 (사용자 입력만 사용)
+      totalLicenses: null, // SMP-160: no longer auto-filled from suggestedSeats (user input only)
       startDate: suggestion.firstPaymentDate,
       renewalDate,
       autoRenewal: true,
       renewalAlert30: true,
-      notes: `결제 내역 기반 자동 생성 (${suggestion.paymentCount}건 분석, 신뢰도 ${Math.round(suggestion.confidence * 100)}%)`,
+      notes: `Auto-created from payment records (${suggestion.paymentCount} payments analysed, ${Math.round(suggestion.confidence * 100)}% confidence)`,
     },
   });
 
@@ -683,20 +699,20 @@ export const createSubscriptionFromSuggestion = withLogging(
 );
 
 /**
- * SMP-78: PaymentRecord 기반 구독 생성 입력 타입
+ * SMP-78: input type for creating a subscription from a PaymentRecord suggestion
  */
 export interface CreateSubscriptionFromPaymentSuggestionInput {
   suggestion: PaymentRecordSuggestion;
   selectedUserIds: string[];
-  billingType?: string; // SMP-134: 유저 체크박스 상태 반영
-  totalLicenses?: number | null; // SMP-134: 유저 입력 총 Seat 수
+  billingType?: string; // SMP-134: reflects the user's checkbox state
+  totalLicenses?: number | null; // SMP-134: total seats entered by the user
 }
 
 /**
- * SMP-78/SMP-107: PaymentRecord 추천에서 구독 생성/연결
- * - suggestedAction: create → 새 구독 생성
- * - suggestedAction: link → 기존 구독에 결제내역만 연결
- * - App-Team 자동 배정, SubscriptionUser 배속
+ * SMP-78/SMP-107: create or link a subscription from a PaymentRecord suggestion
+ * - suggestedAction: create → create a new subscription
+ * - suggestedAction: link → only link payment records to the existing subscription
+ * - Auto-assigns App-Team and attaches SubscriptionUser records
  */
 async function _createSubscriptionFromPaymentSuggestion(
   input: CreateSubscriptionFromPaymentSuggestionInput
@@ -709,9 +725,9 @@ async function _createSubscriptionFromPaymentSuggestion(
   } = input;
   const { organizationId, userId, role } = await requireOrganization();
 
-  // ADMIN만 사용자 배정 가능
+  // Only ADMINs can assign users
   if (selectedUserIds.length > 0 && role !== "ADMIN") {
-    return { success: false, message: "사용자 배정은 관리자만 가능합니다" };
+    return { success: false, message: "Only admins can assign users" };
   }
 
   const app = await prisma.app.findFirst({
@@ -719,17 +735,17 @@ async function _createSubscriptionFromPaymentSuggestion(
   });
 
   if (!app) {
-    return { success: false, message: "앱을 찾을 수 없습니다" };
+    return { success: false, message: "App not found" };
   }
 
-  // SMP-107: 기존 구독 확인
+  // SMP-107: check for an existing subscription
   const existingSubscription = await prisma.subscription.findFirst({
     where: { appId: suggestion.appId, organizationId },
   });
 
-  // SMP-107: suggestedAction: link인 경우 - 기존 구독에 결제내역만 연결
+  // SMP-107: suggestedAction link - only link payment records to the existing subscription
   if (suggestion.suggestedAction === "link" && existingSubscription) {
-    // 결제내역 연결
+    // Link payment records
     if (suggestion.unmatchedPaymentIds.length > 0) {
       await prisma.paymentRecord.updateMany({
         where: { id: { in: suggestion.unmatchedPaymentIds } },
@@ -737,7 +753,7 @@ async function _createSubscriptionFromPaymentSuggestion(
       });
     }
 
-    // 감사 로그
+    // Audit log
     await prisma.auditLog.create({
       data: {
         action: "LINK_PAYMENT_RECORDS",
@@ -758,15 +774,18 @@ async function _createSubscriptionFromPaymentSuggestion(
     return { success: true, data: { id: existingSubscription.id } };
   }
 
-  // suggestedAction: create인 경우 - 새 구독 생성
+  // suggestedAction create - create a new subscription
   if (existingSubscription) {
-    return { success: false, message: "이미 해당 앱에 대한 구독이 있습니다" };
+    return {
+      success: false,
+      message: "A subscription for this app already exists",
+    };
   }
 
-  // SMP-107: App-Team 자동 배정
+  // SMP-107: auto-assign App-Team
   await ensureAppTeamAssignment(suggestion.appId, suggestion.teamId);
 
-  // assignedUserId가 있으면 자동으로 배정할 유저 목록에 추가
+  // Add assignedUserId to the users to assign, when present
   const userIdsToAssign = new Set(selectedUserIds);
   if (suggestion.assignedUserId) {
     userIdsToAssign.add(suggestion.assignedUserId);
@@ -774,7 +793,7 @@ async function _createSubscriptionFromPaymentSuggestion(
   const finalUserIds = Array.from(userIdsToAssign);
   let userTeamIds: string[] = [];
 
-  // 선택된 사용자 검증 (조직 소속 확인)
+  // Validate selected users (must belong to the organization)
   if (finalUserIds.length > 0) {
     const validUsers = await prisma.user.findMany({
       where: {
@@ -787,11 +806,11 @@ async function _createSubscriptionFromPaymentSuggestion(
     if (validUsers.length !== finalUserIds.length) {
       return {
         success: false,
-        message: "유효하지 않은 사용자가 포함되어 있습니다",
+        message: "One or more users are invalid",
       };
     }
 
-    // SMP-134: 유저 배정 시 팀-앱 자동 연결
+    // SMP-134: auto-link team and app when assigning users
     userTeamIds = validUsers
       .filter((u) => u.teamId != null)
       .map((u) => u.teamId as string);
@@ -817,10 +836,10 @@ async function _createSubscriptionFromPaymentSuggestion(
     }
   }
 
-  // SMP-134: billingType/totalLicenses 오버라이드
+  // SMP-134: billingType/totalLicenses overrides
   const finalBillingType =
     (overrideBillingType as "FLAT_RATE" | "PER_SEAT") || suggestion.billingType;
-  // SMP-160: suggestedSeats 자동 채움 제거 — override 값만 사용
+  // SMP-160: no auto-fill from suggestedSeats — use override values only
   const finalTotalLicenses =
     overrideTotalLicenses !== undefined ? overrideTotalLicenses : null;
 
@@ -846,11 +865,11 @@ async function _createSubscriptionFromPaymentSuggestion(
       renewalDate,
       autoRenewal: true,
       renewalAlert30: true,
-      notes: `결제 내역(CSV) 기반 자동 생성 (${suggestion.paymentCount}건 분석, 신뢰도 ${Math.round(suggestion.confidence * 100)}%)`,
+      notes: `Auto-created from payment records (CSV) (${suggestion.paymentCount} payments analysed, ${Math.round(suggestion.confidence * 100)}% confidence)`,
     },
   });
 
-  // SubscriptionTeam 생성 (suggestion.teamId가 있을 경우)
+  // Create SubscriptionTeam (when suggestion.teamId is set)
   if (suggestion.teamId) {
     await prisma.subscriptionTeam.create({
       data: {
@@ -861,7 +880,7 @@ async function _createSubscriptionFromPaymentSuggestion(
     });
   }
 
-  // SMP-107: PaymentRecord.linkedSubscriptionId 연결
+  // SMP-107: link PaymentRecord.linkedSubscriptionId
   if (suggestion.unmatchedPaymentIds.length > 0) {
     await prisma.paymentRecord.updateMany({
       where: { id: { in: suggestion.unmatchedPaymentIds } },
@@ -869,7 +888,7 @@ async function _createSubscriptionFromPaymentSuggestion(
     });
   }
 
-  // SMP-107: SubscriptionUser 레코드 생성
+  // SMP-107: create SubscriptionUser records
   if (finalUserIds.length > 0) {
     await prisma.subscriptionUser.createMany({
       data: finalUserIds.map((uid) => ({
@@ -880,7 +899,7 @@ async function _createSubscriptionFromPaymentSuggestion(
       skipDuplicates: true,
     });
 
-    // SMP-180: 사용자 팀 → SubscriptionTeam 자동 연결 (suggestion.teamId 없을 때)
+    // SMP-180: user's team → auto-link SubscriptionTeam (when suggestion.teamId is absent)
     if (!suggestion.teamId && userTeamIds.length > 0) {
       const uniqueUserTeamIds = [...new Set(userTeamIds)];
       await prisma.subscriptionTeam.createMany({
@@ -892,7 +911,7 @@ async function _createSubscriptionFromPaymentSuggestion(
         skipDuplicates: true,
       });
 
-      // Dual-write: subscription.teamId 업데이트 (첫 번째 팀)
+      // Dual-write: update subscription.teamId (first team)
       await prisma.subscription.update({
         where: { id: subscription.id },
         data: { teamId: uniqueUserTeamIds[0] },
@@ -900,7 +919,7 @@ async function _createSubscriptionFromPaymentSuggestion(
     }
   }
 
-  // SMP-160: Seat 판단 결과를 감사 로그에 포함
+  // SMP-160: include the seat detection result in the audit log
   const seatDetectionLog = {
     billingType: suggestion.billingType,
     perSeatPrice: suggestion.perSeatPrice,
@@ -943,12 +962,12 @@ export const createSubscriptionFromPaymentSuggestion = withLogging(
   _createSubscriptionFromPaymentSuggestion
 );
 
-// ==================== 구독 제안 카운트 (대시보드 얼럿용) ====================
+// ==================== Subscription suggestion count (for dashboard alerts) ====================
 
 /**
- * 대시보드 얼럿용 구독 제안 건수 조회
- * - PaymentRecord 및 CardTransaction 기반 미등록/미연결 구독 후보 앱 수 반환
- * - 신뢰도 계산 생략 (경량 쿼리)
+ * Get the subscription suggestion count for dashboard alerts
+ * - Returns the number of candidate apps with unregistered/unlinked subscriptions from PaymentRecord and CardTransaction
+ * - Skips confidence calculation (lightweight query)
  */
 export async function getSuggestionCount(): Promise<
   ActionState<{ count: number }>
@@ -963,14 +982,14 @@ export async function getSuggestionCount(): Promise<
       .slice(0, 10)
       .replace(/-/g, "");
 
-    // 기존 구독 앱 ID 조회
+    // Load app IDs with existing subscriptions
     const existingSubscriptions = await prisma.subscription.findMany({
       where: { organizationId },
       select: { appId: true },
     });
     const existingAppIds = new Set(existingSubscriptions.map((s) => s.appId));
 
-    // PaymentRecord 그룹: 전체 + 미연결
+    // PaymentRecord groups: all + unlinked
     const [paymentTotalGroups, paymentUnlinkedGroups] = await Promise.all([
       prisma.paymentRecord.groupBy({
         by: ["matchedAppId"],
@@ -995,7 +1014,7 @@ export async function getSuggestionCount(): Promise<
       }),
     ]);
 
-    // CardTransaction 그룹: 전체 + 미연결
+    // CardTransaction groups: all + unlinked
     const [cardTotalGroups, cardUnlinkedGroups] = await Promise.all([
       prisma.cardTransaction.groupBy({
         by: ["matchedAppId"],
@@ -1029,7 +1048,7 @@ export async function getSuggestionCount(): Promise<
 
     const pendingAppIds = new Set<string>();
 
-    // PaymentRecord 기반 후보 앱 수집
+    // Collect PaymentRecord-based candidate apps
     for (const g of paymentTotalGroups) {
       if (!g.matchedAppId) continue;
       const unlinkedCount = unlinkedPaymentMap.get(g.matchedAppId) ?? 0;
@@ -1042,7 +1061,7 @@ export async function getSuggestionCount(): Promise<
       }
     }
 
-    // CardTransaction 기반 후보 앱 수집 (PaymentRecord와 중복 제거됨)
+    // Collect CardTransaction-based candidate apps (deduplicated against PaymentRecord)
     for (const g of cardTotalGroups) {
       if (!g.matchedAppId) continue;
       const unlinkedCount = unlinkedCardMap.get(g.matchedAppId) ?? 0;
@@ -1060,16 +1079,16 @@ export async function getSuggestionCount(): Promise<
     if (isRedirectError(error)) throw error;
     return {
       success: false,
-      error: "구독 제안 수 조회 중 오류가 발생했습니다",
+      error: "An error occurred while counting subscription suggestions",
     };
   }
 }
 
-// ==================== 법인카드 거래 기반 구독 추천 (Phase 3) ====================
+// ==================== Subscription suggestions from corporate card transactions (Phase 3) ====================
 
 /**
- * YYYYMMDD 문자열을 Date 객체로 변환
- * CardTransaction.useDt는 "20250109" 형식이므로 직접 new Date()에 전달하면 Invalid Date
+ * Convert a YYYYMMDD string to a Date
+ * CardTransaction.useDt is in "20250109" format, so passing it directly to new Date() yields Invalid Date
  */
 function parseYYYYMMDD(dateStr: string): Date {
   return new Date(
@@ -1078,16 +1097,16 @@ function parseYYYYMMDD(dateStr: string): Date {
 }
 
 /**
- * CardTransaction 기반 구독 추천 타입
- * - Team 자동배정: CorporateCard.teamId 또는 assignedUser.teamId 기준
- * - User 자동배정: CorporateCard.assignedUserId가 있으면 자동 배정
- * - User 선택용: Team.members 목록 제공
- * - SMP-123: PaymentRecord와 동일한 구조로 확장
+ * CardTransaction-based subscription suggestion type
+ * - Team auto-assignment: based on CorporateCard.teamId or assignedUser.teamId
+ * - User auto-assignment: assigned automatically when CorporateCard.assignedUserId is set
+ * - User selection: provides the Team.members list
+ * - SMP-123: extended to the same structure as PaymentRecord
  */
 export interface CardTransactionSuggestion extends SubscriptionSuggestion {
   teamId: string | null;
   teamName: string | null;
-  // Phase 2 추가: 카드에 배정된 유저 정보
+  // Phase 2: user assigned to the card
   assignedUserId: string | null;
   assignedUserName: string | null;
   availableUsers: {
@@ -1098,35 +1117,36 @@ export interface CardTransactionSuggestion extends SubscriptionSuggestion {
     teamName: string | null;
   }[];
   source: "card_transaction";
-  // SMP-123: PaymentRecord와 동일한 필드 추가
+  // SMP-123: same fields as PaymentRecord
   existingSubscriptionId?: string;
   suggestedAction: SuggestedAction;
   unmatchedTransactionIds: string[];
 }
 
 /**
- * CardTransaction 기반 구독 생성 입력 타입
+ * Input type for creating a subscription from a CardTransaction suggestion
  */
 export interface CreateSubscriptionFromCardSuggestionInput {
   suggestion: CardTransactionSuggestion;
   selectedUserIds: string[];
-  billingType?: string; // SMP-134: 유저 체크박스 상태 반영
-  totalLicenses?: number | null; // SMP-134: 유저 입력 총 Seat 수
+  billingType?: string; // SMP-134: reflects the user's checkbox state
+  totalLicenses?: number | null; // SMP-134: total seats entered by the user
 }
 
 /**
- * 법인카드 거래 기반 구독 추천 생성
- * - CardTransaction에서 매칭된 앱별 반복 패턴 감지
- * - Dominant Card의 Team 정보 자동 포함
- * - Team 멤버 목록을 availableUsers로 제공
- * - SMP-123: matchStatus 필드 사용, 기존 구독 연결 지원
+ * Build subscription suggestions from corporate card transactions
+ * - Detects recurring patterns per matched app in CardTransaction
+ * - Automatically includes the dominant card's team
+ * - Provides team members as availableUsers
+ * - SMP-123: uses the matchStatus field; supports linking to existing subscriptions
  */
 export async function suggestFromCardTransactions(): Promise<
   ActionState<CardTransactionSuggestion[]>
 > {
   const { organizationId } = await requireOrganization();
+  const taxRatePercent = await getDefaultTaxRatePercent(organizationId);
 
-  // 1. SMP-123: 이미 구독이 있는 앱 ID와 구독 정보 조회 (ID 매핑 포함)
+  // 1. SMP-123: load app IDs that already have subscriptions, with subscription details (ID map)
   const existingSubscriptions = await prisma.subscription.findMany({
     where: { organizationId },
     select: { id: true, appId: true },
@@ -1135,7 +1155,7 @@ export async function suggestFromCardTransactions(): Promise<
     existingSubscriptions.map((s) => [s.appId, s.id])
   );
 
-  // 2. 최근 12개월 CardTransaction 그룹화 (matchStatus 활용)
+  // 2. Group CardTransactions from the last 12 months (uses matchStatus)
   const twelveMonthsAgo = new Date();
   twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
   const twelveMonthsAgoStr = twelveMonthsAgo
@@ -1164,12 +1184,12 @@ export async function suggestFromCardTransactions(): Promise<
       continue;
     }
 
-    // 최소 2건 이상 필요
+    // At least 2 required
     if (group._count.id < 2) {
       continue;
     }
 
-    // 앱 정보 조회 (SMP-160: pricingModel, basePricePerSeat 포함)
+    // Load app details (SMP-160: includes pricingModel, basePricePerSeat)
     const app = await prisma.app.findUnique({
       where: { id: group.matchedAppId },
       include: {
@@ -1185,7 +1205,7 @@ export async function suggestFromCardTransactions(): Promise<
 
     if (!app) continue;
 
-    // SMP-123: 상세 거래 내역 조회 (linkedSubscriptionId 포함)
+    // SMP-123: load transaction details (includes linkedSubscriptionId)
     const transactions = await prisma.cardTransaction.findMany({
       where: {
         organizationId,
@@ -1204,27 +1224,27 @@ export async function suggestFromCardTransactions(): Promise<
       },
     });
 
-    // SMP-123: 연결 안 된 거래내역 필터링
+    // SMP-123: filter unlinked transactions
     const unmatchedTransactions = transactions.filter(
       (t) => t.linkedSubscriptionId === null
     );
     const unmatchedTransactionIds = unmatchedTransactions.map((t) => t.id);
 
-    // SMP-123: 기존 구독 확인
+    // SMP-123: check for an existing subscription
     const existingSubscriptionId = appToSubscriptionMap.get(group.matchedAppId);
     const hasExistingSubscription = !!existingSubscriptionId;
 
-    // SMP-123: 기존 구독이 있고 모든 거래내역이 연결되어 있으면 스킵
+    // SMP-123: skip if a subscription exists and all transactions are linked
     if (hasExistingSubscription && unmatchedTransactionIds.length === 0) {
       continue;
     }
 
-    // SMP-123: 기존 구독이 없으면 최소 2건 필요, 있으면 연결 안 된 건이 있으면 OK
+    // SMP-123: without a subscription at least 2 are needed; with one, any unlinked transaction is enough
     if (!hasExistingSubscription && transactions.length < 2) {
       continue;
     }
 
-    // Dominant Card 조회 (가장 많이 사용된 카드)
+    // Load the dominant card (the most frequently used card)
     const dominantCardGroup = await prisma.cardTransaction.groupBy({
       by: ["corporateCardId"],
       where: {
@@ -1241,7 +1261,7 @@ export async function suggestFromCardTransactions(): Promise<
     let teamName: string | null = null;
     let availableUsers: AvailableUserWithTeam[] = [];
 
-    // Phase 2 추가: assignedUser 정보
+    // Phase 2: assignedUser details
     let assignedUserId: string | null = null;
     let assignedUserName: string | null = null;
 
@@ -1257,7 +1277,7 @@ export async function suggestFromCardTransactions(): Promise<
               },
             },
           },
-          // Phase 2: 카드에 배정된 유저 정보 포함
+          // Phase 2: include the user assigned to the card
           assignedUser: {
             select: {
               id: true,
@@ -1269,15 +1289,15 @@ export async function suggestFromCardTransactions(): Promise<
         },
       });
 
-      // Phase 2: assignedUser가 있으면 우선 사용
+      // Phase 2: prefer assignedUser when present
       if (card?.assignedUser) {
         assignedUserId = card.assignedUser.id;
         assignedUserName = card.assignedUser.name || card.assignedUser.email;
-        // 유저 배정 시, 해당 유저의 팀 정보를 teamId/teamName에 설정
+        // When a user is assigned, set teamId/teamName from that user's team
         if (card.assignedUser.team) {
           teamId = card.assignedUser.team.id;
           teamName = card.assignedUser.team.name;
-          // SMP-134: 유저의 팀 멤버를 availableUsers에 채우기
+          // SMP-134: fill availableUsers with the user's team members
           const teamWithMembers = await prisma.team.findUnique({
             where: { id: card.assignedUser.team.id },
             include: {
@@ -1299,7 +1319,7 @@ export async function suggestFromCardTransactions(): Promise<
             );
           }
         } else {
-          // SMP-134: 팀이 없는 경우 조직 전체 멤버로 fallback
+          // SMP-134: fall back to all organization members when there is no team
           const allUsers = await prisma.user.findMany({
             where: { organizationId, status: "ACTIVE" },
             select: {
@@ -1313,7 +1333,7 @@ export async function suggestFromCardTransactions(): Promise<
           availableUsers = mapUsersWithOwnTeam(allUsers);
         }
       } else if (card?.team) {
-        // team 배정만 있는 경우 기존 로직 유지
+        // Team-only assignment keeps the existing logic
         teamId = card.team.id;
         teamName = card.team.name;
         availableUsers = mapMembersToAvailableUsers(
@@ -1328,8 +1348,8 @@ export async function suggestFromCardTransactions(): Promise<
       }
     }
 
-    // SMP-123: CardTransaction의 Team/User 배정도 dominant 분석에 포함
-    // (CorporateCard 배정이 없는 경우 대비)
+    // SMP-123: include CardTransaction team/user assignments in the dominant analysis
+    // (covers cards without a CorporateCard assignment)
     if (!teamId && !assignedUserId) {
       const teamCounts = new Map<string, number>();
       const userCounts = new Map<string, number>();
@@ -1343,7 +1363,7 @@ export async function suggestFromCardTransactions(): Promise<
         }
       }
 
-      // Dominant User 우선
+      // Dominant user first
       let maxUserCount = 0;
       let dominantUserId: string | null = null;
       for (const [uid, count] of userCounts) {
@@ -1369,7 +1389,7 @@ export async function suggestFromCardTransactions(): Promise<
           if (user.team) {
             teamId = user.team.id;
             teamName = user.team.name;
-            // SMP-134: 유저의 팀 멤버를 availableUsers에 채우기
+            // SMP-134: fill availableUsers with the user's team members
             const teamWithMembers = await prisma.team.findUnique({
               where: { id: user.team.id },
               include: {
@@ -1391,7 +1411,7 @@ export async function suggestFromCardTransactions(): Promise<
               );
             }
           } else {
-            // SMP-134: 팀이 없는 경우 조직 전체 멤버로 fallback
+            // SMP-134: fall back to all organization members when there is no team
             const allUsers = await prisma.user.findMany({
               where: { organizationId, status: "ACTIVE" },
               select: {
@@ -1440,7 +1460,7 @@ export async function suggestFromCardTransactions(): Promise<
             );
           }
         } else {
-          // SMP-156: 팀/유저 배정이 없는 경우 조직 전체 활성 멤버로 fallback
+          // SMP-156: fall back to all active organization members when there is no team/user assignment
           const allUsers = await prisma.user.findMany({
             where: { organizationId, status: "ACTIVE" },
             select: {
@@ -1456,7 +1476,7 @@ export async function suggestFromCardTransactions(): Promise<
       }
     }
 
-    // SMP-134: assignedUserId가 availableUsers에 반드시 포함되도록 보장
+    // SMP-134: ensure assignedUserId is always included in availableUsers
     if (
       assignedUserId &&
       !availableUsers.some((u) => u.id === assignedUserId)
@@ -1485,7 +1505,7 @@ export async function suggestFromCardTransactions(): Promise<
       }
     }
 
-    // 결제 주기 분석 (기존 함수 재사용)
+    // Analyse the billing cycle (reuses the existing function)
     const paymentsForAnalysis = transactions.map((t) => ({
       transactionDate: parseYYYYMMDD(t.useDt),
       amount: t.useAmt,
@@ -1493,12 +1513,12 @@ export async function suggestFromCardTransactions(): Promise<
     const { billingCycle, confidence } =
       analyzeBillingCycle(paymentsForAnalysis);
 
-    // 평균 금액 계산
+    // Calculate the average amount
     const avgAmount =
       transactions.reduce((sum, t) => sum + Number(t.useAmt), 0) /
       transactions.length;
 
-    // SMP-134/SMP-160: Seat 구독제 자동 판단 (카탈로그 정보 포함)
+    // SMP-134/SMP-160: auto-detect seat-based subscriptions (includes catalogue data)
     const txAmounts = transactions.map((t) => Number(t.useAmt));
     const cardSeatDetection = detectBillingType({
       appName: app.name,
@@ -1507,11 +1527,12 @@ export async function suggestFromCardTransactions(): Promise<
       catalogBasePricePerSeat: app.catalog?.basePricePerSeat
         ? Number(app.catalog.basePricePerSeat)
         : null,
+      taxRatePercent,
     });
 
-    // confidence >= 0.5 필터링
+    // Filter confidence >= 0.5
     if (confidence >= 0.5) {
-      // SMP-123: suggestedAction 결정
+      // SMP-123: determine suggestedAction
       const suggestedAction: SuggestedAction = existingSubscriptionId
         ? "link"
         : "create";
@@ -1528,7 +1549,7 @@ export async function suggestFromCardTransactions(): Promise<
         firstPaymentDate: parseYYYYMMDD(group._min.useDt!),
         lastPaymentDate: parseYYYYMMDD(group._max.useDt!),
         confidence,
-        // SMP-134/SMP-160: Seat 구독제 판단
+        // SMP-134/SMP-160: seat-based subscription detection
         billingType: cardSeatDetection.billingType,
         perSeatPrice: cardSeatDetection.perSeatPrice,
         suggestedSeats: cardSeatDetection.suggestedSeats,
@@ -1540,7 +1561,7 @@ export async function suggestFromCardTransactions(): Promise<
         assignedUserName,
         availableUsers,
         source: "card_transaction",
-        // SMP-123: 추가 필드
+        // SMP-123: additional fields
         existingSubscriptionId,
         suggestedAction,
         unmatchedTransactionIds,
@@ -1548,15 +1569,15 @@ export async function suggestFromCardTransactions(): Promise<
     }
   }
 
-  // confidence 높은 순 정렬
+  // Sort by confidence, highest first
   suggestions.sort((a, b) => b.confidence - a.confidence);
 
   return { success: true, data: suggestions };
 }
 
 /**
- * CardTransaction 추천에서 구독 생성/연결 (Team 자동배정 + User 수동선택)
- * SMP-123: suggestedAction에 따라 create 또는 link 액션 수행
+ * Create or link a subscription from a CardTransaction suggestion (team auto-assignment + manual user selection)
+ * SMP-123: performs a create or link action based on suggestedAction
  */
 async function _createSubscriptionFromCardSuggestion(
   input: CreateSubscriptionFromCardSuggestionInput
@@ -1569,9 +1590,9 @@ async function _createSubscriptionFromCardSuggestion(
   } = input;
   const { organizationId, userId, role } = await requireOrganization();
 
-  // ADMIN만 사용자 배정 가능
+  // Only ADMINs can assign users
   if (selectedUserIds.length > 0 && role !== "ADMIN") {
-    return { success: false, message: "사용자 배정은 관리자만 가능합니다" };
+    return { success: false, message: "Only admins can assign users" };
   }
 
   const app = await prisma.app.findFirst({
@@ -1579,17 +1600,17 @@ async function _createSubscriptionFromCardSuggestion(
   });
 
   if (!app) {
-    return { success: false, message: "앱을 찾을 수 없습니다" };
+    return { success: false, message: "App not found" };
   }
 
-  // SMP-123: 기존 구독 확인
+  // SMP-123: check for an existing subscription
   const existingSubscription = await prisma.subscription.findFirst({
     where: { appId: suggestion.appId, organizationId },
   });
 
-  // SMP-123: suggestedAction: link인 경우 - 기존 구독에 거래내역만 연결
+  // SMP-123: suggestedAction link - only link transactions to the existing subscription
   if (suggestion.suggestedAction === "link" && existingSubscription) {
-    // 거래내역 연결
+    // Link transactions
     if (suggestion.unmatchedTransactionIds.length > 0) {
       await prisma.cardTransaction.updateMany({
         where: { id: { in: suggestion.unmatchedTransactionIds } },
@@ -1597,7 +1618,7 @@ async function _createSubscriptionFromCardSuggestion(
       });
     }
 
-    // 감사 로그
+    // Audit log
     await prisma.auditLog.create({
       data: {
         action: "LINK_CARD_TRANSACTIONS",
@@ -1618,15 +1639,18 @@ async function _createSubscriptionFromCardSuggestion(
     return { success: true, data: { id: existingSubscription.id } };
   }
 
-  // suggestedAction: create인 경우 - 새 구독 생성
+  // suggestedAction create - create a new subscription
   if (existingSubscription) {
-    return { success: false, message: "이미 해당 앱에 대한 구독이 있습니다" };
+    return {
+      success: false,
+      message: "A subscription for this app already exists",
+    };
   }
 
-  // SMP-123: App-Team 자동 배정
+  // SMP-123: auto-assign App-Team
   await ensureAppTeamAssignment(suggestion.appId, suggestion.teamId);
 
-  // Phase 2: assignedUserId가 있으면 자동으로 배정할 유저 목록에 추가
+  // Phase 2: add assignedUserId to the users to assign, when present
   const userIdsToAssign = new Set(selectedUserIds);
   if (suggestion.assignedUserId) {
     userIdsToAssign.add(suggestion.assignedUserId);
@@ -1634,7 +1658,7 @@ async function _createSubscriptionFromCardSuggestion(
   const finalUserIds = Array.from(userIdsToAssign);
   let userTeamIds: string[] = [];
 
-  // 선택된 사용자 검증 (조직 소속 확인)
+  // Validate selected users (must belong to the organization)
   if (finalUserIds.length > 0) {
     const validUsers = await prisma.user.findMany({
       where: {
@@ -1647,11 +1671,11 @@ async function _createSubscriptionFromCardSuggestion(
     if (validUsers.length !== finalUserIds.length) {
       return {
         success: false,
-        message: "유효하지 않은 사용자가 포함되어 있습니다",
+        message: "One or more users are invalid",
       };
     }
 
-    // SMP-134: 유저 배정 시 팀-앱 자동 연결
+    // SMP-134: auto-link team and app when assigning users
     userTeamIds = validUsers
       .filter((u) => u.teamId != null)
       .map((u) => u.teamId as string);
@@ -1677,10 +1701,10 @@ async function _createSubscriptionFromCardSuggestion(
     }
   }
 
-  // SMP-134: billingType/totalLicenses 오버라이드
+  // SMP-134: billingType/totalLicenses overrides
   const finalBillingType =
     (overrideBillingType as "FLAT_RATE" | "PER_SEAT") || suggestion.billingType;
-  // SMP-160: suggestedSeats 자동 채움 제거 — override 값만 사용
+  // SMP-160: no auto-fill from suggestedSeats — use override values only
   const finalTotalLicenses =
     overrideTotalLicenses !== undefined ? overrideTotalLicenses : null;
 
@@ -1706,11 +1730,11 @@ async function _createSubscriptionFromCardSuggestion(
       renewalDate,
       autoRenewal: true,
       renewalAlert30: true,
-      notes: `법인카드 거래 기반 자동 생성 (${suggestion.paymentCount}건 분석, 신뢰도 ${Math.round(suggestion.confidence * 100)}%)`,
+      notes: `Auto-created from corporate card transactions (${suggestion.paymentCount} transactions analysed, ${Math.round(suggestion.confidence * 100)}% confidence)`,
     },
   });
 
-  // SubscriptionTeam 생성 (suggestion.teamId가 있을 경우)
+  // Create SubscriptionTeam (when suggestion.teamId is set)
   if (suggestion.teamId) {
     await prisma.subscriptionTeam.create({
       data: {
@@ -1721,7 +1745,7 @@ async function _createSubscriptionFromCardSuggestion(
     });
   }
 
-  // SMP-123: CardTransaction.linkedSubscriptionId 연결
+  // SMP-123: link CardTransaction.linkedSubscriptionId
   if (suggestion.unmatchedTransactionIds.length > 0) {
     await prisma.cardTransaction.updateMany({
       where: { id: { in: suggestion.unmatchedTransactionIds } },
@@ -1729,7 +1753,7 @@ async function _createSubscriptionFromCardSuggestion(
     });
   }
 
-  // SubscriptionUser 레코드 생성
+  // Create SubscriptionUser records
   if (finalUserIds.length > 0) {
     await prisma.subscriptionUser.createMany({
       data: finalUserIds.map((uid) => ({
@@ -1740,7 +1764,7 @@ async function _createSubscriptionFromCardSuggestion(
       skipDuplicates: true,
     });
 
-    // SMP-180: 사용자 팀 → SubscriptionTeam 자동 연결 (suggestion.teamId 없을 때)
+    // SMP-180: user's team → auto-link SubscriptionTeam (when suggestion.teamId is absent)
     if (!suggestion.teamId && userTeamIds.length > 0) {
       const uniqueUserTeamIds = [...new Set(userTeamIds)];
       await prisma.subscriptionTeam.createMany({
@@ -1752,7 +1776,7 @@ async function _createSubscriptionFromCardSuggestion(
         skipDuplicates: true,
       });
 
-      // Dual-write: subscription.teamId 업데이트 (첫 번째 팀)
+      // Dual-write: update subscription.teamId (first team)
       await prisma.subscription.update({
         where: { id: subscription.id },
         data: { teamId: uniqueUserTeamIds[0] },
@@ -1760,7 +1784,7 @@ async function _createSubscriptionFromCardSuggestion(
     }
   }
 
-  // SMP-160: Seat 판단 결과를 감사 로그에 포함
+  // SMP-160: include the seat detection result in the audit log
   const cardSeatDetectionLog = {
     billingType: suggestion.billingType,
     perSeatPrice: suggestion.perSeatPrice,

@@ -38,7 +38,7 @@ const enhancedFormScan = async (): Promise<void> => {
       config.type
     );
 
-    // OAuth 버튼 타입 처리
+    // Handle the OAuth button type
     if (config.type === "oauth-button") {
       console.log("[Shade] OAuth button type - monitoring login buttons");
       const buttonResult = detectAndMonitorLoginButtons();
@@ -48,17 +48,17 @@ const enhancedFormScan = async (): Promise<void> => {
           buttonResult.buttonCount
         );
       }
-      // OAuth Provider 페이지 감지도 실행
+      // Also run OAuth provider page detection
       detectOAuthProviderLogin();
       return;
     }
 
-    // 2-Step 로그인 타입 처리
+    // Handle the 2-step login type
     if (config.type === "2-step") {
       console.log("[Shade] 2-step login type - will monitor step transitions");
     }
 
-    // 향상된 폼 감지 사용
+    // Use enhanced form detection
     const result = await detectLoginFormEnhanced();
 
     if (result.found) {
@@ -67,23 +67,23 @@ const enhancedFormScan = async (): Promise<void> => {
       console.log(
         "[Shade] Enhanced detection: no form found, setting up observer"
       );
-      // 동적 폼 로딩 감지
+      // Detect dynamic form loading
       setupDynamicFormObserver(() => {
         findAndMonitorForms();
       });
     }
   } else {
-    // 설정이 없는 서비스에서도 로그인 버튼 감지 시도
+    // Try login-button detection even for services without settings
     const buttonResult = detectAndMonitorLoginButtons();
     if (buttonResult.found && buttonResult.isOAuthButtonType) {
       console.log("[Shade] Detected OAuth button pattern on unconfigured site");
     }
   }
 
-  // 기존 폼 모니터링도 실행
+  // Also run the existing form monitoring
   findAndMonitorForms();
 
-  // OAuth Provider 페이지 체크
+  // OAuth provider page check
   detectOAuthProviderLogin();
 };
 
@@ -113,7 +113,7 @@ const initialize = (): void => {
     document.addEventListener("DOMContentLoaded", async () => {
       console.log("[Shade] DOM ready, scanning for forms...");
 
-      // 향상된 폼 스캔 (특수 SaaS 처리 포함)
+      // Enhanced form scan (including special SaaS handling)
       await enhancedFormScan();
 
       observeDOMChanges(findAndMonitorForms);
@@ -129,7 +129,7 @@ const initialize = (): void => {
       // Force refresh values after a delay (for slow password managers)
       setTimeout(forceRefreshValues, 1500);
 
-      // SPA 동적 로딩 대응 - 다중 지연 스캔
+      // Handle SPA dynamic loading - multiple delayed scans
       const delayedScans = [2000, 4000, 6000, 10000];
       delayedScans.forEach((delay) => {
         setTimeout(() => {
@@ -142,7 +142,7 @@ const initialize = (): void => {
   } else {
     console.log("[Shade] Document already loaded, scanning for forms...");
 
-    // 향상된 폼 스캔 (특수 SaaS 처리 포함)
+    // Enhanced form scan (including special SaaS handling)
     enhancedFormScan().then(() => {
       observeDOMChanges(findAndMonitorForms);
       // Observe visibility changes for hidden password fields
@@ -156,7 +156,7 @@ const initialize = (): void => {
       // Force refresh values after a delay
       setTimeout(forceRefreshValues, 1500);
 
-      // SPA 동적 로딩 대응 - 다중 지연 스캔
+      // Handle SPA dynamic loading - multiple delayed scans
       const delayedScans = [2000, 4000, 6000, 10000];
       delayedScans.forEach((delay) => {
         setTimeout(() => {

@@ -41,7 +41,6 @@ vi.mock("next/link", () => ({
   }) => <a href={href}>{children}</a>,
 }));
 vi.mock("next/image", () => ({
-  // eslint-disable-next-line @next/next/no-img-element
   default: ({ alt, src }: { alt: string; src: string }) => (
     <img alt={alt} src={src} />
   ),
@@ -133,7 +132,7 @@ describe("SubscriptionPageClient", () => {
 
   it("renders the summary with count and monthly base total", () => {
     render(<SubscriptionPageClient {...baseProps()} />);
-    expect(screen.getByText(/구독 42개/)).toHaveTextContent("AED");
+    expect(screen.getByText(/42 subscriptions/)).toHaveTextContent("AED");
     expect(screen.getByText("Slack")).toBeInTheDocument();
     expect(screen.getByText("Notion")).toBeInTheDocument();
   });
@@ -142,8 +141,8 @@ describe("SubscriptionPageClient", () => {
     searchParams.current = new URLSearchParams("page=3&q=old");
     render(<SubscriptionPageClient {...baseProps()} />);
     const filters = within(screen.getByTestId("subscription-filters"));
-    fireEvent.click(filters.getByRole("button", { name: "상태" }));
-    fireEvent.click(screen.getByText("일시중지"));
+    fireEvent.click(filters.getByRole("button", { name: "Status" }));
+    fireEvent.click(screen.getByText("Paused"));
     expect(push).toHaveBeenCalledTimes(1);
     const url = push.mock.calls[0][0] as string;
     expect(url).toContain("status=PAUSED");
@@ -175,7 +174,7 @@ describe("SubscriptionPageClient", () => {
       data: { csv: "a,b", filename: "x.csv", rowCount: 2 },
     });
     render(<SubscriptionPageClient {...baseProps()} />);
-    fireEvent.click(screen.getByText("CSV 내보내기"));
+    fireEvent.click(screen.getByText("Export CSV"));
     await waitFor(() => expect(exportSubscriptionsCsv).toHaveBeenCalled());
     expect(exportSubscriptionsCsv).toHaveBeenCalledWith({
       filter: { statuses: ["ACTIVE"] },
@@ -198,9 +197,9 @@ describe("SubscriptionPageClient", () => {
     ).not.toBeInTheDocument();
     fireEvent.click(screen.getAllByRole("checkbox")[1]);
     expect(screen.getByTestId("subscription-bulk-bar")).toBeInTheDocument();
-    fireEvent.click(screen.getByText(/일치하는 3개 모두 선택/));
+    fireEvent.click(screen.getByText(/Select all 3 matching/));
     await waitFor(() =>
-      expect(screen.getByText("일치하는 모든 행이 선택됨")).toBeInTheDocument()
+      expect(screen.getByText("All matching rows selected")).toBeInTheDocument()
     );
     expect(screen.getByTestId("subscription-bulk-bar")).toHaveTextContent("3");
   });

@@ -39,7 +39,7 @@ vi.mock("@/lib/db", () => ({
       upsert: vi.fn(),
       deleteMany: vi.fn(),
     },
-    // SMP-107: AppTeam 자동 배정을 위한 mock
+    // SMP-107: mock for AppTeam auto-assignment
     user: {
       findUnique: vi.fn(),
     },
@@ -79,47 +79,52 @@ describe("saas-matcher", () => {
     vi.clearAllMocks();
   });
 
+  // Korean merchant names below are functional fixtures for the Korean-market
+  // NON_SAAS_KEYWORDS preset and must stay in Korean.
   describe("findNonSaaSKeywordHit", () => {
     it("detects Non-SaaS keyword in merchant name", () => {
-      const hit = findNonSaaSKeywordHit("카카오T 블루", null);
+      const hit = findNonSaaSKeywordHit("카카오T Blue", null);
       expect(hit).toBe("카카오T");
     });
 
     it("detects Non-SaaS keyword in memo", () => {
-      const hit = findNonSaaSKeywordHit("기타 가맹점", "우아한형제들 배달");
+      const hit = findNonSaaSKeywordHit(
+        "Other merchant",
+        "우아한형제들 delivery"
+      );
       expect(hit).toBe("우아한형제들");
     });
 
     it("handles lowercase/uppercase mix", () => {
-      // 아이엠택시가 아이엠택시_스마트보다 먼저 매칭됨
+      // Korean preset keyword fixture (functional data): the base taxi keyword precedes its "_smart" variant in the array
       const hit = findNonSaaSKeywordHit("아이엠택시_스마트", "memo");
       expect(hit).toBe("아이엠택시");
     });
 
     it("detects English keywords case-insensitively", () => {
-      // STARBUCKS 키워드가 배열에서 먼저 나옴
+      // The STARBUCKS keyword appears first in the array
       const hit = findNonSaaSKeywordHit("starbucks coffee", null);
       expect(hit).toBe("STARBUCKS");
     });
 
     it("detects transportation keywords", () => {
-      // UBER 키워드가 배열에서 우버보다 먼저 나옴
+      // The UBER keyword appears before its Korean spelling in the array
       const hit = findNonSaaSKeywordHit("UBER TRIP", null);
       expect(hit).toBe("UBER");
     });
 
     it("detects convenience store keywords", () => {
-      const hit = findNonSaaSKeywordHit("GS25 강남점", null);
+      const hit = findNonSaaSKeywordHit("GS25 Gangnam", null);
       expect(hit).toBe("GS25");
     });
 
     it("detects Korean keywords", () => {
-      const hit = findNonSaaSKeywordHit("스타벅스 강남점", null);
+      const hit = findNonSaaSKeywordHit("스타벅스 Gangnam", null);
       expect(hit).toBe("스타벅스");
     });
 
     it("returns null when no keyword matches", () => {
-      const hit = findNonSaaSKeywordHit("구글 클라우드", "월 구독");
+      const hit = findNonSaaSKeywordHit("Google Cloud", "monthly subscription");
       expect(hit).toBeNull();
     });
 
@@ -648,7 +653,7 @@ describe("saas-matcher", () => {
     });
   });
 
-  // ==================== SMP-162: Category 자동 추가 + 정규화 테스트 ====================
+  // ==================== SMP-162: category auto-add + normalisation tests ====================
 
   describe("upsertAppForOrganization - category handling (SMP-162)", () => {
     const organizationId = "org-cat-test";
@@ -659,7 +664,7 @@ describe("saas-matcher", () => {
           isSaaS: true,
           canonicalName: "Figma",
           website: "https://figma.com",
-          category: "Design Tools", // LLM 출력: 자유 형식
+          category: "Design Tools", // LLM output: free-form
           confidence: 0.9,
           suggestedPatterns: ["figma"],
           reasoning: "Design SaaS",
@@ -702,7 +707,7 @@ describe("saas-matcher", () => {
           isSaaS: true,
           canonicalName: "Notion",
           website: "https://notion.so",
-          category: "Productivity", // LLM 출력
+          category: "Productivity", // LLM output
           confidence: 0.9,
           suggestedPatterns: [],
           reasoning: "Productivity SaaS",
@@ -824,7 +829,7 @@ describe("saas-matcher", () => {
               isSaaS: true,
               canonicalName: "Asana",
               website: "https://asana.com",
-              category: "Project Management", // LLM 출력
+              category: "Project Management", // LLM output
               confidence: 0.92,
               suggestedPatterns: ["asana"],
               reasoning: "SaaS",
@@ -1112,13 +1117,13 @@ describe("saas-matcher", () => {
     });
   });
 
-  // ==================== SMP-107: AppTeam 자동 배정 테스트 ====================
+  // ==================== SMP-107: AppTeam auto-assignment tests ====================
 
   describe("matchMerchantWithLLM - AppTeam auto assignment (SMP-107)", () => {
     const organizationId = "org-team-test";
 
     beforeEach(() => {
-      // 기본 SaaS 응답 설정
+      // Default SaaS response
       mockClassify.mockResolvedValue({
         inference: {
           isSaaS: true,
@@ -1253,7 +1258,7 @@ describe("saas-matcher", () => {
         userId: "user-1",
       });
 
-      // teamId가 있으면 user.findUnique는 호출되지 않음
+      // With teamId set, user.findUnique is not called
       expect(mockPrisma.user.findUnique).not.toHaveBeenCalled();
       expect(mockPrisma.appTeam.create).toHaveBeenCalledWith({
         data: {

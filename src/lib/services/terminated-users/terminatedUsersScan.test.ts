@@ -40,7 +40,7 @@ describe("terminatedUsersScan", () => {
       vi.mocked(prisma.organization.findMany).mockResolvedValue([
         {
           id: "org-1",
-          name: "테스트 조직",
+          name: "Test Organization",
           settings: { notifications: { offboardingAlerts: true } },
           users: [{ email: "admin@example.com", role: "ADMIN" }],
         },
@@ -51,7 +51,7 @@ describe("terminatedUsersScan", () => {
         {
           id: "user-1",
           email: "terminated@example.com",
-          name: "퇴사자 1",
+          name: "Offboarded User 1",
           terminatedAt: new Date("2025-01-01"),
           _count: { appAccesses: 3 },
           appAccesses: [
@@ -74,7 +74,7 @@ describe("terminatedUsersScan", () => {
       vi.mocked(prisma.organization.findMany).mockResolvedValue([
         {
           id: "org-1",
-          name: "테스트 조직",
+          name: "Test Organization",
           settings: {
             notifications: { offboardingAlerts: true, emailEnabled: true },
           },
@@ -86,7 +86,7 @@ describe("terminatedUsersScan", () => {
         {
           id: "user-1",
           email: "terminated@example.com",
-          name: "퇴사자 1",
+          name: "Offboarded User 1",
           terminatedAt: new Date("2025-01-01"),
           _count: { appAccesses: 2 },
           appAccesses: [
@@ -101,14 +101,14 @@ describe("terminatedUsersScan", () => {
       expect(mockSend).toHaveBeenCalled();
       const callArgs = mockSend.mock.calls[0][0];
       expect(callArgs.to).toContain("admin@example.com");
-      expect(callArgs.subject).toContain("퇴사자");
+      expect(callArgs.subject).toContain("Offboarded");
     });
 
     it("should not send email when offboardingAlerts is disabled", async () => {
       vi.mocked(prisma.organization.findMany).mockResolvedValue([
         {
           id: "org-1",
-          name: "테스트 조직",
+          name: "Test Organization",
           settings: { notifications: { offboardingAlerts: false } },
           users: [{ email: "admin@example.com", role: "ADMIN" }],
         },
@@ -118,7 +118,7 @@ describe("terminatedUsersScan", () => {
         {
           id: "user-1",
           email: "terminated@example.com",
-          name: "퇴사자 1",
+          name: "Offboarded User 1",
           terminatedAt: new Date(),
           _count: { appAccesses: 1 },
           appAccesses: [{ app: { name: "Notion" } }],
@@ -134,7 +134,7 @@ describe("terminatedUsersScan", () => {
       vi.mocked(prisma.organization.findMany).mockResolvedValue([
         {
           id: "org-1",
-          name: "테스트 조직",
+          name: "Test Organization",
           settings: { notifications: { offboardingAlerts: true } },
           users: [],
         },
@@ -144,7 +144,7 @@ describe("terminatedUsersScan", () => {
         {
           id: "user-1",
           email: "terminated@example.com",
-          name: "퇴사자 1",
+          name: "Offboarded User 1",
           terminatedAt: new Date(),
           _count: { appAccesses: 1 },
           appAccesses: [{ app: { name: "Notion" } }],
@@ -154,14 +154,14 @@ describe("terminatedUsersScan", () => {
       const result = await processTerminatedUsersScan();
 
       expect(mockSend).not.toHaveBeenCalled();
-      expect(result.errors).toContain("org-1: 관리자 없음");
+      expect(result.errors).toContain("org-1: No admin found");
     });
 
     it("should handle empty terminated users", async () => {
       vi.mocked(prisma.organization.findMany).mockResolvedValue([
         {
           id: "org-1",
-          name: "테스트 조직",
+          name: "Test Organization",
           settings: { notifications: { offboardingAlerts: true } },
           users: [{ email: "admin@example.com", role: "ADMIN" }],
         },
@@ -181,7 +181,7 @@ describe("terminatedUsersScan", () => {
       vi.mocked(prisma.organization.findMany).mockResolvedValue([
         {
           id: "org-1",
-          name: "테스트 조직",
+          name: "Test Organization",
           settings: {
             notifications: { offboardingAlerts: true, emailEnabled: true },
           },
@@ -193,7 +193,7 @@ describe("terminatedUsersScan", () => {
         {
           id: "user-1",
           email: "terminated1@example.com",
-          name: "퇴사자 1",
+          name: "Offboarded User 1",
           terminatedAt: new Date(),
           _count: { appAccesses: 2 },
           appAccesses: [
@@ -204,7 +204,7 @@ describe("terminatedUsersScan", () => {
         {
           id: "user-2",
           email: "terminated2@example.com",
-          name: "퇴사자 2",
+          name: "Offboarded User 2",
           terminatedAt: new Date(),
           _count: { appAccesses: 3 },
           appAccesses: [

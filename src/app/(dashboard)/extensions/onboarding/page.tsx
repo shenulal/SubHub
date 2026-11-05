@@ -1,7 +1,7 @@
 // src/app/(dashboard)/extensions/onboarding/page.tsx
 /**
- * Extension 온보딩 모니터링 페이지
- * 전체 활성 사용자 대비 온보딩 완료 여부 확인
+ * Extension onboarding monitoring page
+ * Shows onboarding completion against all active users
  */
 
 import { getOnboardingMonitorData } from "@/actions/extensions/onboarding-monitor";

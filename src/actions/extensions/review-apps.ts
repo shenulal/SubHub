@@ -18,12 +18,12 @@ import type { ActionState } from "@/types";
 import { revalidatePath } from "next/cache";
 
 /**
- * 검토 대기 앱 유형
+ * Pending-review app type
  */
 export type ReviewAppType = "malicious" | "saas";
 
 /**
- * 검토 대기 앱 아이템 타입
+ * Pending-review app item type
  */
 export type ReviewAppItem = {
   id: string;
@@ -44,7 +44,7 @@ export type ReviewAppItem = {
 };
 
 /**
- * 검토 대기 앱 리스트 응답 타입
+ * Pending-review app list response type
  */
 export type ReviewAppsResponse = {
   items: ReviewAppItem[];
@@ -60,8 +60,8 @@ export type ReviewAppsResponse = {
 };
 
 /**
- * 검토 대기 앱 리스트 조회
- * - 악성 의심 URL + SaaS로 식별된 미등록 도메인 목록
+ * Fetch the pending-review app list
+ * - Suspected malicious URLs plus unregistered domains identified as SaaS
  */
 export async function getReviewApps(params: {
   page?: number;
@@ -72,13 +72,13 @@ export async function getReviewApps(params: {
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
-      return { success: false, error: "인증이 필요합니다" };
+      return { success: false, error: "Authentication required" };
     }
 
     const { page = 1, limit = 20, search, filter = "all" } = params;
     const skip = (page - 1) * limit;
 
-    // 필터 조건 구성
+    // Build filter conditions
     const baseWhere = {
       organizationId: session.user.organizationId,
       reviewStatus: "pending",
@@ -90,7 +90,7 @@ export async function getReviewApps(params: {
       }),
     };
 
-    // 유형별 필터
+    // Filter by type
     const whereClause =
       filter === "malicious"
         ? { ...baseWhere, isMalicious: true }
@@ -117,7 +117,7 @@ export async function getReviewApps(params: {
         }),
         prisma.saaSDomainScanHistory.count({ where: whereClause }),
         getUnscannedDomainCount(session.user.organizationId),
-        // stats용: 전체 pending 스캔 조회 (필터링 후 정확한 카운트 산출)
+        // For stats: fetch all pending scans (exact counts after filtering)
         prisma.saaSDomainScanHistory.findMany({
           where: {
             organizationId: session.user.organizationId,
@@ -128,7 +128,7 @@ export async function getReviewApps(params: {
         }),
       ]);
 
-    // 등록된 앱 패턴 목록 조회
+    // Fetch registered app patterns
     const registeredPatterns = await getRegisteredPatterns(
       session.user.organizationId
     );
@@ -139,12 +139,12 @@ export async function getReviewApps(params: {
           matchDomainPattern(p, domain) || matchDomainWithTldVariants(p, domain)
       );
 
-    // 등록된 앱 제외 (TLD 변형도 매칭)
+    // Exclude registered apps (TLD variants also match)
     const filteredHistory = scanHistory.filter(
       (item) => !isRegisteredDomain(item.domain)
     );
 
-    // stats: 필터링 후 정확한 카운트
+    // stats: exact counts after filtering
     const filteredAllPending = allPendingScans.filter(
       (item) => !isRegisteredDomain(item.domain)
     );
@@ -155,7 +155,7 @@ export async function getReviewApps(params: {
       (i) => i.isSaaS && !i.isMalicious
     ).length;
 
-    // 방문 통계 조회
+    // Fetch visit statistics
     const domainStats = await getDomainVisitStats(
       session.user.organizationId,
       filteredHistory.map((h) => h.domain)
@@ -169,10 +169,10 @@ export async function getReviewApps(params: {
         id: item.id,
         domain: item.domain,
         type: isMalicious ? "malicious" : "saas",
-        typeBadge: isMalicious ? "악성 의심" : "SaaS",
+        typeBadge: isMalicious ? "Suspected malicious" : "SaaS",
         reason: isMalicious
           ? getThreatTypeLabel(item.threatType as ThreatType)
-          : item.reasoning || "AI 분류 결과",
+          : item.reasoning || "AI classification result",
         serviceName: item.serviceName || item.catalog?.name || null,
         category: item.category || item.catalog?.category || null,
         confidence: item.confidence,
@@ -209,15 +209,15 @@ export async function getReviewApps(params: {
       error:
         error instanceof Error
           ? error.message
-          : "검토 대기 앱 리스트 조회 실패",
+          : "Failed to fetch apps pending review",
     };
   }
 }
 
 /**
- * 미스캔 도메인 스캔 실행
- * - 접속 로그에서 미등록/미스캔 도메인을 추출
- * - LLM으로 SaaS 여부 판별 + Google Safe Browsing으로 악성 검사
+ * Scan unscanned domains
+ * - Extracts unregistered/unscanned domains from access logs
+ * - Classifies SaaS with the LLM and checks for malware with Google Safe Browsing
  */
 export async function scanUnregisteredDomains(params: {
   batchSize?: number;
@@ -231,34 +231,34 @@ export async function scanUnregisteredDomains(params: {
     if (!orgId) {
       const session = await auth();
       if (!session?.user?.organizationId) {
-        return { success: false, error: "인증이 필요합니다" };
+        return { success: false, error: "Authentication required" };
       }
       orgId = session.user.organizationId;
     }
 
     const { batchSize = 10 } = params;
 
-    // 미스캔 도메인 추출
+    // Extract unscanned domains
     const unscannedDomains = await getUnscannedDomains(orgId, batchSize);
 
     if (unscannedDomains.length === 0) {
       return {
         success: true,
         data: { scanned: 0, saasFound: 0, maliciousFound: 0 },
-        message: "스캔할 새 도메인이 없습니다.",
+        message: "No new domains to scan.",
       };
     }
 
     let saasFound = 0;
     let maliciousFound = 0;
 
-    // 각 도메인에 대해 SaaS 분류 + 악성 검사 수행
+    // Classify each domain as SaaS and check it for malware
     for (const domain of unscannedDomains) {
       try {
-        // 1. Google Safe Browsing API로 악성 검사
+        // 1. Malware check via the Google Safe Browsing API
         const safetyResult = await checkDomainSafety(domain);
 
-        // 2. LLM으로 SaaS 분류
+        // 2. SaaS classification via the LLM
         const classifyResult = await classifyMerchantWithLLM({
           merchantName: domain,
           memo: `Website domain: ${domain}`,
@@ -266,7 +266,7 @@ export async function scanUnregisteredDomains(params: {
 
         const inference = classifyResult.inference;
 
-        // 스캔 결과 저장
+        // Save the scan result
         await prisma.saaSDomainScanHistory.create({
           data: {
             organizationId: orgId,
@@ -277,7 +277,7 @@ export async function scanUnregisteredDomains(params: {
             confidence: inference?.confidence,
             website: inference?.website || `https://${domain}`,
             reasoning: inference?.reasoning,
-            // 악성 검사 결과
+            // Malware check result
             isMalicious: safetyResult.isMalicious,
             threatType: safetyResult.threatType,
             safeBrowsingCheckedAt: new Date(),
@@ -296,7 +296,7 @@ export async function scanUnregisteredDomains(params: {
           `[scanUnregisteredDomains] Error scanning ${domain}:`,
           error
         );
-        // 에러가 발생해도 저장하여 재스캔 방지
+        // On error, still save to avoid rescanning
         await prisma.saaSDomainScanHistory.create({
           data: {
             organizationId: orgId,
@@ -319,19 +319,19 @@ export async function scanUnregisteredDomains(params: {
         saasFound,
         maliciousFound,
       },
-      message: `${unscannedDomains.length}개 도메인 스캔 완료 (SaaS: ${saasFound}, 악성: ${maliciousFound})`,
+      message: `Scanned ${unscannedDomains.length} domains (SaaS: ${saasFound}, malicious: ${maliciousFound})`,
     };
   } catch (error) {
     console.error("[scanUnregisteredDomains] Error:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "스캔 실패",
+      error: error instanceof Error ? error.message : "Scan failed",
     };
   }
 }
 
 /**
- * 검토 대기 앱을 등록 앱으로 추가
+ * Add a pending-review app as a registered app
  */
 export async function registerReviewApp(
   scanHistoryId: string
@@ -339,10 +339,10 @@ export async function registerReviewApp(
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
-      return { success: false, error: "인증이 필요합니다" };
+      return { success: false, error: "Authentication required" };
     }
 
-    // 스캔 히스토리 조회
+    // Fetch scan history
     const scanHistory = await prisma.saaSDomainScanHistory.findUnique({
       where: { id: scanHistoryId },
       include: { catalog: true },
@@ -352,10 +352,10 @@ export async function registerReviewApp(
       !scanHistory ||
       scanHistory.organizationId !== session.user.organizationId
     ) {
-      return { success: false, error: "검토 대기 앱을 찾을 수 없습니다" };
+      return { success: false, error: "App pending review not found" };
     }
 
-    // 앱 생성
+    // Create the app
     const app = await prisma.app.create({
       data: {
         organizationId: session.user.organizationId,
@@ -368,7 +368,7 @@ export async function registerReviewApp(
       },
     });
 
-    // 화이트리스트에 추가
+    // Add to the whitelist
     const pattern = `*.${scanHistory.domain}`;
     await prisma.extensionWhitelist.upsert({
       where: {
@@ -387,7 +387,7 @@ export async function registerReviewApp(
       },
     });
 
-    // 검토 상태 업데이트
+    // Update the review status
     await prisma.saaSDomainScanHistory.update({
       where: { id: scanHistoryId },
       data: { reviewStatus: "registered" },
@@ -400,19 +400,19 @@ export async function registerReviewApp(
     return {
       success: true,
       data: { appId: app.id },
-      message: "앱이 등록되었습니다",
+      message: "App registered",
     };
   } catch (error) {
     console.error("[registerReviewApp] Error:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "등록 실패",
+      error: error instanceof Error ? error.message : "Registration failed",
     };
   }
 }
 
 /**
- * 검토 대기 앱을 차단
+ * Block a pending-review app
  */
 export async function blockReviewApp(
   scanHistoryId: string,
@@ -421,10 +421,10 @@ export async function blockReviewApp(
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
-      return { success: false, error: "인증이 필요합니다" };
+      return { success: false, error: "Authentication required" };
     }
 
-    // 스캔 히스토리 조회
+    // Fetch scan history
     const scanHistory = await prisma.saaSDomainScanHistory.findUnique({
       where: { id: scanHistoryId },
     });
@@ -433,16 +433,16 @@ export async function blockReviewApp(
       !scanHistory ||
       scanHistory.organizationId !== session.user.organizationId
     ) {
-      return { success: false, error: "검토 대기 앱을 찾을 수 없습니다" };
+      return { success: false, error: "App pending review not found" };
     }
 
-    // 블랙리스트에 추가
+    // Add to the blacklist
     const pattern = `*.${scanHistory.domain}`;
     const reason =
       blockReason ||
       (scanHistory.isMalicious
-        ? `악성 URL 탐지: ${getThreatTypeLabel(scanHistory.threatType as ThreatType)}`
-        : "관리자에 의해 차단됨");
+        ? `Malicious URL detected: ${getThreatTypeLabel(scanHistory.threatType as ThreatType)}`
+        : "Blocked by an admin");
 
     await prisma.extensionBlacklist.upsert({
       where: {
@@ -461,7 +461,7 @@ export async function blockReviewApp(
       },
     });
 
-    // 검토 상태 업데이트
+    // Update the review status
     await prisma.saaSDomainScanHistory.update({
       where: { id: scanHistoryId },
       data: { reviewStatus: "blocked" },
@@ -471,18 +471,18 @@ export async function blockReviewApp(
     revalidatePath("/extensions/blocked-apps");
     revalidatePath("/extensions/blacklist");
 
-    return { success: true, message: "차단되었습니다" };
+    return { success: true, message: "Blocked" };
   } catch (error) {
     console.error("[blockReviewApp] Error:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "차단 실패",
+      error: error instanceof Error ? error.message : "Failed to block",
     };
   }
 }
 
 /**
- * 검토 대기 앱 무시 (SaaS가 아닌 것으로 표시)
+ * Ignore a pending-review app (mark as non-SaaS)
  */
 export async function dismissReviewApp(
   scanHistoryId: string
@@ -490,10 +490,10 @@ export async function dismissReviewApp(
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
-      return { success: false, error: "인증이 필요합니다" };
+      return { success: false, error: "Authentication required" };
     }
 
-    // 스캔 히스토리에서 검토 완료 처리
+    // Mark as reviewed in scan history
     await prisma.saaSDomainScanHistory.update({
       where: { id: scanHistoryId },
       data: {
@@ -506,18 +506,18 @@ export async function dismissReviewApp(
 
     revalidatePath("/extensions/review-apps");
 
-    return { success: true, message: "무시되었습니다" };
+    return { success: true, message: "Ignored" };
   } catch (error) {
     console.error("[dismissReviewApp] Error:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "처리 실패",
+      error: error instanceof Error ? error.message : "Processing failed",
     };
   }
 }
 
 /**
- * 일괄 등록
+ * Bulk register
  */
 export async function bulkRegisterReviewApps(
   scanHistoryIds: string[]
@@ -525,7 +525,7 @@ export async function bulkRegisterReviewApps(
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
-      return { success: false, error: "인증이 필요합니다" };
+      return { success: false, error: "Authentication required" };
     }
 
     let registered = 0;
@@ -540,19 +540,20 @@ export async function bulkRegisterReviewApps(
     return {
       success: true,
       data: { registered },
-      message: `${registered}개 앱이 등록되었습니다`,
+      message: `${registered} apps registered`,
     };
   } catch (error) {
     console.error("[bulkRegisterReviewApps] Error:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "일괄 등록 실패",
+      error:
+        error instanceof Error ? error.message : "Bulk registration failed",
     };
   }
 }
 
 /**
- * 일괄 차단
+ * Bulk block
  */
 export async function bulkBlockReviewApps(
   scanHistoryIds: string[],
@@ -561,7 +562,7 @@ export async function bulkBlockReviewApps(
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
-      return { success: false, error: "인증이 필요합니다" };
+      return { success: false, error: "Authentication required" };
     }
 
     let blocked = 0;
@@ -576,19 +577,19 @@ export async function bulkBlockReviewApps(
     return {
       success: true,
       data: { blocked },
-      message: `${blocked}개 앱이 차단되었습니다`,
+      message: `${blocked} apps blocked`,
     };
   } catch (error) {
     console.error("[bulkBlockReviewApps] Error:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "일괄 차단 실패",
+      error: error instanceof Error ? error.message : "Bulk block failed",
     };
   }
 }
 
 /**
- * 자동 스캔 스케줄 현황 조회
+ * Fetch the automatic scan schedule status
  */
 export async function getScanScheduleStatus(): Promise<
   ActionState<{
@@ -601,7 +602,7 @@ export async function getScanScheduleStatus(): Promise<
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
-      return { success: false, error: "인증이 필요합니다" };
+      return { success: false, error: "Authentication required" };
     }
 
     const orgId = session.user.organizationId;
@@ -619,7 +620,7 @@ export async function getScanScheduleStatus(): Promise<
         }),
       ]);
 
-    // 다음 3:00 AM UTC 계산
+    // Compute the next 3:00 AM UTC
     const now = new Date();
     const nextScanAt = new Date(now);
     nextScanAt.setUTCHours(3, 0, 0, 0);
@@ -640,7 +641,10 @@ export async function getScanScheduleStatus(): Promise<
     console.error("[getScanScheduleStatus] Error:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "스케줄 현황 조회 실패",
+      error:
+        error instanceof Error
+          ? error.message
+          : "Failed to fetch the scan schedule status",
     };
   }
 }
@@ -648,7 +652,7 @@ export async function getScanScheduleStatus(): Promise<
 // ==================== Helper Functions ====================
 
 /**
- * 등록된 앱 패턴 목록 조회
+ * Fetch registered app patterns
  */
 async function getRegisteredPatterns(
   organizationId: string
@@ -661,7 +665,7 @@ async function getRegisteredPatterns(
 }
 
 /**
- * 미스캔 도메인 수 조회
+ * Count unscanned domains
  */
 async function getUnscannedDomainCount(
   organizationId: string
@@ -711,7 +715,7 @@ async function getUnscannedDomainCount(
 }
 
 /**
- * 미스캔 도메인 목록 조회
+ * Fetch unscanned domains
  */
 async function getUnscannedDomains(
   organizationId: string,
@@ -769,7 +773,7 @@ async function getUnscannedDomains(
 }
 
 /**
- * 도메인별 방문 통계 조회
+ * Fetch visit statistics per domain
  */
 async function getDomainVisitStats(
   organizationId: string,

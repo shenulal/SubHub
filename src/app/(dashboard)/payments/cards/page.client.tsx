@@ -63,14 +63,14 @@ export function CardsPageClient({
 
   return (
     <>
-      {/* 안내 메시지 */}
+      {/* Info message */}
       <Alert className="border-info/30 bg-info/[0.06]">
         <Info className="text-info h-4 w-4" />
         <AlertTitle>{t("title")}</AlertTitle>
         <AlertDescription>{t("description")}</AlertDescription>
       </Alert>
 
-      {/* 카드 목록 (ADMIN일 때만 등록 버튼 표시) */}
+      {/* Card list (register button shown only to ADMIN) */}
       <CardList
         cards={initialCards}
         onRefresh={handleRefresh}

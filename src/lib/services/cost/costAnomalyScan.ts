@@ -4,7 +4,7 @@ import { getBaseCurrency } from "@/lib/fx/base-currency";
 import { sendCostAnomalyAlertEmail } from "@/lib/services/notification/securityAlert";
 import { getSetting } from "@/lib/settings/service";
 
-// 조직 설정 타입
+// Organization settings type
 interface OrganizationSettings {
   notifications?: {
     emailEnabled?: boolean;
@@ -12,7 +12,7 @@ interface OrganizationSettings {
   };
 }
 
-// 스캔 결과 타입
+// Scan result type
 export interface CostAnomalyScanResult {
   success: boolean;
   processedAt: Date;
@@ -22,7 +22,7 @@ export interface CostAnomalyScanResult {
   errors: string[];
 }
 
-// 월별 비용 집계 결과
+// Monthly cost aggregation result
 interface MonthlyCost {
   appId: string;
   appName: string;
@@ -32,9 +32,9 @@ interface MonthlyCost {
 }
 
 /**
- * 비용 이상 감지 스캔 처리
- * - 전월 대비 비용 증가율 계산
- * - 임계값 초과 시 관리자에게 이메일 발송
+ * Runs the cost anomaly scan
+ * - Calculates the month-over-month cost increase
+ * - E-mails admins when the threshold is exceeded
  */
 export async function processCostAnomalyScan(): Promise<CostAnomalyScanResult> {
   const result: CostAnomalyScanResult = {
@@ -47,7 +47,7 @@ export async function processCostAnomalyScan(): Promise<CostAnomalyScanResult> {
   };
 
   try {
-    // 모든 조직 조회 (알림 설정 포함)
+    // Load all organizations (including notification settings)
     const organizations = await prisma.organization.findMany({
       select: {
         id: true,
@@ -76,21 +76,21 @@ export async function processCostAnomalyScan(): Promise<CostAnomalyScanResult> {
         );
       } catch (error) {
         const errorMessage =
-          error instanceof Error ? error.message : "알 수 없는 오류";
+          error instanceof Error ? error.message : "Unknown error";
         result.errors.push(`${org.id}: ${errorMessage}`);
       }
     }
   } catch (error) {
     result.success = false;
     const errorMessage =
-      error instanceof Error ? error.message : "알 수 없는 오류";
+      error instanceof Error ? error.message : "Unknown error";
     result.errors.push(errorMessage);
   }
 
   return result;
 }
 
-// 개별 조직 처리
+// Process a single organization
 async function processOrganization(
   org: {
     id: string;
@@ -110,18 +110,18 @@ async function processOrganization(
     "discovery.costAnomalyThresholdPercent"
   );
 
-  // 알림 비활성화된 경우 스킵
+  // Skip when notifications are disabled
   if (!costAnomalyAlerts || !emailEnabled) {
     return;
   }
 
-  // 관리자가 없는 경우
+  // No admins
   if (org.adminEmails.length === 0) {
-    result.errors.push(`${org.id}: 관리자 없음`);
+    result.errors.push(`${org.id}: No admin found`);
     return;
   }
 
-  // 월별 비용 집계
+  // Aggregate monthly costs
   const anomalies = await calculateMonthlyCostAnomalies(org.id, threshold);
 
   if (anomalies.length === 0) {
@@ -130,13 +130,13 @@ async function processOrganization(
 
   result.anomaliesFound += anomalies.length;
 
-  // 이상 감지된 각 앱에 대해 관리자에게 이메일 발송
+  // E-mail admins for each app with a detected anomaly
   for (const anomaly of anomalies) {
     const currentMonth = new Date();
     const previousMonth = new Date();
     previousMonth.setMonth(previousMonth.getMonth() - 1);
 
-    const period = `${previousMonth.getFullYear()}년 ${previousMonth.getMonth() + 1}월 → ${currentMonth.getFullYear()}년 ${currentMonth.getMonth() + 1}월`;
+    const period = `${previousMonth.toLocaleString("en-US", { month: "short", year: "numeric" })} → ${currentMonth.toLocaleString("en-US", { month: "short", year: "numeric" })}`;
 
     const baseCurrency = await getBaseCurrency(org.id);
     for (const admin of org.admins) {
@@ -158,14 +158,14 @@ async function processOrganization(
         result.emailsSent++;
       } else {
         result.errors.push(
-          `${org.id}/${anomaly.appId}: 이메일 발송 실패 (${adminEmail}) - ${emailResult.error}`
+          `${org.id}/${anomaly.appId}: Email delivery failed (${adminEmail}) - ${emailResult.error}`
         );
       }
     }
   }
 }
 
-// 월별 비용 이상 계산
+// Calculate monthly cost anomalies
 async function calculateMonthlyCostAnomalies(
   organizationId: string,
   threshold: number
@@ -175,25 +175,25 @@ async function calculateMonthlyCostAnomalies(
   const previousMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
   const previousMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
 
-  // 이번 달 비용 집계 (승인내역 기준)
+  // Aggregate this month's costs (based on approvals)
   const currentMonthCosts = await prisma.cardTransaction.groupBy({
     by: ["matchedAppId"],
     where: {
       organizationId,
       matchedAppId: { not: null },
-      transactionType: "APPROVAL", // 승인내역 기준 조회
+      transactionType: "APPROVAL", // Query approvals only
       createdAt: { gte: currentMonthStart },
     },
     _sum: { useAmt: true },
   });
 
-  // 전월 비용 집계 (승인내역 기준)
+  // Aggregate last month's costs (based on approvals)
   const previousMonthCosts = await prisma.cardTransaction.groupBy({
     by: ["matchedAppId"],
     where: {
       organizationId,
       matchedAppId: { not: null },
-      transactionType: "APPROVAL", // 승인내역 기준 조회
+      transactionType: "APPROVAL", // Query approvals only
       createdAt: {
         gte: previousMonthStart,
         lte: previousMonthEnd,
@@ -202,7 +202,7 @@ async function calculateMonthlyCostAnomalies(
     _sum: { useAmt: true },
   });
 
-  // 앱 이름 조회
+  // Look up app names
   const appIds = [
     ...new Set([
       ...currentMonthCosts
@@ -220,12 +220,12 @@ async function calculateMonthlyCostAnomalies(
   });
   const appNameMap = new Map(apps.map((a) => [a.id, a.name]));
 
-  // 전월 비용 맵 (Decimal을 number로 변환)
+  // Previous-month cost map (Decimal converted to number)
   const previousCostMap = new Map(
     previousMonthCosts.map((c) => [c.matchedAppId, Number(c._sum.useAmt) || 0])
   );
 
-  // 이상 감지
+  // Detect anomalies
   const anomalies: MonthlyCost[] = [];
 
   for (const current of currentMonthCosts) {
@@ -234,17 +234,17 @@ async function calculateMonthlyCostAnomalies(
     const currentCost = Number(current._sum.useAmt) || 0;
     const previousCost = previousCostMap.get(current.matchedAppId) || 0;
 
-    // 전월 비용이 0인 경우 스킵 (새로운 앱)
+    // Skip when last month's cost is 0 (new app)
     if (previousCost === 0) continue;
 
     const percentageChange =
       ((currentCost - previousCost) / previousCost) * 100;
 
-    // 임계값 초과 시 이상으로 간주
+    // Treat as an anomaly when the threshold is exceeded
     if (percentageChange >= threshold) {
       anomalies.push({
         appId: current.matchedAppId,
-        appName: appNameMap.get(current.matchedAppId) || "알 수 없는 앱",
+        appName: appNameMap.get(current.matchedAppId) || "Unknown app",
         previousMonthCost: previousCost,
         currentMonthCost: currentCost,
         percentageChange,

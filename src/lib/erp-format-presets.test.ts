@@ -4,34 +4,35 @@ import { detectPreset, getAllPresets, getPreset } from "./erp-format-presets";
 
 describe("erp-format-presets", () => {
   describe("getPreset", () => {
-    it("더존 iCUBE 프리셋 반환", () => {
+    it("returns the Douzone iCUBE preset", () => {
       const preset = getPreset("ERP_DUZON_ICUBE");
       expect(preset).toBeDefined();
-      expect(preset!.name).toBe("더존 iCUBE");
+      expect(preset!.name).toBe("Douzone iCUBE");
       expect(preset!.doubleEntry.mode).toBe("DEBIT_EXPENSE_ONLY");
     });
 
-    it("SAP FI 프리셋 반환", () => {
+    it("returns the SAP FI preset", () => {
       const preset = getPreset("ERP_SAP_FI");
       expect(preset).toBeDefined();
       expect(preset!.name).toBe("SAP S/4HANA FI");
       expect(preset!.doubleEntry.expenseAccountPrefixes).toContain("6");
     });
 
-    it("Oracle Journal 프리셋 반환", () => {
+    it("returns the Oracle Journal preset", () => {
       const preset = getPreset("ERP_ORACLE_JOURNAL");
       expect(preset).toBeDefined();
       expect(preset!.doubleEntry.expenseAccountPrefixes).toContain("EXPENSE");
     });
 
-    it("존재하지 않는 포맷은 undefined 반환", () => {
+    it("returns undefined for an unknown format", () => {
       expect(getPreset("CARD_COMPANY")).toBeUndefined();
       expect(getPreset("UNKNOWN")).toBeUndefined();
     });
   });
 
   describe("detectPreset", () => {
-    it("더존 iCUBE 헤더로 감지 (관리번호 포함)", () => {
+    it("detects Douzone iCUBE headers (with management number)", () => {
+      // Korean header names are functional: they are the actual Douzone export columns
       const headers = [
         "전표일자",
         "차변계정코드",
@@ -48,9 +49,10 @@ describe("erp-format-presets", () => {
       expect(preset!.format).toBe("ERP_DUZON_ICUBE");
     });
 
-    it("더존 WEHAGO 헤더로 감지 (관리번호 없음 → iCUBE required와 동일 → iCUBE 매칭)", () => {
-      // detectPreset은 required만으로도 iCUBE 매칭 (distinctive는 우선순위용)
-      // payment-csv.ts의 detectCSVFormat()이 관리번호 유무로 구분
+    it("detects Douzone WEHAGO headers (no management number → same as iCUBE required → matches iCUBE)", () => {
+      // detectPreset matches iCUBE on required headers alone (distinctive headers only set priority)
+      // detectCSVFormat() in payment-csv.ts distinguishes them by the management number column
+      // (Korean header names below are functional Douzone export columns)
       const headers = [
         "전표일자",
         "차변계정코드",
@@ -61,11 +63,11 @@ describe("erp-format-presets", () => {
       ];
       const preset = detectPreset(headers);
       expect(preset).toBeDefined();
-      // detectPreset은 required 매칭으로 iCUBE 반환 (관리번호 없으면 2단계에서 매칭)
+      // detectPreset returns iCUBE via the required match (without a management number it matches in step 2)
       expect(preset!.format).toBe("ERP_DUZON_ICUBE");
     });
 
-    it("SAP FI 헤더로 감지", () => {
+    it("detects SAP FI headers", () => {
       const headers = [
         "PostingDate",
         "GLAccount",
@@ -78,7 +80,7 @@ describe("erp-format-presets", () => {
       expect(preset!.format).toBe("ERP_SAP_FI");
     });
 
-    it("Oracle Journal 헤더로 감지", () => {
+    it("detects Oracle Journal headers", () => {
       const headers = [
         "AccountingDate",
         "EnteredDebit",
@@ -91,14 +93,14 @@ describe("erp-format-presets", () => {
       expect(preset!.format).toBe("ERP_ORACLE_JOURNAL");
     });
 
-    it("매칭되지 않는 헤더는 undefined", () => {
+    it("returns undefined for unmatched headers", () => {
       const headers = ["column1", "column2", "column3"];
       expect(detectPreset(headers)).toBeUndefined();
     });
   });
 
   describe("getAllPresets", () => {
-    it("6개 프리셋 반환", () => {
+    it("returns 6 presets", () => {
       const presets = getAllPresets();
       expect(presets.length).toBe(6);
     });

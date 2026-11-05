@@ -65,7 +65,7 @@ export function TeamsPageClient({ initialTeams }: TeamsPageClientProps) {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [selectedTeam, setSelectedTeam] = useState<TeamWithStats | null>(null);
-  // #6: 팀 멤버 표시 기능
+  // #6: show team members
   const [teamMembers, setTeamMembers] = useState<Record<string, TeamMember[]>>(
     {}
   );
@@ -84,7 +84,7 @@ export function TeamsPageClient({ initialTeams }: TeamsPageClientProps) {
 
       if (teamsResult.success && teamsResult.data) {
         setTeams(teamsResult.data);
-        // 기본적으로 1단계까지 펼침
+        // Expand to the first level by default
         const firstLevel = new Set(teamsResult.data.map((t) => t.id));
         setExpandedTeams(firstLevel);
       }
@@ -134,7 +134,7 @@ export function TeamsPageClient({ initialTeams }: TeamsPageClientProps) {
     collectIds(teams);
     setExpandedTeams(allIds);
     setExpandedMembers(new Set(allIds));
-    // 아직 로드되지 않은 팀의 멤버 데이터 로드
+    // Load member data for teams not yet loaded
     allIds.forEach((id) => loadTeamMembers(id));
   };
 
@@ -143,10 +143,10 @@ export function TeamsPageClient({ initialTeams }: TeamsPageClientProps) {
     setExpandedMembers(new Set());
   };
 
-  // 팀 멤버 로드
+  // Load team members
   const loadTeamMembers = useCallback(
     async (teamId: string) => {
-      if (teamMembers[teamId]) return; // 이미 로드됨
+      if (teamMembers[teamId]) return; // Already loaded
       setLoadingMembers((prev) => new Set(prev).add(teamId));
       try {
         const result = await getTeamMembers(teamId);
@@ -164,7 +164,7 @@ export function TeamsPageClient({ initialTeams }: TeamsPageClientProps) {
     [teamMembers]
   );
 
-  // 팀 멤버 토글
+  // Toggle team members
   const toggleMembers = useCallback(
     (teamId: string) => {
       const isCurrentlyExpanded = expandedMembers.has(teamId);
@@ -179,7 +179,7 @@ export function TeamsPageClient({ initialTeams }: TeamsPageClientProps) {
         return next;
       });
 
-      // Side effect를 state updater 외부에서 실행
+      // Run the side effect outside the state updater
       if (!isCurrentlyExpanded) {
         loadTeamMembers(teamId);
       }
@@ -187,7 +187,7 @@ export function TeamsPageClient({ initialTeams }: TeamsPageClientProps) {
     [loadTeamMembers, expandedMembers]
   );
 
-  // 검색 필터링
+  // Search filtering
   const filterTeams = (nodes: TeamNode[], query: string): TeamNode[] => {
     if (!query) return nodes;
 
@@ -219,13 +219,13 @@ export function TeamsPageClient({ initialTeams }: TeamsPageClientProps) {
 
   const filteredTeams = filterTeams(teams, searchQuery);
 
-  // 수정 다이얼로그 열기
+  // Open the edit dialog
   const openEditDialog = (team: TeamNode) => {
     setSelectedTeam(team);
     setIsEditDialogOpen(true);
   };
 
-  // 삭제 다이얼로그 열기
+  // Open the delete dialog
   const openDeleteDialog = (team: TeamNode) => {
     setSelectedTeam(team);
     setIsDeleteDialogOpen(true);
@@ -234,7 +234,7 @@ export function TeamsPageClient({ initialTeams }: TeamsPageClientProps) {
   const renderTeamNode = (node: TeamNode, depth: number = 0) => {
     const isExpanded = expandedTeams.has(node.id);
     const hasChildren = node.children && node.children.length > 0;
-    const isManualTeam = !node.googleOrgUnitId; // 수동 생성 팀 여부
+    const isManualTeam = !node.googleOrgUnitId; // Whether the team was created manually
     const isMembersExpanded = expandedMembers.has(node.id);
 
     return (
@@ -243,7 +243,7 @@ export function TeamsPageClient({ initialTeams }: TeamsPageClientProps) {
           className={`group hover:bg-muted flex min-h-11 min-w-0 cursor-pointer items-center gap-2 rounded-md px-3 py-2 transition-colors ${isMembersExpanded ? "bg-primary/[0.08]" : ""}`}
           onClick={() => toggleMembers(node.id)}
         >
-          {/* 자식 팀 펼침/접힘 버튼 (자식 있을 때만) */}
+          {/* Expand/collapse button for child teams (only when children exist) */}
           <div className="w-5 shrink-0">
             {hasChildren ? (
               <Button
@@ -266,12 +266,12 @@ export function TeamsPageClient({ initialTeams }: TeamsPageClientProps) {
             )}
           </div>
 
-          {/* 팀 아이콘 */}
+          {/* Team icon */}
           <span className="tonal-primary flex size-7 shrink-0 items-center justify-center rounded-md">
             <FolderTree className="h-4 w-4" />
           </span>
 
-          {/* 팀 이름 */}
+          {/* Team name */}
           <span
             className="min-w-0 flex-1 truncate font-medium"
             title={node.name}
@@ -279,7 +279,7 @@ export function TeamsPageClient({ initialTeams }: TeamsPageClientProps) {
             {node.name}
           </span>
 
-          {/* 멤버 수 (정보 표시용 Badge) */}
+          {/* Member count (informational badge) */}
           <Badge
             variant="secondary"
             className="flex shrink-0 items-center gap-1 tabular-nums"
@@ -288,21 +288,21 @@ export function TeamsPageClient({ initialTeams }: TeamsPageClientProps) {
             <span>{node._count?.members || 0}</span>
           </Badge>
 
-          {/* Google OU 배지 */}
+          {/* Google OU badge */}
           {node.googleOrgUnitPath && (
             <Badge variant="info" className="shrink-0">
               OU
             </Badge>
           )}
 
-          {/* 멤버 펼침 상태 아이콘 */}
+          {/* Member expand-state icon */}
           {isMembersExpanded ? (
             <ChevronDown className="text-muted-foreground h-4 w-4 shrink-0" />
           ) : (
             <ChevronRight className="text-muted-foreground h-4 w-4 shrink-0" />
           )}
 
-          {/* 수동 팀: 수정/삭제 메뉴 */}
+          {/* Manual team: edit/delete menu */}
           {isManualTeam && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -340,7 +340,7 @@ export function TeamsPageClient({ initialTeams }: TeamsPageClientProps) {
           )}
         </div>
 
-        {/* 팀 멤버 목록 (팀 행 바로 아래, 자식 팀 위) */}
+        {/* Team member list (directly below the team row, above child teams) */}
         <div
           className="grid transition-[grid-template-rows] duration-200 ease-in-out"
           style={{ gridTemplateRows: isMembersExpanded ? "1fr" : "0fr" }}
@@ -389,7 +389,7 @@ export function TeamsPageClient({ initialTeams }: TeamsPageClientProps) {
           </div>
         </div>
 
-        {/* 자식 팀 렌더링 (멤버 패널 아래) */}
+        {/* Render child teams (below the member panel) */}
         {isExpanded && hasChildren && (
           <div className="border-muted ml-5 border-l">
             {node.children.map((child) => renderTeamNode(child, depth + 1))}
@@ -434,7 +434,7 @@ export function TeamsPageClient({ initialTeams }: TeamsPageClientProps) {
 
   return (
     <div className="min-w-0 space-y-6">
-      {/* 통계 카드 */}
+      {/* Stat cards */}
       {stats && (
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           <ReportStatCard
@@ -452,7 +452,7 @@ export function TeamsPageClient({ initialTeams }: TeamsPageClientProps) {
         </div>
       )}
 
-      {/* 팀 트리 */}
+      {/* Team tree */}
       <Card>
         <CardHeader>
           <div className="flex min-w-0 items-center justify-between gap-3">
@@ -479,7 +479,7 @@ export function TeamsPageClient({ initialTeams }: TeamsPageClientProps) {
               </Button>
             </div>
           </div>
-          {/* 검색 */}
+          {/* Search */}
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <div className="relative min-w-[12rem] flex-1">
               <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
@@ -522,14 +522,14 @@ export function TeamsPageClient({ initialTeams }: TeamsPageClientProps) {
         </CardContent>
       </Card>
 
-      {/* 팀 생성 다이얼로그 */}
+      {/* Create team dialog */}
       <CreateTeamDialog
         open={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}
         onSuccess={loadData}
       />
 
-      {/* 팀 수정 다이얼로그 */}
+      {/* Edit team dialog */}
       {selectedTeam && (
         <EditTeamDialog
           open={isEditDialogOpen}
@@ -542,7 +542,7 @@ export function TeamsPageClient({ initialTeams }: TeamsPageClientProps) {
         />
       )}
 
-      {/* 팀 삭제 다이얼로그 */}
+      {/* Delete team dialog */}
       {selectedTeam && (
         <DeleteTeamDialog
           open={isDeleteDialogOpen}

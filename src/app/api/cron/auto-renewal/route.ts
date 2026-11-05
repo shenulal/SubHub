@@ -8,23 +8,23 @@ import { NextRequest, NextResponse } from "next/server";
 export const GET = withCronAuth(
   withLogging("cron:auto-renewal", async (request: NextRequest) => {
     try {
-      logger.info("[Cron] 자동 갱신일 업데이트 시작");
+      logger.info("[Cron] Auto-renewal date update started");
 
       const result = await processAutoRenewals();
 
-      logger.info({ result }, "[Cron] 자동 갱신일 업데이트 완료");
+      logger.info({ result }, "[Cron] Auto-renewal date update completed");
 
       return NextResponse.json({
         success: true,
         ...result,
       });
     } catch (error) {
-      logger.error({ err: error }, "[Cron] 자동 갱신일 업데이트 오류");
+      logger.error({ err: error }, "[Cron] Auto-renewal date update error");
 
       return NextResponse.json(
         {
           success: false,
-          error: error instanceof Error ? error.message : "알 수 없는 오류",
+          error: error instanceof Error ? error.message : "Unknown error",
         },
         { status: 500 }
       );

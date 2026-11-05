@@ -6,9 +6,9 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * 🎯 목적: NavigationMenu 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: Radix UI NavigationMenu.Root primitive 사용, viewport prop으로 Viewport 렌더링 제어
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the NavigationMenu component for React 18/19 compatibility
+ * 📝 Note: Uses the Radix UI NavigationMenu.Root primitive; the viewport prop controls Viewport rendering
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const NavigationMenu = React.forwardRef<
   React.ElementRef<typeof NavigationMenuPrimitive.Root>,
@@ -35,7 +35,7 @@ const NavigationMenu = React.forwardRef<
 NavigationMenu.displayName = "NavigationMenu";
 
 /**
- * 🎯 목적: NavigationMenuList 컴포넌트에 forwardRef 적용
+ * 🎯 Purpose: Apply forwardRef to the NavigationMenuList component
  */
 const NavigationMenuList = React.forwardRef<
   React.ElementRef<typeof NavigationMenuPrimitive.List>,
@@ -56,7 +56,7 @@ const NavigationMenuList = React.forwardRef<
 NavigationMenuList.displayName = "NavigationMenuList";
 
 /**
- * 🎯 목적: NavigationMenuItem 컴포넌트에 forwardRef 적용
+ * 🎯 Purpose: Apply forwardRef to the NavigationMenuItem component
  */
 const NavigationMenuItem = React.forwardRef<
   React.ElementRef<typeof NavigationMenuPrimitive.Item>,
@@ -74,16 +74,16 @@ const NavigationMenuItem = React.forwardRef<
 NavigationMenuItem.displayName = "NavigationMenuItem";
 
 /**
- * 🎯 목적: NavigationMenu 트리거 버튼 스타일 정의
- * 📝 주의사항: CVA로 정의된 스타일 변수이므로 forwardRef 불필요
+ * 🎯 Purpose: Defines the NavigationMenu trigger button style
+ * 📝 Note: A CVA style variable, so forwardRef is not needed
  */
 const navigationMenuTriggerStyle = cva(
   "group bg-background hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground data-[state=open]:hover:bg-accent data-[state=open]:text-accent-foreground data-[state=open]:focus:bg-accent data-[state=open]:bg-accent/50 focus-visible:ring-ring/50 inline-flex h-9 w-max items-center justify-center rounded-md px-4 py-2 text-sm font-medium transition-[color,box-shadow] outline-none focus-visible:ring-[3px] focus-visible:outline-1 disabled:pointer-events-none disabled:opacity-50",
 );
 
 /**
- * 🎯 목적: NavigationMenuTrigger 컴포넌트에 forwardRef 적용
- * 📝 주의사항: ChevronDownIcon 포함, state에 따라 회전 애니메이션
+ * 🎯 Purpose: Apply forwardRef to the NavigationMenuTrigger component
+ * 📝 Note: Includes ChevronDownIcon; rotates based on state
  */
 const NavigationMenuTrigger = React.forwardRef<
   React.ElementRef<typeof NavigationMenuPrimitive.Trigger>,
@@ -107,8 +107,8 @@ const NavigationMenuTrigger = React.forwardRef<
 NavigationMenuTrigger.displayName = "NavigationMenuTrigger";
 
 /**
- * 🎯 목적: NavigationMenuContent 컴포넌트에 forwardRef 적용
- * 📝 주의사항: viewport 여부에 따라 스타일 변경
+ * 🎯 Purpose: Apply forwardRef to the NavigationMenuContent component
+ * 📝 Note: Style changes depending on whether a viewport is used
  */
 const NavigationMenuContent = React.forwardRef<
   React.ElementRef<typeof NavigationMenuPrimitive.Content>,
@@ -130,8 +130,8 @@ const NavigationMenuContent = React.forwardRef<
 NavigationMenuContent.displayName = "NavigationMenuContent";
 
 /**
- * 🎯 목적: NavigationMenuViewport 컴포넌트에 forwardRef 적용
- * 📝 주의사항: div wrapper 내부에서 Viewport primitive 렌더링
+ * 🎯 Purpose: Apply forwardRef to the NavigationMenuViewport component
+ * 📝 Note: Renders the Viewport primitive inside a div wrapper
  */
 const NavigationMenuViewport = React.forwardRef<
   React.ElementRef<typeof NavigationMenuPrimitive.Viewport>,
@@ -158,7 +158,7 @@ const NavigationMenuViewport = React.forwardRef<
 NavigationMenuViewport.displayName = "NavigationMenuViewport";
 
 /**
- * 🎯 목적: NavigationMenuLink 컴포넌트에 forwardRef 적용
+ * 🎯 Purpose: Apply forwardRef to the NavigationMenuLink component
  */
 const NavigationMenuLink = React.forwardRef<
   React.ElementRef<typeof NavigationMenuPrimitive.Link>,
@@ -179,8 +179,8 @@ const NavigationMenuLink = React.forwardRef<
 NavigationMenuLink.displayName = "NavigationMenuLink";
 
 /**
- * 🎯 목적: NavigationMenuIndicator 컴포넌트에 forwardRef 적용
- * 📝 주의사항: 내부에 회전된 div indicator 포함
+ * 🎯 Purpose: Apply forwardRef to the NavigationMenuIndicator component
+ * 📝 Note: Includes an inner rotated div indicator
  */
 const NavigationMenuIndicator = React.forwardRef<
   React.ElementRef<typeof NavigationMenuPrimitive.Indicator>,

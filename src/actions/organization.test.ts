@@ -40,26 +40,26 @@ describe("createOrganization", () => {
     vi.clearAllMocks();
   });
 
-  describe("인증 검증", () => {
-    it("인증되지 않은 사용자는 로그인 페이지로 리다이렉트해야 한다", async () => {
+  describe("authentication", () => {
+    it("redirects an unauthenticated user to the login page", async () => {
       mockedAuth.mockResolvedValue(null);
 
       const formData = new FormData();
-      formData.set("name", "테스트 조직");
+      formData.set("name", "Test Organization");
 
       await expect(createOrganization(formData)).rejects.toThrow(
         "NEXT_REDIRECT:/login"
       );
     });
 
-    it("세션에 user.id가 없으면 로그인 페이지로 리다이렉트해야 한다", async () => {
+    it("redirects to the login page when the session has no user.id", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "", email: "test@test.com" },
         expires: "",
       });
 
       const formData = new FormData();
-      formData.set("name", "테스트 조직");
+      formData.set("name", "Test Organization");
 
       await expect(createOrganization(formData)).rejects.toThrow(
         "NEXT_REDIRECT:/login"
@@ -67,8 +67,8 @@ describe("createOrganization", () => {
     });
   });
 
-  describe("유효성 검사", () => {
-    it("조직명이 없으면 에러가 발생해야 한다", async () => {
+  describe("validation", () => {
+    it("throws when the organization name is missing", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", email: "test@test.com" },
         expires: "",
@@ -84,7 +84,7 @@ describe("createOrganization", () => {
       await expect(createOrganization(formData)).rejects.toThrow();
     });
 
-    it("조직명이 2자 미만이면 에러가 발생해야 한다", async () => {
+    it("throws when the organization name is shorter than 2 characters", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", email: "test@test.com" },
         expires: "",
@@ -101,8 +101,8 @@ describe("createOrganization", () => {
     });
   });
 
-  describe("중복 조직 방지", () => {
-    it("이미 조직에 소속된 사용자는 에러가 발생해야 한다", async () => {
+  describe("duplicate organization prevention", () => {
+    it("throws for a user who already belongs to an organization", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", email: "test@test.com" },
         expires: "",
@@ -113,16 +113,16 @@ describe("createOrganization", () => {
       } as never);
 
       const formData = new FormData();
-      formData.set("name", "테스트 조직");
+      formData.set("name", "Test Organization");
 
       await expect(createOrganization(formData)).rejects.toThrow(
-        "이미 조직에 소속되어 있습니다"
+        "You already belong to an organization"
       );
     });
   });
 
-  describe("성공 케이스", () => {
-    it("조직 생성 후 대시보드로 리다이렉트해야 한다", async () => {
+  describe("success cases", () => {
+    it("redirects to the dashboard after creating the organization", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", email: "test@test.com" },
         expires: "",
@@ -145,7 +145,7 @@ describe("createOrganization", () => {
       });
 
       const formData = new FormData();
-      formData.set("name", "테스트 조직");
+      formData.set("name", "Test Organization");
 
       // redirect throws NEXT_REDIRECT error
       await expect(createOrganization(formData)).rejects.toThrow(
@@ -153,7 +153,7 @@ describe("createOrganization", () => {
       );
     });
 
-    it("트랜잭션에서 조직을 생성하고 사용자를 ADMIN으로 업데이트해야 한다", async () => {
+    it("creates the organization and updates the user to ADMIN in a transaction", async () => {
       const mockCreate = vi.fn().mockResolvedValue({ id: "new-org-id" });
       const mockUpdate = vi.fn().mockResolvedValue({});
 
@@ -175,7 +175,7 @@ describe("createOrganization", () => {
       });
 
       const formData = new FormData();
-      formData.set("name", "테스트 조직");
+      formData.set("name", "Test Organization");
 
       // redirect throws, so we catch and verify the mocks were called
       try {
@@ -186,7 +186,7 @@ describe("createOrganization", () => {
       }
 
       expect(mockCreate).toHaveBeenCalledWith({
-        data: { name: "테스트 조직" },
+        data: { name: "Test Organization" },
       });
 
       expect(mockUpdate).toHaveBeenCalledWith({

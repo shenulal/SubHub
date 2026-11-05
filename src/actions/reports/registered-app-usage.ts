@@ -8,7 +8,7 @@ import type { ActionState } from "@/types";
 import { getTranslations } from "next-intl/server";
 
 /**
- * 등록 앱 접속 로그 아이템 타입
+ * Registered app access log item type
  */
 export type RegisteredAppUsageItem = {
   id: string;
@@ -26,7 +26,7 @@ export type RegisteredAppUsageItem = {
 };
 
 /**
- * 등록 앱 접속 현황 응답 타입
+ * Registered app access response type
  */
 export type RegisteredAppUsageResponse = {
   items: RegisteredAppUsageItem[];
@@ -43,7 +43,7 @@ export type RegisteredAppUsageResponse = {
 };
 
 /**
- * 등록 앱 접속 현황 필터 타입
+ * Registered app access filter type
  */
 export type RegisteredAppUsageFilters = {
   startDate: Date;
@@ -56,7 +56,7 @@ export type RegisteredAppUsageFilters = {
 };
 
 /**
- * 등록 앱별 요약 아이템 타입
+ * Per-registered-app summary item type
  */
 export type AppUsageSummaryItem = {
   appId: string | null;
@@ -69,7 +69,7 @@ export type AppUsageSummaryItem = {
 };
 
 /**
- * 등록 앱 접속 현황 조회
+ * Fetch registered app access
  */
 export async function getRegisteredAppUsageReport(
   filters: RegisteredAppUsageFilters
@@ -77,7 +77,7 @@ export async function getRegisteredAppUsageReport(
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
-      return { success: false, error: "인증이 필요합니다" };
+      return { success: false, error: "Authentication required" };
     }
 
     const {
@@ -91,7 +91,7 @@ export async function getRegisteredAppUsageReport(
     } = filters;
     const skip = (page - 1) * limit;
 
-    // 등록된 앱 패턴 조회
+    // Fetch registered app patterns
     const whitelists = await prisma.extensionWhitelist.findMany({
       where: {
         organizationId: session.user.organizationId,
@@ -119,7 +119,7 @@ export async function getRegisteredAppUsageReport(
       };
     }
 
-    // 앱 ID로 필터링 시 해당 앱의 URL 패턴 조회
+    // When filtering by app ID, fetch that app's URL patterns
     let targetPatterns = whitelists;
     if (appId) {
       const app = await prisma.app.findUnique({
@@ -135,7 +135,7 @@ export async function getRegisteredAppUsageReport(
       }
     }
 
-    // 브라우징 로그 조회 (화이트리스트 패턴과 매칭되는 것만)
+    // Fetch browsing logs (only those matching whitelist patterns)
     const browsingLogs = await prisma.extensionBrowsingLog.findMany({
       where: {
         organizationId: session.user.organizationId,
@@ -163,7 +163,7 @@ export async function getRegisteredAppUsageReport(
       orderBy: { visitedAt: "desc" },
     });
 
-    // 패턴 매칭 필터링
+    // Pattern-match filtering
     const patternMap = new Map(targetPatterns.map((p) => [p.pattern, p.name]));
     const matchedLogs = browsingLogs.filter((log) => {
       for (const pattern of patternMap.keys()) {
@@ -174,10 +174,10 @@ export async function getRegisteredAppUsageReport(
       return false;
     });
 
-    // 페이지네이션 적용
+    // Apply pagination
     const paginatedLogs = matchedLogs.slice(skip, skip + limit);
 
-    // 앱 정보 조회 (URL 기반 매칭)
+    // Fetch app info (URL-based matching)
     const apps = await prisma.app.findMany({
       where: { organizationId: session.user.organizationId, status: "ACTIVE" },
       include: { catalog: { select: { website: true } } },
@@ -192,7 +192,7 @@ export async function getRegisteredAppUsageReport(
       }
     }
 
-    // 체류 시간 조회 (extension_usages에서)
+    // Fetch dwell time (from extension_usages)
     const usageData = await prisma.extensionUsage.findMany({
       where: {
         organizationId: session.user.organizationId,
@@ -215,9 +215,9 @@ export async function getRegisteredAppUsageReport(
       usageMap.set(key, usage.totalSeconds);
     }
 
-    // 결과 매핑
+    // Map results
     const items: RegisteredAppUsageItem[] = paginatedLogs.map((log) => {
-      // 앱 찾기
+      // Find the app
       let appInfo: { id: string | null; name: string } = {
         id: null,
         name: "Unknown",
@@ -229,7 +229,7 @@ export async function getRegisteredAppUsageReport(
         }
       }
 
-      // 패턴에서 이름 찾기
+      // Find the name from the pattern
       for (const [pattern, name] of patternMap) {
         if (matchDomainPattern(pattern, log.domain)) {
           if (!appInfo.id) {
@@ -239,7 +239,7 @@ export async function getRegisteredAppUsageReport(
         }
       }
 
-      // 체류 시간 찾기
+      // Find the dwell time
       const dateStr = log.visitedAt.toISOString().split("T")[0];
       const usageKey = `${log.deviceId}-${log.domain}-${dateStr}`;
       const durationSeconds = usageMap.get(usageKey) || null;
@@ -260,7 +260,7 @@ export async function getRegisteredAppUsageReport(
       };
     });
 
-    // 요약 통계 계산
+    // Compute summary statistics
     const uniqueUsers = new Set(matchedLogs.map((l) => l.userId));
     const uniqueApps = new Set<string>();
     let totalDuration = 0;
@@ -298,13 +298,15 @@ export async function getRegisteredAppUsageReport(
     return {
       success: false,
       error:
-        error instanceof Error ? error.message : "등록 앱 접속 현황 조회 실패",
+        error instanceof Error
+          ? error.message
+          : "Failed to fetch registered app access",
     };
   }
 }
 
 /**
- * 등록 앱별 사용 요약 조회
+ * Fetch the usage summary per registered app
  */
 export async function getRegisteredAppUsageSummary(filters: {
   startDate: Date;
@@ -313,12 +315,12 @@ export async function getRegisteredAppUsageSummary(filters: {
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
-      return { success: false, error: "인증이 필요합니다" };
+      return { success: false, error: "Authentication required" };
     }
 
     const { startDate, endDate } = filters;
 
-    // 등록된 앱 패턴 조회
+    // Fetch registered app patterns
     const whitelists = await prisma.extensionWhitelist.findMany({
       where: {
         organizationId: session.user.organizationId,
@@ -327,7 +329,7 @@ export async function getRegisteredAppUsageSummary(filters: {
       select: { pattern: true, name: true },
     });
 
-    // 앱 정보 조회
+    // Fetch app info
     const apps = await prisma.app.findMany({
       where: { organizationId: session.user.organizationId, status: "ACTIVE" },
       include: { catalog: { select: { website: true } } },
@@ -338,7 +340,7 @@ export async function getRegisteredAppUsageSummary(filters: {
       { id: string | null; name: string }
     >();
     for (const whitelist of whitelists) {
-      // 앱과 매칭
+      // Match against apps
       let matchedApp: { id: string | null; name: string } = {
         id: null,
         name: whitelist.name,
@@ -356,7 +358,7 @@ export async function getRegisteredAppUsageSummary(filters: {
       patternToAppMap.set(whitelist.pattern, matchedApp);
     }
 
-    // 브라우징 로그 조회
+    // Fetch browsing logs
     const browsingLogs = await prisma.extensionBrowsingLog.findMany({
       where: {
         organizationId: session.user.organizationId,
@@ -373,7 +375,7 @@ export async function getRegisteredAppUsageSummary(filters: {
       },
     });
 
-    // 체류 시간 조회
+    // Fetch dwell time
     const usageData = await prisma.extensionUsage.findMany({
       where: {
         organizationId: session.user.organizationId,
@@ -395,7 +397,7 @@ export async function getRegisteredAppUsageSummary(filters: {
       usageMap.set(usage.domain, existing + usage.totalSeconds);
     }
 
-    // 패턴별 통계 집계
+    // Aggregate statistics per pattern
     const summaryMap = new Map<
       string,
       {
@@ -452,13 +454,15 @@ export async function getRegisteredAppUsageSummary(filters: {
     return {
       success: false,
       error:
-        error instanceof Error ? error.message : "앱별 사용 요약 조회 실패",
+        error instanceof Error
+          ? error.message
+          : "Failed to fetch the per-app usage summary",
     };
   }
 }
 
 /**
- * 날짜 범위 프리셋 조회
+ * Fetch date range presets
  */
 export async function getDateRangePresets(): Promise<
   { value: string; label: string; startDate: Date; endDate: Date }[]
@@ -502,7 +506,7 @@ export async function getDateRangePresets(): Promise<
 // ==================== Helper Functions ====================
 
 /**
- * URL에서 도메인 추출
+ * Extract the domain from a URL
  */
 function extractDomainFromUrl(url: string): string {
   try {

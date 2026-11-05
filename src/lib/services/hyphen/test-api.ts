@@ -1,16 +1,16 @@
 /**
- * Hyphen API 실제 테스트 스크립트
- * 실행: npx tsx src/lib/services/hyphen/test-api.ts
+ * Live Hyphen API test script
+ * Run: npx tsx src/lib/services/hyphen/test-api.ts
  *
- * 사전 준비:
- * 1. npx tsx src/lib/services/hyphen/seed-test-card.ts 실행하여 DB에 카드 등록
- * 2. .env.local에 HYPHEN_USER_ID, HYPHEN_HKEY, ENCRYPTION_KEY 설정
+ * Prerequisites:
+ * 1. npx tsx src/lib/services/hyphen/seed-test-card.ts to register a card in the DB
+ * 2. Set HYPHEN_USER_ID, HYPHEN_HKEY and ENCRYPTION_KEY in .env.local
  */
 
 import * as dotenv from "dotenv";
 import * as path from "path";
 
-// .env.local 로드
+// Load .env.local
 dotenv.config({ path: path.resolve(process.cwd(), ".env.local") });
 
 import { decryptJson } from "@/lib/crypto";
@@ -20,21 +20,21 @@ import type { CardCompanyCode, CardCredentials } from "./types";
 
 const prisma = new PrismaClient();
 
-// 조회 기간 설정
+// Query period
 const QUERY_PERIOD = {
   sdate: "20251101",
   edate: "20251201",
 };
 
 async function testOAuthToken() {
-  console.log("\n========== Step 1: OAuth 토큰 발급 테스트 ==========\n");
+  console.log("\n========== Step 1: OAuth token request test ==========\n");
 
   const HYPHEN_API_BASE = "https://api.hyphen.im";
   const userId = process.env.HYPHEN_USER_ID;
   const hkey = process.env.HYPHEN_HKEY;
 
-  console.log(`요청 URL: ${HYPHEN_API_BASE}/oauth/token`);
-  console.log(`요청 body: { user_id: "${userId}", hkey: "${hkey}" }`);
+  console.log(`Request URL: ${HYPHEN_API_BASE}/oauth/token`);
+  console.log(`Request body: { user_id: "${userId}", hkey: "${hkey}" }`);
 
   try {
     const response = await fetch(`${HYPHEN_API_BASE}/oauth/token`, {
@@ -43,34 +43,34 @@ async function testOAuthToken() {
       body: JSON.stringify({ user_id: userId, hkey: hkey }),
     });
 
-    console.log(`응답 상태: ${response.status} ${response.statusText}`);
+    console.log(`Response status: ${response.status} ${response.statusText}`);
 
     const rawText = await response.text();
-    console.log(`응답 내용: ${rawText}`);
+    console.log(`Response body: ${rawText}`);
 
     if (response.ok) {
       const data = JSON.parse(rawText);
       if (data.access_token) {
-        console.log("\n✅ 토큰 발급 성공!");
+        console.log("\n✅ Token issued successfully");
         console.log(
-          `   토큰 (앞 50자): ${data.access_token.substring(0, 50)}...`
+          `   Token (first 50 characters): ${data.access_token.substring(0, 50)}...`
         );
         return true;
       }
     }
 
-    console.error("\n❌ 토큰 발급 실패: access_token이 없습니다");
+    console.error("\n❌ Token request failed: no access_token returned");
     return false;
   } catch (error) {
-    console.error("❌ 토큰 발급 실패:", error);
+    console.error("❌ Token request failed:", error);
     return false;
   }
 }
 
 async function getTestCardFromDB() {
-  console.log("\n========== DB에서 테스트 카드 조회 ==========\n");
+  console.log("\n========== Load test card from DB ==========\n");
 
-  // 테스트 조직의 첫 번째 활성 카드 조회
+  // Load the most recent active card
   const card = await prisma.corporateCard.findFirst({
     where: {
       isActive: true,
@@ -87,30 +87,30 @@ async function getTestCardFromDB() {
 
   if (!card) {
     throw new Error(
-      "DB에 등록된 카드가 없습니다. seed-test-card.ts를 먼저 실행하세요."
+      "No card is registered in the DB. Run seed-test-card.ts first."
     );
   }
 
-  console.log(`✅ 카드 조회 성공`);
-  console.log(`   카드 ID: ${card.id}`);
-  console.log(`   카드명: ${card.cardNm}`);
-  console.log(`   카드번호: ${card.cardNo}`);
-  console.log(`   조직: ${card.organization.name}`);
+  console.log(`✅ Card loaded`);
+  console.log(`   Card ID: ${card.id}`);
+  console.log(`   Card name: ${card.cardNm}`);
+  console.log(`   Card number: ${card.cardNo}`);
+  console.log(`   Organization: ${card.organization.name}`);
 
-  // 인증 정보 복호화
-  console.log("\n인증 정보 복호화 중...");
+  // Decrypt credentials
+  console.log("\nDecrypting credentials...");
   const credentials = decryptJson<CardCredentials>(card.encryptedCredentials);
-  console.log(`✅ 복호화 성공`);
-  console.log(`   로그인 방식: ${credentials.loginMethod}`);
+  console.log(`✅ Decryption succeeded`);
+  console.log(`   Login method: ${credentials.loginMethod}`);
   console.log(
-    `   사용자 ID: ${credentials.loginMethod === "ID" ? credentials.userId : "(인증서 로그인)"}`
+    `   User ID: ${credentials.loginMethod === "ID" ? credentials.userId : "(certificate login)"}`
   );
-  console.log(`   사업자번호: ${credentials.bizNo || "N/A"}`);
+  console.log(`   Business registration number: ${credentials.bizNo || "N/A"}`);
 
   return { card, credentials };
 }
 
-// CardCredentials에 cardNo가 포함된 확장 타입
+// CardCredentials extended with cardNo
 type ExtendedCardCredentials = CardCredentials & {
   cardNo?: string;
 };
@@ -119,9 +119,9 @@ async function testCardApprovals(
   card: { cardCd: string; cardNo: string },
   credentials: ExtendedCardCredentials
 ) {
-  console.log("\n========== Step 2: 승인내역 조회 테스트 ==========\n");
+  console.log("\n========== Step 2: approval history test ==========\n");
 
-  // 원본 카드번호는 암호화된 credentials에서 가져옴
+  // The original card number comes from the encrypted credentials
   const originalCardNo = credentials.cardNo || card.cardNo.replace(/\*/g, "");
 
   const request = {
@@ -133,12 +133,14 @@ async function testCardApprovals(
   };
 
   console.log(
-    "요청 파라미터:",
+    "Request parameters:",
     JSON.stringify(
       {
         ...request,
         userId:
-          credentials.loginMethod === "ID" ? credentials.userId : "(인증서)",
+          credentials.loginMethod === "ID"
+            ? credentials.userId
+            : "(certificate)",
         userPw: "***hidden***",
         bizNo: credentials.bizNo || "N/A",
       },
@@ -150,24 +152,24 @@ async function testCardApprovals(
   try {
     const response = await getCardApprovals(request, credentials);
 
-    console.log("\n✅ 승인내역 조회 성공!");
-    console.log(`   조회 결과: ${response.data.list?.length || 0}건`);
-    console.log(`   총 금액: ${response.data.totalAmt || "N/A"}`);
+    console.log("\n✅ Approval history retrieved");
+    console.log(`   Results: ${response.data.list?.length || 0}`);
+    console.log(`   Total amount: ${response.data.totalAmt || "N/A"}`);
 
     if (response.data.list && response.data.list.length > 0) {
-      console.log("\n   [승인내역 샘플 (최대 5건)]");
+      console.log("\n   [Approval history sample (up to 5)]");
       response.data.list.slice(0, 5).forEach((item, i) => {
         console.log(
-          `   ${i + 1}. ${item.useDt} | ${item.useStore} | ${item.useAmt}원`
+          `   ${i + 1}. ${item.useDt} | ${item.useStore} | ${item.useAmt} KRW`
         );
       });
     }
 
     return true;
   } catch (error: unknown) {
-    console.error("\n❌ 승인내역 조회 실패:");
+    console.error("\n❌ Approval history request failed:");
     if (error instanceof Error) {
-      console.error("   에러 메시지:", error.message);
+      console.error("   Error message:", error.message);
     }
     return false;
   }
@@ -177,9 +179,9 @@ async function testCardPurchases(
   card: { cardCd: string; cardNo: string },
   credentials: ExtendedCardCredentials
 ) {
-  console.log("\n========== Step 3: 매입내역 조회 테스트 ==========\n");
+  console.log("\n========== Step 3: purchase history test ==========\n");
 
-  // 원본 카드번호는 암호화된 credentials에서 가져옴
+  // The original card number comes from the encrypted credentials
   const originalCardNo = credentials.cardNo || card.cardNo.replace(/\*/g, "");
 
   const request = {
@@ -191,12 +193,14 @@ async function testCardPurchases(
   };
 
   console.log(
-    "요청 파라미터:",
+    "Request parameters:",
     JSON.stringify(
       {
         ...request,
         userId:
-          credentials.loginMethod === "ID" ? credentials.userId : "(인증서)",
+          credentials.loginMethod === "ID"
+            ? credentials.userId
+            : "(certificate)",
         userPw: "***hidden***",
         bizNo: credentials.bizNo || "N/A",
       },
@@ -208,24 +212,24 @@ async function testCardPurchases(
   try {
     const response = await getCardPurchases(request, credentials);
 
-    console.log("\n✅ 매입내역 조회 성공!");
-    console.log(`   조회 결과: ${response.data.list?.length || 0}건`);
-    console.log(`   총 금액: ${response.data.totalAmt || "N/A"}`);
+    console.log("\n✅ Purchase history retrieved");
+    console.log(`   Results: ${response.data.list?.length || 0}`);
+    console.log(`   Total amount: ${response.data.totalAmt || "N/A"}`);
 
     if (response.data.list && response.data.list.length > 0) {
-      console.log("\n   [매입내역 샘플 (최대 5건)]");
+      console.log("\n   [Purchase history sample (up to 5)]");
       response.data.list.slice(0, 5).forEach((item, i) => {
         console.log(
-          `   ${i + 1}. ${item.useDt} | ${item.useStore} | ${item.useAmt}원 | 매입일: ${item.pchDt || "N/A"}`
+          `   ${i + 1}. ${item.useDt} | ${item.useStore} | ${item.useAmt} KRW | Purchase date: ${item.pchDt || "N/A"}`
         );
       });
     }
 
     return true;
   } catch (error: unknown) {
-    console.error("\n❌ 매입내역 조회 실패:");
+    console.error("\n❌ Purchase history request failed:");
     if (error instanceof Error) {
-      console.error("   에러 메시지:", error.message);
+      console.error("   Error message:", error.message);
     }
     return false;
   }
@@ -233,26 +237,26 @@ async function testCardPurchases(
 
 async function main() {
   console.log("================================================");
-  console.log("   Hyphen 법인카드 API 테스트 (DB 기반)");
+  console.log("   Hyphen corporate card API test (DB-based)");
   console.log("================================================");
-  console.log(`조회기간: ${QUERY_PERIOD.sdate} ~ ${QUERY_PERIOD.edate}`);
+  console.log(`Query period: ${QUERY_PERIOD.sdate} ~ ${QUERY_PERIOD.edate}`);
 
-  // 환경 변수 확인
+  // Check environment variables
   if (!process.env.HYPHEN_USER_ID || !process.env.HYPHEN_HKEY) {
     console.error(
-      "\n❌ 환경 변수 오류: HYPHEN_USER_ID 또는 HYPHEN_HKEY가 설정되지 않았습니다."
+      "\n❌ Environment error: HYPHEN_USER_ID or HYPHEN_HKEY is not set."
     );
-    console.error("   .env.local 파일을 확인하세요.");
+    console.error("   Please check your .env.local file.");
     process.exit(1);
   }
 
   if (!process.env.ENCRYPTION_KEY) {
-    console.error("\n❌ 환경 변수 오류: ENCRYPTION_KEY가 설정되지 않았습니다.");
-    console.error("   .env.local 파일을 확인하세요.");
+    console.error("\n❌ Environment error: ENCRYPTION_KEY is not set.");
+    console.error("   Please check your .env.local file.");
     process.exit(1);
   }
 
-  console.log(`\nHyphen 계정: ${process.env.HYPHEN_USER_ID}`);
+  console.log(`\nHyphen account: ${process.env.HYPHEN_USER_ID}`);
 
   const results = {
     oauth: false,
@@ -262,36 +266,42 @@ async function main() {
   };
 
   try {
-    // Step 1: OAuth 토큰 테스트
+    // Step 1: OAuth token test
     results.oauth = await testOAuthToken();
 
     if (!results.oauth) {
-      throw new Error("OAuth 토큰 발급 실패");
+      throw new Error("OAuth token request failed");
     }
 
-    // Step 2: DB에서 카드 정보 조회 및 복호화
+    // Step 2: load and decrypt the card from the DB
     const { card, credentials } = await getTestCardFromDB();
     results.dbQuery = true;
 
-    // Step 3: 승인내역 조회
+    // Step 3: approval history
     results.approvals = await testCardApprovals(card, credentials);
 
-    // Step 4: 매입내역 조회
+    // Step 4: purchase history
     results.purchases = await testCardPurchases(card, credentials);
   } catch (error) {
-    console.error("\n❌ 테스트 중 오류 발생:", error);
+    console.error("\n❌ Error during test:", error);
   } finally {
     await prisma.$disconnect();
   }
 
-  // 결과 요약
+  // Result summary
   console.log("\n================================================");
-  console.log("   테스트 결과 요약");
+  console.log("   Test result summary");
   console.log("================================================");
-  console.log(`OAuth 토큰 발급: ${results.oauth ? "✅ 성공" : "❌ 실패"}`);
-  console.log(`DB 카드 조회:    ${results.dbQuery ? "✅ 성공" : "❌ 실패"}`);
-  console.log(`승인내역 조회:   ${results.approvals ? "✅ 성공" : "❌ 실패"}`);
-  console.log(`매입내역 조회:   ${results.purchases ? "✅ 성공" : "❌ 실패"}`);
+  console.log(`OAuth token:      ${results.oauth ? "✅ Passed" : "❌ Failed"}`);
+  console.log(
+    `DB card lookup:   ${results.dbQuery ? "✅ Passed" : "❌ Failed"}`
+  );
+  console.log(
+    `Approval history: ${results.approvals ? "✅ Passed" : "❌ Failed"}`
+  );
+  console.log(
+    `Purchase history: ${results.purchases ? "✅ Passed" : "❌ Failed"}`
+  );
   console.log("================================================\n");
 }
 

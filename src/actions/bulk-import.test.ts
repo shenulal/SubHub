@@ -47,18 +47,18 @@ describe("bulk-import actions", () => {
   });
 
   describe("bulkImportApps", () => {
-    it("인증되지 않은 사용자는 에러를 반환해야 한다", async () => {
+    it("returns an error for an unauthenticated user", async () => {
       vi.mocked(auth).mockResolvedValue(null as never);
 
       const result = await bulkImportApps("name,category\nSlack,COLLABORATION");
 
       expect(result).toEqual({
         success: false,
-        message: "인증이 필요합니다",
+        message: "Authentication required",
       });
     });
 
-    it("조직 ID가 없는 사용자는 에러를 반환해야 한다", async () => {
+    it("returns an error for a user without an organization ID", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: null, role: "ADMIN" },
       } as never);
@@ -67,11 +67,11 @@ describe("bulk-import actions", () => {
 
       expect(result).toEqual({
         success: false,
-        message: "조직 정보가 필요합니다",
+        message: "Organization information is required",
       });
     });
 
-    it("ADMIN이 아닌 사용자는 일괄 등록할 수 없어야 한다", async () => {
+    it("prevents a non-ADMIN user from bulk importing", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "MEMBER" },
       } as never);
@@ -80,11 +80,11 @@ describe("bulk-import actions", () => {
 
       expect(result).toEqual({
         success: false,
-        message: "관리자만 일괄 등록할 수 있습니다",
+        message: "Only admins can bulk import",
       });
     });
 
-    it("유효한 CSV로 앱을 일괄 등록해야 한다", async () => {
+    it("bulk imports apps from a valid CSV", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
@@ -122,7 +122,7 @@ Notion,PRODUCTIVITY,Notion Labs,Workspace tool,https://notion.so`;
       expect(revalidatePath).toHaveBeenCalledWith("/apps");
     });
 
-    it("CSV 유효성 검증 오류를 반환해야 한다", async () => {
+    it("returns CSV validation errors", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
@@ -137,7 +137,7 @@ Notion,INVALID_CATEGORY`;
       expect(result.data?.errors).toHaveLength(2);
     });
 
-    it("빈 CSV는 에러를 반환해야 한다", async () => {
+    it("returns an error for an empty CSV", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
@@ -146,13 +146,13 @@ Notion,INVALID_CATEGORY`;
 
       expect(result).toEqual({
         success: false,
-        message: "등록할 데이터가 없습니다",
+        message: "There is no data to import",
       });
     });
   });
 
   describe("bulkImportSubscriptions", () => {
-    it("인증되지 않은 사용자는 에러를 반환해야 한다", async () => {
+    it("returns an error for an unauthenticated user", async () => {
       vi.mocked(auth).mockResolvedValue(null as never);
 
       const result = await bulkImportSubscriptions(
@@ -161,11 +161,11 @@ Notion,INVALID_CATEGORY`;
 
       expect(result).toEqual({
         success: false,
-        message: "인증이 필요합니다",
+        message: "Authentication required",
       });
     });
 
-    it("유효한 CSV로 구독을 일괄 등록해야 한다", async () => {
+    it("bulk imports subscriptions from a valid CSV", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
@@ -188,7 +188,7 @@ Notion,Team,YEARLY,120000`;
       expect(revalidatePath).toHaveBeenCalledWith("/subscriptions");
     });
 
-    it("존재하지 않는 앱에 대한 구독은 에러로 처리해야 한다", async () => {
+    it("treats subscriptions for non-existent apps as errors", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
@@ -212,7 +212,7 @@ NonExistentApp,Plan,MONTHLY`;
   });
 
   describe("bulkImportUsers", () => {
-    it("인증되지 않은 사용자는 에러를 반환해야 한다", async () => {
+    it("returns an error for an unauthenticated user", async () => {
       vi.mocked(auth).mockResolvedValue(null as never);
 
       const result = await bulkImportUsers(
@@ -221,11 +221,11 @@ NonExistentApp,Plan,MONTHLY`;
 
       expect(result).toEqual({
         success: false,
-        message: "인증이 필요합니다",
+        message: "Authentication required",
       });
     });
 
-    it("조직 정보가 없으면 에러를 반환해야 한다", async () => {
+    it("returns an error when there is no organization info", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: null, role: "ADMIN" },
       } as never);
@@ -236,11 +236,11 @@ NonExistentApp,Plan,MONTHLY`;
 
       expect(result).toEqual({
         success: false,
-        message: "조직 정보가 필요합니다",
+        message: "Organization information is required",
       });
     });
 
-    it("ADMIN이 아닌 사용자는 에러를 반환해야 한다", async () => {
+    it("returns an error for a non-ADMIN user", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "MEMBER" },
       } as never);
@@ -251,11 +251,11 @@ NonExistentApp,Plan,MONTHLY`;
 
       expect(result).toEqual({
         success: false,
-        message: "관리자만 일괄 등록할 수 있습니다",
+        message: "Only admins can bulk import",
       });
     });
 
-    it("빈 CSV는 에러를 반환해야 한다", async () => {
+    it("returns an error for an empty CSV", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
@@ -264,16 +264,16 @@ NonExistentApp,Plan,MONTHLY`;
 
       expect(result).toEqual({
         success: false,
-        message: "등록할 데이터가 없습니다",
+        message: "There is no data to import",
       });
     });
 
-    it("유효한 CSV로 사용자를 일괄 등록해야 한다", async () => {
+    it("bulk imports users from a valid CSV", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
 
-      // 기존 사용자 없음
+      // no existing users
       vi.mocked(prisma.user.findMany).mockResolvedValue([]);
       vi.mocked(prisma.user.createMany).mockResolvedValue({ count: 2 });
       vi.mocked(prisma.auditLog.create).mockResolvedValue({} as never);
@@ -310,7 +310,7 @@ jane@example.com,Jane Smith,ADMIN,HR,HR Manager,EMP002`;
       expect(revalidatePath).toHaveBeenCalledWith("/settings/team");
     });
 
-    it("CSV 유효성 검증 오류를 반환해야 한다", async () => {
+    it("returns CSV validation errors", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
@@ -325,12 +325,12 @@ jane@example.com,Jane,SUPERADMIN`;
       expect(result.data?.errors).toHaveLength(2);
     });
 
-    it("기존 사용자 이메일은 스킵해야 한다", async () => {
+    it("skips existing user emails", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
 
-      // john@example.com은 이미 존재
+      // john@example.com already exists
       vi.mocked(prisma.user.findMany).mockResolvedValue([
         { id: "existing-user", email: "john@example.com" },
       ] as never);
@@ -346,10 +346,10 @@ jane@example.com,Jane Smith,ADMIN`;
       expect(result.success).toBe(true);
       expect(result.data?.created).toBe(1);
       expect(result.data?.errors).toHaveLength(1);
-      expect(result.data?.errors?.[0].message).toContain("이미 존재");
+      expect(result.data?.errors?.[0].message).toContain("already exists");
     });
 
-    it("감사 로그를 기록해야 한다", async () => {
+    it("writes an audit log", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
@@ -377,7 +377,7 @@ john@example.com,John Doe,MEMBER`;
       });
     });
 
-    it("캐시를 갱신해야 한다", async () => {
+    it("refreshes the cache", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);

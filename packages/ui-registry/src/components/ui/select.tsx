@@ -7,9 +7,9 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * 🎯 목적: Select 컴포넌트 (Radix UI Root primitive)
- * 📝 주의사항: Root primitive는 ref를 지원하지 않음
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support 검토 (ref 미지원 확인)
+ * 🎯 Purpose: Select component (Radix UI Root primitive)
+ * 📝 Note: Root primitive does not support ref
+ * 🔄 History: 2025-10-11 - Reviewed for React 18/19 dual support (confirmed ref is not supported)
  */
 function Select({
   ...props
@@ -18,9 +18,9 @@ function Select({
 }
 
 /**
- * 🎯 목적: SelectGroup 컴포넌트 (Radix UI Group primitive)
- * 📝 주의사항: Group primitive는 ref를 지원하지 않음
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support 검토 (ref 미지원 확인)
+ * 🎯 Purpose: SelectGroup component (Radix UI Group primitive)
+ * 📝 Note: Group primitive does not support ref
+ * 🔄 History: 2025-10-11 - Reviewed for React 18/19 dual support (confirmed ref is not supported)
  */
 function SelectGroup({
   ...props
@@ -29,9 +29,9 @@ function SelectGroup({
 }
 
 /**
- * 🎯 목적: SelectValue 컴포넌트 (Radix UI Value primitive)
- * 📝 주의사항: Value primitive는 ref를 지원하지 않음
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support 검토 (ref 미지원 확인)
+ * 🎯 Purpose: SelectValue component (Radix UI Value primitive)
+ * 📝 Note: Value primitive does not support ref
+ * 🔄 History: 2025-10-11 - Reviewed for React 18/19 dual support (confirmed ref is not supported)
  */
 function SelectValue({
   ...props
@@ -40,9 +40,9 @@ function SelectValue({
 }
 
 /**
- * 🎯 목적: SelectTrigger 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: Radix UI Trigger primitive 사용, size prop 추가
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the SelectTrigger component for React 18/19 compatibility
+ * 📝 Note: Uses the Radix UI Trigger primitive; adds a size prop
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const SelectTrigger = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Trigger>,
@@ -71,9 +71,9 @@ const SelectTrigger = React.forwardRef<
 SelectTrigger.displayName = "SelectTrigger";
 
 /**
- * 🎯 목적: SelectContent 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: Radix UI Content primitive 사용, Portal로 래핑됨
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the SelectContent component for React 18/19 compatibility
+ * 📝 Note: Uses the Radix UI Content primitive; wrapped in a Portal
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const SelectContent = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Content>,
@@ -111,9 +111,9 @@ const SelectContent = React.forwardRef<
 SelectContent.displayName = "SelectContent";
 
 /**
- * 🎯 목적: SelectLabel 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: Radix UI Label primitive 사용
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the SelectLabel component for React 18/19 compatibility
+ * 📝 Note: Uses the Radix UI Label primitive
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const SelectLabel = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Label>,
@@ -131,9 +131,9 @@ const SelectLabel = React.forwardRef<
 SelectLabel.displayName = "SelectLabel";
 
 /**
- * 🎯 목적: SelectItem 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: Radix UI Item primitive 사용, ItemIndicator와 ItemText 포함
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the SelectItem component for React 18/19 compatibility
+ * 📝 Note: Uses the Radix UI Item primitive; includes ItemIndicator and ItemText
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const SelectItem = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Item>,
@@ -161,9 +161,9 @@ const SelectItem = React.forwardRef<
 SelectItem.displayName = "SelectItem";
 
 /**
- * 🎯 목적: SelectSeparator 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: Radix UI Separator primitive 사용
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the SelectSeparator component for React 18/19 compatibility
+ * 📝 Note: Uses the Radix UI Separator primitive
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const SelectSeparator = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.Separator>,
@@ -181,9 +181,9 @@ const SelectSeparator = React.forwardRef<
 SelectSeparator.displayName = "SelectSeparator";
 
 /**
- * 🎯 목적: SelectScrollUpButton 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: Radix UI ScrollUpButton primitive 사용
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the SelectScrollUpButton component for React 18/19 compatibility
+ * 📝 Note: Uses the Radix UI ScrollUpButton primitive
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const SelectScrollUpButton = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.ScrollUpButton>,
@@ -206,9 +206,9 @@ const SelectScrollUpButton = React.forwardRef<
 SelectScrollUpButton.displayName = "SelectScrollUpButton";
 
 /**
- * 🎯 목적: SelectScrollDownButton 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: Radix UI ScrollDownButton primitive 사용
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the SelectScrollDownButton component for React 18/19 compatibility
+ * 📝 Note: Uses the Radix UI ScrollDownButton primitive
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const SelectScrollDownButton = React.forwardRef<
   React.ElementRef<typeof SelectPrimitive.ScrollDownButton>,

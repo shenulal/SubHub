@@ -1,7 +1,7 @@
 // src/actions/cards/card-sync.test.ts
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-// Mock 설정 (import 전에 선언)
+// Mock setup (declared before imports)
 vi.mock("@/lib/fx/base-currency", () => ({
   getBaseCurrency: vi.fn().mockResolvedValue("KRW"),
 }));
@@ -97,7 +97,7 @@ import {
 } from "@/lib/services/saas-matcher";
 import { syncCardTransactions } from "./card-sync";
 
-// 테스트 헬퍼: ApprovalItem 생성
+// Test helper: build an ApprovalItem
 function createApprovalItem(overrides: Record<string, string> = {}) {
   return {
     apprNo: "APPR001",
@@ -107,9 +107,9 @@ function createApprovalItem(overrides: Record<string, string> = {}) {
     useAmt: "10000",
     settleDt: "20250120",
     storeBizNo: "1234567890",
-    storeType: "소프트웨어",
-    storeAddr: "서울시 강남구",
-    useDiv: "일시불",
+    storeType: "Software",
+    storeAddr: "Business Bay, Dubai",
+    useDiv: "Lump sum",
     instMon: null,
     addTax: "1000",
     ...overrides,
@@ -129,7 +129,7 @@ const mockCard = {
   organizationId: "org-1",
   cardCd: "SHINHAN",
   cardNo: "****1234",
-  cardNm: "법인카드1",
+  cardNm: "Corporate Card 1",
   cardLast4: "1234",
   encryptedCredentials: "encrypted",
   isActive: true,
@@ -175,28 +175,28 @@ describe("syncCardTransactions", () => {
     } as never);
   });
 
-  describe("인증 및 카드 조회", () => {
-    it("세션이 없으면 인증 오류 반환", async () => {
+  describe("Authentication and card lookup", () => {
+    it("returns an authentication error without a session", async () => {
       vi.mocked(getCachedSession).mockResolvedValue(null);
 
       const result = await syncCardTransactions("card-1");
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("인증이 필요합니다");
+      expect(result.message).toBe("Authentication required");
     });
 
-    it("카드가 없으면 카드 미발견 오류 반환", async () => {
+    it("returns a card-not-found error when the card does not exist", async () => {
       vi.mocked(prisma.corporateCard.findFirst).mockResolvedValue(null);
 
       const result = await syncCardTransactions("card-999");
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("카드를 찾을 수 없습니다");
+      expect(result.message).toBe("Card not found");
     });
   });
 
-  describe("Phase 1: 4-Layer 매칭", () => {
-    it("카탈로그 패턴 매칭으로 앱을 찾으면 matched에 추가", async () => {
+  describe("Phase 1: 4-layer matching", () => {
+    it("adds to matched when catalog pattern matching finds an app", async () => {
       const awsItem = createApprovalItem({
         useStore: "AMAZON WEB SERVICES",
         apprNo: "APPR-AWS",
@@ -224,7 +224,7 @@ describe("syncCardTransactions", () => {
         },
       ] as never);
 
-      // 4-layer matcher가 매칭 결과 반환
+      // The 4-layer matcher returns a match
       vi.mocked(matchMerchant4LayerSync).mockReturnValue({
         appId: "app-aws",
         appName: "AWS",
@@ -239,12 +239,12 @@ describe("syncCardTransactions", () => {
       expect(result.success).toBe(true);
       expect(result.data?.created).toBe(1);
       expect(matchMerchant4LayerSync).toHaveBeenCalledWith(
-        { merchantName: "AMAZON WEB SERVICES", memo: "일시불" },
+        { merchantName: "AMAZON WEB SERVICES", memo: "Lump sum" },
         expect.any(Array),
         expect.any(Array),
         0.8
       );
-      // matchSource가 CATALOG로 저장되었는지 확인
+      // Verify matchSource was saved as CATALOG
       expect(prisma.cardTransaction.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           matchedAppId: "app-aws",
@@ -254,7 +254,7 @@ describe("syncCardTransactions", () => {
       });
     });
 
-    it("퍼지 매칭으로 앱을 찾으면 matched에 추가", async () => {
+    it("adds to matched when fuzzy matching finds an app", async () => {
       const slackItem = createApprovalItem({
         useStore: "SLCK TECHNOLOGIES",
         apprNo: "APPR-SLACK",
@@ -283,7 +283,7 @@ describe("syncCardTransactions", () => {
       expect(matchMerchantWithLLM).not.toHaveBeenCalled();
     });
 
-    it("커스텀 패턴이 4-layer보다 우선 적용됨", async () => {
+    it("applies custom patterns before the 4-layer matcher", async () => {
       const customItem = createApprovalItem({
         useStore: "INTERNAL-SVC-SLACK",
         apprNo: "APPR-CUSTOM",
@@ -300,7 +300,7 @@ describe("syncCardTransactions", () => {
 
       expect(result.success).toBe(true);
       expect(result.data?.created).toBe(1);
-      // 커스텀 패턴이 먼저 매칭되므로 4-layer는 호출되지 않아야 함
+      // The custom pattern matches first, so the 4-layer matcher must not be called
       expect(matchMerchant4LayerSync).not.toHaveBeenCalled();
       expect(prisma.cardTransaction.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
@@ -311,7 +311,7 @@ describe("syncCardTransactions", () => {
       });
     });
 
-    it("4-layer 매칭 실패 시 unmatched로 분류", async () => {
+    it("classifies as unmatched when 4-layer matching fails", async () => {
       const unknownItem = createApprovalItem({
         useStore: "UNKNOWN VENDOR",
         apprNo: "APPR-UNK",
@@ -344,34 +344,34 @@ describe("syncCardTransactions", () => {
     });
   });
 
-  describe("Phase 2: Non-SaaS 필터링", () => {
-    it("Non-SaaS 캐시에 있으면 LLM 호출 스킵", async () => {
+  describe("Phase 2: Non-SaaS filtering", () => {
+    it("skips the LLM call when the merchant is in the Non-SaaS cache", async () => {
       const taxiItem = createApprovalItem({
-        useStore: "카카오T택시",
+        useStore: "Careem Taxi",
         apprNo: "APPR-TAXI",
       });
       vi.mocked(getCardApprovals).mockResolvedValue({
         data: { list: [taxiItem] },
       } as never);
 
-      // 4-layer 매칭 실패
+      // 4-layer matching fails
       vi.mocked(matchMerchant4LayerSync).mockReturnValue({
         appId: null,
         appName: null,
         confidence: 0,
         matchSource: null,
         matchLayer: null,
-        normalized: "카카오t택시",
+        normalized: "careem taxi",
       });
 
-      // Non-SaaS 캐시 히트
-      vi.mocked(checkNonSaaSCache).mockResolvedValue(new Set(["카카오t택시"]));
+      // Non-SaaS cache hit
+      vi.mocked(checkNonSaaSCache).mockResolvedValue(new Set(["careem taxi"]));
 
       const result = await syncCardTransactions("card-1");
 
       expect(result.success).toBe(true);
       expect(matchMerchantWithLLM).not.toHaveBeenCalled();
-      // Non-SaaS → appId null, matchSource null, UNMATCHED로 저장
+      // Non-SaaS → saved with appId null, matchSource null, UNMATCHED
       expect(prisma.cardTransaction.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           matchedAppId: null,
@@ -381,9 +381,9 @@ describe("syncCardTransactions", () => {
       });
     });
 
-    it("Non-SaaS 키워드 히트 시 LLM 호출 스킵 및 캐시 저장", async () => {
+    it("skips the LLM call and caches the vendor on a Non-SaaS keyword hit", async () => {
       const foodItem = createApprovalItem({
-        useStore: "우아한형제들",
+        useStore: "Talabat",
         apprNo: "APPR-FOOD",
       });
       vi.mocked(getCardApprovals).mockResolvedValue({
@@ -396,10 +396,10 @@ describe("syncCardTransactions", () => {
         confidence: 0,
         matchSource: null,
         matchLayer: null,
-        normalized: "우아한형제들",
+        normalized: "Talabat",
       });
 
-      vi.mocked(findNonSaaSKeywordHit).mockReturnValue("배달/음식");
+      vi.mocked(findNonSaaSKeywordHit).mockReturnValue("Food/Delivery");
 
       const result = await syncCardTransactions("card-1");
 
@@ -409,16 +409,16 @@ describe("syncCardTransactions", () => {
         "org-1",
         expect.arrayContaining([
           expect.objectContaining({
-            originalName: "우아한형제들",
-            reasoning: "키워드 제외: 배달/음식",
+            originalName: "Talabat",
+            reasoning: "Keyword excluded: Food/Delivery",
           }),
         ])
       );
     });
 
-    it("Non-SaaS 키워드 히트 시 matchStatus가 UNMATCHED로 저장", async () => {
+    it("saves matchStatus as UNMATCHED on a Non-SaaS keyword hit", async () => {
       const foodItem = createApprovalItem({
-        useStore: "우아한형제들",
+        useStore: "Talabat",
         apprNo: "APPR-FOOD2",
       });
       vi.mocked(getCardApprovals).mockResolvedValue({
@@ -431,10 +431,10 @@ describe("syncCardTransactions", () => {
         confidence: 0,
         matchSource: null,
         matchLayer: null,
-        normalized: "우아한형제들",
+        normalized: "Talabat",
       });
 
-      vi.mocked(findNonSaaSKeywordHit).mockReturnValue("배달/음식");
+      vi.mocked(findNonSaaSKeywordHit).mockReturnValue("Food/Delivery");
 
       await syncCardTransactions("card-1");
 
@@ -446,9 +446,9 @@ describe("syncCardTransactions", () => {
       });
     });
 
-    it("Non-SaaS 캐시 히트 시 matchStatus가 UNMATCHED로 저장", async () => {
+    it("saves matchStatus as UNMATCHED on a Non-SaaS cache hit", async () => {
       const taxiItem = createApprovalItem({
-        useStore: "카카오T택시",
+        useStore: "Careem Taxi",
         apprNo: "APPR-TAXI2",
       });
       vi.mocked(getCardApprovals).mockResolvedValue({
@@ -461,10 +461,10 @@ describe("syncCardTransactions", () => {
         confidence: 0,
         matchSource: null,
         matchLayer: null,
-        normalized: "카카오t택시",
+        normalized: "careem taxi",
       });
 
-      vi.mocked(checkNonSaaSCache).mockResolvedValue(new Set(["카카오t택시"]));
+      vi.mocked(checkNonSaaSCache).mockResolvedValue(new Set(["careem taxi"]));
 
       await syncCardTransactions("card-1");
 
@@ -477,8 +477,8 @@ describe("syncCardTransactions", () => {
     });
   });
 
-  describe("Phase 3: 개별 LLM 호출", () => {
-    it("각 미매칭 거래에 대해 개별 LLM 호출 실행", async () => {
+  describe("Phase 3: individual LLM calls", () => {
+    it("calls the LLM individually for each unmatched transaction", async () => {
       const item1 = createApprovalItem({
         useStore: "WASABI TECH",
         apprNo: "APPR-W1",
@@ -491,7 +491,7 @@ describe("syncCardTransactions", () => {
         data: { list: [item1, item2] },
       } as never);
 
-      // 4-layer 매칭 실패
+      // 4-layer matching fails
       vi.mocked(matchMerchant4LayerSync).mockReturnValue({
         appId: null,
         appName: null,
@@ -521,12 +521,12 @@ describe("syncCardTransactions", () => {
 
       expect(result.success).toBe(true);
       expect(result.data?.created).toBe(2);
-      // 개별 호출 (1건씩, 배치가 아님)
+      // Individual calls (one at a time, not batched)
       expect(matchMerchantWithLLM).toHaveBeenCalledTimes(2);
       expect(matchMerchantWithLLM).toHaveBeenCalledWith({
         organizationId: "org-1",
         merchantName: "WASABI TECH",
-        memo: "일시불",
+        memo: "Lump sum",
         storeBizNo: "1234567890",
         amount: 10000,
         currency: "KRW",
@@ -534,14 +534,14 @@ describe("syncCardTransactions", () => {
       expect(matchMerchantWithLLM).toHaveBeenCalledWith({
         organizationId: "org-1",
         merchantName: "MAILGUN INC",
-        memo: "일시불",
+        memo: "Lump sum",
         storeBizNo: "1234567890",
         amount: 10000,
         currency: "KRW",
       });
     });
 
-    it("LLM 미매칭 시 matchStatus가 UNMATCHED로 저장", async () => {
+    it("saves matchStatus as UNMATCHED when the LLM finds no match", async () => {
       const unknownItem = createApprovalItem({
         useStore: "UNKNOWN VENDOR",
         apprNo: "APPR-UNK2",
@@ -578,7 +578,7 @@ describe("syncCardTransactions", () => {
       });
     });
 
-    it("LLM 매칭 결과가 matchSource=LLM으로 저장됨", async () => {
+    it("saves LLM matches with matchSource=LLM", async () => {
       const openaiItem = createApprovalItem({
         useStore: "OPENAI LLC",
         apprNo: "APPR-OAI",
@@ -618,12 +618,12 @@ describe("syncCardTransactions", () => {
     });
   });
 
-  describe("Phase 4: 저장", () => {
-    it("취소 거래는 매칭 없이 저장", async () => {
+  describe("Phase 4: persistence", () => {
+    it("saves cancelled transactions without matching", async () => {
       const cancelItem = createApprovalItem({
         useStore: "AWS",
         apprNo: "APPR-CANCEL",
-        useDiv: "승인취소",
+        useDiv: "승인취소", // Hyphen API value (cancelled approval); must stay Korean
       });
       vi.mocked(getCardApprovals).mockResolvedValue({
         data: { list: [cancelItem] },
@@ -644,7 +644,7 @@ describe("syncCardTransactions", () => {
       });
     });
 
-    it("기존 AUTO_MATCHED 거래는 matchStatus 유지", async () => {
+    it("keeps matchStatus for existing AUTO_MATCHED transactions", async () => {
       const awsItem = createApprovalItem({
         useStore: "AWS",
         apprNo: "APPR-EXISTING",
@@ -662,7 +662,7 @@ describe("syncCardTransactions", () => {
         normalized: "aws",
       });
 
-      // 기존에 자동 매칭된 레코드
+      // Previously auto-matched record
       vi.mocked(prisma.cardTransaction.findUnique).mockResolvedValue({
         id: "tx-existing",
         matchStatus: "AUTO_MATCHED",
@@ -676,14 +676,14 @@ describe("syncCardTransactions", () => {
       expect(prisma.cardTransaction.update).toHaveBeenCalledWith({
         where: { id: "tx-existing" },
         data: expect.objectContaining({
-          // AUTO_MATCHED 상태 유지
+          // Keeps AUTO_MATCHED status
           matchStatus: "AUTO_MATCHED",
           matchedAppId: "app-aws-old",
         }),
       });
     });
 
-    it("성공 시 감사 로그 생성", async () => {
+    it("creates an audit log on success", async () => {
       const item = createApprovalItem();
       vi.mocked(getCardApprovals).mockResolvedValue({
         data: { list: [item] },
@@ -710,7 +710,7 @@ describe("syncCardTransactions", () => {
       });
     });
 
-    it("카드 동기화 시간 업데이트", async () => {
+    it("updates the card sync time", async () => {
       vi.mocked(getCardApprovals).mockResolvedValue({
         data: { list: [] },
       } as never);
@@ -727,14 +727,14 @@ describe("syncCardTransactions", () => {
     });
   });
 
-  describe("혼합 시나리오", () => {
-    it("여러 거래가 각 경로로 올바르게 분류됨", async () => {
+  describe("Mixed scenario", () => {
+    it("routes multiple transactions down the correct paths", async () => {
       const awsItem = createApprovalItem({
         useStore: "AWS",
         apprNo: "APPR-1",
       });
       const taxiItem = createApprovalItem({
-        useStore: "카카오T택시",
+        useStore: "Careem Taxi",
         apprNo: "APPR-2",
       });
       const unknownItem = createApprovalItem({
@@ -744,14 +744,14 @@ describe("syncCardTransactions", () => {
       const cancelItem = createApprovalItem({
         useStore: "AWS",
         apprNo: "APPR-4",
-        useDiv: "승인취소",
+        useDiv: "승인취소", // Hyphen API value (cancelled approval); must stay Korean
       });
 
       vi.mocked(getCardApprovals).mockResolvedValue({
         data: { list: [awsItem, taxiItem, unknownItem, cancelItem] },
       } as never);
 
-      // AWS → 4-layer 매칭 성공
+      // AWS → 4-layer match succeeds
       vi.mocked(matchMerchant4LayerSync)
         .mockReturnValueOnce({
           appId: "app-aws",
@@ -761,16 +761,16 @@ describe("syncCardTransactions", () => {
           matchLayer: 1,
           normalized: "aws",
         })
-        // 카카오T택시 → 4-layer 실패
+        // Careem Taxi → 4-layer match fails
         .mockReturnValueOnce({
           appId: null,
           appName: null,
           confidence: 0,
           matchSource: null,
           matchLayer: null,
-          normalized: "카카오t택시",
+          normalized: "careem taxi",
         })
-        // MYSTERY SaaS → 4-layer 실패
+        // MYSTERY SaaS → 4-layer match fails
         .mockReturnValueOnce({
           appId: null,
           appName: null,
@@ -780,9 +780,9 @@ describe("syncCardTransactions", () => {
           normalized: "mystery saas",
         });
 
-      // 카카오T택시 → 키워드 필터
+      // Careem Taxi → keyword filter
       vi.mocked(findNonSaaSKeywordHit)
-        .mockReturnValueOnce("택시/교통")
+        .mockReturnValueOnce("Taxi/Transport")
         .mockReturnValueOnce(null);
 
       // MYSTERY SaaS → LLM
@@ -799,15 +799,15 @@ describe("syncCardTransactions", () => {
       expect(result.success).toBe(true);
       expect(result.data?.created).toBe(4);
 
-      // 4-layer: AWS 1건, 키워드NonSaaS 스킵: 카카오T 1건, LLM: MYSTERY 1건, 취소: 1건
+      // 4-layer: AWS x1, keyword Non-SaaS skip: Careem x1, LLM: MYSTERY x1, cancelled: x1
       expect(matchMerchant4LayerSync).toHaveBeenCalledTimes(3);
       expect(matchMerchantWithLLM).toHaveBeenCalledTimes(1);
       expect(prisma.cardTransaction.create).toHaveBeenCalledTimes(4);
     });
   });
 
-  describe("SMP-179: 구독 자동 연결", () => {
-    it("매칭된 앱에 ACTIVE 구독이 있으면 linkedSubscriptionId 자동 설정", async () => {
+  describe("SMP-179: automatic subscription linking", () => {
+    it("sets linkedSubscriptionId when the matched app has an ACTIVE subscription", async () => {
       const awsItem = createApprovalItem({
         useStore: "AWS",
         apprNo: "APPR-SUB-LINK",
@@ -838,7 +838,7 @@ describe("syncCardTransactions", () => {
       });
     });
 
-    it("매칭된 앱에 구독이 없으면 linkedSubscriptionId는 null", async () => {
+    it("leaves linkedSubscriptionId null when the matched app has no subscription", async () => {
       const slackItem = createApprovalItem({
         useStore: "SLACK",
         apprNo: "APPR-NO-SUB",
@@ -869,7 +869,7 @@ describe("syncCardTransactions", () => {
       });
     });
 
-    it("재동기화 시 기존 AUTO_MATCHED의 linkedSubscriptionId 보존", async () => {
+    it("preserves linkedSubscriptionId of existing AUTO_MATCHED records on resync", async () => {
       const awsItem = createApprovalItem({
         useStore: "AWS",
         apprNo: "APPR-RESYNC",
@@ -889,7 +889,7 @@ describe("syncCardTransactions", () => {
 
       vi.mocked(findActiveSubscriptionForApp).mockResolvedValue("sub-aws-new");
 
-      // 기존 레코드가 이미 AUTO_MATCHED 상태
+      // The existing record is already AUTO_MATCHED
       vi.mocked(prisma.cardTransaction.findUnique).mockResolvedValue({
         id: "tx-existing",
         matchStatus: "AUTO_MATCHED",
@@ -904,46 +904,46 @@ describe("syncCardTransactions", () => {
         where: { id: "tx-existing" },
         data: expect.objectContaining({
           matchedAppId: "app-aws",
-          linkedSubscriptionId: "sub-aws-old", // 기존 값 보존
+          linkedSubscriptionId: "sub-aws-old", // Existing value preserved
         }),
       });
     });
   });
 
-  describe("에러 처리", () => {
-    it("동기화 실패 시 에러 메시지와 lastError 기록", async () => {
-      // 앱 조회에서 DB 에러 발생 → 외부 try-catch로 전파
+  describe("Error handling", () => {
+    it("records the error message and lastError when sync fails", async () => {
+      // A DB error in the app lookup → propagates to the outer try-catch
       vi.mocked(prisma.app.findMany).mockRejectedValue(
-        new Error("DB 연결 실패")
+        new Error("DB connection failed")
       );
 
       const result = await syncCardTransactions("card-1");
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("거래내역 동기화에 실패했습니다");
+      expect(result.message).toBe("Failed to sync transactions");
       expect(prisma.corporateCard.update).toHaveBeenCalledWith({
         where: { id: "card-1" },
         data: expect.objectContaining({
-          lastError: "DB 연결 실패",
+          lastError: "DB connection failed",
         }),
       });
     });
 
-    it("승인내역 조회 실패 시 빈 결과로 계속 진행", async () => {
+    it("continues with empty results when fetching approvals fails", async () => {
       const { withRetry } = await import("@/lib/services/hyphen");
-      vi.mocked(withRetry).mockRejectedValue(new Error("API 호출 실패"));
+      vi.mocked(withRetry).mockRejectedValue(new Error("API call failed"));
 
       const result = await syncCardTransactions("card-1");
 
-      // 승인내역 실패는 내부 try-catch로 처리, 함수는 성공
+      // Approval failures are handled by the inner try-catch; the function succeeds
       expect(result.success).toBe(true);
       expect(result.data?.created).toBe(0);
       expect(result.data?.updated).toBe(0);
     });
   });
 
-  describe("SyncHistory 기록", () => {
-    it("동기화 시작 시 SyncHistory를 RUNNING 상태로 생성", async () => {
+  describe("SyncHistory recording", () => {
+    it("creates SyncHistory as RUNNING when sync starts", async () => {
       await syncCardTransactions("card-1");
 
       expect(createSyncHistory).toHaveBeenCalledWith(
@@ -957,7 +957,7 @@ describe("syncCardTransactions", () => {
       );
     });
 
-    it("triggeredBy 옵션이 없으면 기본값 USER로 생성", async () => {
+    it("defaults to USER when no triggeredBy option is given", async () => {
       await syncCardTransactions("card-1");
 
       expect(createSyncHistory).toHaveBeenCalledWith(
@@ -965,7 +965,7 @@ describe("syncCardTransactions", () => {
       );
     });
 
-    it("triggeredBy CRON 옵션 전달 시 CRON으로 생성", async () => {
+    it("creates with CRON when triggeredBy CRON is passed", async () => {
       await syncCardTransactions("card-1", { triggeredBy: "CRON" });
 
       expect(createSyncHistory).toHaveBeenCalledWith(
@@ -973,7 +973,7 @@ describe("syncCardTransactions", () => {
       );
     });
 
-    it("성공 시 completeSyncHistory가 SUCCESS 상태로 호출됨", async () => {
+    it("calls completeSyncHistory with SUCCESS on success", async () => {
       await syncCardTransactions("card-1");
 
       expect(completeSyncHistory).toHaveBeenCalledWith(
@@ -982,15 +982,15 @@ describe("syncCardTransactions", () => {
       );
     });
 
-    it("성공 시 updateCardFailCount가 true로 호출됨", async () => {
+    it("calls updateCardFailCount with true on success", async () => {
       await syncCardTransactions("card-1");
 
       expect(updateCardFailCount).toHaveBeenCalledWith("card-1", true);
     });
 
-    it("에러 발생 시 completeSyncHistory가 FAILED 상태로 호출됨", async () => {
+    it("calls completeSyncHistory with FAILED on error", async () => {
       vi.mocked(prisma.app.findMany).mockRejectedValue(
-        new Error("DB 연결 실패")
+        new Error("DB connection failed")
       );
 
       await syncCardTransactions("card-1");
@@ -999,14 +999,14 @@ describe("syncCardTransactions", () => {
         "sync-history-1",
         expect.objectContaining({
           status: "FAILED",
-          errorMessage: "DB 연결 실패",
+          errorMessage: "DB connection failed",
         })
       );
     });
 
-    it("에러 발생 시 updateCardFailCount가 false로 호출됨", async () => {
+    it("calls updateCardFailCount with false on error", async () => {
       vi.mocked(prisma.app.findMany).mockRejectedValue(
-        new Error("DB 연결 실패")
+        new Error("DB connection failed")
       );
 
       await syncCardTransactions("card-1");
@@ -1014,21 +1014,21 @@ describe("syncCardTransactions", () => {
       expect(updateCardFailCount).toHaveBeenCalledWith("card-1", false);
     });
 
-    it("성공 반환 데이터에 syncHistoryId 포함", async () => {
+    it("includes syncHistoryId in the success payload", async () => {
       const result = await syncCardTransactions("card-1");
 
       expect(result.success).toBe(true);
       expect(result.data?.syncHistoryId).toBe("sync-history-1");
     });
 
-    it("createSyncHistory 실패해도 메인 동기화 흐름은 계속 진행", async () => {
+    it("continues the main sync when createSyncHistory fails", async () => {
       vi.mocked(createSyncHistory).mockRejectedValue(
-        new Error("SyncHistory DB 오류")
+        new Error("SyncHistory DB error")
       );
 
       const result = await syncCardTransactions("card-1");
 
-      // SyncHistory 실패해도 메인 동기화는 성공
+      // The main sync succeeds even if SyncHistory fails
       expect(result.success).toBe(true);
     });
   });

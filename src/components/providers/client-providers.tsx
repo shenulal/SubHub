@@ -15,9 +15,9 @@ interface ClientProvidersProps {
 }
 
 /**
- * Refine + next-themes Provider 래퍼.
- * - RootLayout는 Server Component로 유지하고, 클라이언트 Provider는 분리한다.
- * - 리소스 정의는 추후 단계에서 실제 경로에 맞춰 주입한다.
+ * Refine + next-themes provider wrapper.
+ * - RootLayout stays a Server Component; client providers live here.
+ * - Resource definitions will be injected later to match the actual routes.
  */
 export function ClientProviders({ children }: ClientProvidersProps) {
   const [queryClient] = useState(
@@ -63,7 +63,7 @@ export function ClientProviders({ children }: ClientProvidersProps) {
             create: "/apps/new",
             edit: "/apps/:id/edit",
             show: "/apps/:id",
-            meta: { label: "앱 관리" },
+            meta: { label: "Apps" },
           },
           {
             name: "subscriptions",
@@ -71,13 +71,13 @@ export function ClientProviders({ children }: ClientProvidersProps) {
             create: "/subscriptions/new",
             edit: "/subscriptions/:id/edit",
             show: "/subscriptions/:id",
-            meta: { label: "구독 관리" },
+            meta: { label: "Subscriptions" },
           },
           {
             name: "users",
             list: "/users",
             show: "/users/:id",
-            meta: { label: "사용자 관리" },
+            meta: { label: "Users" },
           },
           {
             name: "integrations",
@@ -85,12 +85,12 @@ export function ClientProviders({ children }: ClientProvidersProps) {
             create: "/integrations/new",
             edit: "/integrations/:id/edit",
             show: "/integrations/:id",
-            meta: { label: "연동 관리" },
+            meta: { label: "Integrations" },
           },
           {
             name: "reports",
             list: "/reports",
-            meta: { label: "리포트" },
+            meta: { label: "Reports" },
           },
         ]}
       >

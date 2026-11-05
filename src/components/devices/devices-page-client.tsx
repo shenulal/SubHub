@@ -67,27 +67,27 @@ export function DevicesPageClient({ role }: DevicesPageClientProps) {
   const [isPending, startTransition] = useTransition();
   const [activeTab, setActiveTab] = useState("devices");
 
-  // 디바이스 목록 상태
+  // Device list state
   const [deviceResult, setDeviceResult] = useState<DeviceListResult | null>(
     null
   );
   const [stats, setStats] = useState<DeviceStats | null>(null);
   const [shadowITApps, setShadowITApps] = useState<ShadowITAppSummary[]>([]);
 
-  // 미설치 사용자 목록
+  // Users without the agent installed
   const [usersWithoutAgent, setUsersWithoutAgent] = useState<
     UserWithoutAgent[]
   >([]);
 
-  // 설치 가이드 Sheet 상태
+  // Install guide sheet state
   const [showInstallGuide, setShowInstallGuide] = useState(false);
 
-  // 필터 상태
+  // Filter state
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [platformFilter, setPlatformFilter] = useState<string>("all");
 
-  // 데이터 로드
+  // Load data
   const loadData = useCallback(() => {
     startTransition(async () => {
       const [devicesRes, statsRes, shadowITRes, usersWithoutAgentRes] =
@@ -127,7 +127,7 @@ export function DevicesPageClient({ role }: DevicesPageClientProps) {
     loadData();
   }, [loadData]);
 
-  // Shadow IT 앱 승인/차단 처리
+  // Approve/block Shadow IT apps
   const handleApproveShadowIT = (appName: string, approve: boolean) => {
     if (role !== "ADMIN") return;
 
@@ -148,7 +148,7 @@ export function DevicesPageClient({ role }: DevicesPageClientProps) {
     <div className="space-y-6">
       <PageHeader title={t("page.title")} />
 
-      {/* KPI 카드 */}
+      {/* KPI cards */}
       <KpiCardsGrid>
         <KpiCard
           title={t("kpi.totalDevices")}
@@ -175,16 +175,16 @@ export function DevicesPageClient({ role }: DevicesPageClientProps) {
         />
       </KpiCardsGrid>
 
-      {/* 메인 콘텐츠 카드 */}
+      {/* Main content card */}
       <Card className="gap-0 py-0">
         <CardContent className="px-0 pb-5">
-          {/* 미설치 사용자 알림 */}
+          {/* Not-installed users alert */}
           <DevicesUsersAlert
             usersWithoutAgent={usersWithoutAgent}
             onShowInstallGuide={() => setShowInstallGuide(true)}
           />
 
-          {/* 탭 */}
+          {/* Tabs */}
           <div className="px-5 pt-5 sm:px-6">
             <Tabs value={activeTab} onValueChange={setActiveTab}>
               <TabsList>
@@ -194,9 +194,9 @@ export function DevicesPageClient({ role }: DevicesPageClientProps) {
                 </TabsTrigger>
               </TabsList>
 
-              {/* 디바이스 목록 탭 */}
+              {/* Device list tab */}
               <TabsContent value="devices" className="mt-4 space-y-4">
-                {/* 필터 */}
+                {/* Filters */}
                 <div className="bg-muted/60 rounded-md p-4">
                   <div className="flex flex-wrap items-center gap-4">
                     <div className="relative min-w-[200px] flex-1">
@@ -274,7 +274,7 @@ export function DevicesPageClient({ role }: DevicesPageClientProps) {
                   </div>
                 </div>
 
-                {/* 디바이스 테이블 */}
+                {/* Device table */}
                 <DevicesTable
                   devices={devices}
                   isPending={isPending}
@@ -282,7 +282,7 @@ export function DevicesPageClient({ role }: DevicesPageClientProps) {
                 />
               </TabsContent>
 
-              {/* Shadow IT 탭 */}
+              {/* Shadow IT tab */}
               <TabsContent value="shadow-it" className="mt-4 space-y-4">
                 <ShadowITTable
                   shadowITApps={shadowITApps}
@@ -296,7 +296,7 @@ export function DevicesPageClient({ role }: DevicesPageClientProps) {
         </CardContent>
       </Card>
 
-      {/* 설치 가이드 Sheet */}
+      {/* Install guide sheet */}
       <Sheet open={showInstallGuide} onOpenChange={setShowInstallGuide}>
         <SheetContent
           side="right"

@@ -32,8 +32,6 @@ describe("HelpHint", () => {
 
   it("falls back to a generic accessible label", () => {
     render(<HelpHint content="x" />);
-    expect(
-      screen.getByRole("button", { name: /도움말|Help/ })
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Help/ })).toBeInTheDocument();
   });
 });

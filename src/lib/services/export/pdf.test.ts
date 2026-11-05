@@ -40,24 +40,24 @@ describe("PDF Export Service", () => {
 
   describe("generatePDFReport", () => {
     const basicConfig: PDFReportConfig = {
-      title: "테스트 리포트",
-      subtitle: "2024년 12월",
+      title: "Test Report",
+      subtitle: "December 2024",
       sections: [],
     };
 
-    it("PDF 문서를 생성해야 한다", async () => {
+    it("generates a PDF document", async () => {
       const result = await generatePDFReport(basicConfig);
       expect(result).toBeInstanceOf(ArrayBuffer);
     });
 
-    it("테이블 섹션을 처리해야 한다", async () => {
+    it("handles a table section", async () => {
       const configWithTable: PDFReportConfig = {
-        title: "테스트 리포트",
+        title: "Test Report",
         sections: [
           {
             type: "table",
-            title: "비용 현황",
-            headers: ["앱 이름", "금액"],
+            title: "Cost Overview",
+            headers: ["App Name", "Amount"],
             rows: [
               ["Slack", "₩15,000"],
               ["Notion", "₩12,000"],
@@ -70,16 +70,16 @@ describe("PDF Export Service", () => {
       expect(result).toBeInstanceOf(ArrayBuffer);
     });
 
-    it("키-값 섹션을 처리해야 한다", async () => {
+    it("handles a key-value section", async () => {
       const configWithKeyValue: PDFReportConfig = {
-        title: "테스트 리포트",
+        title: "Test Report",
         sections: [
           {
             type: "keyValue",
-            title: "요약",
+            title: "Summary",
             items: [
-              { label: "총 비용", value: "₩1,234,567" },
-              { label: "전월 대비", value: "+15.2%" },
+              { label: "Total cost", value: "₩1,234,567" },
+              { label: "Month over month", value: "+15.2%" },
             ],
           },
         ],
@@ -89,14 +89,14 @@ describe("PDF Export Service", () => {
       expect(result).toBeInstanceOf(ArrayBuffer);
     });
 
-    it("텍스트 섹션을 처리해야 한다", async () => {
+    it("handles a text section", async () => {
       const configWithText: PDFReportConfig = {
-        title: "테스트 리포트",
+        title: "Test Report",
         sections: [
           {
             type: "text",
-            title: "설명",
-            content: "이 리포트는 월간 비용 현황을 요약합니다.",
+            title: "Description",
+            content: "This report summarises monthly costs.",
           },
         ],
       };
@@ -105,26 +105,26 @@ describe("PDF Export Service", () => {
       expect(result).toBeInstanceOf(ArrayBuffer);
     });
 
-    it("여러 섹션을 순서대로 처리해야 한다", async () => {
+    it("handles multiple sections in order", async () => {
       const configWithMultipleSections: PDFReportConfig = {
-        title: "종합 리포트",
-        subtitle: "2024년 12월 1일",
+        title: "Consolidated Report",
+        subtitle: "December 1, 2024",
         sections: [
           {
             type: "keyValue",
-            title: "요약",
-            items: [{ label: "총 비용", value: "₩1,000,000" }],
+            title: "Summary",
+            items: [{ label: "Total cost", value: "₩1,000,000" }],
           },
           {
             type: "table",
-            title: "상세 내역",
-            headers: ["항목", "금액"],
-            rows: [["테스트", "₩100,000"]],
+            title: "Details",
+            headers: ["Item", "Amount"],
+            rows: [["Test", "₩100,000"]],
           },
           {
             type: "text",
-            title: "비고",
-            content: "추가 내용 없음",
+            title: "Notes",
+            content: "No additional notes",
           },
         ],
       };
@@ -133,13 +133,13 @@ describe("PDF Export Service", () => {
       expect(result).toBeInstanceOf(ArrayBuffer);
     });
 
-    it("이미지 섹션을 처리해야 한다", async () => {
+    it("handles an image section", async () => {
       const configWithImage: PDFReportConfig = {
-        title: "테스트 리포트",
+        title: "Test Report",
         sections: [
           {
             type: "image",
-            title: "차트",
+            title: "Chart",
             imageDataUrl:
               "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJ",
             width: 100,
@@ -152,9 +152,9 @@ describe("PDF Export Service", () => {
       expect(result).toBeInstanceOf(ArrayBuffer);
     });
 
-    it("생성 날짜를 포함해야 한다", async () => {
+    it("includes the generation date", async () => {
       const configWithDate: PDFReportConfig = {
-        title: "테스트 리포트",
+        title: "Test Report",
         generatedAt: new Date("2024-12-01"),
         sections: [],
       };
@@ -163,10 +163,10 @@ describe("PDF Export Service", () => {
       expect(result).toBeInstanceOf(ArrayBuffer);
     });
 
-    it("조직 이름을 포함할 수 있어야 한다", async () => {
+    it("can include the organization name", async () => {
       const configWithOrg: PDFReportConfig = {
-        title: "테스트 리포트",
-        organizationName: "테스트 회사",
+        title: "Test Report",
+        organizationName: "Test Company",
         sections: [],
       };
 

@@ -7,7 +7,7 @@ import type { UrgentRenewalSummary } from "@/types/dashboard2";
 import { SubscriptionStatus, UserStatus } from "@prisma/client";
 
 /**
- * 30일 내 긴급 갱신 요약 조회 (7일/15일 세분화 포함)
+ * Get an urgent-renewal summary for the next 30 days (with 7/15-day breakdown)
  */
 export async function getUrgentRenewals(): Promise<UrgentRenewalSummary> {
   const { organizationId } = await requireOrganization();
@@ -37,14 +37,14 @@ export async function getUrgentRenewals(): Promise<UrgentRenewalSummary> {
     orderBy: { renewalDate: "asc" },
   });
 
-  // 30일 내 전체
+  // Everything within 30 days
   const thirtyDayCount = renewals.length;
   const thirtyDayAmount = renewals.reduce(
     (sum, r) => sum + Number(r.amount || 0),
     0
   );
 
-  // 7일 이내 필터링
+  // Filter to within 7 days
   const sevenDayRenewals = renewals.filter(
     (r) => r.renewalDate && new Date(r.renewalDate) <= sevenDaysLater
   );
@@ -54,7 +54,7 @@ export async function getUrgentRenewals(): Promise<UrgentRenewalSummary> {
     0
   );
 
-  // 15일 이내 필터링
+  // Filter to within 15 days
   const fifteenDayRenewals = renewals.filter(
     (r) => r.renewalDate && new Date(r.renewalDate) <= fifteenDaysLater
   );
@@ -83,8 +83,8 @@ export async function getUrgentRenewals(): Promise<UrgentRenewalSummary> {
 }
 
 /**
- * 퇴사자 미회수 계정 조회
- * TERMINATED 사용자 중 아직 앱 접근 권한이 남아있는 사용자
+ * Get unrecovered accounts of terminated users
+ * TERMINATED users who still have app access
  */
 export async function getUnrecoveredAccounts(): Promise<{
   totalCount: number;
@@ -98,13 +98,13 @@ export async function getUnrecoveredAccounts(): Promise<{
 }> {
   const { organizationId } = await requireOrganization();
 
-  // TERMINATED 상태이면서 앱 접근 권한이 남아있는 사용자 조회
+  // Fetch TERMINATED users who still have app access
   const terminatedUsers = await prisma.user.findMany({
     where: {
       organizationId,
       status: UserStatus.TERMINATED,
       appAccesses: {
-        some: {}, // 최소 1개 이상의 앱 접근 권한이 있는 경우
+        some: {}, // at least one app access grant
       },
     },
     select: {

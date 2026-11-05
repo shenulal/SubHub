@@ -139,7 +139,7 @@ export const Numeric: Story = {
 };
 
 /**
- * Badge variant 변경을 테스트합니다.
+ * Tests changing the Badge variant.
  */
 export const ShouldChangeVariant: Story = {
   name: "when user clicks buttons, should change badge variant dynamically",
@@ -186,31 +186,31 @@ export const ShouldChangeVariant: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    // 🎯 목적: Badge variant가 버튼 클릭에 따라 동적으로 변경되는지 확인
+    // 🎯 Purpose: Verify the Badge variant changes dynamically on button clicks
 
-    // 초기 상태 확인 (default)
+    // Check the initial state (default)
     const badge = canvas.getByTestId("badge");
     await expect(badge).toBeInTheDocument();
     await expect(badge).toHaveTextContent("Default Badge");
 
-    // Secondary 버튼 클릭
+    // Click the Secondary button
     const secondaryButton = canvas.getByRole("button", { name: /Secondary/i });
     await userEvent.click(secondaryButton);
     await expect(badge).toHaveTextContent("Secondary Badge");
 
-    // Destructive 버튼 클릭
+    // Click the Destructive button
     const destructiveButton = canvas.getByRole("button", {
       name: /Destructive/i,
     });
     await userEvent.click(destructiveButton);
     await expect(badge).toHaveTextContent("Destructive Badge");
 
-    // Outline 버튼 클릭
+    // Click the Outline button
     const outlineButton = canvas.getByRole("button", { name: /Outline/i });
     await userEvent.click(outlineButton);
     await expect(badge).toHaveTextContent("Outline Badge");
 
-    // 다시 Default로 돌아가기
+    // Return to Default
     const defaultButton = canvas.getByRole("button", { name: /Default/i });
     await userEvent.click(defaultButton);
     await expect(badge).toHaveTextContent("Default Badge");

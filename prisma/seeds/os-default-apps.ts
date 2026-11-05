@@ -1,5 +1,5 @@
 // prisma/seeds/os-default-apps.ts
-// OS 기본 앱 Seed 데이터
+// OS default apps seed data
 
 import { DevicePlatform, PrismaClient } from "@prisma/client";
 
@@ -13,14 +13,14 @@ interface OsDefaultAppSeed {
   description?: string;
 }
 
-// macOS 기본 앱 목록
+// macOS default apps
 const macOSDefaultApps: OsDefaultAppSeed[] = [
   // System Apps
   {
     name: "Finder",
     bundleId: "com.apple.finder",
     category: "System",
-    description: "macOS 파일 관리자",
+    description: "macOS file manager",
   },
   {
     name: "System Preferences",
@@ -66,13 +66,13 @@ const macOSDefaultApps: OsDefaultAppSeed[] = [
     name: "Safari",
     bundleId: "com.apple.Safari",
     category: "Browser",
-    description: "Apple 기본 브라우저",
+    description: "Apple default browser",
   },
   {
     name: "Mail",
     bundleId: "com.apple.mail",
     category: "Email",
-    description: "Apple 기본 이메일",
+    description: "Apple default email client",
   },
   { name: "Calendar", bundleId: "com.apple.iCal", category: "Productivity" },
   {
@@ -144,7 +144,7 @@ const macOSDefaultApps: OsDefaultAppSeed[] = [
   { name: "App Store", bundleId: "com.apple.AppStore", category: "System" },
   { name: "iCloud", bundleId: "com.apple.CloudDocs", category: "System" },
 
-  // Development (Xcode 관련)
+  // Development (Xcode related)
   { name: "Xcode", bundleId: "com.apple.dt.Xcode", category: "Development" },
   {
     name: "Instruments",
@@ -158,14 +158,14 @@ const macOSDefaultApps: OsDefaultAppSeed[] = [
   },
 ];
 
-// Windows 기본 앱 목록
+// Windows default apps
 const windowsDefaultApps: OsDefaultAppSeed[] = [
   // System
   {
     name: "Microsoft Edge",
     namePattern: "^Microsoft Edge.*",
     category: "Browser",
-    description: "Windows 기본 브라우저",
+    description: "Windows default browser",
   },
   { name: "Windows Security", category: "System" },
   { name: "Settings", category: "System" },
@@ -237,10 +237,14 @@ const windowsDefaultApps: OsDefaultAppSeed[] = [
   { name: "Feedback Hub", category: "System" },
 ];
 
-// Linux 기본 앱 목록 (GNOME/Ubuntu 기준)
+// Linux default apps (GNOME/Ubuntu)
 const linuxDefaultApps: OsDefaultAppSeed[] = [
   // Browser
-  { name: "Firefox", category: "Browser", description: "Ubuntu 기본 브라우저" },
+  {
+    name: "Firefox",
+    category: "Browser",
+    description: "Ubuntu default browser",
+  },
   { name: "Firefox ESR", namePattern: "^Firefox ESR.*", category: "Browser" },
 
   // System
@@ -412,7 +416,7 @@ export async function seedOsDefaultApps() {
   console.log(`\nTotal: ${totalCount} OS Default Apps seeded successfully!`);
 }
 
-// 직접 실행 시
+// When run directly
 if (require.main === module) {
   seedOsDefaultApps()
     .then(async () => {

@@ -60,9 +60,9 @@ export {
 
 // Suggestions
 export {
-  // Phase 3: CardTransaction 기반 추천
+  // Phase 3: CardTransaction-based suggestions
   createSubscriptionFromCardSuggestion,
-  // SMP-78: PaymentRecord 기반 추천
+  // SMP-78: PaymentRecord-based suggestions
   createSubscriptionFromPaymentSuggestion,
   createSubscriptionFromSuggestion,
   suggestFromCardTransactions,

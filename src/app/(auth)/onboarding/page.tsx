@@ -1,5 +1,5 @@
 // src/app/(auth)/onboarding/page.tsx
-// 조직 생성 페이지 (온보딩)
+// Organization creation page (onboarding)
 
 "use client";
 
@@ -14,8 +14,8 @@ import { useTranslations } from "next-intl";
 import { useActionState, useMemo, useState } from "react";
 
 /**
- * 조직 생성 페이지
- * 첫 로그인 후 조직이 없는 사용자가 이동
+ * Organization creation page
+ * Users without an organization land here after their first login
  */
 export default function OnboardingPage() {
   const t = useTranslations();
@@ -98,7 +98,7 @@ export default function OnboardingPage() {
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="domain">
               {t("auth.onboarding.org.domain", {
-                defaultValue: "회사 도메인",
+                defaultValue: "Company Domain *",
               })}
             </Label>
             <Input
@@ -113,7 +113,7 @@ export default function OnboardingPage() {
             <p className="text-muted-foreground text-[0.8125rem]">
               {t("auth.onboarding.org.domainHelper", {
                 defaultValue:
-                  "회사 이메일 도메인을 입력하세요. Extension 사용자 인증에 사용됩니다.",
+                  "Enter your company email domain. This is used for Extension user verification.",
               })}
             </p>
           </div>

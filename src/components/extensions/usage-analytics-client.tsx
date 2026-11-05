@@ -40,7 +40,7 @@ import {
   Monitor,
   Users,
 } from "lucide-react";
-import { useLocale, useTranslations } from "next-intl";
+import { useTranslations } from "next-intl";
 import { useCallback, useEffect, useState } from "react";
 
 function getAuthTypeBadgeVariant(
@@ -59,14 +59,13 @@ function getAuthTypeBadgeVariant(
 
 export function UsageAnalyticsClient() {
   const t = useTranslations("extensions.usage");
-  const locale = useLocale();
 
   const [period, setPeriod] = useState<UsageAnalyticsPeriod>("today");
   const [data, setData] = useState<UsageAnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // 상세 다이얼로그 상태
+  // Detail dialog state
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [selectedDomain, setSelectedDomain] = useState<DomainLoginItem | null>(
     null
@@ -80,35 +79,26 @@ export function UsageAnalyticsClient() {
     return today.toISOString().split("T")[0];
   });
 
-  const formatTime = useCallback(
-    (dateString: Date | string): string => {
-      const date =
-        typeof dateString === "string" ? new Date(dateString) : dateString;
-      return date.toLocaleTimeString(locale === "en" ? "en-US" : "ko-KR", {
-        hour: "2-digit",
-        minute: "2-digit",
-        second: "2-digit",
-      });
-    },
-    [locale]
-  );
+  const formatTime = useCallback((dateString: Date | string): string => {
+    const date =
+      typeof dateString === "string" ? new Date(dateString) : dateString;
+    return date.toLocaleTimeString("en-US", {
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
+    });
+  }, []);
 
-  const formatDate = useCallback(
-    (dateString: string): string => {
-      return new Date(dateString).toLocaleDateString(
-        locale === "en" ? "en-US" : "ko-KR",
-        {
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-          weekday: "short",
-        }
-      );
-    },
-    [locale]
-  );
+  const formatDate = useCallback((dateString: string): string => {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      weekday: "short",
+    });
+  }, []);
 
-  // 데이터 로드
+  // Load data
   useEffect(() => {
     async function fetchData() {
       setLoading(true);
@@ -124,7 +114,7 @@ export function UsageAnalyticsClient() {
     fetchData();
   }, [period, t]);
 
-  // 도메인 상세 로드
+  // Load domain details
   const fetchDomainDetail = useCallback(
     async (domain: string, date: string) => {
       setDetailLoading(true);
@@ -139,14 +129,14 @@ export function UsageAnalyticsClient() {
     []
   );
 
-  // 도메인 클릭 핸들러
+  // Domain click handler
   const handleDomainClick = (item: DomainLoginItem) => {
     setSelectedDomain(item);
     setDetailDialogOpen(true);
     fetchDomainDetail(item.domain, selectedDate);
   };
 
-  // 날짜 변경 핸들러
+  // Date change handler
   const handleDateChange = (newDate: string) => {
     setSelectedDate(newDate);
     if (selectedDomain) {
@@ -154,7 +144,7 @@ export function UsageAnalyticsClient() {
     }
   };
 
-  // 날짜 이동
+  // Move between dates
   const navigateDate = (direction: "prev" | "next") => {
     const current = new Date(selectedDate);
     current.setDate(current.getDate() + (direction === "next" ? 1 : -1));

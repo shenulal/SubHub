@@ -18,7 +18,6 @@ vi.mock("next/link", () => ({
   }) => <a href={href}>{children}</a>,
 }));
 vi.mock("next/image", () => ({
-  // eslint-disable-next-line @next/next/no-img-element
   default: ({ alt, src }: { alt: string; src: string }) => (
     <img alt={alt} src={src} />
   ),
@@ -103,7 +102,7 @@ describe("SubscriptionList", () => {
   it("shows an empty state with a reset action when filters are active", () => {
     const { props } = renderList({ subscriptions: [], hasFilters: true });
     expect(screen.getByTestId("subscription-list-empty")).toBeInTheDocument();
-    fireEvent.click(screen.getByText("필터 초기화"));
+    fireEvent.click(screen.getByText("Clear filters"));
     expect(props.onResetFilters).toHaveBeenCalled();
   });
 
@@ -119,22 +118,22 @@ describe("SubscriptionList", () => {
     expect(screen.getAllByText("core").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Sara").length).toBeGreaterThan(0);
     expect(screen.getByText("Ops")).toBeInTheDocument(); // team fallback when no owner
-    expect(screen.getAllByText("활성").length).toBeGreaterThan(0);
-    expect(screen.getByText("보관됨")).toBeInTheDocument();
+    expect(screen.getAllByText("Active").length).toBeGreaterThan(0);
+    expect(screen.getByText("Archived")).toBeInTheDocument();
   });
 
   it("shows the base-currency monthly equivalent, countdown and trial/notice badges", () => {
     renderList();
     expect(screen.getByText(/≈/)).toHaveTextContent("AED");
-    expect(screen.getByText("2일 후")).toBeInTheDocument();
-    expect(screen.getByText("3일 지연")).toBeInTheDocument();
-    expect(screen.getByText(/체험판/)).toBeInTheDocument();
-    expect(screen.getByText(/통보 기한/)).toBeInTheDocument();
+    expect(screen.getByText("in 2 days")).toBeInTheDocument();
+    expect(screen.getByText("3 days overdue")).toBeInTheDocument();
+    expect(screen.getByText(/Trial/)).toBeInTheDocument();
+    expect(screen.getByText(/Notice by/)).toBeInTheDocument();
   });
 
   it("maps header sorting to list sort fields", () => {
     const { props } = renderList();
-    fireEvent.click(screen.getByText("비용"));
+    fireEvent.click(screen.getByText("Cost"));
     expect(props.onSortChange).toHaveBeenCalledWith({
       sortBy: "amount",
       sortOrder: "asc",

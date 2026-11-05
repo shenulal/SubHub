@@ -7,7 +7,7 @@ import { prisma } from "@/lib/db";
 import { withLogging } from "@/lib/logging";
 import { revalidatePath } from "next/cache";
 
-// 타입 정의
+// Type definitions
 export interface NotificationSettings {
   emailEnabled: boolean;
   renewalAlertDays: number[];
@@ -15,7 +15,7 @@ export interface NotificationSettings {
   weeklyDigest: boolean;
   shadowITAlerts: boolean;
   costAnomalyAlerts: boolean;
-  costAnomalyThreshold: number; // 퍼센트 (기본 50%)
+  costAnomalyThreshold: number; // percent (default 50%)
 }
 
 interface OrganizationSettings {
@@ -34,7 +34,7 @@ const DEFAULT_NOTIFICATION_SETTINGS: NotificationSettings = {
 };
 
 /**
- * 조직 알림 설정 조회
+ * Get organization notification settings
  */
 export async function getOrganizationNotificationSettings(): Promise<NotificationSettings> {
   const { organizationId } = await requireOrganization();
@@ -79,7 +79,7 @@ export async function getOrganizationNotificationSettings(): Promise<Notificatio
 }
 
 /**
- * 조직 알림 설정 업데이트
+ * Update organization notification settings
  */
 async function _updateOrganizationNotificationSettings(
   updates: Partial<NotificationSettings>
@@ -99,15 +99,15 @@ async function _updateOrganizationNotificationSettings(
     return redirect("/onboarding");
   }
 
-  // 관리자 권한 확인
+  // Check admin permission
   if (user.role !== "ADMIN") {
     return {
       success: false,
-      message: "관리자 권한이 필요합니다",
+      message: "Admin permission required",
     };
   }
 
-  // 현재 설정 조회
+  // Fetch current settings
   const organization = await prisma.organization.findUnique({
     where: { id: organizationId },
     select: { settings: true },
@@ -118,7 +118,7 @@ async function _updateOrganizationNotificationSettings(
   const currentNotifications =
     currentSettings.notifications || DEFAULT_NOTIFICATION_SETTINGS;
 
-  // 업데이트된 알림 설정
+  // Updated notification settings
   const updatedNotifications = {
     emailEnabled: updates.emailEnabled ?? currentNotifications.emailEnabled,
     renewalAlertDays:
@@ -134,13 +134,13 @@ async function _updateOrganizationNotificationSettings(
       updates.costAnomalyThreshold ?? currentNotifications.costAnomalyThreshold,
   };
 
-  // 설정 데이터 구성
+  // Build settings data
   const newSettings = {
     ...currentSettings,
     notifications: updatedNotifications,
   };
 
-  // 설정 업데이트
+  // Update settings
   await prisma.organization.update({
     where: { id: organizationId },
     data: {

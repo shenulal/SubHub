@@ -33,12 +33,12 @@ export function UserPageClient({ role }: UserPageClientProps) {
     role: new Set<string>(),
   });
 
-  // 컬럼 가시성 상태 (외부에서 관리)
+  // Column visibility state (managed externally)
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
   >({});
 
-  // 선택된 행 상태
+  // Selected row state
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
 
   const handleColumnVisibilityChange = useCallback(
@@ -65,7 +65,7 @@ export function UserPageClient({ role }: UserPageClientProps) {
     [users.length, data?.total]
   );
 
-  // 사용자 통계 계산
+  // Compute user statistics
   const stats = useMemo(() => {
     const activeCount = users.filter((u) => u.status === "ACTIVE").length;
     const inactiveCount = users.filter((u) => u.status === "INACTIVE").length;
@@ -75,7 +75,7 @@ export function UserPageClient({ role }: UserPageClientProps) {
     return { activeCount, inactiveCount, terminatedCount };
   }, [users]);
 
-  // 필터 정의
+  // Filter definitions
   const filters: FilterDefinition[] = useMemo(
     () => [
       {
@@ -111,7 +111,7 @@ export function UserPageClient({ role }: UserPageClientProps) {
     });
   };
 
-  // 필터링된 사용자 목록
+  // Filtered user list
   const filteredUsers = useMemo(() => {
     let result = users;
 
@@ -125,12 +125,12 @@ export function UserPageClient({ role }: UserPageClientProps) {
       );
     }
 
-    // Status 필터
+    // Status filter
     if (selectedFilters.status.size > 0) {
       result = result.filter((u) => selectedFilters.status.has(u.status));
     }
 
-    // Role 필터
+    // Role filter
     if (selectedFilters.role.size > 0) {
       result = result.filter((u) => selectedFilters.role.has(u.role));
     }
@@ -138,14 +138,14 @@ export function UserPageClient({ role }: UserPageClientProps) {
     return result;
   }, [users, searchQuery, selectedFilters]);
 
-  // 사용자 초대는 ADMIN만 가능
+  // Only ADMIN can invite users
   const canInvite = role === "ADMIN";
 
-  // 로딩 상태 - Skeleton UI
+  // Loading state - skeleton UI
   if (isLoading) {
     return (
       <div className="min-w-0 space-y-6">
-        {/* 페이지 헤더 Skeleton */}
+        {/* Page header skeleton */}
         <div className="flex items-center justify-between gap-4">
           <div className="min-w-0">
             <Skeleton className="h-8 w-32" />
@@ -211,7 +211,7 @@ export function UserPageClient({ role }: UserPageClientProps) {
 
   return (
     <div className="min-w-0 space-y-6">
-      {/* 페이지 헤더 */}
+      {/* Page header */}
       <PageHeader
         title={t("users.page.title")}
         actions={[
@@ -224,7 +224,7 @@ export function UserPageClient({ role }: UserPageClientProps) {
         ]}
       />
 
-      {/* 통계 카드 */}
+      {/* Stat cards */}
       <KpiCardsGrid columns={4}>
         <KpiCard title={t("users.kpi.total")} value={total} icon={Users} />
         <KpiCard
@@ -252,7 +252,7 @@ export function UserPageClient({ role }: UserPageClientProps) {
         />
       </KpiCardsGrid>
 
-      {/* 필터 툴바 */}
+      {/* Filter toolbar */}
       <AdvancedFilterBar
         searchValue={searchQuery}
         onSearchChange={setSearchQuery}
@@ -269,7 +269,7 @@ export function UserPageClient({ role }: UserPageClientProps) {
         />
       </AdvancedFilterBar>
 
-      {/* 사용자 목록 */}
+      {/* User list */}
       <UserList
         users={filteredUsers}
         columnVisibility={columnVisibility}

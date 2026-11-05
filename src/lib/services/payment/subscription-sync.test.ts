@@ -184,7 +184,7 @@ describe("syncSubscriptionsFromPayments", () => {
       nextPaymentDate: new Date("2025-04-15"),
       lastPaymentDate: new Date("2025-03-15"),
       transactionCount: 3,
-      avgAmount: 12000, // 금액 변경
+      avgAmount: 12000, // Amount changed
     };
 
     vi.mocked(analyzePaymentIntervals).mockReturnValue(
@@ -316,7 +316,7 @@ describe("syncSubscriptionsFromPayments", () => {
     expect(result.created).toBe(1);
     expect(prisma.subscription.create).toHaveBeenCalledWith({
       data: expect.objectContaining({
-        billingCycle: "YEARLY", // ANNUAL -> YEARLY 매핑
+        billingCycle: "YEARLY", // ANNUAL -> YEARLY mapping
       }),
     });
   });
@@ -356,7 +356,7 @@ describe("syncAppSubscriptionFromPayments", () => {
 
     const result = await syncAppSubscriptionFromPayments("org-1", "app-1", [
       { useDt: "20250101", useAmt: "10000" },
-      { useDt: "20250301", useAmt: "10000" }, // 59일 간격 - 불규칙
+      { useDt: "20250301", useAmt: "10000" }, // 59-day interval - irregular
     ]);
 
     expect(result).toBe("no_pattern");

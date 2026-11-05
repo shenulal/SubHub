@@ -1,5 +1,5 @@
 // src/app/(auth)/login/page.test.tsx
-import messages from "@/i18n/messages/ko.json";
+import messages from "@/i18n/messages/en.json";
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -108,89 +108,89 @@ describe("LoginPage", () => {
     render(ui);
   };
 
-  describe("렌더링", () => {
-    it("로그인 페이지가 렌더링되어야 한다", async () => {
+  describe("rendering", () => {
+    it("renders the login page", async () => {
       await renderLoginPage();
       expect(screen.getByTestId("login-page")).toBeInTheDocument();
     });
 
-    it("로그인 제목이 표시되어야 한다", async () => {
+    it("shows the login title", async () => {
       await renderLoginPage();
       expect(
-        screen.getByRole("heading", { name: "로그인" })
+        screen.getByRole("heading", { name: "Sign In" })
       ).toBeInTheDocument();
     });
 
-    it("로그인 설명이 표시되어야 한다", async () => {
+    it("shows the login description", async () => {
       await renderLoginPage();
       expect(
-        screen.getByText("이메일 인증 코드로 로그인하세요")
+        screen.getByText("Log in with your email verification code")
       ).toBeInTheDocument();
     });
   });
 
-  describe("이메일/OTP 폼", () => {
-    it("이메일 입력 필드가 존재해야 한다", async () => {
+  describe("email/OTP form", () => {
+    it("has an email input field", async () => {
       await renderLoginPage();
-      expect(screen.getByLabelText(/이메일/)).toBeInTheDocument();
+      expect(screen.getByLabelText(/Email/)).toBeInTheDocument();
     });
 
-    it("OTP 발송 버튼이 존재해야 한다", async () => {
+    it("has a send-OTP button", async () => {
       await renderLoginPage();
       expect(screen.getByTestId("send-otp-btn")).toBeInTheDocument();
     });
 
-    it("로그인 버튼이 존재해야 한다", async () => {
+    it("has a login button", async () => {
       await renderLoginPage();
       expect(
-        screen.getByRole("button", { name: /로그인/i })
+        screen.getByRole("button", { name: /log in/i })
       ).toBeInTheDocument();
     });
 
-    it("로그인 버튼 텍스트가 올바르게 표시되어야 한다", async () => {
+    it("shows the correct login button text", async () => {
       await renderLoginPage();
       expect(
-        screen.getByRole("button", { name: "로그인" })
+        screen.getByRole("button", { name: "Log in" })
       ).toBeInTheDocument();
     });
   });
 
-  describe("Google 로그인 버튼", () => {
-    it("Google 로그인 버튼이 존재해야 한다", async () => {
+  describe("Google login button", () => {
+    it("has a Google login button", async () => {
       await renderLoginPage();
       expect(
         screen.getByRole("button", { name: /google/i })
       ).toBeInTheDocument();
     });
 
-    it("버튼에 form이 연결되어 있어야 한다", async () => {
+    it("has the button attached to a form", async () => {
       await renderLoginPage();
       const form = screen.getByTestId("login-form");
       expect(form).toBeInTheDocument();
     });
   });
 
-  describe("에러 메시지", () => {
-    it("CredentialsSignin 에러 시 메시지를 표시해야 한다", async () => {
+  describe("error messages", () => {
+    it("shows a message on a CredentialsSignin error", async () => {
       await renderLoginPage({ error: "CredentialsSignin" });
       expect(
-        screen.getByText("인증 코드가 올바르지 않습니다")
+        screen.getByText("The verification code is incorrect")
       ).toBeInTheDocument();
     });
   });
 
-  describe("링크", () => {
-    it("회원가입 링크가 존재하지 않아야 한다", async () => {
+  describe("links", () => {
+    it("does not show a sign-up link", async () => {
       await renderLoginPage();
       expect(
-        screen.queryByRole("link", { name: /회원가입/ })
+        screen.queryByRole("link", { name: /sign up/i })
       ).not.toBeInTheDocument();
     });
 
-    it("이용약관/개인정보 처리방침 문구가 표시되지 않아야 한다", async () => {
+    it("does not show Terms of Service / Privacy Policy text", async () => {
       await renderLoginPage();
-      expect(screen.queryByText(/이용약관/)).not.toBeInTheDocument();
-      expect(screen.queryByText(/개인정보 처리방침/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/Terms of Service/)).not.toBeInTheDocument();
+      expect(screen.queryByText(/Privacy Policy/)).not.toBeInTheDocument();
     });
   });
 });

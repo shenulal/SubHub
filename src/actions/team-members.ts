@@ -25,7 +25,7 @@ export interface TeamMember {
   createdAt: Date;
 }
 
-// 팀원 역할 변경
+// Change a team member's role
 async function _updateMemberRole(
   input: UpdateMemberRoleInput
 ): Promise<ActionState> {
@@ -35,34 +35,34 @@ async function _updateMemberRole(
     if (!session?.user) {
       return {
         success: false,
-        message: "인증이 필요합니다",
+        message: "Authentication required",
       };
     }
 
     if (!session.user.organizationId) {
       return {
         success: false,
-        message: "조직 정보가 필요합니다",
+        message: "Organization information is required",
       };
     }
 
-    // 관리자 권한 확인
+    // Check admin permission
     if (session.user.role !== "ADMIN") {
       return {
         success: false,
-        message: "관리자만 역할을 변경할 수 있습니다",
+        message: "Only admins can change roles",
       };
     }
 
-    // 자기 자신의 역할 변경 불가
+    // Users cannot change their own role
     if (input.userId === session.user.id) {
       return {
         success: false,
-        message: "자신의 역할은 변경할 수 없습니다",
+        message: "You cannot change your own role",
       };
     }
 
-    // 대상 사용자 확인
+    // Look up the target user
     const targetUser = await prisma.user.findFirst({
       where: {
         id: input.userId,
@@ -73,11 +73,11 @@ async function _updateMemberRole(
     if (!targetUser) {
       return {
         success: false,
-        message: "팀원을 찾을 수 없습니다",
+        message: "Team member not found",
       };
     }
 
-    // 역할 업데이트
+    // Update the role
     await prisma.user.update({
       where: { id: input.userId },
       data: { role: input.role },
@@ -87,13 +87,13 @@ async function _updateMemberRole(
 
     return {
       success: true,
-      message: "역할이 변경되었습니다",
+      message: "Role updated",
     };
   } catch (error) {
-    logger.error({ err: error }, "역할 변경 오류");
+    logger.error({ err: error }, "Role change error");
     return {
       success: false,
-      message: "역할 변경 중 오류가 발생했습니다",
+      message: "An error occurred while changing the role",
     };
   }
 }
@@ -102,7 +102,7 @@ export const updateMemberRole = withLogging(
   _updateMemberRole
 );
 
-// 팀원 제거
+// Remove a team member
 async function _removeMember(userId: string): Promise<ActionState> {
   try {
     const session = await auth();
@@ -110,34 +110,34 @@ async function _removeMember(userId: string): Promise<ActionState> {
     if (!session?.user) {
       return {
         success: false,
-        message: "인증이 필요합니다",
+        message: "Authentication required",
       };
     }
 
     if (!session.user.organizationId) {
       return {
         success: false,
-        message: "조직 정보가 필요합니다",
+        message: "Organization information is required",
       };
     }
 
-    // 관리자 권한 확인
+    // Check admin permission
     if (session.user.role !== "ADMIN") {
       return {
         success: false,
-        message: "관리자만 팀원을 제거할 수 있습니다",
+        message: "Only admins can remove team members",
       };
     }
 
-    // 자기 자신 제거 불가
+    // Users cannot remove themselves
     if (userId === session.user.id) {
       return {
         success: false,
-        message: "자신은 제거할 수 없습니다",
+        message: "You cannot remove yourself",
       };
     }
 
-    // 대상 사용자 확인
+    // Look up the target user
     const targetUser = await prisma.user.findFirst({
       where: {
         id: userId,
@@ -148,11 +148,11 @@ async function _removeMember(userId: string): Promise<ActionState> {
     if (!targetUser) {
       return {
         success: false,
-        message: "팀원을 찾을 수 없습니다",
+        message: "Team member not found",
       };
     }
 
-    // 마지막 관리자인지 확인
+    // Check whether this is the last admin
     if (targetUser.role === "ADMIN") {
       const adminCount = await prisma.user.count({
         where: {
@@ -164,17 +164,17 @@ async function _removeMember(userId: string): Promise<ActionState> {
       if (adminCount <= 1) {
         return {
           success: false,
-          message: "조직의 마지막 관리자는 제거할 수 없습니다",
+          message: "The organization's last admin cannot be removed",
         };
       }
     }
 
-    // 조직에서 제거 (organizationId를 null로 설정)
+    // Remove from the organization (set organizationId to null)
     await prisma.user.update({
       where: { id: userId },
       data: {
         organizationId: null,
-        role: "VIEWER", // 기본 역할로 리셋
+        role: "VIEWER", // reset to the default role
       },
     });
 
@@ -182,19 +182,19 @@ async function _removeMember(userId: string): Promise<ActionState> {
 
     return {
       success: true,
-      message: "팀원이 제거되었습니다",
+      message: "Team member removed",
     };
   } catch (error) {
-    logger.error({ err: error }, "팀원 제거 오류");
+    logger.error({ err: error }, "Team member removal error");
     return {
       success: false,
-      message: "팀원 제거 중 오류가 발생했습니다",
+      message: "An error occurred while removing the team member",
     };
   }
 }
 export const removeMember = withLogging("removeMember", _removeMember);
 
-// 팀원 목록 조회
+// List team members
 export async function getTeamMembers(): Promise<ActionState<TeamMember[]>> {
   try {
     const session = await auth();
@@ -202,14 +202,14 @@ export async function getTeamMembers(): Promise<ActionState<TeamMember[]>> {
     if (!session?.user) {
       return {
         success: false,
-        message: "인증이 필요합니다",
+        message: "Authentication required",
       };
     }
 
     if (!session.user.organizationId) {
       return {
         success: false,
-        message: "조직 정보가 필요합니다",
+        message: "Organization information is required",
       };
     }
 
@@ -237,10 +237,10 @@ export async function getTeamMembers(): Promise<ActionState<TeamMember[]>> {
       data: members,
     };
   } catch (error) {
-    logger.error({ err: error }, "팀원 목록 조회 오류");
+    logger.error({ err: error }, "Team member list error");
     return {
       success: false,
-      message: "팀원 목록 조회 중 오류가 발생했습니다",
+      message: "An error occurred while loading team members",
     };
   }
 }

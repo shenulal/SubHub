@@ -1,7 +1,7 @@
 // src/lib/services/saas-matcher.ts
 /**
- * SaaS 매칭 고도화 유틸
- * - LLM 기반 분류 결과를 SaaS 마스터 DB에 적재하고, 바로 매칭에 사용
+ * Advanced SaaS matching utilities
+ * - Stores LLM classification results in the SaaS master DB and uses them for matching immediately
  */
 
 import { prisma } from "@/lib/db";
@@ -70,7 +70,7 @@ async function upsertCatalogFromInference(
       },
     }));
 
-  // SMP-160: LLM pricingModel → 미검증 카탈로그 업데이트
+  // SMP-160: LLM pricingModel → update unverified catalog entries
   if (
     existing &&
     !existing.isVerified &&
@@ -83,7 +83,7 @@ async function upsertCatalogFromInference(
     });
   }
 
-  // 제안된 패턴을 패턴 테이블에 반영(중복 방지)
+  // Persist suggested patterns to the pattern table (deduplicated)
   if (inference.suggestedPatterns?.length) {
     const existingPatterns = await prisma.saaSPattern.findMany({
       where: {
@@ -112,10 +112,10 @@ async function upsertCatalogFromInference(
 }
 
 /**
- * 신뢰도 기반 앱 상태 결정
- * - 80% 이상 (고신뢰): ACTIVE (자동 확정)
- * - 50~80% (중간신뢰): PENDING_REVIEW (사용자 확인 필요)
- * - 50% 미만 (저신뢰): SaaS로 판정되지 않음 (이 함수 호출되지 않음)
+ * Determines app status from confidence
+ * - 80% or above (high confidence): ACTIVE (auto-confirmed)
+ * - 50–80% (medium confidence): PENDING_REVIEW (user confirmation required)
+ * - Below 50% (low confidence): not classified as SaaS (this function is not called)
  */
 function determineAppStatus(confidence: number): AppStatus {
   if (confidence >= 0.8) {
@@ -141,7 +141,7 @@ async function upsertAppForOrganization(
   const normalizedCategory = normalizeCategory(category ?? null);
 
   if (existing) {
-    // SMP-162: 기존 앱의 category가 null이면 카탈로그 category로 업데이트
+    // SMP-162: if the existing app's category is null, set it from the catalog category
     if (!existing.category && normalizedCategory) {
       await prisma.app.update({
         where: { id: existing.id },
@@ -167,11 +167,11 @@ async function upsertAppForOrganization(
 }
 
 /**
- * 앱 생성 후 Team 자동 배정 (SMP-107)
- * - teamId가 있으면 해당 팀에 배정
- * - userId만 있으면 User 소속 팀 조회 후 배정
- * - 둘 다 없으면 배정 안 함
- * - 기존 AppTeam 있으면 중복 생성 안 함 (멱등성)
+ * Auto-assigns a team after app creation (SMP-107)
+ * - If teamId is given, assign to that team
+ * - If only userId is given, look up the user's team and assign it
+ * - If neither is given, no assignment
+ * - Does not create a duplicate if an AppTeam already exists (idempotent)
  */
 async function ensureAppTeamOnCreation(
   appId: string,
@@ -180,7 +180,7 @@ async function ensureAppTeamOnCreation(
 ): Promise<void> {
   let targetTeamId = teamId;
 
-  // userId만 있으면 User 소속 팀 조회
+  // Only userId given: look up the user's team
   if (!targetTeamId && userId) {
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -191,13 +191,13 @@ async function ensureAppTeamOnCreation(
 
   if (!targetTeamId) return;
 
-  // 기존 AppTeam 확인 (중복 방지)
+  // Check for an existing AppTeam (prevent duplicates)
   const existing = await prisma.appTeam.findFirst({
     where: { appId, teamId: targetTeamId },
   });
   if (existing) return;
 
-  // AppTeam 생성
+  // Create AppTeam
   await prisma.appTeam.create({
     data: {
       appId,
@@ -252,9 +252,9 @@ async function logInference(params: {
 }
 
 /**
- * LLM 기반 폴백 매칭
- * - 기존 패턴/앱 매칭 실패 시 호출
- * - SaaS로 판단되면 Catalog/App을 생성/연결
+ * LLM-based fallback matching
+ * - Called when pattern/app matching fails
+ * - If classified as SaaS, creates/links the Catalog/App
  */
 export async function matchMerchantWithLLM(
   params: LlmMatchParams
@@ -286,7 +286,7 @@ export async function matchMerchantWithLLM(
     };
   }
 
-  // 카탈로그/앱 생성 또는 연결
+  // Create or link the catalog/app
   const catalog = await upsertCatalogFromInference(
     params.organizationId,
     inference
@@ -303,7 +303,7 @@ export async function matchMerchantWithLLM(
     inference.category
   );
 
-  // SMP-107: 앱 생성 후 Team 자동 배정
+  // SMP-107: auto-assign a team after app creation
   await ensureAppTeamOnCreation(app.id, params.teamId, params.userId);
 
   await logInference({
@@ -324,11 +324,11 @@ export async function matchMerchantWithLLM(
   };
 }
 
-// ==================== Non-SaaS 캐시 함수 ====================
+// ==================== Non-SaaS cache functions ====================
 
 /**
- * Non-SaaS 캐시 조회
- * 이미 Non-SaaS로 판정된 가맹점명 집합 반환
+ * Reads the non-SaaS cache
+ * Returns the set of merchant names already classified as non-SaaS
  */
 export async function checkNonSaaSCache(
   organizationId: string,
@@ -348,7 +348,7 @@ export async function checkNonSaaSCache(
 }
 
 /**
- * Non-SaaS 벤더 저장 (upsert)
+ * Saves non-SaaS vendors (upsert)
  */
 export async function saveNonSaaSVendors(
   organizationId: string,
@@ -361,7 +361,7 @@ export async function saveNonSaaSVendors(
 ): Promise<void> {
   if (vendors.length === 0) return;
 
-  // Prisma createMany는 upsert 지원 안 함 → 개별 upsert
+  // Prisma createMany does not support upsert → upsert individually
   await Promise.all(
     vendors.map((v) =>
       prisma.nonSaaSVendor.upsert({
@@ -389,7 +389,7 @@ export async function saveNonSaaSVendors(
 }
 
 /**
- * Non-SaaS 캐시에서 제거 (수동 SaaS 지정 시)
+ * Removes from the non-SaaS cache (when manually marked as SaaS)
  */
 export async function removeFromNonSaaSCache(
   organizationId: string,
@@ -403,13 +403,13 @@ export async function removeFromNonSaaSCache(
   });
 }
 
-// ==================== 배치 매칭 함수 ====================
+// ==================== Batch matching functions ====================
 
 /**
- * 배치 LLM 매칭
- * - 여러 가맹점을 한 번에 LLM 호출
- * - SaaS 판정 시 Catalog/App 생성
- * - Non-SaaS 결과는 캐시에 저장
+ * Batch LLM matching
+ * - Sends multiple merchants to the LLM in one call
+ * - Creates the Catalog/App when classified as SaaS
+ * - Stores non-SaaS results in the cache
  */
 export async function matchMerchantsBatchWithLLM(
   organizationId: string,
@@ -417,7 +417,7 @@ export async function matchMerchantsBatchWithLLM(
 ): Promise<BatchMatchResult[]> {
   if (merchants.length === 0) return [];
 
-  // 배치 LLM 호출
+  // Batch LLM call
   const batchInput: BatchMerchantInput[] = merchants.map((m) => ({
     id: m.id,
     merchantName: m.merchantName,
@@ -443,7 +443,7 @@ export async function matchMerchantsBatchWithLLM(
     const normalized = normalizeMerchantName(merchant.merchantName);
 
     if (!inference || !inference.isSaaS) {
-      // Non-SaaS → 캐시에 저장할 목록에 추가
+      // Non-SaaS → add to the list to cache
       nonSaaSToSave.push({
         normalizedName: normalized,
         originalName: merchant.merchantName,
@@ -461,7 +461,7 @@ export async function matchMerchantsBatchWithLLM(
         inference: inference ?? null,
       });
 
-      // 로그 기록
+      // Write log
       await logInference({
         organizationId,
         merchantName: merchant.merchantName,
@@ -469,7 +469,7 @@ export async function matchMerchantsBatchWithLLM(
         payload: { inference: inference ?? null, usage: batchPayload.usage },
       });
     } else {
-      // SaaS → Catalog/App 생성
+      // SaaS → create Catalog/App
       const catalog = await upsertCatalogFromInference(
         organizationId,
         inference
@@ -486,7 +486,7 @@ export async function matchMerchantsBatchWithLLM(
         inference.category
       );
 
-      // SMP-107: 앱 생성 후 Team 자동 배정
+      // SMP-107: auto-assign a team after app creation
       await ensureAppTeamOnCreation(app.id, merchant.teamId, merchant.userId);
 
       results.push({
@@ -499,7 +499,7 @@ export async function matchMerchantsBatchWithLLM(
         inference,
       });
 
-      // 로그 기록
+      // Write log
       await logInference({
         organizationId,
         merchantName: merchant.merchantName,
@@ -511,7 +511,7 @@ export async function matchMerchantsBatchWithLLM(
     }
   }
 
-  // Non-SaaS 벤더 일괄 저장
+  // Save non-SaaS vendors in bulk
   if (nonSaaSToSave.length > 0) {
     await saveNonSaaSVendors(organizationId, nonSaaSToSave);
   }
@@ -520,8 +520,8 @@ export async function matchMerchantsBatchWithLLM(
 }
 
 /**
- * 배치 처리 유틸리티
- * 배열을 chunkSize 크기로 나누어 처리
+ * Batch processing utility
+ * Processes an array in chunks of chunkSize
  */
 export async function processMerchantsInBatches<T>(
   items: T[],

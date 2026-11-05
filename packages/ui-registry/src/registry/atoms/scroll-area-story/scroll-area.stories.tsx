@@ -204,25 +204,25 @@ export const ShouldScroll: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    // 🎯 목적: Scroll Area가 콘텐츠가 넘칠 때 스크롤 가능한지 확인
-    // 첫 번째 태그 확인 (v1.2.0-beta.50)
+    // 🎯 Purpose: Verify the Scroll Area scrolls when content overflows
+    // Check the first tag (v1.2.0-beta.50)
     const firstTag = await canvas.findByText(/v1\.2\.0-beta\.50/i);
     await expect(firstTag).toBeInTheDocument();
 
-    // 스크롤 영역을 찾아서 스크롤 다운
+    // Find the scroll area and scroll down
     const scrollViewport = canvasElement.querySelector(
       "[data-radix-scroll-area-viewport]",
     );
     if (scrollViewport) {
-      // 스크롤 가능 여부 확인 (scrollHeight > clientHeight)
+      // Check it is scrollable (scrollHeight > clientHeight)
       await expect(scrollViewport.scrollHeight).toBeGreaterThan(
         scrollViewport.clientHeight,
       );
 
-      // 스크롤 다운
+      // Scroll down
       scrollViewport.scrollTop = scrollViewport.scrollHeight;
 
-      // 스크롤 후 마지막 태그가 보이는지 확인
+      // Verify the last tag is visible after scrolling
       await waitFor(async () => {
         const lastTagVisible = await canvas.findByText(/v1\.2\.0-beta\.1$/);
         await expect(lastTagVisible).toBeInTheDocument();
@@ -268,36 +268,36 @@ export const ShouldScrollHorizontally: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    // 🎯 목적: Scroll Area가 수평 스크롤을 지원하고 horizontal ScrollBar가 표시되는지 확인
+    // 🎯 Purpose: Verify the Scroll Area supports horizontal scrolling and shows a horizontal ScrollBar
 
-    // Scroll Area 존재 확인
+    // Verify the Scroll Area exists
     const scrollArea = canvas.getByTestId("scroll-area");
     await expect(scrollArea).toBeInTheDocument();
 
-    // Horizontal ScrollBar 확인
+    // Check the horizontal ScrollBar
     const horizontalScrollbar = canvas.getByTestId("horizontal-scrollbar");
     await expect(horizontalScrollbar).toBeInTheDocument();
 
-    // 첫 번째 아이템 확인
+    // Check the first item
     const firstItem = canvas.getByTestId("item-1");
     await expect(firstItem).toBeInTheDocument();
     await expect(firstItem).toHaveTextContent("Item 1");
 
-    // 스크롤 viewport 찾기
+    // Find the scroll viewport
     const scrollViewport = canvasElement.querySelector(
       "[data-radix-scroll-area-viewport]",
     );
 
     if (scrollViewport) {
-      // 수평 스크롤 가능 여부 확인 (scrollWidth > clientWidth)
+      // Check it scrolls horizontally (scrollWidth > clientWidth)
       await expect(scrollViewport.scrollWidth).toBeGreaterThan(
         scrollViewport.clientWidth,
       );
 
-      // 수평 스크롤 (오른쪽으로)
+      // Scroll horizontally (to the right)
       scrollViewport.scrollLeft = scrollViewport.scrollWidth / 2;
 
-      // 스크롤 후 중간 아이템 확인
+      // Check a middle item after scrolling
       await waitFor(async () => {
         const middleItem = canvas.getByTestId("item-5");
         await expect(middleItem).toBeInTheDocument();

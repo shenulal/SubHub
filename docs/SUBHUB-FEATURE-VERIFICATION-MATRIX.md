@@ -3,14 +3,14 @@
 **Prepared by:** HelloPixels, Dubai UAE
 **Date:** 4 November 2026
 **Source requirement:** `MVP_Feature_Matrix_Subscription_Management.xlsx` (60 capabilities, 11 feature areas, 25 P0)
-**Baseline application:** saaslens v0.1.0 (Wondermove-Inc, MIT) — Next.js 15, React 19, Prisma 6 / PostgreSQL, NextAuth 5, shadcn/ui, next-intl
+**Baseline application:** the upstream open-source base v0.1.0 (Wondermove-Inc, MIT) — Next.js 15, React 19, Prisma 6 / PostgreSQL, NextAuth 5, shadcn/ui, next-intl
 **Target application:** SubHub (`subhub/` folder, own git repository)
 
 ## 1. How to read this document
 
 | Column              | Meaning                                                                                                                                          |
 | ------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Baseline status** | What the saaslens code actually does today, verified by reading the source (`prisma/schema.prisma`, `src/actions`, `src/app`, `src/components`). |
+| **Baseline status** | What the upstream code actually does today, verified by reading the source (`prisma/schema.prisma`, `src/actions`, `src/app`, `src/components`). |
 | **SubHub action**   | What was added or changed in SubHub to satisfy the capability.                                                                                   |
 | **Delivered**       | ✅ delivered in SubHub web · 🟡 partially delivered (see note) · ⏭ out of this pass (mobile client)                                             |
 
@@ -18,7 +18,7 @@ Status legend for the baseline: ✅ Exists · 🟡 Partial · ❌ Missing · ➖
 
 ## 2. Platform scope decision
 
-The matrix covers **Web + Mobile**. saaslens is a web application only. This pass delivers the **complete web application** plus a **mobile-ready REST API** under `/api/v1` (every new capability has a server action and, where the matrix marks Mobile = Yes, a JSON endpoint). The React Native mobile client is a separate deliverable and is not built in this pass; mobile-only items (7.5 home-screen widget, 7.6 offline cache) are therefore marked ⏭.
+The matrix covers **Web + Mobile**. The upstream base is a web application only. This pass delivers the **complete web application** plus a **mobile-ready REST API** under `/api/v1` (every new capability has a server action and, where the matrix marks Mobile = Yes, a JSON endpoint). The React Native mobile client is a separate deliverable and is not built in this pass; mobile-only items (7.5 home-screen widget, 7.6 offline cache) are therefore marked ⏭.
 
 ## 3. Verification matrix
 
@@ -133,7 +133,7 @@ The matrix covers **Web + Mobile**. saaslens is a web application only. This pas
 | 11.3 | In-app onboarding checklist | P1  | ❌                                                       | Dashboard checklist (add subscription → set reminder → invite teammate → set policy) with progress persistence | ✅        |
 | 11.4 | Contextual help             | P1  | ❌                                                       | Help tooltips/links on policies, approvals, custom fields, notification preferences                            | ✅        |
 
-## 4. Baseline capabilities retained from saaslens (outside the matrix)
+## 4. Baseline capabilities retained from the upstream base (outside the matrix)
 
 Payment-to-app matching (CSV/ERP/card), Google Workspace SSO discovery, Chrome extension usage capture, FleetDM device inventory, seat utilisation analytics, offboarding detection, Shadow-IT / Shadow-AI scan, AI assistant, super-admin tenant console, cost / renewal / usage / audit reports, scheduled report emails. These remain in SubHub unchanged.
 
@@ -150,6 +150,6 @@ Payment-to-app matching (CSV/ERP/card), Google Workspace SSO discovery, Chrome e
 ## 6. Delivery summary (web application, 4 November 2026)
 
 - 59 of 60 matrix capabilities delivered on the web application; 6.5 cross-device sync is delivered as a server-authoritative REST API with a single web client (🟡); 7.5 and 7.6 are mobile-client items (⏭).
-- Verification (after dependency upgrades): production build passes (185 routes); strict type-check passes; Vitest 3,534 tests with 3,405 passing, 38 skipped and 91 failing, all 91 being pre-existing upstream saaslens failures (baseline 124), no regressions; Playwright runtime smoke suite 50 / 50 against the production server. Per-feature evidence: `SubHub-Implementation-Tracker.md`.
+- Verification (after dependency upgrades): production build passes (185 routes); strict type-check passes; Vitest 3,534 tests with 3,405 passing, 38 skipped and 91 failing, all 91 being pre-existing upstream failures (baseline 124), no regressions; Playwright runtime smoke suite 50 / 50 against the production server. Per-feature evidence: `SubHub-Implementation-Tracker.md`.
 - Repository: https://github.com/shenulal/SubHub (branch `main`).
 - Items requiring external credentials before end-to-end use: Google / Apple sign-in, Gmail and Microsoft Graph mailbox OAuth, Resend email, FCM push, S3/R2 storage.

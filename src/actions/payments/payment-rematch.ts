@@ -9,8 +9,8 @@ import type { ActionState } from "@/types";
 import { revalidatePath } from "next/cache";
 
 /**
- * 결제 레코드(PaymentRecord) 재매칭 Server Action
- * UNMATCHED/PENDING 항목을 rematch-service를 통해 재매칭합니다.
+ * Server Action: rematch payment records (PaymentRecord)
+ * Rematches UNMATCHED/PENDING items via rematch-service.
  */
 export async function rematchPaymentRecords(
   recordIds: string[]
@@ -19,11 +19,11 @@ export async function rematchPaymentRecords(
     const session = await getCachedSession();
 
     if (!session?.user) {
-      return { success: false, error: "인증이 필요합니다" };
+      return { success: false, error: "Authentication required" };
     }
 
     if (!session.user.organizationId) {
-      return { success: false, error: "조직 정보가 필요합니다" };
+      return { success: false, error: "Organization information is required" };
     }
 
     const result = await rematchRecords({
@@ -37,14 +37,14 @@ export async function rematchPaymentRecords(
     return { success: true, data: result };
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : "재매칭에 실패했습니다";
+      error instanceof Error ? error.message : "Rematching failed";
     return { success: false, error: message };
   }
 }
 
 /**
- * 카드 거래내역(CardTransaction) 재매칭 Server Action
- * UNMATCHED/PENDING 항목을 rematch-service를 통해 재매칭합니다.
+ * Server Action: rematch card transactions (CardTransaction)
+ * Rematches UNMATCHED/PENDING items via rematch-service.
  */
 export async function rematchCardTransactions(
   transactionIds: string[]
@@ -53,11 +53,11 @@ export async function rematchCardTransactions(
     const session = await getCachedSession();
 
     if (!session?.user) {
-      return { success: false, error: "인증이 필요합니다" };
+      return { success: false, error: "Authentication required" };
     }
 
     if (!session.user.organizationId) {
-      return { success: false, error: "조직 정보가 필요합니다" };
+      return { success: false, error: "Organization information is required" };
     }
 
     const result = await rematchRecords({
@@ -71,7 +71,7 @@ export async function rematchCardTransactions(
     return { success: true, data: result };
   } catch (error) {
     const message =
-      error instanceof Error ? error.message : "재매칭에 실패했습니다";
+      error instanceof Error ? error.message : "Rematching failed";
     return { success: false, error: message };
   }
 }

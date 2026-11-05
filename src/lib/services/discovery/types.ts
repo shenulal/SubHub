@@ -1,47 +1,47 @@
 // src/lib/services/discovery/types.ts
 /**
- * 앱 활성 감지 시스템 — 타입 정의
- * 향후 IdP API 연동(Okta, Azure AD 등)을 위한 인터페이스
+ * App activity detection — type definitions
+ * Interfaces for future IdP API integrations (Okta, Azure AD, etc.)
  */
 
 /**
- * IdP에서 발견된 앱 접근 정보
+ * App access discovered from an IdP
  */
 export interface IdPAppAccess {
-  /** IdP에서 사용하는 앱 식별자 */
+  /** App identifier used by the IdP */
   externalAppId: string;
-  /** IdP에서의 앱 이름 */
+  /** App name in the IdP */
   appName: string;
-  /** 앱에 접근한 사용자 이메일 */
+  /** E-mail of the user who accessed the app */
   userEmail: string;
-  /** 마지막 사용 시각 */
+  /** Last used at */
   lastUsedAt: Date;
-  /** 접근 상태 (active/revoked) */
+  /** Access status (active/revoked) */
   status: "active" | "revoked";
 }
 
 /**
- * IdP 프로바이더 어댑터 인터페이스
+ * IdP provider adapter interface
  *
- * 향후 구현 예정:
+ * Planned implementations:
  * - OktaAdapter: AccessSource.IDP_OKTA
  * - AzureADAdapter: AccessSource.IDP_AZURE_AD
  * - OneLoginAdapter: AccessSource.IDP_ONELOGIN
  *
- * AccessSource enum 확장값 (향후 추가):
+ * AccessSource enum extensions (to be added):
  * - IDP_OKTA
  * - IDP_AZURE_AD
  * - IDP_ONELOGIN
  */
 export interface IdPProviderAdapter {
-  /** 프로바이더 이름 (예: "okta", "azure_ad") */
+  /** Provider name (e.g. "okta", "azure_ad") */
   readonly providerName: string;
 
   /**
-   * IdP에서 조직의 앱 접근 목록을 가져옴
-   * @param credentials - IdP API 인증 정보
-   * @param organizationId - 조직 ID
-   * @returns 앱 접근 정보 배열
+   * Fetches the organization's app access list from the IdP
+   * @param credentials - IdP API credentials
+   * @param organizationId - Organization ID
+   * @returns Array of app access records
    */
   fetchAppAccesses(
     credentials: Record<string, string>,
@@ -49,9 +49,9 @@ export interface IdPProviderAdapter {
   ): Promise<IdPAppAccess[]>;
 
   /**
-   * IdP 연결 상태 확인
-   * @param credentials - IdP API 인증 정보
-   * @returns 연결 가능 여부
+   * Checks the IdP connection
+   * @param credentials - IdP API credentials
+   * @returns Whether the connection succeeds
    */
   testConnection(credentials: Record<string, string>): Promise<boolean>;
 }

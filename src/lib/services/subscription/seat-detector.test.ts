@@ -35,13 +35,13 @@ describe("seat-detector", () => {
       expect(isKnownPerSeatSaaS("Netlify")).toBe(false);
     });
 
-    // R1: catalogPricingModel 우선순위 테스트
+    // R1: catalogPricingModel priority tests
     it("should return true when catalogPricingModel is PER_SEAT", () => {
       expect(isKnownPerSeatSaaS("NewSaaS", "PER_SEAT")).toBe(true);
     });
 
     it("should return false when catalogPricingModel is FLAT_RATE (override)", () => {
-      // Slack은 하드코딩 목록에 있지만 catalog에서 FLAT_RATE로 오버라이드
+      // Slack is in the hard-coded list but the catalog overrides it to FLAT_RATE
       expect(isKnownPerSeatSaaS("Slack", "FLAT_RATE")).toBe(false);
     });
 
@@ -126,7 +126,7 @@ describe("seat-detector", () => {
     });
   });
 
-  // R2: GCD 허용 오차 테스트
+  // R2: GCD tolerance tests
   describe("extractSeatPriceWithTolerance", () => {
     it("should handle exact multiples (same as extractSeatPrice)", () => {
       const result = extractSeatPriceWithTolerance([50000, 100000, 150000]);
@@ -142,12 +142,31 @@ describe("seat-detector", () => {
       expect(result.approxMethod).toBe("tolerance");
     });
 
-    it("should detect VAT-included amounts", () => {
-      // 55000 = 50000 * 1.1 (부가세), 110000 = 100000 * 1.1, 165000 = 150000 * 1.1
-      const result = extractSeatPriceWithTolerance([55000, 110000, 165000]);
-      // 정확한 GCD로 55000이 나올 수 있고, 부가세 제거로 50000이 나올 수 있음
+    it("should detect tax-inclusive amounts at the organisation's VAT rate", () => {
+      // UAE VAT 5%: 52500 = 50000 * 1.05, 105000 = 100000 * 1.05, 157500 = 150000 * 1.05
+      const result = extractSeatPriceWithTolerance([52500, 105000, 157500], 5);
+      // The exact GCD may give 52500, and tax removal may give 50000
       expect(result.seatPrice).not.toBeNull();
-      expect([50000, 55000]).toContain(result.seatPrice);
+      expect([50000, 52500]).toContain(result.seatPrice);
+    });
+
+    it("should strip tax using the configured rate when amounts are not exact multiples", () => {
+      // Seat price 99.99 + 5% VAT, rounded per charge: the tax step recovers whole seats
+      const withTax = [210, 315, 420];
+      const result = extractSeatPriceWithTolerance(withTax, 5);
+      expect(result.seatPrice).not.toBeNull();
+    });
+
+    it("should skip the tax step when no rate is configured", () => {
+      const withRate = extractSeatPriceWithTolerance(
+        [52500, 105000, 157500],
+        5
+      );
+      const withoutRate = extractSeatPriceWithTolerance([
+        52500, 105000, 157500,
+      ]);
+      expect(withoutRate.approxMethod).not.toBe("vat_adjusted");
+      expect(withRate.seatPrice).not.toBeNull();
     });
 
     it("should return null for truly noisy data", () => {
@@ -176,9 +195,9 @@ describe("seat-detector", () => {
     });
 
     it("should handle amounts with minor fluctuations (exchange rate)", () => {
-      // 약 15000원/seat × 2~4 seats with minor fluctuations (~1%)
+      // About 15000/seat × 2–4 seats with minor fluctuations (~1%)
       const result = extractSeatPriceWithTolerance([30150, 45100, 59900]);
-      // 15000 기준으로 약간의 오차가 있지만 tolerance 범위 내
+      // Slight deviation from 15000 but within tolerance
       if (result.seatPrice) {
         expect(result.seatPrice).toBeGreaterThanOrEqual(14000);
         expect(result.seatPrice).toBeLessThanOrEqual(16000);
@@ -188,14 +207,14 @@ describe("seat-detector", () => {
 
   describe("detectBillingType", () => {
     it("should detect PER_SEAT for known SaaS with consistent amounts (key fix)", () => {
-      // 이전에는 FLAT_RATE로 잘못 판단했던 핵심 케이스
+      // Key case that was previously misclassified as FLAT_RATE
       const result = detectBillingType({
         appName: "Slack",
         amounts: [50000, 50000, 50000, 50000],
       });
       expect(result.billingType).toBe("PER_SEAT");
       expect(result.confidence).toBe(0.8);
-      expect(result.perSeatPrice).toBeNull(); // 변동 없으므로 단가 알 수 없음
+      expect(result.perSeatPrice).toBeNull(); // No variation, so the unit price is unknown
       expect(result.method).toBe("heuristic_known");
     });
 
@@ -299,7 +318,7 @@ describe("seat-detector", () => {
       expect(result.billingType).toBe("FLAT_RATE");
     });
 
-    // R1: catalogPricingModel 테스트
+    // R1: catalogPricingModel tests
     it("should detect PER_SEAT when catalogPricingModel is PER_SEAT for unknown app", () => {
       const result = detectBillingType({
         appName: "NewSaaS",
@@ -311,7 +330,7 @@ describe("seat-detector", () => {
     });
 
     it("should detect FLAT_RATE when catalogPricingModel is FLAT_RATE for known app", () => {
-      // Slack은 하드코딩 목록에 있지만 카탈로그에서 FLAT_RATE로 오버라이드
+      // Slack is in the hard-coded list but the catalog overrides it to FLAT_RATE
       const result = detectBillingType({
         appName: "Slack",
         amounts: [50000, 50000, 50000],
@@ -320,9 +339,9 @@ describe("seat-detector", () => {
       expect(result.billingType).toBe("FLAT_RATE");
     });
 
-    // R3: catalogBasePricePerSeat 테스트
+    // R3: catalogBasePricePerSeat tests
     it("should estimate seats from catalog base price when amounts are constant", () => {
-      // Slack $7.25/seat → KRW ~10000/seat, 총 50000원 = 5 seats
+      // Slack $7.25/seat → ~10000/seat in local currency; total 50000 = 5 seats
       const result = detectBillingType({
         appName: "Slack",
         amounts: [50000, 50000, 50000],
@@ -359,11 +378,11 @@ describe("seat-detector", () => {
       expect(result.confidence).toBeGreaterThanOrEqual(0.8);
     });
 
-    // Bug A 회귀 테스트: USAGE_BASED/FLAT_RATE SaaS가 GCD 패턴으로 PER_SEAT 오판 방지
+    // Bug A regression test: prevent USAGE_BASED/FLAT_RATE SaaS from being misclassified as PER_SEAT via a GCD pattern
     it("should return FLAT_RATE for USAGE_BASED SaaS even with valid GCD pattern", () => {
-      // Azure 실제 시나리오: [170만, 180만, 195만, 210만, 225만, 235만]
-      // GCD = 50,000, seat counts = [34, 36, 39, 42, 45, 47] → 유효한 GCD 패턴
-      // 하지만 catalogPricingModel = USAGE_BASED이므로 FLAT_RATE 반환해야 함
+      // Real Azure scenario: [1.70M, 1.80M, 1.95M, 2.10M, 2.25M, 2.35M]
+      // GCD = 50,000, seat counts = [34, 36, 39, 42, 45, 47] → valid GCD pattern
+      // But catalogPricingModel = USAGE_BASED, so FLAT_RATE must be returned
       const result = detectBillingType({
         appName: "Microsoft Azure",
         amounts: [1700000, 1800000, 1950000, 2100000, 2250000, 2350000],
@@ -398,17 +417,17 @@ describe("seat-detector", () => {
     });
 
     it("should still detect PER_SEAT for unknown SaaS with valid GCD when no catalog info", () => {
-      // catalogPricingModel이 없으면 기존 GCD 로직 동작
+      // Without catalogPricingModel the existing GCD logic applies
       const result = detectBillingType({
         appName: "Microsoft Azure",
         amounts: [1700000, 1800000, 1950000, 2100000, 2250000, 2350000],
         catalogPricingModel: null,
       });
-      // catalog 없으면 GCD 기반으로 PER_SEAT 판단 (기존 동작)
+      // Without a catalog, PER_SEAT is decided by GCD (existing behaviour)
       expect(result.billingType).toBe("PER_SEAT");
     });
 
-    // R5: method 필드 테스트
+    // R5: method field tests
     it("should return method field in result", () => {
       const result = detectBillingType({
         appName: "Slack",

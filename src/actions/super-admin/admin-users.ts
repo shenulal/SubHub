@@ -20,7 +20,7 @@ export interface AdminUserInfo {
 }
 
 /**
- * 테넌트 관리자(ADMIN role) 목록 조회
+ * Fetch tenant admins (ADMIN role)
  */
 async function _listTenantAdmins(): Promise<ActionState<AdminUserInfo[]>> {
   await requireSuperAdmin();
@@ -31,7 +31,7 @@ async function _listTenantAdmins(): Promise<ActionState<AdminUserInfo[]>> {
   });
 
   if (!org) {
-    return { success: false, message: "테넌트 정보를 찾을 수 없습니다." };
+    return { success: false, message: "Tenant information not found." };
   }
 
   const admins = await prisma.user.findMany({
@@ -60,11 +60,11 @@ export const listTenantAdmins = withLogging(
 );
 
 const inviteSchema = z.object({
-  email: z.string().email("유효한 이메일을 입력하세요"),
+  email: z.string().email("Please enter a valid email address"),
 });
 
 /**
- * 테넌트 관리자 초대 (ADMIN role로 초대)
+ * Invite a tenant admin (invited with the ADMIN role)
  */
 async function _inviteTenantAdmin(email: string): Promise<ActionState> {
   await requireSuperAdmin();
@@ -80,10 +80,10 @@ async function _inviteTenantAdmin(email: string): Promise<ActionState> {
   });
 
   if (!org) {
-    return { success: false, message: "테넌트 정보를 찾을 수 없습니다." };
+    return { success: false, message: "Tenant information not found." };
   }
 
-  // 이미 조직에 속한 사용자인지 확인
+  // Check whether the user already belongs to the organization
   const existingUser = await prisma.user.findFirst({
     where: { email: parsed.data.email, organizationId: org.id },
   });
@@ -91,11 +91,11 @@ async function _inviteTenantAdmin(email: string): Promise<ActionState> {
   if (existingUser) {
     return {
       success: false,
-      message: "이미 조직에 속한 사용자입니다.",
+      message: "This user already belongs to the organization.",
     };
   }
 
-  // 중복 초대 확인
+  // Check for a duplicate invitation
   const existingInvitation = await prisma.invitation.findFirst({
     where: {
       email: parsed.data.email,
@@ -107,11 +107,11 @@ async function _inviteTenantAdmin(email: string): Promise<ActionState> {
   if (existingInvitation) {
     return {
       success: false,
-      message: "이미 초대장이 발송된 이메일입니다.",
+      message: "An invitation has already been sent to this email address.",
     };
   }
 
-  // 초대 생성
+  // Create the invitation
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + 7);
 
@@ -124,7 +124,7 @@ async function _inviteTenantAdmin(email: string): Promise<ActionState> {
     },
   });
 
-  // 초대 이메일 발송
+  // Send the invitation email
   try {
     await sendInvitationEmail({
       email: parsed.data.email,
@@ -133,13 +133,13 @@ async function _inviteTenantAdmin(email: string): Promise<ActionState> {
       role: "ADMIN",
     });
   } catch (error) {
-    // 이메일 발송 실패 시 초대 삭제
+    // Delete the invitation if the email fails to send
     await prisma.invitation.delete({ where: { id: invitation.id } });
-    return { success: false, message: "초대 이메일 발송에 실패했습니다." };
+    return { success: false, message: "Failed to send the invitation email." };
   }
 
   revalidatePath("/super-admin/admins");
-  return { success: true, message: "초대장이 발송되었습니다." };
+  return { success: true, message: "Invitation sent." };
 }
 
 export const inviteTenantAdmin = withLogging(
@@ -148,7 +148,7 @@ export const inviteTenantAdmin = withLogging(
 );
 
 /**
- * 관리자 역할 변경 (ADMIN ↔ MEMBER)
+ * Change an admin's role (ADMIN ↔ MEMBER)
  */
 async function _changeAdminRole(
   userId: string,
@@ -162,7 +162,7 @@ async function _changeAdminRole(
   });
 
   revalidatePath("/super-admin/admins");
-  return { success: true, message: "역할이 변경되었습니다." };
+  return { success: true, message: "Role updated." };
 }
 
 export const changeAdminRole = withLogging("changeAdminRole", _changeAdminRole);
@@ -177,7 +177,7 @@ export interface TenantInvitationInfo {
 }
 
 /**
- * 테넌트 초대 이력 조회
+ * Fetch tenant invitation history
  */
 async function _listTenantInvitations(): Promise<
   ActionState<TenantInvitationInfo[]>
@@ -190,7 +190,7 @@ async function _listTenantInvitations(): Promise<
   });
 
   if (!org) {
-    return { success: false, message: "테넌트 정보를 찾을 수 없습니다." };
+    return { success: false, message: "Tenant information not found." };
   }
 
   const invitations = await prisma.invitation.findMany({
@@ -215,7 +215,7 @@ export const listTenantInvitations = withLogging(
 );
 
 /**
- * 초대 재발송
+ * Resend an invitation
  */
 async function _resendTenantInvitation(
   invitationId: string
@@ -228,7 +228,7 @@ async function _resendTenantInvitation(
   });
 
   if (!invitation || invitation.status !== "PENDING") {
-    return { success: false, message: "유효하지 않은 초대입니다." };
+    return { success: false, message: "Invalid invitation." };
   }
 
   const expiresAt = new Date();
@@ -248,7 +248,7 @@ async function _resendTenantInvitation(
   });
 
   revalidatePath("/super-admin/admins");
-  return { success: true, message: "초대장이 재발송되었습니다." };
+  return { success: true, message: "Invitation resent." };
 }
 
 export const resendTenantInvitation = withLogging(

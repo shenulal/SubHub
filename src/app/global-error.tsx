@@ -7,7 +7,7 @@ export default function GlobalError({
   reset: () => void;
 }) {
   return (
-    <html lang="ko">
+    <html lang="en">
       <body
         style={{
           margin: 0,
@@ -98,7 +98,7 @@ export default function GlobalError({
                 color: "#333333",
               }}
             >
-              치명적 오류
+              Critical error
             </h1>
             <p
               style={{
@@ -108,7 +108,7 @@ export default function GlobalError({
                 whiteSpace: "nowrap",
               }}
             >
-              애플리케이션에 심각한 오류가 발생했습니다. 다시 시도해 주세요.
+              A critical application error occurred. Please try again.
             </p>
             <button
               onClick={reset}
@@ -124,7 +124,7 @@ export default function GlobalError({
                 cursor: "pointer",
               }}
             >
-              다시 시도
+              Try again
             </button>
           </div>
         </main>

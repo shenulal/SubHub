@@ -120,7 +120,7 @@ export function SeatAnalysisSection() {
 
   return (
     <div className="space-y-6">
-      {/* Seat 낭비 분석 (D-2) */}
+      {/* Seat waste analysis (D-2) */}
       {hasWasteData && (
         <>
           <Separator />
@@ -249,7 +249,7 @@ export function SeatAnalysisSection() {
         </>
       )}
 
-      {/* Seat 최적화 제안 (D-4) */}
+      {/* Seat optimisation suggestions (D-4) */}
       {hasOptimizationData && (
         <>
           <Separator />

@@ -24,7 +24,7 @@ interface MerchantPatternWithApp extends MerchantPattern {
 }
 
 /**
- * 가맹점 패턴 목록 조회
+ * List merchant patterns
  */
 export async function getMerchantPatterns(): Promise<MerchantPatternWithApp[]> {
   const { organizationId } = await requireOrganization();
@@ -43,7 +43,7 @@ export async function getMerchantPatterns(): Promise<MerchantPatternWithApp[]> {
 }
 
 /**
- * 단일 가맹점 패턴 조회
+ * Get a single merchant pattern
  */
 export async function getMerchantPattern(
   id: string
@@ -71,7 +71,7 @@ interface CreateMerchantPatternInput {
 }
 
 /**
- * 가맹점 패턴 생성
+ * Create a merchant pattern
  */
 async function _createMerchantPattern(
   input: CreateMerchantPatternInput
@@ -80,16 +80,16 @@ async function _createMerchantPattern(
     const { organizationId, role } = await requireOrganization();
 
     if (role !== "ADMIN") {
-      return { success: false, message: "관리자 권한이 필요합니다" };
+      return { success: false, message: "Admin permission required" };
     }
 
-    // 앱 존재 확인
+    // Verify the app exists
     const app = await prisma.app.findFirst({
       where: { id: input.appId, organizationId },
     });
 
     if (!app) {
-      return { success: false, message: "앱을 찾을 수 없습니다" };
+      return { success: false, message: "App not found" };
     }
 
     const pattern = await prisma.merchantPattern.create({
@@ -107,11 +107,11 @@ async function _createMerchantPattern(
 
     return { success: true, data: { id: pattern.id } };
   } catch (error) {
-    logger.error({ err: error }, "가맹점 패턴 생성 오류");
+    logger.error({ err: error }, "Merchant pattern creation error");
     if (isRedirectError(error)) throw error;
     return {
       success: false,
-      message: "가맹점 패턴 생성 중 오류가 발생했습니다",
+      message: "An error occurred while creating the merchant pattern",
     };
   }
 }
@@ -129,7 +129,7 @@ interface UpdateMerchantPatternInput {
 }
 
 /**
- * 가맹점 패턴 수정
+ * Update a merchant pattern
  */
 async function _updateMerchantPattern(
   id: string,
@@ -139,7 +139,7 @@ async function _updateMerchantPattern(
     const { organizationId, role } = await requireOrganization();
 
     if (role !== "ADMIN") {
-      return { success: false, message: "관리자 권한이 필요합니다" };
+      return { success: false, message: "Admin permission required" };
     }
 
     const existingPattern = await prisma.merchantPattern.findFirst({
@@ -147,16 +147,16 @@ async function _updateMerchantPattern(
     });
 
     if (!existingPattern) {
-      return { success: false, message: "패턴을 찾을 수 없습니다" };
+      return { success: false, message: "Pattern not found" };
     }
 
-    // 앱 변경 시 존재 확인
+    // Verify the app exists when it is changed
     if (input.appId) {
       const app = await prisma.app.findFirst({
         where: { id: input.appId, organizationId },
       });
       if (!app) {
-        return { success: false, message: "앱을 찾을 수 없습니다" };
+        return { success: false, message: "App not found" };
       }
     }
 
@@ -175,11 +175,11 @@ async function _updateMerchantPattern(
 
     return { success: true };
   } catch (error) {
-    logger.error({ err: error }, "가맹점 패턴 수정 오류");
+    logger.error({ err: error }, "Merchant pattern update error");
     if (isRedirectError(error)) throw error;
     return {
       success: false,
-      message: "가맹점 패턴 수정 중 오류가 발생했습니다",
+      message: "An error occurred while updating the merchant pattern",
     };
   }
 }
@@ -189,14 +189,14 @@ export const updateMerchantPattern = withLogging(
 );
 
 /**
- * 가맹점 패턴 삭제
+ * Delete a merchant pattern
  */
 async function _deleteMerchantPattern(id: string): Promise<ActionState> {
   try {
     const { organizationId, role } = await requireOrganization();
 
     if (role !== "ADMIN") {
-      return { success: false, message: "관리자 권한이 필요합니다" };
+      return { success: false, message: "Admin permission required" };
     }
 
     const existingPattern = await prisma.merchantPattern.findFirst({
@@ -204,7 +204,7 @@ async function _deleteMerchantPattern(id: string): Promise<ActionState> {
     });
 
     if (!existingPattern) {
-      return { success: false, message: "패턴을 찾을 수 없습니다" };
+      return { success: false, message: "Pattern not found" };
     }
 
     await prisma.merchantPattern.delete({ where: { id } });
@@ -213,11 +213,11 @@ async function _deleteMerchantPattern(id: string): Promise<ActionState> {
 
     return { success: true };
   } catch (error) {
-    logger.error({ err: error }, "가맹점 패턴 삭제 오류");
+    logger.error({ err: error }, "Merchant pattern deletion error");
     if (isRedirectError(error)) throw error;
     return {
       success: false,
-      message: "가맹점 패턴 삭제 중 오류가 발생했습니다",
+      message: "An error occurred while deleting the merchant pattern",
     };
   }
 }

@@ -1,7 +1,7 @@
 // src/lib/services/notification/email.types.ts
 
 /**
- * 이메일 발송 결과
+ * E-mail send result
  */
 export interface EmailResult {
   success: boolean;
@@ -10,7 +10,7 @@ export interface EmailResult {
 }
 
 /**
- * 갱신 알림 이메일 파라미터
+ * Renewal alert e-mail parameters
  */
 export interface RenewalAlertEmailParams {
   to: string;
@@ -23,7 +23,7 @@ export interface RenewalAlertEmailParams {
 }
 
 /**
- * 환영 이메일 파라미터
+ * Welcome e-mail parameters
  */
 export interface WelcomeEmailParams {
   to: string;
@@ -32,7 +32,7 @@ export interface WelcomeEmailParams {
 }
 
 /**
- * 퇴사자 알림 이메일 파라미터
+ * Offboarded-user alert e-mail parameters
  */
 export interface TerminatedUserAlertParams {
   to: string;
@@ -47,7 +47,7 @@ export interface TerminatedUserAlertParams {
 }
 
 /**
- * Extension 온보딩 안내 이메일 파라미터
+ * Extension onboarding e-mail parameters
  */
 export interface ExtensionOnboardingGuideEmailParams {
   to: string;
@@ -56,7 +56,7 @@ export interface ExtensionOnboardingGuideEmailParams {
 }
 
 /**
- * 초대 이메일 파라미터
+ * Invitation e-mail parameters
  */
 export interface InvitationEmailParams {
   email: string;
@@ -67,7 +67,7 @@ export interface InvitationEmailParams {
 }
 
 /**
- * LLM Confirm 결과 알림 파라미터
+ * LLM confirmation result notification parameters
  */
 export interface ConfirmationResultEmailParams {
   to: string;
@@ -79,7 +79,7 @@ export interface ConfirmationResultEmailParams {
 }
 
 /**
- * 주간 요약 이메일 파라미터
+ * Weekly summary e-mail parameters
  */
 export interface WeeklyDigestEmailParams {
   to: string;

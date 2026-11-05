@@ -37,16 +37,16 @@ export function AdminsTable({ admins: initialAdmins }: AdminsTableProps) {
       setAdmins((prev) =>
         prev.map((a) => (a.id === userId ? { ...a, role: newRole } : a))
       );
-      toast.success(result.message ?? "역할이 변경되었습니다.");
+      toast.success(result.message ?? "Role updated.");
     } else {
-      toast.error(result.message ?? "오류가 발생했습니다.");
+      toast.error(result.message ?? "An error occurred.");
     }
   };
 
   if (admins.length === 0) {
     return (
       <div className="text-muted-foreground flex h-32 items-center justify-center text-sm">
-        관리자가 없습니다.
+        No admins found.
       </div>
     );
   }
@@ -55,12 +55,12 @@ export function AdminsTable({ admins: initialAdmins }: AdminsTableProps) {
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>이름</TableHead>
-          <TableHead>이메일</TableHead>
-          <TableHead>역할</TableHead>
-          <TableHead>가입일</TableHead>
-          <TableHead>마지막 로그인</TableHead>
-          <TableHead className="w-24">관리</TableHead>
+          <TableHead>Name</TableHead>
+          <TableHead>Email</TableHead>
+          <TableHead>Role</TableHead>
+          <TableHead>Joined</TableHead>
+          <TableHead>Last Login</TableHead>
+          <TableHead className="w-24">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -74,15 +74,15 @@ export function AdminsTable({ admins: initialAdmins }: AdminsTableProps) {
             </TableCell>
             <TableCell>
               <Badge variant={admin.role === "ADMIN" ? "primary" : "secondary"}>
-                {admin.role === "ADMIN" ? "관리자" : "멤버"}
+                {admin.role === "ADMIN" ? "Admin" : "Member"}
               </Badge>
             </TableCell>
             <TableCell className="text-muted-foreground text-sm">
-              {new Date(admin.createdAt).toLocaleDateString("ko-KR")}
+              {new Date(admin.createdAt).toLocaleDateString("en-US")}
             </TableCell>
             <TableCell className="text-muted-foreground text-sm">
               {admin.lastLoginAt
-                ? new Date(admin.lastLoginAt).toLocaleDateString("ko-KR")
+                ? new Date(admin.lastLoginAt).toLocaleDateString("en-US")
                 : "-"}
             </TableCell>
             <TableCell>
@@ -93,10 +93,10 @@ export function AdminsTable({ admins: initialAdmins }: AdminsTableProps) {
                 onClick={() => handleRoleChange(admin.id, admin.role)}
               >
                 {loadingId === admin.id
-                  ? "변경 중..."
+                  ? "Updating..."
                   : admin.role === "ADMIN"
-                    ? "멤버로"
-                    : "관리자로"}
+                    ? "Make Member"
+                    : "Make Admin"}
               </Button>
             </TableCell>
           </TableRow>

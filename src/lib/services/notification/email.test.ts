@@ -26,14 +26,14 @@ import {
 describe("Email Service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // 테스트 환경에서 RESEND_API_KEY 설정 (lazy init을 위해 필요)
+    // Set RESEND_API_KEY in the test environment (required for lazy init)
     process.env.RESEND_API_KEY = "test-api-key";
     // Default successful response
     mockSend.mockResolvedValue({ data: { id: "email-123" }, error: null });
   });
 
   describe("sendRenewalAlertEmail", () => {
-    it("30일 전 갱신 알림 이메일을 발송해야 한다", async () => {
+    it("sends a renewal alert e-mail 30 days before", async () => {
       const result = await sendRenewalAlertEmail({
         to: "admin@example.com",
         appName: "Slack",
@@ -41,7 +41,7 @@ describe("Email Service", () => {
         daysUntilRenewal: 30,
         amount: 100000,
         currency: "KRW",
-        organizationName: "테스트 조직",
+        organizationName: "Test Organization",
       });
 
       expect(result.success).toBe(true);
@@ -49,7 +49,7 @@ describe("Email Service", () => {
       expect(mockSend).toHaveBeenCalledTimes(1);
     });
 
-    it("60일 전 갱신 알림 이메일을 발송해야 한다", async () => {
+    it("sends a renewal alert e-mail 60 days before", async () => {
       const result = await sendRenewalAlertEmail({
         to: "admin@example.com",
         appName: "Notion",
@@ -57,13 +57,13 @@ describe("Email Service", () => {
         daysUntilRenewal: 60,
         amount: 50000,
         currency: "KRW",
-        organizationName: "테스트 조직",
+        organizationName: "Test Organization",
       });
 
       expect(result.success).toBe(true);
     });
 
-    it("90일 전 갱신 알림 이메일을 발송해야 한다", async () => {
+    it("sends a renewal alert e-mail 90 days before", async () => {
       const result = await sendRenewalAlertEmail({
         to: "admin@example.com",
         appName: "Figma",
@@ -71,17 +71,17 @@ describe("Email Service", () => {
         daysUntilRenewal: 90,
         amount: 200000,
         currency: "KRW",
-        organizationName: "테스트 조직",
+        organizationName: "Test Organization",
       });
 
       expect(result.success).toBe(true);
     });
 
-    it("이메일 발송 실패 시 에러를 반환해야 한다", async () => {
+    it("returns an error when e-mail delivery fails", async () => {
       // Override mock for this test
       mockSend.mockResolvedValueOnce({
         data: null,
-        error: { message: "발송 실패" },
+        error: { message: "Delivery failed" },
       });
 
       const result = await sendRenewalAlertEmail({
@@ -91,15 +91,15 @@ describe("Email Service", () => {
         daysUntilRenewal: 30,
         amount: 100000,
         currency: "KRW",
-        organizationName: "테스트 조직",
+        organizationName: "Test Organization",
       });
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe("발송 실패");
+      expect(result.error).toBe("Delivery failed");
     });
 
-    it("예외 발생 시 에러를 반환해야 한다", async () => {
-      mockSend.mockRejectedValueOnce(new Error("네트워크 오류"));
+    it("returns an error when an exception is thrown", async () => {
+      mockSend.mockRejectedValueOnce(new Error("Network error"));
 
       const result = await sendRenewalAlertEmail({
         to: "admin@example.com",
@@ -108,100 +108,100 @@ describe("Email Service", () => {
         daysUntilRenewal: 30,
         amount: 100000,
         currency: "KRW",
-        organizationName: "테스트 조직",
+        organizationName: "Test Organization",
       });
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe("네트워크 오류");
+      expect(result.error).toBe("Network error");
     });
   });
 
   describe("sendWelcomeEmail", () => {
-    it("환영 이메일을 발송해야 한다", async () => {
+    it("sends a welcome e-mail", async () => {
       const result = await sendWelcomeEmail({
         to: "newuser@example.com",
-        userName: "홍길동",
-        organizationName: "테스트 조직",
+        userName: "Ahmed Al Mansoori",
+        organizationName: "Test Organization",
       });
 
       expect(result.success).toBe(true);
       expect(result.messageId).toBe("email-123");
     });
 
-    it("환영 이메일 발송 실패 시 에러를 반환해야 한다", async () => {
+    it("returns an error when the welcome e-mail fails", async () => {
       mockSend.mockResolvedValueOnce({
         data: null,
-        error: { message: "이메일 발송 실패" },
+        error: { message: "Email delivery failed" },
       });
 
       const result = await sendWelcomeEmail({
         to: "newuser@example.com",
-        userName: "홍길동",
-        organizationName: "테스트 조직",
+        userName: "Ahmed Al Mansoori",
+        organizationName: "Test Organization",
       });
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe("이메일 발송 실패");
+      expect(result.error).toBe("Email delivery failed");
     });
   });
 
   describe("sendTerminatedUserAlertEmail", () => {
-    it("퇴사자 미회수 계정 알림 이메일을 발송해야 한다", async () => {
+    it("sends an unrevoked-account alert e-mail for an offboarded user", async () => {
       const result = await sendTerminatedUserAlertEmail({
         to: "admin@example.com",
-        terminatedUserName: "김퇴사",
+        terminatedUserName: "Omar Khalid",
         terminatedUserEmail: "kim@example.com",
         unrevokedApps: ["Slack", "Notion", "Figma"],
         terminatedAt: new Date("2024-01-10"),
-        organizationName: "테스트 조직",
+        organizationName: "Test Organization",
       });
 
       expect(result.success).toBe(true);
       expect(result.messageId).toBe("email-123");
     });
 
-    it("여러 앱 목록을 포함해야 한다", async () => {
+    it("includes multiple apps", async () => {
       const apps = ["Slack", "Notion", "Figma", "Zoom", "GitHub"];
 
       const result = await sendTerminatedUserAlertEmail({
         to: "admin@example.com",
-        terminatedUserName: "김퇴사",
+        terminatedUserName: "Omar Khalid",
         terminatedUserEmail: "kim@example.com",
         unrevokedApps: apps,
         terminatedAt: new Date("2024-01-10"),
-        organizationName: "테스트 조직",
+        organizationName: "Test Organization",
       });
 
       expect(result.success).toBe(true);
     });
 
-    it("퇴사자 알림 발송 실패 시 에러를 반환해야 한다", async () => {
+    it("returns an error when the offboarded-user alert fails", async () => {
       mockSend.mockResolvedValueOnce({
         data: null,
-        error: { message: "알림 발송 실패" },
+        error: { message: "Alert delivery failed" },
       });
 
       const result = await sendTerminatedUserAlertEmail({
         to: "admin@example.com",
-        terminatedUserName: "김퇴사",
+        terminatedUserName: "Omar Khalid",
         terminatedUserEmail: "kim@example.com",
         unrevokedApps: ["Slack"],
         terminatedAt: new Date("2024-01-10"),
-        organizationName: "테스트 조직",
+        organizationName: "Test Organization",
       });
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe("알림 발송 실패");
+      expect(result.error).toBe("Alert delivery failed");
     });
   });
 
   describe("EmailConfig", () => {
-    it("기본 설정값이 있어야 한다", () => {
+    it("has default settings", () => {
       expect(EmailConfig.fromEmail).toBeDefined();
       expect(EmailConfig.fromName).toBeDefined();
     });
 
-    it("from 주소를 올바르게 포맷해야 한다", () => {
+    it("formats the from address correctly", () => {
       expect(EmailConfig.from).toContain(EmailConfig.fromName);
       expect(EmailConfig.from).toContain(EmailConfig.fromEmail);
     });

@@ -1,13 +1,13 @@
 // prisma/seeds/seed-super-admin.ts
 /**
- * Super Admin 계정 초기 생성 스크립트
+ * Script that creates the initial Super Admin account
  *
- * 사용법:
+ * Usage:
  *   npm run seed:super-admin
  *
- * 환경 변수:
- *   SUPER_ADMIN_EMAIL    - Super Admin 이메일 (필수)
- *   SUPER_ADMIN_PASSWORD - Super Admin 비밀번호 (선택, 없으면 이메일 OTP만 사용)
+ * Environment variables:
+ *   SUPER_ADMIN_EMAIL    - Super Admin email (required)
+ *   SUPER_ADMIN_PASSWORD - Super Admin password (optional; without it only email OTP is used)
  */
 
 import { PrismaClient } from "@prisma/client";
@@ -20,21 +20,21 @@ async function main() {
   const password = process.env.SUPER_ADMIN_PASSWORD;
 
   if (!email) {
-    console.error("❌ SUPER_ADMIN_EMAIL 환경 변수가 설정되지 않았습니다.");
+    console.error("❌ The SUPER_ADMIN_EMAIL environment variable is not set.");
     process.exit(1);
   }
 
-  console.log(`🔧 Super Admin 계정 생성 중: ${email}`);
+  console.log(`🔧 Creating Super Admin account: ${email}`);
 
-  // 기존 계정 확인
+  // Check for an existing account
   const existingUser = await prisma.user.findUnique({ where: { email } });
 
   if (existingUser) {
     if (existingUser.role === "SUPER_ADMIN") {
-      console.log("✅ Super Admin 계정이 이미 존재합니다.");
+      console.log("✅ The Super Admin account already exists.");
       return;
     }
-    // 기존 계정을 SUPER_ADMIN으로 업그레이드
+    // Upgrade the existing account to SUPER_ADMIN
     await prisma.user.update({
       where: { email },
       data: {
@@ -43,17 +43,17 @@ async function main() {
         emailVerified: new Date(),
       },
     });
-    console.log("✅ 기존 계정을 Super Admin으로 업그레이드했습니다.");
+    console.log("✅ Upgraded the existing account to Super Admin.");
     return;
   }
 
-  // 비밀번호 해시 생성
+  // Hash the password
   let passwordHash: string | undefined;
   if (password) {
     passwordHash = await bcrypt.hash(password, 12);
   }
 
-  // Super Admin 계정 생성
+  // Create the Super Admin account
   const superAdmin = await prisma.user.create({
     data: {
       email,
@@ -66,16 +66,16 @@ async function main() {
     },
   });
 
-  console.log(`✅ Super Admin 계정 생성 완료!`);
+  console.log(`✅ Super Admin account created!`);
   console.log(`   ID: ${superAdmin.id}`);
   console.log(`   Email: ${superAdmin.email}`);
   console.log(`   Role: ${superAdmin.role}`);
-  console.log(`   비밀번호: ${password ? "설정됨" : "미설정 (OTP 전용)"}`);
+  console.log(`   Password: ${password ? "set" : "not set (OTP only)"}`);
 }
 
 main()
   .catch((e) => {
-    console.error("❌ 오류 발생:", e);
+    console.error("❌ Error:", e);
     process.exit(1);
   })
   .finally(async () => {

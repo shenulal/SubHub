@@ -6,13 +6,13 @@ import type { UserFilterOptions, UserSortOptions } from "@/types/user";
 
 /**
  * GET /api/v1/users
- * - 사용자 목록 조회 (필터/정렬/페이지네이션)
+ * - List users (filter/sort/pagination)
  */
 import { withLogging } from "@/lib/logging";
 
 /**
  * GET /api/v1/users
- * - 사용자 목록 조회 (필터/정렬/페이지네이션)
+ * - List users (filter/sort/pagination)
  */
 export const GET = withLogging(
   "GET /api/v1/users",

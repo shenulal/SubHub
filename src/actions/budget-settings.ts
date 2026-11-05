@@ -40,7 +40,7 @@ export async function getBudgetSettingsForOrganization(
 }
 
 /**
- * 조직 예산 설정 조회 (current session)
+ * Get organization budget settings (current session)
  */
 export async function getBudgetSettings(): Promise<BudgetSettings> {
   const { organizationId } = await requireOrganization();
@@ -48,7 +48,7 @@ export async function getBudgetSettings(): Promise<BudgetSettings> {
 }
 
 /**
- * 조직 예산 설정 업데이트 (permission: budgets:manage)
+ * Update organization budget settings (permission: budgets:manage)
  */
 async function _updateBudgetSettings(
   updates: Partial<BudgetSettings>
@@ -103,21 +103,21 @@ export const updateBudgetSettings = withLogging(
 );
 
 /**
- * 차트용 월별 예산 조회
- * - monthlyBudget이 설정되어 있으면 해당 값 반환
- * - 설정되지 않았으면 (null) 전월 카드 매입 승인 내역 총액 반환
+ * Get the monthly budget for charts
+ * - Returns monthlyBudget when it is set
+ * - Otherwise (null) returns the total of last month's approved card purchases
  */
 export async function getMonthlyBudgetForChart(
   organizationId: string,
   month: Date,
   budgetSettings: BudgetSettings
 ): Promise<number> {
-  // 예산이 설정되어 있으면 해당 값 반환
+  // Return the budget when it is set
   if (budgetSettings.monthlyBudget !== null) {
     return budgetSettings.monthlyBudget;
   }
 
-  // Fallback: 전월 카드 매입 승인 내역 총액
+  // Fallback: total of last month's approved card purchases
   const prevMonth = new Date(month);
   prevMonth.setMonth(prevMonth.getMonth() - 1);
 
@@ -138,13 +138,13 @@ export async function getMonthlyBudgetForChart(
     _sum: { useAmt: true },
   });
 
-  // Decimal 타입 처리
+  // Handle the Decimal type
   const sum = cardTransactions._sum.useAmt;
   if (sum === null) {
     return 0;
   }
 
-  // Prisma Decimal은 toNumber() 메서드를 가짐
+  // Prisma Decimal exposes toNumber()
   if (typeof sum === "object" && "toNumber" in sum) {
     return (sum as { toNumber: () => number }).toNumber();
   }

@@ -28,39 +28,39 @@ interface ChartCardProps {
   title: string;
   description?: string;
   icon?: React.ReactNode;
-  /** 우측 상단에 표시할 요약 정보 */
+  /** Summary shown in the top-right corner */
   summary?: {
     label: string;
     value: string;
   };
-  /** CardAction 슬롯에 추가할 커스텀 액션 (e.g. ToggleGroup) */
+  /** Custom action for the CardAction slot (e.g. ToggleGroup) */
   action?: React.ReactNode;
-  /** 차트 컨텐츠 */
+  /** Chart content */
   children: React.ReactNode;
-  /** 차트 하단에 표시할 추가 컨텐츠 */
+  /** Additional content shown below the chart */
   footer?: React.ReactNode;
-  /** Export 기능 활성화 */
+  /** Enable export */
   enableExport?: boolean;
-  /** Export 데이터 (CSV 형식) */
+  /** Export data (CSV format) */
   exportData?: ExportData;
-  /** Export 파일명 (확장자 제외) */
+  /** Export file name (without extension) */
   exportFilename?: string;
-  /** 로딩 상태 */
+  /** Loading state */
   isLoading?: boolean;
-  /** 차트 높이 */
+  /** Chart height */
   chartHeight?: number;
-  /** 추가 CSS 클래스 */
+  /** Additional CSS classes */
   className?: string;
-  /** 데이터 없음 메시지 */
+  /** Empty-state message */
   emptyMessage?: string;
-  /** 데이터 없음 액션 */
+  /** Empty-state action */
   emptyAction?: React.ReactNode;
-  /** 데이터 없음 여부 */
+  /** Whether there is no data */
   isEmpty?: boolean;
 }
 
 /**
- * Export 데이터 타입
+ * Export data type
  */
 export interface ExportData {
   headers: string[];
@@ -68,7 +68,7 @@ export interface ExportData {
 }
 
 /**
- * CSV 문자열 생성
+ * Build a CSV string
  */
 function generateCSV(data: ExportData): string {
   const escape = (value: string | number) => {
@@ -86,7 +86,7 @@ function generateCSV(data: ExportData): string {
 }
 
 /**
- * CSV 파일 다운로드
+ * Download a CSV file
  */
 function downloadCSV(csv: string, filename: string) {
   const bom = "\uFEFF";
@@ -102,7 +102,7 @@ function downloadCSV(csv: string, filename: string) {
 }
 
 /**
- * JSON 파일 다운로드
+ * Download a JSON file
  */
 function downloadJSON(data: ExportData, filename: string) {
   const jsonData = data.rows.map((row) => {
@@ -126,10 +126,10 @@ function downloadJSON(data: ExportData, filename: string) {
 }
 
 /**
- * 차트 카드 컴포넌트 (shadcn dashboard-01 패턴)
- * - CardAction 슬롯 지원
- * - 그래디언트 배경 + shadow-xs
- * - Export 기능, 로딩/빈 상태 처리
+ * Chart card component (shadcn dashboard-01 pattern)
+ * - Supports the CardAction slot
+ * - Gradient background + shadow-xs
+ * - Export, loading and empty states
  */
 export function ChartCard({
   title,
@@ -145,7 +145,7 @@ export function ChartCard({
   isLoading = false,
   chartHeight = 200,
   className,
-  emptyMessage = "데이터가 없습니다.",
+  emptyMessage = "No data available.",
   emptyAction,
   isEmpty = false,
 }: ChartCardProps) {
@@ -162,7 +162,7 @@ export function ChartCard({
     }
   };
 
-  // 로딩 상태
+  // Loading state
   if (isLoading) {
     return (
       <Card className={cn(className)} data-testid="chart-card-skeleton">
@@ -190,7 +190,7 @@ export function ChartCard({
     );
   }
 
-  // 빈 상태
+  // Empty state
   if (isEmpty) {
     return (
       <Card className={cn(className)}>
@@ -254,11 +254,11 @@ export function ChartCard({
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem onClick={handleExportCSV}>
                     <Download className="mr-2 size-4" />
-                    CSV로 내보내기
+                    Export as CSV
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleExportJSON}>
                     <Download className="mr-2 size-4" />
-                    JSON으로 내보내기
+                    Export as JSON
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -277,7 +277,7 @@ export function ChartCard({
 }
 
 /**
- * ChartCardFooter - 차트 하단 요약 정보
+ * ChartCardFooter - summary shown below the chart
  */
 interface ChartCardFooterProps {
   items: {
@@ -329,7 +329,7 @@ export function ChartCardFooter({ items, columns = 3 }: ChartCardFooterProps) {
 }
 
 /**
- * ChartLegend - 차트 범례
+ * ChartLegend - chart legend
  */
 interface ChartLegendProps {
   items: {

@@ -106,17 +106,17 @@ export function AppForm({
   const [categoryOpen, setCategoryOpen] = useState(false);
   const [categorySearchValue, setCategorySearchValue] = useState<string>("");
 
-  // 역할 기반 제한 여부
+  // Whether role-based restrictions apply
   const isRestricted = userRole === "MEMBER" || userRole === "VIEWER";
 
-  // 팀 목록 로드 (역할 기반 필터링)
+  // Load teams (role-based filtering)
   useEffect(() => {
     const loadTeams = async () => {
       const result = await getTeams();
       if (result.success && result.data) {
         let filteredTeams = result.data;
 
-        // MEMBER/VIEWER는 본인 팀만 표시
+        // MEMBER/VIEWER only see their own team
         if (isRestricted && userTeamId) {
           filteredTeams = result.data.filter((team) => team.id === userTeamId);
         }
@@ -153,7 +153,7 @@ export function AppForm({
     },
   });
 
-  // MEMBER/VIEWER의 경우 본인 팀 자동 선택
+  // Auto-select the user's own team for MEMBER/VIEWER
   useEffect(() => {
     if (isRestricted && userTeamId) {
       setValue("teamIds", [userTeamId]);
@@ -170,14 +170,14 @@ export function AppForm({
   const onSubmit = handleSubmit(async (values) => {
     setSubmitError(null);
     try {
-      // 템플릿 로고가 있고 customLogoUrl이 비어있으면 템플릿 로고 사용
+      // Use the template logo when one exists and customLogoUrl is empty
       const finalValues = {
         ...values,
         customLogoUrl: values.customLogoUrl || templateLogoPath || "",
       };
       const result = await onFinish(normalizePayload(finalValues));
 
-      // 성공 여부 확인 후 redirect (실패 시 onMutationError 콜백에서 처리됨)
+      // Redirect after confirming success (failures are handled in the onMutationError callback)
       if (!result?.data) {
         return;
       }
@@ -201,7 +201,7 @@ export function AppForm({
     router.back();
   };
 
-  // 팀 옵션 변환
+  // Map teams to options
   const teamOptions = teams.map((team) => ({
     id: team.id,
     name: team.name,
@@ -209,7 +209,7 @@ export function AppForm({
 
   return (
     <form onSubmit={onSubmit} id={formId}>
-      {/* 상단 액션 버튼 (레퍼런스: Discard / Save Draft / Publish) */}
+      {/* Top action buttons (reference: Discard / Save Draft / Publish) */}
       {!hideActions && (
         <div className="bg-background/80 sticky top-0 z-10 mb-6 flex items-center justify-end gap-3 border-b py-3 backdrop-blur supports-[backdrop-filter]:backdrop-blur">
           <Button type="button" variant="outline" onClick={handleCancel}>
@@ -229,9 +229,9 @@ export function AppForm({
         </Alert>
       )}
 
-      {/* 1컬럼 레이아웃 */}
+      {/* Single-column layout */}
       <div className="space-y-6">
-        {/* 기본 정보 카드 (상태, 태그, 담당자 통합) */}
+        {/* Basic info card (status, tags and owner combined) */}
         <Card>
           <CardHeader>
             <CardTitle>{t("apps.form.create.title")}</CardTitle>
@@ -254,7 +254,7 @@ export function AppForm({
               )}
             </div>
 
-            {/* 카테고리 - Combobox (드롭다운 + 직접 입력) */}
+            {/* Category - Combobox (dropdown + free text) */}
             <div className="space-y-2">
               <Label htmlFor="category">{t("apps.form.fields.category")}</Label>
               <Controller
@@ -465,7 +465,7 @@ export function AppForm({
               )}
             </div>
 
-            {/* 상태 */}
+            {/* Status */}
             <div className="space-y-2">
               <Label>{t("apps.form.fields.status")}</Label>
               <Controller
@@ -494,7 +494,7 @@ export function AppForm({
               />
             </div>
 
-            {/* 태그 */}
+            {/* Tags */}
             <div className="space-y-2">
               <Label htmlFor="tags">{t("apps.form.fields.tags")}</Label>
               <Input
@@ -510,7 +510,7 @@ export function AppForm({
               </p>
             </div>
 
-            {/* 배정 팀 - MultiSelect */}
+            {/* Assigned teams - MultiSelect */}
             <div className="space-y-2">
               <Label>{t("apps.form.fields.assignedTeam")}</Label>
               {isRestricted && !userTeamId ? (
@@ -608,7 +608,7 @@ export function AppForm({
               )}
             </div>
 
-            {/* 담당자 (향후 확장용) */}
+            {/* Owner (reserved for future use) */}
             <div className="space-y-2">
               <Label>{t("apps.form.fields.owner")}</Label>
               <p className="text-muted-foreground text-sm">
@@ -618,7 +618,7 @@ export function AppForm({
           </CardContent>
         </Card>
 
-        {/* 앱 로고 카드 */}
+        {/* App logo card */}
         <Card>
           <CardHeader>
             <CardTitle>{t("apps.form.fields.logo")}</CardTitle>
@@ -632,7 +632,7 @@ export function AppForm({
                   value={field.value || templateLogoPath || ""}
                   onChange={(url) => {
                     field.onChange(url);
-                    // 사용자가 직접 로고를 업로드하면 템플릿 로고 및 URL 입력 초기화
+                    // When the user uploads a logo, clear the template logo and URL input
                     if (url) {
                       setTemplateLogoPath(null);
                       setUrlInputValue("");
@@ -664,7 +664,7 @@ export function AppForm({
                 setUrlInputValue(value);
               }}
               onBlur={() => {
-                // blur 시에만 유효한 URL을 form에 반영
+                // Only commit a valid URL to the form on blur
                 const trimmedValue = urlInputValue.trim();
                 if (trimmedValue) {
                   try {
@@ -672,7 +672,7 @@ export function AppForm({
                     setValue("customLogoUrl", trimmedValue);
                     setTemplateLogoPath(null);
                   } catch {
-                    // 유효하지 않은 URL은 무시
+                    // Ignore invalid URLs
                   }
                 } else {
                   setValue("customLogoUrl", "");

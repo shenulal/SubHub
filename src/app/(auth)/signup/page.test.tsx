@@ -1,5 +1,5 @@
 // src/app/(auth)/signup/page.test.tsx
-import messages from "@/i18n/messages/ko.json";
+import messages from "@/i18n/messages/en.json";
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -64,18 +64,20 @@ describe("SignupPage", () => {
   it("should render signup form", async () => {
     render(await SignupPage({ searchParams: Promise.resolve({}) }));
 
-    expect(screen.getByText("회원가입")).toBeInTheDocument();
-    expect(screen.getByLabelText(/이름/)).toBeInTheDocument();
-    expect(screen.getByLabelText(/이메일/)).toBeInTheDocument();
-    expect(screen.getByLabelText(/비밀번호/)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /가입/i })).toBeInTheDocument();
+    expect(screen.getByText("Sign up")).toBeInTheDocument();
+    expect(screen.getByLabelText(/Name/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Email/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Password/)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Create account/i })
+    ).toBeInTheDocument();
   });
 
   it("should have link to login page", async () => {
     render(await SignupPage({ searchParams: Promise.resolve({}) }));
 
-    expect(screen.getByText(/이미 계정이 있으신가요/)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /로그인/ })).toHaveAttribute(
+    expect(screen.getByText(/Already have an account/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Log in/ })).toHaveAttribute(
       "href",
       "/login"
     );
@@ -84,7 +86,7 @@ describe("SignupPage", () => {
   it("should have Google OAuth button", async () => {
     render(await SignupPage({ searchParams: Promise.resolve({}) }));
 
-    expect(screen.getByText(/Google로 계속하기/)).toBeInTheDocument();
+    expect(screen.getByText(/Continue with Google/)).toBeInTheDocument();
   });
 
   describe("error handling", () => {
@@ -96,10 +98,10 @@ describe("SignupPage", () => {
       );
 
       expect(
-        screen.getByText(/이미 Google 계정으로 가입되어 있습니다/)
+        screen.getByText(/already registered with Google/)
       ).toBeInTheDocument();
       expect(
-        screen.getByRole("button", { name: /Google로 로그인/ })
+        screen.getByRole("button", { name: /Log in with Google/ })
       ).toBeInTheDocument();
     });
 
@@ -110,10 +112,13 @@ describe("SignupPage", () => {
         })
       );
 
-      expect(screen.getByText(/이미 가입된 이메일/)).toBeInTheDocument();
       expect(
-        screen.getByRole("link", { name: /로그인하러 가기/ })
-      ).toHaveAttribute("href", "/login");
+        screen.getByText(/This email is already registered/)
+      ).toBeInTheDocument();
+      expect(screen.getByRole("link", { name: /Go to login/ })).toHaveAttribute(
+        "href",
+        "/login"
+      );
     });
 
     it("should display generic error message for unknown error code", async () => {
@@ -123,7 +128,7 @@ describe("SignupPage", () => {
         })
       );
 
-      expect(screen.getByText(/오류가 발생/)).toBeInTheDocument();
+      expect(screen.getByText(/An error occurred/)).toBeInTheDocument();
     });
 
     it("should display generic error for EMAIL_EXISTS", async () => {
@@ -133,7 +138,7 @@ describe("SignupPage", () => {
         })
       );
 
-      expect(screen.getByText(/이미 사용 중인 이메일/)).toBeInTheDocument();
+      expect(screen.getByText(/already in use/)).toBeInTheDocument();
     });
   });
 });

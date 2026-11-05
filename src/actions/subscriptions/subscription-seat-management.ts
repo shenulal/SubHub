@@ -10,8 +10,8 @@ import { revalidatePath } from "next/cache";
 const INACTIVE_DAYS_THRESHOLD = 30;
 
 /**
- * 구독의 Seat 상세 정보 조회
- * SubscriptionUser + UserAppAccess.lastUsedAt 크로스 조인
+ * Get seat details for a subscription
+ * Cross-joins SubscriptionUser with UserAppAccess.lastUsedAt
  */
 export async function getSubscriptionSeatDetails(
   subscriptionId: string
@@ -30,12 +30,12 @@ export async function getSubscriptionSeatDetails(
     });
 
     if (!subscription) {
-      return { success: false, error: "구독을 찾을 수 없습니다" };
+      return { success: false, error: "Subscription not found" };
     }
 
     const totalSeats = subscription.totalLicenses ?? 0;
 
-    // SubscriptionUser + User 정보 조회
+    // Load SubscriptionUser + User details
     const subscriptionUsers = await prisma.subscriptionUser.findMany({
       where: { subscriptionId },
       include: {
@@ -50,7 +50,7 @@ export async function getSubscriptionSeatDetails(
       orderBy: { assignedAt: "desc" },
     });
 
-    // UserAppAccess에서 lastUsedAt 매핑
+    // Map lastUsedAt from UserAppAccess
     const userIds = subscriptionUsers.map((su) => su.userId);
     const appAccesses = await prisma.userAppAccess.findMany({
       where: {
@@ -74,15 +74,15 @@ export async function getSubscriptionSeatDetails(
     const assignedUsers: SeatUser[] = subscriptionUsers.map((su) => {
       const lastUsedAt = lastUsedMap.get(su.userId) ?? null;
 
-      // 활성 판단:
-      // 1. lastUsedAt 있고 30일 이내 → 활성
-      // 2. lastUsedAt 있고 30일 초과 → 비활성
-      // 3. UserAppAccess 없거나 lastUsedAt null → 할당되어 있으므로 활성 (fallback)
+      // Active status:
+      // 1. lastUsedAt within 30 days → active
+      // 2. lastUsedAt older than 30 days → inactive
+      // 3. No UserAppAccess or lastUsedAt null → assigned, so active (fallback)
       let isInactive: boolean;
       if (lastUsedAt) {
         isInactive = lastUsedAt < thresholdDate;
       } else {
-        // lastUsedAt이 null: 레코드 없거나 null → 할당 fallback → 활성
+        // lastUsedAt null: no record or null → assignment fallback → active
         isInactive = false;
       }
 
@@ -111,14 +111,14 @@ export async function getSubscriptionSeatDetails(
       },
     };
   } catch (error) {
-    console.error("Seat 상세 조회 오류:", error);
-    return { success: false, error: "Seat 상세 정보 조회에 실패했습니다" };
+    console.error("Seat detail lookup error:", error);
+    return { success: false, error: "Failed to load seat details" };
   }
 }
 
 /**
- * 구독에 유저 할당
- * Seat 용량 검증 + SubscriptionUser 생성 + usedLicenses 갱신
+ * Assign a user to a subscription
+ * Validates seat capacity, creates SubscriptionUser and updates usedLicenses
  */
 export async function assignUserToSubscription(
   subscriptionId: string,
@@ -138,28 +138,28 @@ export async function assignUserToSubscription(
     });
 
     if (!subscription) {
-      return { success: false, error: "구독을 찾을 수 없습니다" };
+      return { success: false, error: "Subscription not found" };
     }
 
-    // Seat 용량 검증
+    // Validate seat capacity
     if (
       subscription.totalLicenses !== null &&
       subscription._count.assignedUsers >= subscription.totalLicenses
     ) {
-      return { success: false, error: "Seat 한도에 도달했습니다" };
+      return { success: false, error: "Seat limit reached" };
     }
 
-    // 유저가 같은 조직인지 검증
+    // Verify the user belongs to the same organization
     const user = await prisma.user.findFirst({
       where: { id: userId, organizationId },
       select: { id: true, teamId: true },
     });
 
     if (!user) {
-      return { success: false, error: "유저를 찾을 수 없습니다" };
+      return { success: false, error: "User not found" };
     }
 
-    // 중복 검증
+    // Check for duplicates
     const existing = await prisma.subscriptionUser.findUnique({
       where: {
         subscriptionId_userId: { subscriptionId, userId },
@@ -167,10 +167,10 @@ export async function assignUserToSubscription(
     });
 
     if (existing) {
-      return { success: false, error: "이미 배정된 유저입니다" };
+      return { success: false, error: "User is already assigned" };
     }
 
-    // SubscriptionUser 생성 + usedLicenses 갱신 (트랜잭션)
+    // Create SubscriptionUser + update usedLicenses (transaction)
     const result = await prisma.$transaction(async (tx) => {
       const su = await tx.subscriptionUser.create({
         data: {
@@ -192,7 +192,7 @@ export async function assignUserToSubscription(
       return su;
     });
 
-    // SubscriptionTeam 자동 연결 (유저의 팀이 있는 경우)
+    // Auto-link SubscriptionTeam (when the user has a team)
     if (user.teamId) {
       const existingSubscriptionTeam = await prisma.subscriptionTeam.findFirst({
         where: { subscriptionId, teamId: user.teamId },
@@ -212,14 +212,14 @@ export async function assignUserToSubscription(
 
     return { success: true, data: { assignedAt: result.assignedAt } };
   } catch (error) {
-    console.error("유저 배정 오류:", error);
-    return { success: false, error: "유저 배정에 실패했습니다" };
+    console.error("User assignment error:", error);
+    return { success: false, error: "Failed to assign the user" };
   }
 }
 
 /**
- * 구독에서 유저 제거
- * SubscriptionUser 삭제 + usedLicenses 감소
+ * Remove a user from a subscription
+ * Deletes SubscriptionUser and decrements usedLicenses
  */
 export async function removeUserFromSubscription(
   subscriptionId: string,
@@ -234,10 +234,10 @@ export async function removeUserFromSubscription(
     });
 
     if (!subscription) {
-      return { success: false, error: "구독을 찾을 수 없습니다" };
+      return { success: false, error: "Subscription not found" };
     }
 
-    // 배정 확인
+    // Check the assignment
     const existing = await prisma.subscriptionUser.findUnique({
       where: {
         subscriptionId_userId: { subscriptionId, userId },
@@ -245,10 +245,10 @@ export async function removeUserFromSubscription(
     });
 
     if (!existing) {
-      return { success: false, error: "배정되지 않은 유저입니다" };
+      return { success: false, error: "User is not assigned" };
     }
 
-    // 삭제 + usedLicenses 갱신 (트랜잭션)
+    // Delete + update usedLicenses (transaction)
     await prisma.$transaction(async (tx) => {
       await tx.subscriptionUser.delete({
         where: {
@@ -270,7 +270,7 @@ export async function removeUserFromSubscription(
 
     return { success: true };
   } catch (error) {
-    console.error("유저 제거 오류:", error);
-    return { success: false, error: "유저 제거에 실패했습니다" };
+    console.error("User removal error:", error);
+    return { success: false, error: "Failed to remove the user" };
   }
 }

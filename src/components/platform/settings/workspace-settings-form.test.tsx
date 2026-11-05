@@ -97,9 +97,7 @@ describe("WorkspaceSettingsForm", () => {
     );
     expect(screen.getByText("Base currency")).toBeInTheDocument();
     expect(screen.getByLabelText("Prices include tax")).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: /변경사항 저장/ })
-    ).toBeDisabled();
+    expect(screen.getByRole("button", { name: /Save changes/ })).toBeDisabled();
   });
 
   it("submits only the dirty keys and never sends untouched secrets", async () => {
@@ -115,7 +113,7 @@ describe("WorkspaceSettingsForm", () => {
     await user.click(screen.getByLabelText("Prices include tax"));
     await user.clear(screen.getByLabelText("Rounding"));
     await user.type(screen.getByLabelText("Rounding"), "3");
-    await user.click(screen.getByRole("button", { name: /변경사항 저장/ }));
+    await user.click(screen.getByRole("button", { name: /Save changes/ }));
     await waitFor(() => expect(saveAction).toHaveBeenCalledTimes(1));
     expect(saveAction).toHaveBeenCalledWith("finance", {
       "finance.pricesIncludeTax": true,
@@ -143,7 +141,7 @@ describe("WorkspaceSettingsForm", () => {
     );
     await user.clear(screen.getByLabelText("Rounding"));
     await user.type(screen.getByLabelText("Rounding"), "4");
-    await user.click(screen.getByRole("button", { name: /변경사항 저장/ }));
+    await user.click(screen.getByRole("button", { name: /Save changes/ }));
     await waitFor(() => expect(saveAction).toHaveBeenCalledTimes(1));
     expect(
       await screen.findByText("Too big for this plan", {}, { timeout: 3000 })
@@ -159,7 +157,7 @@ describe("WorkspaceSettingsForm", () => {
         resetAction={resetAction}
       />
     );
-    expect(screen.queryByRole("button", { name: /변경사항 저장/ })).toBeNull();
+    expect(screen.queryByRole("button", { name: /Save changes/ })).toBeNull();
     expect(screen.getByLabelText("Prices include tax")).toBeDisabled();
   });
 });

@@ -13,7 +13,10 @@ export const GET = withCronAuth(
       return NextResponse.json(
         {
           success: false,
-          error: error instanceof Error ? error.message : "주간 요약 처리 실패",
+          error:
+            error instanceof Error
+              ? error.message
+              : "Weekly digest processing failed",
         },
         { status: 500 }
       );

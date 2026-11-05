@@ -4,31 +4,31 @@ import { Meta } from '@storybook/addon-docs/blocks';
 
 # Contribution Guide
 
-shadcn-storybook-registry에 기여하는 방법을 안내합니다.
+This guide explains how to contribute to shadcn-storybook-registry.
 
 ## Adding a New Story
 
-새로운 컴포넌트 스토리를 추가하는 방법:
+How to add a new component story:
 
 ### 1. Create Story File
 
-스토리 파일을 생성합니다:
+Create the story file:
 
 ```bash
-# 파일 경로
+# File path
 src/registry/atoms/[component]-story/[component].stories.tsx
 ```
 
 ### 2. Follow Story Structure Pattern
 
-CSF 3.0 형식을 따릅니다:
+Follow the CSF 3.0 format:
 
 ```typescript
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { Component } from "@/components/ui/component";
 
 /**
- * 컴포넌트의 목적과 사용법을 설명합니다.
+ * Describes the component's purpose and usage.
  */
 const meta: Meta<typeof Component> = {
   title: "ui/Component",
@@ -43,7 +43,7 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 /**
- * 기본 스토리 설명.
+ * Default story description.
  */
 export const Default: Story = {
   args: {
@@ -55,7 +55,7 @@ export const Default: Story = {
 
 ### 3. Add Registry Entry
 
-`registry.json`에 엔트리를 추가합니다:
+Add an entry to `registry.json`:
 
 ```json
 {
@@ -75,7 +75,7 @@ export const Default: Story = {
 
 ### 4. Build Registry
 
-Registry를 빌드합니다:
+Build the registry:
 
 ```bash
 npm run registry:build
@@ -83,7 +83,7 @@ npm run registry:build
 
 ### 5. Test Locally
 
-로컬에서 설치 테스트:
+Test the installation locally:
 
 ```bash
 npx shadcn@latest add http://localhost:3000/v2/r/component-story.json
@@ -91,16 +91,16 @@ npx shadcn@latest add http://localhost:3000/v2/r/component-story.json
 
 ### 6. Verify in Storybook
 
-Storybook에서 확인:
+Verify in Storybook:
 
 ```bash
 npm run storybook
-# http://localhost:6006에서 스토리 확인
+# Check the story at http://localhost:6006
 ```
 
 ### 7. Run Quality Checks
 
-품질 검사 실행:
+Run the quality checks:
 
 ```bash
 npm run lint
@@ -112,9 +112,9 @@ npm run test
 
 ### TypeScript
 
-- `satisfies Meta<typeof Component>` 사용
-- Explicit types 선호 (`any` 금지)
-- Form 스키마는 `zod`로 정의
+- Use `satisfies Meta<typeof Component>`
+- Prefer explicit types (`any` is not allowed)
+- Define form schemas with `zod`
 
 ### Imports
 
@@ -131,14 +131,14 @@ import { ChevronRight, Loader2 } from "lucide-react";
 
 ### Story Naming
 
-- Default: 기본 사용 예제
-- Variants: 다양한 variant (outline, ghost, secondary 등)
+- Default: basic usage example
+- Variants: the different variants (outline, ghost, secondary, etc.)
 - States: Loading, Disabled
 - Sizes: Small, Default, Large
 
 ### Play Functions
 
-인터랙티브 테스트 추가:
+Add interaction tests:
 
 ```typescript
 import { expect, userEvent, within } from "storybook/test";
@@ -158,11 +158,11 @@ export const InteractionTest: Story = {
 
 ### JSDoc Comments
 
-모든 story export에 JSDoc 주석 추가:
+Add a JSDoc comment to every story export:
 
 ```typescript
 /**
- * Outline variant를 사용하여 보조 액션을 나타냅니다.
+ * Uses the outline variant to represent a secondary action.
  */
 export const Outline: Story = {
   args: { variant: "outline" },
@@ -171,16 +171,16 @@ export const Outline: Story = {
 
 ### Korean Comments
 
-코드 주석은 한국어로 작성:
+Write code comments in English:
 
 ```typescript
-// 🎯 목적: 사용자 입력 검증
-// 📝 주의사항: 최소 6자 이상 필수
+// 🎯 Purpose: validate user input
+// 📝 Note: minimum of 6 characters required
 ```
 
 ## Commit Message Format
 
-Conventional Commits 형식 사용:
+Use the Conventional Commits format:
 
 ```bash
 feat: add Calendar story with date range picker

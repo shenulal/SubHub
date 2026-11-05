@@ -188,39 +188,39 @@ export const ShouldSubmitWithSelectedDate: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    // 🎯 목적: Calendar Form이 날짜 선택 후 제출 시 정상 작동하는지 확인
+    // 🎯 Purpose: Verify the Calendar Form works when submitted after selecting a date
     const triggerButton = canvas.getByRole("button", { name: /pick a date/i });
     await expect(triggerButton).toBeInTheDocument();
 
-    // 트리거 버튼 클릭하여 Calendar 열기
+    // Click the trigger button to open the Calendar
     await userEvent.click(triggerButton);
 
-    // Calendar가 열렸는지 확인
+    // Verify the Calendar is open
     await waitFor(async () => {
       const dateButtons = await canvas.findAllByRole("button");
       await expect(dateButtons.length).toBeGreaterThan(1);
     });
 
-    // 날짜 버튼 찾기 (15일 선택)
+    // Find the date button (select the 15th)
     const dateButtons = canvas.getAllByRole("button");
     const date15Button = dateButtons.find(
       (button) => button.textContent?.trim() === "15",
     );
 
     if (date15Button) {
-      // 날짜 클릭
+      // Click the date
       await userEvent.click(date15Button);
 
-      // 날짜가 선택되었는지 확인 (버튼 텍스트 변경)
+      // Verify the date is selected (button text changes)
       await waitFor(() => {
         expect(triggerButton.textContent).not.toMatch(/pick a date/i);
       });
 
-      // Submit 버튼 클릭
+      // Click the Submit button
       const submitButton = canvas.getByRole("button", { name: /submit/i });
       await userEvent.click(submitButton);
 
-      // Toast 메시지 확인
+      // Check the toast message
       await waitFor(async () => {
         const toastMessage = await canvas.findByText(
           /you submitted the following values/i,

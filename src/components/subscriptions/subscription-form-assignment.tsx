@@ -76,28 +76,28 @@ export function SubscriptionFormAssignment({
   const [userPopoverOpen, setUserPopoverOpen] = useState(false);
   const [teamPopoverOpen, setTeamPopoverOpen] = useState(false);
 
-  // 선택된 앱 ID 감시
+  // Watch the selected app ID
   const selectedAppId = useWatch({ control, name: "appId" });
   const watchedTeamIds = useWatch({ control, name: "teamIds" });
   const selectedTeamIds = useMemo(() => watchedTeamIds ?? [], [watchedTeamIds]);
   const watchedUserIds = useWatch({ control, name: "assignedUserIds" });
   const selectedUserIds = useMemo(() => watchedUserIds ?? [], [watchedUserIds]);
 
-  // 선택된 앱의 배정 팀 목록
+  // Teams assigned to the selected app
   const availableTeams = useMemo(() => {
     if (!selectedAppId) return [];
     const selectedApp = apps.find((app) => app.id === selectedAppId);
     return selectedApp?.teams ?? [];
   }, [selectedAppId, apps]);
 
-  // 앱이 변경되면 이전 팀 선택 초기화
+  // Reset the previous team selection when the app changes
   useEffect(() => {
     if (availableTeams.length === 0 && selectedTeamIds.length > 0) {
       setValue("teamIds", []);
     }
   }, [availableTeams, selectedTeamIds, setValue]);
 
-  // 선택된 팀에 속한 사용자만 필터링 (선택된 팀 중 하나에라도 속하면 표시)
+  // Show only users in the selected teams (shown if they belong to any selected team)
   const availableUsers = useMemo(() => {
     if (selectedTeamIds.length === 0) return [];
     return users.filter(
@@ -105,13 +105,13 @@ export function SubscriptionFormAssignment({
     );
   }, [users, selectedTeamIds]);
 
-  // 선택된 사용자 정보
+  // Selected user details
   const selectedUsers = useMemo(() => {
     return availableUsers.filter((user) => selectedUserIds.includes(user.id));
   }, [availableUsers, selectedUserIds]);
 
-  // 팀 변경 시 선택된 사용자 초기화 (선택된 팀에 속하지 않는 사용자 제거)
-  // PER_SEAT 구독에서는 유저 배정이 Pricing 카드에서 독립적으로 관리되므로 팀 기반 필터링 스킵
+  // Reset selected users when teams change (drop users outside the selected teams)
+  // PER_SEAT subscriptions manage user assignment in the Pricing card, so skip team-based filtering
   useEffect(() => {
     if (isPerSeat) return;
     if (selectedUserIds.length > 0 && selectedTeamIds.length > 0) {
@@ -126,7 +126,7 @@ export function SubscriptionFormAssignment({
     }
   }, [isPerSeat, selectedTeamIds, selectedUserIds, users, setValue]);
 
-  // 팀 선택/해제 토글
+  // Toggle team selection
   const toggleTeam = (teamId: string) => {
     const newValue = selectedTeamIds.includes(teamId)
       ? selectedTeamIds.filter((id) => id !== teamId)
@@ -134,7 +134,7 @@ export function SubscriptionFormAssignment({
     setValue("teamIds", newValue);
   };
 
-  // 팀 제거
+  // Remove a team
   const removeTeam = (teamId: string) => {
     setValue(
       "teamIds",
@@ -142,7 +142,7 @@ export function SubscriptionFormAssignment({
     );
   };
 
-  // 사용자 선택/해제 토글
+  // Toggle user selection
   const toggleUser = (userId: string) => {
     const newValue = selectedUserIds.includes(userId)
       ? selectedUserIds.filter((id) => id !== userId)
@@ -150,7 +150,7 @@ export function SubscriptionFormAssignment({
     setValue("assignedUserIds", newValue);
   };
 
-  // 사용자 제거
+  // Remove a user
   const removeUser = (userId: string) => {
     setValue(
       "assignedUserIds",
@@ -158,12 +158,12 @@ export function SubscriptionFormAssignment({
     );
   };
 
-  // 선택된 팀 정보
+  // Selected team details
   const selectedTeams = useMemo(() => {
     return availableTeams.filter((team) => selectedTeamIds.includes(team.id));
   }, [availableTeams, selectedTeamIds]);
 
-  // ADMIN만 배정 카드 표시
+  // Only ADMIN sees the assignment card
   if (!isAdmin) {
     return null;
   }
@@ -175,7 +175,7 @@ export function SubscriptionFormAssignment({
         <CardDescription>{t("description")}</CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* Team 다중 선택 */}
+        {/* Team multi-select */}
         <div className="space-y-2">
           <Label>{t("teamLabel")}</Label>
           {availableTeams.length === 0 ? (
@@ -239,7 +239,7 @@ export function SubscriptionFormAssignment({
                     </PopoverContent>
                   </Popover>
 
-                  {/* 선택된 팀 목록 */}
+                  {/* Selected teams */}
                   {selectedTeams.length > 0 && (
                     <div className="flex flex-wrap gap-1 pt-2">
                       {selectedTeams.map((team) => (
@@ -266,7 +266,7 @@ export function SubscriptionFormAssignment({
           )}
         </div>
 
-        {/* User 배정 (ADMIN만, PER_SEAT일 때는 라이선스 카드에서 관리) */}
+        {/* User assignment (ADMIN only; managed in the license card for PER_SEAT) */}
         {isAdmin && !isPerSeat && (
           <div className="space-y-2">
             <Label>{t("userLabel")}</Label>
@@ -335,7 +335,7 @@ export function SubscriptionFormAssignment({
                   </PopoverContent>
                 </Popover>
 
-                {/* 선택된 사용자 목록 */}
+                {/* Selected users */}
                 {selectedUsers.length > 0 && (
                   <div className="flex flex-wrap gap-1 pt-2">
                     {selectedUsers.map((user) => (

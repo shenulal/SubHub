@@ -141,7 +141,7 @@ export function IntegrationDetailCard({
       </CardHeader>
       <CardContent>
         <div className="grid gap-6 md:grid-cols-2">
-          {/* 동기화 정보 */}
+          {/* Sync info */}
           <div className="min-w-0 space-y-4">
             <div className="min-w-0">
               <p className="text-muted-foreground truncate text-[0.8125rem]">
@@ -163,7 +163,7 @@ export function IntegrationDetailCard({
             </div>
           </div>
 
-          {/* 마지막 동기화 결과 */}
+          {/* Last sync result */}
           {integration.lastSyncResult && (
             <div className="min-w-0 space-y-4">
               <p className="text-muted-foreground text-[0.8125rem]">
@@ -199,7 +199,7 @@ export function IntegrationDetailCard({
           )}
         </div>
 
-        {/* 오류 메시지 */}
+        {/* Error message */}
         {integration.lastError && (
           <div className="tonal-error mt-4 rounded-md px-4 py-3">
             <p className="text-sm font-medium">

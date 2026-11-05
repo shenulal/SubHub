@@ -1,7 +1,7 @@
 // src/actions/teams.ts
 /**
- * Team 관련 Server Actions
- * Google Workspace OU 기반 팀 관리
+ * Team Server Actions
+ * Team management based on Google Workspace OUs
  */
 
 "use server";
@@ -45,7 +45,7 @@ export interface TeamMember extends User {
 // ==================== Server Actions ====================
 
 /**
- * 팀 목록 조회 (flat)
+ * List teams (flat)
  */
 export async function getTeams(): Promise<ActionState<TeamWithStats[]>> {
   try {
@@ -66,14 +66,14 @@ export async function getTeams(): Promise<ActionState<TeamWithStats[]>> {
 
     return { success: true, data: teams };
   } catch (error) {
-    logger.error({ err: error }, "팀 목록 조회 오류");
+    logger.error({ err: error }, "Team list error");
     if (isRedirectError(error)) throw error;
-    return { success: false, message: "팀 목록을 불러오는 데 실패했습니다" };
+    return { success: false, message: "Failed to load teams" };
   }
 }
 
 /**
- * 팀 계층 구조 조회 (tree)
+ * Get the team hierarchy (tree)
  */
 export async function getTeamHierarchy(): Promise<ActionState<TeamNode[]>> {
   try {
@@ -92,16 +92,16 @@ export async function getTeamHierarchy(): Promise<ActionState<TeamNode[]>> {
       orderBy: { googleOrgUnitPath: "asc" },
     });
 
-    // 트리 구조로 변환
+    // Convert to a tree
     const teamMap = new Map<string, TeamNode>();
     const rootTeams: TeamNode[] = [];
 
-    // 1차: 모든 팀을 맵에 추가
+    // Pass 1: add all teams to the map
     teams.forEach((team) => {
       teamMap.set(team.id, { ...team, children: [] });
     });
 
-    // 2차: 부모-자식 관계 설정
+    // Pass 2: set parent-child relationships
     teams.forEach((team) => {
       const node = teamMap.get(team.id)!;
       if (team.parentId) {
@@ -109,7 +109,7 @@ export async function getTeamHierarchy(): Promise<ActionState<TeamNode[]>> {
         if (parent) {
           parent.children.push(node);
         } else {
-          // 부모가 없으면 루트로
+          // No parent: treat as a root
           rootTeams.push(node);
         }
       } else {
@@ -119,14 +119,14 @@ export async function getTeamHierarchy(): Promise<ActionState<TeamNode[]>> {
 
     return { success: true, data: rootTeams };
   } catch (error) {
-    logger.error({ err: error }, "팀 계층 조회 오류");
+    logger.error({ err: error }, "Team hierarchy error");
     if (isRedirectError(error)) throw error;
-    return { success: false, message: "팀 계층을 불러오는 데 실패했습니다" };
+    return { success: false, message: "Failed to load the team hierarchy" };
   }
 }
 
 /**
- * 단일 팀 조회
+ * Get a single team
  */
 export async function getTeam(
   teamId: string
@@ -147,23 +147,23 @@ export async function getTeam(
     });
 
     if (!team) {
-      return { success: false, message: "팀을 찾을 수 없습니다" };
+      return { success: false, message: "Team not found" };
     }
 
     if (team.organizationId !== organizationId) {
-      return { success: false, message: "접근 권한이 없습니다" };
+      return { success: false, message: "You do not have access permission" };
     }
 
     return { success: true, data: team };
   } catch (error) {
-    logger.error({ err: error }, "팀 조회 오류");
+    logger.error({ err: error }, "Team lookup error");
     if (isRedirectError(error)) throw error;
-    return { success: false, message: "팀을 불러오는 데 실패했습니다" };
+    return { success: false, message: "Failed to load the team" };
   }
 }
 
 /**
- * 팀 멤버 조회
+ * Get team members
  */
 export async function getTeamMembers(
   teamId: string
@@ -171,18 +171,18 @@ export async function getTeamMembers(
   try {
     const { organizationId } = await requireOrganization();
 
-    // 팀 존재 여부 및 권한 확인
+    // Check the team exists and access is allowed
     const team = await prisma.team.findUnique({
       where: { id: teamId },
       select: { organizationId: true },
     });
 
     if (!team) {
-      return { success: false, message: "팀을 찾을 수 없습니다" };
+      return { success: false, message: "Team not found" };
     }
 
     if (team.organizationId !== organizationId) {
-      return { success: false, message: "접근 권한이 없습니다" };
+      return { success: false, message: "You do not have access permission" };
     }
 
     const members = await prisma.user.findMany({
@@ -197,14 +197,14 @@ export async function getTeamMembers(
 
     return { success: true, data: members };
   } catch (error) {
-    logger.error({ err: error }, "팀 멤버 조회 오류");
+    logger.error({ err: error }, "Team member lookup error");
     if (isRedirectError(error)) throw error;
-    return { success: false, message: "팀 멤버를 불러오는 데 실패했습니다" };
+    return { success: false, message: "Failed to load team members" };
   }
 }
 
 /**
- * 팀 생성 (수동)
+ * Create a team (manual)
  */
 async function _createTeam(input: {
   name: string;
@@ -216,16 +216,16 @@ async function _createTeam(input: {
     const { organizationId, role } = await requireOrganization();
 
     if (role !== "ADMIN") {
-      return { success: false, message: "관리자 권한이 필요합니다" };
+      return { success: false, message: "Admin permission required" };
     }
 
     const { name, description, parentId, memberIds } = input;
 
     if (!name.trim()) {
-      return { success: false, message: "팀 이름을 입력해주세요" };
+      return { success: false, message: "Please enter a team name" };
     }
 
-    // 부모 팀 확인 (parentId가 있는 경우)
+    // Verify the parent team (when parentId is given)
     if (parentId) {
       const parentTeam = await prisma.team.findUnique({
         where: { id: parentId },
@@ -233,15 +233,15 @@ async function _createTeam(input: {
       });
 
       if (!parentTeam) {
-        return { success: false, message: "부모 팀을 찾을 수 없습니다" };
+        return { success: false, message: "Parent team not found" };
       }
 
       if (parentTeam.organizationId !== organizationId) {
-        return { success: false, message: "접근 권한이 없습니다" };
+        return { success: false, message: "You do not have access permission" };
       }
     }
 
-    // 팀 생성
+    // Create the team
     const team = await prisma.team.create({
       data: {
         name: name.trim(),
@@ -251,9 +251,9 @@ async function _createTeam(input: {
       },
     });
 
-    // 멤버 배정 (memberIds가 있는 경우)
+    // Assign members (when memberIds is given)
     if (memberIds && memberIds.length > 0) {
-      // 유효한 멤버만 필터링
+      // Keep only valid members
       const validMembers = await prisma.user.findMany({
         where: {
           id: { in: memberIds },
@@ -274,30 +274,30 @@ async function _createTeam(input: {
 
     revalidatePath("/teams");
 
-    return { success: true, data: team, message: "팀이 생성되었습니다" };
+    return { success: true, data: team, message: "Team created" };
   } catch (error) {
-    logger.error({ err: error }, "팀 생성 오류");
+    logger.error({ err: error }, "Team creation error");
     if (isRedirectError(error)) throw error;
-    return { success: false, message: "팀 생성에 실패했습니다" };
+    return { success: false, message: "Failed to create the team" };
   }
 }
 export const createTeam = withLogging("createTeam", _createTeam);
 
 /**
- * 팀 수정 입력 타입
+ * Team update input type
  */
 export interface UpdateTeamInput {
   name?: string;
   description?: string;
   parentId?: string | null;
-  memberIds?: string[]; // 전체 멤버 ID 배열 (sync 방식)
+  memberIds?: string[]; // full member ID array (sync mode)
 }
 
 /**
- * 팀 수정 (수동 생성된 팀만)
- * - memberIds가 제공되면 팀 멤버를 동기화 (추가/제거)
- * - 트랜잭션으로 원자성 보장
- * - 팀에서 제거된 멤버는 해당 팀의 구독 배정에서도 제거
+ * Update a team (manually created teams only)
+ * - When memberIds is given, sync team members (add/remove)
+ * - Atomic via a transaction
+ * - Members removed from the team are also removed from that team's subscription assignments
  */
 async function _updateTeam(
   teamId: string,
@@ -307,7 +307,7 @@ async function _updateTeam(
     const { organizationId, role } = await requireOrganization();
 
     if (role !== "ADMIN") {
-      return { success: false, message: "관리자 권한이 필요합니다" };
+      return { success: false, message: "Admin permission required" };
     }
 
     const team = await prisma.team.findUnique({
@@ -316,37 +316,37 @@ async function _updateTeam(
     });
 
     if (!team) {
-      return { success: false, message: "팀을 찾을 수 없습니다" };
+      return { success: false, message: "Team not found" };
     }
 
     if (team.organizationId !== organizationId) {
-      return { success: false, message: "접근 권한이 없습니다" };
+      return { success: false, message: "You do not have access permission" };
     }
 
-    // Google Workspace에서 동기화된 팀은 이름 수정 불가
+    // Teams synced from Google Workspace cannot be renamed
     if (team.googleOrgUnitId && input.name) {
       return {
         success: false,
-        message: "Google Workspace에서 동기화된 팀의 이름은 수정할 수 없습니다",
+        message: "Teams synced from Google Workspace cannot be renamed",
       };
     }
 
-    // 부모 팀 확인 (parentId가 있는 경우)
+    // Verify the parent team (when parentId is given)
     if (input.parentId) {
-      // 자기 자신을 부모로 설정하는 것 방지
+      // Prevent a team from being its own parent
       if (input.parentId === teamId) {
         return {
           success: false,
-          message: "자기 자신을 부모 팀으로 설정할 수 없습니다",
+          message: "A team cannot be its own parent",
         };
       }
 
-      // 순환 참조 방지: 자신의 하위 팀을 부모로 설정하는 것 방지
+      // Prevent cycles: a descendant team cannot become the parent
       const isDescendant = await checkIsDescendant(teamId, input.parentId);
       if (isDescendant) {
         return {
           success: false,
-          message: "하위 팀을 부모 팀으로 설정할 수 없습니다",
+          message: "A child team cannot be set as the parent team",
         };
       }
 
@@ -356,17 +356,17 @@ async function _updateTeam(
       });
 
       if (!parentTeam) {
-        return { success: false, message: "부모 팀을 찾을 수 없습니다" };
+        return { success: false, message: "Parent team not found" };
       }
 
       if (parentTeam.organizationId !== organizationId) {
-        return { success: false, message: "접근 권한이 없습니다" };
+        return { success: false, message: "You do not have access permission" };
       }
     }
 
-    // 트랜잭션으로 모든 변경 사항을 원자적으로 처리
+    // Apply all changes atomically in a transaction
     const updatedTeam = await prisma.$transaction(async (tx) => {
-      // 1. 팀 기본 정보 업데이트
+      // 1. Update basic team info
       const updated = await tx.team.update({
         where: { id: teamId },
         data: {
@@ -378,9 +378,9 @@ async function _updateTeam(
         },
       });
 
-      // 2. 멤버 동기화 (memberIds가 제공된 경우)
+      // 2. Sync members (when memberIds is given)
       if (input.memberIds !== undefined) {
-        // 유효한 멤버만 필터링 (조직에 속한 멤버)
+        // Keep only valid members (belonging to the organization)
         const validMembers = await tx.user.findMany({
           where: {
             id: { in: input.memberIds },
@@ -390,42 +390,42 @@ async function _updateTeam(
         });
         const validMemberIds = validMembers.map((m) => m.id);
 
-        // 현재 팀 멤버 조회
+        // Fetch current team members
         const currentMembers = await tx.user.findMany({
           where: { teamId },
           select: { id: true },
         });
         const currentMemberIds = currentMembers.map((m) => m.id);
 
-        // 추가할 멤버 (input에 있지만 현재에 없는)
+        // Members to add (in input but not current)
         const membersToAdd = validMemberIds.filter(
           (id) => !currentMemberIds.includes(id)
         );
 
-        // 제거할 멤버 (현재에 있지만 input에 없는)
+        // Members to remove (current but not in input)
         const membersToRemove = currentMemberIds.filter(
           (id) => !validMemberIds.includes(id)
         );
 
-        // 2-1. 추가할 멤버: 기존 팀에서 이동 시 이전 팀의 구독 배정에서 제거
+        // 2-1. Members to add: when moving from another team, remove them from the previous team's subscription assignments
         if (membersToAdd.length > 0) {
-          // 추가할 멤버들의 이전 팀 정보 조회
+          // Fetch the previous team of members being added
           const usersWithPrevTeam = await tx.user.findMany({
             where: { id: { in: membersToAdd }, teamId: { not: null } },
             select: { id: true, teamId: true },
           });
 
-          // 이전 팀의 구독에서 해당 사용자들의 배정 제거
+          // Remove those users' assignments from the previous team's subscriptions
           for (const user of usersWithPrevTeam) {
             if (user.teamId) {
-              // 이전 팀에 배정된 구독 조회
+              // Fetch subscriptions assigned to the previous team
               const prevTeamSubscriptions = await tx.subscription.findMany({
                 where: { teamId: user.teamId },
                 select: { id: true },
               });
 
               if (prevTeamSubscriptions.length > 0) {
-                // 해당 구독들에서 사용자 배정 제거
+                // Remove user assignments from those subscriptions
                 await tx.subscriptionUser.deleteMany({
                   where: {
                     userId: user.id,
@@ -438,23 +438,23 @@ async function _updateTeam(
             }
           }
 
-          // 팀 이동
+          // Move teams
           await tx.user.updateMany({
             where: { id: { in: membersToAdd } },
             data: { teamId },
           });
         }
 
-        // 2-2. 제거할 멤버: 현재 팀의 구독 배정에서 제거
+        // 2-2. Members to remove: remove them from the current team's subscription assignments
         if (membersToRemove.length > 0) {
-          // 현재 팀에 배정된 구독 조회
+          // Fetch subscriptions assigned to the current team
           const teamSubscriptions = await tx.subscription.findMany({
             where: { teamId },
             select: { id: true },
           });
 
           if (teamSubscriptions.length > 0) {
-            // 해당 구독들에서 제거될 멤버들의 배정 제거
+            // Remove the departing members' assignments from those subscriptions
             await tx.subscriptionUser.deleteMany({
               where: {
                 userId: { in: membersToRemove },
@@ -463,7 +463,7 @@ async function _updateTeam(
             });
           }
 
-          // 팀에서 제거
+          // Remove from the team
           await tx.user.updateMany({
             where: { id: { in: membersToRemove } },
             data: { teamId: null },
@@ -478,17 +478,17 @@ async function _updateTeam(
     revalidatePath("/users");
     revalidatePath("/subscriptions");
 
-    return { success: true, data: updatedTeam, message: "팀이 수정되었습니다" };
+    return { success: true, data: updatedTeam, message: "Team updated" };
   } catch (error) {
-    logger.error({ err: error }, "팀 수정 오류");
+    logger.error({ err: error }, "Team update error");
     if (isRedirectError(error)) throw error;
-    return { success: false, message: "팀 수정에 실패했습니다" };
+    return { success: false, message: "Failed to update the team" };
   }
 }
 export const updateTeam = withLogging("updateTeam", _updateTeam);
 
 /**
- * 순환 참조 체크: targetId가 teamId의 하위 팀인지 확인
+ * Cycle check: whether targetId is a descendant of teamId
  */
 async function checkIsDescendant(
   teamId: string,
@@ -513,15 +513,15 @@ async function checkIsDescendant(
 }
 
 /**
- * 팀 삭제 시 영향도 조회
+ * Get the impact of deleting a team
  */
 export interface TeamImpact {
-  memberCount: number; // 영향 받는 멤버 수
-  appCount: number; // 배정된 앱 수 (AppTeam)
-  subscriptionCount: number; // 담당 구독 수
-  cardCount: number; // 소속 법인카드 수
-  childTeamCount: number; // 하위 팀 수
-  paymentRecordCount: number; // SMP-78: 배정된 결제 내역 수
+  memberCount: number; // affected members
+  appCount: number; // assigned apps (AppTeam)
+  subscriptionCount: number; // owned subscriptions
+  cardCount: number; // corporate cards belonging to the team
+  childTeamCount: number; // child teams
+  paymentRecordCount: number; // SMP-78: assigned payment records
 }
 
 export async function getTeamImpact(
@@ -530,21 +530,21 @@ export async function getTeamImpact(
   try {
     const { organizationId } = await requireOrganization();
 
-    // 팀 존재 여부 및 권한 확인
+    // Check the team exists and access is allowed
     const team = await prisma.team.findUnique({
       where: { id: teamId },
       select: { organizationId: true },
     });
 
     if (!team) {
-      return { success: false, message: "팀을 찾을 수 없습니다" };
+      return { success: false, message: "Team not found" };
     }
 
     if (team.organizationId !== organizationId) {
-      return { success: false, message: "접근 권한이 없습니다" };
+      return { success: false, message: "You do not have access permission" };
     }
 
-    // 병렬로 영향도 조회 (SMP-78: paymentRecordCount 추가)
+    // Fetch impact in parallel (SMP-78: added paymentRecordCount)
     const [
       memberCount,
       appCount,
@@ -573,21 +573,21 @@ export async function getTeamImpact(
       },
     };
   } catch (error) {
-    logger.error({ err: error }, "팀 영향도 조회 오류");
+    logger.error({ err: error }, "Team impact lookup error");
     if (isRedirectError(error)) throw error;
-    return { success: false, message: "팀 영향도를 불러오는 데 실패했습니다" };
+    return { success: false, message: "Failed to load the team impact" };
   }
 }
 
 /**
- * 팀 삭제 (수동 생성된 팀만)
+ * Delete a team (manually created teams only)
  */
 async function _deleteTeam(teamId: string): Promise<ActionState> {
   try {
     const { organizationId, role } = await requireOrganization();
 
     if (role !== "ADMIN") {
-      return { success: false, message: "관리자 권한이 필요합니다" };
+      return { success: false, message: "Admin permission required" };
     }
 
     const team = await prisma.team.findUnique({
@@ -596,19 +596,19 @@ async function _deleteTeam(teamId: string): Promise<ActionState> {
     });
 
     if (!team) {
-      return { success: false, message: "팀을 찾을 수 없습니다" };
+      return { success: false, message: "Team not found" };
     }
 
     if (team.organizationId !== organizationId) {
-      return { success: false, message: "접근 권한이 없습니다" };
+      return { success: false, message: "You do not have access permission" };
     }
 
-    // Google Workspace에서 동기화된 팀은 삭제 불가
+    // Teams synced from Google Workspace cannot be deleted
     if (team.googleOrgUnitId) {
       return {
         success: false,
         message:
-          "Google Workspace에서 동기화된 팀은 삭제할 수 없습니다. Google Admin Console에서 OU를 삭제하세요.",
+          "Teams synced from Google Workspace cannot be deleted. Delete the OU in the Google Admin Console.",
       };
     }
 
@@ -618,17 +618,17 @@ async function _deleteTeam(teamId: string): Promise<ActionState> {
 
     revalidatePath("/teams");
 
-    return { success: true, message: "팀이 삭제되었습니다" };
+    return { success: true, message: "Team deleted" };
   } catch (error) {
-    logger.error({ err: error }, "팀 삭제 오류");
+    logger.error({ err: error }, "Team deletion error");
     if (isRedirectError(error)) throw error;
-    return { success: false, message: "팀 삭제에 실패했습니다" };
+    return { success: false, message: "Failed to delete the team" };
   }
 }
 export const deleteTeam = withLogging("deleteTeam", _deleteTeam);
 
 /**
- * 팀 통계 조회 (대시보드용)
+ * Get team statistics (for the dashboard)
  */
 export async function getTeamStats(): Promise<
   ActionState<{
@@ -656,7 +656,7 @@ export async function getTeamStats(): Promise<
     const avgMembersPerTeam =
       totalTeams > 0 ? Math.round((totalMembers / totalTeams) * 10) / 10 : 0;
 
-    // 최대 깊이 계산 (googleOrgUnitPath의 슬래시 개수)
+    // Calculate the maximum depth (number of slashes in googleOrgUnitPath)
     const maxDepth = teams.reduce((max, team) => {
       if (!team.googleOrgUnitPath) return max;
       const depth = (team.googleOrgUnitPath.match(/\//g) || []).length;
@@ -673,14 +673,14 @@ export async function getTeamStats(): Promise<
       },
     };
   } catch (error) {
-    logger.error({ err: error }, "팀 통계 조회 오류");
+    logger.error({ err: error }, "Team statistics error");
     if (isRedirectError(error)) throw error;
-    return { success: false, message: "팀 통계를 불러오는 데 실패했습니다" };
+    return { success: false, message: "Failed to load team statistics" };
   }
 }
 
 /**
- * 사용자를 팀에 할당 (수동)
+ * Assign a user to a team (manual)
  */
 async function _assignUserToTeam(
   userId: string,
@@ -690,24 +690,24 @@ async function _assignUserToTeam(
     const { organizationId, role } = await requireOrganization();
 
     if (role !== "ADMIN") {
-      return { success: false, message: "관리자 권한이 필요합니다" };
+      return { success: false, message: "Admin permission required" };
     }
 
-    // 사용자 확인
+    // Look up the user
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: { organizationId: true },
     });
 
     if (!user) {
-      return { success: false, message: "사용자를 찾을 수 없습니다" };
+      return { success: false, message: "User not found" };
     }
 
     if (user.organizationId !== organizationId) {
-      return { success: false, message: "접근 권한이 없습니다" };
+      return { success: false, message: "You do not have access permission" };
     }
 
-    // 팀 확인 (teamId가 있는 경우)
+    // Verify the team (when teamId is given)
     if (teamId) {
       const team = await prisma.team.findUnique({
         where: { id: teamId },
@@ -715,11 +715,11 @@ async function _assignUserToTeam(
       });
 
       if (!team) {
-        return { success: false, message: "팀을 찾을 수 없습니다" };
+        return { success: false, message: "Team not found" };
       }
 
       if (team.organizationId !== organizationId) {
-        return { success: false, message: "접근 권한이 없습니다" };
+        return { success: false, message: "You do not have access permission" };
       }
     }
 
@@ -733,12 +733,12 @@ async function _assignUserToTeam(
 
     return {
       success: true,
-      message: teamId ? "팀에 할당되었습니다" : "팀에서 제외되었습니다",
+      message: teamId ? "Assigned to the team" : "Removed from the team",
     };
   } catch (error) {
-    logger.error({ err: error }, "사용자 팀 할당 오류");
+    logger.error({ err: error }, "User team assignment error");
     if (isRedirectError(error)) throw error;
-    return { success: false, message: "사용자 팀 할당에 실패했습니다" };
+    return { success: false, message: "Failed to assign the user to the team" };
   }
 }
 export const assignUserToTeam = withLogging(

@@ -38,25 +38,25 @@ describe("deleteAccount", () => {
     vi.clearAllMocks();
   });
 
-  it("인증되지 않은 사용자는 에러를 반환해야 한다", async () => {
+  it("returns an error for an unauthenticated user", async () => {
     mockedAuth.mockResolvedValueOnce(null);
 
     const result = await deleteAccount();
 
     expect(result.success).toBe(false);
-    expect(result.error).toBe("인증이 필요합니다");
+    expect(result.error).toBe("Authentication required");
   });
 
-  it("세션에 user.id가 없으면 에러를 반환해야 한다", async () => {
+  it("returns an error when the session has no user.id", async () => {
     mockedAuth.mockResolvedValueOnce({ user: {} });
 
     const result = await deleteAccount();
 
     expect(result.success).toBe(false);
-    expect(result.error).toBe("인증이 필요합니다");
+    expect(result.error).toBe("Authentication required");
   });
 
-  it("조직의 마지막 ADMIN은 계정을 삭제할 수 없다", async () => {
+  it("prevents the organization's last ADMIN from deleting their account", async () => {
     mockedAuth.mockResolvedValueOnce({
       user: {
         id: "user-1",
@@ -70,11 +70,11 @@ describe("deleteAccount", () => {
     const result = await deleteAccount();
 
     expect(result.success).toBe(false);
-    expect(result.error).toContain("마지막 관리자");
+    expect(result.error).toContain("last admin");
     expect(prisma.user.delete).not.toHaveBeenCalled();
   });
 
-  it("다른 ADMIN이 있으면 ADMIN도 계정을 삭제할 수 있다", async () => {
+  it("lets an ADMIN delete their account when another ADMIN exists", async () => {
     mockedAuth.mockResolvedValueOnce({
       user: {
         id: "user-1",
@@ -83,7 +83,7 @@ describe("deleteAccount", () => {
       },
     });
 
-    vi.mocked(prisma.user.count).mockResolvedValueOnce(1); // 다른 ADMIN 존재
+    vi.mocked(prisma.user.count).mockResolvedValueOnce(1); // another ADMIN exists
     vi.mocked(prisma.user.findUnique).mockResolvedValueOnce({
       name: "Admin User",
       email: "admin@example.com",
@@ -106,7 +106,7 @@ describe("deleteAccount", () => {
     expect(redirect).toHaveBeenCalledWith("/login?deleted=true");
   });
 
-  it("MEMBER는 ADMIN 체크 없이 계정을 삭제할 수 있다", async () => {
+  it("lets a MEMBER delete their account without the ADMIN check", async () => {
     mockedAuth.mockResolvedValueOnce({
       user: {
         id: "user-2",
@@ -130,7 +130,7 @@ describe("deleteAccount", () => {
 
     await deleteAccount();
 
-    // MEMBER는 user.count 호출 안함
+    // MEMBER does not call user.count
     expect(prisma.user.count).not.toHaveBeenCalled();
     expect(prisma.user.delete).toHaveBeenCalledWith({
       where: { id: "user-2" },
@@ -138,7 +138,7 @@ describe("deleteAccount", () => {
     expect(redirect).toHaveBeenCalledWith("/login?deleted=true");
   });
 
-  it("삭제 전에 감사 로그를 기록해야 한다 (사용자 정보 포함)", async () => {
+  it("writes an audit log before deletion (including user info)", async () => {
     mockedAuth.mockResolvedValueOnce({
       user: {
         id: "user-3",
@@ -180,7 +180,7 @@ describe("deleteAccount", () => {
     });
   });
 
-  it("organizationId가 없는 사용자도 계정을 삭제할 수 있다", async () => {
+  it("lets a user without an organizationId delete their account", async () => {
     mockedAuth.mockResolvedValueOnce({
       user: {
         id: "user-4",
@@ -200,7 +200,7 @@ describe("deleteAccount", () => {
 
     await deleteAccount();
 
-    // organizationId 없으면 감사 로그 기록 안함
+    // No organizationId, so no audit log is written
     expect(prisma.auditLog.create).not.toHaveBeenCalled();
     expect(prisma.user.delete).toHaveBeenCalledWith({
       where: { id: "user-4" },

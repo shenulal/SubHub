@@ -6,9 +6,9 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * 🎯 목적: Avatar 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: Radix UI Avatar primitive 사용, ElementRef 타입 필수
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the Avatar component for React 18/19 compatibility
+ * 📝 Note: Uses the Radix UI Avatar primitive; ElementRef type is required
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const Avatar = React.forwardRef<
   React.ElementRef<typeof AvatarPrimitive.Root>,
@@ -29,8 +29,8 @@ const Avatar = React.forwardRef<
 Avatar.displayName = "Avatar";
 
 /**
- * 🎯 목적: AvatarImage 컴포넌트에 forwardRef 적용
- * 📝 주의사항: aspect-square 비율 유지
+ * 🎯 Purpose: Apply forwardRef to the AvatarImage component
+ * 📝 Note: Keep the aspect-square ratio
  */
 const AvatarImage = React.forwardRef<
   React.ElementRef<typeof AvatarPrimitive.Image>,
@@ -48,8 +48,8 @@ const AvatarImage = React.forwardRef<
 AvatarImage.displayName = "AvatarImage";
 
 /**
- * 🎯 목적: AvatarFallback 컴포넌트에 forwardRef 적용
- * 📝 주의사항: bg-muted 배경색 유지
+ * 🎯 Purpose: Apply forwardRef to the AvatarFallback component
+ * 📝 Note: Keep the bg-muted background color
  */
 const AvatarFallback = React.forwardRef<
   React.ElementRef<typeof AvatarPrimitive.Fallback>,

@@ -11,7 +11,7 @@ import { CardsPageClient } from "./page.client";
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("cards.page");
   return {
-    title: `${t("title")} | SaaS 관리 플랫폼`,
+    title: `${t("title")}`,
     description: t("description"),
   };
 }

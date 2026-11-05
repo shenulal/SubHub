@@ -12,7 +12,7 @@ import { AppStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
 /**
- * 확인 필요 항목 (50~80% 신뢰도의 LLM 추론 결과)
+ * Items needing confirmation (LLM inference results with 50–80% confidence)
  */
 export interface PendingConfirmationItem {
   id: string;
@@ -40,7 +40,7 @@ const CONFIDENCE_MAX = 0.8;
 async function requireSession() {
   const session = await auth();
   if (!session?.user?.organizationId) {
-    return { error: "인증이 필요합니다" };
+    return { error: "Authentication required" };
   }
   return { user: session.user };
 }
@@ -49,15 +49,15 @@ async function requireAdminSession() {
   const result = await requireSession();
   if ("error" in result) return result;
   if (result.user.role !== "ADMIN") {
-    return { error: "관리자만 확인할 수 있습니다" };
+    return { error: "Only admins can confirm this" };
   }
   return result;
 }
 
 /**
- * 확인 필요 항목 조회 (50~80% 신뢰도)
- * - isSaaS: true이면서 PENDING_REVIEW 상태인 앱
- * - confidence가 0.5 ~ 0.8 범위
+ * Get items needing confirmation (50–80% confidence)
+ * - Apps with isSaaS: true in PENDING_REVIEW status
+ * - confidence in the 0.5–0.8 range
  */
 export async function getPendingConfirmations(
   limit = 10
@@ -111,17 +111,17 @@ export async function getPendingConfirmations(
       data: { items, total },
     };
   } catch (error) {
-    logger.error({ err: error }, "확인 필요 항목 조회 실패");
+    logger.error({ err: error }, "Failed to load items needing confirmation");
     return {
       success: false,
-      message: "확인 필요 항목을 조회하는 중 오류가 발생했습니다",
+      message: "An error occurred while loading items needing confirmation",
     };
   }
 }
 
 /**
- * SaaS로 확인 (승인)
- * - 앱 상태를 ACTIVE로 변경
+ * Confirm as SaaS (approve)
+ * - Sets the app status to ACTIVE
  */
 async function _confirmAsSaaS(appId: string): Promise<ActionState> {
   const sessionResult = await requireAdminSession();
@@ -132,13 +132,13 @@ async function _confirmAsSaaS(appId: string): Promise<ActionState> {
   const { user } = sessionResult;
 
   try {
-    // 앱 소유권 확인
+    // Verify app ownership
     const app = await prisma.app.findFirst({
       where: { id: appId, organizationId: user.organizationId! },
     });
 
     if (!app) {
-      return { success: false, message: "앱을 찾을 수 없습니다" };
+      return { success: false, message: "App not found" };
     }
 
     await prisma.app.update({
@@ -160,19 +160,22 @@ async function _confirmAsSaaS(appId: string): Promise<ActionState> {
 
     return {
       success: true,
-      message: `"${app.name}"이(가) SaaS로 승인되었습니다`,
+      message: `"${app.name}" has been approved as SaaS`,
     };
   } catch (error) {
-    logger.error({ err: error }, "SaaS 승인 실패");
-    return { success: false, message: "SaaS 승인 중 오류가 발생했습니다" };
+    logger.error({ err: error }, "SaaS approval failed");
+    return {
+      success: false,
+      message: "An error occurred while approving as SaaS",
+    };
   }
 }
 export const confirmAsSaaS = withLogging("confirmAsSaaS", _confirmAsSaaS);
 
 /**
- * 비-SaaS로 확인 (거부)
- * - 앱 상태를 BLOCKED로 변경
- * - NonSaaSVendor 캐시에 추가
+ * Confirm as non-SaaS (reject)
+ * - Sets the app status to BLOCKED
+ * - Adds it to the NonSaaSVendor cache
  */
 async function _confirmAsNonSaaS(
   appId: string,
@@ -186,23 +189,23 @@ async function _confirmAsNonSaaS(
   const { user } = sessionResult;
 
   try {
-    // 앱 소유권 확인
+    // Verify app ownership
     const app = await prisma.app.findFirst({
       where: { id: appId, organizationId: user.organizationId! },
     });
 
     if (!app) {
-      return { success: false, message: "앱을 찾을 수 없습니다" };
+      return { success: false, message: "App not found" };
     }
 
-    // 트랜잭션으로 앱 차단 + Non-SaaS 캐시 등록
+    // Block the app and register it in the non-SaaS cache in one transaction
     await prisma.$transaction(async (tx) => {
       await tx.app.update({
         where: { id: appId },
         data: { status: AppStatus.BLOCKED },
       });
 
-      // Non-SaaS 캐시에 추가
+      // Add to the non-SaaS cache
       const normalized = normalizedName || normalizeMerchantName(app.name);
       await tx.nonSaaSVendor.upsert({
         where: {
@@ -215,8 +218,8 @@ async function _confirmAsNonSaaS(
           organizationId: user.organizationId!,
           normalizedName: normalized,
           originalName: app.name,
-          confidence: 1.0, // 사용자 확인이므로 100%
-          reasoning: "사용자가 비-SaaS로 확인함",
+          confidence: 1.0, // confirmed by a user, so 100%
+          reasoning: "Confirmed as non-SaaS by a user",
           transactionCount: 1,
         },
         update: {
@@ -240,11 +243,14 @@ async function _confirmAsNonSaaS(
 
     return {
       success: true,
-      message: `"${app.name}"이(가) 비-SaaS로 처리되었습니다`,
+      message: `"${app.name}" has been marked as non-SaaS`,
     };
   } catch (error) {
-    logger.error({ err: error }, "비-SaaS 처리 실패");
-    return { success: false, message: "비-SaaS 처리 중 오류가 발생했습니다" };
+    logger.error({ err: error }, "Non-SaaS processing failed");
+    return {
+      success: false,
+      message: "An error occurred while marking as non-SaaS",
+    };
   }
 }
 export const confirmAsNonSaaS = withLogging(
@@ -281,19 +287,19 @@ async function sendConfirmationEmail(params: {
 
     await sendConfirmationResultEmail({
       to: recipient,
-      organizationName: org?.name || "SaaS 관리 플랫폼",
+      organizationName: org?.name || "SubHub",
       appName: params.appName,
       action: params.action,
       confidence: params.confidence,
       normalizedName: params.normalizedName || undefined,
     });
   } catch (error) {
-    logger.error({ err: error }, "확인 결과 이메일 발송 실패");
+    logger.error({ err: error }, "Failed to send confirmation result email");
   }
 }
 
 /**
- * 대시보드 요약용: 확인 필요 항목 수 조회
+ * For the dashboard summary: count items needing confirmation
  */
 export async function getPendingConfirmationsCount(): Promise<number> {
   const sessionResult = await requireSession();

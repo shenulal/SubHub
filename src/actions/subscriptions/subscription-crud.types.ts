@@ -1,6 +1,6 @@
 // src/actions/subscriptions/subscription-crud.types.ts
 /**
- * Subscription CRUD 관련 타입 및 스키마 정의
+ * Subscription CRUD types and schemas
  */
 
 import { DEFAULT_BASE_CURRENCY } from "@/lib/fx/convert";
@@ -12,7 +12,7 @@ import { BillingCycle, BillingType, SubscriptionStatus } from "@prisma/client";
 import { z } from "zod";
 
 /**
- * 구독 목록 조회 파라미터
+ * Subscription list query parameters
  */
 export interface GetSubscriptionsParams {
   filter?: SubscriptionFilterOptions;
@@ -22,7 +22,7 @@ export interface GetSubscriptionsParams {
 }
 
 /**
- * 연결된 결제 정보
+ * Linked payment information
  */
 export interface LinkedPayment {
   id: string;
@@ -40,7 +40,7 @@ const MAX_NOTICE_DAYS = 365;
 const MAX_LEAD_DAYS = 365;
 
 /**
- * 구독 생성 스키마 — either an existing `appId` or a vendor `appName`
+ * Subscription create schema — either an existing `appId` or a vendor `appName`
  * (find-or-create) must be supplied.
  */
 const subscriptionBaseSchema = z.object({
@@ -50,17 +50,17 @@ const subscriptionBaseSchema = z.object({
   appWebsite: z.string().trim().max(500).nullish().or(z.literal("")),
   appLogoUrl: z.string().trim().max(1000).nullish().or(z.literal("")),
   billingCycle: z.enum(BillingCycle, {
-    error: "결제 주기를 선택해주세요",
+    error: "Please select a billing cycle",
   }),
   billingType: z.enum(BillingType).default(BillingType.FLAT_RATE),
   amount: z
     .string()
-    .min(1, "금액을 입력해주세요")
-    .regex(/^\d+(\.\d{1,2})?$/, "유효한 금액을 입력해주세요"),
+    .min(1, "Please enter an amount")
+    .regex(/^\d+(\.\d{1,2})?$/, "Please enter a valid amount"),
   currency: z.string().min(3).max(3).default(DEFAULT_BASE_CURRENCY),
   totalLicenses: z.coerce.number().int().positive().nullish(),
   usedLicenses: z.coerce.number().int().min(0).nullish(),
-  startDate: z.string().min(1, "시작일을 입력해주세요"),
+  startDate: z.string().min(1, "Please enter a start date"),
   endDate: optionalDate,
   renewalDate: optionalDate,
   autoRenewal: z.coerce.boolean().default(true),
@@ -69,13 +69,16 @@ const subscriptionBaseSchema = z.object({
   renewalAlert90: z.coerce.boolean().default(false),
   contractUrl: z
     .string()
-    .url("유효한 URL을 입력하세요")
+    .url("Please enter a valid URL")
     .nullish()
     .or(z.literal("")),
-  notes: z.string().max(MAX_NOTES, "메모는 1000자 이하여야 합니다").nullish(),
-  // Team/User 배정 (Phase 2)
+  notes: z
+    .string()
+    .max(MAX_NOTES, "Notes must be 1000 characters or fewer")
+    .nullish(),
+  // Team/User assignment (Phase 2)
   teamId: z.string().nullish(),
-  // Team 배정 (다중, Phase 3)
+  // Team assignment (multiple, Phase 3)
   teamIds: z.array(z.string()).default([]),
   assignedUserIds: z.array(z.string()).default([]),
   // SubHub taxonomy / finance dimensions
@@ -105,7 +108,7 @@ const subscriptionBaseSchema = z.object({
   // Cancellation overrides
   cancellationUrl: z
     .string()
-    .url("유효한 URL을 입력하세요")
+    .url("Please enter a valid URL")
     .nullish()
     .or(z.literal("")),
   cancellationNotes: z.string().max(2000).nullish(),
@@ -114,7 +117,7 @@ const subscriptionBaseSchema = z.object({
 export const createSubscriptionSchema = subscriptionBaseSchema.refine(
   (data) => Boolean(data.appId) || Boolean(data.appName?.trim()),
   {
-    message: "앱을 선택하거나 서비스명을 입력해주세요",
+    message: "Please select an app or enter a service name",
     path: ["appId"],
   }
 );
@@ -122,7 +125,7 @@ export const createSubscriptionSchema = subscriptionBaseSchema.refine(
 export type CreateSubscriptionData = z.infer<typeof createSubscriptionSchema>;
 
 /**
- * 구독 수정 스키마
+ * Subscription update schema
  */
 export const updateSubscriptionSchema = subscriptionBaseSchema.extend({
   status: z.enum(SubscriptionStatus).nullish(),
@@ -131,7 +134,7 @@ export const updateSubscriptionSchema = subscriptionBaseSchema.extend({
 export type UpdateSubscriptionData = z.infer<typeof updateSubscriptionSchema>;
 
 /**
- * Next.js redirect 에러 체크 유틸리티
+ * Utility to detect Next.js redirect errors
  */
 export function isRedirectError(error: unknown): boolean {
   return (

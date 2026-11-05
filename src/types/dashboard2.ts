@@ -8,7 +8,7 @@ import type {
   TopLicenseApp,
 } from "./dashboard";
 
-// Seat/License 타입은 @/types/dashboard 에서 re-export
+// Seat/License types are re-exported from @/types/dashboard
 export type {
   LicenseUsageTrend,
   LowUtilizationApp,
@@ -17,7 +17,7 @@ export type {
 };
 
 /**
- * Shadow IT 목록 항목
+ * Shadow IT list item
  */
 export interface ShadowITItem {
   id: string;
@@ -29,12 +29,12 @@ export interface ShadowITItem {
   estimatedCost?: number | null;
   discoveredAt: Date;
   userCount?: number;
-  isAI?: boolean; // Shadow AI 여부
+  isAI?: boolean; // whether it is Shadow AI
   category?: string | null;
 }
 
 /**
- * 앱 상태 분포 (Donut Chart용)
+ * App status distribution (for the donut chart)
  */
 export interface AppStatusDistribution {
   active: number;
@@ -44,7 +44,7 @@ export interface AppStatusDistribution {
 }
 
 /**
- * 보안 리스크 게이지 데이터
+ * Security risk gauge data
  */
 export interface SecurityRiskGauge {
   riskScore: number; // 0-100
@@ -54,7 +54,7 @@ export interface SecurityRiskGauge {
 }
 
 /**
- * 보안 알림 항목
+ * Security alert item
  */
 export interface SecurityAlertItem {
   type: "shadow_ai" | "high_risk" | "unapproved";
@@ -65,18 +65,18 @@ export interface SecurityAlertItem {
 }
 
 /**
- * 카테고리별 지출 (Stacked Bar + Progress List용)
+ * Spend by category (for the stacked bar + progress list)
  */
 export interface SpendByCategory {
   category: string;
   amount: number;
   percentage: number;
-  subscriptionCount?: number; // 해당 카테고리의 구독 건수
-  changeRate?: number; // 전월 대비 증감률 (%)
+  subscriptionCount?: number; // subscription count in this category
+  changeRate?: number; // month-over-month change (%)
 }
 
 /**
- * 긴급 갱신 요약
+ * Urgent renewal summary
  */
 export interface UrgentRenewalSummary {
   thirtyDayCount: number;
@@ -92,7 +92,7 @@ export interface UrgentRenewalSummary {
 }
 
 /**
- * Onboarding/Offboarding 사용자
+ * Onboarding/offboarding user
  */
 export interface OnboardingOffboardingUser {
   id: string;
@@ -107,7 +107,7 @@ export interface OnboardingOffboardingUser {
 }
 
 /**
- * Onboarding/Offboarding 요약
+ * Onboarding/offboarding summary
  */
 export interface OnboardingOffboardingSummary {
   onboarding: {
@@ -121,7 +121,7 @@ export interface OnboardingOffboardingSummary {
 }
 
 /**
- * Top Spending App (테이블용)
+ * Top spending app (for the table)
  */
 export interface TopSpendingApp {
   id: string;
@@ -130,38 +130,38 @@ export interface TopSpendingApp {
   userCount: number;
   monthlyCost: number;
   totalLicenses?: number;
-  unusedRate?: number; // 미사용률 (%)
+  unusedRate?: number; // unused rate (%)
 }
 
 /**
- * 플랫폼 상세 정보
+ * Platform details
  */
 export interface PlatformDetail {
   platform: "MACOS" | "WINDOWS" | "LINUX" | "OTHER";
-  osVersion?: string | null; // 예: "14.0", "10.0.19045", "Ubuntu 22.04"
-  deviceCount: number; // 해당 플랫폼의 디바이스 수
+  osVersion?: string | null; // e.g. "14.0", "10.0.19045", "Ubuntu 22.04"
+  deviceCount: number; // number of devices on this platform
 }
 
 /**
- * Device Detected App (FleetDM에서 수집된 앱)
+ * Device-detected app (collected from FleetDM)
  */
 export interface DeviceDetectedApp {
   id: string;
   name: string;
   version?: string | null;
-  deviceCount: number; // 설치된 디바이스 수
+  deviceCount: number; // number of devices it is installed on
   approvalStatus: "UNKNOWN" | "APPROVED" | "SHADOW_IT" | "BLOCKED";
-  platforms: string[]; // 설치된 OS 플랫폼 목록 (MACOS, WINDOWS, LINUX, OTHER) - 하위 호환성
-  platformDetails: PlatformDetail[]; // 플랫폼별 상세 정보 (OS 버전 포함)
+  platforms: string[]; // installed OS platforms (MACOS, WINDOWS, LINUX, OTHER) - backward compatibility
+  platformDetails: PlatformDetail[]; // per-platform details (including OS version)
   matchedApp?: {
     id: string;
     name: string;
   } | null;
-  isOsDefault: boolean; // OS 기본 앱 여부
+  isOsDefault: boolean; // whether it is an OS default app
 }
 
 /**
- * Device Detected Apps 통계 (OS 기본 앱 분리)
+ * Device-detected app statistics (OS default apps separated)
  */
 export interface DeviceDetectedAppsStats {
   total: number;
@@ -182,7 +182,7 @@ export interface DeviceDetectedAppsStats {
 }
 
 /**
- * OS Default App 레코드 (DB 타입)
+ * OS default app record (DB type)
  */
 export interface OsDefaultAppRecord {
   id: string;
@@ -198,7 +198,7 @@ export interface OsDefaultAppRecord {
 }
 
 /**
- * OS Default App 생성 입력
+ * OS default app create input
  */
 export interface CreateOsDefaultAppInput {
   name: string;
@@ -210,7 +210,7 @@ export interface CreateOsDefaultAppInput {
 }
 
 /**
- * 퇴사자 미회수 계정 요약
+ * Summary of unrevoked accounts of departed employees
  */
 export interface UnrecoveredAccountsSummary {
   totalCount: number;
@@ -224,7 +224,7 @@ export interface UnrecoveredAccountsSummary {
 }
 
 /**
- * Dashboard2 전체 Summary 데이터
+ * Dashboard2 overall summary data
  */
 export interface Dashboard2Summary {
   // Row 1: KPI Cards
@@ -232,7 +232,7 @@ export interface Dashboard2Summary {
   totalMonthlySpend: {
     amount: number;
     changeRate: number;
-    budgetRatio?: number; // 예산 대비 비율 (%)
+    budgetRatio?: number; // ratio to budget (%)
   };
   securityRisks: {
     unapproved: number;
@@ -250,7 +250,7 @@ export interface Dashboard2Summary {
     month: string;
     saasCost: number;
     nonSaasCost: number;
-    isCurrentMonth: boolean; // 현재 월(진행 중) 여부
+    isCurrentMonth: boolean; // whether this is the current (in-progress) month
   }[];
   licenseUsageTrend: LicenseUsageTrend[];
 

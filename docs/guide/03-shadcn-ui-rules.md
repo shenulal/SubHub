@@ -1,39 +1,39 @@
-# shadcn/ui Component Rules (컴포넌트 규칙)
+# shadcn/ui Component Rules
 
-> **황금률: shadcn/ui 컴포넌트는 절대 재생성하지 않는다**
+> **Golden rule: never recreate a shadcn/ui component**
 
 ---
 
-## 1. 핵심 원칙
+## 1. Core Principles
 
-### 1.1 컴포넌트 재생성 금지
+### 1.1 Do Not Recreate Components
 
 ```typescript
-// ❌ 금지: 기본 컴포넌트 새로 만들기
-// src/components/MyButton.tsx - 절대 금지!
+// ❌ Not allowed: building a new base component
+// src/components/MyButton.tsx - strictly prohibited!
 export function MyButton({ children }) {
   return <button className="px-4 py-2">{children}</button>;
 }
 
-// ✅ 필수: 기존 shadcn/ui 컴포넌트 사용
+// ✅ Required: use the existing shadcn/ui component
 import { Button } from "@/components/ui/button";
 
 export function SubmitButton() {
-  return <Button type="submit">제출</Button>;
+  return <Button type="submit">Submit</Button>;
 }
 ```
 
-### 1.2 왜 재생성을 금지하는가?
+### 1.2 Why Is Recreating Components Prohibited?
 
-- **일관성**: 전체 앱에서 동일한 디자인 시스템 유지
-- **유지보수**: 한 곳에서 스타일 변경 시 전체 반영
-- **테스트**: shadcn/ui 컴포넌트는 이미 테스트됨
-- **접근성**: 기본 a11y 지원 포함
-- **시간 절약**: 바퀴를 재발명하지 않음
+- **Consistency**: the same design system is maintained across the whole app
+- **Maintainability**: a style change in one place is reflected everywhere
+- **Testing**: shadcn/ui components are already tested
+- **Accessibility**: built-in a11y support is included
+- **Time savings**: no reinventing the wheel
 
 ---
 
-## 2. 사용 가능한 컴포넌트 (54개)
+## 2. Available Components (54)
 
 ### 2.1 Layout & Navigation
 
@@ -232,40 +232,40 @@ import { Item } from "@/components/ui/item";
 
 ---
 
-## 3. 컴포넌트 확인 방법
+## 3. How to Check Available Components
 
-### 3.1 파일 목록 확인
+### 3.1 Check the File List
 
 ```bash
-# 사용 가능한 모든 컴포넌트 확인
+# List all available components
 ls packages/ui-registry/src/components/ui/
 ```
 
-### 3.2 Storybook 실행
+### 3.2 Run Storybook
 
 ```bash
 npm run storybook
-# http://localhost:6006 에서 확인
+# View at http://localhost:6006
 ```
 
-### 3.3 소스 코드 확인
+### 3.3 Check the Source Code
 
 ```bash
-# 특정 컴포넌트 소스 확인
+# View the source of a specific component
 cat packages/ui-registry/src/components/ui/button.tsx
 ```
 
 ---
 
-## 4. 올바른 사용 패턴
+## 4. Correct Usage Patterns
 
-### 4.1 도메인 컴포넌트 생성 (권장)
+### 4.1 Creating Domain Components (Recommended)
 
-shadcn/ui 컴포넌트를 **합성**하여 도메인 컴포넌트 생성
+Create domain components by **composing** shadcn/ui components
 
 ```typescript
 // src/components/dashboard/stats-card.tsx
-// ✅ 올바른 패턴: shadcn/ui 컴포넌트 합성
+// ✅ Correct pattern: composing shadcn/ui components
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -297,11 +297,11 @@ export function StatsCard({ title, value, badge, icon }: StatsCardProps) {
 }
 ```
 
-### 4.2 Form 컴포넌트 생성
+### 4.2 Creating Form Components
 
 ```typescript
 // src/components/forms/app-form.tsx
-// ✅ shadcn/ui Form 컴포넌트 활용
+// ✅ Using the shadcn/ui Form components
 
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -323,7 +323,7 @@ export function AppForm({ onSubmit }: AppFormProps) {
           name="name"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>앱 이름</FormLabel>
+              <FormLabel>App Name</FormLabel>
               <FormControl>
                 <Input placeholder="Slack" {...field} />
               </FormControl>
@@ -337,11 +337,11 @@ export function AppForm({ onSubmit }: AppFormProps) {
           name="category"
           render={({ field }) => (
             <FormItem>
-              <FormLabel>카테고리</FormLabel>
+              <FormLabel>Category</FormLabel>
               <Select onValueChange={field.onChange} defaultValue={field.value}>
                 <FormControl>
                   <SelectTrigger>
-                    <SelectValue placeholder="선택" />
+                    <SelectValue placeholder="Select" />
                   </SelectTrigger>
                 </FormControl>
                 <SelectContent>
@@ -354,7 +354,7 @@ export function AppForm({ onSubmit }: AppFormProps) {
           )}
         />
 
-        <Button type="submit">저장</Button>
+        <Button type="submit">Save</Button>
       </form>
     </Form>
   );
@@ -363,47 +363,47 @@ export function AppForm({ onSubmit }: AppFormProps) {
 
 ---
 
-## 5. 커스텀 컴포넌트 위치
+## 5. Custom Component Locations
 
-### 5.1 디렉토리 구조
+### 5.1 Directory Structure
 
 ```
 src/components/
-├── ui/                    # ❌ 여기에 추가 금지! (서브모듈 심볼릭 링크)
-├── dashboard/             # ✅ 대시보드 도메인 컴포넌트
+├── ui/                    # ❌ Do not add anything here! (submodule symlink)
+├── dashboard/             # ✅ Dashboard domain components
 │   ├── stats-card.tsx
 │   ├── stats-card.test.tsx
 │   ├── app-list.tsx
 │   └── app-list.test.tsx
-├── forms/                 # ✅ 폼 컴포넌트
+├── forms/                 # ✅ Form components
 │   ├── app-form.tsx
 │   └── app-form.test.tsx
-├── charts/                # ✅ 차트 컴포넌트
+├── charts/                # ✅ Chart components
 │   └── spending-chart.tsx
-└── layouts/               # ✅ 레이아웃 컴포넌트
+└── layouts/               # ✅ Layout components
     ├── dashboard-header.tsx
     └── dashboard-sidebar.tsx
 ```
 
-### 5.2 컴포넌트 생성 체크리스트
+### 5.2 Component Creation Checklist
 
 ```markdown
-새 컴포넌트 생성 전:
-[ ] packages/ui-registry/src/components/ui/에 유사 컴포넌트 있는지 확인
-[ ] Storybook에서 사용 가능한 컴포넌트 확인
-[ ] 기존 shadcn/ui로 해결 가능한지 검토
+Before creating a new component:
+[ ] Check whether a similar component exists in packages/ui-registry/src/components/ui/
+[ ] Check the available components in Storybook
+[ ] Review whether existing shadcn/ui components can solve the need
 
-새 컴포넌트 생성 시:
-[ ] src/components/[domain]/ 폴더에 생성
-[ ] shadcn/ui 컴포넌트를 합성하여 구현
-[ ] 테스트 파일 함께 생성 (.test.tsx)
+When creating a new component:
+[ ] Create it in the src/components/[domain]/ folder
+[ ] Implement it by composing shadcn/ui components
+[ ] Create the test file alongside it (.test.tsx)
 ```
 
 ---
 
-## 6. 테스트 작성 가이드
+## 6. Test Writing Guide
 
-### 6.1 도메인 컴포넌트 테스트
+### 6.1 Testing Domain Components
 
 ```typescript
 // src/components/dashboard/stats-card.test.tsx
@@ -441,60 +441,60 @@ describe('StatsCard', () => {
 });
 ```
 
-### 6.2 테스트하지 않아도 되는 것
+### 6.2 What You Do Not Need to Test
 
 ```typescript
-// ❌ shadcn/ui 내부 동작 테스트 불필요
-// Button이 클릭 가능한지, Dialog가 열리는지 등은 이미 테스트됨
+// ❌ No need to test shadcn/ui internal behaviour
+// Whether a Button is clickable, whether a Dialog opens, etc. is already tested
 
-// ✅ 도메인 로직만 테스트
-// - 올바른 데이터가 표시되는지
-// - 이벤트 핸들러가 올바르게 호출되는지
-// - 조건부 렌더링이 동작하는지
+// ✅ Test domain logic only
+// - The correct data is displayed
+// - Event handlers are called correctly
+// - Conditional rendering works
 ```
 
 ---
 
-## 7. 자주 하는 실수
+## 7. Common Mistakes
 
-### 7.1 중복 컴포넌트 생성
+### 7.1 Creating Duplicate Components
 
 ```typescript
-// ❌ 실수: 이미 있는 컴포넌트 재생성
+// ❌ Mistake: recreating a component that already exists
 // src/components/common/LoadingSpinner.tsx
 export function LoadingSpinner() {
   return <div className="animate-spin">...</div>;
 }
 
-// ✅ 해결: 기존 컴포넌트 사용
+// ✅ Fix: use the existing component
 import { Spinner } from "@/components/ui/spinner";
-// 또는
+// or
 import { Skeleton } from "@/components/ui/skeleton";
 ```
 
-### 7.2 스타일 오버라이드
+### 7.2 Style Overrides
 
 ```typescript
-// ❌ 실수: 인라인 스타일로 완전히 다른 버튼 만들기
+// ❌ Mistake: building a completely different button with inline styles
 <Button style={{ backgroundColor: 'purple', borderRadius: '20px' }}>
 
-// ✅ 해결: variant 사용 또는 className으로 확장
+// ✅ Fix: use a variant or extend via className
 <Button variant="secondary" className="rounded-full bg-purple-500">
 ```
 
-### 7.3 직접 HTML 요소 사용
+### 7.3 Using Raw HTML Elements
 
 ```typescript
-// ❌ 실수: 직접 <button> 사용
+// ❌ Mistake: using <button> directly
 <button onClick={handleClick}>Click me</button>
 
-// ✅ 해결: shadcn/ui Button 사용
+// ✅ Fix: use the shadcn/ui Button
 <Button onClick={handleClick}>Click me</Button>
 ```
 
 ---
 
-## 8. 다음 단계
+## 8. Next Steps
 
-- [04-test-templates.md](./04-test-templates.md) - 복사해서 사용하는 테스트 템플릿
-- [05-common-patterns.md](./05-common-patterns.md) - 공통 테스트 패턴
+- [04-test-templates.md](./04-test-templates.md) - Copy-and-use test templates
+- [05-common-patterns.md](./05-common-patterns.md) - Common test patterns

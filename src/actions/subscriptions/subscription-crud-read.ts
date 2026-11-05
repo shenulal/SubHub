@@ -2,7 +2,7 @@
 "use server";
 
 /**
- * Subscription 조회 관련 Server Actions
+ * Subscription read Server Actions
  */
 
 import { requireOrganization } from "@/lib/auth/require-auth";
@@ -69,7 +69,7 @@ async function withMonthlyBase(
 }
 
 /**
- * 구독 목록 조회
+ * List subscriptions
  */
 export async function getSubscriptions(
   params: GetSubscriptionsParams = {}
@@ -117,7 +117,7 @@ export async function getSubscriptions(
 }
 
 /**
- * 구독 상세 조회
+ * Get subscription details
  */
 export async function getSubscription(
   id: string
@@ -147,11 +147,11 @@ export async function getSubscription(
   return mapSubscriptionDetail(subscription);
 }
 
-// 동일 요청 내에서 구독 상세를 중복 호출할 때 캐시로 DB 조회를 한 번만 수행
+// Cache so repeated subscription-detail calls within one request hit the DB only once
 export const getSubscriptionCached = cache(getSubscription);
 
 /**
- * 구독에 연결된 결제 내역 조회
+ * Get payment records linked to a subscription
  */
 export async function getLinkedPayments(
   subscriptionId: string
@@ -165,7 +165,7 @@ export async function getLinkedPayments(
     });
 
     if (!subscription) {
-      return { success: false, message: "구독을 찾을 수 없습니다" };
+      return { success: false, message: "Subscription not found" };
     }
 
     const payments = await prisma.paymentRecord.findMany({
@@ -194,6 +194,6 @@ export async function getLinkedPayments(
     };
   } catch (error) {
     logger.error({ err: error }, "getLinkedPayments error");
-    return { success: false, message: "연결된 결제 내역 조회에 실패했습니다" };
+    return { success: false, message: "Failed to load linked payment records" };
   }
 }

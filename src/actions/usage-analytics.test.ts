@@ -52,7 +52,7 @@ describe("Usage Analytics Server Actions", () => {
   });
 
   describe("getUsageReport", () => {
-    it("인증되지 않은 경우 login으로 리다이렉트해야 한다", async () => {
+    it("redirects to login when unauthenticated", async () => {
       mockedRequireOrganization.mockRejectedValueOnce(
         new Error("NEXT_REDIRECT:/login")
       );
@@ -67,7 +67,7 @@ describe("Usage Analytics Server Actions", () => {
       ).rejects.toThrow("NEXT_REDIRECT:/login");
     });
 
-    it("사용 현황 데이터를 반환해야 한다", async () => {
+    it("returns usage data", async () => {
       setupAdminAuth();
 
       // getSubscribedAppIds: subscription.findMany
@@ -79,7 +79,7 @@ describe("Usage Analytics Server Actions", () => {
       // totalApps: app.count
       vi.mocked(prisma.app.count).mockResolvedValueOnce(11 as never);
 
-      // Promise.all의 4개 병렬 호출:
+      // The 4 parallel calls in Promise.all:
 
       // 1) getActiveUsersTrendInternal: userAppAccess.findMany
       vi.mocked(prisma.userAppAccess.findMany).mockResolvedValueOnce([
@@ -139,7 +139,7 @@ describe("Usage Analytics Server Actions", () => {
       expect(result.summary.totalApps).toBe(11);
     });
 
-    it("구독 앱이 없어도 totalApps는 실제 ACTIVE 앱 수를 반환해야 한다", async () => {
+    it("returns the real ACTIVE app count for totalApps even with no subscribed apps", async () => {
       setupAdminAuth();
 
       // No subscriptions
@@ -162,7 +162,7 @@ describe("Usage Analytics Server Actions", () => {
       expect(result.summary.unusedAppsCount).toBe(0);
     });
 
-    it("teamId 필터가 사용자 접근 집계에 반영되어야 한다", async () => {
+    it("applies the teamId filter to user access aggregation", async () => {
       setupAdminAuth();
 
       // getSubscribedAppIds with team filter
@@ -217,7 +217,7 @@ describe("Usage Analytics Server Actions", () => {
       );
     });
 
-    it("userId 필터가 사용자 접근 집계에 반영되어야 한다", async () => {
+    it("applies the userId filter to user access aggregation", async () => {
       setupAdminAuth();
 
       vi.mocked(prisma.subscription.findMany).mockResolvedValueOnce([
@@ -267,7 +267,7 @@ describe("Usage Analytics Server Actions", () => {
   });
 
   describe("getActiveUsersTrend", () => {
-    it("인증되지 않은 경우 login으로 리다이렉트해야 한다", async () => {
+    it("redirects to login when unauthenticated", async () => {
       mockedRequireOrganization.mockRejectedValueOnce(
         new Error("NEXT_REDIRECT:/login")
       );
@@ -278,7 +278,7 @@ describe("Usage Analytics Server Actions", () => {
       ).rejects.toThrow("NEXT_REDIRECT:/login");
     });
 
-    it("활성 사용자 추이 데이터를 반환해야 한다", async () => {
+    it("returns active user trend data", async () => {
       setupAdminAuth();
 
       // getSubscribedAppIds
@@ -304,7 +304,7 @@ describe("Usage Analytics Server Actions", () => {
   });
 
   describe("getAppUsageRanking", () => {
-    it("인증되지 않은 경우 login으로 리다이렉트해야 한다", async () => {
+    it("redirects to login when unauthenticated", async () => {
       mockedRequireOrganization.mockRejectedValueOnce(
         new Error("NEXT_REDIRECT:/login")
       );
@@ -315,7 +315,7 @@ describe("Usage Analytics Server Actions", () => {
       );
     });
 
-    it("앱별 사용률 순위를 반환해야 한다", async () => {
+    it("returns the usage rate ranking per app", async () => {
       setupAdminAuth();
 
       // getSubscribedAppIds
@@ -356,7 +356,7 @@ describe("Usage Analytics Server Actions", () => {
   });
 
   describe("getUnusedApps", () => {
-    it("인증되지 않은 경우 login으로 리다이렉트해야 한다", async () => {
+    it("redirects to login when unauthenticated", async () => {
       mockedRequireOrganization.mockRejectedValueOnce(
         new Error("NEXT_REDIRECT:/login")
       );
@@ -365,7 +365,7 @@ describe("Usage Analytics Server Actions", () => {
       await expect(getUnusedApps()).rejects.toThrow("NEXT_REDIRECT:/login");
     });
 
-    it("미사용 앱 목록에 monthlyWastedCost가 포함되어야 한다", async () => {
+    it("includes monthlyWastedCost in the unused app list", async () => {
       setupAdminAuth();
 
       vi.mocked(prisma.app.findMany).mockResolvedValueOnce([
@@ -392,7 +392,7 @@ describe("Usage Analytics Server Actions", () => {
       expect(result[0]).toHaveProperty("monthlyWastedCost", 100000);
     });
 
-    it("MONTHLY 구독의 월간 비용을 그대로 반환해야 한다", async () => {
+    it("returns the monthly cost of a MONTHLY subscription as is", async () => {
       setupAdminAuth();
 
       vi.mocked(prisma.app.findMany).mockResolvedValueOnce([
@@ -412,7 +412,7 @@ describe("Usage Analytics Server Actions", () => {
       expect(result[0].monthlyWastedCost).toBe(50000);
     });
 
-    it("ONE_TIME 구독은 월간 비용 0으로 계산해야 한다", async () => {
+    it("calculates a monthly cost of 0 for a ONE_TIME subscription", async () => {
       setupAdminAuth();
 
       vi.mocked(prisma.app.findMany).mockResolvedValueOnce([
@@ -432,7 +432,7 @@ describe("Usage Analytics Server Actions", () => {
       expect(result[0].monthlyWastedCost).toBe(0);
     });
 
-    it("QUARTERLY 구독의 월간 비용은 amount/3 이어야 한다", async () => {
+    it("sets the monthly cost of a QUARTERLY subscription to amount/3", async () => {
       setupAdminAuth();
 
       vi.mocked(prisma.app.findMany).mockResolvedValueOnce([

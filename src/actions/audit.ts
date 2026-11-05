@@ -2,7 +2,7 @@
 "use server";
 
 /**
- * Audit Log (감사 로그) 관련 Server Actions
+ * Audit log Server Actions
  */
 
 import { auth } from "@/lib/auth";
@@ -43,8 +43,8 @@ function buildAuditLogWhere(
   }
 
   if (filters.action) {
-    // 액션 필터는 CREATE_APP, CREATE_SUBSCRIPTION 등 세부 코드까지 포함할 수 있으므로
-    // 카테고리(예: CREATE) 기준으로 시작 문자열 매칭을 사용한다.
+    // The action filter may include detailed codes such as CREATE_APP or CREATE_SUBSCRIPTION,
+    // so match on the category prefix (e.g. CREATE).
     where.action = { startsWith: filters.action };
   }
 
@@ -81,8 +81,8 @@ function buildAuditLogWhere(
 // ==================== Server Actions ====================
 
 /**
- * 감사 로그 목록 조회 (페이지네이션)
- * 권한: ADMIN 전체, MEMBER 본인만, VIEWER 불가
+ * List audit logs (paginated)
+ * Access: ADMIN sees all, MEMBER sees own entries only, VIEWER denied
  */
 export async function getAuditLogs(
   filters: AuditLogFilters
@@ -94,7 +94,7 @@ export async function getAuditLogs(
 
   const { role, id: userId } = session.user;
 
-  // VIEWER는 감사 로그 접근 불가
+  // VIEWER cannot access audit logs
   if (role === "VIEWER") {
     return {
       logs: [],
@@ -158,7 +158,7 @@ export async function getAuditLogs(
 }
 
 /**
- * 감사 로그 내보내기 데이터 조회 (페이지네이션 없음)
+ * Get audit log export data (no pagination)
  */
 export async function getAuditLogExportData(
   filters: AuditLogFilters
@@ -209,8 +209,8 @@ export async function getAuditLogExportData(
 }
 
 /**
- * 단일 감사 로그 조회
- * 권한: ADMIN 전체, MEMBER 본인만, VIEWER 불가
+ * Get a single audit log entry
+ * Access: ADMIN sees all, MEMBER sees own entries only, VIEWER denied
  */
 export async function getAuditLogById(
   id: string
@@ -222,7 +222,7 @@ export async function getAuditLogById(
 
   const { role, id: userId } = session.user;
 
-  // VIEWER는 감사 로그 접근 불가
+  // VIEWER cannot access audit logs
   if (role === "VIEWER") {
     return null;
   }
@@ -243,12 +243,12 @@ export async function getAuditLogById(
     return null;
   }
 
-  // 조직 검증
+  // Verify organization
   if (log.organizationId !== session.user.organizationId) {
-    throw new Error("접근 권한이 없습니다");
+    throw new Error("You do not have access permission");
   }
 
-  // MEMBER는 본인 로그만 조회 가능
+  // MEMBER can only view their own entries
   if (role === "MEMBER" && log.userId !== userId) {
     return null;
   }
@@ -270,8 +270,8 @@ export async function getAuditLogById(
 }
 
 /**
- * 필터 옵션 조회 (액션 유형, 엔티티 유형, 사용자 목록)
- * 권한: ADMIN/MEMBER만 허용, VIEWER 불가
+ * Get filter options (action types, entity types, user list)
+ * Access: ADMIN/MEMBER only, VIEWER denied
  */
 export async function getAuditLogFilterOptions(): Promise<AuditLogFilterOptions> {
   const session = await auth();
@@ -279,7 +279,7 @@ export async function getAuditLogFilterOptions(): Promise<AuditLogFilterOptions>
     redirect("/login");
   }
 
-  // VIEWER는 감사 로그 접근 불가
+  // VIEWER cannot access audit logs
   if (session.user.role === "VIEWER") {
     return { actions: [], entityTypes: [], users: [], teams: [] };
   }
@@ -295,7 +295,7 @@ export async function getAuditLogFilterOptions(): Promise<AuditLogFilterOptions>
       ? { id: session.user.teamId }
       : { id: "__none__" };
 
-  // 사용자 목록 조회
+  // Fetch user list
   const users = await prisma.user.findMany({
     where: userWhere,
     select: {
@@ -316,7 +316,7 @@ export async function getAuditLogFilterOptions(): Promise<AuditLogFilterOptions>
     orderBy: { name: "asc" },
   });
 
-  // 정적 옵션 (실제 DB에서 distinct 쿼리도 가능)
+  // Static options (a distinct query against the DB is also possible)
   const actions = [
     "CREATE",
     "UPDATE",

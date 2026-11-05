@@ -7,7 +7,7 @@ import { useTranslations } from "next-intl";
 import { useTheme } from "next-themes";
 import { useEffect, useMemo, useState } from "react";
 
-// 다크 모드 미리보기 색상
+// Dark mode preview colours
 // (Materio dark palette: paper #312D4B, text #E7E3FC, primary #8C57FF)
 const darkColors = {
   background: "#312d4b",
@@ -18,7 +18,7 @@ const darkColors = {
   border: "#4a4466",
 };
 
-// 라이트 모드 미리보기 색상
+// Light mode preview colours
 // (Materio light palette: paper #FFFFFF, text #2E263D, primary #8C57FF)
 const lightColors = {
   background: "#ffffff",
@@ -58,7 +58,7 @@ export function AppearanceSettingsClient() {
     [t]
   );
 
-  // 선택한 테마에 따른 미리보기 색상 결정
+  // Pick preview colours for the selected theme
   const previewColors = useMemo(() => {
     let previewTheme = theme;
     if (theme === "system" && typeof window !== "undefined") {
@@ -149,7 +149,7 @@ export function AppearanceSettingsClient() {
         })}
       </div>
 
-      {/* 테마 미리보기 - 선택한 테마에 따라 색상 변경 */}
+      {/* Theme preview - colours follow the selected theme */}
       <div className="space-y-4">
         <Label className="text-[0.9375rem] font-medium">
           {t("settings.appearance.preview")}

@@ -47,14 +47,14 @@ export interface TopCostApp {
 // ============================================================================
 
 /**
- * 부서별 월간 활동 추이 + 앱 사용률 조회
- * - AuditLog 기반 활동량 집계
- * - UserAppAccess 기반 사용률 계산
+ * Get monthly activity trend and app usage by department
+ * - Activity volume aggregated from AuditLog
+ * - Usage rate calculated from UserAppAccess
  */
 export async function getDepartmentActivityReport(): Promise<DepartmentActivityReport> {
   const { organizationId } = await requireOrganization();
 
-  // 1. 팀(부서) 목록 조회
+  // 1. Fetch teams (departments)
   const teams = await prisma.team.findMany({
     where: { organizationId },
     select: {
@@ -79,11 +79,11 @@ export async function getDepartmentActivityReport(): Promise<DepartmentActivityR
     };
   }
 
-  // 2. 12개월 기간 설정
+  // 2. Set the 12-month window
   const now = new Date();
   const startDate = new Date(now.getFullYear(), now.getMonth() - 11, 1);
 
-  // 3. AuditLog에서 부서별 월간 활동 집계
+  // 3. Aggregate monthly activity per department from AuditLog
   const auditLogs = await prisma.auditLog.findMany({
     where: {
       organizationId,
@@ -99,7 +99,7 @@ export async function getDepartmentActivityReport(): Promise<DepartmentActivityR
     },
   });
 
-  // 팀별 월별 활동 카운트
+  // Monthly activity counts per team
   const teamMonthlyCount = new Map<string, Map<string, number>>();
   const totalMonthlyCount = new Map<string, number>();
 
@@ -109,18 +109,18 @@ export async function getDepartmentActivityReport(): Promise<DepartmentActivityR
 
     const monthKey = `${log.createdAt.getFullYear()}-${String(log.createdAt.getMonth() + 1).padStart(2, "0")}`;
 
-    // 팀별 카운트
+    // Per-team count
     if (!teamMonthlyCount.has(teamId)) {
       teamMonthlyCount.set(teamId, new Map());
     }
     const teamMap = teamMonthlyCount.get(teamId)!;
     teamMap.set(monthKey, (teamMap.get(monthKey) || 0) + 1);
 
-    // 전체 카운트
+    // Overall count
     totalMonthlyCount.set(monthKey, (totalMonthlyCount.get(monthKey) || 0) + 1);
   }
 
-  // 4. UserAppAccess에서 30일 내 활성 사용자 집계
+  // 4. Aggregate active users within 30 days from UserAppAccess
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
@@ -137,7 +137,7 @@ export async function getDepartmentActivityReport(): Promise<DepartmentActivityR
     },
   });
 
-  // 팀별 활성 사용자 및 앱 사용 집계
+  // Aggregate active users and app usage per team
   const teamActiveUsers = new Map<string, Set<string>>();
   const teamActiveApps = new Map<string, Set<string>>();
   const teamAppUsers = new Map<string, Map<string, Set<string>>>();
@@ -146,19 +146,19 @@ export async function getDepartmentActivityReport(): Promise<DepartmentActivityR
     const teamId = access.user?.teamId;
     if (!teamId) continue;
 
-    // 활성 사용자
+    // Active users
     if (!teamActiveUsers.has(teamId)) {
       teamActiveUsers.set(teamId, new Set());
     }
     teamActiveUsers.get(teamId)!.add(access.userId);
 
-    // 활성 앱
+    // Active apps
     if (!teamActiveApps.has(teamId)) {
       teamActiveApps.set(teamId, new Set());
     }
     teamActiveApps.get(teamId)!.add(access.appId);
 
-    // 앱별 사용자
+    // Users per app
     if (!teamAppUsers.has(teamId)) {
       teamAppUsers.set(teamId, new Map());
     }
@@ -169,7 +169,7 @@ export async function getDepartmentActivityReport(): Promise<DepartmentActivityR
     appMap.get(access.app.name)!.add(access.userId);
   }
 
-  // 5. 월 키 생성 (12개월)
+  // 5. Build month keys (12 months)
   const monthKeys: string[] = [];
   for (let i = 0; i < 12; i++) {
     const d = new Date(now.getFullYear(), now.getMonth() - 11 + i, 1);
@@ -178,7 +178,7 @@ export async function getDepartmentActivityReport(): Promise<DepartmentActivityR
     );
   }
 
-  // 6. 부서별 데이터 조합
+  // 6. Assemble per-department data
   const departments: DepartmentActivityItem[] = teams.map((team) => {
     const teamMap = teamMonthlyCount.get(team.id) || new Map();
     const monthlyActivity = monthKeys.map((month) => ({
@@ -190,7 +190,7 @@ export async function getDepartmentActivityReport(): Promise<DepartmentActivityR
     const activeAppSet = teamActiveApps.get(team.id) || new Set();
     const appUsersMap = teamAppUsers.get(team.id) || new Map();
 
-    // 앱별 사용률 (활성사용자/전체멤버)
+    // Usage rate per app (active users / total members)
     const totalUsers = team.members.length;
     const appUsage = Array.from(appUsersMap.entries())
       .map(([appName, users]) => ({
@@ -213,13 +213,13 @@ export async function getDepartmentActivityReport(): Promise<DepartmentActivityR
     };
   });
 
-  // 7. 전체 월간 활동
+  // 7. Overall monthly activity
   const totalMonthlyActivity = monthKeys.map((month) => ({
     month,
     count: totalMonthlyCount.get(month) || 0,
   }));
 
-  // 8. 요약
+  // 8. Summary
   const totalActivityCount = Array.from(totalMonthlyCount.values()).reduce(
     (sum, count) => sum + count,
     0
@@ -244,21 +244,21 @@ export async function getDepartmentActivityReport(): Promise<DepartmentActivityR
 // ============================================================================
 
 /**
- * 부서별/전체 연간 활동 히트맵 데이터 조회
- * @param teamId - 특정 부서만 조회 (optional, 없으면 전체)
+ * Get annual activity heatmap data per department or overall
+ * @param teamId - Limit to one department (optional; all when omitted)
  */
 export async function getActivityHeatmapByDept(
   teamId?: string
 ): Promise<ActivityHeatmapData> {
   const { organizationId } = await requireOrganization();
 
-  // 1년 기간 설정
+  // Set the one-year window
   const now = new Date();
   const startDate = new Date(now);
   startDate.setFullYear(startDate.getFullYear() - 1);
   startDate.setHours(0, 0, 0, 0);
 
-  // 팀 필터 조건 구성
+  // Build the team filter
   const whereCondition: Record<string, unknown> = {
     organizationId,
     createdAt: { gte: startDate },
@@ -268,20 +268,20 @@ export async function getActivityHeatmapByDept(
     whereCondition.user = { teamId };
   }
 
-  // AuditLog 조회
+  // Fetch AuditLog
   const logs = await prisma.auditLog.findMany({
     where: whereCondition,
     select: { createdAt: true },
   });
 
-  // 일별 집계
+  // Daily aggregation
   const dailyCount = new Map<string, number>();
   for (const log of logs) {
     const dateKey = log.createdAt.toISOString().split("T")[0];
     dailyCount.set(dateKey, (dailyCount.get(dateKey) || 0) + 1);
   }
 
-  // 365일 데이터 생성 (빈 날짜도 포함)
+  // Generate 365 days of data (including empty days)
   const data: Array<{ date: string; count: number }> = [];
   for (let i = 364; i >= 0; i--) {
     const date = new Date(now);
@@ -310,19 +310,19 @@ export async function getActivityHeatmapByDept(
 // ============================================================================
 
 /**
- * 비용 상위 앱 + MoM 추세 조회
- * @param limit - 반환할 앱 개수 (기본 10)
+ * Get top-cost apps with MoM trend
+ * @param limit - Number of apps to return (default 10)
  */
 export async function getTopCostAppsWithTrend(
   limit: number = 10
 ): Promise<TopCostApp[]> {
   const { organizationId } = await requireOrganization();
 
-  // 이전 월 끝 시점 설정 (MoM 비교용)
+  // End of the previous month (for MoM comparison)
   const now = new Date();
   const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
 
-  // ACTIVE 구독 조회 (현재)
+  // Fetch ACTIVE subscriptions (current)
   const subscriptions = await prisma.subscription.findMany({
     where: {
       organizationId,
@@ -345,7 +345,7 @@ export async function getTopCostAppsWithTrend(
     },
   });
 
-  // 앱별 비용 및 사용자 집계
+  // Aggregate cost and users per app
   const appCostMap = new Map<
     string,
     {
@@ -377,7 +377,7 @@ export async function getTopCostAppsWithTrend(
     }
   }
 
-  // 이전 달 구독 조회 (비용 추세 계산용)
+  // Fetch last month's subscriptions (for the cost trend)
   const lastMonthSubs = await prisma.subscription.findMany({
     where: {
       organizationId,
@@ -403,7 +403,7 @@ export async function getTopCostAppsWithTrend(
     );
   }
 
-  // 결과 조합
+  // Assemble results
   const result: TopCostApp[] = Array.from(appCostMap.entries())
     .map(([appId, data]) => {
       const lastCost = lastMonthCostMap.get(appId) || 0;

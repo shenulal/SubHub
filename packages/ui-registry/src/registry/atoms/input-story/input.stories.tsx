@@ -32,14 +32,14 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 /**
- * 기본 input 필드 스타일입니다. 이메일, 텍스트 등 다양한 타입의 입력을 받을 수 있으며,
- * placeholder로 입력 안내를 제공합니다. 폼에서 가장 기본적인 입력 컴포넌트입니다.
+ * The default input field style. It accepts various input types such as email and text,
+ * and uses the placeholder for guidance. It is the most basic input component in forms.
  */
 export const Default: Story = {};
 
 /**
- * 파일 업로드를 위한 input 필드입니다. type="file"을 사용하여 사용자가 로컬 파일을 선택할 수 있으며,
- * Label과 함께 사용하여 접근성을 향상시킵니다. 프로필 사진, 문서 첨부 등에 활용됩니다.
+ * An input field for file uploads. type="file" lets users choose a local file;
+ * pair it with a Label for accessibility. Used for profile photos, document attachments and similar.
  */
 export const File: Story = {
   args: {
@@ -56,16 +56,16 @@ export const File: Story = {
 };
 
 /**
- * 비활성화된 input 필드입니다. disabled prop을 사용하여 입력을 막고 흐릿하게 표시하며,
- * 현재 입력을 받을 수 없는 상태임을 시각적으로 나타냅니다. 조건부 폼에서 사용됩니다.
+ * A disabled input field. The disabled prop blocks input and dims the field,
+ * showing visually that it cannot accept input right now. Used in conditional forms.
  */
 export const Disabled: Story = {
   args: { disabled: true },
 };
 
 /**
- * Label과 함께 사용하는 input 필드입니다. Label 컴포넌트를 input 위나 옆에 배치하여
- * 사용자에게 명확한 입력 안내를 제공합니다. htmlFor와 id를 연결하여 접근성을 보장합니다.
+ * An input field used with a Label. Placing the Label component above or beside the input
+ * gives users clear guidance. Linking htmlFor and id ensures accessibility.
  */
 export const WithLabel: Story = {
   render: (args) => (
@@ -77,8 +77,8 @@ export const WithLabel: Story = {
 };
 
 /**
- * 도움말 텍스트가 있는 input 필드입니다. input 아래에 설명 텍스트를 배치하여
- * 추가 안내나 입력 형식 정보를 제공합니다. 복잡한 입력 요구사항을 설명할 때 유용합니다.
+ * An input field with helper text. Descriptive text below the input
+ * provides extra guidance or format information. Useful for explaining complex input requirements.
  */
 export const WithHelperText: Story = {
   render: (args) => (
@@ -91,8 +91,8 @@ export const WithHelperText: Story = {
 };
 
 /**
- * Button과 함께 사용하는 input 필드입니다. input 옆에 제출 버튼을 배치하여
- * 즉시 액션을 수행할 수 있습니다. 검색, 구독, 빠른 입력 폼 등에 적합합니다.
+ * An input field used with a Button. A submit button beside the input
+ * allows immediate action. Suited to search, subscribe and quick-entry forms.
  */
 export const WithButton: Story = {
   render: (args) => (
@@ -122,12 +122,12 @@ export const ShouldEnterText: Story = {
 };
 
 /**
- * Ref 사용 예제: Input에 ref를 전달하여 DOM 요소에 직접 접근합니다.
- * 이 예제는 ref를 통한 focus와 select 제어를 보여줍니다.
+ * Ref example: pass a ref to Input to access the DOM element directly.
+ * This example shows controlling focus and select through the ref.
  */
 export const WithRef: Story = {
   render: () => {
-    // 🎯 목적: HTMLInputElement에 대한 ref를 생성하여 focus()와 select() 메서드 접근
+    // 🎯 Purpose: Create an HTMLInputElement ref to access the focus() and select() methods
     const inputRef = useRef<HTMLInputElement>(null);
 
     return (
@@ -162,17 +162,17 @@ export const WithRef: Story = {
     );
   },
   play: async ({ canvasElement }) => {
-    // 🎯 목적: play function을 통해 ref 동작을 자동으로 테스트
+    // 🎯 Purpose: Automatically test ref behavior via a play function
     const canvas = within(canvasElement);
     const input = canvas.getByLabelText("Target Input") as HTMLInputElement;
     const focusButton = canvas.getByRole("button", { name: "Focus Input" });
     const selectButton = canvas.getByRole("button", { name: "Select Text" });
 
-    // "Focus Input" 버튼 클릭하여 input에 focus 트리거
+    // Click "Focus Input" to focus the input
     await userEvent.click(focusButton);
     await expect(input).toHaveFocus();
 
-    // "Select Text" 버튼 클릭하여 텍스트 선택 트리거
+    // Click "Select Text" to select the text
     await userEvent.click(selectButton);
     await expect(input.selectionStart).toBe(0);
     await expect(input.selectionEnd).toBe(input.value.length);

@@ -1,5 +1,5 @@
-// FleetDM 동기화 Cron Job
-// Schedule: 매 3시간 (vercel.json에서 설정)
+// FleetDM sync cron job
+// Schedule: every 3 hours (configured in vercel.json)
 import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { withCronAuth } from "@/lib/middleware";
@@ -11,7 +11,7 @@ async function handleSync(request: NextRequest) {
   const startTime = Date.now();
 
   try {
-    // 2. 활성 FleetDM 연동 조회
+    // 2. Fetch active FleetDM integrations
     const integrations = await prisma.integration.findMany({
       where: {
         type: "FLEETDM",
@@ -32,7 +32,7 @@ async function handleSync(request: NextRequest) {
       });
     }
 
-    // 3. 각 연동별 동기화 실행
+    // 3. Run the sync for each integration
     const results: Array<{
       organizationId: string;
       hostsSync: number;
@@ -68,7 +68,7 @@ async function handleSync(request: NextRequest) {
           teamId: credentials.teamId,
         });
 
-        // 연결 테스트
+        // Connection test
         const isConnected = await client.testConnection();
         if (!isConnected) {
           await prisma.integration.update({
@@ -89,14 +89,14 @@ async function handleSync(request: NextRequest) {
           continue;
         }
 
-        // 동기화 실행
+        // Run the sync
         const syncResult = await syncAllFromFleetDM(
           client,
           integration.organizationId,
           { syncSoftware: true }
         );
 
-        // 연동 상태 업데이트
+        // Update the integration status
         await prisma.integration.update({
           where: { id: integration.id },
           data: {
@@ -138,7 +138,7 @@ async function handleSync(request: NextRequest) {
       }
     }
 
-    // 4. 결과 반환
+    // 4. Return the result
     const totalHosts = results.reduce((sum, r) => sum + r.hostsSync, 0);
     const totalSoftware = results.reduce((sum, r) => sum + r.softwareSync, 0);
     const totalErrors = results.reduce((sum, r) => sum + r.errors.length, 0);
@@ -170,8 +170,8 @@ async function handleSync(request: NextRequest) {
   }
 }
 
-// GET (Vercel Cron에서 호출)
+// GET (called by Vercel Cron)
 export const GET = withCronAuth(handleSync);
 
-// POST (수동 트리거용)
+// POST (manual trigger)
 export const POST = withCronAuth(handleSync);

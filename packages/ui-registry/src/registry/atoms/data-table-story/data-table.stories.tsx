@@ -347,13 +347,13 @@ export const ShouldFilterTable: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    // 🎯 목적: Email 필터 입력 시 테이블이 필터링되는지 확인
+    // 🎯 Purpose: Verify the table is filtered when an Email filter is entered
     const filterInput = canvas.getByPlaceholderText("Filter emails...");
     await userEvent.type(filterInput, "ken99");
 
     await waitFor(
       () => {
-        // 필터링 후 1개 행만 표시되어야 함 (ken99@example.com)
+        // Only 1 row should be shown after filtering (ken99@example.com)
         const email = canvas.getByText("ken99@example.com");
         expect(email).toBeInTheDocument();
       },
@@ -368,13 +368,13 @@ export const ShouldSortTable: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    // 🎯 목적: Email 컬럼 정렬 버튼 클릭 시 테이블이 정렬되는지 확인
+    // 🎯 Purpose: Verify the table is sorted when the Email column sort button is clicked
     const emailSortButton = canvas.getByRole("button", { name: /email/i });
     await userEvent.click(emailSortButton);
 
     await waitFor(
       () => {
-        // 정렬 버튼에 정렬 아이콘이 표시되어야 함
+        // The sort button should show a sort icon
         expect(emailSortButton).toBeInTheDocument();
       },
       { timeout: 2000 },

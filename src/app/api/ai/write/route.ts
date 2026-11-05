@@ -1,11 +1,11 @@
 /**
- * SMP AI Agent Write Tool API Route
- * SMP-198: 자연어 명령 → Write Tool 파싱 → 승인 대기 응답
- * SMP-203: AI SDK v6 호환성 정비 — prompt → messages 전환, ctx 전달
- * SMP-204: 서버 측 pending action 검증 — TTL + 1회 소비 + 변조 감지
+ * SubHub AI Agent Write Tool API Route
+ * SMP-198: natural-language command → Write Tool parsing → pending-approval response
+ * SMP-203: AI SDK v6 compatibility — switch from prompt to messages, pass ctx
+ * SMP-204: server-side pending action validation — TTL + single use + tamper detection
  *
- * POST /api/ai/write  → 자연어 파싱 + 승인 대기 응답
- * PUT  /api/ai/write  → 사용자 승인 후 실제 실행 (서버 검증 포함)
+ * POST /api/ai/write  → natural-language parsing + pending-approval response
+ * PUT  /api/ai/write  → actual execution after user approval (with server validation)
  */
 
 import { anthropic } from "@ai-sdk/anthropic";
@@ -22,20 +22,20 @@ import { requireOrganization } from "@/lib/auth/require-auth";
 
 const MODEL = process.env.AI_MODEL ?? "claude-haiku-4-5";
 
-const SYSTEM_PROMPT = `당신은 SMP(SaaS Management Platform) AI 어시스턴트입니다.
-사용자의 자연어 명령을 분석하여 앱 등록/수정/삭제 또는 구독 변경 작업을 수행합니다.
+const SYSTEM_PROMPT = `You are the SubHub AI assistant.
+Analyze the user's natural-language commands and perform app create/update/delete or subscription change operations.
 
-중요 규칙:
-- Write 작업(등록/수정/삭제)은 반드시 사용자 승인 후 실행됩니다
-- 작업 전 영향 범위를 명확히 설명하세요
-- 앱 ID나 구독 ID가 필요한 경우, 사용자에게 확인을 요청하세요
-- 불명확한 명령은 명확히 해달라고 요청하세요
+Important rules:
+- Write operations (create/update/delete) are executed only after user approval
+- Clearly explain the scope of impact before any operation
+- If an app ID or subscription ID is required, ask the user to confirm it
+- Ask the user to clarify any ambiguous command
 
-응답은 한국어로 합니다.`;
+Respond in English.`;
 
 export async function POST(request: NextRequest) {
   try {
-    // 인증 확인
+    // Verify authentication
     const { organizationId, userId } = await requireOrganization();
 
     const body = await request.json();
@@ -43,12 +43,12 @@ export async function POST(request: NextRequest) {
 
     if (!message || typeof message !== "string") {
       return NextResponse.json(
-        { error: "message가 필요합니다." },
+        { error: "message is required." },
         { status: 400 }
       );
     }
 
-    // SMP-203: prompt → messages 오버로드 전환 (AI SDK v6 호환)
+    // SMP-203: switch from prompt to the messages overload (AI SDK v6 compatible)
     const { text, toolResults } = await generateText({
       model: anthropic(MODEL),
       system: SYSTEM_PROMPT,
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
       stopWhen: stepCountIs(1),
     });
 
-    // pendingAction 추출
+    // Extract pendingAction
     const pendingActions = toolResults
       ?.filter(
         (r) => (r.output as { type?: string })?.type === "pending_approval"
@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
       )
       .filter(Boolean);
 
-    // SMP-204: pending action을 서버 store에 저장
+    // SMP-204: save the pending action in the server store
     if (pendingActions && pendingActions.length > 0) {
       for (const action of pendingActions) {
         if (action) {
@@ -84,7 +84,9 @@ export async function POST(request: NextRequest) {
       }
 
       return NextResponse.json({
-        message: text || "작업을 실행하려면 아래 내용을 확인하고 승인해주세요.",
+        message:
+          text ||
+          "Please review the details below and approve to run this action.",
         pendingActions,
       });
     }
@@ -95,14 +97,14 @@ export async function POST(request: NextRequest) {
     const message =
       error instanceof Error
         ? error.message
-        : "요청 처리 중 오류가 발생했습니다.";
+        : "An error occurred while processing the request.";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }
 
 export async function PUT(request: NextRequest) {
   try {
-    // SMP-203: 인증 정보를 ctx로 서비스에 전달
+    // SMP-203: pass auth info to the service via ctx
     const { organizationId, userId, role } = await requireOrganization();
 
     const body = await request.json();
@@ -110,12 +112,12 @@ export async function PUT(request: NextRequest) {
 
     if (!pendingAction) {
       return NextResponse.json(
-        { error: "pendingAction이 필요합니다." },
+        { error: "pendingAction is required." },
         { status: 400 }
       );
     }
 
-    // SMP-204: 서버 측 검증 — TTL + 1회 소비 + 변조 감지 + 권한 확인
+    // SMP-204: server-side validation — TTL + single use + tamper detection + permission check
     const validation = validateAndConsume(
       pendingAction.id,
       pendingAction.params as unknown as Record<string, unknown>,
@@ -139,7 +141,9 @@ export async function PUT(request: NextRequest) {
   } catch (error) {
     console.error("[AI Write Tool PUT] Error:", error);
     const message =
-      error instanceof Error ? error.message : "실행 중 오류가 발생했습니다.";
+      error instanceof Error
+        ? error.message
+        : "An error occurred during execution.";
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

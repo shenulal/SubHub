@@ -10,7 +10,7 @@ import {
 
 /**
  * GET /api/v1/subscriptions
- * - 목록 조회 (필터/정렬/페이지네이션)
+ * - List (filter/sort/pagination)
  */
 export const GET = withLogging(
   "GET /api/v1/subscriptions",
@@ -30,7 +30,7 @@ export const GET = withLogging(
 
 /**
  * POST /api/v1/subscriptions
- * - 구독 생성 (FormData 기반 Server Action 래핑)
+ * - Create a subscription (wraps the FormData-based Server Action)
  * - permission check happens inside the action (`subscriptions:create`)
  */
 export const POST = withLogging(

@@ -37,12 +37,12 @@ import {
 import * as React from "react";
 
 /**
- * 정렬 방향 타입
+ * Sort direction type
  */
 export type SortDirection = "asc" | "desc" | null;
 
 /**
- * 컬럼 정의
+ * Column definition
  */
 export interface DataTableColumn<T> {
   id: string;
@@ -57,7 +57,7 @@ export interface DataTableColumn<T> {
 }
 
 /**
- * 정렬 상태
+ * Sort state
  */
 export interface SortState {
   columnId: string;
@@ -65,7 +65,7 @@ export interface SortState {
 }
 
 /**
- * 페이지네이션 상태
+ * Pagination state
  */
 export interface PaginationState {
   pageIndex: number;
@@ -79,73 +79,73 @@ interface DataTableProps<T> {
   data: T[];
   columns: DataTableColumn<T>[];
   getRowId: (row: T) => string;
-  // 행 선택
+  // Row selection
   enableRowSelection?: boolean;
   selectedRows?: Set<string>;
   onSelectedRowsChange?: (selectedRows: Set<string>) => void;
-  // 컬럼 가시성
+  // Column visibility
   enableColumnVisibility?: boolean;
   columnVisibility?: Record<string, boolean>;
   onColumnVisibilityChange?: (columnId: string, visible: boolean) => void;
-  // 정렬
+  // Sorting
   enableSorting?: boolean;
   sortState?: SortState | null;
   onSortChange?: (sort: SortState | null) => void;
-  // 페이지네이션
+  // Pagination
   enablePagination?: boolean;
   pagination?: PaginationState;
   onPaginationChange?: (pagination: PaginationState) => void;
   totalCount?: number;
   pageSizeOptions?: number[];
-  // 기타
+  // Other
   emptyMessage?: string;
   className?: string;
   isLoading?: boolean;
   hideToolbar?: boolean;
-  /** 툴바 왼쪽에 표시할 내용 (예: 필터 버튼). Columns 드롭다운과 같은 행에 배치됨 */
+  /** Content shown on the left of the toolbar (e.g. filter buttons). Rendered on the same row as the Columns dropdown */
   toolbarLeft?: React.ReactNode;
-  /** true면 하단 "1-10 of 10 items" 문구 숨김 (서버 페이지네이션 사용 시 중복 방지) */
+  /** When true, hides the "1-10 of 10 items" footer text (avoids duplication with server-side pagination) */
   hideFooterItemCount?: boolean;
 }
 
 /**
- * 고급 데이터 테이블 컴포넌트
- * - 행 선택 (체크박스)
- * - 컬럼 가시성 토글
- * - 정렬
- * - 페이지네이션
+ * Advanced data table component
+ * - Row selection (checkboxes)
+ * - Column visibility toggle
+ * - Sorting
+ * - Pagination
  */
 export function DataTable<T>({
   data,
   columns,
   getRowId,
-  // 행 선택
+  // Row selection
   enableRowSelection = false,
   selectedRows = new Set(),
   onSelectedRowsChange,
-  // 컬럼 가시성
+  // Column visibility
   enableColumnVisibility = false,
   columnVisibility = {},
   onColumnVisibilityChange,
-  // 정렬
+  // Sorting
   enableSorting = false,
   sortState = null,
   onSortChange,
-  // 페이지네이션
+  // Pagination
   enablePagination = false,
   pagination = { pageIndex: 0, pageSize: 10 },
   onPaginationChange,
   totalCount,
   pageSizeOptions = [10, 20, 30, 50, 100],
-  // 기타
-  emptyMessage = "데이터가 없습니다",
+  // Other
+  emptyMessage = "No data available",
   className,
   isLoading = false,
   hideToolbar = false,
   toolbarLeft,
   hideFooterItemCount = false,
 }: DataTableProps<T>) {
-  // 가시적인 컬럼 필터링
+  // Filter to visible columns
   const visibleColumns = React.useMemo(() => {
     return columns.filter((col) => {
       if (!enableColumnVisibility) return col.visible !== false;
@@ -153,13 +153,13 @@ export function DataTable<T>({
     });
   }, [columns, columnVisibility, enableColumnVisibility]);
 
-  // 전체 선택 상태 계산
+  // Compute select-all state
   const allRowIds = React.useMemo(() => data.map(getRowId), [data, getRowId]);
   const isAllSelected =
     allRowIds.length > 0 && allRowIds.every((id) => selectedRows.has(id));
   const isSomeSelected = allRowIds.some((id) => selectedRows.has(id));
 
-  // 전체 선택/해제 핸들러
+  // Select/deselect all handler
   const handleSelectAll = (checked: boolean) => {
     if (!onSelectedRowsChange) return;
     if (checked) {
@@ -169,7 +169,7 @@ export function DataTable<T>({
     }
   };
 
-  // 개별 행 선택/해제 핸들러
+  // Single-row select/deselect handler
   const handleSelectRow = (rowId: string, checked: boolean) => {
     if (!onSelectedRowsChange) return;
     const newSelected = new Set(selectedRows);
@@ -181,7 +181,7 @@ export function DataTable<T>({
     onSelectedRowsChange(newSelected);
   };
 
-  // 정렬 핸들러
+  // Sort handler
   const handleSort = (columnId: string) => {
     if (!onSortChange) return;
     if (sortState?.columnId === columnId) {
@@ -197,7 +197,7 @@ export function DataTable<T>({
     }
   };
 
-  // 정렬 아이콘 렌더링
+  // Render sort icon
   const renderSortIcon = (columnId: string) => {
     if (sortState?.columnId !== columnId) {
       return <ArrowUpDown className="ml-2 h-4 w-4" />;
@@ -211,7 +211,7 @@ export function DataTable<T>({
     return <ArrowUpDown className="ml-2 h-4 w-4" />;
   };
 
-  // 페이지네이션 계산
+  // Pagination maths
   const total = totalCount ?? data.length;
   const totalPages = Math.ceil(total / pagination.pageSize);
   const currentPage = pagination.pageIndex + 1;
@@ -221,7 +221,7 @@ export function DataTable<T>({
     total
   );
 
-  // 셀 내용 렌더링
+  // Render cell content
   const renderCellContent = (
     column: DataTableColumn<T>,
     row: T
@@ -240,7 +240,7 @@ export function DataTable<T>({
 
   return (
     <div className={cn("space-y-4", className)}>
-      {/* 상단 툴바 (매칭상태 필터 등 toolbarLeft + Columns) */}
+      {/* Top toolbar (toolbarLeft, e.g. match-status filter, + Columns) */}
       {(enableColumnVisibility || toolbarLeft) && !hideToolbar && (
         <div className="flex flex-wrap items-center justify-between gap-4">
           {toolbarLeft ? (
@@ -259,7 +259,7 @@ export function DataTable<T>({
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuLabel>표시 컬럼</DropdownMenuLabel>
+                <DropdownMenuLabel>Visible columns</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 {columns
                   .filter((column) => typeof column.header === "string")
@@ -280,7 +280,7 @@ export function DataTable<T>({
         </div>
       )}
 
-      {/* 테이블 */}
+      {/* Table */}
       <div
         data-slot="data-table-panel"
         className="bg-card min-w-0 overflow-hidden rounded-md border"
@@ -294,7 +294,7 @@ export function DataTable<T>({
                     <Checkbox
                       checked={isAllSelected}
                       onCheckedChange={handleSelectAll}
-                      aria-label="전체 선택"
+                      aria-label="Select all"
                       {...(isSomeSelected && !isAllSelected
                         ? { "data-state": "indeterminate" }
                         : {})}
@@ -338,7 +338,7 @@ export function DataTable<T>({
                     }
                     className="text-muted-foreground h-24 text-center"
                   >
-                    로딩 중...
+                    Loading...
                   </TableCell>
                 </TableRow>
               ) : data.length === 0 ? (
@@ -369,7 +369,7 @@ export function DataTable<T>({
                             onCheckedChange={(checked) =>
                               handleSelectRow(rowId, !!checked)
                             }
-                            aria-label="행 선택"
+                            aria-label="Select row"
                           />
                         </TableCell>
                       )}
@@ -385,7 +385,7 @@ export function DataTable<T>({
             </TableBody>
           </Table>
 
-          {/* 하단 페이지네이션 및 선택 정보 (서버 페이지네이션 사용 시 hideFooterItemCount로 푸터 전체 숨김) */}
+          {/* Bottom pagination and selection info (hideFooterItemCount hides the whole footer for server-side pagination) */}
           {(!hideFooterItemCount || enablePagination) && (
             <div className="flex flex-wrap items-center justify-between gap-3 border-t px-5 py-3">
               {!hideFooterItemCount && (
@@ -478,7 +478,7 @@ export function DataTable<T>({
 }
 
 /**
- * useDataTable 훅 - 테이블 상태 관리
+ * useDataTable hook - manages table state
  */
 export function useDataTable({
   defaultPageSize = 10,

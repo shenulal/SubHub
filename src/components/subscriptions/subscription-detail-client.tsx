@@ -41,7 +41,7 @@ export function SubscriptionDetailClient({
   if (isLoading) {
     return (
       <div className="text-muted-foreground text-sm">
-        구독 정보를 불러오는 중...
+        Loading subscription details...
       </div>
     );
   }
@@ -49,11 +49,11 @@ export function SubscriptionDetailClient({
   if (!data?.data) {
     return (
       <div className="space-y-4">
-        <p className="text-muted-foreground">구독을 찾을 수 없습니다.</p>
+        <p className="text-muted-foreground">Subscription not found.</p>
         <Link href="/subscriptions">
           <Button variant="ghost" size="sm">
             <ArrowLeft className="mr-2 h-4 w-4" />
-            목록으로
+            Back to list
           </Button>
         </Link>
       </div>
@@ -61,11 +61,15 @@ export function SubscriptionDetailClient({
   }
 
   const subscription = data.data;
-  const appName = subscription.appName || "알 수 없음";
+  const appName = subscription.appName || "Unknown";
 
   return (
     <div className="space-y-6">
-      <PageHeader title={`${appName} 구독`} showBack backHref="/subscriptions">
+      <PageHeader
+        title={`${appName} subscription`}
+        showBack
+        backHref="/subscriptions"
+      >
         <SubscriptionStatusActions
           subscriptionId={id}
           appName={appName}

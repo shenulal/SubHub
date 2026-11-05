@@ -1,30 +1,30 @@
 // src/lib/auth/require-auth.ts
 /**
- * Server Action에서 인증 및 조직 확인 헬퍼
- * - 세션이 없으면 /login으로 리다이렉트
- * - 조직이 없으면 /onboarding으로 리다이렉트
+ * Helpers to check authentication and organization in Server Actions
+ * - Redirects to /login when there is no session
+ * - Redirects to /onboarding when there is no organization
  */
 
 import { redirect } from "next/navigation";
 import { cache } from "react";
 import { auth } from "./index";
 
-// 세션 조회는 여러 곳에서 반복 호출되므로 cache로 동일 요청 내 중복 호출을 방지
+// Session lookup is called from many places, so cache() prevents duplicate calls within the same request
 export const getCachedSession = cache(async () => auth());
 
 /**
- * 인증된 사용자 + 조직 필수
- * @returns 세션 (organizationId 보장)
+ * Requires an authenticated user + organization
+ * @returns Session (organizationId guaranteed)
  */
 export async function requireOrganization() {
   const session = await getCachedSession();
 
-  // 세션이 없으면 로그인으로
+  // No session: go to login
   if (!session?.user) {
     redirect("/login");
   }
 
-  // 조직이 없으면 온보딩으로
+  // No organization: go to onboarding
   if (!session.user.organizationId) {
     redirect("/onboarding");
   }
@@ -39,8 +39,8 @@ export async function requireOrganization() {
 }
 
 /**
- * 인증된 사용자만 필요 (조직은 선택)
- * @returns 세션
+ * Requires an authenticated user only (organization optional)
+ * @returns Session
  */
 export async function requireAuth() {
   const session = await getCachedSession();
@@ -52,15 +52,15 @@ export async function requireAuth() {
   return session;
 }
 
-// 기존 UserRole 타입 유지 (하위 호환성)
+// Keep the existing UserRole type (backward compatibility)
 export type UserRole = "ADMIN" | "APPROVER" | "MEMBER" | "VIEWER";
 export type TenantRole = "ADMIN" | "APPROVER" | "MEMBER" | "VIEWER";
 
 /**
- * 특정 역할 필수
- * @param allowedRoles 허용된 역할 목록
- * @param redirectTo 권한 없을 때 리다이렉트 경로 (기본: /settings)
- * @returns 세션 (organizationId, role 보장)
+ * Requires one of the given roles
+ * @param allowedRoles List of allowed roles
+ * @param redirectTo Redirect path when unauthorized (default: /settings)
+ * @returns Session (organizationId and role guaranteed)
  */
 export async function requireRole(
   allowedRoles: TenantRole | TenantRole[],
@@ -83,8 +83,8 @@ export async function requireRole(
 }
 
 /**
- * Admin 권한 필수
- * @param redirectTo 권한 없을 때 리다이렉트 경로 (기본: /settings)
+ * Requires Admin role
+ * @param redirectTo Redirect path when unauthorized (default: /settings)
  */
 export async function requireAdmin(
   redirectTo: string = "/settings"
@@ -93,8 +93,8 @@ export async function requireAdmin(
 }
 
 /**
- * Super Admin 권한 필수 (organizationId 없어도 됨)
- * @returns 세션 (userId, role 보장)
+ * Requires Super Admin role (organizationId not required)
+ * @returns Session (userId and role guaranteed)
  */
 export async function requireSuperAdmin() {
   const session = await getCachedSession();
@@ -103,7 +103,7 @@ export async function requireSuperAdmin() {
     redirect("/login");
   }
 
-  // UserRole enum에 SUPER_ADMIN이 추가됨 (prisma/schema.prisma 참조)
+  // SUPER_ADMIN was added to the UserRole enum (see prisma/schema.prisma)
   if ((session.user.role as string) !== "SUPER_ADMIN") {
     redirect("/dashboard");
   }

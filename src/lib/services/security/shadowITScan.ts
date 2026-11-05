@@ -2,7 +2,7 @@
 import { prisma } from "@/lib/db";
 import { sendShadowITAlertEmail } from "@/lib/services/notification/securityAlert";
 
-// 조직 설정 타입
+// Organization settings type
 interface OrganizationSettings {
   notifications?: {
     emailEnabled?: boolean;
@@ -10,9 +10,9 @@ interface OrganizationSettings {
   };
 }
 
-// AI 도구 키워드 DB (Shadow IT 탐지용)
+// AI tool keyword list (for Shadow IT detection)
 const AI_TOOL_KEYWORDS = [
-  // AI/LLM 서비스
+  // AI/LLM services
   "OPENAI",
   "CHATGPT",
   "GPT",
@@ -22,34 +22,34 @@ const AI_TOOL_KEYWORDS = [
   "DALLE",
   "BARD",
   "GEMINI",
-  // AI 코딩 도구
+  // AI coding tools
   "GITHUB COPILOT",
   "COPILOT",
   "TABNINE",
   "CODEIUM",
   "CURSOR",
-  // AI 생산성 도구
+  // AI productivity tools
   "JASPER",
   "NOTION AI",
   "GRAMMARLY",
   "PERPLEXITY",
   "COPY.AI",
   "WRITESONIC",
-  // AI 미디어 도구
+  // AI media tools
   "SYNTHESIA",
   "RUNWAY",
   "STABILITY",
   "ELEVENLABS",
   "HEYGEN",
   "DESCRIPT",
-  // 기타 AI 도구
+  // Other AI tools
   "REPLICATE",
   "HUGGINGFACE",
   "WEIGHTS & BIASES",
   "WANDB",
 ];
 
-// 스캔 결과 타입
+// Scan result type
 export interface ShadowITScanResult {
   success: boolean;
   processedAt: Date;
@@ -59,7 +59,7 @@ export interface ShadowITScanResult {
   errors: string[];
 }
 
-// Shadow IT 앱 타입
+// Shadow IT app type
 interface ShadowApp {
   name: string;
   detectedAt: Date;
@@ -68,10 +68,10 @@ interface ShadowApp {
 }
 
 /**
- * Shadow IT 스캔 처리
- * - 카드 거래에서 AI 도구 키워드 탐지
- * - 미승인 앱인지 확인
- * - 관리자에게 이메일 발송
+ * Runs the Shadow IT scan
+ * - Detects AI tool keywords in card transactions
+ * - Checks whether the app is unapproved
+ * - E-mails admins
  */
 export async function processShadowITScan(): Promise<ShadowITScanResult> {
   const result: ShadowITScanResult = {
@@ -84,7 +84,7 @@ export async function processShadowITScan(): Promise<ShadowITScanResult> {
   };
 
   try {
-    // 모든 조직 조회 (알림 설정 포함)
+    // Load all organizations (including notification settings)
     const organizations = await prisma.organization.findMany({
       select: {
         id: true,
@@ -112,21 +112,21 @@ export async function processShadowITScan(): Promise<ShadowITScanResult> {
         );
       } catch (error) {
         const errorMessage =
-          error instanceof Error ? error.message : "알 수 없는 오류";
+          error instanceof Error ? error.message : "Unknown error";
         result.errors.push(`${org.id}: ${errorMessage}`);
       }
     }
   } catch (error) {
     result.success = false;
     const errorMessage =
-      error instanceof Error ? error.message : "알 수 없는 오류";
+      error instanceof Error ? error.message : "Unknown error";
     result.errors.push(errorMessage);
   }
 
   return result;
 }
 
-// 개별 조직 처리
+// Process a single organization
 async function processOrganization(
   org: {
     id: string;
@@ -140,18 +140,18 @@ async function processOrganization(
   const shadowITAlerts = settings?.notifications?.shadowITAlerts ?? true;
   const emailEnabled = settings?.notifications?.emailEnabled ?? true;
 
-  // 알림 비활성화된 경우 스킵
+  // Skip when notifications are disabled
   if (!shadowITAlerts || !emailEnabled) {
     return;
   }
 
-  // 관리자가 없는 경우
+  // No admins
   if (org.adminEmails.length === 0) {
-    result.errors.push(`${org.id}: 관리자 없음`);
+    result.errors.push(`${org.id}: No admin found`);
     return;
   }
 
-  // 조직의 승인된 앱 목록 조회
+  // Load the organization's approved apps
   const approvedApps = await prisma.app.findMany({
     where: {
       organizationId: org.id,
@@ -163,7 +163,7 @@ async function processOrganization(
     approvedApps.map((a) => a.name.toUpperCase())
   );
 
-  // 최근 7일간 카드 거래에서 AI 도구 키워드 탐지
+  // Detect AI tool keywords in card transactions from the last 7 days
   const sevenDaysAgo = new Date();
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
@@ -171,7 +171,7 @@ async function processOrganization(
     where: {
       organizationId: org.id,
       createdAt: { gte: sevenDaysAgo },
-      matchedAppId: null, // 미매칭 거래만
+      matchedAppId: null, // Unmatched transactions only
     },
     select: {
       useStore: true,
@@ -179,7 +179,7 @@ async function processOrganization(
     },
   });
 
-  // AI 도구 키워드 매칭
+  // Match AI tool keywords
   const shadowAppsMap = new Map<string, ShadowApp>();
 
   for (const tx of transactions) {
@@ -187,7 +187,7 @@ async function processOrganization(
 
     for (const keyword of AI_TOOL_KEYWORDS) {
       if (storeName.includes(keyword)) {
-        // 승인된 앱인지 확인
+        // Check whether the app is approved
         if (!approvedAppNames.has(keyword)) {
           const existing = shadowAppsMap.get(keyword);
           if (existing) {
@@ -201,7 +201,7 @@ async function processOrganization(
             });
           }
         }
-        break; // 하나의 키워드만 매칭
+        break; // Match one keyword only
       }
     }
   }
@@ -214,7 +214,7 @@ async function processOrganization(
 
   result.totalShadowApps += shadowApps.length;
 
-  // 관리자에게 이메일 발송
+  // E-mail admins
   for (const adminEmail of org.adminEmails) {
     const emailResult = await sendShadowITAlertEmail({
       to: adminEmail,
@@ -230,7 +230,7 @@ async function processOrganization(
       result.emailsSent++;
     } else {
       result.errors.push(
-        `${org.id}: 이메일 발송 실패 (${adminEmail}) - ${emailResult.error}`
+        `${org.id}: Email delivery failed (${adminEmail}) - ${emailResult.error}`
       );
     }
   }

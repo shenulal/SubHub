@@ -85,14 +85,15 @@ export default function Error({
       <div className="mx-auto max-w-md text-center">
         <ErrorIllustration />
         <h1 className="text-foreground mt-8 text-4xl font-bold tracking-tight">
-          오류가 발생했습니다
+          Something went wrong
         </h1>
         <p className="text-muted-foreground mt-4 text-lg whitespace-nowrap">
-          예기치 않은 문제가 발생했습니다. 다시 시도하거나 홈으로 돌아가 주세요.
+          An unexpected problem occurred. Please try again or return to the home
+          page.
         </p>
         <div className="mt-8 flex items-center justify-center gap-4">
           <Button onClick={reset} className="rounded-full" size="default">
-            다시 시도
+            Try again
           </Button>
           <Button
             asChild
@@ -100,7 +101,7 @@ export default function Error({
             className="rounded-full"
             size="default"
           >
-            <Link href="/">홈으로</Link>
+            <Link href="/">Go home</Link>
           </Button>
         </div>
       </div>

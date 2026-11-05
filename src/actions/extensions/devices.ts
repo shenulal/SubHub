@@ -17,7 +17,7 @@ import { updateDeviceStatusSchema } from "@/types/extension";
 import { revalidatePath } from "next/cache";
 
 /**
- * Extension Device 목록 조회
+ * Fetch the extension device list
  */
 export async function getExtensionDevices(
   params: PaginationParams & { status?: string } = {}
@@ -25,7 +25,7 @@ export async function getExtensionDevices(
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
-      return { success: false, error: "인증이 필요합니다" };
+      return { success: false, error: "Authentication required" };
     }
 
     const { page = 1, limit = 20, status } = params;
@@ -71,13 +71,13 @@ export async function getExtensionDevices(
     logger.error({ err: error }, "[getExtensionDevices] Error");
     return {
       success: false,
-      error: error instanceof Error ? error.message : "디바이스 목록 조회 실패",
+      error: error instanceof Error ? error.message : "Failed to fetch devices",
     };
   }
 }
 
 /**
- * Extension Device 상세 조회
+ * Fetch extension device details
  */
 export async function getExtensionDevice(
   id: string
@@ -85,7 +85,7 @@ export async function getExtensionDevice(
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
-      return { success: false, error: "인증이 필요합니다" };
+      return { success: false, error: "Authentication required" };
     }
 
     const device = await prisma.extensionDevice.findUnique({
@@ -102,7 +102,7 @@ export async function getExtensionDevice(
     });
 
     if (!device || device.organizationId !== session.user.organizationId) {
-      return { success: false, error: "디바이스를 찾을 수 없습니다" };
+      return { success: false, error: "Device not found" };
     }
 
     return { success: true, data: device };
@@ -110,13 +110,14 @@ export async function getExtensionDevice(
     logger.error({ err: error }, "[getExtensionDevice] Error");
     return {
       success: false,
-      error: error instanceof Error ? error.message : "디바이스 조회 실패",
+      error:
+        error instanceof Error ? error.message : "Failed to fetch the device",
     };
   }
 }
 
 /**
- * Extension Device 상태 업데이트
+ * Update extension device status
  */
 async function _updateExtensionDeviceStatus(
   id: string,
@@ -125,26 +126,25 @@ async function _updateExtensionDeviceStatus(
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
-      return { success: false, error: "인증이 필요합니다" };
+      return { success: false, error: "Authentication required" };
     }
 
-    // 입력 검증
+    // Validate input
     const validation = updateDeviceStatusSchema.safeParse(input);
     if (!validation.success) {
       return {
         success: false,
-        error:
-          validation.error.issues[0]?.message || "입력값이 올바르지 않습니다",
+        error: validation.error.issues[0]?.message || "Invalid input",
       };
     }
 
-    // 기존 항목 확인
+    // Check the existing entry
     const existing = await prisma.extensionDevice.findUnique({
       where: { id },
     });
 
     if (!existing || existing.organizationId !== session.user.organizationId) {
-      return { success: false, error: "디바이스를 찾을 수 없습니다" };
+      return { success: false, error: "Device not found" };
     }
 
     const updated = await prisma.extensionDevice.update({
@@ -159,7 +159,9 @@ async function _updateExtensionDeviceStatus(
     return {
       success: false,
       error:
-        error instanceof Error ? error.message : "디바이스 상태 업데이트 실패",
+        error instanceof Error
+          ? error.message
+          : "Failed to update the device status",
     };
   }
 }
@@ -169,7 +171,7 @@ export const updateExtensionDeviceStatus = withLogging(
 );
 
 /**
- * Extension Device 동기화 (lastSeenAt 업데이트)
+ * Sync an extension device (updates lastSeenAt)
  */
 async function _syncExtensionDevice(
   id: string
@@ -177,16 +179,16 @@ async function _syncExtensionDevice(
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
-      return { success: false, error: "인증이 필요합니다" };
+      return { success: false, error: "Authentication required" };
     }
 
-    // 기존 항목 확인
+    // Check the existing entry
     const existing = await prisma.extensionDevice.findUnique({
       where: { id },
     });
 
     if (!existing || existing.organizationId !== session.user.organizationId) {
-      return { success: false, error: "디바이스를 찾을 수 없습니다" };
+      return { success: false, error: "Device not found" };
     }
 
     const updated = await prisma.extensionDevice.update({
@@ -200,7 +202,8 @@ async function _syncExtensionDevice(
     logger.error({ err: error }, "[syncExtensionDevice] Error");
     return {
       success: false,
-      error: error instanceof Error ? error.message : "디바이스 동기화 실패",
+      error:
+        error instanceof Error ? error.message : "Failed to sync the device",
     };
   }
 }
@@ -210,8 +213,8 @@ export const syncExtensionDevice = withLogging(
 );
 
 /**
- * 현재 사용자의 Extension 설치 여부 확인
- * ExtensionDevice 테이블에서 현재 userId + status=APPROVED 레코드 존재 확인
+ * Check whether the current user has the extension installed
+ * Checks ExtensionDevice for a record with the current userId and status=APPROVED
  */
 export async function checkExtensionInstalled(): Promise<
   ActionState<{ installed: boolean }>
@@ -219,7 +222,7 @@ export async function checkExtensionInstalled(): Promise<
   try {
     const session = await auth();
     if (!session?.user?.organizationId || !session?.user?.id) {
-      return { success: false, error: "인증이 필요합니다" };
+      return { success: false, error: "Authentication required" };
     }
 
     const device = await prisma.extensionDevice.findFirst({
@@ -237,7 +240,9 @@ export async function checkExtensionInstalled(): Promise<
     return {
       success: false,
       error:
-        error instanceof Error ? error.message : "Extension 설치 확인 실패",
+        error instanceof Error
+          ? error.message
+          : "Failed to check the extension installation",
     };
   }
 }

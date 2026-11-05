@@ -2,8 +2,8 @@
 "use server";
 
 /**
- * Account 관련 Server Actions
- * - 계정 삭제
+ * Account Server Actions
+ * - Account deletion
  */
 
 import { auth, signOut } from "@/lib/auth";
@@ -13,25 +13,25 @@ import type { ActionState } from "@/types";
 import { redirect } from "next/navigation";
 
 /**
- * 본인 계정 삭제
+ * Delete own account
  *
- * 제약사항:
- * - 조직의 마지막 ADMIN인 경우 삭제 불가
+ * Constraints:
+ * - Not allowed for the organization's last ADMIN
  *
- * 데이터 처리:
- * - Cascade 삭제: accounts, sessions, appAccesses
- * - SetNull 처리: ownedApps, auditLogs, invitations, schedules, devices, directReports
+ * Data handling:
+ * - Cascade delete: accounts, sessions, appAccesses
+ * - SetNull: ownedApps, auditLogs, invitations, schedules, devices, directReports
  */
 async function _deleteAccount(): Promise<ActionState> {
   const session = await auth();
   if (!session?.user?.id) {
-    return { success: false, error: "인증이 필요합니다" };
+    return { success: false, error: "Authentication required" };
   }
 
   const userId = session.user.id;
   const organizationId = session.user.organizationId;
 
-  // 조직의 마지막 ADMIN인지 확인
+  // Check whether the user is the organization's last ADMIN
   if (organizationId && session.user.role === "ADMIN") {
     const otherAdminCount = await prisma.user.count({
       where: {
@@ -45,12 +45,12 @@ async function _deleteAccount(): Promise<ActionState> {
       return {
         success: false,
         error:
-          "조직의 마지막 관리자는 계정을 삭제할 수 없습니다. 다른 관리자를 지정한 후 다시 시도하세요.",
+          "The last admin of an organization cannot delete their account. Assign another admin and try again.",
       };
     }
   }
 
-  // 삭제 전 사용자 정보 조회 (감사 로그용)
+  // Fetch user info before deletion (for the audit log)
   const userToDelete = await prisma.user.findUnique({
     where: { id: userId },
     select: {
@@ -61,7 +61,7 @@ async function _deleteAccount(): Promise<ActionState> {
     },
   });
 
-  // 감사 로그 기록 (삭제 전 - 사용자 정보 보존)
+  // Write the audit log (before deletion, preserving user info)
   if (organizationId) {
     await prisma.auditLog.create({
       data: {
@@ -72,7 +72,7 @@ async function _deleteAccount(): Promise<ActionState> {
         entityId: userId,
         metadata: {
           reason: "self_deletion",
-          // 삭제된 사용자 정보 보존 (userId가 SetNull되어도 조회 가능)
+          // Preserve the deleted user's info (still viewable after userId is SetNull)
           deletedUserName: userToDelete?.name,
           deletedUserEmail: userToDelete?.email,
           deletedUserRole: userToDelete?.role,
@@ -81,7 +81,7 @@ async function _deleteAccount(): Promise<ActionState> {
       },
     });
 
-    // 초대 레코드 삭제 (재초대 가능하도록)
+    // Delete invitation records (so the user can be re-invited)
     if (userToDelete?.email) {
       await prisma.invitation.deleteMany({
         where: {
@@ -92,15 +92,15 @@ async function _deleteAccount(): Promise<ActionState> {
     }
   }
 
-  // User 삭제 (Cascade/SetNull 자동 처리)
+  // Delete the User (Cascade/SetNull handled automatically)
   await prisma.user.delete({
     where: { id: userId },
   });
 
-  // 세션 무효화
+  // Invalidate the session
   await signOut({ redirect: false });
 
-  // 로그인 페이지로 리다이렉트
+  // Redirect to the login page
   redirect("/login?deleted=true");
 }
 export const deleteAccount = withLogging("deleteAccount", _deleteAccount);

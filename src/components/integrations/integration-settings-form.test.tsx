@@ -36,27 +36,27 @@ describe("IntegrationSettingsForm", () => {
   it("should render form fields", () => {
     render(<IntegrationSettingsForm {...defaultProps} />);
 
-    expect(screen.getByText("자동 동기화")).toBeInTheDocument();
-    expect(screen.getByText("동기화 주기")).toBeInTheDocument();
-    expect(screen.getByText("사용자 동기화")).toBeInTheDocument();
-    expect(screen.getByText("앱 동기화")).toBeInTheDocument();
+    expect(screen.getByText("Auto sync")).toBeInTheDocument();
+    expect(screen.getByText("Sync interval")).toBeInTheDocument();
+    expect(screen.getByText("Sync users")).toBeInTheDocument();
+    expect(screen.getByText("Sync apps")).toBeInTheDocument();
   });
 
   it("should render initial values", () => {
     render(<IntegrationSettingsForm {...defaultProps} />);
 
-    // 자동 동기화 스위치가 켜져 있어야 함
-    const autoSyncSwitch = screen.getByRole("switch", { name: /자동 동기화/i });
+    // The auto sync switch should be on
+    const autoSyncSwitch = screen.getByRole("switch", { name: /Auto sync/i });
     expect(autoSyncSwitch).toBeChecked();
 
-    // 사용자 동기화 스위치가 켜져 있어야 함
+    // The sync users switch should be on
     const syncUsersSwitch = screen.getByRole("switch", {
-      name: /사용자 동기화/i,
+      name: /Sync users/i,
     });
     expect(syncUsersSwitch).toBeChecked();
 
-    // 앱 동기화 스위치가 꺼져 있어야 함
-    const syncAppsSwitch = screen.getByRole("switch", { name: /앱 동기화/i });
+    // The sync apps switch should be off
+    const syncAppsSwitch = screen.getByRole("switch", { name: /Sync apps/i });
     expect(syncAppsSwitch).not.toBeChecked();
   });
 
@@ -66,7 +66,7 @@ describe("IntegrationSettingsForm", () => {
 
     render(<IntegrationSettingsForm {...defaultProps} />);
 
-    const saveButton = screen.getByRole("button", { name: /저장/i });
+    const saveButton = screen.getByRole("button", { name: /Save/i });
     await user.click(saveButton);
 
     await waitFor(() => {
@@ -85,10 +85,10 @@ describe("IntegrationSettingsForm", () => {
 
     render(<IntegrationSettingsForm {...defaultProps} />);
 
-    const autoSyncSwitch = screen.getByRole("switch", { name: /자동 동기화/i });
+    const autoSyncSwitch = screen.getByRole("switch", { name: /Auto sync/i });
     await user.click(autoSyncSwitch);
 
-    const saveButton = screen.getByRole("button", { name: /저장/i });
+    const saveButton = screen.getByRole("button", { name: /Save/i });
     await user.click(saveButton);
 
     await waitFor(() => {
@@ -112,16 +112,16 @@ describe("IntegrationSettingsForm", () => {
 
     render(<IntegrationSettingsForm {...defaultProps} />);
 
-    const saveButton = screen.getByRole("button", { name: /저장/i });
+    const saveButton = screen.getByRole("button", { name: /Save/i });
     await user.click(saveButton);
 
-    expect(screen.getByText(/저장 중/i)).toBeInTheDocument();
+    expect(screen.getByText(/Saving/i)).toBeInTheDocument();
   });
 
   it("should render disabled state when disabled prop is true", () => {
     render(<IntegrationSettingsForm {...defaultProps} disabled />);
 
-    const saveButton = screen.getByRole("button", { name: /저장/i });
+    const saveButton = screen.getByRole("button", { name: /Save/i });
     expect(saveButton).toBeDisabled();
   });
 });

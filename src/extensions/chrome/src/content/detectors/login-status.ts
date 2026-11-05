@@ -37,7 +37,7 @@ const ERROR_PATTERNS_EN = [
   "captcha required",
 ];
 
-/** Error message patterns (Korean) */
+/** Error message patterns (Korean). Matched against login error text on third-party Korean-language sites, so they must stay in Korean. */
 const ERROR_PATTERNS_KO = [
   "올바르지 않",
   "잘못된",

@@ -58,7 +58,7 @@ export const ShouldToggleCheckboxWhenClicked: Story = {
     const label = canvas.getByText("Accept terms and conditions");
     const checkbox = canvas.getByRole("checkbox") as HTMLInputElement;
 
-    // 🎯 목적: Label 클릭 시 연결된 checkbox가 토글되는지 확인
+    // 🎯 Purpose: Verify clicking the Label toggles the linked checkbox
     await expect(checkbox).not.toBeChecked();
 
     await userEvent.click(label);
@@ -97,25 +97,25 @@ export const ShouldFocusInputWithHtmlFor: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    // 🎯 목적: htmlFor 속성으로 연결된 Label 클릭 시 Input에 포커스가 이동하는지 확인
+    // 🎯 Purpose: Verify clicking a Label linked via htmlFor moves focus to the Input
 
-    // Label과 Input 요소 찾기
+    // Find the Label and Input elements
     const label = canvas.getByText("Email Address");
     const input = canvas.getByPlaceholderText(
       "Enter your email",
     ) as HTMLInputElement;
 
-    // 초기 상태 확인
+    // Check the initial state
     await expect(input).not.toHaveFocus();
 
-    // Label 클릭 시 Input에 포커스 이동
+    // Clicking the Label moves focus to the Input
     await userEvent.click(label);
     await expect(input).toHaveFocus();
 
-    // Input에 값 입력
+    // Type a value into the Input
     await userEvent.type(input, "test@example.com");
 
-    // 값 표시 확인
+    // Verify the value is shown
     const valueDisplay = canvas.getByTestId("value-display");
     await expect(valueDisplay).toHaveTextContent("Value: test@example.com");
   },

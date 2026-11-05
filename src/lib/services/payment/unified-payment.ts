@@ -4,7 +4,7 @@ import { getBaseCurrency } from "@/lib/fx/base-currency";
 import { DEFAULT_BASE_CURRENCY } from "@/lib/fx/convert";
 import type { MatchSource, PaymentMatchStatus, Prisma } from "@prisma/client";
 
-// 통합 결제 내역 인터페이스
+// Unified payment interface
 export interface UnifiedPayment {
   id: string;
   source: "card" | "csv";
@@ -15,23 +15,23 @@ export interface UnifiedPayment {
   approvalNumber: string | null;
   cardLast4: string | null;
 
-  // 앱 매칭 (CardTransaction은 기본값)
+  // App matching (default for CardTransaction)
   matchedAppId: string | null;
   matchedApp: { id: string; name: string } | null;
   matchConfidence: number | null;
   matchStatus: PaymentMatchStatus;
   matchSource: MatchSource | null;
 
-  // 구독 연결 (CardTransaction은 null)
+  // Subscription link (null for CardTransaction)
   linkedSubscriptionId: string | null;
   linkedSubscription: { id: string; appName: string } | null;
 
-  // 원본 ID (수정/삭제 시 필요)
+  // Source ID (needed for edit/delete)
   cardTransactionId: string | null;
   paymentRecordId: string | null;
 }
 
-// 조회 옵션
+// Query options
 export interface UnifiedPaymentOptions {
   organizationId: string;
   page?: number;
@@ -43,7 +43,7 @@ export interface UnifiedPaymentOptions {
   source?: "card" | "csv" | "all";
 }
 
-// CardTransaction 타입 (Prisma include 결과)
+// CardTransaction type (Prisma include result)
 type CardTransactionWithRelations = Prisma.CardTransactionGetPayload<{
   include: {
     corporateCard: true;
@@ -54,7 +54,7 @@ type CardTransactionWithRelations = Prisma.CardTransactionGetPayload<{
   };
 }>;
 
-// PaymentRecord 타입 (Prisma include 결과)
+// PaymentRecord type (Prisma include result)
 type PaymentRecordWithRelations = Prisma.PaymentRecordGetPayload<{
   include: {
     matchedApp: true;
@@ -65,7 +65,7 @@ type PaymentRecordWithRelations = Prisma.PaymentRecordGetPayload<{
 }>;
 
 /**
- * useDt (YYYYMMDD) + useTm (HHmmss) → Date 변환
+ * Converts useDt (YYYYMMDD) + useTm (HHmmss) → Date
  */
 function parseCardTransactionDate(useDt: string, useTm?: string | null): Date {
   const year = parseInt(useDt.substring(0, 4), 10);
@@ -83,17 +83,17 @@ function parseCardTransactionDate(useDt: string, useTm?: string | null): Date {
 }
 
 /**
- * 카드번호에서 마지막 4자리 추출
+ * Extracts the last 4 digits of the card number
  */
 function extractCardLast4(cardNo: string | null | undefined): string | null {
   if (!cardNo) return null;
-  // 카드번호에서 숫자만 추출
+  // Keep only digits from the card number
   const digits = cardNo.replace(/\D/g, "");
   return digits.length >= 4 ? digits.slice(-4) : digits;
 }
 
 /**
- * CardTransaction → UnifiedPayment 변환
+ * Converts CardTransaction → UnifiedPayment
  */
 export function convertCardTransaction(
   tx: CardTransactionWithRelations,
@@ -109,7 +109,7 @@ export function convertCardTransaction(
     approvalNumber: tx.apprNo,
     cardLast4: extractCardLast4(tx.corporateCard?.cardNo),
 
-    // 앱 매칭 정보 (matchStatus 필드 직접 사용)
+    // App matching info (uses the matchStatus field directly)
     matchedAppId: tx.matchedAppId,
     matchedApp: tx.matchedApp
       ? { id: tx.matchedApp.id, name: tx.matchedApp.name }
@@ -118,7 +118,7 @@ export function convertCardTransaction(
     matchStatus: tx.matchStatus,
     matchSource: tx.matchSource ?? null,
 
-    // 구독 연결
+    // Subscription link
     linkedSubscriptionId: tx.linkedSubscriptionId,
     linkedSubscription: tx.linkedSubscription
       ? {
@@ -127,14 +127,14 @@ export function convertCardTransaction(
         }
       : null,
 
-    // 원본 ID
+    // Source ID
     cardTransactionId: tx.id,
     paymentRecordId: null,
   };
 }
 
 /**
- * PaymentRecord → UnifiedPayment 변환
+ * Converts PaymentRecord → UnifiedPayment
  */
 export function convertPaymentRecord(
   pr: PaymentRecordWithRelations
@@ -149,14 +149,14 @@ export function convertPaymentRecord(
     approvalNumber: pr.approvalNumber,
     cardLast4: pr.cardLast4,
 
-    // 앱 매칭 정보
+    // App matching info
     matchedAppId: pr.matchedAppId,
     matchedApp: pr.matchedApp,
     matchConfidence: pr.matchConfidence,
     matchStatus: pr.matchStatus,
     matchSource: pr.matchSource || null,
 
-    // 구독 연결
+    // Subscription link
     linkedSubscriptionId: pr.linkedSubscriptionId,
     linkedSubscription: pr.linkedSubscription
       ? {
@@ -165,14 +165,14 @@ export function convertPaymentRecord(
         }
       : null,
 
-    // 원본 ID
+    // Source ID
     cardTransactionId: null,
     paymentRecordId: pr.id,
   };
 }
 
 /**
- * 통합 결제 내역 조회 (CardTransaction + PaymentRecord Union)
+ * Queries unified payments (CardTransaction + PaymentRecord union)
  */
 export async function getUnifiedPayments(
   options: UnifiedPaymentOptions
@@ -190,17 +190,17 @@ export async function getUnifiedPayments(
 
   const skip = (page - 1) * limit;
 
-  // 1. CardTransaction 조회 (source가 'csv'가 아닌 경우)
+  // 1. Query CardTransaction (when source is not 'csv')
   let cardTransactions: CardTransactionWithRelations[] = [];
   let cardTotal = 0;
 
   if (source !== "csv") {
-    // CardTransaction 쿼리 조건 구성
+    // Build CardTransaction query conditions
     const cardWhere: Prisma.CardTransactionWhereInput = {
       organizationId,
     };
 
-    // matchStatus 필터 적용
+    // Apply the matchStatus filter
     if (matchStatus) {
       if (Array.isArray(matchStatus)) {
         cardWhere.matchStatus = { in: matchStatus };
@@ -209,12 +209,12 @@ export async function getUnifiedPayments(
       }
     }
 
-    // appId 필터 적용
+    // Apply the appId filter
     if (appId) {
       cardWhere.matchedAppId = appId;
     }
 
-    // 날짜 필터 (useDt는 YYYYMMDD 문자열)
+    // Date filter (useDt is a YYYYMMDD string)
     if (startDate) {
       const startStr = startDate.toISOString().slice(0, 10).replace(/-/g, "");
       cardWhere.useDt = { gte: startStr };
@@ -245,7 +245,7 @@ export async function getUnifiedPayments(
     ]);
   }
 
-  // 2. PaymentRecord 조회 (source가 'card'가 아닌 경우)
+  // 2. Query PaymentRecord (when source is not 'card')
   let paymentRecords: PaymentRecordWithRelations[] = [];
   let csvTotal = 0;
 
@@ -289,19 +289,19 @@ export async function getUnifiedPayments(
     ]);
   }
 
-  // 3. Union 및 정렬
+  // 3. Union and sort
   const baseCurrency = await getBaseCurrency(organizationId);
   const allRecords: UnifiedPayment[] = [
     ...cardTransactions.map((tx) => convertCardTransaction(tx, baseCurrency)),
     ...paymentRecords.map(convertPaymentRecord),
   ];
 
-  // 날짜 내림차순 정렬
+  // Sort by date descending
   allRecords.sort(
     (a, b) => b.transactionDate.getTime() - a.transactionDate.getTime()
   );
 
-  // 4. 페이지네이션 적용
+  // 4. Apply pagination
   const paginatedRecords = allRecords.slice(skip, skip + limit);
 
   return {
@@ -311,17 +311,17 @@ export async function getUnifiedPayments(
 }
 
 /**
- * 통합 결제 금액 집계 (월별)
+ * Aggregates unified payment amounts (monthly)
  */
 export async function getUnifiedPaymentTotals(
   organizationId: string,
   startDate: Date,
   endDate?: Date
 ): Promise<{ cardTotal: number; csvTotal: number; total: number }> {
-  // CardTransaction 합계 (승인내역 기준)
+  // CardTransaction total (approvals only)
   const cardWhere: Prisma.CardTransactionWhereInput = {
     organizationId,
-    transactionType: "APPROVAL", // 승인내역 기준 조회
+    transactionType: "APPROVAL", // Query approvals only
   };
 
   const startStr = startDate.toISOString().slice(0, 10).replace(/-/g, "");
@@ -337,7 +337,7 @@ export async function getUnifiedPaymentTotals(
     _sum: { useAmt: true },
   });
 
-  // PaymentRecord 합계 (매칭된 것만)
+  // PaymentRecord total (matched only)
   const csvWhere: Prisma.PaymentRecordWhereInput = {
     organizationId,
     matchStatus: { in: ["MANUAL", "AUTO_MATCHED"] },
@@ -364,13 +364,13 @@ export async function getUnifiedPaymentTotals(
 }
 
 /**
- * 미매칭 결제 건수 조회
+ * Counts unmatched payments
  */
 export async function getUnifiedUnmatchedCount(
   organizationId: string
 ): Promise<{ cardCount: number; csvCount: number; total: number }> {
   const [cardCount, csvCount] = await Promise.all([
-    // CardTransaction 미매칭 (PENDING만 — UNMATCHED는 Non-SaaS 판정 완료)
+    // Unmatched CardTransaction (PENDING only — UNMATCHED means already classified non-SaaS)
     prisma.cardTransaction.count({
       where: {
         organizationId,
@@ -378,7 +378,7 @@ export async function getUnifiedUnmatchedCount(
         matchStatus: "PENDING",
       },
     }),
-    // PaymentRecord 미매칭 (PENDING만)
+    // Unmatched PaymentRecord (PENDING only)
     prisma.paymentRecord.count({
       where: {
         organizationId,

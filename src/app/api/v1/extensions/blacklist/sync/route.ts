@@ -1,7 +1,7 @@
 // src/app/api/v1/extensions/blacklist/sync/route.ts
 /**
  * Extension Blacklist Sync API
- * 조직의 블랙리스트 도메인 조회
+ * Fetch the organization's blacklisted domains
  */
 
 import { withExtensionAuth } from "@/lib/api/extension-auth";
@@ -11,7 +11,7 @@ import { NextResponse } from "next/server";
 
 /**
  * GET /api/v1/extensions/blacklist/sync
- * 활성화된 블랙리스트 도메인 반환
+ * Returns active blacklisted domains
  */
 export const GET = withLogging(
   "ext:blacklist-sync",

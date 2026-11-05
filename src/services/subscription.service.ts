@@ -1,5 +1,5 @@
 // src/services/subscription.service.ts
-// SMP-203: Subscription CRUD 비즈니스 로직 — Server Action + Write Tool 공용 서비스 레이어
+// SMP-203: Subscription CRUD business logic — service layer shared by Server Actions and the Write Tool
 
 import { prisma } from "@/lib/db";
 import { getBaseCurrency } from "@/lib/fx/base-currency";
@@ -48,20 +48,23 @@ export async function createSubscription(
   ctx: SubscriptionServiceContext,
   input: CreateSubscriptionInput
 ): Promise<ServiceResult<{ id: string }>> {
-  // 권한 검증
+  // Permission check
   if (ctx.role === "VIEWER") {
-    return { success: false, message: "구독 생성 권한이 없습니다" };
+    return {
+      success: false,
+      message: "You do not have permission to create subscriptions",
+    };
   }
 
-  // 앱 존재 확인
+  // Ensure the app exists
   const app = await prisma.app.findFirst({
     where: { id: input.appId, organizationId: ctx.organizationId },
   });
   if (!app) {
-    return { success: false, message: "앱을 찾을 수 없습니다" };
+    return { success: false, message: "App not found" };
   }
 
-  // 구독 생성
+  // Create the subscription
   const subscription = await prisma.subscription.create({
     data: {
       appId: input.appId,
@@ -78,7 +81,7 @@ export async function createSubscription(
     },
   });
 
-  // 감사 로그
+  // Audit log
   await prisma.auditLog.create({
     data: {
       action: "CREATE_SUBSCRIPTION",
@@ -100,20 +103,23 @@ export async function updateSubscription(
   id: string,
   input: UpdateSubscriptionInput
 ): Promise<ServiceResult<{ id: string }>> {
-  // 권한 검증
+  // Permission check
   if (ctx.role !== "ADMIN") {
-    return { success: false, message: "구독 수정 권한이 없습니다" };
+    return {
+      success: false,
+      message: "You do not have permission to edit this subscription",
+    };
   }
 
-  // 구독 존재 여부
+  // Ensure the subscription exists
   const existing = await prisma.subscription.findFirst({
     where: { id, organizationId: ctx.organizationId },
   });
   if (!existing) {
-    return { success: false, message: "구독을 찾을 수 없습니다" };
+    return { success: false, message: "Subscription not found" };
   }
 
-  // 구독 수정
+  // Update the subscription
   const subscription = await prisma.subscription.update({
     where: { id },
     data: {
@@ -132,7 +138,7 @@ export async function updateSubscription(
     },
   });
 
-  // 감사 로그
+  // Audit log
   await prisma.auditLog.create({
     data: {
       action: "UPDATE_SUBSCRIPTION",
@@ -153,24 +159,24 @@ export async function deleteSubscription(
   ctx: SubscriptionServiceContext,
   id: string
 ): Promise<ServiceResult> {
-  // 권한 검증
+  // Permission check
   if (ctx.role !== "ADMIN") {
-    return { success: false, message: "관리자 권한이 필요합니다" };
+    return { success: false, message: "Admin permission required" };
   }
 
-  // 구독 존재 여부
+  // Ensure the subscription exists
   const existing = await prisma.subscription.findFirst({
     where: { id, organizationId: ctx.organizationId },
     include: { app: { select: { name: true } } },
   });
   if (!existing) {
-    return { success: false, message: "구독을 찾을 수 없습니다" };
+    return { success: false, message: "Subscription not found" };
   }
 
-  // 삭제
+  // Delete
   await prisma.subscription.delete({ where: { id } });
 
-  // 감사 로그
+  // Audit log
   await prisma.auditLog.create({
     data: {
       action: "DELETE_SUBSCRIPTION",

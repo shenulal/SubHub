@@ -1,6 +1,6 @@
 "use client";
 
-import { Check, Languages, LogOut, Settings, User } from "lucide-react";
+import { LogOut, Settings, User } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 
@@ -19,16 +19,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { type Locale, locales } from "@/i18n/config";
-import { useLocale } from "next-intl";
-import { useRouter } from "next/navigation";
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useState } from "react";
 
 export function AppHeader() {
   const t = useTranslations();
-  const locale = useLocale() as Locale;
-  const router = useRouter();
-  const [, startTransition] = useTransition();
   // Materio navbar: transparent at rest, paper surface + shadow once the page scrolls
   const [isScrolled, setIsScrolled] = useState(false);
   useEffect(() => {
@@ -38,16 +32,6 @@ export function AppHeader() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const handleLocaleChange = (nextLocale: Locale) => {
-    if (!locales.includes(nextLocale) || nextLocale === locale) {
-      return;
-    }
-
-    document.cookie = `NEXT_LOCALE=${nextLocale}; path=/; max-age=31536000`;
-    startTransition(() => {
-      router.refresh();
-    });
-  };
   return (
     <header
       data-testid="app-header"
@@ -62,7 +46,7 @@ export function AppHeader() {
             : "bg-transparent")
         }
       >
-        {/* 사이드바 토글 */}
+        {/* Sidebar toggle */}
         <SidebarTrigger className="-ml-1" />
 
         <Separator
@@ -70,51 +54,20 @@ export function AppHeader() {
           className="mr-2 hidden !h-4 sm:block"
         />
 
-        {/* Command+K 검색 */}
+        {/* Command+K search */}
         <div className="flex min-w-0 flex-1 items-center gap-2">
           <CommandSearch />
         </div>
 
-        {/* 우측 액션 */}
+        {/* Right-side actions */}
         <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
-          {/* 알림 벨 */}
+          {/* Notification bell */}
           <NotificationBell />
 
-          {/* 테마 토글 (7.4 dark mode) */}
+          {/* Theme toggle (7.4 dark mode) */}
           <ThemeToggle />
 
-          {/* 언어 */}
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                aria-label={t("header.language.label")}
-              >
-                <Languages className="h-5 w-5" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="center" className="w-36">
-              <DropdownMenuItem onSelect={() => handleLocaleChange("ko")}>
-                <Check
-                  className={
-                    locale === "ko" ? "mr-2 h-4 w-4" : "mr-2 h-4 w-4 opacity-0"
-                  }
-                />
-                {t("language.ko")}
-              </DropdownMenuItem>
-              <DropdownMenuItem onSelect={() => handleLocaleChange("en")}>
-                <Check
-                  className={
-                    locale === "en" ? "mr-2 h-4 w-4" : "mr-2 h-4 w-4 opacity-0"
-                  }
-                />
-                {t("language.en")}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-
-          {/* 설정 */}
+          {/* Settings */}
           <Button
             variant="ghost"
             size="icon"
@@ -132,7 +85,7 @@ export function AppHeader() {
             className="mx-2 hidden !h-4 sm:block"
           />
 
-          {/* 사용자 메뉴 */}
+          {/* User menu */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button

@@ -62,10 +62,10 @@ export function KanbanBoard({
     const activeTask = tasks.find((t) => t.id === activeId);
     if (!activeTask) return;
 
-    // 컬럼 위로 드래그할 때
+    // When dragging over a column
     if (columns.includes(overId as TaskStatus)) {
-      // 이 부분은 실제 상태 업데이트를 위해 onTaskMove 호출
-      // 여기서는 시각적 피드백만 제공
+      // The actual state update happens via onTaskMove
+      // Only visual feedback is provided here
     }
   };
 
@@ -81,7 +81,7 @@ export function KanbanBoard({
     const activeTask = tasks.find((t) => t.id === activeId);
     if (!activeTask) return;
 
-    // 컬럼으로 드롭
+    // Drop onto a column
     if (columns.includes(overId as TaskStatus)) {
       const newStatus = overId as TaskStatus;
       if (activeTask.status !== newStatus) {
@@ -90,7 +90,7 @@ export function KanbanBoard({
       return;
     }
 
-    // 다른 카드 위로 드롭
+    // Drop onto another card
     const overTask = tasks.find((t) => t.id === overId);
     if (overTask && activeTask.status !== overTask.status) {
       onTaskMove?.(activeId, overTask.status);
@@ -116,7 +116,7 @@ export function KanbanBoard({
         ))}
       </div>
 
-      {/* 드래그 오버레이 */}
+      {/* Drag overlay */}
       <DragOverlay>
         {activeTask ? (
           <div className="rotate-3 opacity-90">

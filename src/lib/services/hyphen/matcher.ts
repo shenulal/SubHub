@@ -1,14 +1,14 @@
 /**
- * SaaS 서비스 매칭 로직
- * 카드 거래 가맹점명을 SaaS 앱과 매칭
+ * SaaS service matching logic
+ * Matches card transaction merchant names to SaaS apps
  */
 
 import type { ApprovalItem, PurchaseItem } from "./types";
 
-/** App의 필수 필드만 정의 (매칭에 필요한 최소 정보) */
+/** Minimal App fields required for matching */
 export type AppForMatching = { id: string; name: string };
 
-/** 매칭 결과 */
+/** Match result */
 export interface MatchResult {
   appId: string | null;
   appName: string | null;
@@ -16,7 +16,7 @@ export interface MatchResult {
   matchedBy: "pattern" | "bizNo" | "exact" | null;
 }
 
-/** SaaS 벤더 패턴 */
+/** SaaS vendor pattern */
 interface SaaSPattern {
   pattern: RegExp;
   appName: string;
@@ -24,11 +24,12 @@ interface SaaSPattern {
 }
 
 /**
- * 글로벌 SaaS 패턴 (기본 제공)
- * 가맹점명에서 SaaS 서비스를 식별하기 위한 패턴
+ * Built-in global SaaS patterns used to identify SaaS services from merchant names.
+ * The Korean alternatives inside the regexes are functional matching data for
+ * Korean card statements (Hyphen feed) and must stay in Korean.
  */
 const GLOBAL_SAAS_PATTERNS: SaaSPattern[] = [
-  // 클라우드 & 인프라
+  // Cloud & infrastructure
   { pattern: /AWS|AMAZON\s*WEB\s*SERVICES/i, appName: "AWS", confidence: 0.95 },
   {
     pattern: /GOOGLE\s*(CLOUD|GCP)|GCP/i,
@@ -41,7 +42,7 @@ const GLOBAL_SAAS_PATTERNS: SaaSPattern[] = [
     confidence: 0.95,
   },
 
-  // 협업 & 생산성
+  // Collaboration & productivity
   {
     pattern: /GOOGLE\s*(WORKSPACE|APPS)/i,
     appName: "Google Workspace",
@@ -58,7 +59,7 @@ const GLOBAL_SAAS_PATTERNS: SaaSPattern[] = [
   { pattern: /ZOOM|줌/i, appName: "Zoom", confidence: 0.85 },
   { pattern: /DROPBOX|드롭박스/i, appName: "Dropbox", confidence: 0.9 },
 
-  // 개발 도구
+  // Developer tools
   { pattern: /GITHUB|깃허브/i, appName: "GitHub", confidence: 0.9 },
   { pattern: /GITLAB|깃랩/i, appName: "GitLab", confidence: 0.9 },
   {
@@ -72,7 +73,7 @@ const GLOBAL_SAAS_PATTERNS: SaaSPattern[] = [
   { pattern: /HEROKU|헤로쿠/i, appName: "Heroku", confidence: 0.9 },
   { pattern: /DATADOG/i, appName: "Datadog", confidence: 0.9 },
 
-  // CRM & 마케팅
+  // CRM & marketing
   {
     pattern: /SALESFORCE|세일즈포스/i,
     appName: "Salesforce",
@@ -84,19 +85,19 @@ const GLOBAL_SAAS_PATTERNS: SaaSPattern[] = [
   { pattern: /MAILCHIMP|메일침프/i, appName: "Mailchimp", confidence: 0.9 },
   { pattern: /SENDGRID/i, appName: "SendGrid", confidence: 0.9 },
 
-  // 디자인 & 미디어
+  // Design & media
   { pattern: /ADOBE|어도비/i, appName: "Adobe", confidence: 0.85 },
   { pattern: /CANVA|캔바/i, appName: "Canva", confidence: 0.9 },
   { pattern: /MIRO|미로/i, appName: "Miro", confidence: 0.9 },
 
-  // 통신 & 메시징
+  // Communications & messaging
   { pattern: /TWILIO/i, appName: "Twilio", confidence: 0.9 },
 
-  // 보안 & 인증
+  // Security & identity
   { pattern: /OKTA|옥타/i, appName: "Okta", confidence: 0.9 },
   { pattern: /AUTH0/i, appName: "Auth0", confidence: 0.9 },
 
-  // 데이터 & 분석
+  // Data & analytics
   {
     pattern: /SNOWFLAKE|스노우플레이크/i,
     appName: "Snowflake",
@@ -105,21 +106,25 @@ const GLOBAL_SAAS_PATTERNS: SaaSPattern[] = [
   { pattern: /TABLEAU|태블로/i, appName: "Tableau", confidence: 0.9 },
   { pattern: /LOOKER/i, appName: "Looker", confidence: 0.9 },
 
-  // 한국 서비스
-  { pattern: /카카오\s*(워크|WORK)/i, appName: "카카오워크", confidence: 0.9 },
-  { pattern: /네이버\s*(웍스|WORKS)/i, appName: "네이버웍스", confidence: 0.9 },
+  // Korean services (Korean merchant-name patterns are functional data)
+  { pattern: /카카오\s*(워크|WORK)/i, appName: "KakaoWork", confidence: 0.9 },
+  {
+    pattern: /네이버\s*(웍스|WORKS)/i,
+    appName: "Naver Works",
+    confidence: 0.9,
+  },
   {
     pattern: /토스\s*(페이먼츠|PAYMENTS)/i,
-    appName: "토스페이먼츠",
+    appName: "Toss Payments",
     confidence: 0.9,
   },
 ];
 
 /**
- * 카드 거래를 SaaS 앱과 매칭
- * @param transaction 거래 내역
- * @param apps 조직의 등록된 앱 목록
- * @param customPatterns 조직별 커스텀 패턴 (선택)
+ * Matches a card transaction to a SaaS app
+ * @param transaction Transaction
+ * @param apps The organization's registered apps
+ * @param customPatterns Organization-specific custom patterns (optional)
  */
 export function matchTransactionToApp(
   transaction: ApprovalItem | PurchaseItem,
@@ -128,7 +133,7 @@ export function matchTransactionToApp(
 ): MatchResult {
   const merchantName = transaction.useStore;
 
-  // 1. 커스텀 패턴으로 매칭 (가장 높은 우선순위)
+  // 1. Match by custom pattern (highest priority)
   if (customPatterns) {
     for (const { pattern, appId } of customPatterns) {
       const regex = new RegExp(pattern, "i");
@@ -146,7 +151,7 @@ export function matchTransactionToApp(
     }
   }
 
-  // 2. 앱 이름으로 정확히 매칭
+  // 2. Exact match by app name
   for (const app of apps) {
     if (merchantName.toLowerCase().includes(app.name.toLowerCase())) {
       return {
@@ -158,10 +163,10 @@ export function matchTransactionToApp(
     }
   }
 
-  // 3. 글로벌 SaaS 패턴으로 매칭
+  // 3. Match by global SaaS pattern
   for (const { pattern, appName, confidence } of GLOBAL_SAAS_PATTERNS) {
     if (pattern.test(merchantName)) {
-      // 매칭된 패턴명으로 앱 찾기
+      // Find the app by the matched pattern name
       const app = apps.find(
         (a) => a.name.toLowerCase() === appName.toLowerCase()
       );
@@ -173,7 +178,7 @@ export function matchTransactionToApp(
           matchedBy: "pattern",
         };
       }
-      // 앱이 없어도 SaaS로 인식됨을 알림
+      // Report it as SaaS even if no app is registered
       return {
         appId: null,
         appName: appName,
@@ -183,7 +188,7 @@ export function matchTransactionToApp(
     }
   }
 
-  // 매칭 실패
+  // No match
   return {
     appId: null,
     appName: null,
@@ -193,10 +198,10 @@ export function matchTransactionToApp(
 }
 
 /**
- * 여러 거래를 일괄 매칭
- * @param transactions 거래 내역 목록
- * @param apps 조직의 등록된 앱 목록
- * @param customPatterns 커스텀 패턴
+ * Matches multiple transactions in bulk
+ * @param transactions Transactions
+ * @param apps The organization's registered apps
+ * @param customPatterns Custom patterns
  */
 export function batchMatchTransactions(
   transactions: (ApprovalItem | PurchaseItem)[],
@@ -215,8 +220,8 @@ export function batchMatchTransactions(
 }
 
 /**
- * 거래 내역에서 SaaS 후보 추출
- * (앱으로 등록되지 않은 SaaS 발견용)
+ * Extracts SaaS candidates from transactions
+ * (for discovering SaaS not yet registered as apps)
  */
 export function extractSaaSCandidates(
   transactions: (ApprovalItem | PurchaseItem)[]
@@ -226,7 +231,7 @@ export function extractSaaSCandidates(
   for (const transaction of transactions) {
     const merchantName = transaction.useStore;
 
-    // 글로벌 패턴과 매칭되는지 확인
+    // Check against the global patterns
     for (const { pattern, appName } of GLOBAL_SAAS_PATTERNS) {
       if (pattern.test(merchantName)) {
         const existing = candidates.get(appName) || {

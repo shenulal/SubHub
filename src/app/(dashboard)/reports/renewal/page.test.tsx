@@ -62,14 +62,14 @@ describe("RenewalReportPage", () => {
     vi.clearAllMocks();
   });
 
-  it("페이지 제목을 표시해야 한다", async () => {
+  it("shows the page title", async () => {
     const page = await RenewalReportPage({ searchParams: Promise.resolve({}) });
     render(page);
 
-    expect(screen.getByText("구독 갱신 리포트")).toBeInTheDocument();
+    expect(screen.getByText("Subscription Renewal Report")).toBeInTheDocument();
   });
 
-  it("뒤로가기 링크가 /reports로 연결되어야 한다", async () => {
+  it("links the back link to /reports", async () => {
     const page = await RenewalReportPage({ searchParams: Promise.resolve({}) });
     render(page);
 
@@ -77,48 +77,48 @@ describe("RenewalReportPage", () => {
     expect(backLink).toHaveAttribute("href", "/reports");
   });
 
-  it("핵심 지표를 표시해야 한다", async () => {
+  it("shows the key metrics", async () => {
     const page = await RenewalReportPage({ searchParams: Promise.resolve({}) });
     render(page);
 
-    expect(screen.getByText("총 갱신 건수")).toBeInTheDocument();
-    expect(screen.getByText("예상 갱신 비용")).toBeInTheDocument();
-    expect(screen.getByText("7일 이내")).toBeInTheDocument();
-    expect(screen.getByText("30일 이내")).toBeInTheDocument();
+    expect(screen.getByText("Total Renewals")).toBeInTheDocument();
+    expect(screen.getByText("Estimated Renewal Cost")).toBeInTheDocument();
+    expect(screen.getByText("Within 7 Days")).toBeInTheDocument();
+    expect(screen.getByText("Within 30 Days")).toBeInTheDocument();
   });
 
-  it("총 갱신 건수를 표시해야 한다", async () => {
+  it("shows the total renewal count", async () => {
     const page = await RenewalReportPage({ searchParams: Promise.resolve({}) });
     render(page);
 
-    expect(screen.getByText("3건")).toBeInTheDocument();
+    expect(screen.getByText("3")).toBeInTheDocument();
   });
 
-  it("7일 이내 갱신 목록을 표시해야 한다", async () => {
+  it("shows the renewals within 7 days", async () => {
     const page = await RenewalReportPage({ searchParams: Promise.resolve({}) });
     render(page);
 
-    expect(screen.getByText("7일 이내 갱신")).toBeInTheDocument();
+    expect(screen.getByText("Renewals Within 7 Days")).toBeInTheDocument();
     expect(screen.getByText("Slack")).toBeInTheDocument();
   });
 
-  it("8-30일 갱신 목록을 표시해야 한다", async () => {
+  it("shows the renewals in 8-30 days", async () => {
     const page = await RenewalReportPage({ searchParams: Promise.resolve({}) });
     render(page);
 
-    expect(screen.getByText("8-30일 갱신")).toBeInTheDocument();
+    expect(screen.getByText("Renewals in 8-30 Days")).toBeInTheDocument();
     expect(screen.getByText("Notion")).toBeInTheDocument();
   });
 
-  it("31-90일 갱신 목록을 표시해야 한다", async () => {
+  it("shows the renewals in 31-90 days", async () => {
     const page = await RenewalReportPage({ searchParams: Promise.resolve({}) });
     render(page);
 
-    expect(screen.getByText("31-90일 갱신")).toBeInTheDocument();
+    expect(screen.getByText("Renewals in 31-90 Days")).toBeInTheDocument();
     expect(screen.getByText("Figma")).toBeInTheDocument();
   });
 
-  it("내보내기 버튼을 표시해야 한다", async () => {
+  it("shows the export button", async () => {
     const page = await RenewalReportPage({ searchParams: Promise.resolve({}) });
     render(page);
 

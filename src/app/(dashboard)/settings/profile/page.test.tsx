@@ -9,7 +9,7 @@ vi.mock("@/lib/auth", () => ({
     user: {
       id: "user-1",
       email: "test@example.com",
-      name: "테스트 유저",
+      name: "Test User",
       organizationId: "org-1",
       role: "MEMBER",
     },
@@ -29,73 +29,75 @@ describe("ProfilePage", () => {
     vi.clearAllMocks();
   });
 
-  it("프로필 폼 필드를 표시해야 한다", async () => {
+  it("shows the profile form fields", async () => {
     vi.mocked(prisma.user.findUnique).mockResolvedValue({
-      name: "테스트 유저",
-      department: "플랫폼",
-      // jobTitle, avatarUrl은 주석 처리되어 사용하지 않음
+      name: "Test User",
+      department: "Platform",
+      // jobTitle and avatarUrl are commented out and unused
     } as never);
 
     const page = await ProfilePage();
     render(page);
 
-    expect(screen.getByText("이름 *")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("테스트 유저")).toBeInTheDocument();
+    expect(screen.getByText("Name *")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Test User")).toBeInTheDocument();
   });
 
-  it("아바타가 표시되지 않아야 한다 (주석 처리됨)", async () => {
+  it("does not show the avatar (commented out)", async () => {
     vi.mocked(prisma.user.findUnique).mockResolvedValue({
-      name: "테스트 유저",
-      department: "플랫폼",
+      name: "Test User",
+      department: "Platform",
     } as never);
 
     const page = await ProfilePage();
     render(page);
 
-    expect(screen.queryByText("아바타")).not.toBeInTheDocument();
-    expect(screen.queryByText("새로 생성")).not.toBeInTheDocument();
+    expect(screen.queryByText("Avatar")).not.toBeInTheDocument();
+    expect(screen.queryByText("Regenerate")).not.toBeInTheDocument();
   });
 
-  it("직함 필드가 표시되지 않아야 한다 (주석 처리됨)", async () => {
+  it("does not show the job title field (commented out)", async () => {
     vi.mocked(prisma.user.findUnique).mockResolvedValue({
-      name: "테스트 유저",
-      department: "플랫폼",
+      name: "Test User",
+      department: "Platform",
     } as never);
 
     const page = await ProfilePage();
     render(page);
 
-    expect(screen.queryByText("직함")).not.toBeInTheDocument();
+    expect(screen.queryByText("Title")).not.toBeInTheDocument();
     expect(
-      screen.queryByPlaceholderText(/프로덕트 엔지니어/)
+      screen.queryByPlaceholderText(/Product Engineer/)
     ).not.toBeInTheDocument();
   });
 
-  it("부서가 텍스트로 표시되어야 한다", async () => {
+  it("shows the department as text", async () => {
     vi.mocked(prisma.user.findUnique).mockResolvedValue({
-      name: "테스트 유저",
-      department: "플랫폼",
+      name: "Test User",
+      department: "Platform",
     } as never);
 
     const page = await ProfilePage();
     render(page);
 
-    expect(screen.getByText("부서")).toBeInTheDocument();
-    expect(screen.getByText("플랫폼")).toBeInTheDocument();
-    // 부서가 입력 필드가 아닌 텍스트로 표시되는지 확인
-    expect(screen.queryByPlaceholderText(/플랫폼팀/)).not.toBeInTheDocument();
+    expect(screen.getByText("Department")).toBeInTheDocument();
+    expect(screen.getByText("Platform")).toBeInTheDocument();
+    // Check that the department is shown as text, not as an input field
+    expect(
+      screen.queryByPlaceholderText(/Platform Team/)
+    ).not.toBeInTheDocument();
   });
 
-  it("이메일이 텍스트로 표시되어야 한다", async () => {
+  it("shows the email as text", async () => {
     vi.mocked(prisma.user.findUnique).mockResolvedValue({
-      name: "테스트 유저",
-      department: "플랫폼",
+      name: "Test User",
+      department: "Platform",
     } as never);
 
     const page = await ProfilePage();
     render(page);
 
-    expect(screen.getByText("이메일")).toBeInTheDocument();
+    expect(screen.getByText("Email")).toBeInTheDocument();
     expect(screen.getByText("test@example.com")).toBeInTheDocument();
   });
 });

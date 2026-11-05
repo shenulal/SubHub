@@ -28,17 +28,17 @@ type Resource =
   | "attachments";
 
 /**
- * 리소스별 권한 매트릭스
- * CLAUDE.md 권한 매트릭스 기반
+ * Per-resource permission matrix
+ * Based on the CLAUDE.md permission matrix
  *
- * | 리소스 | ADMIN | MEMBER | VIEWER |
+ * | Resource | ADMIN | MEMBER | VIEWER |
  * |--------|-------|--------|--------|
- * | apps | CRUD | 조회+생성 | 조회만 |
- * | subscriptions | CRUD | 조회+생성 | 조회만 |
- * | users | CRUD+초대 | 조회만 | 조회만 |
- * | integrations | CRUD+동기화 | 조회만 | 조회만 |
- * | payments | CRUD | 조회만 | 불가 |
- * | audit-logs | 전체 | 제한적 | 불가 |
+ * | apps | CRUD | Read+Create | Read only |
+ * | subscriptions | CRUD | Read+Create | Read only |
+ * | users | CRUD+Invite | Read only | Read only |
+ * | integrations | CRUD+Sync | Read only | Read only |
+ * | payments | CRUD | Read only | None |
+ * | audit-logs | Full | Limited | None |
  */
 const PERMISSION_MATRIX: Record<Role, Record<Resource, Action[]>> = {
   ADMIN: {
@@ -116,18 +116,17 @@ const PERMISSION_MATRIX: Record<Role, Record<Resource, Action[]>> = {
 };
 
 /**
- * 권한 매트릭스에서 리소스를 찾기 위한 매핑
- * API 리소스명 → 권한 리소스명
+ * Maps API resource names to permission-matrix resource names
  */
 function normalizeResource(resource: string | undefined): Resource | null {
   if (!resource) return null;
 
-  // 정확히 일치하는 경우
+  // Exact match
   if (resource in PERMISSION_MATRIX.ADMIN) {
     return resource as Resource;
   }
 
-  // 복수형/단수형 변환 시도
+  // Try singular/plural conversion
   const resourceMap: Record<string, Resource> = {
     app: "apps",
     subscription: "subscriptions",
@@ -155,27 +154,27 @@ function normalizeResource(resource: string | undefined): Resource | null {
   return resourceMap[resource] ?? null;
 }
 
-// 세션 캐시 (불필요한 반복 호출 방지)
+// Session cache (avoids repeated session calls)
 let cachedRole: Role | null = null;
 let cacheTimestamp = 0;
-const CACHE_TTL = 30_000; // 30초
+const CACHE_TTL = 30_000; // 30 seconds
 
 /**
- * 역할 결정: params → cache → /api/auth/session 순서로 시도
+ * Resolve the role, trying params → cache → /api/auth/session in that order
  */
 async function resolveRole(
   params: Record<string, unknown> | undefined
 ): Promise<Role | null> {
-  // 1. params에서 먼저 시도 (기존 호환)
+  // 1. Try params first (backward compatible)
   const paramRole = (params as { user?: { role?: string } })?.user?.role;
   if (paramRole) return paramRole as Role;
 
-  // 2. 캐시 사용
+  // 2. Use the cache
   if (cachedRole && Date.now() - cacheTimestamp < CACHE_TTL) {
     return cachedRole;
   }
 
-  // 3. 세션에서 조회
+  // 3. Look up the session
   try {
     const res = await fetch("/api/auth/session", { credentials: "include" });
     if (!res.ok) return null;
@@ -188,7 +187,7 @@ async function resolveRole(
   }
 }
 
-/** 캐시 초기화 (테스트용) */
+/** Reset the cache (for tests) */
 function resetRoleCache() {
   cachedRole = null;
   cacheTimestamp = 0;
@@ -196,24 +195,24 @@ function resetRoleCache() {
 
 /**
  * Refine AccessControlProvider
- * - PERMISSION_MATRIX 기반 리소스별 권한 체크
- * - ADMIN: 모든 리소스 전체 권한
- * - MEMBER: 리소스별 제한된 권한 (apps/subscriptions는 생성 가능)
- * - VIEWER: 읽기 전용 (payments, audit-logs 접근 불가)
+ * - Per-resource permission checks based on PERMISSION_MATRIX
+ * - ADMIN: full access to all resources
+ * - MEMBER: limited per-resource access (can create apps/subscriptions)
+ * - VIEWER: read-only (no access to payments or audit-logs)
  */
 export const accessControlProvider: AccessControlProvider = {
   can: async ({ action, resource, params }) => {
     const role = await resolveRole(params);
 
-    // 역할이 없으면 거부
+    // Deny when there is no role
     if (!role) {
-      return { can: false, reason: "권한이 없습니다." };
+      return { can: false, reason: "Permission denied." };
     }
 
-    // 리소스가 없으면 기본 규칙 적용 (하위 호환성)
+    // Without a resource, apply the default rules (backward compatibility)
     const normalizedResource = normalizeResource(resource);
     if (!normalizedResource) {
-      // 리소스 없이 호출된 경우 기존 동작 유지
+      // Keep the legacy behaviour when called without a resource
       if (role === "ADMIN") {
         return { can: true };
       }
@@ -221,18 +220,21 @@ export const accessControlProvider: AccessControlProvider = {
         const isReadOnly = action === "list" || action === "show";
         return isReadOnly
           ? { can: true }
-          : { can: false, reason: "VIEWER는 읽기만 가능합니다." };
+          : { can: false, reason: "VIEWER has read-only access." };
       }
       if (role === "MEMBER" || role === "APPROVER") {
         if (action === "delete") {
-          return { can: false, reason: "MEMBER는 삭제 권한이 없습니다." };
+          return {
+            can: false,
+            reason: "MEMBER does not have delete permission.",
+          };
         }
         return { can: true };
       }
-      return { can: false, reason: "권한이 없습니다." };
+      return { can: false, reason: "Permission denied." };
     }
 
-    // PERMISSION_MATRIX 기반 체크
+    // Check against PERMISSION_MATRIX
     const allowedActions = PERMISSION_MATRIX[role]?.[normalizedResource] ?? [];
     const isAllowed = allowedActions.includes(action as Action);
 
@@ -240,43 +242,43 @@ export const accessControlProvider: AccessControlProvider = {
       return { can: true };
     }
 
-    // 거부 사유 생성
+    // Build the denial reason
     const resourceLabel = {
-      apps: "앱",
-      subscriptions: "구독",
-      users: "사용자",
-      integrations: "연동",
-      payments: "결제",
-      "audit-logs": "감사 로그",
-      approvals: "승인 요청",
-      "approval-policies": "승인 정책",
-      categories: "카테고리",
-      tags: "태그",
-      "custom-fields": "사용자 정의 필드",
-      "saved-views": "저장된 보기",
-      notifications: "알림",
-      attachments: "첨부 파일",
+      apps: "apps",
+      subscriptions: "subscriptions",
+      users: "users",
+      integrations: "integrations",
+      payments: "payments",
+      "audit-logs": "audit logs",
+      approvals: "approval requests",
+      "approval-policies": "approval policies",
+      categories: "categories",
+      tags: "tags",
+      "custom-fields": "custom fields",
+      "saved-views": "saved views",
+      notifications: "notifications",
+      attachments: "attachments",
     }[normalizedResource];
 
     const actionLabel = {
-      list: "목록 조회",
-      show: "상세 조회",
-      create: "생성",
-      edit: "수정",
-      delete: "삭제",
-      invite: "초대",
-      sync: "동기화",
-      approve: "승인",
-      export: "내보내기",
+      list: "list",
+      show: "view",
+      create: "create",
+      edit: "edit",
+      delete: "delete",
+      invite: "invite",
+      sync: "sync",
+      approve: "approve",
+      export: "export",
     }[action as Action];
 
     return {
       can: false,
-      reason: `${resourceLabel}에 대한 ${actionLabel ?? action} 권한이 없습니다.`,
+      reason: `You do not have ${actionLabel ?? action} permission for ${resourceLabel}.`,
     };
   },
 };
 
-// 테스트용 export
+// Exported for tests
 export { normalizeResource, PERMISSION_MATRIX, resetRoleCache, resolveRole };
 export type { Action, Resource, Role };

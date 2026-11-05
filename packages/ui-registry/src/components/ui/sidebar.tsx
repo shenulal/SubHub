@@ -54,9 +54,9 @@ function useSidebar() {
 }
 
 /**
- * 🎯 목적: SidebarProvider 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: HTML div 요소 사용, Context Provider 내부 구조 유지
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the SidebarProvider component for React 18/19 compatibility
+ * 📝 Note: Uses an HTML div element; keep the internal Context Provider structure
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const SidebarProvider = React.forwardRef<
   HTMLDivElement,
@@ -177,9 +177,9 @@ const SidebarProvider = React.forwardRef<
 SidebarProvider.displayName = "SidebarProvider";
 
 /**
- * 🎯 목적: Sidebar 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: HTML div 요소 사용, collapsible과 mobile 상태에 따라 다른 렌더링
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the Sidebar component for React 18/19 compatibility
+ * 📝 Note: Uses an HTML div element; renders differently depending on collapsible and mobile state
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const Sidebar = React.forwardRef<
   HTMLDivElement,
@@ -297,9 +297,9 @@ const Sidebar = React.forwardRef<
 Sidebar.displayName = "Sidebar";
 
 /**
- * 🎯 목적: SidebarTrigger 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: Button 컴포넌트 래퍼, toggleSidebar 기능 포함
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the SidebarTrigger component for React 18/19 compatibility
+ * 📝 Note: Button component wrapper; includes toggleSidebar
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const SidebarTrigger = React.forwardRef<
   React.ElementRef<typeof Button>,
@@ -329,9 +329,9 @@ const SidebarTrigger = React.forwardRef<
 SidebarTrigger.displayName = "SidebarTrigger";
 
 /**
- * 🎯 목적: SidebarRail 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: HTML button 요소 사용, toggleSidebar 기능 포함
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the SidebarRail component for React 18/19 compatibility
+ * 📝 Note: Uses an HTML button element; includes toggleSidebar
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const SidebarRail = React.forwardRef<
   HTMLButtonElement,
@@ -364,9 +364,9 @@ const SidebarRail = React.forwardRef<
 SidebarRail.displayName = "SidebarRail";
 
 /**
- * 🎯 목적: SidebarInset 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: HTML main 요소 사용
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the SidebarInset component for React 18/19 compatibility
+ * 📝 Note: Uses an HTML main element
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const SidebarInset = React.forwardRef<
   HTMLElement,
@@ -388,9 +388,9 @@ const SidebarInset = React.forwardRef<
 SidebarInset.displayName = "SidebarInset";
 
 /**
- * 🎯 목적: SidebarInput 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: Input 컴포넌트 래퍼
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the SidebarInput component for React 18/19 compatibility
+ * 📝 Note: Input component wrapper
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const SidebarInput = React.forwardRef<
   React.ElementRef<typeof Input>,
@@ -409,9 +409,9 @@ const SidebarInput = React.forwardRef<
 SidebarInput.displayName = "SidebarInput";
 
 /**
- * 🎯 목적: SidebarHeader 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: HTML div 요소 사용
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the SidebarHeader component for React 18/19 compatibility
+ * 📝 Note: Uses an HTML div element
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const SidebarHeader = React.forwardRef<
   HTMLDivElement,
@@ -430,9 +430,9 @@ const SidebarHeader = React.forwardRef<
 SidebarHeader.displayName = "SidebarHeader";
 
 /**
- * 🎯 목적: SidebarFooter 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: HTML div 요소 사용
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the SidebarFooter component for React 18/19 compatibility
+ * 📝 Note: Uses an HTML div element
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const SidebarFooter = React.forwardRef<
   HTMLDivElement,
@@ -451,9 +451,9 @@ const SidebarFooter = React.forwardRef<
 SidebarFooter.displayName = "SidebarFooter";
 
 /**
- * 🎯 목적: SidebarSeparator 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: Separator 컴포넌트 래퍼
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the SidebarSeparator component for React 18/19 compatibility
+ * 📝 Note: Separator component wrapper
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const SidebarSeparator = React.forwardRef<
   React.ElementRef<typeof Separator>,
@@ -472,9 +472,9 @@ const SidebarSeparator = React.forwardRef<
 SidebarSeparator.displayName = "SidebarSeparator";
 
 /**
- * 🎯 목적: SidebarContent 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: HTML div 요소 사용
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the SidebarContent component for React 18/19 compatibility
+ * 📝 Note: Uses an HTML div element
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const SidebarContent = React.forwardRef<
   HTMLDivElement,
@@ -496,9 +496,9 @@ const SidebarContent = React.forwardRef<
 SidebarContent.displayName = "SidebarContent";
 
 /**
- * 🎯 목적: SidebarGroup 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: HTML div 요소 사용
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the SidebarGroup component for React 18/19 compatibility
+ * 📝 Note: Uses an HTML div element
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const SidebarGroup = React.forwardRef<
   HTMLDivElement,
@@ -517,9 +517,9 @@ const SidebarGroup = React.forwardRef<
 SidebarGroup.displayName = "SidebarGroup";
 
 /**
- * 🎯 목적: SidebarGroupLabel 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: Slot 패턴 지원, asChild prop으로 컴포넌트 교체 가능
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the SidebarGroupLabel component for React 18/19 compatibility
+ * 📝 Note: Supports the Slot pattern (asChild swaps the component)
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const SidebarGroupLabel = React.forwardRef<
   HTMLDivElement,
@@ -544,9 +544,9 @@ const SidebarGroupLabel = React.forwardRef<
 SidebarGroupLabel.displayName = "SidebarGroupLabel";
 
 /**
- * 🎯 목적: SidebarGroupAction 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: Slot 패턴 지원, asChild prop으로 컴포넌트 교체 가능
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the SidebarGroupAction component for React 18/19 compatibility
+ * 📝 Note: Supports the Slot pattern (asChild swaps the component)
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const SidebarGroupAction = React.forwardRef<
   HTMLButtonElement,
@@ -573,9 +573,9 @@ const SidebarGroupAction = React.forwardRef<
 SidebarGroupAction.displayName = "SidebarGroupAction";
 
 /**
- * 🎯 목적: SidebarGroupContent 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: HTML div 요소 사용
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the SidebarGroupContent component for React 18/19 compatibility
+ * 📝 Note: Uses an HTML div element
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const SidebarGroupContent = React.forwardRef<
   HTMLDivElement,
@@ -594,9 +594,9 @@ const SidebarGroupContent = React.forwardRef<
 SidebarGroupContent.displayName = "SidebarGroupContent";
 
 /**
- * 🎯 목적: SidebarMenu 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: HTML ul 요소 사용
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the SidebarMenu component for React 18/19 compatibility
+ * 📝 Note: Uses an HTML ul element
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const SidebarMenu = React.forwardRef<
   HTMLUListElement,
@@ -615,9 +615,9 @@ const SidebarMenu = React.forwardRef<
 SidebarMenu.displayName = "SidebarMenu";
 
 /**
- * 🎯 목적: SidebarMenuItem 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: HTML li 요소 사용
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the SidebarMenuItem component for React 18/19 compatibility
+ * 📝 Note: Uses an HTML li element
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const SidebarMenuItem = React.forwardRef<
   HTMLLIElement,
@@ -658,9 +658,9 @@ const sidebarMenuButtonVariants = cva(
 );
 
 /**
- * 🎯 목적: SidebarMenuButton 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: Slot 패턴 지원, asChild prop으로 컴포넌트 교체 가능, tooltip 기능 포함
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the SidebarMenuButton component for React 18/19 compatibility
+ * 📝 Note: Supports the Slot pattern (asChild swaps the component); includes tooltip support
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const SidebarMenuButton = React.forwardRef<
   HTMLButtonElement,
@@ -723,9 +723,9 @@ const SidebarMenuButton = React.forwardRef<
 SidebarMenuButton.displayName = "SidebarMenuButton";
 
 /**
- * 🎯 목적: SidebarMenuAction 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: Slot 패턴 지원, asChild prop으로 컴포넌트 교체 가능, showOnHover 기능 포함
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the SidebarMenuAction component for React 18/19 compatibility
+ * 📝 Note: Supports the Slot pattern (asChild swaps the component); includes showOnHover
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const SidebarMenuAction = React.forwardRef<
   HTMLButtonElement,
@@ -760,9 +760,9 @@ const SidebarMenuAction = React.forwardRef<
 SidebarMenuAction.displayName = "SidebarMenuAction";
 
 /**
- * 🎯 목적: SidebarMenuBadge 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: HTML div 요소 사용
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the SidebarMenuBadge component for React 18/19 compatibility
+ * 📝 Note: Uses an HTML div element
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const SidebarMenuBadge = React.forwardRef<
   HTMLDivElement,
@@ -789,9 +789,9 @@ const SidebarMenuBadge = React.forwardRef<
 SidebarMenuBadge.displayName = "SidebarMenuBadge";
 
 /**
- * 🎯 목적: SidebarMenuSkeleton 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: HTML div 요소 사용, showIcon prop 포함
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the SidebarMenuSkeleton component for React 18/19 compatibility
+ * 📝 Note: Uses an HTML div element; includes the showIcon prop
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const SidebarMenuSkeleton = React.forwardRef<
   HTMLDivElement,
@@ -833,9 +833,9 @@ const SidebarMenuSkeleton = React.forwardRef<
 SidebarMenuSkeleton.displayName = "SidebarMenuSkeleton";
 
 /**
- * 🎯 목적: SidebarMenuSub 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: HTML ul 요소 사용
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the SidebarMenuSub component for React 18/19 compatibility
+ * 📝 Note: Uses an HTML ul element
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const SidebarMenuSub = React.forwardRef<
   HTMLUListElement,
@@ -858,9 +858,9 @@ const SidebarMenuSub = React.forwardRef<
 SidebarMenuSub.displayName = "SidebarMenuSub";
 
 /**
- * 🎯 목적: SidebarMenuSubItem 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: HTML li 요소 사용
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the SidebarMenuSubItem component for React 18/19 compatibility
+ * 📝 Note: Uses an HTML li element
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const SidebarMenuSubItem = React.forwardRef<
   HTMLLIElement,
@@ -879,9 +879,9 @@ const SidebarMenuSubItem = React.forwardRef<
 SidebarMenuSubItem.displayName = "SidebarMenuSubItem";
 
 /**
- * 🎯 목적: SidebarMenuSubButton 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: Slot 패턴 지원, asChild prop으로 컴포넌트 교체 가능, size와 isActive prop 포함
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the SidebarMenuSubButton component for React 18/19 compatibility
+ * 📝 Note: Supports the Slot pattern (asChild swaps the component); includes the size and isActive props
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const SidebarMenuSubButton = React.forwardRef<
   HTMLAnchorElement,

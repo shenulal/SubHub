@@ -4,12 +4,12 @@ import { Meta } from '@storybook/addon-docs/blocks';
 
 # Design Tokens
 
-shadcn-storybook-registry의 디자인 토큰 시스템입니다. 일관된 디자인 언어를 위한 체계적인 토큰 구조를 제공합니다.
+The design token system of shadcn-storybook-registry. It provides a structured token hierarchy for a consistent design language.
 
 ## Color System
 
 ### Primary Colors
-브랜드의 주요 색상으로 버튼, 링크 등 주요 인터랙티브 요소에 사용됩니다.
+The brand's main colour, used for key interactive elements such as buttons and links.
 
 ```css
 /* CSS Variables */
@@ -17,7 +17,7 @@ shadcn-storybook-registry의 디자인 토큰 시스템입니다. 일관된 디�
 --primary-foreground: 210 40% 98%;
 ```
 
-**사용 예시:**
+**Usage example:**
 ```tsx
 import { Button } from "@/components/ui/button";
 
@@ -25,41 +25,41 @@ import { Button } from "@/components/ui/button";
 ```
 
 ### Secondary Colors
-보조 색상으로 덜 강조되는 요소에 사용됩니다.
+A secondary colour, used for less prominent elements.
 
 ```css
 --secondary: 210 40% 96.1%;
 --secondary-foreground: 222.2 47.4% 11.2%;
 ```
 
-**사용 예시:**
+**Usage example:**
 ```tsx
 <Button variant="secondary">Secondary Button</Button>
 ```
 
 ### Destructive Colors
-경고, 에러, 삭제 등 위험한 동작을 나타냅니다.
+Indicates destructive actions such as warnings, errors and deletions.
 
 ```css
 --destructive: 0 84.2% 60.2%;
 --destructive-foreground: 210 40% 98%;
 ```
 
-**사용 예시:**
+**Usage example:**
 ```tsx
 <Button variant="destructive">Delete</Button>
 <Alert variant="destructive">Error message</Alert>
 ```
 
 ### Muted Colors
-배경, 비활성 상태, 보조 텍스트에 사용됩니다.
+Used for backgrounds, disabled states and secondary text.
 
 ```css
 --muted: 210 40% 96.1%;
 --muted-foreground: 215.4 16.3% 46.9%;
 ```
 
-**사용 예시:**
+**Usage example:**
 ```tsx
 <div className="bg-muted text-muted-foreground">
   Muted content
@@ -67,7 +67,7 @@ import { Button } from "@/components/ui/button";
 ```
 
 ### Accent Colors
-강조가 필요한 요소에 사용됩니다.
+Used for elements that need emphasis.
 
 ```css
 --accent: 210 40% 96.1%;
@@ -77,7 +77,7 @@ import { Button } from "@/components/ui/button";
 ## Typography Scale
 
 ### Font Sizes
-일관된 타이포그래피 계층을 위한 크기 시스템입니다.
+A sizing system for a consistent typographic hierarchy.
 
 ```css
 /* Tailwind CSS Classes */
@@ -92,7 +92,7 @@ text-4xl   /* 2.25rem (36px) */
 text-5xl   /* 3rem (48px) */
 ```
 
-**사용 예시:**
+**Usage example:**
 ```tsx
 <h1 className="text-4xl font-bold">Heading 1</h1>
 <h2 className="text-3xl font-semibold">Heading 2</h2>
@@ -118,7 +118,7 @@ leading-relaxed /* 1.625 */
 
 ## Spacing System
 
-Tailwind CSS 기반의 일관된 여백 시스템입니다.
+A consistent spacing system based on Tailwind CSS.
 
 ```css
 /* Padding & Margin Scale */
@@ -136,7 +136,7 @@ p-12   /* 3rem (48px) */
 p-16   /* 4rem (64px) */
 ```
 
-**사용 예시:**
+**Usage example:**
 ```tsx
 <Card className="p-6">
   <CardHeader className="pb-4">
@@ -160,7 +160,7 @@ gap-8   /* 2rem */
 
 ## Shadow System
 
-깊이감을 표현하는 그림자 시스템입니다.
+A shadow system that conveys depth.
 
 ```css
 /* CSS Variables */
@@ -172,7 +172,7 @@ gap-8   /* 2rem */
 --shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
 ```
 
-**사용 예시:**
+**Usage example:**
 ```tsx
 <div className="shadow-sm">Subtle elevation</div>
 <div className="shadow-md">Medium elevation</div>
@@ -184,7 +184,7 @@ gap-8   /* 2rem */
 ```
 
 ### Dark Mode Shadows
-Dark mode에서 그림자는 자동으로 조정됩니다:
+Shadows adjust automatically in dark mode:
 ```css
 .dark {
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.25);
@@ -195,7 +195,7 @@ Dark mode에서 그림자는 자동으로 조정됩니다:
 
 ## Radius System
 
-모서리 둥글기를 제어하는 시스템입니다.
+A system that controls corner rounding.
 
 ```css
 /* CSS Variables */
@@ -212,7 +212,7 @@ rounded-lg    /* calc(var(--radius) + 2px) */
 rounded-full  /* 9999px */
 ```
 
-**사용 예시:**
+**Usage example:**
 ```tsx
 <Button className="rounded-md">Default Radius</Button>
 <Button className="rounded-full">Fully Rounded</Button>
@@ -225,7 +225,7 @@ rounded-full  /* 9999px */
 
 ## Border System
 
-테두리 스타일 시스템입니다.
+The border style system.
 
 ```css
 /* CSS Variables */
@@ -234,7 +234,7 @@ rounded-full  /* 9999px */
 --ring: 222.2 84% 4.9%;
 ```
 
-**사용 예시:**
+**Usage example:**
 ```tsx
 <Input className="border border-input focus-visible:ring-2 focus-visible:ring-ring" />
 
@@ -253,7 +253,7 @@ const radius = styles.getPropertyValue('--radius');
 ```
 
 ### Customizing Tokens
-`app/globals.css`에서 토큰을 커스터마이징할 수 있습니다:
+Tokens can be customised in `app/globals.css`:
 
 ```css
 @layer base {
@@ -269,7 +269,7 @@ const radius = styles.getPropertyValue('--radius');
 ```
 
 ### Tailwind Integration
-모든 디자인 토큰은 Tailwind CSS v4와 완벽하게 통합됩니다:
+All design tokens integrate fully with Tailwind CSS v4:
 
 ```tsx
 // Color

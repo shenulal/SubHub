@@ -1,5 +1,5 @@
 // src/app/(auth)/reset-password/[token]/page.tsx
-// 비밀번호 재설정 페이지
+// Password reset page
 
 import { resetPassword } from "@/actions/password";
 import { Button } from "@/components/ui/button";
@@ -53,7 +53,7 @@ export default async function ResetPasswordPage({
     );
   }
 
-  // 토큰 유효성 검증
+  // Validate the token
   const resetToken = await prisma.passwordResetToken.findUnique({
     where: { token },
   });
@@ -68,7 +68,7 @@ export default async function ResetPasswordPage({
     );
   }
 
-  // 만료 확인
+  // Check expiry
   if (new Date() > resetToken.expires) {
     return (
       <TokenProblem
@@ -97,7 +97,7 @@ export default async function ResetPasswordPage({
           if (result.success) {
             redirect("/login?message=password-reset");
           }
-          // TODO: 에러 처리는 클라이언트 컴포넌트로 분리 필요
+          // TODO: move error handling to a client component
         }}
         className="flex flex-col gap-5"
       >

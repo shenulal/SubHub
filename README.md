@@ -8,24 +8,24 @@
 </p>
 
 <p align="center">
-  Built by <strong>HelloPixels</strong>, Dubai UAE · Derived from <a href="https://github.com/Wondermove-Inc/saaslens">saaslens</a> (MIT)
+  Built by <strong>HelloPixels</strong>, Dubai UAE
 </p>
 
 ---
 
 ## What SubHub does
 
-| Area                        | Capabilities                                                                                                                                                                                                                                                                                                       |
-| --------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Subscription tracking**   | Manual add with vendor catalog autocomplete, edit / pause / archive, duplicate detection, trial tracking, contract terms + notice periods, attachments, notes and activity log, personal vs. workspace subscriptions                                                                                               |
-| **Email receipt detection** | Connect Gmail or Outlook (read-only); recurring charges are parsed into suggestions you can accept, link or dismiss                                                                                                                                                                                                |
-| **Approvals**               | Policies by cost threshold / category, named approvers, manager → finance chains, approve / reject / request info with comments, reminders and escalation, auto-create the subscription on approval, exportable audit trail                                                                                        |
-| **Reminders & alerts**      | Configurable lead times (1/3/7/14/30 days), trial-ending, price-change, notice-period alerts; approvers copied on renewals; in-app, email and push-ready                                                                                                                                                           |
-| **Insights**                | Spend dashboard in the organisation base currency, category / subcategory breakdown, trends, pending-approval committed spend, CSV exports                                                                                                                                                                         |
-| **Taxonomy & masters**      | Two-level categories, tags with merge/rename, custom fields, 120+ vendor catalog with logos, default pricing and cancellation guides, auto-categorisation                                                                                                                                                          |
-| **Discovery**               | Global Cmd+K search, filters + saved views, sort, calendar, renewal pipeline (this week / this month / later), bulk actions                                                                                                                                                                                        |
-| **Platform**                | Role-based access control with custom roles, every tunable in a settings registry (no hard-coded thresholds), currency / country / tax / cost-centre / payment-method masters, exchange rates from a configurable provider, notification preferences per user, data export + deletion, dark mode, English + Korean |
-| **Inherited from saaslens** | Payment-to-app matching (CSV / ERP / card feeds), Google Workspace SSO discovery, Chrome extension usage capture, FleetDM devices, seat utilisation, offboarding and shadow-IT detection, AI assistant, super-admin console                                                                                        |
+| Area                                 | Capabilities                                                                                                                                                                                                                                                                                                 |
+| ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Subscription tracking**            | Manual add with vendor catalog autocomplete, edit / pause / archive, duplicate detection, trial tracking, contract terms + notice periods, attachments, notes and activity log, personal vs. workspace subscriptions                                                                                         |
+| **Email receipt detection**          | Connect Gmail or Outlook (read-only); recurring charges are parsed into suggestions you can accept, link or dismiss                                                                                                                                                                                          |
+| **Approvals**                        | Policies by cost threshold / category, named approvers, manager → finance chains, approve / reject / request info with comments, reminders and escalation, auto-create the subscription on approval, exportable audit trail                                                                                  |
+| **Reminders & alerts**               | Configurable lead times (1/3/7/14/30 days), trial-ending, price-change, notice-period alerts; approvers copied on renewals; in-app, email and push-ready                                                                                                                                                     |
+| **Insights**                         | Spend dashboard in the organisation base currency, category / subcategory breakdown, trends, pending-approval committed spend, CSV exports                                                                                                                                                                   |
+| **Taxonomy & masters**               | Two-level categories, tags with merge/rename, custom fields, 120+ vendor catalog with logos, default pricing and cancellation guides, auto-categorisation                                                                                                                                                    |
+| **Discovery**                        | Global Cmd+K search, filters + saved views, sort, calendar, renewal pipeline (this week / this month / later), bulk actions                                                                                                                                                                                  |
+| **Platform**                         | Role-based access control with custom roles, every tunable in a settings registry (no hard-coded thresholds), currency / country / tax / cost-centre / payment-method masters, exchange rates from a configurable provider, notification preferences per user, data export + deletion, dark mode, English UI |
+| **Inherited from the upstream base** | Payment-to-app matching (CSV / ERP / card feeds), Google Workspace SSO discovery, Chrome extension usage capture, FleetDM devices, seat utilisation, offboarding and shadow-IT detection, AI assistant, super-admin console                                                                                  |
 
 The REST API under `/api/v1` is the contract for the SubHub mobile app (React Native), which is a separate deliverable.
 
@@ -55,7 +55,7 @@ cp .env.example .env.local           # fill DATABASE_URL, NEXTAUTH_SECRET, NEXTA
 npx prisma migrate deploy            # creates the schema
 npx prisma generate
 npm run db:seed                      # currencies, countries, permission catalogue, vendor catalog
-npm run db:backfill-defaults         # only when upgrading an existing saaslens database
+npm run db:backfill-defaults         # only when upgrading an existing pre-SubHub database
 
 npm run dev                          # http://localhost:3000
 ```
@@ -115,16 +115,16 @@ npm run test:coverage  # coverage report (80% threshold)
 npm run db:studio      # Prisma Studio
 ```
 
-Contributor conventions live in `docs/SUBHUB-AGENT-GUIDE.md`. The upstream saaslens guides remain under `docs/guide/`.
+Contributor conventions live in `docs/SUBHUB-AGENT-GUIDE.md`. The upstream developer guides remain under `docs/guide/`.
 
 ## Build log — 4 November 2026
 
-- Baseline: saaslens v0.1.0 imported; upstream migration drift repaired (`20261103000000_upstream_schema_sync`).
+- Baseline: upstream base v0.1.0 imported; upstream migration drift repaired (`20261103000000_upstream_schema_sync`).
 - Foundation: `20261104000000_subhub_foundation` (taxonomy, approvals, notifications, documents, receipts, FX, saved views, onboarding, privacy) and `20261104010000_subhub_platform_layer` (RBAC, settings, masters).
 - Feature areas delivered against `MVP_Feature_Matrix_Subscription_Management.xlsx` — see `../SubHub-Feature-Verification-Matrix.md` for the capability-by-capability status.
-- Verification on 4 November 2026 (after the dependency upgrade): `next build` passes (185 routes); `tsc --noEmit` passes (strict); Vitest 3,534 tests — 3,405 pass, 38 skipped, 91 fail, every failure a pre-existing upstream saaslens failure (baseline 124 failing / 2,582 passing), eight upstream suites repaired, no regressions; Playwright smoke suite 50 / 50 against the production server. Full module/feature tracker: `docs/SUBHUB-IMPLEMENTATION-TRACKER.md`.
+- Verification on 4 November 2026 (after the dependency upgrade): `next build` passes (185 routes); `tsc --noEmit` passes (strict); Vitest 3,534 tests — 3,405 pass, 38 skipped, 91 fail, every failure a pre-existing upstream SubHub failure (baseline 124 failing / 2,582 passing), eight upstream suites repaired, no regressions; Playwright smoke suite 50 / 50 against the production server. Full module/feature tracker: `docs/SUBHUB-IMPLEMENTATION-TRACKER.md`.
 - Stack and security: Next.js 15.5.29, next-auth 5.0.0-beta.32, zod 4.6.7, Vite 8 / Vitest 4.1 (all critical/high advisories on direct dependencies resolved); secret-scan pre-commit hook; baseline security headers; see `docs/SECURITY-PRACTICES.md`.
 
 ## License
 
-MIT. SubHub contains code from saaslens © 2026 Wondermove-Inc (MIT); see `LICENSE`.
+MIT. SubHub contains third-party code © 2026 Wondermove-Inc (MIT); see `LICENSE`.

@@ -106,7 +106,7 @@ describe("integrations actions", () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("인증이 필요합니다");
+      expect(result.message).toBe("Authentication required");
     });
 
     it("should return error when no organization", async () => {
@@ -121,7 +121,7 @@ describe("integrations actions", () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("조직에 속해 있어야 합니다");
+      expect(result.message).toBe("You must belong to an organization");
     });
 
     it("should create integration successfully", async () => {
@@ -181,7 +181,7 @@ describe("integrations actions", () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("이미 동일한 유형의 연동이 존재합니다");
+      expect(result.message).toBe("An integration of this type already exists");
     });
   });
 
@@ -263,7 +263,7 @@ describe("integrations actions", () => {
       const result = await getIntegration("non-existent");
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("연동을 찾을 수 없습니다");
+      expect(result.message).toBe("Integration not found");
     });
   });
 
@@ -313,7 +313,7 @@ describe("integrations actions", () => {
       const result = await updateIntegrationStatus("non-existent", "ACTIVE");
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("연동을 찾을 수 없습니다");
+      expect(result.message).toBe("Integration not found");
     });
   });
 
@@ -390,7 +390,7 @@ describe("integrations actions", () => {
 
       expect(result.success).toBe(false);
       expect(result.message).toBe(
-        "현재 Google Workspace만 동기화를 지원합니다"
+        "Currently only Google Workspace sync is supported"
       );
     });
   });
@@ -403,7 +403,7 @@ describe("integrations actions", () => {
       const { getSyncLogs } = await import("./integrations");
       const result = await getSyncLogs("int-1");
       expect(result.success).toBe(false);
-      expect(result.message).toBe("인증이 필요합니다");
+      expect(result.message).toBe("Authentication required");
     });
 
     it("should return error when integration not found", async () => {
@@ -420,7 +420,7 @@ describe("integrations actions", () => {
       const { getSyncLogs } = await import("./integrations");
       const result = await getSyncLogs("non-existent");
       expect(result.success).toBe(false);
-      expect(result.message).toBe("연동을 찾을 수 없습니다");
+      expect(result.message).toBe("Integration not found");
     });
 
     it("should return error when accessing other organization integration", async () => {
@@ -434,13 +434,13 @@ describe("integrations actions", () => {
         prisma.integration.findUnique as ReturnType<typeof vi.fn>
       ).mockResolvedValue({
         id: "int-1",
-        organizationId: "org-2", // 다른 조직
+        organizationId: "org-2", // different organization
       });
 
       const { getSyncLogs } = await import("./integrations");
       const result = await getSyncLogs("int-1");
       expect(result.success).toBe(false);
-      expect(result.message).toBe("접근 권한이 없습니다");
+      expect(result.message).toBe("You do not have access permission");
     });
 
     it("should return sync logs with default limit", async () => {
@@ -466,7 +466,9 @@ describe("integrations actions", () => {
           itemsFound: 5,
           itemsCreated: 1,
           itemsUpdated: 3,
-          errors: [{ code: "USER_ERROR", message: "일부 사용자 동기화 실패" }],
+          errors: [
+            { code: "USER_ERROR", message: "Some users failed to sync" },
+          ],
           startedAt: new Date("2024-11-29T10:00:00Z"),
           completedAt: new Date("2024-11-29T10:03:00Z"),
         },
@@ -490,13 +492,13 @@ describe("integrations actions", () => {
       expect(result.data?.logs).toHaveLength(2);
       expect(result.data?.logs?.[0].id).toBe("log-1");
       expect(result.data?.logs?.[0].status).toBe("SUCCESS");
-      // Date가 ISO 문자열로 직렬화됨
+      // Dates are serialized as ISO strings
       expect(typeof result.data?.logs?.[0].startedAt).toBe("string");
       expect(prisma.syncLog.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { integrationId: "int-1" },
           orderBy: { startedAt: "desc" },
-          take: 10, // 기본값
+          take: 10, // default
         })
       );
     });
@@ -540,7 +542,7 @@ describe("integrations actions", () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("인증이 필요합니다");
+      expect(result.message).toBe("Authentication required");
     });
 
     it("should return error when integration not found", async () => {
@@ -560,7 +562,7 @@ describe("integrations actions", () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("연동을 찾을 수 없습니다");
+      expect(result.message).toBe("Integration not found");
     });
 
     it("should return error when accessing other organization integration", async () => {
@@ -584,7 +586,7 @@ describe("integrations actions", () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("접근 권한이 없습니다");
+      expect(result.message).toBe("You do not have access permission");
     });
 
     it("should update integration settings in metadata", async () => {

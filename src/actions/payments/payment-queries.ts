@@ -48,9 +48,9 @@ export interface PaymentSummaryByAppResult {
 }
 
 /**
- * 결제 데이터 존재 여부 확인
- * PaymentRecord + CardTransaction 중 하나라도 있으면 hasData: true
- * 에러 시 false alarm 방지를 위해 hasData: true 기본값 반환
+ * Check whether payment data exists
+ * hasData: true if either PaymentRecord or CardTransaction exists
+ * Returns hasData: true by default on error to avoid false alarms
  */
 export async function hasPaymentData(): Promise<
   ActionState<{ hasData: boolean }>
@@ -59,11 +59,14 @@ export async function hasPaymentData(): Promise<
     const session = await auth();
 
     if (!session?.user) {
-      return { success: false, message: "인증이 필요합니다" };
+      return { success: false, message: "Authentication required" };
     }
 
     if (!session.user.organizationId) {
-      return { success: false, message: "조직 정보가 필요합니다" };
+      return {
+        success: false,
+        message: "Organization information is required",
+      };
     }
 
     const orgId = session.user.organizationId;
@@ -78,7 +81,7 @@ export async function hasPaymentData(): Promise<
       data: { hasData: paymentCount > 0 || cardCount > 0 },
     };
   } catch (error) {
-    console.error("결제 데이터 존재 여부 확인 오류:", error);
+    console.error("Payment data existence check error:", error);
     return {
       success: true,
       data: { hasData: true },
@@ -87,7 +90,7 @@ export async function hasPaymentData(): Promise<
 }
 
 /**
- * 결제 내역 조회 (CardTransaction + PaymentRecord 통합)
+ * Get payment records (CardTransaction + PaymentRecord combined)
  */
 export async function getPaymentRecords(options: {
   page: number;
@@ -104,14 +107,14 @@ export async function getPaymentRecords(options: {
     if (!session?.user) {
       return {
         success: false,
-        message: "인증이 필요합니다",
+        message: "Authentication required",
       };
     }
 
     if (!session.user.organizationId) {
       return {
         success: false,
-        message: "조직 정보가 필요합니다",
+        message: "Organization information is required",
       };
     }
 
@@ -125,7 +128,7 @@ export async function getPaymentRecords(options: {
       source = "all",
     } = options;
 
-    // 통합 결제 서비스 사용
+    // Use the unified payment service
     const { getUnifiedPayments } =
       await import("@/lib/services/payment/unified-payment");
 
@@ -166,20 +169,20 @@ export async function getPaymentRecords(options: {
       },
     };
   } catch (error) {
-    console.error("결제 내역 조회 오류:", error);
+    console.error("Payment record query error:", error);
     return {
       success: false,
-      message: "결제 내역 조회 중 오류가 발생했습니다",
+      message: "An error occurred while loading payment records",
     };
   }
 }
 
 /**
- * 앱별 결제 내역 집계
+ * Aggregate payment records per app
  */
 /**
- * 매칭 상태별 건수 조회 (TabFilter용)
- * PaymentRecord + CardTransaction 모두 집계
+ * Count by match status (for TabFilter)
+ * Aggregates both PaymentRecord and CardTransaction
  */
 export async function getPaymentStatusCounts(): Promise<
   ActionState<Record<PaymentMatchStatus | "all", number>>
@@ -188,11 +191,14 @@ export async function getPaymentStatusCounts(): Promise<
     const session = await auth();
 
     if (!session?.user) {
-      return { success: false, message: "인증이 필요합니다" };
+      return { success: false, message: "Authentication required" };
     }
 
     if (!session.user.organizationId) {
-      return { success: false, message: "조직 정보가 필요합니다" };
+      return {
+        success: false,
+        message: "Organization information is required",
+      };
     }
 
     const orgId = session.user.organizationId;
@@ -211,7 +217,7 @@ export async function getPaymentStatusCounts(): Promise<
       _count: { id: true },
     });
 
-    // 합산
+    // Sum
     const counts: Record<string, number> = {
       all: 0,
       PENDING: 0,
@@ -235,16 +241,16 @@ export async function getPaymentStatusCounts(): Promise<
       data: counts as Record<PaymentMatchStatus | "all", number>,
     };
   } catch (error) {
-    console.error("상태별 건수 조회 오류:", error);
+    console.error("Status count query error:", error);
     return {
       success: false,
-      message: "상태별 건수 조회 중 오류가 발생했습니다",
+      message: "An error occurred while loading status counts",
     };
   }
 }
 
 /**
- * 앱별 결제 내역 집계
+ * Aggregate payment records per app
  */
 export async function getPaymentSummaryByApp(options: {
   startDate?: Date;
@@ -256,20 +262,20 @@ export async function getPaymentSummaryByApp(options: {
     if (!session?.user) {
       return {
         success: false,
-        message: "인증이 필요합니다",
+        message: "Authentication required",
       };
     }
 
     if (!session.user.organizationId) {
       return {
         success: false,
-        message: "조직 정보가 필요합니다",
+        message: "Organization information is required",
       };
     }
 
     const { startDate, endDate } = options;
 
-    // 필터 조건 구성
+    // Build filter conditions
     const where: Record<string, unknown> = {
       organizationId: session.user.organizationId,
       matchedAppId: { not: null },
@@ -286,7 +292,7 @@ export async function getPaymentSummaryByApp(options: {
       }
     }
 
-    // 앱별 집계
+    // Aggregate per app
     const groupedPayments = await prisma.paymentRecord.groupBy({
       by: ["matchedAppId"],
       where,
@@ -294,7 +300,7 @@ export async function getPaymentSummaryByApp(options: {
       _count: { id: true },
     });
 
-    // 앱 정보 조회
+    // Fetch app info
     const appIds = groupedPayments
       .map((g) => g.matchedAppId)
       .filter((id): id is string => id !== null);
@@ -306,7 +312,7 @@ export async function getPaymentSummaryByApp(options: {
 
     const appMap = new Map(apps.map((app) => [app.id, app.name]));
 
-    // 결과 구성
+    // Build the result
     let totalAmount = 0;
     let totalTransactions = 0;
 
@@ -324,7 +330,7 @@ export async function getPaymentSummaryByApp(options: {
 
         return {
           appId: g.matchedAppId!,
-          appName: appMap.get(g.matchedAppId!) || "알 수 없음",
+          appName: appMap.get(g.matchedAppId!) || "Unknown",
           totalAmount: amount,
           transactionCount: count,
         };
@@ -340,10 +346,10 @@ export async function getPaymentSummaryByApp(options: {
       },
     };
   } catch (error) {
-    console.error("비용 집계 오류:", error);
+    console.error("Cost aggregation error:", error);
     return {
       success: false,
-      message: "비용 집계 중 오류가 발생했습니다",
+      message: "An error occurred while aggregating costs",
     };
   }
 }

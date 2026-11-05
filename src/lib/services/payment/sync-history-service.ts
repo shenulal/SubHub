@@ -2,7 +2,7 @@ import { Prisma, SyncHistory, SyncStatus, SyncType } from "@prisma/client";
 
 import { prisma } from "@/lib/db";
 
-// SyncHistory 생성 입력 타입
+// SyncHistory creation input type
 interface CreateSyncHistoryInput {
   organizationId: string;
   type: SyncType;
@@ -12,7 +12,7 @@ interface CreateSyncHistoryInput {
   fileName?: string;
 }
 
-// SyncHistory 완료 결과 타입
+// SyncHistory completion result type
 interface CompleteSyncHistoryResult {
   status: "SUCCESS" | "PARTIAL" | "FAILED";
   totalRecords: number;
@@ -24,7 +24,7 @@ interface CompleteSyncHistoryResult {
   errorDetails?: Record<string, unknown>;
 }
 
-// getSyncHistories 필터 타입
+// getSyncHistories filter type
 interface GetSyncHistoriesFilters {
   organizationId: string;
   corporateCardId?: string;
@@ -34,7 +34,7 @@ interface GetSyncHistoriesFilters {
 }
 
 /**
- * 새 SyncHistory 레코드를 RUNNING 상태로 생성합니다.
+ * Creates a new SyncHistory record in RUNNING status.
  */
 export async function createSyncHistory(
   input: CreateSyncHistoryInput
@@ -53,8 +53,8 @@ export async function createSyncHistory(
 }
 
 /**
- * SyncHistory를 완료 상태로 업데이트합니다.
- * completedAt은 항상 현재 시각으로 설정됩니다.
+ * Updates a SyncHistory to its completed status.
+ * completedAt is always set to the current time.
  */
 export async function completeSyncHistory(
   syncHistoryId: string,
@@ -79,9 +79,9 @@ export async function completeSyncHistory(
 }
 
 /**
- * 법인카드의 consecutiveFailCount를 업데이트합니다.
- * success=true: 0으로 초기화
- * success=false: 1 증가
+ * Updates the corporate card's consecutiveFailCount.
+ * success=true: reset to 0
+ * success=false: increment by 1
  */
 export async function updateCardFailCount(
   cardId: string,
@@ -97,8 +97,8 @@ export async function updateCardFailCount(
 }
 
 /**
- * SyncHistory 목록을 페이지네이션하여 조회합니다.
- * 기본값: limit=20, offset=0, startedAt 내림차순 정렬
+ * Returns a paginated list of SyncHistory records.
+ * Defaults: limit=20, offset=0, sorted by startedAt descending
  */
 export async function getSyncHistories(
   filters: GetSyncHistoriesFilters

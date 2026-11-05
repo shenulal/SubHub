@@ -79,7 +79,7 @@ describe("Extension Blacklist Actions", () => {
       const result = await getBlacklists();
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe("인증이 필요합니다");
+      expect(result.error).toBe("Authentication required");
     });
   });
 
@@ -116,7 +116,7 @@ describe("Extension Blacklist Actions", () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain("도메인 패턴");
+      expect(result.error).toContain("domain pattern");
     });
   });
 
@@ -153,7 +153,7 @@ describe("Extension Blacklist Actions", () => {
       const result = await updateBlacklist("non-existent", { enabled: false });
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain("찾을 수 없습니다");
+      expect(result.error).toContain("not found");
     });
   });
 

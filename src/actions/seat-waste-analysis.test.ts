@@ -70,7 +70,7 @@ describe("seat-waste-analysis", () => {
       vi.mocked(prisma.userAppAccess.findMany).mockResolvedValue([
         { userId: "user-1", appId: "app-1", lastUsedAt: recentDate },
         { userId: "user-2", appId: "app-1", lastUsedAt: oldDate },
-        // user-3 has no access record → untracked (과다 배정 아님)
+        // user-3 has no access record → untracked (not over-assigned)
       ] as never);
 
       const result = await getSeatWasteAnalysis();
@@ -83,7 +83,7 @@ describe("seat-waste-analysis", () => {
       // user-1 (recent) = active, user-2 (old) = inactive, user-3 (no access) = untracked
       expect(app.activeSeats).toBe(1);
       expect(app.unassignedSeats).toBe(7); // 10 - 3
-      expect(app.inactiveSeats).toBe(1); // user-2 only (증거 기반)
+      expect(app.inactiveSeats).toBe(1); // user-2 only (evidence-based)
       expect(app.wastedSeats).toBe(8); // 7 + 1
       expect(app.perSeatPrice).toBe(15000);
       expect(app.monthlyWaste).toBe(8 * 15000);
@@ -101,7 +101,7 @@ describe("seat-waste-analysis", () => {
         },
       ] as never);
 
-      // No UserAppAccess records at all → untracked (과다 배정 아님)
+      // No UserAppAccess records at all → untracked (not over-assigned)
       vi.mocked(prisma.userAppAccess.findMany).mockResolvedValue([]);
 
       const result = await getSeatWasteAnalysis();
@@ -129,7 +129,7 @@ describe("seat-waste-analysis", () => {
         },
       ] as never);
 
-      // UserAppAccess exists but lastUsedAt is null → untracked (과다 배정 아님)
+      // UserAppAccess exists but lastUsedAt is null → untracked (not over-assigned)
       vi.mocked(prisma.userAppAccess.findMany).mockResolvedValue([
         { userId: "user-1", appId: "app-1", lastUsedAt: null },
       ] as never);

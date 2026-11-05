@@ -4,8 +4,8 @@ import { SuperAdminSidebar } from "@/components/super-admin/super-admin-sidebar"
 import { requireSuperAdmin } from "@/lib/auth/require-auth";
 
 /**
- * Super Admin 레이아웃
- * SUPER_ADMIN role 없으면 /dashboard로 리다이렉트
+ * Super Admin layout
+ * Redirects to /dashboard without the SUPER_ADMIN role
  */
 export default async function SuperAdminLayout({
   children,

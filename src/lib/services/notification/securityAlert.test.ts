@@ -28,7 +28,7 @@ describe("securityAlert", () => {
   describe("sendShadowITAlertEmail", () => {
     const validParams: ShadowITAlertParams = {
       to: "admin@example.com",
-      organizationName: "테스트 조직",
+      organizationName: "Test Organization",
       shadowApps: [
         {
           name: "Unknown App 1",
@@ -56,7 +56,7 @@ describe("securityAlert", () => {
 
       const callArgs = mockSend.mock.calls[0][0];
       expect(callArgs.subject).toContain("Shadow IT");
-      expect(callArgs.subject).toContain("2건");
+      expect(callArgs.subject).toContain("2 unapproved");
     });
 
     it("should include all shadow apps in email body", async () => {
@@ -92,13 +92,13 @@ describe("securityAlert", () => {
   describe("sendCostAnomalyAlertEmail", () => {
     const validParams: CostAnomalyAlertParams = {
       to: "admin@example.com",
-      organizationName: "테스트 조직",
+      organizationName: "Test Organization",
       appName: "Notion",
       previousCost: 100000,
       currentCost: 180000,
       percentageIncrease: 80,
       currency: "KRW",
-      period: "2025년 1월",
+      period: "Jan 2025",
     };
 
     it("should send cost anomaly alert email successfully", async () => {
@@ -113,7 +113,7 @@ describe("securityAlert", () => {
       await sendCostAnomalyAlertEmail(validParams);
 
       const callArgs = mockSend.mock.calls[0][0];
-      expect(callArgs.subject).toContain("비용 이상");
+      expect(callArgs.subject).toContain("Cost Anomaly");
       expect(callArgs.subject).toContain("Notion");
       expect(callArgs.subject).toContain("80%");
     });

@@ -1,10 +1,10 @@
 /**
- * SMP AI Agent Chat API Route
- * SMP-197: streamText 기반 실시간 채팅 + Read Tool 자동 실행
- * SMP-198: Write Tool 통합 — 승인 대기 패턴 (pending_approval)
- * SMP-204: pending action 서버 저장 — onStepFinish에서 감지 후 store 등록
+ * SubHub AI Agent Chat API Route
+ * SMP-197: real-time chat via streamText with automatic Read Tool execution
+ * SMP-198: Write Tool integration — pending-approval pattern (pending_approval)
+ * SMP-204: server-side pending action storage — detected in onStepFinish and registered in the store
  *
- * POST /api/ai/chat → 스트리밍 응답 (useChat 훅과 연동)
+ * POST /api/ai/chat → streaming response (works with the useChat hook)
  */
 
 import { anthropic } from "@ai-sdk/anthropic";
@@ -33,7 +33,7 @@ export async function POST(request: Request) {
       messages: await convertToModelMessages(messages),
       tools: { ...readTools, ...writeTools },
       stopWhen: stepCountIs(5),
-      // SMP-204: 각 step 완료 시 pending_approval 감지 → 서버 store 등록
+      // SMP-204: on each completed step, detect pending_approval → register in the server store
       onStepFinish: ({ toolResults }) => {
         if (!toolResults) return;
         for (const tr of toolResults) {
@@ -62,7 +62,9 @@ export async function POST(request: Request) {
   } catch (error) {
     console.error("[AI Chat] Error:", error);
     return new Response(
-      JSON.stringify({ error: "요청 처리 중 오류가 발생했습니다." }),
+      JSON.stringify({
+        error: "An error occurred while processing the request.",
+      }),
       {
         status: 500,
         headers: { "Content-Type": "application/json" },

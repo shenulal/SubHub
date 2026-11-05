@@ -26,8 +26,8 @@ interface ColumnsDropdownProps {
 }
 
 /**
- * 컬럼 가시성 토글 드롭다운 컴포넌트
- * DataTable과 독립적으로 사용 가능
+ * Column visibility toggle dropdown
+ * Can be used independently of DataTable
  */
 export function ColumnsDropdown({
   columns,

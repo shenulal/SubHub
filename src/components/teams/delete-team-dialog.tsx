@@ -40,7 +40,7 @@ export function DeleteTeamDialog({
   const [isLoadingImpact, setIsLoadingImpact] = useState(false);
   const [isPending, startTransition] = useTransition();
 
-  // 다이얼로그 열릴 때 영향도 조회
+  // Fetch the impact when the dialog opens
   useEffect(() => {
     if (open) {
       setIsLoadingImpact(true);
@@ -70,7 +70,7 @@ export function DeleteTeamDialog({
     });
   };
 
-  // 영향도가 있는지 확인
+  // Check whether there is any impact
   const hasImpact =
     impact &&
     (impact.memberCount > 0 ||
@@ -95,7 +95,7 @@ export function DeleteTeamDialog({
                 {t("teams.delete.irreversible")}
               </p>
 
-              {/* 영향도 표시 */}
+              {/* Impact display */}
               {isLoadingImpact ? (
                 <div className="flex items-center justify-center py-4">
                   <Loader2 className="h-5 w-5 animate-spin" />

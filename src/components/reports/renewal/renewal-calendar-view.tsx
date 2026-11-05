@@ -19,14 +19,14 @@ interface RenewalCalendarViewProps {
 
 const WEEKDAY_KEYS = ["sun", "mon", "tue", "wed", "thu", "fri", "sat"] as const;
 
-// 긴급도 계산 (오늘 기준 남은 일수)
+// Urgency calculation (days remaining from today)
 function getUrgencyLevel(daysUntilRenewal: number): UrgencyLevel {
   if (daysUntilRenewal <= 7) return "urgent";
   if (daysUntilRenewal <= 14) return "warning";
   return "normal";
 }
 
-// 긴급도별 색상 클래스 (Tailwind 표준 색상)
+// Colour classes per urgency (standard Tailwind colours)
 const urgencyStyles = {
   urgent: {
     dot: "bg-error",
@@ -48,14 +48,14 @@ const urgencyStyles = {
   },
 };
 
-// 날짜 문자열 생성 (YYYY-MM-DD)
+// Build a date string (YYYY-MM-DD)
 function formatDateKey(year: number, month: number, day: number): string {
   const paddedMonth = String(month).padStart(2, "0");
   const paddedDay = String(day).padStart(2, "0");
   return `${year}-${paddedMonth}-${paddedDay}`;
 }
 
-// 날짜별 갱신 목록 그룹화
+// Group renewals by date
 function groupRenewalsByDate(
   renewals: UpcomingRenewal[]
 ): Map<string, UpcomingRenewal[]> {
@@ -78,7 +78,7 @@ function groupRenewalsByDate(
   return grouped;
 }
 
-// 날짜의 가장 긴급한 레벨 찾기
+// Find the most urgent level for a date
 function getMostUrgentLevel(renewals: UpcomingRenewal[]): UrgencyLevel {
   let mostUrgent: UrgencyLevel = "normal";
 
@@ -101,34 +101,34 @@ export function RenewalCalendarView({
   const [currentYear, setCurrentYear] = useState(today.getFullYear());
   const [currentMonth, setCurrentMonth] = useState(today.getMonth() + 1);
 
-  // 날짜별 갱신 그룹화
+  // Group renewals by date
   const renewalsByDate = groupRenewalsByDate(renewals);
 
-  // 캘린더 날짜 계산
+  // Calendar date calculation
   const firstDayOfMonth = new Date(currentYear, currentMonth - 1, 1);
   const lastDayOfMonth = new Date(currentYear, currentMonth, 0);
   const startingDayOfWeek = firstDayOfMonth.getDay();
   const daysInMonth = lastDayOfMonth.getDate();
 
-  // 캘린더 그리드 생성
+  // Build the calendar grid
   const calendarDays: (number | null)[] = [];
 
-  // 이전 달의 빈 셀
+  // Empty cells for the previous month
   for (let i = 0; i < startingDayOfWeek; i++) {
     calendarDays.push(null);
   }
 
-  // 현재 달의 날짜들
+  // Days of the current month
   for (let day = 1; day <= daysInMonth; day++) {
     calendarDays.push(day);
   }
 
-  // 다음 달의 빈 셀로 6주 채우기
+  // Fill up to 6 weeks with empty cells for the next month
   while (calendarDays.length < 42) {
     calendarDays.push(null);
   }
 
-  // 이전/다음 월 네비게이션
+  // Previous/next month navigation
   const handlePrevMonth = () => {
     if (currentMonth === 1) {
       setCurrentYear(currentYear - 1);
@@ -152,7 +152,7 @@ export function RenewalCalendarView({
     setCurrentMonth(today.getMonth() + 1);
   };
 
-  // 오늘 날짜 확인
+  // Check for today
   const isToday = (day: number): boolean => {
     return (
       today.getFullYear() === currentYear &&
@@ -161,12 +161,12 @@ export function RenewalCalendarView({
     );
   };
 
-  // 선택된 날짜 확인
+  // Check for the selected date
   const isSelected = (day: number): boolean => {
     return formatDateKey(currentYear, currentMonth, day) === selectedDate;
   };
 
-  // 날짜 클릭 핸들러
+  // Date click handler
   const handleDateClick = (day: number) => {
     const dateKey = formatDateKey(currentYear, currentMonth, day);
     const dateRenewals = renewalsByDate.get(dateKey) || [];
@@ -196,7 +196,7 @@ export function RenewalCalendarView({
         </div>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* 범례 */}
+        {/* Legend */}
         <div className="bg-muted flex flex-wrap items-center gap-x-5 gap-y-2 rounded-md px-3 py-2">
           <div className="flex items-center gap-2">
             <span
@@ -218,7 +218,7 @@ export function RenewalCalendarView({
           </div>
         </div>
 
-        {/* 월 네비게이션 */}
+        {/* Month navigation */}
         <div className="flex items-center justify-between gap-2">
           <Button
             variant="ghost"
@@ -243,7 +243,7 @@ export function RenewalCalendarView({
           </Button>
         </div>
 
-        {/* 요일 헤더 */}
+        {/* Weekday header */}
         <div className="grid grid-cols-7 gap-1">
           {WEEKDAY_KEYS.map((key, index) => (
             <div
@@ -259,7 +259,7 @@ export function RenewalCalendarView({
           ))}
         </div>
 
-        {/* 캘린더 그리드 */}
+        {/* Calendar grid */}
         <div className="grid grid-cols-7 gap-1">
           {calendarDays.map((day, index) => {
             if (day === null) {
@@ -304,7 +304,7 @@ export function RenewalCalendarView({
                   {day}
                 </span>
 
-                {/* 갱신 표시 */}
+                {/* Renewal indicator */}
                 {hasRenewals && urgencyLevel && (
                   <div className="absolute right-1 bottom-1 flex items-center gap-1">
                     <span

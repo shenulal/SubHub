@@ -88,7 +88,7 @@ export function SubscriptionDetailSeatCard({
     return (
       <Card>
         <CardHeader>
-          <CardTitle>라이선스 사용량</CardTitle>
+          <CardTitle>License Usage</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex items-center justify-between text-sm">
@@ -98,7 +98,9 @@ export function SubscriptionDetailSeatCard({
             </span>
           </div>
           <Progress value={usagePercent} className="h-2" />
-          <p className="text-muted-foreground text-xs">{total - used}개 남음</p>
+          <p className="text-muted-foreground text-xs">
+            {total - used} remaining
+          </p>
         </CardContent>
       </Card>
     );

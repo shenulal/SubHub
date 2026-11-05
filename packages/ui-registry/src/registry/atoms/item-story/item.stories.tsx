@@ -47,8 +47,8 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 /**
- * 기본 Item 사용 예제입니다.
- * 제목, 설명, 액션 버튼을 포함합니다.
+ * Basic Item usage.
+ * Includes a title, description and action button.
  */
 export const Default: Story = {
   render: () => (
@@ -84,8 +84,8 @@ export const Default: Story = {
 };
 
 /**
- * Variant 예제입니다.
- * default와 outline variant를 보여줍니다.
+ * Variant example.
+ * Shows the default and outline variants.
  */
 export const Variants: Story = {
   render: () => (
@@ -121,8 +121,8 @@ export const Variants: Story = {
 };
 
 /**
- * 크기 예제입니다.
- * sm과 기본 크기를 보여줍니다.
+ * Size example.
+ * Shows the sm and default sizes.
  */
 export const Size: Story = {
   render: () => (
@@ -158,8 +158,8 @@ export const Size: Story = {
 };
 
 /**
- * 아이콘 예제입니다.
- * ItemMedia에 아이콘을 표시합니다.
+ * Icon example.
+ * Shows an icon in ItemMedia.
  */
 export const Icon: Story = {
   render: () => (
@@ -185,8 +185,8 @@ export const Icon: Story = {
 };
 
 /**
- * 아바타 예제입니다.
- * ItemMedia에 Avatar 컴포넌트를 사용합니다.
+ * Avatar example.
+ * Uses the Avatar component in ItemMedia.
  */
 export const AvatarExample: Story = {
   render: () => (
@@ -213,8 +213,8 @@ export const AvatarExample: Story = {
 };
 
 /**
- * 이미지 예제입니다.
- * ItemMedia에 이미지를 표시합니다.
+ * Image example.
+ * Shows an image in ItemMedia.
  */
 export const ImageExample: Story = {
   render: () => {
@@ -274,8 +274,8 @@ export const ImageExample: Story = {
 };
 
 /**
- * 그룹 예제입니다.
- * ItemGroup과 ItemSeparator를 사용합니다.
+ * Group example.
+ * Uses ItemGroup and ItemSeparator.
  */
 export const Group: Story = {
   render: () => {
@@ -329,8 +329,8 @@ export const Group: Story = {
 };
 
 /**
- * 헤더 예제입니다.
- * ItemHeader를 사용하여 상단에 이미지를 표시합니다.
+ * Header example.
+ * Uses ItemHeader to show an image at the top.
  */
 export const Header: Story = {
   render: () => {
@@ -381,8 +381,8 @@ export const Header: Story = {
 };
 
 /**
- * 링크 예제입니다.
- * asChild prop을 사용하여 다양한 블로그 포스트를 링크로 표시합니다.
+ * Link example.
+ * Uses the asChild prop to show various blog posts as links.
  */
 export const LinkExample: Story = {
   render: () => {
@@ -437,8 +437,8 @@ export const LinkExample: Story = {
 };
 
 /**
- * 드롭다운 예제입니다.
- * DropdownMenu와 함께 사용하여 사람들의 목록을 보여줍니다.
+ * Dropdown example.
+ * Used with DropdownMenu to show a list of people.
  */
 export const Dropdown: Story = {
   render: () => {

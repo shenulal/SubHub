@@ -38,9 +38,9 @@ export interface InferenceMetrics {
 }
 
 /**
- * VendorInferenceLog 기반 LLM 호출 메트릭 조회
- * - 성공: rawResult가 존재하는 건
- * - 실패: errorCode 존재 또는 rawResult 없음
+ * Get LLM call metrics from VendorInferenceLog
+ * - Success: entries with a rawResult
+ * - Failure: entries with an errorCode or no rawResult
  */
 export async function getInferenceMetrics(): Promise<InferenceMetrics> {
   const { organizationId } = await requireOrganization();
@@ -136,7 +136,7 @@ async function _sendInferenceMetricsEmail(): Promise<SendInferenceMetricsEmailRe
   if (role !== "ADMIN") {
     return {
       success: false,
-      message: "관리자만 이메일 알림을 발송할 수 있습니다.",
+      message: "Only admins can send email alerts.",
     };
   }
 
@@ -164,7 +164,7 @@ async function _sendInferenceMetricsEmail(): Promise<SendInferenceMetricsEmailRe
   if (recipients.length === 0) {
     return {
       success: false,
-      message: "발송할 관리자 이메일을 찾을 수 없습니다.",
+      message: "No admin email address found to send to.",
     };
   }
 
@@ -174,45 +174,45 @@ async function _sendInferenceMetricsEmail(): Promise<SendInferenceMetricsEmailRe
 
   const resend = getResend();
   const today = new Date().toLocaleDateString("ko-KR");
-  const orgName = organization?.name || "SaaS Management Platform";
-  const subject = `[${orgName}] LLM 매칭 메트릭 알림 - ${today}`;
+  const orgName = organization?.name || "SubHub";
+  const subject = `[${orgName}] LLM matching metrics alert - ${today}`;
 
   const html = `
     <div style="font-family: sans-serif; max-width: 640px;">
-      <h2>LLM 매칭 메트릭 알림</h2>
-      <p>${orgName}의 최근 LLM 매칭 메트릭입니다.</p>
+      <h2>LLM matching metrics alert</h2>
+      <p>Recent LLM matching metrics for ${orgName}.</p>
       <ul>
-        <li>총 호출: ${metrics.totalCalls}건</li>
-        <li>성공(결과 존재): ${metrics.successfulCalls}건 (${metrics.successRate.toFixed(1)}%)</li>
-        <li>평균 토큰: prompt ${metrics.averageTokens.prompt ?? "-"} / completion ${
+        <li>Total calls: ${metrics.totalCalls}</li>
+        <li>Successful (with result): ${metrics.successfulCalls} (${metrics.successRate.toFixed(1)}%)</li>
+        <li>Average tokens: prompt ${metrics.averageTokens.prompt ?? "-"} / completion ${
           metrics.averageTokens.completion ?? "-"
         } / total ${metrics.averageTokens.total ?? "-"}</li>
       </ul>
-      <h4>최근 에러 Top 5</h4>
+      <h4>Top 5 recent errors</h4>
       <ul>
         ${
           errorEntries.length === 0
-            ? "<li>에러 없음</li>"
+            ? "<li>No errors</li>"
             : errorEntries
-                .map(([code, count]) => `<li>${code}: ${count}건</li>`)
+                .map(([code, count]) => `<li>${code}: ${count}</li>`)
                 .join("")
         }
       </ul>
-      <p style="color:#666;font-size:12px;">관리자 알림용 자동 발송 이메일입니다.</p>
+      <p style="color:#666;font-size:12px;">This is an automated alert email for administrators.</p>
     </div>
   `;
 
   try {
     await resend.emails.send({
-      from: "SaaS Management Platform <reports@resend.dev>",
+      from: "SubHub <reports@resend.dev>",
       to: recipients,
       subject,
       html,
     });
-    return { success: true, message: "이메일을 발송했습니다." };
+    return { success: true, message: "Email sent." };
   } catch (error) {
-    logger.error({ err: error }, "[Inference Email] 발송 실패");
-    return { success: false, message: "이메일 발송에 실패했습니다." };
+    logger.error({ err: error }, "[Inference Email] Send failed");
+    return { success: false, message: "Failed to send the email." };
   }
 }
 export const sendInferenceMetricsEmail = withLogging(

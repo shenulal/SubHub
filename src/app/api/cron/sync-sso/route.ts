@@ -1,10 +1,10 @@
 // src/app/api/cron/sync-sso/route.ts
 /**
- * SSO 동기화 Cron Job
- * Vercel Cron: 매일 자정(UTC) 실행
+ * SSO sync cron job
+ * Vercel Cron: runs daily at midnight (UTC)
  *
- * 환경변수:
- * - CRON_SECRET: Vercel Cron 인증 토큰
+ * Environment variables:
+ * - CRON_SECRET: Vercel Cron auth token
  */
 
 import { prisma } from "@/lib/db";
@@ -17,7 +17,7 @@ import type { ServiceAccountCredentials, SyncResult } from "@/types/sso";
 import type { Integration } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
-// Integration 자격증명 파싱
+// Parse integration credentials
 function parseCredentials(
   integration: Integration
 ): ServiceAccountCredentials | null {
@@ -65,7 +65,7 @@ export const GET = withCronAuth(
     const results: SyncJobResult[] = [];
 
     try {
-      // 활성화된 모든 Integration 조회
+      // Fetch all active integrations
       const integrations = await prisma.integration.findMany({
         where: {
           status: "ACTIVE",
@@ -84,7 +84,7 @@ export const GET = withCronAuth(
         `[Cron] Starting SSO sync for ${integrations.length} integrations`
       );
 
-      // 각 Integration 처리
+      // Process each integration
       for (const integration of integrations) {
         const jobResult: SyncJobResult = {
           integrationId: integration.id,
@@ -93,7 +93,7 @@ export const GET = withCronAuth(
         };
 
         try {
-          // Google Workspace만 처리
+          // Only Google Workspace is processed
           if (integration.type !== "GOOGLE_WORKSPACE") {
             logger.info(
               `[Cron] Skipping non-Google integration: ${integration.id}`
@@ -101,7 +101,7 @@ export const GET = withCronAuth(
             continue;
           }
 
-          // 자격증명 파싱
+          // Parse credentials
           const credentials = parseCredentials(integration);
           if (!credentials) {
             jobResult.error = "Invalid credentials";
@@ -109,10 +109,10 @@ export const GET = withCronAuth(
             continue;
           }
 
-          // Google Workspace 서비스 생성
+          // Create the Google Workspace service
           const googleService = new GoogleWorkspaceService(credentials);
 
-          // 1. 사용자 동기화
+          // 1. Sync users
           logger.info(
             `[Cron] Syncing users for integration: ${integration.id}`
           );
@@ -122,7 +122,7 @@ export const GET = withCronAuth(
           );
           jobResult.userSync = userSyncResult;
 
-          // 2. 앱 발견
+          // 2. Discover apps
           logger.info(
             `[Cron] Discovering apps for integration: ${integration.id}`
           );
@@ -137,7 +137,7 @@ export const GET = withCronAuth(
           );
           jobResult.appDiscovery = appDiscoveryResult;
 
-          // Integration 상태 업데이트
+          // Update the integration status
           await prisma.integration.update({
             where: { id: integration.id },
             data: {
@@ -150,7 +150,7 @@ export const GET = withCronAuth(
             error instanceof Error ? error.message : "Unknown error";
           jobResult.error = errorMessage;
 
-          // Integration 에러 상태 업데이트
+          // Update the integration error status
           await prisma.integration.update({
             where: { id: integration.id },
             data: {

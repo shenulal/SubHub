@@ -1,7 +1,7 @@
 // src/actions/cards/card-registration.test.ts
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-// Mock 설정
+// Mock setup
 vi.mock("@/lib/db", () => ({
   prisma: {
     corporateCard: {
@@ -57,13 +57,13 @@ describe("registerCorporateCard", () => {
     vi.mocked(prisma.auditLog.create).mockResolvedValue({} as never);
   });
 
-  // 기본 FormData 생성 헬퍼
+  // Helper that builds a default FormData
   const createFormData = (overrides: Record<string, string> = {}) => {
     const formData = new FormData();
     formData.append("cardCd", "001");
     formData.append("cardNo", "1234567890123456");
     formData.append("loginMethod", "ID");
-    formData.append("userId", "card-login-id"); // 카드사 로그인 ID
+    formData.append("userId", "card-login-id"); // Card issuer login ID
     formData.append("userPw", "card-login-pw");
 
     Object.entries(overrides).forEach(([key, value]) => {
@@ -73,9 +73,9 @@ describe("registerCorporateCard", () => {
     return formData;
   };
 
-  describe("유저 배정 기본 기능", () => {
+  describe("User assignment basics", () => {
     it("should register card with assignedUserId when valid user provided", async () => {
-      // Arrange: 조직에 속한 유저 생성
+      // Arrange: create a user in the organization
       const mockUser = {
         id: "user-member",
         organizationId: "org-1",
@@ -107,7 +107,7 @@ describe("registerCorporateCard", () => {
     });
 
     it("should reject assignedUserId from different organization", async () => {
-      // Arrange: 유저를 찾을 수 없음 (다른 조직이므로)
+      // Arrange: user not found (belongs to another organization)
       vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
 
       const formData = createFormData();
@@ -118,11 +118,11 @@ describe("registerCorporateCard", () => {
 
       // Assert
       expect(result.success).toBe(false);
-      expect(result.message).toBe("유효하지 않은 사용자입니다");
+      expect(result.message).toBe("Invalid user");
     });
 
     it("should reject when both teamId and assignedUserId are provided", async () => {
-      // Arrange: 팀과 유저 둘 다 유효
+      // Arrange: both team and user are valid
       vi.mocked(prisma.team.findFirst).mockResolvedValue({
         id: "team-1",
         organizationId: "org-1",
@@ -142,12 +142,12 @@ describe("registerCorporateCard", () => {
       // Assert
       expect(result.success).toBe(false);
       expect(result.message).toBe(
-        "팀 배정과 유저 배정 중 하나만 선택할 수 있습니다"
+        "Select either a team or a user assignment, not both"
       );
     });
 
     it("should allow card registration with only teamId", async () => {
-      // Arrange: 팀만 유효
+      // Arrange: only the team is valid
       vi.mocked(prisma.team.findFirst).mockResolvedValue({
         id: "team-1",
         organizationId: "org-1",
@@ -172,7 +172,7 @@ describe("registerCorporateCard", () => {
     });
 
     it("should allow card registration with only assignedUserId", async () => {
-      // Arrange: 유저만 유효
+      // Arrange: only the user is valid
       vi.mocked(prisma.user.findFirst).mockResolvedValue({
         id: "user-1",
         organizationId: "org-1",
@@ -197,7 +197,7 @@ describe("registerCorporateCard", () => {
     });
 
     it("should allow card registration without teamId and assignedUserId", async () => {
-      // Arrange: 배정 정보 없음
+      // Arrange: no assignment info
       const formData = createFormData();
 
       // Act
@@ -216,7 +216,7 @@ describe("registerCorporateCard", () => {
     });
   });
 
-  describe("감사 로그", () => {
+  describe("Audit log", () => {
     it("should create audit log with assignedUserId when user assigned", async () => {
       // Arrange
       vi.mocked(prisma.user.findFirst).mockResolvedValue({
@@ -250,8 +250,8 @@ describe("getCorporateCards", () => {
   });
 
   it("should include user info with team for user-assigned cards", async () => {
-    // 이 테스트는 getCorporateCards 함수 수정 후 구현
-    // Phase 1 완료 후 추가 예정
+    // To be implemented after getCorporateCards is updated
+    // Planned after Phase 1 is complete
     expect(true).toBe(true);
   });
 });

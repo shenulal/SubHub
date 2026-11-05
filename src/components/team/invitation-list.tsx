@@ -37,11 +37,11 @@ interface InvitationListProps {
   }>;
 }
 
-// Status Colors 매핑 (color-theme-guide.md 기준)
-// PENDING: info-muted (대기 중, 중립적)
-// ACCEPTED: success-muted (완료, 긍정적)
-// EXPIRED: destructive-muted (만료, 부정적)
-// CANCELLED: warning-muted (취소, 주의 필요)
+// Status colour mapping (per color-theme-guide.md)
+// PENDING: info-muted (pending, neutral)
+// ACCEPTED: success-muted (completed, positive)
+// EXPIRED: destructive-muted (expired, negative)
+// CANCELLED: warning-muted (cancelled, needs attention)
 const statusStyles: Record<
   InvitationStatus,
   { variant: "info" | "success" | "warning" | "error" }

@@ -8,7 +8,7 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 export default defineConfig({
   plugins: [react()],
   test: {
-    // 테스트 환경 설정
+    // Test environment settings
     environment: "jsdom",
     globals: true,
     setupFiles: [
@@ -16,7 +16,7 @@ export default defineConfig({
       "./vitest.setup.ts",
     ],
 
-    // 테스트 파일 패턴
+    // Test file patterns
     include: [
       "src/**/*.test.{ts,tsx}",
       "tests/**/*.test.{ts,tsx}",
@@ -30,7 +30,7 @@ export default defineConfig({
       "src/extensions/chrome/src/background/index.test.ts",
     ],
 
-    // 커버리지 설정
+    // Coverage settings
     coverage: {
       provider: "v8",
       reporter: ["text", "json", "html", "lcov"],
@@ -46,7 +46,7 @@ export default defineConfig({
         "src/app/**/error.tsx",
         "src/app/**/not-found.tsx",
       ],
-      // 80% 커버리지 임계값
+      // 80% coverage threshold
       thresholds: {
         global: {
           branches: 80,
@@ -57,10 +57,10 @@ export default defineConfig({
       },
     },
 
-    // 리포터 설정
+    // Reporter settings
     reporters: ["default", "html"],
 
-    // framer-motion ESM 호환성 (jsdom에서 정상 동작하도록)
+    // framer-motion ESM compatibility (so it works under jsdom)
     server: {
       deps: {
         inline: ["framer-motion"],
@@ -68,15 +68,15 @@ export default defineConfig({
     },
   },
 
-  // Path aliases (tsconfig.json과 동기화)
+  // Path aliases (kept in sync with tsconfig.json)
   resolve: {
     alias: {
-      // UI 컴포넌트는 서브모듈에서 가져옴
+      // UI components come from the submodule
       "@/components/ui": path.resolve(
         __dirname,
         "./packages/ui-registry/src/components/ui"
       ),
-      // hooks: 프로젝트 hooks 우선, 없으면 서브모듈 폴백
+      // hooks: project hooks first, falling back to the submodule
       "@/hooks/use-count-up": path.resolve(
         __dirname,
         "./src/hooks/use-count-up"
@@ -103,22 +103,22 @@ export default defineConfig({
         "./src/hooks/use-element-size"
       ),
       "@/hooks": path.resolve(__dirname, "./packages/ui-registry/src/hooks"),
-      // lib/utils/renewal-date는 src에서 가져옴 (@/lib/utils보다 먼저 등록)
+      // lib/utils/renewal-date comes from src (registered before @/lib/utils)
       "@/lib/utils/renewal-date": path.resolve(
         __dirname,
         "./src/lib/utils/renewal-date"
       ),
-      // lib/utils/domain-extractor는 src에서 가져옴 (@/lib/utils보다 먼저 등록)
+      // lib/utils/domain-extractor comes from src (registered before @/lib/utils)
       "@/lib/utils/domain-extractor": path.resolve(
         __dirname,
         "./src/lib/utils/domain-extractor"
       ),
-      // lib/utils는 서브모듈에서 가져옴
+      // lib/utils comes from the submodule
       "@/lib/utils": path.resolve(
         __dirname,
         "./packages/ui-registry/src/lib/utils"
       ),
-      // 나머지는 src에서 가져옴
+      // Everything else comes from src
       "@": path.resolve(__dirname, "./src"),
     },
   },

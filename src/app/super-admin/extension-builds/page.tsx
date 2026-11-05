@@ -11,7 +11,7 @@ import {
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Extension 빌드 | Super Admin",
+  title: "Extension Builds | Super Admin",
 };
 
 export default async function ExtensionBuildsPage() {
@@ -20,17 +20,19 @@ export default async function ExtensionBuildsPage() {
   return (
     <div className="space-y-6">
       <div className="space-y-1">
-        <h1 className="text-foreground text-2xl font-medium">Extension 빌드</h1>
+        <h1 className="text-foreground text-2xl font-medium">
+          Extension Builds
+        </h1>
         <p className="text-muted-foreground text-[0.9375rem]">
-          브라우저 확장 프로그램 빌드를 관리합니다.
+          Manage browser extension builds.
         </p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>빌드 목록</CardTitle>
+          <CardTitle>Builds</CardTitle>
           <CardDescription>
-            새 빌드를 생성하거나 기존 빌드를 다운로드합니다.
+            Create a new build or download an existing one.
           </CardDescription>
         </CardHeader>
         <CardContent className="px-0">
@@ -38,7 +40,7 @@ export default async function ExtensionBuildsPage() {
             <ExtensionBuildsTable initialBuilds={result.data} />
           ) : (
             <div className="text-muted-foreground flex h-32 items-center justify-center text-sm">
-              {result.message ?? "데이터를 불러올 수 없습니다."}
+              {result.message ?? "Unable to load data."}
             </div>
           )}
         </CardContent>

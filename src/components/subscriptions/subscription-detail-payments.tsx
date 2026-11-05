@@ -30,12 +30,14 @@ export function SubscriptionDetailPayments({
           <span className="tonal-primary flex size-9 shrink-0 items-center justify-center rounded-md">
             <CreditCard className="size-5" />
           </span>
-          연결된 결제 내역
+          Linked payments
           {linkedPayments.length > 0 && (
-            <Badge variant="secondary">{linkedPayments.length}건</Badge>
+            <Badge variant="secondary">{linkedPayments.length}</Badge>
           )}
         </CardTitle>
-        <CardDescription>이 구독과 연결된 카드 결제 내역</CardDescription>
+        <CardDescription>
+          Card payments linked to this subscription
+        </CardDescription>
       </CardHeader>
       <CardContent>
         {isLoading ? (
@@ -44,7 +46,7 @@ export function SubscriptionDetailPayments({
           </div>
         ) : linkedPayments.length === 0 ? (
           <div className="text-muted-foreground py-6 text-center text-sm">
-            연결된 결제 내역이 없습니다
+            No linked payments
           </div>
         ) : (
           <div className="space-y-3">
@@ -59,7 +61,7 @@ export function SubscriptionDetailPayments({
                   </div>
                   <div className="text-muted-foreground text-xs">
                     {formatDate(payment.transactionDate)}
-                    {payment.cardLast4 && ` · 카드 ****${payment.cardLast4}`}
+                    {payment.cardLast4 && ` · Card ****${payment.cardLast4}`}
                   </div>
                 </div>
                 <div className="shrink-0 text-right font-medium whitespace-nowrap tabular-nums">
@@ -69,9 +71,7 @@ export function SubscriptionDetailPayments({
             ))}
             <Separator className="my-3" />
             <div className="flex items-center justify-between">
-              <span className="text-muted-foreground text-sm">
-                총 결제 금액
-              </span>
+              <span className="text-muted-foreground text-sm">Total paid</span>
               <span className="text-foreground font-medium tabular-nums">
                 {formatCurrency(
                   linkedPayments.reduce((sum, p) => sum + p.amount, 0),

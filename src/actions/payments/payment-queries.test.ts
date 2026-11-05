@@ -41,7 +41,7 @@ describe("getPaymentStatusCounts", () => {
     const result = await getPaymentStatusCounts();
 
     expect(result.success).toBe(false);
-    expect(result.message).toBe("인증이 필요합니다");
+    expect(result.message).toBe("Authentication required");
   });
 
   it("should return error when no organization", async () => {
@@ -52,7 +52,7 @@ describe("getPaymentStatusCounts", () => {
     const result = await getPaymentStatusCounts();
 
     expect(result.success).toBe(false);
-    expect(result.message).toBe("조직 정보가 필요합니다");
+    expect(result.message).toBe("Organization information is required");
   });
 
   it("should return zero counts when no records exist", async () => {

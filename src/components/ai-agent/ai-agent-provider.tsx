@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * AI Agent 전역 Provider — 모든 페이지에 플로팅 버튼 + 사이드 패널 마운트
+ * Global AI Agent provider — mounts the floating button and side panel on every page
  * SMP-197 + SMP-198
  */
 

@@ -96,7 +96,7 @@ export function AppDetailClient({ id, role }: AppDetailClientProps) {
                   label: t("apps.actions.delete"),
                   icon: Trash2,
                   variant: "destructive" as const,
-                  // 삭제 핸들러는 AppDetail 내부에서 처리
+                  // The delete handler lives inside AppDetail
                 },
               ]
             : []),

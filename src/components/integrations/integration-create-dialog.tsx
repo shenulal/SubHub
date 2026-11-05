@@ -1,9 +1,9 @@
 // src/components/integrations/integration-create-dialog.tsx
-// TODO: Google Workspace 마켓플레이스 앱 등록 필요
-// - 현재: 사용자가 직접 Service Account 생성 및 Domain-Wide Delegation 설정 필요
-// - 목표: 마켓플레이스 앱 등록 후 OAuth 동의 화면만으로 간편 연동 가능하도록 개선
-// - 참고: https://developers.google.com/workspace/marketplace
-// - 우선순위: P1 (사용자 온보딩 마찰 감소를 위해 중요)
+// TODO: Register a Google Workspace Marketplace app
+// - Current: users must create the Service Account and configure Domain-Wide Delegation themselves
+// - Goal: after Marketplace registration, connect with just the OAuth consent screen
+// - Reference: https://developers.google.com/workspace/marketplace
+// - Priority: P1 (important for reducing onboarding friction)
 "use client";
 
 import { createIntegration } from "@/actions/integrations";
@@ -46,7 +46,7 @@ import { useState, useTransition } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 
-// Google Workspace 연동을 위한 스키마 (필수 필드 강화)
+// Schema for the Google Workspace integration (stricter required fields)
 const createIntegrationCreateSchema = (t: (key: string) => string) => {
   return z
     .object({
@@ -59,7 +59,7 @@ const createIntegrationCreateSchema = (t: (key: string) => string) => {
       privateKey: z.string().optional(),
     })
     .superRefine((data, ctx) => {
-      // Google Workspace 선택 시 필수 필드 검증
+      // Validate required fields when Google Workspace is selected
       if (data.type === "GOOGLE_WORKSPACE") {
         if (!data.adminEmail || data.adminEmail.trim() === "") {
           ctx.addIssue({
@@ -205,7 +205,7 @@ export function IntegrationCreateDialog({
             </Alert>
           )}
 
-          {/* 연동 유형 선택 */}
+          {/* Integration type selection */}
           <div className="space-y-2">
             <Label htmlFor="type">{t("integrations.list.columns.type")}</Label>
             <Controller
@@ -260,7 +260,7 @@ export function IntegrationCreateDialog({
             )}
           </div>
 
-          {/* Google Workspace 전용 안내 */}
+          {/* Google Workspace guidance */}
           {isGoogleWorkspace && (
             <Alert>
               <HelpCircle className="h-4 w-4" />
@@ -288,7 +288,7 @@ export function IntegrationCreateDialog({
             </Alert>
           )}
 
-          {/* 도메인 */}
+          {/* Domain */}
           <div className="space-y-2">
             <Label htmlFor="domain">
               {t("integrations.form.create.domainOptional")}
@@ -304,11 +304,11 @@ export function IntegrationCreateDialog({
             </p>
           </div>
 
-          {/* Google Workspace 전용 필드 */}
+          {/* Google Workspace fields */}
           {isGoogleWorkspace && (
             <>
               <div className="grid gap-4 md:grid-cols-2">
-                {/* 관리자 이메일 */}
+                {/* Admin email */}
                 <div className="space-y-2">
                   <TooltipProvider>
                     <Tooltip>
@@ -343,7 +343,7 @@ export function IntegrationCreateDialog({
                   )}
                 </div>
 
-                {/* 서비스 계정 이메일 */}
+                {/* Service account email */}
                 <div className="space-y-2">
                   <TooltipProvider>
                     <Tooltip>
@@ -427,7 +427,7 @@ export function IntegrationCreateDialog({
             </>
           )}
 
-          {/* 버튼 */}
+          {/* Buttons */}
           <div className="flex justify-end gap-2 border-t pt-4">
             <Button
               type="button"

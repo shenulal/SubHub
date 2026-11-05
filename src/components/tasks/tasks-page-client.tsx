@@ -18,64 +18,78 @@ import { AlertTriangle, Circle, Clock, ListTodo, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo, useState } from "react";
 
-// 데모 데이터
+// Demo data
 const demoTasks: Task[] = [
   {
     id: "1",
-    title: "Slack 라이선스 최적화",
-    description: "미사용 라이선스 정리 및 플랜 다운그레이드 검토",
+    title: "Slack licence optimisation",
+    description: "Clean up unused licences and review a plan downgrade",
     status: "TODO",
     priority: "HIGH",
-    assignee: { id: "1", name: "김철수", email: "kim@company.com" },
+    assignee: {
+      id: "1",
+      name: "Ahmed Al Mansoori",
+      email: "ahmed@company.com",
+    },
     dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-    tags: ["비용절감", "Slack"],
+    tags: ["Cost saving", "Slack"],
     createdAt: new Date(),
     updatedAt: new Date(),
   },
   {
     id: "2",
-    title: "Notion 팀 워크스페이스 통합",
-    description: "분산된 워크스페이스를 단일 엔터프라이즈로 통합",
+    title: "Notion team workspace consolidation",
+    description:
+      "Consolidate scattered workspaces into a single enterprise workspace",
     status: "IN_PROGRESS",
     priority: "MEDIUM",
-    assignee: { id: "2", name: "이영희", email: "lee@company.com" },
+    assignee: {
+      id: "2",
+      name: "Fatima Al Hashimi",
+      email: "fatima@company.com",
+    },
     dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
-    tags: ["Notion", "통합"],
+    tags: ["Notion", "Consolidation"],
     createdAt: new Date(),
     updatedAt: new Date(),
   },
   {
     id: "3",
-    title: "퇴사자 계정 회수 - Q4",
-    description: "4분기 퇴사자 미회수 SaaS 계정 정리",
+    title: "Leaver account recovery - Q4",
+    description: "Clean up unrecovered SaaS accounts of Q4 leavers",
     status: "IN_REVIEW",
     priority: "URGENT",
-    assignee: { id: "1", name: "김철수", email: "kim@company.com" },
+    assignee: {
+      id: "1",
+      name: "Ahmed Al Mansoori",
+      email: "ahmed@company.com",
+    },
     dueDate: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000),
-    tags: ["보안", "계정관리"],
+    tags: ["Security", "Account management"],
     createdAt: new Date(),
     updatedAt: new Date(),
   },
   {
     id: "4",
-    title: "Figma 연간 계약 검토",
-    description: "갱신일 전 라이선스 수 및 플랜 재검토",
+    title: "Figma annual contract review",
+    description: "Review licence count and plan before the renewal date",
     status: "DONE",
     priority: "MEDIUM",
-    assignee: { id: "3", name: "박지민", email: "park@company.com" },
-    tags: ["Figma", "갱신"],
+    assignee: { id: "3", name: "Omar Khalid", email: "omar@company.com" },
+    tags: ["Figma", "Renewal"],
     createdAt: new Date(),
     updatedAt: new Date(),
   },
   {
     id: "5",
-    title: "AWS 비용 분석 리포트",
-    description: "월간 AWS 비용 분석 및 최적화 기회 도출",
+    title: "AWS cost analysis report",
+    description:
+      "Monthly AWS cost analysis and identification of optimisation opportunities",
     status: "TODO",
     priority: "LOW",
     assignee: null,
     dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-    tags: ["AWS", "비용분석"],
+    tags: ["AWS", "Cost analysis"],
     createdAt: new Date(),
     updatedAt: new Date(),
   },
@@ -90,7 +104,7 @@ export function TasksPageClient({ canManage = false }: TasksPageClientProps) {
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
 
-  // 통계 계산
+  // Compute statistics
   const stats = useMemo(() => {
     const todoCount = demoTasks.filter((t) => t.status === "TODO").length;
     const inProgressCount = demoTasks.filter(
@@ -101,7 +115,7 @@ export function TasksPageClient({ canManage = false }: TasksPageClientProps) {
     return { todoCount, inProgressCount, doneCount, urgentCount };
   }, []);
 
-  // 필터링
+  // Filtering
   const filteredTasks = useMemo(() => {
     let result = demoTasks;
 
@@ -131,7 +145,7 @@ export function TasksPageClient({ canManage = false }: TasksPageClientProps) {
         ]}
       />
 
-      {/* KPI 카드 */}
+      {/* KPI cards */}
       <KpiCardsGrid columns={4}>
         <KpiCard
           title={t("kpi.total")}
@@ -164,7 +178,7 @@ export function TasksPageClient({ canManage = false }: TasksPageClientProps) {
         />
       </KpiCardsGrid>
 
-      {/* 필터 바 */}
+      {/* Filter bar */}
       <div className="bg-card flex flex-wrap items-center gap-2 rounded-lg px-5 py-4 shadow-md">
         <Select value={statusFilter} onValueChange={setStatusFilter}>
           <SelectTrigger className="w-[160px]">
@@ -215,7 +229,7 @@ export function TasksPageClient({ canManage = false }: TasksPageClientProps) {
         </div>
       </div>
 
-      {/* 작업 테이블 */}
+      {/* Task table */}
       <Card className="overflow-hidden pb-0">
         <CardContent className="p-0">
           <TaskTable

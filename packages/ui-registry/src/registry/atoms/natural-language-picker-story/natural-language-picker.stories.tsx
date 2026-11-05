@@ -190,32 +190,32 @@ export const ShouldParseNaturalLanguage: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    // 🎯 목적: 자연어 입력 시 chrono-node가 날짜를 파싱하고 업데이트하는지 확인
+    // 🎯 Purpose: Verify chrono-node parses and updates the date from natural-language input
     const input = canvas.getByTestId("natural-language-input");
     await expect(input).toBeInTheDocument();
 
-    // 기존 값 확인
+    // Check the existing value
     await expect(input).toHaveValue("In 2 days");
 
-    // 자연어 입력 변경 ("tomorrow"로 변경)
+    // Change the natural-language input (to "tomorrow")
     await userEvent.clear(input);
     await userEvent.type(input, "tomorrow");
 
     await waitFor(
       () => {
-        // Input 값이 변경되었는지 확인
+        // Verify the Input value changed
         expect(input).toHaveValue("tomorrow");
       },
       { timeout: 2000 },
     );
 
-    // Calendar 버튼 클릭하여 Popover 열기
+    // Click the Calendar button to open the Popover
     const calendarButton = canvas.getByTestId("calendar-button");
     await userEvent.click(calendarButton);
 
     await waitFor(
       () => {
-        // Popover가 열렸는지 확인 (Calendar가 표시되는지)
+        // Verify the Popover is open (the Calendar is shown)
         const calendar = canvas.getByRole("grid");
         expect(calendar).toBeInTheDocument();
       },

@@ -1,8 +1,8 @@
 // src/i18n/messages/index.ts
 /**
- * Message loader. The base files (en.json / ko.json) are inherited from saaslens;
- * each SubHub feature area owns one namespace file under en/ and ko/ so parallel
- * work never conflicts. Files are deep-merged in the order listed below.
+ * Message loader. en.json holds the base messages; each SubHub feature area owns
+ * one namespace file under en/ so parallel work never conflicts. Files are
+ * deep-merged in the order listed below.
  */
 import type { Locale } from "@/i18n/config";
 
@@ -14,14 +14,6 @@ import enNotifications from "./en/notifications.json";
 import enPlatform from "./en/platform.json";
 import enReceipts from "./en/receipts.json";
 import enTaxonomy from "./en/taxonomy.json";
-import koBase from "./ko.json";
-import koApprovals from "./ko/approvals.json";
-import koDiscovery from "./ko/discovery.json";
-import koLifecycle from "./ko/lifecycle.json";
-import koNotifications from "./ko/notifications.json";
-import koPlatform from "./ko/platform.json";
-import koReceipts from "./ko/receipts.json";
-import koTaxonomy from "./ko/taxonomy.json";
 
 type Messages = Record<string, unknown>;
 
@@ -53,34 +45,19 @@ const FEATURE_MESSAGES: Record<Locale, Messages[]> = {
     enReceipts,
     enDiscovery,
   ],
-  ko: [
-    koPlatform,
-    koApprovals,
-    koTaxonomy,
-    koLifecycle,
-    koNotifications,
-    koReceipts,
-    koDiscovery,
-  ],
 };
 
-const BASE_MESSAGES: Record<Locale, Messages> = { en: enBase, ko: koBase };
+const BASE_MESSAGES: Record<Locale, Messages> = { en: enBase };
 
 const cache = new Map<Locale, Messages>();
 
 export function getAllMessages(locale: Locale): Messages {
   const cached = cache.get(locale);
   if (cached) return cached;
-  // Korean falls back to English for namespaces not yet translated.
-  const merged =
-    locale === "ko"
-      ? deepMergeMessages(
-          BASE_MESSAGES.en,
-          ...FEATURE_MESSAGES.en,
-          BASE_MESSAGES.ko,
-          ...FEATURE_MESSAGES.ko
-        )
-      : deepMergeMessages(BASE_MESSAGES.en, ...FEATURE_MESSAGES.en);
+  const merged = deepMergeMessages(
+    BASE_MESSAGES[locale],
+    ...FEATURE_MESSAGES[locale]
+  );
   cache.set(locale, merged);
   return merged;
 }

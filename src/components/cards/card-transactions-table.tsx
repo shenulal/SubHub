@@ -69,7 +69,7 @@ export function CardTransactionsTable({
   const [total, setTotal] = useState(initialData?.total || 0);
   const [page, setPage] = useState(initialData?.page || 1);
   const [pageSize] = useState(initialData?.pageSize || 20);
-  // 새 필터: SaaS가 기본값
+  // New filter: SaaS is the default
   const [filter, setFilter] = useState<TransactionFilter>("saas");
   const [searchTerm, setSearchTerm] = useState("");
   const [sortField, setSortField] = useState<"useDt" | "useAmt">("useDt");
@@ -79,7 +79,7 @@ export function CardTransactionsTable({
 
   const totalPages = Math.ceil(total / pageSize);
 
-  // 데이터 로드
+  // Load data
   const loadTransactions = async (
     newPage?: number,
     newFilter?: TransactionFilter
@@ -99,7 +99,7 @@ export function CardTransactionsTable({
     setIsLoading(false);
   };
 
-  // 탭(필터) 변경 시 리로드
+  // Reload when the tab (filter) changes
   const handleFilterChange = (newFilter: TransactionFilter) => {
     setFilter(newFilter);
     setPage(1);
@@ -108,7 +108,7 @@ export function CardTransactionsTable({
     });
   };
 
-  // 페이지 변경
+  // Page change
   const handlePageChange = (newPage: number) => {
     setPage(newPage);
     startTransition(() => {
@@ -116,7 +116,7 @@ export function CardTransactionsTable({
     });
   };
 
-  // 정렬 변경
+  // Sort change
   const handleSort = (field: "useDt" | "useAmt") => {
     if (sortField === field) {
       setSortOrder(sortOrder === "asc" ? "desc" : "asc");
@@ -126,7 +126,7 @@ export function CardTransactionsTable({
     }
   };
 
-  // 수동 매칭
+  // Manual matching
   const handleMatchUpdate = async (
     transactionId: string,
     appId: string | null
@@ -142,7 +142,7 @@ export function CardTransactionsTable({
     });
   };
 
-  // 날짜 포맷
+  // Date formatting
   const formatDate = (useDt: string, useTm: string | null) => {
     const year = useDt.substring(0, 4);
     const month = useDt.substring(4, 6);
@@ -156,19 +156,19 @@ export function CardTransactionsTable({
     return result;
   };
 
-  // 금액 포맷
+  // Amount formatting
   const { baseCurrency } = useBaseCurrency();
   const formatAmount = (amount: number) =>
     formatMoney(amount, baseCurrency, "ko");
 
-  // 검색 필터링 (클라이언트 측)
+  // Search filtering (client side)
   const filteredTransactions = transactions.filter((t) =>
     searchTerm
       ? t.useStore.toLowerCase().includes(searchTerm.toLowerCase())
       : true
   );
 
-  // 정렬 (클라이언트 측)
+  // Sorting (client side)
   const sortedTransactions = [...filteredTransactions].sort((a, b) => {
     if (sortField === "useDt") {
       const aDate = a.useDt + (a.useTm || "000000");
@@ -181,7 +181,7 @@ export function CardTransactionsTable({
     }
   });
 
-  // 탭별 건수 표시용 헬퍼
+  // Helper for per-tab counts
   const getTabLabel = (tab: TransactionFilter) => {
     if (!summary) {
       const labels: Record<TransactionFilter, string> = {
@@ -209,7 +209,7 @@ export function CardTransactionsTable({
 
   return (
     <div className="space-y-4">
-      {/* Tabs: SaaS → 미분류 → Non-SaaS → 전체 */}
+      {/* Tabs: SaaS → Unclassified → Non-SaaS → All */}
       <Tabs
         value={filter}
         onValueChange={(v) => handleFilterChange(v as TransactionFilter)}
@@ -224,7 +224,7 @@ export function CardTransactionsTable({
         </TabsList>
       </Tabs>
 
-      {/* 검색 */}
+      {/* Search */}
       <div className="flex items-center gap-2">
         <Search className="text-muted-foreground h-4 w-4" />
         <Input
@@ -235,7 +235,7 @@ export function CardTransactionsTable({
         />
       </div>
 
-      {/* 테이블 */}
+      {/* Table */}
       {isLoading || isPending ? (
         <Card className="border-border/50 rounded-sm shadow-sm">
           <CardHeader>
@@ -379,7 +379,7 @@ export function CardTransactionsTable({
         </div>
       )}
 
-      {/* 페이지네이션 */}
+      {/* Pagination */}
       {totalPages > 1 && (
         <div className="flex items-center justify-between">
           <div className="text-muted-foreground text-sm">

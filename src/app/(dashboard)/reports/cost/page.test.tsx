@@ -25,19 +25,19 @@ vi.mock("@/actions/cost-analytics", () => ({
       trends: [
         {
           month: "2024-06",
-          displayLabel: "2024년 6월",
+          displayLabel: "Jun 2024",
           totalCost: 400000,
           transactionCount: 5,
         },
         {
           month: "2024-07",
-          displayLabel: "2024년 7월",
+          displayLabel: "Jul 2024",
           totalCost: 450000,
           transactionCount: 6,
         },
         {
           month: "2024-08",
-          displayLabel: "2024년 8월",
+          displayLabel: "Aug 2024",
           totalCost: 480000,
           transactionCount: 7,
         },
@@ -78,7 +78,7 @@ vi.mock("@/actions/cost-analytics", () => ({
           previousCost: 100000,
           changeRate: 100,
           severity: "medium" as const,
-          message: "전월 대비 100% 증가",
+          message: "Up 100% vs last month",
         },
       ],
       hasAnomalies: true,
@@ -102,7 +102,7 @@ vi.mock("./_components/export-buttons", () => ({
   ExportButtons: () => <div data-testid="export-buttons">Export Buttons</div>,
 }));
 
-// 차트 컴포넌트는 리사이즈/ResponsiveContainer 의존성이 있어 테스트에서 간단히 모킹
+// Chart components depend on resize/ResponsiveContainer, so they are mocked simply in tests
 vi.mock("./_components/monthly-trend-chart", () => ({
   MonthlyTrendChart: ({
     initialData,
@@ -110,7 +110,7 @@ vi.mock("./_components/monthly-trend-chart", () => ({
     initialData: { displayLabel: string }[];
   }) => (
     <div data-testid="monthly-trend-chart">
-      <div>월별 비용 추세</div>
+      <div>Monthly Cost Trend</div>
       {initialData.map((item) => (
         <div key={item.displayLabel}>{item.displayLabel}</div>
       ))}
@@ -123,14 +123,14 @@ describe("CostAnalysisPage", () => {
     vi.clearAllMocks();
   });
 
-  it("페이지 제목을 표시해야 한다", async () => {
+  it("shows the page title", async () => {
     const page = await CostAnalysisPage({ searchParams: Promise.resolve({}) });
     render(page);
 
-    expect(screen.getByText("비용 분석 리포트")).toBeInTheDocument();
+    expect(screen.getByText("Cost Analysis Report")).toBeInTheDocument();
   });
 
-  it("뒤로가기 링크가 /reports로 연결되어야 한다", async () => {
+  it("links the back link to /reports", async () => {
     const page = await CostAnalysisPage({ searchParams: Promise.resolve({}) });
     render(page);
 
@@ -138,44 +138,44 @@ describe("CostAnalysisPage", () => {
     expect(backLink).toHaveAttribute("href", "/reports");
   });
 
-  it("핵심 지표를 표시해야 한다", async () => {
+  it("shows the key metrics", async () => {
     const page = await CostAnalysisPage({ searchParams: Promise.resolve({}) });
     render(page);
 
-    expect(screen.getByText("총 비용")).toBeInTheDocument();
-    expect(screen.getByText("월 평균 비용")).toBeInTheDocument();
-    expect(screen.getByText("결제 건수")).toBeInTheDocument();
-    expect(screen.getByText("이상 감지")).toBeInTheDocument();
+    expect(screen.getByText("This Month's SaaS Cost")).toBeInTheDocument();
+    expect(screen.getByText("Monthly SaaS Average")).toBeInTheDocument();
+    expect(screen.getByText("Transactions")).toBeInTheDocument();
+    expect(screen.getByText("Anomaly Detection")).toBeInTheDocument();
   });
 
-  it("월별 비용 추세 섹션을 표시해야 한다", async () => {
+  it("shows the monthly cost trend section", async () => {
     const page = await CostAnalysisPage({ searchParams: Promise.resolve({}) });
     render(page);
 
-    expect(screen.getByText("월별 비용 추세")).toBeInTheDocument();
-    expect(screen.getByText("2024년 6월")).toBeInTheDocument();
-    expect(screen.getByText("2024년 7월")).toBeInTheDocument();
+    expect(screen.getByText("Monthly Cost Trend")).toBeInTheDocument();
+    expect(screen.getByText("Jun 2024")).toBeInTheDocument();
+    expect(screen.getByText("Jul 2024")).toBeInTheDocument();
   });
 
-  it("앱별 비용 분포를 표시해야 한다", async () => {
+  it("shows the cost distribution by app", async () => {
     const page = await CostAnalysisPage({ searchParams: Promise.resolve({}) });
     render(page);
 
-    expect(screen.getByText("앱별 비용 분포")).toBeInTheDocument();
+    expect(screen.getByText("Cost Distribution by App")).toBeInTheDocument();
     expect(screen.getByText("Slack")).toBeInTheDocument();
     expect(screen.getByText("Notion")).toBeInTheDocument();
   });
 
-  it("비용 이상 감지 섹션을 표시해야 한다", async () => {
+  it("shows the cost anomaly detection section", async () => {
     const page = await CostAnalysisPage({ searchParams: Promise.resolve({}) });
     render(page);
 
-    expect(screen.getByText("비용 이상 감지")).toBeInTheDocument();
+    expect(screen.getByText("Cost Anomaly Detection")).toBeInTheDocument();
     expect(screen.getByText("Figma")).toBeInTheDocument();
     expect(screen.getByText("+100%")).toBeInTheDocument();
   });
 
-  it("내보내기 버튼을 표시해야 한다", async () => {
+  it("shows the export buttons", async () => {
     const page = await CostAnalysisPage({ searchParams: Promise.resolve({}) });
     render(page);
 

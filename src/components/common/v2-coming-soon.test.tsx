@@ -16,57 +16,60 @@ vi.mock("next/link", () => ({
 }));
 
 describe("V2ComingSoon", () => {
-  describe("렌더링", () => {
+  describe("rendering", () => {
     it("should render Coming Soon title", () => {
-      render(<V2ComingSoon feature="테스트 기능" />);
+      render(<V2ComingSoon feature="Test feature" />);
 
       expect(screen.getByText("Coming Soon")).toBeInTheDocument();
     });
 
     it("should render feature name", () => {
-      render(<V2ComingSoon feature="칸반 보드" />);
+      render(<V2ComingSoon feature="Kanban board" />);
 
-      expect(screen.getByText("칸반 보드")).toBeInTheDocument();
+      expect(screen.getByText("Kanban board")).toBeInTheDocument();
     });
 
     it("should render default description when not provided", () => {
-      render(<V2ComingSoon feature="테스트 기능" />);
+      render(<V2ComingSoon feature="Test feature" />);
 
       expect(
-        screen.getByText("이 기능은 V2 버전에서 제공될 예정입니다.")
+        screen.getByText("This feature will be available in V2.")
       ).toBeInTheDocument();
     });
 
     it("should render custom description when provided", () => {
       render(
-        <V2ComingSoon feature="테스트 기능" description="커스텀 설명입니다." />
+        <V2ComingSoon
+          feature="Test feature"
+          description="Custom description."
+        />
       );
 
-      expect(screen.getByText("커스텀 설명입니다.")).toBeInTheDocument();
+      expect(screen.getByText("Custom description.")).toBeInTheDocument();
     });
 
     it("should render dashboard navigation button", () => {
-      render(<V2ComingSoon feature="테스트 기능" />);
+      render(<V2ComingSoon feature="Test feature" />);
 
-      const button = screen.getByRole("link", { name: "대시보드로 이동" });
+      const button = screen.getByRole("link", { name: "Go to Dashboard" });
       expect(button).toBeInTheDocument();
       expect(button).toHaveAttribute("href", "/dashboard");
     });
   });
 
-  describe("아이콘", () => {
+  describe("icon", () => {
     it("should render Construction icon", () => {
-      render(<V2ComingSoon feature="테스트 기능" />);
+      render(<V2ComingSoon feature="Test feature" />);
 
-      // Construction 아이콘이 있는 컨테이너 확인
+      // Check the container holding the Construction icon
       const iconContainer = document.querySelector(".rounded-full");
       expect(iconContainer).toBeInTheDocument();
     });
   });
 
-  describe("스타일", () => {
+  describe("styles", () => {
     it("should center content vertically", () => {
-      const { container } = render(<V2ComingSoon feature="테스트 기능" />);
+      const { container } = render(<V2ComingSoon feature="Test feature" />);
 
       const wrapper = container.firstChild as HTMLElement;
       expect(wrapper).toHaveClass("flex");

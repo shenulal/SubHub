@@ -9,7 +9,7 @@ import { getTranslations } from "next-intl/server";
 export async function generateMetadata() {
   const t = await getTranslations("teams.page");
   return {
-    title: `${t("title")} | SaaS Management Platform`,
+    title: `${t("title")}`,
     description: t("description"),
   };
 }

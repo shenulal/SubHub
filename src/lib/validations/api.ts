@@ -35,7 +35,7 @@ export const uuidParamSchema = z.string().refine(
   (val) =>
     /^[0-9a-fA-F-]{36}$/.test(val) || // UUID v4
     /^c[a-z0-9]{24,}$/i.test(val) || // cuid-ish
-    /^c[^\s]{8,}$/i.test(val), // 넉넉한 cuid 허용
+    /^c[^\s]{8,}$/i.test(val), // lenient cuid match
   "Invalid ID format"
 );
 
@@ -45,11 +45,11 @@ export const paginationSchema = z.object({
 });
 
 /**
- * API 에러 응답 헬퍼
+ * API error response helper
  */
 export function formatValidationError(error: z.ZodError) {
   return {
-    error: "입력 검증 실패",
+    error: "Input validation failed",
     details: error.flatten(),
   };
 }

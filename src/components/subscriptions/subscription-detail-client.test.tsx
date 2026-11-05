@@ -70,7 +70,7 @@ const mockSubscriptionData = {
   renewalAlert60: false,
   renewalAlert90: false,
   contractUrl: "https://example.com/contract.pdf",
-  notes: "테스트 메모입니다",
+  notes: "This is a test note",
   createdAt: new Date("2024-01-01"),
   updatedAt: new Date("2024-01-15"),
 };
@@ -86,39 +86,41 @@ describe("SubscriptionDetailClient", () => {
     });
   });
 
-  it("구독 상세 정보를 렌더링한다", async () => {
+  it("renders the subscription details", async () => {
     render(<SubscriptionDetailClient id="sub-1" />);
 
-    // 타이틀: "{appName} 구독"
-    expect(await screen.findByText("Slack 구독")).toBeInTheDocument();
+    // Title: "{appName} subscription"
+    expect(await screen.findByText("Slack subscription")).toBeInTheDocument();
     expect(screen.getAllByText("Slack").length).toBeGreaterThanOrEqual(1);
   });
 
-  it("로딩 중이면 로딩 상태를 표시한다", () => {
+  it("shows the loading state while loading", () => {
     mockUseShow.mockReturnValueOnce({
       query: { data: undefined, isLoading: true },
     });
 
     render(<SubscriptionDetailClient id="sub-1" />);
 
-    expect(screen.getByText(/구독 정보를 불러오는 중/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/Loading subscription details/)
+    ).toBeInTheDocument();
   });
 
-  it("구독이 없으면 에러 메시지를 표시한다", () => {
+  it("shows an error message when the subscription is missing", () => {
     mockUseShow.mockReturnValueOnce({
       query: { data: { data: null }, isLoading: false },
     });
 
     render(<SubscriptionDetailClient id="sub-1" />);
 
-    expect(screen.getByText(/구독을 찾을 수 없습니다/)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /목록으로/ })).toHaveAttribute(
+    expect(screen.getByText(/Subscription not found/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Back to list/ })).toHaveAttribute(
       "href",
       "/subscriptions"
     );
   });
 
-  it("useShow를 올바른 파라미터로 호출한다", () => {
+  it("calls useShow with the correct parameters", () => {
     render(<SubscriptionDetailClient id="sub-123" />);
 
     expect(mockUseShow).toHaveBeenCalledWith({

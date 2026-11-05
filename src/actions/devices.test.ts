@@ -74,7 +74,7 @@ describe("devices actions", () => {
       const result = await fetchDevices();
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe("인증이 필요합니다");
+      expect(result.error).toBe("Authentication required");
     });
 
     it("should pass filter options", async () => {
@@ -129,7 +129,7 @@ describe("devices actions", () => {
       const result = await fetchDeviceById("non-existent");
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe("디바이스를 찾을 수 없습니다");
+      expect(result.error).toBe("Device not found");
     });
   });
 
@@ -214,7 +214,7 @@ describe("devices actions", () => {
       );
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe("권한이 없습니다");
+      expect(result.error).toBe("Permission denied");
     });
   });
 

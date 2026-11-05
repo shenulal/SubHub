@@ -1,7 +1,7 @@
 // src/app/api/v1/extensions/config/sync/route.ts
 /**
  * Extension Config Sync API
- * 원격 설정 조회 (syncIntervals, features, filters)
+ * Fetch remote config (syncIntervals, features, filters)
  */
 
 import { withExtensionAuth } from "@/lib/api/extension-auth";
@@ -10,14 +10,14 @@ import { withLogging } from "@/lib/logging";
 import type { RemoteConfigData } from "@/types/extension-api";
 import { NextResponse } from "next/server";
 
-// 기본 설정값
+// Default settings
 const DEFAULT_CONFIG: RemoteConfigData = {
   version: "1.0.0",
   syncIntervals: {
-    blacklist: 5, // 5분
-    whitelist: 5, // 5분
-    usage: 10, // 10분
-    config: 60, // 60분
+    blacklist: 5, // 5 min
+    whitelist: 5, // 5 min
+    usage: 10, // 10 min
+    config: 60, // 60 min
   },
   features: {
     timeTracking: true,
@@ -32,12 +32,12 @@ const DEFAULT_CONFIG: RemoteConfigData = {
 
 /**
  * POST /api/v1/extensions/config/sync
- * 조직의 Extension 설정 조회
+ * Fetch the organization's Extension settings
  */
 export const POST = withLogging(
   "ext:config-sync",
   withExtensionAuth(async (_request, { auth }) => {
-    // DB에서 조직별 설정 조회
+    // Fetch per-organization settings from the DB
     const configItems = await prisma.extensionConfig.findMany({
       where: {
         organizationId: auth.organizationId,
@@ -51,10 +51,10 @@ export const POST = withLogging(
       },
     });
 
-    // 기본값 복사
+    // Copy defaults
     const config: RemoteConfigData = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
 
-    // DB 설정으로 오버라이드
+    // Override with DB settings
     for (const item of configItems) {
       const value = parseConfigValue(item.configValue, item.valueType);
 
@@ -84,7 +84,7 @@ export const POST = withLogging(
       }
     }
 
-    // 온보딩 섹션 추가 (항상 enabled)
+    // Add the onboarding section (always enabled)
     config.onboarding = { enabled: true };
 
     return NextResponse.json({
@@ -95,7 +95,7 @@ export const POST = withLogging(
 );
 
 /**
- * 설정값 파싱
+ * Parse setting values
  */
 function parseConfigValue(
   value: string,

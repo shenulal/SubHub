@@ -1,7 +1,7 @@
 // src/lib/services/export/csv.ts
 /**
- * CSV 내보내기 서비스
- * 데이터를 CSV 형식으로 변환하는 유틸리티 함수들
+ * CSV export service
+ * Utilities for converting data to CSV
  */
 
 export interface CSVColumn<T = Record<string, unknown>> {
@@ -16,8 +16,8 @@ export interface CSVOptions {
 }
 
 /**
- * CSV 값 이스케이프
- * 쉼표, 따옴표, 줄바꿈이 포함된 값을 적절히 이스케이프
+ * Escapes a CSV value
+ * Escapes values containing commas, quotes or line breaks
  */
 export function escapeCSVValue(value: unknown): string {
   if (value === null || value === undefined) {
@@ -26,14 +26,14 @@ export function escapeCSVValue(value: unknown): string {
 
   const stringValue = String(value);
 
-  // 쉼표, 따옴표, 줄바꿈이 포함된 경우 따옴표로 감싸기
+  // Wrap in quotes when the value contains commas, quotes or line breaks
   if (
     stringValue.includes(",") ||
     stringValue.includes('"') ||
     stringValue.includes("\n") ||
     stringValue.includes("\r")
   ) {
-    // 따옴표는 두 개로 이스케이프
+    // Escape quotes by doubling them
     const escaped = stringValue.replace(/"/g, '""');
     return `"${escaped}"`;
   }
@@ -42,13 +42,13 @@ export function escapeCSVValue(value: unknown): string {
 }
 
 /**
- * 통화 포맷팅
+ * Formats a currency amount
  */
 export function formatCurrency(
   amount: number,
   currency: string = DEFAULT_BASE_CURRENCY
 ): string {
-  const formatter = new Intl.NumberFormat("ko-KR", {
+  const formatter = new Intl.NumberFormat("en-US", {
     style: "currency",
     currency,
     maximumFractionDigits: currencyDecimals(currency),
@@ -57,7 +57,7 @@ export function formatCurrency(
 }
 
 /**
- * 날짜 포맷팅 (YYYY-MM-DD)
+ * Formats a date (YYYY-MM-DD)
  */
 export function formatDate(date: Date | string | null | undefined): string {
   if (!date) {
@@ -78,7 +78,7 @@ export function formatDate(date: Date | string | null | undefined): string {
 }
 
 /**
- * CSV 문자열 생성
+ * Builds the CSV string
  */
 export function generateCSV<T>(
   columns: CSVColumn<T>[],
@@ -87,12 +87,12 @@ export function generateCSV<T>(
 ): string {
   const { includeBOM = false, delimiter = "," } = options;
 
-  // 헤더 행 생성
+  // Build the header row
   const headers = columns
     .map((col) => escapeCSVValue(col.header))
     .join(delimiter);
 
-  // 데이터 행 생성
+  // Build the data rows
   const rows = data.map((row) => {
     return columns
       .map((col) => {
@@ -105,10 +105,10 @@ export function generateCSV<T>(
       .join(delimiter);
   });
 
-  // CSV 문자열 조합
+  // Assemble the CSV string
   const csvContent = [headers, ...rows].join("\n");
 
-  // BOM 추가 (Excel에서 한글 깨짐 방지)
+  // Add a BOM (so Excel reads non-ASCII characters correctly)
   if (includeBOM) {
     return "\uFEFF" + csvContent;
   }
@@ -117,14 +117,14 @@ export function generateCSV<T>(
 }
 
 /**
- * CSV Blob 생성 (다운로드용)
+ * Creates a CSV Blob (for download)
  */
 export function createCSVBlob(csvContent: string): Blob {
   return new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
 }
 
 /**
- * CSV 다운로드 트리거 (클라이언트 사이드)
+ * Triggers a CSV download (client side)
  */
 export function downloadCSV(csvContent: string, filename: string): void {
   const blob = createCSVBlob(csvContent);

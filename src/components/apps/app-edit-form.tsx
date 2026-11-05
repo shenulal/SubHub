@@ -84,17 +84,17 @@ export function AppEditForm({ app, userRole, userTeamId }: AppEditFormProps) {
   const [teams, setTeams] = useState<TeamWithStats[]>([]);
   const defaultValues = useMemo(() => toFormValues(app), [app]);
 
-  // 역할 기반 제한 여부
+  // Whether role-based restrictions apply
   const isRestricted = userRole === "MEMBER" || userRole === "VIEWER";
 
-  // 팀 목록 로드 (역할 기반 필터링)
+  // Load teams (role-based filtering)
   useEffect(() => {
     const loadTeams = async () => {
       const result = await getTeams();
       if (result.success && result.data) {
         let filteredTeams = result.data;
 
-        // MEMBER/VIEWER는 본인 팀만 표시
+        // MEMBER/VIEWER only see their own team
         if (isRestricted && userTeamId) {
           filteredTeams = result.data.filter((team) => team.id === userTeamId);
         }
@@ -141,7 +141,7 @@ export function AppEditForm({ app, userRole, userTeamId }: AppEditFormProps) {
     }
   });
 
-  // 팀 옵션 변환
+  // Map teams to options
   const teamOptions = teams.map((team) => ({
     id: team.id,
     name: team.name,

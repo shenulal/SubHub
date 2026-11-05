@@ -11,12 +11,12 @@ interface MigrationResult {
 }
 
 /**
- * 기존 Non-SaaS 결제 데이터의 matchStatus를 PENDING → UNMATCHED로 마이그레이션
+ * Migrates matchStatus of existing Non-SaaS payment data from PENDING → UNMATCHED
  *
- * 대상: matchStatus=PENDING AND matchedAppId IS NULL (파이프라인 처리 완료인데 PENDING으로 남은 항목)
- * - 취소 거래(useDiv에 '취소' 포함)는 제외 (PENDING 유지)
+ * Scope: matchStatus=PENDING AND matchedAppId IS NULL (pipeline finished but still PENDING)
+ * - Cancelled transactions (useDiv contains the Hyphen cancellation marker) are excluded (stay PENDING)
  *
- * 한 번 실행 후 삭제 가능한 임시 Server Action
+ * Temporary Server Action that can be removed after running once
  */
 export async function migrateNonSaaSMatchStatus(): Promise<
   ActionState<MigrationResult>
@@ -24,22 +24,23 @@ export async function migrateNonSaaSMatchStatus(): Promise<
   try {
     const session = await getCachedSession();
     if (!session?.user?.organizationId) {
-      return { success: false, message: "인증이 필요합니다" };
+      return { success: false, message: "Authentication required" };
     }
 
     if (session.user.role !== "ADMIN") {
-      return { success: false, message: "관리자만 실행할 수 있습니다" };
+      return { success: false, message: "Only admins can run this" };
     }
 
     const organizationId = session.user.organizationId;
 
-    // CardTransaction: PENDING + matchedAppId=null + 취소 거래 제외
+    // CardTransaction: PENDING + matchedAppId=null, excluding cancelled transactions
     const cardResult = await prisma.cardTransaction.updateMany({
       where: {
         organizationId,
         matchStatus: "PENDING",
         matchedAppId: null,
         NOT: {
+          // Kept in Korean: matches the cancellation marker in Hyphen card API useDiv data
           useDiv: { contains: "취소" },
         },
       },
@@ -66,7 +67,7 @@ export async function migrateNonSaaSMatchStatus(): Promise<
         cardTransactionsUpdated: cardResult.count,
         paymentRecordsUpdated: csvResult.count,
       },
-      "[Migration] Non-SaaS matchStatus PENDING → UNMATCHED 마이그레이션 완료"
+      "[Migration] Non-SaaS matchStatus PENDING → UNMATCHED migration completed"
     );
 
     return {
@@ -77,10 +78,10 @@ export async function migrateNonSaaSMatchStatus(): Promise<
       },
     };
   } catch (error) {
-    logger.error({ err: error }, "[Migration] Non-SaaS 마이그레이션 실패");
+    logger.error({ err: error }, "[Migration] Non-SaaS migration failed");
     return {
       success: false,
-      message: "마이그레이션 실행 중 오류가 발생했습니다",
+      message: "An error occurred while running the migration",
     };
   }
 }

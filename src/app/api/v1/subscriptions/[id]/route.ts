@@ -10,13 +10,13 @@ import { jsonBodyToFormData } from "@/lib/validations/subscriptions";
 
 /**
  * GET /api/v1/subscriptions/[id]
- * - 구독 상세 조회
+ * - Get subscription details
  */
 import { withLogging } from "@/lib/logging";
 
 /**
  * GET /api/v1/subscriptions/[id]
- * - 구독 상세 조회
+ * - Get subscription details
  */
 export const GET = withLogging(
   "GET /api/v1/subscriptions/:id",
@@ -41,13 +41,13 @@ export const GET = withLogging(
 
 /**
  * PUT /api/v1/subscriptions/[id]
- * - 구독 수정
+ * - Update a subscription
  * - permission: subscriptions:update / subscriptions:delete (checked in the action)
  */
 
 /**
  * PUT /api/v1/subscriptions/[id]
- * - 구독 수정
+ * - Update a subscription
  * - permission: subscriptions:update / subscriptions:delete (checked in the action)
  */
 export const PUT = withLogging(
@@ -69,7 +69,7 @@ export const PUT = withLogging(
       jsonBodyToFormData(body)
     );
     if (!result.success) {
-      const status = result.message?.includes("권한") ? 403 : 400;
+      const status = result.message?.includes("permission") ? 403 : 400;
       return NextResponse.json(result, { status });
     }
 
@@ -79,13 +79,13 @@ export const PUT = withLogging(
 
 /**
  * DELETE /api/v1/subscriptions/[id]
- * - 구독 삭제
+ * - Delete a subscription
  * - permission: subscriptions:update / subscriptions:delete (checked in the action)
  */
 
 /**
  * DELETE /api/v1/subscriptions/[id]
- * - 구독 삭제
+ * - Delete a subscription
  * - permission: subscriptions:update / subscriptions:delete (checked in the action)
  */
 export const DELETE = withLogging(
@@ -102,7 +102,7 @@ export const DELETE = withLogging(
     const { id } = await params;
     const result = await deleteSubscription(id);
     if (!result.success) {
-      const status = result.message?.includes("권한") ? 403 : 400;
+      const status = result.message?.includes("permission") ? 403 : 400;
       return NextResponse.json(result, { status });
     }
 

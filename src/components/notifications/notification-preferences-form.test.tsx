@@ -43,7 +43,7 @@ describe("NotificationPreferencesForm", () => {
   it("persists a toggled cell", async () => {
     render(<NotificationPreferencesForm initial={matrix as never} />);
     const target = screen.getByRole("switch", {
-      name: "Renewal reminders via 이메일",
+      name: "Renewal reminders via Email",
     });
     fireEvent.click(target);
     await waitFor(() =>

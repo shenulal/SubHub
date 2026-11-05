@@ -101,14 +101,14 @@ export const ShouldShowHoverCard: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    // 🎯 목적: Hover Card가 트리거에 호버 시 열리고, 콘텐츠가 표시되는지 확인
+    // 🎯 Purpose: Verify the Hover Card opens when the trigger is hovered and shows its content
     const trigger = canvas.getByRole("button", { name: /@nextjs/i });
     await expect(trigger).toBeInTheDocument();
 
-    // 트리거에 호버하여 Hover Card 열기
+    // Hover the trigger to open the Hover Card
     await userEvent.hover(trigger);
 
-    // Hover Card 콘텐츠가 표시되는지 확인
+    // Verify the Hover Card content is shown
     await waitFor(async () => {
       const heading = await canvas.findByRole("heading", {
         name: /@nextjs/i,
@@ -116,13 +116,13 @@ export const ShouldShowHoverCard: Story = {
       await expect(heading).toBeInTheDocument();
     });
 
-    // 추가 콘텐츠 확인
+    // Check the additional content
     const description = canvas.getByText(
       /the react framework – created and maintained by @vercel/i,
     );
     await expect(description).toBeInTheDocument();
 
-    // 호버 해제
+    // Unhover
     await userEvent.unhover(trigger);
   },
 };
@@ -164,20 +164,20 @@ export const ShouldHideOnUnhover: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    // 🎯 목적: Hover Card가 호버 해제 시 사라지고, 모든 콘텐츠가 올바르게 표시되는지 확인
+    // 🎯 Purpose: Verify the Hover Card disappears on unhover and all content is shown correctly
 
-    // 트리거 확인
+    // Check the trigger
     const trigger = canvas.getByTestId("hover-trigger");
     await expect(trigger).toBeInTheDocument();
 
-    // Hover Card 콘텐츠가 초기에는 보이지 않음
+    // The Hover Card content is initially hidden
     const content = canvas.queryByTestId("hover-content");
     expect(content).not.toBeInTheDocument();
 
-    // 트리거에 호버하여 Hover Card 열기
+    // Hover the trigger to open the Hover Card
     await userEvent.hover(trigger);
 
-    // Hover Card 콘텐츠가 표시될 때까지 대기
+    // Wait until the Hover Card content is shown
     await waitFor(
       async () => {
         const profileName = await canvas.findByTestId("profile-name");
@@ -186,7 +186,7 @@ export const ShouldHideOnUnhover: Story = {
       { timeout: 1000 },
     );
 
-    // 모든 콘텐츠 확인
+    // Check all content
     const profileName = canvas.getByTestId("profile-name");
     await expect(profileName).toHaveTextContent("@nextjs");
 
@@ -198,10 +198,10 @@ export const ShouldHideOnUnhover: Story = {
     const joinedDate = canvas.getByTestId("joined-date");
     await expect(joinedDate).toHaveTextContent("Joined December 2021");
 
-    // 호버 해제
+    // Unhover
     await userEvent.unhover(trigger);
 
-    // Hover Card 콘텐츠가 사라지는지 확인
+    // Verify the Hover Card content disappears
     await waitFor(
       () => {
         const hiddenContent = canvas.queryByTestId("hover-content");

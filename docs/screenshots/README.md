@@ -1,6 +1,6 @@
 # Screenshot Generation Guide
 
-This directory contains visual assets for the saaslens README and documentation.
+This directory contains visual assets for the SubHub README and documentation.
 
 ## Current Assets
 

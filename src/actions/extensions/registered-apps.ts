@@ -9,7 +9,7 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 /**
- * 등록 앱 리스트 아이템 타입
+ * Registered app list item type
  */
 export type RegisteredAppItem = {
   id: string;
@@ -25,7 +25,7 @@ export type RegisteredAppItem = {
 };
 
 /**
- * 등록 앱 리스트 응답 타입
+ * Registered app list response type
  */
 export type RegisteredAppsResponse = {
   items: RegisteredAppItem[];
@@ -36,8 +36,8 @@ export type RegisteredAppsResponse = {
 };
 
 /**
- * 등록 앱 리스트 조회
- * - 구독 관리 앱에서 URL 정보를 가져와 화이트리스트 패턴으로 표시
+ * Fetch the registered app list
+ * - Takes URLs from subscription-managed apps and shows them as whitelist patterns
  */
 export async function getRegisteredApps(params: {
   page?: number;
@@ -47,13 +47,13 @@ export async function getRegisteredApps(params: {
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
-      return { success: false, error: "인증이 필요합니다" };
+      return { success: false, error: "Authentication required" };
     }
 
     const { page = 1, limit = 20, search } = params;
     const skip = (page - 1) * limit;
 
-    // 앱 목록 조회 (URL이 있는 앱만)
+    // Fetch apps (only those with a URL)
     const whereClause = {
       organizationId: session.user.organizationId,
       status: "ACTIVE" as const,
@@ -92,7 +92,7 @@ export async function getRegisteredApps(params: {
       prisma.app.count({ where: whereClause }),
     ]);
 
-    // 기존 화이트리스트 조회 (앱 URL과 매칭 확인용)
+    // Fetch the existing whitelist (to match against app URLs)
     const whitelists = await prisma.extensionWhitelist.findMany({
       where: { organizationId: session.user.organizationId },
       select: { pattern: true, enabled: true, source: true },
@@ -105,7 +105,7 @@ export async function getRegisteredApps(params: {
       ])
     );
 
-    // 앱을 등록 앱 아이템으로 변환
+    // Convert apps into registered app items
     const items: RegisteredAppItem[] = apps
       .map((app) => {
         const website = app.customWebsite || app.catalog?.website;
@@ -146,14 +146,16 @@ export async function getRegisteredApps(params: {
     return {
       success: false,
       error:
-        error instanceof Error ? error.message : "등록 앱 리스트 조회 실패",
+        error instanceof Error
+          ? error.message
+          : "Failed to fetch registered apps",
     };
   }
 }
 
 /**
- * 등록 앱 화이트리스트 동기화
- * - 구독 앱 URL을 화이트리스트에 자동 추가
+ * Sync registered apps to the whitelist
+ * - Automatically adds subscription app URLs to the whitelist
  */
 export async function syncRegisteredAppsToWhitelist(): Promise<
   ActionState<{ synced: number }>
@@ -161,10 +163,10 @@ export async function syncRegisteredAppsToWhitelist(): Promise<
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
-      return { success: false, error: "인증이 필요합니다" };
+      return { success: false, error: "Authentication required" };
     }
 
-    // 활성 앱에서 URL 조회
+    // Fetch URLs from active apps
     const apps = await prisma.app.findMany({
       where: {
         organizationId: session.user.organizationId,
@@ -190,7 +192,7 @@ export async function syncRegisteredAppsToWhitelist(): Promise<
       const pattern = extractWildcardPattern(website);
       if (!pattern) continue;
 
-      // 기존 화이트리스트 확인
+      // Check the existing whitelist
       const existing = await prisma.extensionWhitelist.findUnique({
         where: {
           organizationId_pattern: {
@@ -201,7 +203,7 @@ export async function syncRegisteredAppsToWhitelist(): Promise<
       });
 
       if (!existing) {
-        // 새로 추가
+        // Add new
         await prisma.extensionWhitelist.create({
           data: {
             organizationId: session.user.organizationId,
@@ -221,19 +223,19 @@ export async function syncRegisteredAppsToWhitelist(): Promise<
     return {
       success: true,
       data: { synced: syncedCount },
-      message: `${syncedCount}개의 앱이 화이트리스트에 동기화되었습니다.`,
+      message: `${syncedCount} apps synced to the whitelist.`,
     };
   } catch (error) {
     console.error("[syncRegisteredAppsToWhitelist] Error:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "동기화 실패",
+      error: error instanceof Error ? error.message : "Sync failed",
     };
   }
 }
 
 /**
- * 등록 앱 활성화/비활성화 토글
+ * Toggle a registered app on/off
  */
 export async function toggleRegisteredAppStatus(
   appId: string,
@@ -242,10 +244,10 @@ export async function toggleRegisteredAppStatus(
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
-      return { success: false, error: "인증이 필요합니다" };
+      return { success: false, error: "Authentication required" };
     }
 
-    // 앱 조회
+    // Fetch the app
     const app = await prisma.app.findUnique({
       where: { id: appId },
       include: {
@@ -254,20 +256,20 @@ export async function toggleRegisteredAppStatus(
     });
 
     if (!app || app.organizationId !== session.user.organizationId) {
-      return { success: false, error: "앱을 찾을 수 없습니다" };
+      return { success: false, error: "App not found" };
     }
 
     const website = app.customWebsite || app.catalog?.website;
     if (!website) {
-      return { success: false, error: "앱에 URL이 없습니다" };
+      return { success: false, error: "The app has no URL" };
     }
 
     const pattern = extractWildcardPattern(website);
     if (!pattern) {
-      return { success: false, error: "유효하지 않은 URL입니다" };
+      return { success: false, error: "Invalid URL" };
     }
 
-    // 화이트리스트 업데이트 또는 생성
+    // Update or create the whitelist entry
     await prisma.extensionWhitelist.upsert({
       where: {
         organizationId_pattern: {
@@ -290,27 +292,28 @@ export async function toggleRegisteredAppStatus(
 
     return {
       success: true,
-      message: enabled ? "활성화되었습니다" : "비활성화되었습니다",
+      message: enabled ? "Enabled" : "Disabled",
     };
   } catch (error) {
     console.error("[toggleRegisteredAppStatus] Error:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "상태 변경 실패",
+      error:
+        error instanceof Error ? error.message : "Failed to change the status",
     };
   }
 }
 
 /**
- * 수동 등록 앱 추가 스키마 (use server 파일에서는 async 함수만 export 가능하므로 내부 사용만)
+ * Schema for manually adding a registered app (internal only: "use server" files may export only async functions)
  */
 const addManualRegisteredAppSchema = z.object({
-  name: z.string().min(1, "이름을 입력하세요").max(100),
-  pattern: z.string().min(1, "도메인 패턴을 입력하세요").max(255),
+  name: z.string().min(1, "Please enter a name").max(100),
+  pattern: z.string().min(1, "Please enter a domain pattern").max(255),
 });
 
 /**
- * 수동 등록 앱 추가
+ * Manually add a registered app
  */
 export async function addManualRegisteredApp(input: {
   name: string;
@@ -319,19 +322,18 @@ export async function addManualRegisteredApp(input: {
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
-      return { success: false, error: "인증이 필요합니다" };
+      return { success: false, error: "Authentication required" };
     }
 
     const validation = addManualRegisteredAppSchema.safeParse(input);
     if (!validation.success) {
       return {
         success: false,
-        error:
-          validation.error.issues[0]?.message || "입력값이 올바르지 않습니다",
+        error: validation.error.issues[0]?.message || "Invalid input",
       };
     }
 
-    // 화이트리스트에 추가
+    // Add to the whitelist
     await prisma.extensionWhitelist.create({
       data: {
         organizationId: session.user.organizationId,
@@ -345,18 +347,18 @@ export async function addManualRegisteredApp(input: {
     revalidatePath("/extensions/registered-apps");
     revalidatePath("/extensions/whitelist");
 
-    return { success: true, message: "추가되었습니다" };
+    return { success: true, message: "Added" };
   } catch (error) {
     console.error("[addManualRegisteredApp] Error:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "추가 실패",
+      error: error instanceof Error ? error.message : "Failed to add",
     };
   }
 }
 
 /**
- * 등록 앱 삭제 (화이트리스트에서 제거)
+ * Delete a registered app (removes it from the whitelist)
  */
 export async function removeRegisteredApp(
   pattern: string
@@ -364,7 +366,7 @@ export async function removeRegisteredApp(
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
-      return { success: false, error: "인증이 필요합니다" };
+      return { success: false, error: "Authentication required" };
     }
 
     await prisma.extensionWhitelist.delete({
@@ -379,12 +381,12 @@ export async function removeRegisteredApp(
     revalidatePath("/extensions/registered-apps");
     revalidatePath("/extensions/whitelist");
 
-    return { success: true, message: "삭제되었습니다" };
+    return { success: true, message: "Deleted" };
   } catch (error) {
     console.error("[removeRegisteredApp] Error:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "삭제 실패",
+      error: error instanceof Error ? error.message : "Failed to delete",
     };
   }
 }

@@ -1,23 +1,23 @@
-# 08. Multi-Tenant 패턴 가이드
+# 08. Multi-Tenant Patterns Guide
 
-이 문서는 SaaS Management Platform의 멀티테넌트 아키텍처와 organizationId 기반 데이터 격리 패턴을 설명합니다.
+This document describes SubHub's multi-tenant architecture and the organizationId-based data isolation pattern.
 
-## 목차
+## Table of Contents
 
-1. [핵심 개념](#1-핵심-개념)
-2. [인증 헬퍼 함수](#2-인증-헬퍼-함수)
-3. [Prisma 쿼리 패턴](#3-prisma-쿼리-패턴)
-4. [역할 기반 접근 제어](#4-역할-기반-접근-제어)
-5. [테스트 패턴](#5-테스트-패턴)
-6. [체크리스트](#6-체크리스트)
+1. [Core Concepts](#1-core-concepts)
+2. [Authentication Helper Functions](#2-authentication-helper-functions)
+3. [Prisma Query Patterns](#3-prisma-query-patterns)
+4. [Role-Based Access Control](#4-role-based-access-control)
+5. [Testing Patterns](#5-testing-patterns)
+6. [Checklist](#6-checklist)
 
 ---
 
-## 1. 핵심 개념
+## 1. Core Concepts
 
-### 1.1 멀티테넌시란?
+### 1.1 What Is Multi-Tenancy?
 
-하나의 애플리케이션 인스턴스가 여러 조직(테넌트)을 동시에 서비스하는 아키텍처입니다.
+An architecture in which a single application instance serves multiple organisations (tenants) simultaneously.
 
 ```
 ┌─────────────────────────────────────────────────┐
@@ -34,31 +34,31 @@
 
 ### 1.2 organizationId
 
-- **정의**: 모든 데이터를 조직 단위로 격리하는 핵심 식별자
-- **위치**: 모든 엔티티 테이블에 `organizationId` 컬럼 존재
-- **검증**: 모든 쿼리에서 organizationId 필터 필수
+- **Definition**: The core identifier that isolates all data per organisation
+- **Location**: Every entity table has an `organizationId` column
+- **Enforcement**: An organizationId filter is mandatory in every query
 
 ```typescript
-// 올바른 예시
+// Correct example
 const apps = await prisma.app.findMany({
-  where: { organizationId }, // ✅ organizationId 포함
+  where: { organizationId }, // ✅ includes organizationId
 });
 
-// 잘못된 예시 - 데이터 누출 위험!
+// Incorrect example - risk of data leakage!
 const apps = await prisma.app.findMany({
-  where: { id: appId }, // ❌ organizationId 누락
+  where: { id: appId }, // ❌ organizationId missing
 });
 ```
 
 ---
 
-## 2. 인증 헬퍼 함수
+## 2. Authentication Helper Functions
 
 ### 2.1 requireOrganization()
 
-가장 많이 사용하는 헬퍼. 인증된 사용자 + 조직 필수.
+The most frequently used helper. Requires an authenticated user + an organisation.
 
-**파일**: `src/lib/auth/require-auth.ts`
+**File**: `src/lib/auth/require-auth.ts`
 
 ```typescript
 import { requireOrganization } from "@/lib/auth/require-auth";
@@ -66,7 +66,7 @@ import { requireOrganization } from "@/lib/auth/require-auth";
 export async function getApps() {
   const { organizationId, userId, role, session } = await requireOrganization();
 
-  // organizationId가 보장된 상태로 쿼리 수행
+  // Run the query with organizationId guaranteed
   const apps = await prisma.app.findMany({
     where: { organizationId },
   });
@@ -75,84 +75,84 @@ export async function getApps() {
 }
 ```
 
-**반환 값**:
-| 필드 | 타입 | 설명 |
+**Return values**:
+| Field | Type | Description |
 |------|------|------|
-| `session` | `Session` | NextAuth 세션 객체 |
-| `organizationId` | `string` | 현재 사용자의 조직 ID |
-| `userId` | `string` | 현재 사용자 ID |
-| `role` | `"ADMIN" \| "MEMBER" \| "VIEWER"` | 사용자 역할 |
+| `session` | `Session` | NextAuth session object |
+| `organizationId` | `string` | Current user's organisation ID |
+| `userId` | `string` | Current user ID |
+| `role` | `"ADMIN" \| "MEMBER" \| "VIEWER"` | User role |
 
-**자동 리다이렉트**:
+**Automatic redirects**:
 
-- 세션 없음 → `/login`
-- 조직 없음 → `/onboarding`
+- No session → `/login`
+- No organisation → `/onboarding`
 
 ### 2.2 requireAuth()
 
-조직 없이 인증만 필요한 경우 사용.
+Use when only authentication is required, without an organisation.
 
 ```typescript
 import { requireAuth } from "@/lib/auth/require-auth";
 
-// 온보딩 완료 전 API에서 사용
+// Used in APIs called before onboarding is complete
 export async function createOrganization() {
   const session = await requireAuth();
-  // session.user 접근 가능
+  // session.user is accessible
 }
 ```
 
 ### 2.3 getCachedSession()
 
-동일 요청 내 여러 번 세션 조회 시 캐싱.
+Caches the session when it is read multiple times within the same request.
 
 ```typescript
 import { getCachedSession } from "@/lib/auth/require-auth";
 
-// React의 cache()로 래핑되어 동일 요청 내 중복 호출 방지
+// Wrapped in React's cache() to prevent duplicate calls within the same request
 const session = await getCachedSession();
 ```
 
 ---
 
-## 3. Prisma 쿼리 패턴
+## 3. Prisma Query Patterns
 
-### 3.1 기본 조회 패턴
+### 3.1 Basic Read Pattern
 
 ```typescript
-// ✅ 올바른 패턴
+// ✅ Correct pattern
 export async function getApps() {
   const { organizationId } = await requireOrganization();
 
   return prisma.app.findMany({
-    where: { organizationId }, // 항상 organizationId 포함
+    where: { organizationId }, // Always include organizationId
   });
 }
 ```
 
-### 3.2 단일 레코드 조회
+### 3.2 Single-Record Read
 
 ```typescript
 export async function getApp(id: string) {
   const { organizationId } = await requireOrganization();
 
-  // findFirst로 organizationId 함께 검증
+  // Use findFirst to verify organizationId at the same time
   const app = await prisma.app.findFirst({
     where: {
       id,
-      organizationId, // ✅ 다른 조직 데이터 접근 방지
+      organizationId, // ✅ Prevents access to another organisation's data
     },
   });
 
   if (!app) {
-    throw new Error("앱을 찾을 수 없습니다");
+    throw new Error("App not found");
   }
 
   return app;
 }
 ```
 
-### 3.3 생성 시 패턴
+### 3.3 Create Pattern
 
 ```typescript
 export async function createApp(formData: FormData) {
@@ -161,11 +161,11 @@ export async function createApp(formData: FormData) {
   const app = await prisma.app.create({
     data: {
       name: formData.get("name") as string,
-      organizationId, // ✅ 필수: 소속 조직 지정
+      organizationId, // ✅ Required: assign the owning organisation
     },
   });
 
-  // 감사 로그도 organizationId 포함
+  // The audit log also includes organizationId
   await prisma.auditLog.create({
     data: {
       action: "CREATE_APP",
@@ -180,22 +180,22 @@ export async function createApp(formData: FormData) {
 }
 ```
 
-### 3.4 수정/삭제 시 패턴
+### 3.4 Update/Delete Pattern
 
 ```typescript
 export async function updateApp(id: string, data: UpdateAppData) {
   const { organizationId, userId } = await requireOrganization();
 
-  // 1. 먼저 해당 조직의 데이터인지 확인
+  // 1. First confirm the record belongs to this organisation
   const existing = await prisma.app.findFirst({
     where: { id, organizationId },
   });
 
   if (!existing) {
-    throw new Error("앱을 찾을 수 없습니다");
+    throw new Error("App not found");
   }
 
-  // 2. 업데이트 수행
+  // 2. Perform the update
   return prisma.app.update({
     where: { id },
     data,
@@ -203,22 +203,22 @@ export async function updateApp(id: string, data: UpdateAppData) {
 }
 ```
 
-### 3.5 관계 데이터 검증
+### 3.5 Validating Related Data
 
 ```typescript
 export async function assignOwner(appId: string, ownerId: string) {
   const { organizationId } = await requireOrganization();
 
-  // 소유자가 같은 조직에 속하는지 검증
+  // Verify that the owner belongs to the same organisation
   const owner = await prisma.user.findFirst({
     where: {
       id: ownerId,
-      organizationId, // ✅ 같은 조직 사용자만 허용
+      organizationId, // ✅ Only users from the same organisation are allowed
     },
   });
 
   if (!owner) {
-    throw new Error("지정된 소유자가 조직에 속하지 않습니다");
+    throw new Error("The specified owner does not belong to the organisation");
   }
 
   return prisma.app.update({
@@ -230,25 +230,25 @@ export async function assignOwner(appId: string, ownerId: string) {
 
 ---
 
-## 4. 역할 기반 접근 제어
+## 4. Role-Based Access Control
 
-### 4.1 역할 정의
+### 4.1 Role Definitions
 
-| 역할     | 권한                                    |
-| -------- | --------------------------------------- |
-| `ADMIN`  | 모든 작업 (생성, 수정, 삭제, 설정 변경) |
-| `MEMBER` | 조회, 생성, 수정                        |
-| `VIEWER` | 조회만 가능                             |
+| Role     | Permissions                                              |
+| -------- | -------------------------------------------------------- |
+| `ADMIN`  | All operations (create, update, delete, change settings) |
+| `MEMBER` | Read, create, update                                     |
+| `VIEWER` | Read only                                                |
 
-### 4.2 역할 검사 패턴
+### 4.2 Role Check Pattern
 
 ```typescript
 export async function deleteApp(id: string) {
   const { organizationId, role } = await requireOrganization();
 
-  // ADMIN만 삭제 가능
+  // Only ADMIN can delete
   if (role !== "ADMIN") {
-    throw new Error("삭제 권한이 없습니다");
+    throw new Error("You do not have permission to delete");
   }
 
   return prisma.app.delete({
@@ -257,7 +257,7 @@ export async function deleteApp(id: string) {
 }
 ```
 
-### 4.3 UI에서 역할 기반 렌더링
+### 4.3 Role-Based Rendering in the UI
 
 ```tsx
 "use client";
@@ -270,11 +270,11 @@ export function AppActions({ appId }: { appId: string }) {
 
   return (
     <div>
-      <Button variant="outline">보기</Button>
+      <Button variant="outline">View</Button>
 
-      {role !== "VIEWER" && <Button variant="outline">수정</Button>}
+      {role !== "VIEWER" && <Button variant="outline">Edit</Button>}
 
-      {role === "ADMIN" && <Button variant="destructive">삭제</Button>}
+      {role === "ADMIN" && <Button variant="destructive">Delete</Button>}
     </div>
   );
 }
@@ -282,16 +282,16 @@ export function AppActions({ appId }: { appId: string }) {
 
 ---
 
-## 5. 테스트 패턴
+## 5. Testing Patterns
 
-### 5.1 세션 모킹
+### 5.1 Session Mocking
 
 ```typescript
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { prisma } from "@/lib/db";
 import { getApps } from "./apps";
 
-// 모듈 모킹
+// Module mocking
 vi.mock("@/lib/auth/require-auth", () => ({
   requireOrganization: vi.fn(),
 }));
@@ -312,7 +312,7 @@ describe("getApps", () => {
   });
 
   it("should return apps for the current organization", async () => {
-    // Arrange: 세션 모킹
+    // Arrange: mock the session
     vi.mocked(requireOrganization).mockResolvedValue({
       session: {} as any,
       organizationId: "org-123",
@@ -335,41 +335,43 @@ describe("getApps", () => {
 });
 ```
 
-### 5.2 다른 조직 접근 테스트
+### 5.2 Cross-Organisation Access Test
 
 ```typescript
 it("should not return apps from other organizations", async () => {
-  // 조직 A로 로그인
+  // Signed in as organisation A
   vi.mocked(requireOrganization).mockResolvedValue({
     organizationId: "org-A",
     // ...
   });
 
-  // 조직 B의 앱 조회 시도
+  // Attempt to read an app belonging to organisation B
   const result = await getApp("app-from-org-B");
 
-  // 조직 검증으로 인해 null 반환 또는 에러
+  // Returns null or throws because of the organisation check
   expect(result).toBeNull();
 });
 ```
 
-### 5.3 역할 테스트
+### 5.3 Role Tests
 
 ```typescript
 it("should throw error when VIEWER tries to delete", async () => {
   vi.mocked(requireOrganization).mockResolvedValue({
     organizationId: "org-123",
-    role: "VIEWER", // Viewer 역할
+    role: "VIEWER", // Viewer role
     // ...
   });
 
-  await expect(deleteApp("app-1")).rejects.toThrow("삭제 권한이 없습니다");
+  await expect(deleteApp("app-1")).rejects.toThrow(
+    "You do not have permission to delete"
+  );
 });
 
 it("should allow ADMIN to delete", async () => {
   vi.mocked(requireOrganization).mockResolvedValue({
     organizationId: "org-123",
-    role: "ADMIN", // Admin 역할
+    role: "ADMIN", // Admin role
     // ...
   });
 
@@ -381,37 +383,37 @@ it("should allow ADMIN to delete", async () => {
 
 ---
 
-## 6. 체크리스트
+## 6. Checklist
 
-### 코드 리뷰 시 확인 사항
+### Code Review Checks
 
-- [ ] 모든 Prisma 쿼리에 `organizationId` 조건 포함
-- [ ] `requireOrganization()` 또는 `requireAuth()` 호출
-- [ ] 관계 데이터(ownerId 등) 같은 조직 소속 검증
-- [ ] 역할 기반 권한 검사 (삭제, 설정 변경 등)
-- [ ] 감사 로그에 `organizationId` 포함
-- [ ] 테스트에서 다양한 organizationId로 격리 검증
+- [ ] Every Prisma query includes an `organizationId` condition
+- [ ] `requireOrganization()` or `requireAuth()` is called
+- [ ] Related data (ownerId, etc.) is verified to belong to the same organisation
+- [ ] Role-based permission checks are in place (delete, settings changes, etc.)
+- [ ] Audit logs include `organizationId`
+- [ ] Tests verify isolation using different organizationId values
 
-### 안티 패턴 (절대 금지)
+### Anti-Patterns (Strictly Prohibited)
 
 ```typescript
-// ❌ organizationId 없이 전체 조회
+// ❌ Reading everything without organizationId
 const allApps = await prisma.app.findMany();
 
-// ❌ id만으로 조회 (다른 조직 데이터 접근 가능)
+// ❌ Reading by id alone (allows access to another organisation's data)
 const app = await prisma.app.findUnique({ where: { id } });
 
-// ❌ 조직 검증 없이 관계 설정
+// ❌ Setting a relationship without organisation verification
 await prisma.app.update({
   where: { id },
-  data: { ownerId: anyUserId }, // 다른 조직 사용자일 수 있음
+  data: { ownerId: anyUserId }, // May be a user from another organisation
 });
 ```
 
 ---
 
-## 관련 문서
+## Related Documents
 
-- [02-development-principles.md](./02-development-principles.md) - 개발 원칙
-- [09-error-handling-strategy.md](./09-error-handling-strategy.md) - 에러 처리 전략
-- [11-audit-logging.md](./11-audit-logging.md) - 감사 로깅
+- [02-development-principles.md](./02-development-principles.md) - Development principles
+- [09-error-handling-strategy.md](./09-error-handling-strategy.md) - Error handling strategy
+- [11-audit-logging.md](./11-audit-logging.md) - Audit logging

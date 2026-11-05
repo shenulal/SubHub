@@ -1,5 +1,5 @@
 // src/lib/services/erp/sap.ts
-// SAP S/4HANA OData API 어댑터
+// SAP S/4HANA OData API adapter
 
 import { DEFAULT_BASE_CURRENCY } from "@/lib/fx/convert";
 import { logger } from "@/lib/logger";
@@ -10,7 +10,7 @@ import type {
   SapCredentials,
 } from "./types";
 
-/** SAP OData 날짜 포맷 → Date 변환 ("/Date(1743465600000)/" 또는 "2026-04-01") */
+/** Converts an SAP OData date → Date ("/Date(1743465600000)/" or "2026-04-01") */
 function parseSapDate(dateValue: string): Date {
   const timestampMatch = dateValue.match(/\/Date\((\d+)\)\//);
   if (timestampMatch) {
@@ -19,19 +19,19 @@ function parseSapDate(dateValue: string): Date {
   return new Date(dateValue);
 }
 
-/** SAP 비용 계정 필터 (6xxx = 비용, 8xxx = 판관비) */
+/** SAP expense account filter (6xxx = expenses, 8xxx = SG&A) */
 function isExpenseAccount(glAccount: string): boolean {
   const cleaned = glAccount.replace(/^0+/, "");
   return cleaned.startsWith("6") || cleaned.startsWith("8");
 }
 
-/** SAP 금액 파싱 */
+/** Parses an SAP amount */
 function parseAmount(value: string | number): number {
   if (typeof value === "number") return value;
   return parseFloat(value.replace(/,/g, "")) || 0;
 }
 
-/** OAuth 토큰 캐시 */
+/** OAuth token cache */
 let tokenCache: { accessToken: string; expiresAt: number } | null = null;
 
 async function getAccessToken(credentials: SapCredentials): Promise<string> {
@@ -90,7 +90,7 @@ function buildAuthHeaders(
   };
 }
 
-/** 재시도 래퍼 */
+/** Retry wrapper */
 async function withRetry<T>(
   operation: () => Promise<T>,
   maxRetries = 3,
@@ -194,7 +194,7 @@ export const sapAdapter: ERPPaymentAdapter = {
         items: [],
         totalCount: 0,
         errorMessage:
-          error instanceof Error ? error.message : "SAP API 호출 실패",
+          error instanceof Error ? error.message : "SAP API call failed",
       };
     }
   },

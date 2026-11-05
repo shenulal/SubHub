@@ -13,8 +13,8 @@ export interface GetSyncHistoryFilters {
 }
 
 /**
- * 동기화 이력 조회 Server Action
- * organizationId는 세션에서 자동으로 가져옵니다.
+ * Server Action: get sync history
+ * organizationId is taken from the session automatically.
  */
 export async function getSyncHistory(
   filters: GetSyncHistoryFilters
@@ -23,11 +23,11 @@ export async function getSyncHistory(
     const session = await getCachedSession();
 
     if (!session?.user) {
-      return { success: false, error: "인증이 필요합니다" };
+      return { success: false, error: "Authentication required" };
     }
 
     if (!session.user.organizationId) {
-      return { success: false, error: "조직 정보가 필요합니다" };
+      return { success: false, error: "Organization information is required" };
     }
 
     const page = filters.page ?? 1;
@@ -45,9 +45,7 @@ export async function getSyncHistory(
     return { success: true, data: result };
   } catch (error) {
     const message =
-      error instanceof Error
-        ? error.message
-        : "동기화 이력 조회에 실패했습니다";
+      error instanceof Error ? error.message : "Failed to load sync history";
     return { success: false, error: message };
   }
 }

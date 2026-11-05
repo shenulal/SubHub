@@ -4,19 +4,19 @@ import { Meta } from '@storybook/addon-docs/blocks';
 
 # Testing Guide
 
-shadcn-storybook-registry의 테스트 전략과 작성 가이드입니다.
+The testing strategy and test-writing guide for shadcn-storybook-registry.
 
 ## Testing Strategy
 
-이 프로젝트는 3가지 테스트 레이어로 구성됩니다:
+This project is made up of three test layers:
 
-- **Play Functions**: Storybook 내에서 인터랙션 테스트
-- **Vitest Unit Tests**: 컴포넌트 로직 단위 테스트
-- **Playwright Browser Tests**: 실제 브라우저 환경에서 E2E 테스트
+- **Play Functions**: Interaction tests within Storybook
+- **Vitest Unit Tests**: Unit tests for component logic
+- **Playwright Browser Tests**: E2E tests in a real browser environment
 
 ## Play Functions
 
-Storybook 9의 **Play Functions**는 컴포넌트 인터랙션을 자동으로 테스트합니다.
+**Play Functions** in Storybook 9 test component interactions automatically.
 
 ### Basic Structure
 
@@ -35,10 +35,10 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 /**
- * 버튼 클릭 시 상태가 변경되는지 테스트합니다.
+ * Tests that the state changes when the button is clicked.
  */
 export const ShouldToggleOnClick: Story = {
-  tags: ["!dev", "!autodocs"], // 👈 테스트 전용 스토리
+  tags: ["!dev", "!autodocs"], // 👈 Test-only story
   render: () => {
     const [clicked, setClicked] = React.useState(false);
     return (
@@ -50,14 +50,14 @@ export const ShouldToggleOnClick: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    // 🎯 목적: 버튼 클릭 시 텍스트가 변경되는지 확인
+    // 🎯 Purpose: Verify that the text changes when the button is clicked
     const button = canvas.getByRole("button", { name: /click me/i });
     await expect(button).toBeInTheDocument();
 
-    // 버튼 클릭
+    // Click the button
     await userEvent.click(button);
 
-    // 텍스트 변경 확인
+    // Verify the text change
     await waitFor(() => {
       expect(button).toHaveTextContent("Clicked");
     });
@@ -67,7 +67,7 @@ export const ShouldToggleOnClick: Story = {
 
 ### Story Naming Convention
 
-Play function 스토리는 **`Should...`** 패턴을 사용합니다:
+Play function stories use the **`Should...`** pattern:
 
 - ✅ `ShouldOpenDialog`
 - ✅ `ShouldSelectDate`
@@ -81,44 +81,44 @@ Play function 스토리는 **`Should...`** 패턴을 사용합니다:
 tags: ["!dev", "!autodocs"]
 ```
 
-- `!dev`: Dev mode에서 숨김
-- `!autodocs`: Autodocs 페이지에서 제외
+- `!dev`: Hidden in Dev mode
+- `!autodocs`: Excluded from the Autodocs page
 
 ### Common Patterns
 
 #### 1. Button Interactions
 
 ```typescript
-// 버튼 찾기
+// Find the button
 const button = canvas.getByRole("button", { name: /submit/i });
 
-// 클릭
+// Click
 await userEvent.click(button);
 
-// 상태 확인
+// Verify the state
 await expect(button).toBeDisabled();
 ```
 
 #### 2. Form Inputs
 
 ```typescript
-// Input 찾기
+// Find the input
 const input = canvas.getByRole("textbox", { name: /email/i });
 
-// 텍스트 입력
+// Enter text
 await userEvent.type(input, "test@example.com");
 
-// 값 확인
+// Verify the value
 await expect(input).toHaveValue("test@example.com");
 ```
 
 #### 3. Dialog/Popover Opening
 
 ```typescript
-// 트리거 클릭
+// Click the trigger
 await userEvent.click(canvas.getByRole("button", { name: /open/i }));
 
-// Dialog 열림 확인
+// Verify that the Dialog is open
 await waitFor(async () => {
   const dialog = await canvas.findByRole("dialog");
   await expect(dialog).toBeInTheDocument();
@@ -128,46 +128,46 @@ await waitFor(async () => {
 #### 4. Select/Combobox
 
 ```typescript
-// Select 열기
+// Open the Select
 await userEvent.click(canvas.getByRole("combobox"));
 
-// 옵션 선택
+// Select an option
 const option = canvas.getByRole("option", { name: /option 1/i });
 await userEvent.click(option);
 
-// 선택 확인
+// Verify the selection
 await expect(canvas.getByRole("combobox")).toHaveTextContent("Option 1");
 ```
 
 #### 5. Keyboard Navigation
 
 ```typescript
-// Tab 키
+// Tab key
 await userEvent.tab();
 
-// Enter 키
+// Enter key
 await userEvent.keyboard("{Enter}");
 
-// Escape 키
+// Escape key
 await userEvent.keyboard("{Escape}");
 
 // Arrow keys
 await userEvent.keyboard("{ArrowDown}");
 ```
 
-### 한국어 주석 필수
+### Purpose Comments Required
 
-모든 Play function에는 `🎯 목적` 주석을 포함해야 합니다:
+Every Play function must include a `🎯 Purpose` comment:
 
 ```typescript
 play: async ({ canvasElement }) => {
   const canvas = within(canvasElement);
 
-  // 🎯 목적: Form 제출 시 validation 에러가 표시되는지 확인
+  // 🎯 Purpose: Verify that validation errors are displayed when the form is submitted
   const submitButton = canvas.getByRole("button", { name: /submit/i });
   await userEvent.click(submitButton);
 
-  // Validation 에러 확인
+  // Verify the validation errors
   await waitFor(() => {
     expect(canvas.getByText(/required/i)).toBeInTheDocument();
   });
@@ -177,13 +177,13 @@ play: async ({ canvasElement }) => {
 ### Testing Async Operations
 
 ```typescript
-// Loading 상태 테스트
+// Test the loading state
 await userEvent.click(submitButton);
 
-// Loading spinner 표시 확인
+// Verify that the loading spinner is displayed
 await expect(canvas.getByRole("status")).toBeInTheDocument();
 
-// 완료 후 성공 메시지 확인
+// Verify the success message after completion
 await waitFor(
   () => {
     expect(canvas.getByText(/success/i)).toBeInTheDocument();
@@ -194,15 +194,15 @@ await waitFor(
 
 ## Vitest Unit Tests
 
-**Vitest**로 컴포넌트 로직을 단위 테스트합니다.
+Unit-test component logic with **Vitest**.
 
 ### Running Tests
 
 ```bash
-# 모든 테스트 실행
+# Run all tests
 npm run test
 
-# 유닛 테스트만 실행
+# Run unit tests only
 npm run test:unit
 
 # Watch mode
@@ -244,10 +244,10 @@ describe("Button", () => {
 ### Mocking
 
 ```typescript
-// Mock 함수
+// Mock function
 const mockFn = vi.fn();
 
-// Mock 모듈
+// Mock module
 vi.mock("@/lib/utils", () => ({
   cn: vi.fn((...classes) => classes.join(" ")),
 }));
@@ -260,12 +260,12 @@ vi.useRealTimers();
 
 ## Playwright Browser Tests
 
-**Playwright**로 실제 브라우저 환경에서 테스트합니다.
+Test in a real browser environment with **Playwright**.
 
 ### Running Tests
 
 ```bash
-# Storybook 테스트 실행
+# Run Storybook tests
 npm run test:storybook
 
 # Storybook Test Runner
@@ -274,7 +274,7 @@ npm run storybook:test
 
 ### Test Configuration
 
-Storybook Test Runner는 모든 Play function을 자동으로 실행합니다.
+The Storybook Test Runner runs every Play function automatically.
 
 ```typescript
 // .storybook/test-runner.ts
@@ -282,7 +282,7 @@ import type { TestRunnerConfig } from "@storybook/test-runner";
 
 const config: TestRunnerConfig = {
   async postVisit(page, context) {
-    // 추가 검증 로직
+    // Additional verification logic
     const element = page.locator("#root");
     await expect(element).toBeVisible();
   },
@@ -293,7 +293,7 @@ export default config;
 
 ## Accessibility Testing
 
-**A11y addon**으로 접근성을 자동 검증합니다.
+Accessibility is verified automatically with the **A11y addon**.
 
 ### Configuration
 
@@ -320,13 +320,13 @@ export const parameters = {
 
 ### Testing WCAG 2.1 AA Compliance
 
-모든 컴포넌트는 다음을 준수해야 합니다:
+All components must comply with the following:
 
-- ✅ **Color Contrast**: 최소 4.5:1 비율
+- ✅ **Color Contrast**: Minimum ratio of 4.5:1
 - ✅ **Keyboard Navigation**: Tab, Enter, Escape, Arrow keys
 - ✅ **Screen Reader**: ARIA labels, roles, states
-- ✅ **Focus Management**: 논리적 포커스 순서
-- ✅ **Semantic HTML**: `<button>`, `<input>`, `<label>` 등
+- ✅ **Focus Management**: Logical focus order
+- ✅ **Semantic HTML**: `<button>`, `<input>`, `<label>`, etc.
 
 ### Keyboard Navigation Testing
 
@@ -336,22 +336,22 @@ export const ShouldNavigateWithKeyboard: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    // 🎯 목적: 키보드로 모든 인터랙티브 요소에 접근 가능한지 확인
+    // 🎯 Purpose: Verify that every interactive element is reachable by keyboard
 
-    // Tab으로 첫 번째 요소에 포커스
+    // Focus the first element with Tab
     await userEvent.tab();
     const firstButton = canvas.getAllByRole("button")[0];
     await expect(firstButton).toHaveFocus();
 
-    // Tab으로 다음 요소로 이동
+    // Move to the next element with Tab
     await userEvent.tab();
     const secondButton = canvas.getAllByRole("button")[1];
     await expect(secondButton).toHaveFocus();
 
-    // Enter로 버튼 활성화
+    // Activate the button with Enter
     await userEvent.keyboard("{Enter}");
 
-    // Escape로 닫기
+    // Close with Escape
     await userEvent.keyboard("{Escape}");
   },
 };
@@ -361,68 +361,68 @@ export const ShouldNavigateWithKeyboard: Story = {
 
 ### 1. Test Isolation
 
-각 테스트는 독립적이어야 합니다:
+Each test must be independent:
 
 ```typescript
-// ✅ Good: 독립적인 테스트
+// ✅ Good: Independent test
 export const ShouldOpenDialog: Story = {
   render: () => {
     const [open, setOpen] = React.useState(false);
     return <Dialog open={open} onOpenChange={setOpen} />;
   },
   play: async ({ canvasElement }) => {
-    // 테스트 로직
+    // Test logic
   },
 };
 
-// ❌ Bad: 외부 상태 의존
+// ❌ Bad: Depends on external state
 let globalState = false;
 export const ShouldOpenDialog: Story = {
   play: async () => {
-    globalState = true; // 다른 테스트에 영향
+    globalState = true; // Affects other tests
   },
 };
 ```
 
 ### 2. Clear Assertions
 
-명확한 assertion을 사용하세요:
+Use clear assertions:
 
 ```typescript
-// ✅ Good: 명확한 assertion
+// ✅ Good: Clear assertion
 await expect(button).toHaveTextContent("Submit");
 await expect(input).toHaveValue("test@example.com");
 await expect(dialog).toBeVisible();
 
-// ❌ Bad: 불명확한 assertion
-await expect(button.textContent).toBe("Submit"); // DOM API 직접 사용
+// ❌ Bad: Unclear assertion
+await expect(button.textContent).toBe("Submit"); // Uses the DOM API directly
 ```
 
 ### 3. WaitFor for Async
 
-비동기 동작은 `waitFor`를 사용하세요:
+Use `waitFor` for asynchronous behaviour:
 
 ```typescript
-// ✅ Good: waitFor 사용
+// ✅ Good: Use waitFor
 await waitFor(() => {
   expect(canvas.getByText(/success/i)).toBeInTheDocument();
 });
 
-// ❌ Bad: 고정된 timeout
+// ❌ Bad: Fixed timeout
 await new Promise((resolve) => setTimeout(resolve, 1000));
 ```
 
 ### 4. User-Centric Queries
 
-사용자 관점의 쿼리를 사용하세요:
+Use queries from the user's perspective:
 
 ```typescript
-// ✅ Good: 역할 기반 쿼리
+// ✅ Good: Role-based queries
 canvas.getByRole("button", { name: /submit/i });
 canvas.getByRole("textbox", { name: /email/i });
 canvas.getByLabelText(/password/i);
 
-// ❌ Bad: 구현 세부사항 쿼리
+// ❌ Bad: Implementation-detail queries
 canvas.getByClassName("btn-primary");
 canvas.querySelector("#submit-button");
 ```
@@ -432,10 +432,10 @@ canvas.querySelector("#submit-button");
 ### Issue 1: Element Not Found
 
 ```typescript
-// ❌ 문제: 요소를 찾을 수 없음
+// ❌ Problem: Element cannot be found
 const button = canvas.getByRole("button");
 
-// ✅ 해결: 대기 후 찾기
+// ✅ Solution: Wait, then find
 await waitFor(async () => {
   const button = await canvas.findByRole("button");
   await expect(button).toBeInTheDocument();
@@ -445,12 +445,12 @@ await waitFor(async () => {
 ### Issue 2: Timeout Errors
 
 ```typescript
-// ❌ 문제: 기본 timeout 초과
+// ❌ Problem: Default timeout exceeded
 await waitFor(() => {
   expect(element).toBeInTheDocument();
 });
 
-// ✅ 해결: timeout 증가
+// ✅ Solution: Increase the timeout
 await waitFor(
   () => {
     expect(element).toBeInTheDocument();
@@ -462,10 +462,10 @@ await waitFor(
 ### Issue 3: Multiple Elements
 
 ```typescript
-// ❌ 문제: 여러 버튼이 있을 때
+// ❌ Problem: When there are multiple buttons
 const button = canvas.getByRole("button");
 
-// ✅ 해결: 구체적인 name 사용
+// ✅ Solution: Use a specific name
 const submitButton = canvas.getByRole("button", { name: /submit/i });
 const cancelButton = canvas.getByRole("button", { name: /cancel/i });
 ```

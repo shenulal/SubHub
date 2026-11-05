@@ -187,14 +187,14 @@ export const ShouldAcceptOTPInput: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    // 🎯 목적: Input OTP가 사용자 입력을 받아 각 슬롯에 표시하고, 값을 추적하는지 확인
+    // 🎯 Purpose: Verify Input OTP accepts user input, shows it in each slot and tracks the value
     const inputs = canvas.getAllByRole("textbox");
     await expect(inputs.length).toBeGreaterThan(0);
 
-    // 첫 번째 입력 필드에 OTP 입력
+    // Type the OTP into the first input field
     await userEvent.type(inputs[0], "123456");
 
-    // 입력한 값이 표시되는지 확인
+    // Verify the entered value is shown
     await waitFor(async () => {
       const displayText = await canvas.findByText(/you entered: 123456/i);
       await expect(displayText).toBeInTheDocument();
@@ -246,20 +246,20 @@ export const ShouldAutoFocus: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    // 🎯 목적: 6자리 OTP 입력 시 자동으로 다음 슬롯으로 포커스가 이동하고, 완료 시 상태가 업데이트되는지 확인
+    // 🎯 Purpose: Verify focus moves to the next slot automatically while typing a 6-digit OTP and the state updates on completion
 
-    // 초기 상태 확인
+    // Check the initial state
     const status = canvas.getByTestId("status");
     await expect(status).toHaveTextContent("Enter OTP (0/6)");
 
-    // 첫 번째 textbox 찾기
+    // Find the first textbox
     const inputs = canvas.getAllByRole("textbox");
     await expect(inputs.length).toBeGreaterThan(0);
 
-    // 6자리 OTP 입력
+    // Type a 6-digit OTP
     await userEvent.type(inputs[0], "123456");
 
-    // 완료 상태 확인
+    // Check the completed state
     await waitFor(
       () => {
         expect(status).toHaveTextContent("✓ OTP Complete: 123456");

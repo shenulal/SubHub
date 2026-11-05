@@ -13,7 +13,7 @@ const OTP_COOLDOWN_SECONDS = 60;
 const OTP_MAX_ATTEMPTS = 5;
 
 /**
- * 6자리 숫자 OTP 코드 생성
+ * Generate a 6-digit numeric OTP code
  */
 function generateOtpCode(): string {
   const array = new Uint32Array(1);
@@ -22,10 +22,10 @@ function generateOtpCode(): string {
 }
 
 /**
- * 이메일로 OTP 코드 발송
- * - 미등록 이메일: USER_NOT_FOUND 반환
- * - 60초 쿨다운 중: COOLDOWN_ACTIVE 반환
- * - 기존 OTP 삭제 후 신규 OTP 생성 및 이메일 발송
+ * Send an OTP code by email
+ * - Unregistered email: returns USER_NOT_FOUND
+ * - During the 60-second cooldown: returns COOLDOWN_ACTIVE
+ * - Deletes existing OTPs, then creates a new OTP and sends the email
  */
 async function _sendOtp(email: string): Promise<ActionState> {
   let user = await prisma.user.findUnique({
@@ -34,7 +34,7 @@ async function _sendOtp(email: string): Promise<ActionState> {
   });
 
   if (!user) {
-    // 초대받은 이메일인지 확인
+    // Check whether the email has been invited
     const pendingInvitation = await prisma.invitation.findFirst({
       where: { email, status: "PENDING" },
     });
@@ -43,7 +43,7 @@ async function _sendOtp(email: string): Promise<ActionState> {
       return { success: false, error: "USER_NOT_FOUND" };
     }
 
-    // 초대받은 경우 임시 계정 생성 (조직 미연결 상태 — 초대 수락 시 연결)
+    // If invited, create a provisional account (not linked to an organization until the invitation is accepted)
     user = await prisma.user.create({
       data: {
         email,
@@ -86,7 +86,7 @@ async function _sendOtp(email: string): Promise<ActionState> {
       },
       "[auth] development OTP issued without email delivery"
     );
-    return { success: true, message: "인증 코드가 발송되었습니다" };
+    return { success: true, message: "Verification code sent" };
   }
 
   const emailResult = await sendOtpEmail({
@@ -99,17 +99,17 @@ async function _sendOtp(email: string): Promise<ActionState> {
     return { success: false, error: "EMAIL_SEND_FAILED" };
   }
 
-  return { success: true, message: "인증 코드가 발송되었습니다" };
+  return { success: true, message: "Verification code sent" };
 }
 
 export const sendOtp = withLogging("sendOtp", _sendOtp);
 
 /**
- * OTP 코드 검증
- * - 유효한 토큰 없음: NO_ACTIVE_OTP 반환
- * - 최대 시도 횟수(5) 초과: MAX_ATTEMPTS_EXCEEDED 반환
- * - 코드 불일치: INVALID_OTP 반환 + 시도 횟수 증가
- * - 코드 일치: 토큰 삭제 후 success 반환
+ * Verify an OTP code
+ * - No valid token: returns NO_ACTIVE_OTP
+ * - Maximum attempts (5) exceeded: returns MAX_ATTEMPTS_EXCEEDED
+ * - Code mismatch: returns INVALID_OTP and increments the attempt count
+ * - Code match: deletes the token and returns success
  */
 async function _verifyOtp(email: string, code: string): Promise<ActionState> {
   const otpToken = await prisma.otpToken.findFirst({

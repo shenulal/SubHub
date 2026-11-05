@@ -143,7 +143,7 @@ describe("userSync", () => {
         primaryEmail: "user2@example.com",
         name: { givenName: "User", familyName: "Two", fullName: "User Two" },
         isAdmin: false,
-        suspended: true, // 퇴사자
+        suspended: true, // Offboarded user
         creationTime: "2024-01-02T00:00:00Z",
       },
     ];
@@ -164,7 +164,7 @@ describe("userSync", () => {
 
       const { prisma } = await import("@/lib/db");
 
-      // Mock prisma 직접 호출
+      // Direct mock prisma calls
       vi.mocked(prisma.syncLog.create).mockResolvedValue({
         id: "sync-log-1",
       } as never);
@@ -180,7 +180,7 @@ describe("userSync", () => {
         updateExisting: true,
       });
 
-      // 에러가 없거나, 부분 성공인 경우 모두 허용
+      // Accept either no errors or a partial success
       expect(["SUCCESS", "PARTIAL"]).toContain(result.status);
       expect(result.itemsFound).toBe(2);
     });
@@ -201,7 +201,7 @@ describe("userSync", () => {
 
       const { prisma } = await import("@/lib/db");
 
-      // Mock prisma 직접 호출
+      // Direct mock prisma calls
       vi.mocked(prisma.syncLog.create).mockResolvedValue({
         id: "sync-log-1",
       } as never);
@@ -224,7 +224,7 @@ describe("userSync", () => {
         options
       );
 
-      // suspended 사용자는 TERMINATED로 매핑됨
+      // Suspended users are mapped to TERMINATED
       expect(result.itemsFound).toBe(2);
     });
 
@@ -242,7 +242,7 @@ describe("userSync", () => {
 
       const { prisma } = await import("@/lib/db");
 
-      // Mock prisma 직접 호출
+      // Direct mock prisma calls
       vi.mocked(prisma.syncLog.create).mockResolvedValue({
         id: "sync-log-1",
       } as never);
@@ -268,7 +268,7 @@ describe("userSync", () => {
 
       const { prisma } = await import("@/lib/db");
 
-      // Mock prisma 직접 호출
+      // Direct mock prisma calls
       vi.mocked(prisma.syncLog.create).mockResolvedValue({
         id: "sync-log-1",
       } as never);

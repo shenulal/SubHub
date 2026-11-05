@@ -1,14 +1,14 @@
 // src/lib/services/payment/merchant-matcher.types.ts
 import type { MatchSource } from "@prisma/client";
 
-// 카탈로그 패턴 타입
+// Catalog pattern type
 export interface CatalogPattern {
   pattern: string;
   matchType: "EXACT" | "DOMAIN" | "SUBDOMAIN" | "REGEX";
   confidence: number;
 }
 
-// 카탈로그와 패턴 타입
+// Catalog with patterns type
 export interface CatalogWithPatterns {
   id: string;
   name: string;
@@ -16,14 +16,14 @@ export interface CatalogWithPatterns {
   patterns: CatalogPattern[];
 }
 
-// 앱 매칭용 타입
+// App type for matching
 export interface AppMatch {
   id: string;
   name: string;
   catalogId: string | null;
 }
 
-// 매칭 결과 타입
+// Match result type
 export interface MerchantMatchResult {
   merchantName: string;
   normalizedName: string;
@@ -34,14 +34,14 @@ export interface MerchantMatchResult {
   matchSource: MatchSource;
 }
 
-// 카탈로그 매칭 결과
+// Catalog match result
 export interface CatalogMatchResult {
   catalogId: string;
   catalogName: string;
   confidence: number;
 }
 
-// 4-Layer 매칭 입력
+// 4-layer matching input
 export interface FourLayerMatchInput {
   merchantName: string;
   memo?: string | null;
@@ -50,7 +50,7 @@ export interface FourLayerMatchInput {
   currency?: string;
 }
 
-// 4-Layer 매칭 결과
+// 4-layer matching result
 export interface FourLayerMatchResult {
   appId: string | null;
   appName: string | null;

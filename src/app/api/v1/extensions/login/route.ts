@@ -1,7 +1,7 @@
 // src/app/api/v1/extensions/login/route.ts
 /**
  * Extension Login Capture API
- * 로그인 정보 캡처 및 HIBP 침해 체크
+ * Captures login info and runs the HIBP breach check
  */
 
 import { withExtensionAuth } from "@/lib/api/extension-auth";
@@ -15,8 +15,8 @@ import { NextRequest, NextResponse } from "next/server";
 
 /**
  * POST /api/v1/extensions/login
- * 로그인 정보 캡처 및 저장
- * 선택적으로 HIBP 침해 체크 수행
+ * Capture and store login info
+ * Optionally runs the HIBP breach check
  */
 export const POST = withLogging(
   "ext:login",
@@ -45,7 +45,7 @@ export const POST = withLogging(
         captured_at,
       } = parseResult.data;
 
-      // HIBP 체크 수행 (비동기, 실패해도 로그인 이벤트는 저장)
+      // Run the HIBP check (async; the login event is saved even if it fails)
       let hibpResult = {
         checked: false,
         breached: false,
@@ -62,7 +62,7 @@ export const POST = withLogging(
         logger.error({ err: hibpError }, "HIBP check failed");
       }
 
-      // 로그인 이벤트 저장
+      // Save the login event
       const loginEvent = await prisma.extensionLoginEvent.create({
         data: {
           organizationId: auth.organizationId,
@@ -81,7 +81,7 @@ export const POST = withLogging(
         },
       });
 
-      // 비차단 브릿지 호출: 로그인 도메인 → UserAppAccess 연결
+      // Non-blocking bridge call: link login domain → UserAppAccess
       bridgeLoginToAppAccess({
         domain,
         deviceId: device_id,

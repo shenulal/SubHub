@@ -9,21 +9,21 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
 const profileSchema = z.object({
-  name: z.string().min(2, "이름은 2자 이상이어야 합니다").max(50),
-  // 주석 처리: 직함, 부서, 아바타 필드
+  name: z.string().min(2, "Name must be at least 2 characters").max(50),
+  // Commented out: job title, department and avatar fields
   // title: z
   //   .string()
-  //   .max(50, "직함은 50자 이하여야 합니다")
+  //   .max(50, "Job title must be 50 characters or fewer")
   //   .optional()
   //   .or(z.literal("")),
   // department: z
   //   .string()
-  //   .max(50, "부서는 50자 이하여야 합니다")
+  //   .max(50, "Department must be 50 characters or fewer")
   //   .optional()
   //   .or(z.literal("")),
   // avatarUrl: z
   //   .string()
-  //   .url("유효한 URL을 입력하세요")
+  //   .url("Please enter a valid URL")
   //   .optional()
   //   .or(z.literal("")),
 });
@@ -36,7 +36,7 @@ async function _updateProfile(
 
   const result = profileSchema.safeParse({
     name: formData.get("name"),
-    // 주석 처리: 직함, 부서, 아바타 필드
+    // Commented out: job title, department and avatar fields
     // title: formData.get("title"),
     // department: formData.get("department"),
     // avatarUrl: formData.get("avatarUrl"),
@@ -46,19 +46,19 @@ async function _updateProfile(
     return {
       success: false,
       errors: result.error.flatten().fieldErrors as Record<string, string[]>,
-      message: "입력값을 확인해주세요",
+      message: "Please check your input",
     };
   }
 
   const { name } = result.data;
-  // 주석 처리: 직함, 부서, 아바타 필드
+  // Commented out: job title, department and avatar fields
   // const { name, title, department, avatarUrl } = result.data;
 
   await prisma.user.update({
     where: { id: session.user.id },
     data: {
       name,
-      // 주석 처리: 직함, 부서, 아바타 필드
+      // Commented out: job title, department and avatar fields
       // jobTitle: title || null,
       // department: department || null,
       // avatarUrl: avatarUrl || null,
@@ -67,6 +67,6 @@ async function _updateProfile(
 
   revalidatePath("/settings");
 
-  return { success: true, message: "프로필이 업데이트되었습니다" };
+  return { success: true, message: "Profile updated" };
 }
 export const updateProfile = withLogging("updateProfile", _updateProfile);

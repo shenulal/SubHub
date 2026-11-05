@@ -17,7 +17,7 @@ const mockAuth = vi.mocked(auth);
 const mockGetSubscriptions = vi.mocked(getSubscriptions);
 const mockCreateSubscription = vi.mocked(createSubscription);
 
-describe("/api/v1/subscriptions 계약", () => {
+describe("/api/v1/subscriptions contract", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });

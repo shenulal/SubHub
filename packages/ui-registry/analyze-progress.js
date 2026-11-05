@@ -2,7 +2,7 @@
 const { chromium } = require("playwright");
 
 async function analyzeProgressBar() {
-  console.log("=== Progress Bar 분석 시작 ===\n");
+  console.log("=== Starting Progress Bar analysis ===\n");
 
   const browser = await chromium.launch({
     headless: false,
@@ -11,33 +11,33 @@ async function analyzeProgressBar() {
   const page = await browser.newPage();
 
   try {
-    // Storybook Progress 문서 페이지로 이동
-    console.log("1. Storybook 페이지 로딩...");
+    // Navigate to the Storybook Progress docs page
+    console.log("1. Loading the Storybook page...");
     await page.goto("http://localhost:6006/?path=/docs/atoms-progress--docs");
     await page.waitForLoadState("networkidle");
     await page.waitForTimeout(3000);
 
-    // Storybook iframe 찾기
-    console.log("2. iframe 검색 중...");
+    // Find the Storybook iframe
+    console.log("2. Searching for the iframe...");
     const iframe = page.frame({ url: /iframe\.html/ });
 
     if (!iframe) {
-      throw new Error("Storybook iframe을 찾을 수 없습니다");
+      throw new Error("Storybook iframe not found");
     }
 
-    console.log("3. Progress 요소 분석 중...\n");
+    console.log("3. Analyzing Progress elements...\n");
 
-    // Progress 컨테이너 찾기
+    // Find the Progress container
     const progressElements = await iframe.$$('[data-slot="progress"]');
-    console.log(`   - Progress 요소 개수: ${progressElements.length}`);
+    console.log(`   - Number of Progress elements: ${progressElements.length}`);
 
-    // 첫 번째 Progress 요소 상세 분석
+    // Detailed analysis of the first Progress element
     if (progressElements.length > 0) {
       const progressInfo = await progressElements[0].evaluate((el) => {
         const computed = window.getComputedStyle(el);
         const rect = el.getBoundingClientRect();
 
-        // 자식 요소들 확인
+        // Inspect the child elements
         const indicator = el.querySelector('[data-slot="progress-indicator"]');
         const indicatorInfo = indicator
           ? {
@@ -51,7 +51,7 @@ async function analyzeProgressBar() {
           : null;
 
         return {
-          // Progress 컨테이너 정보
+          // Progress container info
           container: {
             className: el.className,
             width: computed.width,
@@ -62,22 +62,22 @@ async function analyzeProgressBar() {
             overflow: computed.overflow,
             actualDimensions: `${rect.width}x${rect.height}px`,
           },
-          // Progress 인디케이터 정보
+          // Progress indicator info
           indicator: indicatorInfo,
-          // HTML 구조
+          // HTML structure
           innerHTML: el.innerHTML,
           outerHTML: el.outerHTML,
         };
       });
 
-      console.log("=== Progress 컨테이너 정보 ===");
+      console.log("=== Progress container info ===");
       console.log(JSON.stringify(progressInfo.container, null, 2));
-      console.log("\n=== Progress 인디케이터 정보 ===");
+      console.log("\n=== Progress indicator info ===");
       console.log(JSON.stringify(progressInfo.indicator, null, 2));
     }
 
-    // Tailwind 클래스 테스트
-    console.log("\n4. Tailwind CSS 클래스 테스트...");
+    // Tailwind class test
+    console.log("\n4. Testing Tailwind CSS classes...");
     const tailwindTest = await iframe.evaluate(() => {
       const testColors = [
         "bg-gray-200",
@@ -99,11 +99,11 @@ async function analyzeProgressBar() {
       return results;
     });
 
-    console.log("=== Tailwind 색상 클래스 테스트 결과 ===");
+    console.log("=== Tailwind color class test results ===");
     console.log(JSON.stringify(tailwindTest, null, 2));
 
-    // CSS 변수 확인
-    console.log("\n5. CSS 변수 확인...");
+    // Check CSS variables
+    console.log("\n5. Checking CSS variables...");
     const cssVars = await iframe.evaluate(() => {
       const root = document.documentElement;
       const computed = window.getComputedStyle(root);
@@ -117,11 +117,11 @@ async function analyzeProgressBar() {
       };
     });
 
-    console.log("=== CSS 변수 값 ===");
+    console.log("=== CSS variable values ===");
     console.log(JSON.stringify(cssVars, null, 2));
 
-    // 스크린샷 저장
-    console.log("\n6. 스크린샷 저장 중...");
+    // Save screenshots
+    console.log("\n6. Saving screenshots...");
     await page.screenshot({
       path: "storybook-progress-full.png",
       fullPage: true,
@@ -130,37 +130,37 @@ async function analyzeProgressBar() {
       path: "storybook-progress-iframe.png",
     });
 
-    console.log("   - storybook-progress-full.png (전체 페이지)");
-    console.log("   - storybook-progress-iframe.png (iframe 내용)");
+    console.log("   - storybook-progress-full.png (full page)");
+    console.log("   - storybook-progress-iframe.png (iframe content)");
 
-    // 문제 진단
-    console.log("\n=== 진단 결과 ===");
+    // Diagnose problems
+    console.log("\n=== Diagnosis ===");
 
-    // Tailwind 클래스 작동 여부
+    // Whether Tailwind classes work
     const grayWorks = tailwindTest["bg-gray-200"] !== "rgba(0, 0, 0, 0)";
     const blueWorks = tailwindTest["bg-blue-600"] !== "rgba(0, 0, 0, 0)";
 
     if (grayWorks && blueWorks) {
-      console.log("✅ Tailwind 기본 색상 클래스가 작동합니다");
+      console.log("✅ Tailwind default color classes work");
     } else {
-      console.log("❌ Tailwind 색상 클래스가 작동하지 않습니다");
+      console.log("❌ Tailwind color classes do not work");
     }
 
     if (progressElements.length === 0) {
-      console.log("❌ Progress 요소를 찾을 수 없습니다");
+      console.log("❌ Progress element not found");
     } else {
-      console.log("✅ Progress 요소를 찾았습니다");
+      console.log("✅ Progress element found");
     }
 
-    console.log("\n분석 완료! 브라우저는 10초 후 자동으로 닫힙니다.");
+    console.log("\nAnalysis complete. The browser will close automatically in 10 seconds.");
   } catch (error) {
-    console.error("오류 발생:", error.message);
+    console.error("Error:", error.message);
   } finally {
     await page.waitForTimeout(10000);
     await browser.close();
   }
 }
 
-// 스크립트 실행
-console.log("Progress 바 분석을 시작합니다...\n");
+// Run the script
+console.log("Starting Progress bar analysis...\n");
 analyzeProgressBar();

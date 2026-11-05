@@ -69,8 +69,8 @@ vi.mock("./subscription-status-actions", () => ({
     subscriptionId: string;
   }) => (
     <div>
-      <a href={`/subscriptions/${subscriptionId}/edit`}>수정</a>
-      <button type="button">삭제</button>
+      <a href={`/subscriptions/${subscriptionId}/edit`}>Edit</a>
+      <button type="button">Delete</button>
     </div>
   ),
 }));
@@ -116,7 +116,7 @@ const mockSubscription: SubscriptionDetailType = {
   renewalAlert60: false,
   renewalAlert90: false,
   contractUrl: "https://example.com/contract.pdf",
-  notes: "테스트 메모입니다",
+  notes: "This is a test note",
   createdAt: new Date("2024-01-01"),
   updatedAt: new Date("2024-01-15"),
   teamId: "team-1",
@@ -154,93 +154,93 @@ const renderWithWait = async (
   subscription: SubscriptionDetailType = mockSubscription
 ) => {
   render(<SubscriptionDetail subscription={subscription} />);
-  // 비동기 상태 업데이트(useEffect)로 인한 act 경고를 방지하기 위해
-  // 주요 텍스트가 나타날 때까지 대기
+  // To avoid act warnings from async state updates (useEffect),
+  // wait until the main text appears
   await screen.findByText(subscription.appName);
 };
 
 describe("SubscriptionDetail", () => {
-  it("구독 기본 정보를 표시해야 한다", async () => {
+  it("shows the basic subscription info", async () => {
     await renderWithWait();
 
     expect(screen.getAllByText("Slack").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText("활성").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText("월간").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Active").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("Monthly").length).toBeGreaterThanOrEqual(1);
   });
 
-  it("금액을 포맷하여 표시해야 한다", async () => {
+  it("shows the formatted amount", async () => {
     await renderWithWait();
 
     expect(screen.getAllByText("₩10,000").length).toBeGreaterThanOrEqual(1);
   });
 
-  it("라이선스 정보를 표시해야 한다", async () => {
+  it("shows the license info", async () => {
     await renderWithWait();
 
     expect(screen.getByText("80/100")).toBeInTheDocument();
   });
 
-  it("날짜 정보를 표시해야 한다", async () => {
+  it("shows the date info", async () => {
     await renderWithWait();
 
-    expect(screen.getAllByText("2024.01.01").length).toBeGreaterThanOrEqual(1); // 시작일
-    expect(screen.getAllByText("2024.02.01").length).toBeGreaterThanOrEqual(1); // 갱신일
+    expect(screen.getAllByText("2024.01.01").length).toBeGreaterThanOrEqual(1); // Start date
+    expect(screen.getAllByText("2024.02.01").length).toBeGreaterThanOrEqual(1); // Renewal date
   });
 
-  it("자동 갱신 상태를 표시해야 한다", async () => {
+  it("shows the auto-renewal status", async () => {
     await renderWithWait();
 
-    // 자동 갱신 배지가 표시되는지 확인 (레이블과 배지 모두 존재)
-    const autoRenewalElements = screen.getAllByText("자동 갱신");
+    // Auto-renewal badge is shown (both the label and the badge exist)
+    const autoRenewalElements = screen.getAllByText("Auto renewal");
     expect(autoRenewalElements.length).toBeGreaterThanOrEqual(1);
   });
 
-  it("갱신 알림 설정을 표시해야 한다", async () => {
+  it("shows the renewal alert settings", async () => {
     await renderWithWait();
 
-    // NotificationSettings 컴포넌트의 레이블 확인
-    expect(screen.getByText("30일 전 알림")).toBeInTheDocument();
-    expect(screen.getByText("60일 전 알림")).toBeInTheDocument();
-    expect(screen.getByText("90일 전 알림")).toBeInTheDocument();
+    // Labels from the NotificationSettings component
+    expect(screen.getByText("30 days before alert")).toBeInTheDocument();
+    expect(screen.getByText("60 days before alert")).toBeInTheDocument();
+    expect(screen.getByText("90 days before alert")).toBeInTheDocument();
   });
 
-  it("메모가 있으면 표시해야 한다", async () => {
+  it("shows notes when present", async () => {
     await renderWithWait();
 
-    expect(screen.getByText("테스트 메모입니다")).toBeInTheDocument();
+    expect(screen.getByText("This is a test note")).toBeInTheDocument();
   });
 
-  it("계약서 링크가 있으면 표시해야 한다", async () => {
+  it("shows the contract link when present", async () => {
     await renderWithWait();
 
-    const contractLink = screen.getByRole("link", { name: /계약서 보기/i });
+    const contractLink = screen.getByRole("link", { name: /View contract/i });
     expect(contractLink).toHaveAttribute(
       "href",
       "https://example.com/contract.pdf"
     );
   });
 
-  it("수정 링크가 있어야 한다", async () => {
+  it("has an edit link", async () => {
     await renderWithWait();
 
-    const editLink = screen.getByRole("link", { name: /수정/i });
+    const editLink = screen.getByRole("link", { name: /Edit/i });
     expect(editLink).toHaveAttribute("href", "/subscriptions/sub-1/edit");
   });
 
-  it("삭제 버튼이 있어야 한다", async () => {
+  it("has a delete button", async () => {
     await renderWithWait();
 
-    expect(screen.getByRole("button", { name: /삭제/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Delete/i })).toBeInTheDocument();
   });
 
-  it("로고 URL이 있으면 이미지를 표시해야 한다", async () => {
+  it("shows the logo image when a logo URL is present", async () => {
     await renderWithWait();
 
     const img = screen.getByAltText("Slack");
     expect(img).toHaveAttribute("src", "https://example.com/slack.png");
   });
 
-  it("라이선스가 없으면 - 를 표시해야 한다", async () => {
+  it("shows - when there are no licenses", async () => {
     const subscriptionWithoutLicense = {
       ...mockSubscription,
       totalLicenses: null,
@@ -248,7 +248,7 @@ describe("SubscriptionDetail", () => {
     };
     await renderWithWait(subscriptionWithoutLicense);
 
-    // 라이선스 행에서 "-" 확인
+    // Check "-" in the license row
     expect(screen.getAllByText("-").length).toBeGreaterThan(0);
   });
 });

@@ -46,12 +46,12 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-// headers 사용으로 정적 프리렌더 불가, 동적 렌더링 강제
-// NextAuth 세션 조회 + 실시간 비용 데이터(fetch + headers 사용)로 인해 정적 프리렌더 불가
+// Uses headers, so static prerendering is impossible; force dynamic rendering
+// Static prerendering is impossible due to the NextAuth session lookup + live cost data (fetch + headers)
 export const dynamic = "force-dynamic";
 
 function formatCurrency(amount: number, currency: string): string {
-  return formatMoney(amount, currency, "ko", 0);
+  return formatMoney(amount, currency, "en-US", 0);
 }
 
 function formatPercentage(value: number): string {
@@ -87,7 +87,7 @@ export default async function CostAnalysisPage({ searchParams }: PageProps) {
   const effectiveUserId =
     isRestricted && !session.user.teamId ? session.user.id : requestedUserId;
 
-  // 데이터 조회
+  // Fetch data
   const [statisticsResult, trendResult, topAppsResult, anomaliesResult] =
     await Promise.all([
       getCostStatistics({
@@ -146,7 +146,7 @@ export default async function CostAnalysisPage({ searchParams }: PageProps) {
 
   return (
     <div className="space-y-6">
-      {/* 헤더 */}
+      {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="min-w-0">
           <h1 className="truncate text-2xl font-medium">{t("page.title")}</h1>
@@ -162,7 +162,7 @@ export default async function CostAnalysisPage({ searchParams }: PageProps) {
         )}
       </div>
 
-      {/* 핵심 지표 */}
+      {/* Key metrics */}
       <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
         <ReportStatCard
           icon={Wallet}
@@ -240,7 +240,7 @@ export default async function CostAnalysisPage({ searchParams }: PageProps) {
         teamLocked={isRestricted}
       />
 
-      {/* 월별 추세 */}
+      {/* Monthly trend */}
       <MonthlyTrendChart
         initialData={trends || []}
         teamId={effectiveTeamId}
@@ -248,7 +248,7 @@ export default async function CostAnalysisPage({ searchParams }: PageProps) {
       />
 
       <div className="grid gap-6 xl:grid-cols-2">
-        {/* 앱별 비용 분포 */}
+        {/* Cost distribution by app */}
         <Card className="xl:min-h-[450px]">
           <CardHeader>
             <CardTitle>{t("distribution.title")}</CardTitle>
@@ -296,7 +296,7 @@ export default async function CostAnalysisPage({ searchParams }: PageProps) {
           </CardContent>
         </Card>
 
-        {/* 비용 이상 감지 */}
+        {/* Cost anomaly detection */}
         <Card className="xl:min-h-[450px]">
           <CardHeader>
             <CardTitle className="flex min-w-0 items-center gap-2">
@@ -357,7 +357,7 @@ export default async function CostAnalysisPage({ searchParams }: PageProps) {
         </Card>
       </div>
 
-      {/* Seat 분석 섹션 (D-2 + D-4) */}
+      {/* Seat analysis section (D-2 + D-4) */}
       <SeatAnalysisSection />
     </div>
   );

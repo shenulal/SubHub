@@ -34,7 +34,9 @@ export function transformMonthlyTrend(
 
     return {
       month: trend.month,
-      displayLabel: `${month}월`,
+      displayLabel: new Date(year, month - 1, 1).toLocaleDateString("en-US", {
+        month: "short",
+      }),
       saasCost: trend.saasCost || trend.totalCost,
       nonSaasCost: trend.nonSaasCost || 0,
       isCurrentMonth,
@@ -207,7 +209,7 @@ export function transformToDashboardV3Data(
       totalCost: {
         amount: costStats?.totalCost ?? stats.totalMonthlyCost,
         changePercent: costStats?.costChange ?? 0,
-        note: "전월 대비",
+        note: "vs last month",
       },
       anomaly: anomalyData || { count: 0, severity: "low" },
       terminated: {

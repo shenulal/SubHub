@@ -12,21 +12,21 @@ import type {
 } from "@/types/extension";
 
 /**
- * URL 또는 도메인 문자열에서 순수 도메인 추출
- * 예: "https://www.google.com/login" → "www.google.com"
+ * Extract the bare domain from a URL or domain string
+ * e.g. "https://www.google.com/login" → "www.google.com"
  */
 function extractDomain(urlOrDomain: string): string {
   try {
-    // URL 형식이면 hostname 추출
+    // If it is a URL, extract the hostname
     if (urlOrDomain.includes("://")) {
       const url = new URL(urlOrDomain);
       return url.hostname;
     }
-    // 경로가 포함된 경우 (google.com/login)
+    // When a path is included (google.com/login)
     if (urlOrDomain.includes("/")) {
       return urlOrDomain.split("/")[0];
     }
-    // 이미 순수 도메인
+    // Already a bare domain
     return urlOrDomain;
   } catch {
     return urlOrDomain;
@@ -34,25 +34,25 @@ function extractDomain(urlOrDomain: string): string {
 }
 
 /**
- * 도메인이 whitelist 패턴과 매칭되는지 확인
+ * Check whether a domain matches a whitelist pattern
  */
 function matchesWhitelistPattern(domain: string, pattern: string): boolean {
   const extractedDomain = extractDomain(domain);
   const domainLower = extractedDomain.toLowerCase();
   const patternLower = pattern.toLowerCase();
 
-  // 와일드카드 패턴 (*.example.com)
+  // Wildcard pattern (*.example.com)
   if (patternLower.startsWith("*.")) {
     const suffix = patternLower.slice(2);
     return domainLower === suffix || domainLower.endsWith("." + suffix);
   }
 
-  // 정확한 매칭
+  // Exact match
   return domainLower === patternLower;
 }
 
 /**
- * 조직의 활성화된 whitelist 패턴 목록 조회
+ * Fetch the organization's active whitelist patterns
  */
 async function getEnabledWhitelistPatterns(
   organizationId: string
@@ -71,14 +71,14 @@ async function getEnabledWhitelistPatterns(
 }
 
 /**
- * 도메인이 whitelist에 포함되는지 확인
+ * Check whether a domain is on the whitelist
  */
 function isDomainWhitelisted(domain: string, patterns: string[]): boolean {
   return patterns.some((pattern) => matchesWhitelistPattern(domain, pattern));
 }
 
 /**
- * Usage Analytics 데이터 조회 (로그인 기반 + Whitelist 필터링)
+ * Fetch usage analytics data (login-based, whitelist-filtered)
  */
 export async function getUsageAnalytics(
   period: UsageAnalyticsPeriod = "today"
@@ -86,12 +86,12 @@ export async function getUsageAnalytics(
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
-      return { success: false, error: "인증이 필요합니다" };
+      return { success: false, error: "Authentication required" };
     }
 
     const organizationId = session.user.organizationId;
 
-    // 기간 계산
+    // Compute the period
     const now = new Date();
     let startDate: Date;
 
@@ -109,10 +109,10 @@ export async function getUsageAnalytics(
         startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     }
 
-    // Whitelist 패턴 조회
+    // Fetch whitelist patterns
     const whitelistPatterns = await getEnabledWhitelistPatterns(organizationId);
 
-    // 로그인 이벤트 조회
+    // Fetch login events
     const loginEvents = await prisma.extensionLoginEvent.findMany({
       where: {
         organizationId,
@@ -126,12 +126,12 @@ export async function getUsageAnalytics(
       },
     });
 
-    // Whitelist 필터링
+    // Whitelist filtering
     const filteredEvents = loginEvents.filter((event) =>
       isDomainWhitelisted(event.domain, whitelistPatterns)
     );
 
-    // 도메인별 집계
+    // Aggregate by domain
     const domainStats = new Map<
       string,
       { loginCount: number; users: Set<string>; devices: Set<string> }
@@ -151,7 +151,7 @@ export async function getUsageAnalytics(
       domainStats.set(event.domain, existing);
     }
 
-    // 정렬 및 변환
+    // Sort and transform
     const topDomains = Array.from(domainStats.entries())
       .map(([domain, stats]) => ({
         domain,
@@ -162,7 +162,7 @@ export async function getUsageAnalytics(
       .sort((a, b) => b.loginCount - a.loginCount)
       .slice(0, 20);
 
-    // 전체 통계
+    // Overall statistics
     const allUsers = new Set<string>();
     const allDevices = new Set<string>();
 
@@ -185,13 +185,16 @@ export async function getUsageAnalytics(
     console.error("[getUsageAnalytics] Error:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "사용량 분석 조회 실패",
+      error:
+        error instanceof Error
+          ? error.message
+          : "Failed to fetch usage analytics",
     };
   }
 }
 
 /**
- * 도메인별 로그인 이벤트 상세 조회
+ * Fetch login event details per domain
  */
 export async function getDomainLoginEvents(
   domain: string,
@@ -200,12 +203,12 @@ export async function getDomainLoginEvents(
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
-      return { success: false, error: "인증이 필요합니다" };
+      return { success: false, error: "Authentication required" };
     }
 
     const organizationId = session.user.organizationId;
 
-    // 날짜 파싱 (YYYY-MM-DD)
+    // Parse the date (YYYY-MM-DD)
     const targetDate = new Date(date);
     const startOfDay = new Date(
       targetDate.getFullYear(),
@@ -218,16 +221,16 @@ export async function getDomainLoginEvents(
       targetDate.getDate() + 1
     );
 
-    // Whitelist 체크
+    // Whitelist check
     const whitelistPatterns = await getEnabledWhitelistPatterns(organizationId);
     if (!isDomainWhitelisted(domain, whitelistPatterns)) {
       return {
         success: false,
-        error: "해당 도메인은 whitelist에 등록되지 않았습니다",
+        error: "This domain is not on the whitelist",
       };
     }
 
-    // 로그인 이벤트 조회 (User join 포함)
+    // Fetch login events (with User join)
     const events = await prisma.extensionLoginEvent.findMany({
       where: {
         organizationId,
@@ -248,7 +251,7 @@ export async function getDomainLoginEvents(
       take: 200,
     });
 
-    // 통계 계산
+    // Compute statistics
     const users = new Set<string>();
     const devices = new Set<string>();
 
@@ -282,7 +285,8 @@ export async function getDomainLoginEvents(
     console.error("[getDomainLoginEvents] Error:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "로그인 이벤트 조회 실패",
+      error:
+        error instanceof Error ? error.message : "Failed to fetch login events",
     };
   }
 }

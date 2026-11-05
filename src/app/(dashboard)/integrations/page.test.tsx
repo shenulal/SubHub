@@ -39,7 +39,7 @@ describe("IntegrationsPage (server)", () => {
         user: {
           id: "user-1",
           email: "test@example.com",
-          name: "테스트 관리자",
+          name: "Test Admin",
           organizationId: "org-1",
           role: "ADMIN",
         },
@@ -50,7 +50,7 @@ describe("IntegrationsPage (server)", () => {
     });
   });
 
-  it("관리자 권한을 가진 사용자는 canManage=true로 클라이언트를 렌더링한다", async () => {
+  it("renders the client with canManage=true for admins", async () => {
     const page = await IntegrationsPage();
     render(page);
 
@@ -59,13 +59,13 @@ describe("IntegrationsPage (server)", () => {
     expect(client).toHaveAttribute("data-role", "ADMIN");
   });
 
-  it("멤버 권한 사용자는 canManage=false로 렌더링된다", async () => {
+  it("renders with canManage=false for members", async () => {
     mockRequireOrganization.mockResolvedValueOnce({
       session: {
         user: {
           id: "user-2",
           email: "member@example.com",
-          name: "멤버",
+          name: "Member",
           organizationId: "org-1",
           role: "MEMBER",
         },
@@ -83,9 +83,9 @@ describe("IntegrationsPage (server)", () => {
     expect(client).toHaveAttribute("data-role", "MEMBER");
   });
 
-  it("세션이 없으면 requireOrganization이 리다이렉트를 처리한다", async () => {
-    // requireOrganization은 내부에서 redirect를 호출하므로
-    // 세션이 없는 경우를 시뮬레이션하려면 throw해야 함
+  it("lets requireOrganization handle the redirect when there is no session", async () => {
+    // requireOrganization calls redirect internally, so
+    // simulating a missing session requires throwing
     mockRequireOrganization.mockImplementationOnce(() => {
       mockRedirect("/login");
       throw new Error("NEXT_REDIRECT");

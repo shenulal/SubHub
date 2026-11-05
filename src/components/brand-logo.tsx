@@ -25,11 +25,11 @@ export function BrandLogo({ size = 32 }: BrandLogoProps) {
         </linearGradient>
       </defs>
 
-      {/* 배경 */}
+      {/* Background */}
       <rect x="4" y="4" width="72" height="72" rx="18" fill="url(#brand-bg)" />
 
-      {/* 레이어드 카드 — opacity 높여서 가시성 개선 */}
-      {/* 뒤 카드 */}
+      {/* Layered cards — higher opacity for better visibility */}
+      {/* Back card */}
       <rect
         x="18"
         y="33"
@@ -40,7 +40,7 @@ export function BrandLogo({ size = 32 }: BrandLogoProps) {
         stroke="rgba(255,255,255,0.70)"
         strokeWidth="1.5"
       />
-      {/* 중간 카드 */}
+      {/* Middle card */}
       <rect
         x="26"
         y="23"
@@ -51,10 +51,10 @@ export function BrandLogo({ size = 32 }: BrandLogoProps) {
         stroke="rgba(255,255,255,0.85)"
         strokeWidth="1.5"
       />
-      {/* 앞 카드 (불투명 흰색) */}
+      {/* Front card (opaque white) */}
       <rect x="34" y="13" width="24" height="22" rx="5" fill="white" />
 
-      {/* 돋보기 — stroke 굵게, 크기 키워서 선명도 개선 */}
+      {/* Magnifier — thicker stroke and larger size for sharper rendering */}
       <circle
         cx="51"
         cy="51"

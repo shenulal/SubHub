@@ -1,10 +1,10 @@
 /**
- * 법인카드 거래내역 자동 동기화 Cron Job
+ * Corporate card transaction auto-sync cron job
  *
- * - 매일 새벽 3시 실행 (Vercel Cron)
- * - 모든 활성 카드의 최근 30일 승인내역 수집
- * - SaaS 매칭 자동 실행 (승인건 대상, 취소 거래 제외)
- * - Vercel 60초 한도 대비 55초에서 조기 종료
+ * - Runs daily at 03:00 (Vercel Cron)
+ * - Collects the last 30 days of approvals for all active cards
+ * - Runs SaaS matching automatically (approved transactions; cancellations excluded)
+ * - Stops early at 55s to stay within Vercel's 60s limit
  */
 
 import { decryptJson } from "@/lib/crypto";
@@ -39,10 +39,10 @@ import {
 import type { CardTransactionType, CorporateCard } from "@prisma/client";
 import { NextRequest, NextResponse } from "next/server";
 
-// Vercel 함수 한도(60s) 대비 안전 마진
+// Safety margin against the Vercel function limit (60s)
 const MAX_DURATION_MS = 55_000;
 
-/** 동기화 결과 */
+/** Sync result */
 interface SyncResult {
   cardId: string;
   cardLast4: string | null;
@@ -53,7 +53,7 @@ interface SyncResult {
 }
 
 /**
- * 카탈로그 조회 (조직과 무관하게 전역 카탈로그 사용)
+ * Fetch the catalog (global, independent of organization)
  */
 async function getCatalogsWithPatterns(): Promise<CatalogWithPatterns[]> {
   const catalogs = await prisma.saaSCatalog.findMany({
@@ -75,7 +75,7 @@ async function getCatalogsWithPatterns(): Promise<CatalogWithPatterns[]> {
 }
 
 /**
- * 카드별 거래내역 동기화
+ * Sync transactions per card
  */
 async function syncCardTransactions(
   card: CorporateCard,
@@ -90,11 +90,11 @@ async function syncCardTransactions(
     updated: 0,
   };
 
-  // SyncHistory ID: 에러 핸들러에서도 접근 가능해야 하므로 외부에 선언
+  // SyncHistory ID: declared outside so the error handler can access it
   let syncHistoryId: string | undefined;
 
   try {
-    // SyncHistory 생성 (보조 기능, 실패해도 메인 흐름에 영향 없음)
+    // Create SyncHistory (auxiliary; failure does not affect the main flow)
     try {
       const syncHistory = await createSyncHistory({
         organizationId: card.organizationId,
@@ -106,17 +106,17 @@ async function syncCardTransactions(
     } catch (syncHistoryError) {
       logger.warn(
         { err: syncHistoryError, cardLast4: card.cardLast4 },
-        "[Cron] SyncHistory 생성 실패 (무시)"
+        "[Cron] SyncHistory creation failed (ignored)"
       );
     }
 
-    // 인증 정보 복호화
+    // Decrypt credentials
     const credentials = decryptJson<CardCredentials>(card.encryptedCredentials);
 
-    // 조회 기간 (최근 30일)
+    // Query period (last 30 days)
     const { sdate, edate } = getLastNDaysRange(30);
 
-    // 승인내역 조회
+    // Fetch approvals
     try {
       const approvalResponse = await withRetry(() =>
         getCardApprovals(
@@ -145,11 +145,11 @@ async function syncCardTransactions(
     } catch (error) {
       logger.error(
         { err: error, cardLast4: card.cardLast4 },
-        "[Cron] 승인내역 조회 실패"
+        "[Cron] Failed to fetch approvals"
       );
     }
 
-    // 동기화 시간 업데이트
+    // Update the sync time
     await prisma.corporateCard.update({
       where: { id: card.id },
       data: {
@@ -158,7 +158,7 @@ async function syncCardTransactions(
       },
     });
 
-    // SyncHistory 완료 처리 (보조 기능)
+    // Complete SyncHistory (auxiliary)
     try {
       if (syncHistoryId) {
         const totalRecords = result.created + result.updated;
@@ -175,13 +175,13 @@ async function syncCardTransactions(
     } catch (syncHistoryError) {
       logger.warn(
         { err: syncHistoryError, cardLast4: card.cardLast4 },
-        "[Cron] SyncHistory 완료 처리 실패 (무시)"
+        "[Cron] SyncHistory completion failed (ignored)"
       );
     }
   } catch (error) {
-    result.error = error instanceof Error ? error.message : "알 수 없는 오류";
+    result.error = error instanceof Error ? error.message : "Unknown error";
 
-    // 에러 기록
+    // Record the error
     await prisma.corporateCard.update({
       where: { id: card.id },
       data: {
@@ -189,7 +189,7 @@ async function syncCardTransactions(
       },
     });
 
-    // SyncHistory 실패 처리 (보조 기능)
+    // Mark SyncHistory as failed (auxiliary)
     try {
       if (syncHistoryId) {
         await completeSyncHistory(syncHistoryId, {
@@ -206,7 +206,7 @@ async function syncCardTransactions(
     } catch (syncHistoryError) {
       logger.warn(
         { err: syncHistoryError, cardLast4: card.cardLast4 },
-        "[Cron] SyncHistory 실패 처리 오류 (무시)"
+        "[Cron] SyncHistory failure update error (ignored)"
       );
     }
   }
@@ -215,7 +215,7 @@ async function syncCardTransactions(
 }
 
 /**
- * 거래내역 저장 (4-Layer 매칭 파이프라인 적용)
+ * Save transactions (with the 4-layer matching pipeline)
  */
 async function saveTransaction(
   card: CorporateCard,
@@ -226,7 +226,8 @@ async function saveTransaction(
 ): Promise<"created" | "updated" | "skipped"> {
   const merchantName = item.useStore;
 
-  // 취소 거래는 매칭 없이 저장만 수행
+  // Cancelled transactions are saved without matching.
+  // The literal below is the Korean "cancelled" useDiv value returned by the Hyphen card API — it must stay Korean.
   if (item.useDiv && item.useDiv.includes("취소")) {
     const transactionData = buildTransactionData(
       item,
@@ -238,10 +239,10 @@ async function saveTransaction(
     return await upsertTransaction(card, item, transactionData);
   }
 
-  // 0. Non-SaaS 키워드 필터 (카카오T, 우아한형제들 등)
+  // 0. Non-SaaS keyword filter (ride-hailing, food delivery, etc.)
   const nonSaaSHit = findNonSaaSKeywordHit(merchantName, item.useDiv);
   if (nonSaaSHit) {
-    // Non-SaaS로 확정 → 매칭 스킵, UNMATCHED로 표시 (거래는 저장)
+    // Confirmed Non-SaaS → skip matching, mark UNMATCHED (the transaction is still saved)
     const transactionData = buildTransactionData(
       item,
       null,
@@ -253,27 +254,27 @@ async function saveTransaction(
     return await upsertTransaction(card, item, transactionData);
   }
 
-  // AppMatch 형식으로 변환 (catalogId 포함)
+  // Convert to AppMatch format (including catalogId)
   const appsWithCatalog: AppMatch[] = apps.map((app) => ({
     id: app.id,
     name: app.name,
     catalogId: (app as AppMatch).catalogId || null,
   }));
 
-  // 1~3차: 4-Layer 동기 매칭 (패턴/부분/퍼지)
+  // Steps 1-3: 4-layer synchronous matching (pattern/partial/fuzzy)
   const fourLayerResult = matchMerchant4LayerSync(
     { merchantName, memo: item.useDiv },
     appsWithCatalog,
     catalogs,
-    0.8 // 퍼지 매칭 임계값
+    0.8 // Fuzzy matching threshold
   );
 
   let matchedAppId = fourLayerResult?.appId || null;
   let matchConfidence = fourLayerResult?.confidence || 0;
   let matchSource: MatchSource = fourLayerResult?.matchSource || null;
 
-  // 4차: LLM 폴백 (appId가 없으면 항상 실행)
-  // Note: Layer 1-3에서 SaaS로 인식되었지만 기존 앱이 없는 경우도 LLM 폴백 실행
+  // Step 4: LLM fallback (always runs when there is no appId)
+  // Note: the LLM fallback also runs when layers 1-3 recognised SaaS but no existing app was found
   if (!matchedAppId) {
     const llmMatch = await matchMerchantWithLLM({
       organizationId: card.organizationId,
@@ -288,7 +289,7 @@ async function saveTransaction(
     matchSource = llmMatch.matchSource;
   }
 
-  // 파이프라인 완료 후 appId가 없으면 UNMATCHED (Non-SaaS 또는 LLM 미매칭)
+  // UNMATCHED when there is no appId after the pipeline (Non-SaaS or no LLM match)
   const finalMatchStatus = matchedAppId ? "AUTO_MATCHED" : "UNMATCHED";
   const transactionData = buildTransactionData(
     item,
@@ -303,7 +304,7 @@ async function saveTransaction(
 }
 
 /**
- * 거래 데이터 빌드
+ * Build transaction data
  */
 function buildTransactionData(
   item: ApprovalItem,
@@ -313,7 +314,7 @@ function buildTransactionData(
   transactionType: CardTransactionType,
   matchStatusOverride?: "PENDING" | "AUTO_MATCHED" | "UNMATCHED"
 ) {
-  // matchStatus 결정: override가 있으면 사용, 없으면 appId 기반 자동 결정
+  // Determine matchStatus: use the override if given, otherwise derive it from appId
   const matchStatus =
     matchStatusOverride ?? (matchedAppId ? "AUTO_MATCHED" : "PENDING");
 
@@ -341,7 +342,7 @@ function buildTransactionData(
 }
 
 /**
- * 거래내역 upsert
+ * Upsert transactions
  */
 async function upsertTransaction(
   card: CorporateCard,
@@ -383,44 +384,44 @@ import { withCronAuth } from "@/lib/middleware";
  */
 export const GET = withCronAuth(
   withLogging("cron:sync-cards", async (request: NextRequest) => {
-    logger.info("[Cron] 법인카드 거래내역 동기화 시작");
+    logger.info("[Cron] Corporate card transaction sync started");
     const startedAt = Date.now();
 
     try {
-      // 모든 활성 카드 조회
+      // Fetch all active cards
       const cards = await prisma.corporateCard.findMany({
         where: { isActive: true },
       });
 
-      logger.info(`[Cron] 동기화 대상 카드: ${cards.length}개`);
+      logger.info(`[Cron] Cards to sync: ${cards.length}`);
 
       if (cards.length === 0) {
         return NextResponse.json({
           success: true,
-          message: "동기화할 카드가 없습니다",
+          message: "No cards to sync",
           results: [],
         });
       }
 
-      // 카탈로그 조회 (전역, 한 번만)
+      // Fetch the catalog (global, once)
       const catalogs = await getCatalogsWithPatterns();
-      logger.info(`[Cron] SaaS 카탈로그 로드: ${catalogs.length}개`);
+      logger.info(`[Cron] SaaS catalog loaded: ${catalogs.length} entries`);
 
-      // 조직별로 앱 목록 캐시
+      // Cache the app list per organization
       const appsByOrg = new Map<string, AppForMatching[]>();
 
       const results: SyncResult[] = [];
 
       for (const card of cards) {
-        // 남은 시간 체크: 55초를 넘기면 조기 종료
+        // Check remaining time: stop early after 55s
         if (Date.now() - startedAt >= MAX_DURATION_MS) {
           logger.warn(
-            "[Cron] 시간 한도에 도달하여 동기화를 중단합니다 (부분 완료)"
+            "[Cron] Time limit reached; stopping sync (partially completed)"
           );
           break;
         }
 
-        // 조직의 앱 목록 조회 (캐시, catalogId 포함)
+        // Fetch the organization's app list (cached, including catalogId)
         if (!appsByOrg.has(card.organizationId)) {
           const apps = await prisma.app.findMany({
             where: { organizationId: card.organizationId },
@@ -431,19 +432,19 @@ export const GET = withCronAuth(
 
         const apps = appsByOrg.get(card.organizationId) || [];
 
-        // 동기화 실행 (4-Layer 파이프라인 적용)
+        // Run the sync (with the 4-layer pipeline)
         const result = await syncCardTransactions(card, apps, catalogs);
         results.push(result);
 
         logger.info(
-          `[Cron] 카드 ${card.cardLast4} 동기화 완료: +${result.created}, ~${result.updated}${result.error ? `, 에러: ${result.error}` : ""}`
+          `[Cron] Card ${card.cardLast4} sync completed: +${result.created}, ~${result.updated}${result.error ? `, error: ${result.error}` : ""}`
         );
 
-        // Rate limiting (카드 간 500ms 대기)
+        // Rate limiting (500ms wait between cards)
         await delay(500);
       }
 
-      // 집계
+      // Aggregate
       const summary = {
         totalCards: cards.length,
         successCards: results.filter((r) => !r.error).length,
@@ -452,7 +453,10 @@ export const GET = withCronAuth(
         totalUpdated: results.reduce((sum, r) => sum + r.updated, 0),
       };
 
-      logger.info({ summary }, "[Cron] 법인카드 거래내역 동기화 완료");
+      logger.info(
+        { summary },
+        "[Cron] Corporate card transaction sync completed"
+      );
 
       return NextResponse.json({
         success: true,
@@ -460,12 +464,15 @@ export const GET = withCronAuth(
         results,
       });
     } catch (error) {
-      logger.error({ err: error }, "[Cron] 법인카드 거래내역 동기화 오류");
+      logger.error(
+        { err: error },
+        "[Cron] Corporate card transaction sync error"
+      );
 
       return NextResponse.json(
         {
           success: false,
-          error: error instanceof Error ? error.message : "알 수 없는 오류",
+          error: error instanceof Error ? error.message : "Unknown error",
         },
         { status: 500 }
       );

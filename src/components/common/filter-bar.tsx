@@ -39,11 +39,11 @@ interface FilterBarProps {
 }
 
 /**
- * 고급 필터 바 컴포넌트
- * - 검색 입력
- * - 여러 필터 드롭다운
- * - 활성 필터 배지
- * - 필터 초기화 버튼
+ * Advanced filter bar component
+ * - Search input
+ * - Multiple filter dropdowns
+ * - Active filter badges
+ * - Reset filters button
  */
 export function FilterBar({
   searchPlaceholder,
@@ -63,7 +63,7 @@ export function FilterBar({
 
   return (
     <div className={cn("flex flex-wrap items-center gap-3", className)}>
-      {/* 검색 입력 */}
+      {/* Search input */}
       <div className="relative max-w-sm min-w-[200px] flex-1">
         <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2" />
         <Input
@@ -75,7 +75,7 @@ export function FilterBar({
         />
       </div>
 
-      {/* 필터 드롭다운들 */}
+      {/* Filter dropdowns */}
       {filters.map((filter) => (
         <Select
           key={filter.id}
@@ -99,7 +99,7 @@ export function FilterBar({
         </Select>
       ))}
 
-      {/* 활성 필터 표시 및 초기화 */}
+      {/* Active filters and reset */}
       {activeFilterCount > 0 && (
         <div className="flex shrink-0 items-center gap-2">
           <Badge variant="primary" className="gap-1">
@@ -121,7 +121,7 @@ export function FilterBar({
 }
 
 /**
- * 간단한 검색 바 컴포넌트
+ * Simple search bar component
  */
 interface SearchBarProps {
   placeholder?: string;

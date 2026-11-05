@@ -1,8 +1,8 @@
 /**
- * SaaS Management Platform 공통 타입 정의
+ * SubHub shared types
  */
 
-// API 응답 타입
+// API response types
 export interface ApiResponse<T> {
   success: boolean;
   data?: T;
@@ -12,7 +12,7 @@ export interface ApiResponse<T> {
   };
 }
 
-// 페이지네이션 타입
+// Pagination types
 export interface PaginationParams {
   page?: number;
   limit?: number;
@@ -28,7 +28,7 @@ export interface PaginatedResponse<T> {
   totalPages: number;
 }
 
-// 필터 타입
+// Filter types
 export interface FilterParams {
   search?: string;
   status?: string;
@@ -37,16 +37,16 @@ export interface FilterParams {
   dateTo?: string;
 }
 
-// Server Action 상태 타입
+// Server Action state types
 export interface ActionState<T = null> {
   success: boolean;
   message?: string;
-  error?: string; // 단일 에러 메시지
+  error?: string; // single error message
   data?: T;
-  errors?: Record<string, string[]>; // 필드별 에러 메시지
+  errors?: Record<string, string[]>; // per-field error messages
 }
 
-// 사용자 세션 타입
+// User session types
 export interface UserSession {
   id: string;
   email: string;

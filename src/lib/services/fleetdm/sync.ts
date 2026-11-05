@@ -1,4 +1,4 @@
-// FleetDM 데이터 동기화 서비스
+// FleetDM data sync service
 import { prisma } from "@/lib/db";
 import type { DevicePlatform, DeviceStatus, Prisma } from "@prisma/client";
 import { FleetDMClient } from "./client";
@@ -6,7 +6,7 @@ import type { FleetDMHost, FleetDMSoftware } from "./types";
 import { FLEETDM_PLATFORM_MAP, FLEETDM_STATUS_MAP } from "./types";
 
 /**
- * FleetDM 호스트를 SMP Device로 변환
+ * Converts a FleetDM host to a SubHub Device
  */
 function mapFleetDMHostToDevice(
   host: FleetDMHost,
@@ -29,7 +29,7 @@ function mapFleetDMHostToDevice(
 }
 
 /**
- * FleetDM 소프트웨어를 SMP DeviceApp으로 변환
+ * Converts FleetDM software to a SubHub DeviceApp
  */
 function mapFleetDMSoftwareToDeviceApp(
   software: FleetDMSoftware,
@@ -45,7 +45,7 @@ function mapFleetDMSoftwareToDeviceApp(
 }
 
 /**
- * 단일 호스트 동기화
+ * Syncs a single host
  */
 export async function syncHostFromFleetDM(
   host: FleetDMHost,
@@ -78,13 +78,13 @@ export async function syncHostFromFleetDM(
 }
 
 /**
- * 호스트의 소프트웨어 동기화
+ * Syncs a host's software
  */
 export async function syncHostSoftwareFromFleetDM(
   deviceId: string,
   software: FleetDMSoftware[]
 ): Promise<number> {
-  // 기존 앱 목록 조회
+  // Load existing apps
   const existingApps = await prisma.deviceApp.findMany({
     where: { deviceId },
     select: { id: true, name: true, version: true },
@@ -101,7 +101,7 @@ export async function syncHostSoftwareFromFleetDM(
     const existingAppId = existingAppMap.get(key);
 
     if (existingAppId) {
-      // 기존 앱 업데이트
+      // Update the existing app
       await prisma.deviceApp.update({
         where: { id: existingAppId },
         data: {
@@ -111,7 +111,7 @@ export async function syncHostSoftwareFromFleetDM(
       });
       existingAppMap.delete(key);
     } else {
-      // 새 앱 생성
+      // Create a new app
       await prisma.deviceApp.create({
         data: mapFleetDMSoftwareToDeviceApp(sw, deviceId),
       });
@@ -119,8 +119,8 @@ export async function syncHostSoftwareFromFleetDM(
     syncedCount++;
   }
 
-  // 더 이상 설치되지 않은 앱 삭제 (선택적)
-  // 주석 처리: 삭제하지 않고 유지
+  // Delete apps no longer installed (optional)
+  // Commented out: keep them instead of deleting
   // const removedAppIds = Array.from(existingAppMap.values());
   // if (removedAppIds.length > 0) {
   //   await prisma.deviceApp.deleteMany({
@@ -132,26 +132,26 @@ export async function syncHostSoftwareFromFleetDM(
 }
 
 /**
- * DeviceApp에서 UserAppAccess로 동기화
- * - Device에 연결된 사용자가 있고
- * - DeviceApp에 매칭된 앱(matchedAppId)이 있는 경우
- * - UserAppAccess 레코드를 생성/업데이트
+ * Syncs DeviceApp to UserAppAccess
+ * - When the device has a linked user
+ * - and the DeviceApp has a matched app (matchedAppId)
+ * - creates/updates the UserAppAccess record
  */
 export async function syncUserAppAccessFromDevice(
   deviceId: string
 ): Promise<number> {
-  // 디바이스와 연결된 사용자 확인
+  // Check the user linked to the device
   const device = await prisma.device.findUnique({
     where: { id: deviceId },
     select: { userId: true },
   });
 
   if (!device?.userId) {
-    // 디바이스에 연결된 사용자가 없으면 동기화 불필요
+    // No sync needed if no user is linked to the device
     return 0;
   }
 
-  // 매칭된 앱이 있는 DeviceApp 조회
+  // Load DeviceApps with a matched app
   const deviceApps = await prisma.deviceApp.findMany({
     where: {
       deviceId,
@@ -184,14 +184,14 @@ export async function syncUserAppAccessFromDevice(
           lastUsedAt: deviceApp.lastUsedAt,
         },
         update: {
-          // 더 최신 lastUsedAt으로 업데이트
+          // Update to the more recent lastUsedAt
           lastUsedAt: deviceApp.lastUsedAt,
           updatedAt: new Date(),
         },
       });
       syncedCount++;
     } catch (error) {
-      // 중복 등 오류 무시하고 계속 진행
+      // Ignore errors such as duplicates and continue
       console.error(
         `UserAppAccess sync failed for app ${deviceApp.matchedAppId}:`,
         error
@@ -203,7 +203,7 @@ export async function syncUserAppAccessFromDevice(
 }
 
 /**
- * 전체 동기화 (배치)
+ * Full sync (batch)
  */
 export async function syncAllFromFleetDM(
   client: FleetDMClient,
@@ -226,13 +226,13 @@ export async function syncAllFromFleetDM(
   } = options ?? {};
   const errors: string[] = [];
 
-  // 1. 호스트 목록 가져오기
+  // 1. Fetch hosts
   const hosts = await client.getHosts({ perPage: 1000 });
   let hostsSync = 0;
   let softwareSync = 0;
   let userAppAccessSync = 0;
 
-  // 2. 호스트별 동기화
+  // 2. Sync each host
   for (let i = 0; i < hosts.length; i++) {
     const host = hosts[i];
 
@@ -240,7 +240,7 @@ export async function syncAllFromFleetDM(
       const deviceId = await syncHostFromFleetDM(host, organizationId);
       hostsSync++;
 
-      // 3. 소프트웨어 동기화 (옵션)
+      // 3. Sync software (optional)
       if (syncSoftware) {
         try {
           const software = await client.getHostSoftware(host.id, {
@@ -255,7 +255,7 @@ export async function syncAllFromFleetDM(
         }
       }
 
-      // 4. UserAppAccess 동기화 (옵션)
+      // 4. Sync UserAppAccess (optional)
       if (syncUserAppAccess) {
         try {
           const count = await syncUserAppAccessFromDevice(deviceId);
@@ -272,7 +272,7 @@ export async function syncAllFromFleetDM(
       );
     }
 
-    // 진행률 콜백
+    // Progress callback
     onProgress?.(i + 1, hosts.length);
   }
 
@@ -285,7 +285,7 @@ export async function syncAllFromFleetDM(
 }
 
 /**
- * Integration 설정에서 FleetDM 클라이언트 생성
+ * Creates a FleetDM client from integration settings
  */
 export async function getFleetDMClientFromIntegration(
   integrationId: string
@@ -316,7 +316,7 @@ export async function getFleetDMClientFromIntegration(
 }
 
 /**
- * 조직의 FleetDM 연동에서 클라이언트 가져오기
+ * Gets the client from the organization's FleetDM integration
  */
 export async function getFleetDMClientForOrganization(
   organizationId: string

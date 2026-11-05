@@ -1,6 +1,6 @@
 // src/lib/services/notification/email-onboarding.ts
 /**
- * 온보딩 이메일: 환영, 초대, Extension 온보딩 안내
+ * Onboarding e-mails: welcome, invitation, extension onboarding guide
  */
 import type {
   EmailResult,
@@ -11,54 +11,54 @@ import type {
 import { EmailConfig, getBaseUrl, getResendClient } from "./email.utils";
 
 /**
- * 환영 이메일 발송
+ * Sends the welcome e-mail
  */
 export async function sendWelcomeEmail(
   params: WelcomeEmailParams
 ): Promise<EmailResult> {
   const { to, userName, organizationName } = params;
 
-  const subject = `🎉 ${organizationName}에 오신 것을 환영합니다!`;
+  const subject = `🎉 Welcome to ${organizationName}!`;
 
   const html = `
     <!DOCTYPE html>
-    <html lang="ko">
+    <html lang="en">
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
     </head>
-    <body style="font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <body style="font-family: -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
       <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
-        <h1 style="color: white; margin: 0; font-size: 28px;">🎉 환영합니다!</h1>
+        <h1 style="color: white; margin: 0; font-size: 28px;">🎉 Welcome!</h1>
       </div>
 
       <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px;">
-        <p style="font-size: 18px;">안녕하세요, <strong>${userName}</strong>님!</p>
+        <p style="font-size: 18px;">Hello <strong>${userName}</strong>,</p>
 
         <p style="font-size: 16px;">
-          <strong>${organizationName}</strong>의 SaaS 관리 플랫폼에 가입해 주셔서 감사합니다.
+          Thank you for joining SubHub for <strong>${organizationName}</strong>.
         </p>
 
         <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
-          <h3 style="margin: 0 0 15px; color: #667eea;">🚀 시작하기</h3>
+          <h3 style="margin: 0 0 15px; color: #667eea;">🚀 Getting started</h3>
           <ul style="padding-left: 20px; color: #666;">
-            <li style="margin-bottom: 10px;">SSO/IdP를 연동하여 SaaS 앱을 자동으로 발견하세요</li>
-            <li style="margin-bottom: 10px;">구독 정보를 등록하고 갱신 알림을 받아보세요</li>
-            <li style="margin-bottom: 10px;">퇴사자 계정을 추적하여 보안을 강화하세요</li>
+            <li style="margin-bottom: 10px;">Connect your SSO/IdP to discover SaaS apps automatically</li>
+            <li style="margin-bottom: 10px;">Register your subscriptions and receive renewal alerts</li>
+            <li style="margin-bottom: 10px;">Track offboarded users' accounts to strengthen security</li>
           </ul>
         </div>
 
         <div style="margin-top: 30px; text-align: center;">
           <a href="${getBaseUrl()}/dashboard"
              style="display: inline-block; background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold;">
-            대시보드 바로가기
+            Go to dashboard
           </a>
         </div>
       </div>
 
       <div style="text-align: center; padding: 20px; color: #999; font-size: 12px;">
-        <p>궁금한 점이 있으시면 언제든지 문의해 주세요.</p>
-        <p>&copy; ${new Date().getFullYear()} SaaS Management Platform</p>
+        <p>If you have any questions, please do not hesitate to contact us.</p>
+        <p>&copy; ${new Date().getFullYear()} SubHub</p>
       </div>
     </body>
     </html>
@@ -80,68 +80,68 @@ export async function sendWelcomeEmail(
   } catch (err) {
     return {
       success: false,
-      error: err instanceof Error ? err.message : "이메일 발송 실패",
+      error: err instanceof Error ? err.message : "Email delivery failed",
     };
   }
 }
 
 /**
- * Extension 온보딩 안내 이메일 발송
+ * Sends the extension onboarding guide e-mail
  */
 export async function sendExtensionOnboardingGuideEmail(
   params: ExtensionOnboardingGuideEmailParams
 ): Promise<EmailResult> {
   const { to, userName, orgName } = params;
 
-  const subject = `🚀 ${orgName} Chrome Extension 온보딩 안내`;
+  const subject = `🚀 ${orgName} Chrome Extension onboarding guide`;
 
   const html = `
     <!DOCTYPE html>
-    <html lang="ko">
+    <html lang="en">
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
     </head>
-    <body style="font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <body style="font-family: -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
       <div style="background: linear-gradient(135deg, #4F46E5 0%, #7C3AED 100%); padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
-        <h1 style="color: white; margin: 0; font-size: 26px;">🔌 Extension 온보딩 안내</h1>
+        <h1 style="color: white; margin: 0; font-size: 26px;">🔌 Extension Onboarding Guide</h1>
       </div>
 
       <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px;">
-        <p style="font-size: 18px;">안녕하세요, <strong>${userName}</strong>님!</p>
+        <p style="font-size: 18px;">Hello <strong>${userName}</strong>,</p>
 
         <p style="font-size: 16px;">
-          <strong>${orgName}</strong>에서 Chrome Extension이 배포되었습니다.<br>
-          Extension을 설정하여 SaaS 사용 현황 모니터링을 시작해보세요.
+          <strong>${orgName}</strong> has deployed the Chrome Extension.<br>
+          Set up the extension to start monitoring SaaS usage.
         </p>
 
         <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #4F46E5;">
-          <h3 style="margin: 0 0 15px; color: #4F46E5;">📋 Extension 시작하기</h3>
+          <h3 style="margin: 0 0 15px; color: #4F46E5;">📋 Getting started with the extension</h3>
           <ol style="padding-left: 20px; color: #555;">
-            <li style="margin-bottom: 10px;">Chrome 브라우저에서 Extension이 설치되어 있는지 확인하세요</li>
-            <li style="margin-bottom: 10px;">Extension 아이콘을 클릭하여 온보딩 화면을 진행하세요</li>
-            <li style="margin-bottom: 10px;">회사 이메일 계정으로 인증을 완료하세요</li>
+            <li style="margin-bottom: 10px;">Check that the extension is installed in your Chrome browser</li>
+            <li style="margin-bottom: 10px;">Click the extension icon and complete the onboarding screens</li>
+            <li style="margin-bottom: 10px;">Complete verification with your company email account</li>
           </ol>
         </div>
 
         <div style="background: #EEF2FF; padding: 15px; border-radius: 8px; margin: 20px 0;">
           <p style="margin: 0; font-size: 14px; color: #4338CA;">
-            💡 <strong>참고</strong>: Extension은 업무용 SaaS 앱 접속 현황을 자동으로 수집합니다.
-            개인 정보는 수집되지 않으며, 회사 정책에 따라 운영됩니다.
+            💡 <strong>Note</strong>: the extension automatically collects access activity for work SaaS apps.
+            No personal information is collected, and it operates in line with company policy.
           </p>
         </div>
 
         <div style="margin-top: 30px; text-align: center;">
           <a href="${getBaseUrl()}/dashboard"
              style="display: inline-block; background: #4F46E5; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px; font-weight: bold;">
-            대시보드 바로가기
+            Go to dashboard
           </a>
         </div>
       </div>
 
       <div style="text-align: center; padding: 20px; color: #999; font-size: 12px;">
-        <p>이 메일은 ${orgName} 관리자에 의해 발송되었습니다.</p>
-        <p>&copy; ${new Date().getFullYear()} SaaS Management Platform</p>
+        <p>This email was sent by the ${orgName} administrator.</p>
+        <p>&copy; ${new Date().getFullYear()} SubHub</p>
       </div>
     </body>
     </html>
@@ -163,13 +163,13 @@ export async function sendExtensionOnboardingGuideEmail(
   } catch (err) {
     return {
       success: false,
-      error: err instanceof Error ? err.message : "이메일 발송 실패",
+      error: err instanceof Error ? err.message : "Email delivery failed",
     };
   }
 }
 
 /**
- * 초대 이메일 발송
+ * Sends the invitation e-mail
  */
 export async function sendInvitationEmail(
   params: InvitationEmailParams
@@ -177,66 +177,66 @@ export async function sendInvitationEmail(
   const {
     email,
     token,
-    organizationName = "조직",
-    inviterName = "관리자",
+    organizationName = "your organization",
+    inviterName = "An administrator",
     role = "MEMBER",
   } = params;
 
   const roleLabels: Record<string, string> = {
-    ADMIN: "관리자",
-    MEMBER: "멤버",
-    VIEWER: "뷰어",
+    ADMIN: "Admin",
+    MEMBER: "Member",
+    VIEWER: "Viewer",
   };
 
-  const roleLabel = roleLabels[role] || "멤버";
+  const roleLabel = roleLabels[role] || "Member";
   const inviteUrl = `${getBaseUrl()}/invite/${token}`;
 
-  const subject = `📩 ${organizationName}에서 초대가 도착했습니다`;
+  const subject = `📩 You have been invited to ${organizationName}`;
 
   const html = `
     <!DOCTYPE html>
-    <html lang="ko">
+    <html lang="en">
     <head>
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
     </head>
-    <body style="font-family: 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <body style="font-family: -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
       <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px 10px 0 0; text-align: center;">
-        <h1 style="color: white; margin: 0; font-size: 28px;">📩 팀 초대</h1>
+        <h1 style="color: white; margin: 0; font-size: 28px;">📩 Team Invitation</h1>
       </div>
 
       <div style="background: #f8f9fa; padding: 30px; border-radius: 0 0 10px 10px;">
-        <p style="font-size: 16px;">안녕하세요!</p>
+        <p style="font-size: 16px;">Hello,</p>
 
         <p style="font-size: 16px;">
-          <strong>${inviterName}</strong>님이 <strong>${organizationName}</strong>의
-          SaaS 관리 플랫폼에 <strong>${roleLabel}</strong>로 초대했습니다.
+          <strong>${inviterName}</strong> has invited you to join SubHub for
+          <strong>${organizationName}</strong> as <strong>${roleLabel}</strong>.
         </p>
 
         <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #667eea;">
-          <h3 style="margin: 0 0 15px; color: #667eea;">🚀 SaaS 관리 플랫폼에서 할 수 있는 것</h3>
+          <h3 style="margin: 0 0 15px; color: #667eea;">🚀 What you can do with SubHub</h3>
           <ul style="padding-left: 20px; color: #666;">
-            <li style="margin-bottom: 10px;">조직의 SaaS 앱을 한눈에 파악</li>
-            <li style="margin-bottom: 10px;">구독 비용 및 갱신일 관리</li>
-            <li style="margin-bottom: 10px;">사용자별 앱 접근 권한 추적</li>
+            <li style="margin-bottom: 10px;">See all of your organization's SaaS apps at a glance</li>
+            <li style="margin-bottom: 10px;">Manage subscription costs and renewal dates</li>
+            <li style="margin-bottom: 10px;">Track app access for each user</li>
           </ul>
         </div>
 
         <div style="margin-top: 30px; text-align: center;">
           <a href="${inviteUrl}"
              style="display: inline-block; background: #667eea; color: white; padding: 15px 40px; text-decoration: none; border-radius: 5px; font-weight: bold; font-size: 16px;">
-            초대 수락하기
+            Accept invitation
           </a>
         </div>
 
         <p style="font-size: 12px; color: #999; margin-top: 30px; text-align: center;">
-          이 초대는 7일 후 만료됩니다.
+          This invitation expires in 7 days.
         </p>
       </div>
 
       <div style="text-align: center; padding: 20px; color: #999; font-size: 12px;">
-        <p>이 메일은 SaaS 관리 플랫폼에서 자동 발송되었습니다.</p>
-        <p>&copy; ${new Date().getFullYear()} SaaS Management Platform</p>
+        <p>This is an automated message from SubHub.</p>
+        <p>&copy; ${new Date().getFullYear()} SubHub</p>
       </div>
     </body>
     </html>
@@ -258,7 +258,7 @@ export async function sendInvitationEmail(
   } catch (err) {
     return {
       success: false,
-      error: err instanceof Error ? err.message : "이메일 발송 실패",
+      error: err instanceof Error ? err.message : "Email delivery failed",
     };
   }
 }

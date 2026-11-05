@@ -8,7 +8,7 @@ import {
   type ReminderRunResult,
 } from "./reminders";
 
-// 갱신일까지 남은 일수에 따른 AlertType 매핑
+// AlertType mapping by days remaining until renewal
 function getAlertType(days: number): AlertType {
   if (days === 30) return "DAYS_30";
   if (days === 60) return "DAYS_60";
@@ -16,18 +16,18 @@ function getAlertType(days: number): AlertType {
   throw new Error(`Invalid days: ${days}`);
 }
 
-// 갱신 예정 구독 타입
+// Upcoming-renewal subscription type
 export type UpcomingRenewal = Awaited<
   ReturnType<typeof findUpcomingRenewals>
 >[number];
 
-// 갱신 예정 구독 조회
+// Find subscriptions due for renewal
 export async function findUpcomingRenewals(daysUntilRenewal: 30 | 60 | 90) {
   const now = new Date();
   const targetDate = new Date(now);
   targetDate.setDate(targetDate.getDate() + daysUntilRenewal);
 
-  // 날짜 범위 설정 (±1일)
+  // Date range (±1 day)
   const startDate = new Date(targetDate);
   startDate.setDate(startDate.getDate() - 1);
   const endDate = new Date(targetDate);
@@ -67,7 +67,7 @@ export async function findUpcomingRenewals(daysUntilRenewal: 30 | 60 | 90) {
   return subscriptions;
 }
 
-// 단일 알림 발송 결과
+// Single alert send result
 export interface SendAlertResult {
   subscriptionId: string;
   sent: number;
@@ -76,14 +76,14 @@ export interface SendAlertResult {
   error?: string;
 }
 
-// 단일 구독에 대한 갱신 알림 발송
+// Send renewal alerts for a single subscription
 export async function sendRenewalAlert(
   subscription: UpcomingRenewal,
   daysUntilRenewal: 30 | 60 | 90
 ): Promise<SendAlertResult> {
   const alertType = getAlertType(daysUntilRenewal);
 
-  // 이미 발송된 알림인지 확인
+  // Check whether the alert was already sent
   const existingAlert = await prisma.renewalAlert.findFirst({
     where: {
       subscriptionId: subscription.id,
@@ -101,7 +101,7 @@ export async function sendRenewalAlert(
     };
   }
 
-  // 조직의 관리자 목록 조회
+  // Load the organization's admins
   const admins = await prisma.user.findMany({
     where: {
       organizationId: subscription.organization.id,
@@ -118,14 +118,14 @@ export async function sendRenewalAlert(
       subscriptionId: subscription.id,
       sent: 0,
       failed: 0,
-      error: "관리자 없음",
+      error: "No admin found",
     };
   }
 
   let sent = 0;
   let failed = 0;
 
-  // 각 관리자에게 이메일 발송
+  // E-mail each admin
   for (const admin of admins) {
     const result = await sendRenewalAlertEmail({
       to: admin.email,
@@ -144,7 +144,7 @@ export async function sendRenewalAlert(
     }
   }
 
-  // 알림 기록 저장
+  // Save the alert record
   const scheduledFor = subscription.renewalDate!;
   await prisma.renewalAlert.upsert({
     where: {
@@ -171,7 +171,7 @@ export async function sendRenewalAlert(
   };
 }
 
-// 전체 갱신 알림 처리 결과 (legacy cron → delegated to the reminders service)
+// Overall renewal alert result (legacy cron → delegated to the reminders service)
 export type ProcessResult = ReminderRunResult & { legacy: true };
 
 /**

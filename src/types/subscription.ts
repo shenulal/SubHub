@@ -5,7 +5,7 @@ import type {
   SubscriptionStatus,
 } from "@prisma/client";
 
-// 배정된 사용자 정보
+// Assigned user info
 export interface AssignedUser {
   id: string;
   name: string | null;
@@ -68,12 +68,12 @@ export interface SubscriptionListItem {
   autoRenewal: boolean;
   createdAt: Date;
   updatedAt: Date;
-  // Team 배정 (단일, deprecated - backward compat)
+  // Team assignment (single, deprecated - backward compat)
   teamId: string | null;
   teamName: string | null;
-  // Team 배정 (다중)
+  // Team assignment (multiple)
   teams: Array<{ id: string; name: string }>;
-  // User 배정 (다중)
+  // User assignment (multiple)
   assignedUsers: AssignedUser[];
   // SubHub lifecycle & taxonomy
   category: SubscriptionCategoryRef | null;
@@ -95,7 +95,7 @@ export interface SubscriptionDetail extends SubscriptionListItem {
   renewalAlert30: boolean;
   renewalAlert60: boolean;
   renewalAlert90: boolean;
-  // 상세 정보에 Team 객체 포함 (단일, deprecated - backward compat)
+  // Details include the Team object (single, deprecated - backward compat)
   team: { id: string; name: string } | null;
   // SubHub lifecycle fields
   noticePeriodDays: number | null;
@@ -136,7 +136,7 @@ export interface CreateSubscriptionInput {
   renewalAlert90?: boolean;
   contractUrl?: string;
   notes?: string;
-  // Team/User 배정
+  // Team/User assignment
   teamId?: string;
   teamIds?: string[];
   assignedUserIds?: string[];
@@ -197,7 +197,7 @@ export interface SubscriptionSortOptions {
   sortOrder?: "asc" | "desc";
 }
 
-// P2: Seat 관리 상세 타입
+// P2: Seat management detail types
 export interface SeatUser {
   id: string;
   name: string | null;
@@ -205,7 +205,7 @@ export interface SeatUser {
   assignedAt: Date;
   assignedBy: string | null;
   lastUsedAt: Date | null;
-  isInactive: boolean; // lastUsedAt > 30일 또는 null
+  isInactive: boolean; // lastUsedAt > 30 days or null
 }
 
 export interface SeatDetails {
@@ -213,5 +213,5 @@ export interface SeatDetails {
   totalSeats: number;
   usedSeats: number;
   unassignedSeats: number;
-  inactiveSeats: number; // 할당됐지만 30일+ 미사용
+  inactiveSeats: number; // assigned but unused for 30+ days
 }

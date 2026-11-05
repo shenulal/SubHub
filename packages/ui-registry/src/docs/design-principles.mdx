@@ -4,11 +4,11 @@ import { Meta } from '@storybook/addon-docs/blocks';
 
 # Design Principles
 
-shadcn-storybook-registry의 핵심 디자인 원칙입니다.
+The core design principles of shadcn-storybook-registry.
 
 ## Accessibility First
 
-**WCAG 2.1 AA** 준수를 최우선 목표로 합니다.
+**WCAG 2.1 AA** compliance is the top priority.
 
 - ✅ Keyboard navigation support
 - ✅ Screen reader friendly
@@ -16,39 +16,39 @@ shadcn-storybook-registry의 핵심 디자인 원칙입니다.
 - ✅ ARIA attributes
 - ✅ Color contrast compliance
 
-모든 컴포넌트는 Storybook의 A11y addon을 통해 접근성 검증을 거칩니다.
+Every component is checked for accessibility with the Storybook A11y addon.
 
 ## Responsive Design
 
-**Mobile-first** 접근 방식으로 모든 화면 크기를 지원합니다.
+A **mobile-first** approach supports every screen size.
 
 - 📱 Mobile (375px)
 - 📱 Tablet (768px)
 - 💻 Desktop (1920px)
 
-Storybook의 Viewport addon을 사용하여 다양한 화면 크기에서 컴포넌트를 테스트할 수 있습니다.
+Use the Storybook Viewport addon to test components at different screen sizes.
 
 ## Dark Mode Support
 
-**Light/Dark 테마** 완벽 지원:
+Full **light/dark theme** support:
 
 - 🌞 Light mode (default)
 - 🌙 Dark mode
-- 🎨 CSS custom properties로 쉬운 커스터마이징
+- 🎨 Easy customisation through CSS custom properties
 - 🔄 Seamless theme switching
 
-`@storybook/addon-themes`를 통해 Storybook에서 테마를 즉시 전환하여 테스트할 수 있습니다.
+Use `@storybook/addon-themes` to switch themes instantly in Storybook while testing.
 
 ## Design Tokens
 
-체계적인 디자인 토큰 시스템:
+A structured design token system:
 
 ### Color System
-- **Primary**: 브랜드 컬러
-- **Secondary**: 보조 컬러
-- **Accent**: 강조 컬러
-- **Destructive**: 경고/에러 상태
-- **Muted**: 배경 및 비활성
+- **Primary**: brand colour
+- **Secondary**: secondary colour
+- **Accent**: accent colour
+- **Destructive**: warning/error states
+- **Muted**: backgrounds and disabled states
 
 ### Typography Scale
 - `xs`: 0.75rem (12px)
@@ -56,63 +56,63 @@ Storybook의 Viewport addon을 사용하여 다양한 화면 크기에서 컴포
 - `base`: 1rem (16px)
 - `lg`: 1.125rem (18px)
 - `xl`: 1.25rem (20px)
-- `2xl` ~ `9xl`: 다양한 크기
+- `2xl` ~ `9xl`: larger sizes
 
 ### Spacing System
 - 0.5rem ~ 8rem
-- Tailwind CSS spacing scale 기반
-- 일관된 여백 및 패딩
+- Based on the Tailwind CSS spacing scale
+- Consistent margins and padding
 
 ### Shadow System
 - `sm`, `base`, `md`, `lg`, `xl`, `2xl`
-- 깊이감 표현
-- Light/Dark 모드 별 최적화
+- Conveys depth
+- Optimised separately for light and dark mode
 
 ### Radius System
 - `sm`, `base`, `md`, `lg`, `full`
-- 모서리 둥글기 일관성
+- Consistent corner rounding
 
 ## Component Composition
 
-**Atomic Design** 원칙 적용:
+Applies **Atomic Design** principles:
 
-- **Atoms**: 기본 UI 요소 (Button, Input, Badge)
-- **Molecules**: 조합된 컴포넌트 (Form Field, Card)
-- **Organisms**: 복잡한 UI 블록 (Navigation, Sidebar)
-- **Templates**: 페이지 레이아웃
+- **Atoms**: basic UI elements (Button, Input, Badge)
+- **Molecules**: composed components (Form Field, Card)
+- **Organisms**: complex UI blocks (Navigation, Sidebar)
+- **Templates**: page layouts
 
 ## Type Safety
 
-**TypeScript** 완벽 지원:
+Full **TypeScript** support:
 
-- `satisfies Meta<typeof Component>` 패턴
+- `satisfies Meta<typeof Component>` pattern
 - Explicit return types
 - Strict mode enabled
-- Type inference 최대 활용
+- Makes maximum use of type inference
 
 ## Testing
 
-**자동화된 테스트** 전략:
+**Automated testing** strategy:
 
-- ✅ Play functions로 인터랙션 테스트
-- ✅ Vitest 유닛 테스트
-- ✅ Playwright 브라우저 테스트
-- ✅ A11y 자동 검증
+- ✅ Interaction tests with play functions
+- ✅ Vitest unit tests
+- ✅ Playwright browser tests
+- ✅ Automated accessibility checks
 
 ## Documentation
 
-**명확한 문서화**:
+**Clear documentation**:
 
-- JSDoc 주석 필수
-- Storybook Autodocs 100% 적용
-- 한국어 설명 제공
-- 사용 예제 포함
+- JSDoc comments are mandatory
+- Storybook Autodocs applied to 100% of components
+- Clear English descriptions
+- Usage examples included
 
 ## Performance
 
-**최적화된 성능**:
+**Optimised performance**:
 
-- Tree-shaking 지원
+- Tree-shaking support
 - Lazy loading
 - Minimal bundle size
-- React 18/19 호환
+- React 18/19 compatible

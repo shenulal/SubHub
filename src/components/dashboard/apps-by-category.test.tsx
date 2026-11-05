@@ -1,10 +1,10 @@
 // src/components/dashboard/apps-by-category.test.tsx
-import messages from "@/i18n/messages/ko.json";
+import messages from "@/i18n/messages/en.json";
 import type { CategoryDistribution } from "@/types/dashboard";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-// next-intl mock (dual React 이슈 방지를 위해 Provider 대신 mock 사용)
+// next-intl mock (used instead of the Provider to avoid dual-React issues)
 vi.mock("next-intl", () => {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   function getNestedValue(obj: any, path: string): string | undefined {
@@ -29,7 +29,7 @@ vi.mock("next-intl", () => {
   };
 });
 
-// Recharts mock (ResponsiveContainer 이슈 방지)
+// Recharts mock (avoids ResponsiveContainer issues)
 vi.mock("recharts", () => ({
   ResponsiveContainer: ({ children }: { children: React.ReactNode }) => (
     <div data-testid="responsive-container">{children}</div>
@@ -52,39 +52,39 @@ describe("AppsByCategory", () => {
     { category: "__UNCATEGORIZED__", count: 2, percentage: 20 },
   ];
 
-  describe("렌더링", () => {
-    it("카드 제목이 표시되어야 한다", () => {
+  describe("rendering", () => {
+    it("shows the card title", () => {
       render(<AppsByCategory data={mockData} />);
 
-      expect(screen.getByText("카테고리별 앱")).toBeInTheDocument();
+      expect(screen.getByText("Apps by category")).toBeInTheDocument();
     });
 
-    it("차트가 렌더링되어야 한다", () => {
+    it("renders the chart", () => {
       render(<AppsByCategory data={mockData} />);
 
       expect(screen.getByTestId("pie-chart")).toBeInTheDocument();
     });
 
-    it("카테고리 목록이 표시되어야 한다", () => {
+    it("shows the category list", () => {
       render(<AppsByCategory data={mockData} />);
 
       expect(screen.getByText(/Collaboration/)).toBeInTheDocument();
       expect(screen.getByText(/Development/)).toBeInTheDocument();
-      expect(screen.getByText(/기타/)).toBeInTheDocument();
+      expect(screen.getByText(/Other/)).toBeInTheDocument();
     });
   });
 
-  describe("빈 데이터 처리", () => {
-    it("데이터가 없을 때 안내 메시지가 표시되어야 한다", () => {
+  describe("empty data", () => {
+    it("shows an empty-state message when there is no data", () => {
       render(<AppsByCategory data={[]} />);
 
-      expect(screen.getByText("등록된 앱이 없습니다.")).toBeInTheDocument();
+      expect(screen.getByText("No registered apps.")).toBeInTheDocument();
       expect(screen.queryByTestId("pie-chart")).not.toBeInTheDocument();
     });
   });
 
-  describe("퍼센트 표시", () => {
-    it("각 카테고리의 퍼센트가 표시되어야 한다", () => {
+  describe("percentages", () => {
+    it("shows the percentage for each category", () => {
       render(<AppsByCategory data={mockData} />);
 
       expect(screen.getByText(/50%/)).toBeInTheDocument();

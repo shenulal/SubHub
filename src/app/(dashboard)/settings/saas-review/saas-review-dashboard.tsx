@@ -111,7 +111,7 @@ export function SaasReviewDashboard({
         ]}
       />
 
-      {/* LLM 호출 현황 */}
+      {/* LLM call status */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card className="border-border/50 shadow-sm transition-shadow hover:shadow-md">
           <CardHeader className="pb-2">
@@ -241,7 +241,7 @@ export function SaasReviewDashboard({
         </Card>
       </div>
 
-      {/* 대기 중인 SaaS */}
+      {/* Pending SaaS */}
       <Card className="border-border/50 shadow-sm transition-shadow hover:shadow-md">
         <CardHeader>
           <CardTitle>{t("pendingApps.title")}</CardTitle>
@@ -313,7 +313,7 @@ export function SaasReviewDashboard({
         </CardContent>
       </Card>
 
-      {/* 추론 로그 */}
+      {/* Inference log */}
       <Card className="border-border/50 shadow-sm transition-shadow hover:shadow-md">
         <CardHeader>
           <CardTitle>{t("logs.title")}</CardTitle>

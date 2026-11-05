@@ -1,6 +1,6 @@
 /**
- * AES-256-GCM 암호화 유틸리티
- * 법인카드 인증 정보 등 민감한 데이터 암호화에 사용
+ * AES-256-GCM encryption utilities
+ * Used to encrypt sensitive data such as corporate card credentials
  */
 import crypto from "crypto";
 
@@ -9,9 +9,9 @@ const IV_LENGTH = 16;
 const AUTH_TAG_LENGTH = 16;
 
 /**
- * 문자열을 AES-256-GCM으로 암호화
- * @param text 암호화할 평문
- * @returns IV + AuthTag + EncryptedData (hex 인코딩)
+ * Encrypt a string with AES-256-GCM
+ * @param text plaintext to encrypt
+ * @returns IV + AuthTag + EncryptedData (hex-encoded)
  */
 export function encrypt(text: string): string {
   const key = getEncryptionKey();
@@ -24,19 +24,19 @@ export function encrypt(text: string): string {
   encrypted += cipher.final("hex");
   const authTag = cipher.getAuthTag();
 
-  // IV + AuthTag + EncryptedData 형식으로 반환
+  // Return as IV + AuthTag + EncryptedData
   return iv.toString("hex") + authTag.toString("hex") + encrypted;
 }
 
 /**
- * AES-256-GCM으로 암호화된 문자열을 복호화
- * @param encryptedText 암호화된 문자열 (IV + AuthTag + EncryptedData)
- * @returns 복호화된 평문
+ * Decrypt an AES-256-GCM encrypted string
+ * @param encryptedText encrypted string (IV + AuthTag + EncryptedData)
+ * @returns decrypted plaintext
  */
 export function decrypt(encryptedText: string): string {
   const key = getEncryptionKey();
 
-  // IV, AuthTag, EncryptedData 분리
+  // Split IV, AuthTag and EncryptedData
   const iv = Buffer.from(encryptedText.slice(0, IV_LENGTH * 2), "hex");
   const authTag = Buffer.from(
     encryptedText.slice(IV_LENGTH * 2, (IV_LENGTH + AUTH_TAG_LENGTH) * 2),
@@ -56,27 +56,27 @@ export function decrypt(encryptedText: string): string {
 }
 
 /**
- * JSON 객체를 암호화
- * @param data 암호화할 객체
- * @returns 암호화된 문자열
+ * Encrypt a JSON object
+ * @param data object to encrypt
+ * @returns encrypted string
  */
 export function encryptJson<T>(data: T): string {
   return encrypt(JSON.stringify(data));
 }
 
 /**
- * 암호화된 문자열을 JSON 객체로 복호화
- * @param encryptedText 암호화된 문자열
- * @returns 복호화된 객체
+ * Decrypt an encrypted string into a JSON object
+ * @param encryptedText encrypted string
+ * @returns decrypted object
  */
 export function decryptJson<T>(encryptedText: string): T {
   return JSON.parse(decrypt(encryptedText)) as T;
 }
 
 /**
- * 환경변수에서 암호화 키 가져오기
- * @returns 32바이트 키 버퍼
- * @throws ENCRYPTION_KEY가 설정되지 않았거나 32자가 아닌 경우
+ * Read the encryption key from the environment
+ * @returns 32-byte key buffer
+ * @throws when ENCRYPTION_KEY is missing or not 32 characters
  */
 function getEncryptionKey(): Buffer {
   const key = process.env.ENCRYPTION_KEY;
@@ -92,9 +92,9 @@ function getEncryptionKey(): Buffer {
 }
 
 /**
- * 카드번호 마스킹 (앞 4자리, 뒤 4자리만 표시)
- * @param cardNo 카드번호
- * @returns 마스킹된 카드번호 (예: 1234****5678)
+ * Mask a card number (show only the first 4 and last 4 digits)
+ * @param cardNo card number
+ * @returns masked card number (e.g. 1234****5678)
  */
 export function maskCardNumber(cardNo: string): string {
   const cleaned = cardNo.replace(/\D/g, "");
@@ -108,9 +108,9 @@ export function maskCardNumber(cardNo: string): string {
 }
 
 /**
- * 카드번호에서 마지막 4자리 추출
- * @param cardNo 카드번호
- * @returns 마지막 4자리
+ * Extract the last 4 digits of a card number
+ * @param cardNo card number
+ * @returns last 4 digits
  */
 export function getCardLast4(cardNo: string): string {
   const cleaned = cardNo.replace(/\D/g, "");

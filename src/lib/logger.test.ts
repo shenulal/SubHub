@@ -3,7 +3,7 @@ import pino from "pino";
 import { Writable } from "stream";
 import { describe, expect, it } from "vitest";
 
-/** 출력을 캡처하는 테스트용 로거 생성 */
+/** Create a test logger that captures output */
 function createTestLogger(options: pino.LoggerOptions = {}) {
   let output = "";
   const dest = new Writable({
@@ -34,9 +34,9 @@ function createTestLogger(options: pino.LoggerOptions = {}) {
 }
 
 describe("logger", () => {
-  // ─── 기본 설정 ───
+  // ─── Default configuration ───
 
-  describe("기본 설정", () => {
+  describe("default configuration", () => {
     it("should be defined", () => {
       expect(logger).toBeDefined();
     });
@@ -49,9 +49,9 @@ describe("logger", () => {
     });
   });
 
-  // ─── Pino API 호출 형식 검증 ───
+  // ─── Pino API call format ───
 
-  describe("pino API 호출 형식", () => {
+  describe("pino API call format", () => {
     it("should accept object + message format for info", () => {
       expect(() => {
         logger.info({ name: "test" }, "start");
@@ -90,9 +90,9 @@ describe("logger", () => {
     });
   });
 
-  // ─── 민감정보 Redaction 검증 ───
+  // ─── Sensitive data redaction ───
 
-  describe("민감정보 redaction", () => {
+  describe("sensitive data redaction", () => {
     it("should redact password field", () => {
       const child = logger.child({ password: "secret123" });
       expect(child).toBeDefined();
@@ -111,9 +111,9 @@ describe("logger", () => {
     });
   });
 
-  // ─── 출력 포맷 검증 (JSON stream 캡처) ───
+  // ─── Output format (JSON stream capture) ───
 
-  describe("출력 포맷", () => {
+  describe("output format", () => {
     it("should output level as string label (not number)", () => {
       const t = createTestLogger({ base: { service: "test" } });
 

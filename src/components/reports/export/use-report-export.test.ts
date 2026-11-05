@@ -182,7 +182,7 @@ describe("useReportExport", () => {
     expect(mockGeneratePDFReport).toHaveBeenCalledWith({
       title: "Test Report",
       subtitle: undefined,
-      organizationName: "SaaS Management Platform",
+      organizationName: "SubHub",
       generatedAt: expect.any(Date),
       sections: mockConfig.pdf!.sections,
     });

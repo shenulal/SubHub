@@ -59,8 +59,8 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 /**
- * 기본 입력 그룹입니다.
- * 입력 필드와 관련 요소들을 그룹화합니다.
+ * A basic input group.
+ * Groups an input field with related elements.
  */
 export const Default: Story = {
   render: () => (
@@ -71,8 +71,8 @@ export const Default: Story = {
 };
 
 /**
- * InputGroupDemo 예제입니다.
- * 다양한 입력 그룹 패턴을 보여줍니다.
+ * The InputGroupDemo example.
+ * Shows various input group patterns.
  */
 export const Demo: Story = {
   render: () => (
@@ -129,8 +129,8 @@ export const Demo: Story = {
 };
 
 /**
- * 검색 입력 그룹입니다.
- * 검색 아이콘과 함께 사용합니다.
+ * A search input group.
+ * Used with a search icon.
  */
 export const SearchInput: Story = {
   render: () => (
@@ -144,8 +144,8 @@ export const SearchInput: Story = {
 };
 
 /**
- * URL 입력 그룹입니다.
- * URL 프리픽스와 함께 사용합니다.
+ * A URL input group.
+ * Used with a URL prefix.
  */
 export const UrlInput: Story = {
   render: () => (
@@ -165,8 +165,8 @@ export const UrlInput: Story = {
 };
 
 /**
- * 비밀번호 입력 그룹입니다.
- * 비밀번호 표시/숨기기 토글 버튼을 포함합니다.
+ * A password input group.
+ * Includes a show/hide password toggle button.
  */
 export const PasswordInput: Story = {
   render: function PasswordInputDemo() {
@@ -196,8 +196,8 @@ export const PasswordInput: Story = {
 };
 
 /**
- * 로딩 상태의 입력 그룹입니다.
- * 로딩 인디케이터를 표시합니다.
+ * An input group in the loading state.
+ * Shows a loading indicator.
  */
 export const WithLoading: Story = {
   render: () => (
@@ -211,8 +211,8 @@ export const WithLoading: Story = {
 };
 
 /**
- * 드롭다운 메뉴가 있는 입력 그룹입니다.
- * 추가 옵션을 제공합니다.
+ * An input group with a dropdown menu.
+ * Provides additional options.
  */
 export const WithDropdown: Story = {
   render: () => (
@@ -237,8 +237,8 @@ export const WithDropdown: Story = {
 };
 
 /**
- * 여러 버튼이 있는 입력 그룹입니다.
- * 여러 액션을 제공합니다.
+ * An input group with several buttons.
+ * Provides several actions.
  */
 export const WithMultipleButtons: Story = {
   render: () => (
@@ -258,8 +258,8 @@ export const WithMultipleButtons: Story = {
 };
 
 /**
- * Textarea가 있는 입력 그룹입니다.
- * 여러 줄 입력과 액션 버튼을 포함합니다.
+ * An input group with a Textarea.
+ * Includes multi-line input and action buttons.
  */
 export const WithTextarea: Story = {
   render: () => (
@@ -276,8 +276,8 @@ export const WithTextarea: Story = {
 };
 
 /**
- * 블록 정렬 addon이 있는 입력 그룹입니다.
- * 상단이나 하단에 전체 너비로 addon을 배치합니다.
+ * An input group with block-aligned addons.
+ * Places full-width addons at the top or bottom.
  */
 export const WithBlockAddon: Story = {
   render: () => (
@@ -301,8 +301,8 @@ export const WithBlockAddon: Story = {
 };
 
 /**
- * 인라인 텍스트가 있는 입력 그룹입니다.
- * 입력 필드 내부에 텍스트를 포함합니다.
+ * An input group with inline text.
+ * Includes text inside the input field.
  */
 export const WithInlineText: Story = {
   render: () => (
@@ -327,8 +327,8 @@ export const WithInlineText: Story = {
 };
 
 /**
- * 숫자 입력 그룹입니다.
- * 증가/감소 버튼을 포함합니다.
+ * A numeric input group.
+ * Includes increment/decrement buttons.
  */
 export const NumberInput: Story = {
   render: function NumberInputDemo() {
@@ -366,8 +366,8 @@ export const NumberInput: Story = {
 };
 
 /**
- * 오류 상태의 입력 그룹입니다.
- * 유효성 검사 실패를 나타냅니다.
+ * An input group in the error state.
+ * Indicates a validation failure.
  */
 export const ErrorState: Story = {
   render: () => (
@@ -381,8 +381,8 @@ export const ErrorState: Story = {
 };
 
 /**
- * 비활성화된 입력 그룹입니다.
- * 모든 요소가 비활성화됩니다.
+ * A disabled input group.
+ * All elements are disabled.
  */
 export const DisabledState: Story = {
   render: () => (

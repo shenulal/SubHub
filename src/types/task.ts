@@ -30,18 +30,18 @@ export interface Task {
 export type TaskListItem = Task;
 
 export const taskStatusLabels: Record<TaskStatus, string> = {
-  TODO: "할 일",
-  IN_PROGRESS: "진행 중",
-  IN_REVIEW: "검토 중",
-  DONE: "완료",
-  CANCELLED: "취소됨",
+  TODO: "To Do",
+  IN_PROGRESS: "In Progress",
+  IN_REVIEW: "In Review",
+  DONE: "Completed",
+  CANCELLED: "Cancelled",
 };
 
 export const taskPriorityLabels: Record<TaskPriority, string> = {
-  LOW: "낮음",
-  MEDIUM: "보통",
-  HIGH: "높음",
-  URGENT: "긴급",
+  LOW: "Low",
+  MEDIUM: "Medium",
+  HIGH: "High",
+  URGENT: "Urgent",
 };
 
 export const taskStatusColors: Record<TaskStatus, string> = {

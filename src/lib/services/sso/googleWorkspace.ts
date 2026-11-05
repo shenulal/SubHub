@@ -1,7 +1,7 @@
 // src/lib/services/sso/googleWorkspace.ts
 /**
- * Google Workspace Admin SDK 서비스
- * 사용자 목록 조회, OAuth 토큰 조회 등 Google Workspace 연동 기능 제공
+ * Google Workspace Admin SDK service
+ * Provides Google Workspace integration features such as listing users and OAuth tokens
  */
 
 import type {
@@ -16,18 +16,18 @@ export class GoogleWorkspaceService {
   private adminClient: admin_directory_v1.Admin;
 
   constructor(credentials: ServiceAccountCredentials) {
-    // 자격 증명 검증
+    // Validate credentials
     if (!credentials.clientEmail) {
-      throw new Error("서비스 계정 이메일이 필요합니다");
+      throw new Error("Service account email is required");
     }
     if (!credentials.privateKey) {
-      throw new Error("서비스 계정 Private Key가 필요합니다");
+      throw new Error("Service account private key is required");
     }
     if (!credentials.subject) {
-      throw new Error("관리자 이메일(subject)이 필요합니다");
+      throw new Error("Admin email (subject) is required");
     }
 
-    // JWT 인증 클라이언트 생성
+    // Create the JWT auth client
     const auth = new google.auth.JWT({
       email: credentials.clientEmail,
       key: credentials.privateKey,
@@ -39,13 +39,13 @@ export class GoogleWorkspaceService {
       ],
     });
 
-    // Admin SDK 클라이언트 초기화
+    // Initialise the Admin SDK client
     this.adminClient = google.admin({ version: "directory_v1", auth });
   }
 
   /**
-   * 모든 사용자 목록 조회 (페이지네이션 처리)
-   * @param orgUnitPath 특정 OU 경로로 필터링 (선택)
+   * Lists all users (handles pagination)
+   * @param orgUnitPath Filter by a specific OU path (optional)
    */
   async listUsers(orgUnitPath?: string): Promise<GoogleWorkspaceUser[]> {
     const users: GoogleWorkspaceUser[] = [];
@@ -77,8 +77,8 @@ export class GoogleWorkspaceService {
   }
 
   /**
-   * 단일 사용자 조회
-   * @param userKey 사용자 이메일 또는 ID
+   * Gets a single user
+   * @param userKey User e-mail or ID
    */
   async getUser(userKey: string): Promise<GoogleWorkspaceUser | null> {
     try {
@@ -88,7 +88,7 @@ export class GoogleWorkspaceService {
       });
       return response.data as GoogleWorkspaceUser;
     } catch (error: unknown) {
-      // 사용자를 찾을 수 없는 경우 null 반환
+      // Return null when the user is not found
       if (
         error &&
         typeof error === "object" &&
@@ -102,36 +102,39 @@ export class GoogleWorkspaceService {
   }
 
   /**
-   * 사용자의 OAuth 토큰 목록 조회 (연결된 앱 발견용)
-   * @param userKey 사용자 이메일 또는 ID
+   * Lists a user's OAuth tokens (for discovering connected apps)
+   * @param userKey User e-mail or ID
    */
   async listTokens(userKey: string): Promise<GoogleOAuthToken[]> {
     try {
       const response = await this.adminClient.tokens.list({ userKey });
       return (response.data.items as GoogleOAuthToken[]) || [];
     } catch {
-      throw new Error("OAuth 토큰 조회 실패");
+      throw new Error("Failed to fetch OAuth tokens");
     }
   }
 
   /**
-   * 연결 테스트
-   * 자격 증명이 유효한지 확인
+   * Connection test
+   * Checks that the credentials are valid
    */
   async testConnection(): Promise<boolean> {
     try {
-      console.log("[GoogleWorkspace] testConnection 시작...");
-      // 사용자 1명만 조회하여 연결 테스트
+      console.log("[GoogleWorkspace] testConnection starting...");
+      // Test the connection by fetching a single user
       const response = await this.adminClient.users.list({
         customer: "my_customer",
         maxResults: 1,
       });
-      console.log("[GoogleWorkspace] testConnection 성공:", response.status);
+      console.log(
+        "[GoogleWorkspace] testConnection succeeded:",
+        response.status
+      );
       return true;
     } catch (error: unknown) {
-      console.error("[GoogleWorkspace] testConnection 실패:", error);
+      console.error("[GoogleWorkspace] testConnection failed:", error);
 
-      // GaxiosError 상세 정보 추출
+      // Extract GaxiosError details
       const gaxiosError = error as {
         code?: string | number;
         response?: {
@@ -146,26 +149,26 @@ export class GoogleWorkspaceService {
 
       const errorCode = gaxiosError.code || gaxiosError.response?.status;
       const errorData = gaxiosError.response?.data;
-      const errorMessage = gaxiosError.message || "알 수 없는 오류";
+      const errorMessage = gaxiosError.message || "Unknown error";
 
-      console.error("[GoogleWorkspace] 에러 코드:", errorCode);
-      console.error("[GoogleWorkspace] 에러 데이터:", errorData);
-      console.error("[GoogleWorkspace] 에러 메시지:", errorMessage);
+      console.error("[GoogleWorkspace] Error code:", errorCode);
+      console.error("[GoogleWorkspace] Error data:", errorData);
+      console.error("[GoogleWorkspace] Error message:", errorMessage);
 
-      // 구체적인 에러 메시지 생성
-      let detailedMessage = `Google API 오류: ${errorMessage}`;
+      // Build a specific error message
+      let detailedMessage = `Google API error: ${errorMessage}`;
 
       if (errorMessage.includes("invalid_grant")) {
         detailedMessage =
-          "인증 실패: Domain-Wide Delegation 설정을 확인하세요. " +
-          "1) Google Cloud Console에서 서비스 계정의 'Domain-wide delegation' 활성화 " +
-          "2) Google Admin Console > Security > API Controls에서 Client ID와 스코프 등록 필요";
+          "Authentication failed: please check the Domain-Wide Delegation settings. " +
+          "1) Enable 'Domain-wide delegation' for the service account in Google Cloud Console; " +
+          "2) Register the Client ID and scopes under Google Admin Console > Security > API Controls.";
       } else if (errorMessage.includes("Not Authorized")) {
         detailedMessage =
-          "권한 부족: 관리자 이메일(subject)이 Google Workspace Super Admin 권한을 가지고 있는지 확인하세요.";
+          "Insufficient permissions: please check that the admin email (subject) has Google Workspace Super Admin rights.";
       } else if (errorMessage.includes("invalid_client")) {
         detailedMessage =
-          "클라이언트 오류: 서비스 계정 이메일이 올바른지 확인하세요.";
+          "Client error: please check that the service account email is correct.";
       }
 
       throw new Error(detailedMessage);
@@ -173,8 +176,8 @@ export class GoogleWorkspaceService {
   }
 
   /**
-   * 모든 Organizational Unit (OU) 목록 조회
-   * @returns GoogleOrgUnit 배열
+   * Lists all Organizational Units (OUs)
+   * @returns Array of GoogleOrgUnit
    */
   async listOrgUnits(): Promise<GoogleOrgUnit[]> {
     try {
@@ -195,19 +198,19 @@ export class GoogleWorkspaceService {
         blockInheritance: ou.blockInheritance || false,
       })) as GoogleOrgUnit[];
     } catch (error: unknown) {
-      console.error("OU 목록 조회 실패:", error);
-      throw new Error("Organizational Unit 목록 조회에 실패했습니다");
+      console.error("Failed to list OUs:", error);
+      throw new Error("Failed to list Organizational Units");
     }
   }
 
   /**
-   * 특정 Organizational Unit (OU) 조회
-   * @param orgUnitPath OU 경로 (예: "/Engineering")
-   * @returns GoogleOrgUnit 또는 null
+   * Gets a specific Organizational Unit (OU)
+   * @param orgUnitPath OU path (e.g. "/Engineering")
+   * @returns GoogleOrgUnit or null
    */
   async getOrgUnit(orgUnitPath: string): Promise<GoogleOrgUnit | null> {
     try {
-      // OU 경로는 URL 인코딩 필요
+      // The OU path must be URL-encoded
       const encodedPath = encodeURIComponent(orgUnitPath);
       const response = await this.adminClient.orgunits.get({
         customerId: "my_customer",
@@ -225,7 +228,7 @@ export class GoogleWorkspaceService {
         blockInheritance: ou.blockInheritance || false,
       };
     } catch (error: unknown) {
-      // OU를 찾을 수 없는 경우 null 반환
+      // Return null when the OU is not found
       if (
         error &&
         typeof error === "object" &&
@@ -240,7 +243,7 @@ export class GoogleWorkspaceService {
 }
 
 /**
- * 환경 변수에서 Google Workspace 서비스 인스턴스 생성
+ * Creates a Google Workspace service instance from environment variables
  */
 export function createGoogleWorkspaceServiceFromEnv(): GoogleWorkspaceService {
   const clientEmail = process.env.GOOGLE_ADMIN_CLIENT_EMAIL;
@@ -251,7 +254,7 @@ export function createGoogleWorkspaceServiceFromEnv(): GoogleWorkspaceService {
   const subject = process.env.GOOGLE_ADMIN_SUBJECT;
 
   if (!clientEmail || !privateKey || !subject) {
-    throw new Error("Google Workspace 환경 변수가 설정되지 않았습니다");
+    throw new Error("Google Workspace environment variables are not set");
   }
 
   return new GoogleWorkspaceService({

@@ -1,16 +1,16 @@
 /**
  * Login URL Configuration
- * 실패한 SaaS 서비스들의 로그인 감지를 위한 설정
+ * Login-detection settings for SaaS services where basic detection failed
  */
 
 export interface LoginConfig {
-  /** 실제 로그인이 이루어지는 URL 패턴 */
+  /** URL patterns where the actual login happens */
   loginUrlPatterns?: string[];
-  /** 로그인 폼 렌더링 대기 셀렉터 */
+  /** Selector to wait for while the login form renders */
   waitForSelector?: string;
-  /** 로그인 폼 표시를 위해 클릭해야 하는 버튼 */
+  /** Button that must be clicked to show the login form */
   clickBeforeLogin?: string;
-  /** 로그인 타입 */
+  /** Login type */
   type:
     | "redirect"
     | "spa"
@@ -19,11 +19,11 @@ export interface LoginConfig {
     | "oauth-button"
     | "2-step"
     | "standard";
-  /** 추가 대기 시간 (ms) */
+  /** Extra wait time (ms) */
   extraWaitTime?: number;
-  /** OAuth Provider (oauth-button 타입용) */
+  /** OAuth provider (for the oauth-button type) */
   oauthProvider?: string;
-  /** 커스텀 셀렉터 */
+  /** Custom selectors */
   selectors?: {
     email?: string;
     password?: string;
@@ -32,15 +32,15 @@ export interface LoginConfig {
 }
 
 /**
- * 도메인별 로그인 설정
- * 테스트에서 실패한 15개 서비스 + 특수 케이스
+ * Per-domain login settings
+ * The 15 services that failed in testing, plus special cases
  */
 export const LOGIN_CONFIG: Record<string, LoginConfig> = {
   // ============================================
-  // 리다이렉트 기반 로그인 (6개)
+  // Redirect-based login (6)
   // ============================================
 
-  // ChatGPT - Auth0로 리다이렉트
+  // ChatGPT - redirects to Auth0
   "chat.openai.com": {
     loginUrlPatterns: ["auth0.openai.com", "auth.openai.com"],
     waitForSelector: 'input[name="email"], input[name="username"]',
@@ -53,7 +53,7 @@ export const LOGIN_CONFIG: Record<string, LoginConfig> = {
     },
   },
 
-  // Auth0 OpenAI 도메인 직접 처리
+  // Handle the Auth0 OpenAI domain directly
   "auth0.openai.com": {
     waitForSelector: 'input[name="email"], input[name="username"]',
     type: "standard",
@@ -64,7 +64,7 @@ export const LOGIN_CONFIG: Record<string, LoginConfig> = {
     },
   },
 
-  // Auth OpenAI 도메인 (새로운 인증 URL)
+  // Auth OpenAI domain (new auth URL)
   "auth.openai.com": {
     waitForSelector:
       'input[type="email"], input[name="email"], input[name="username"]',
@@ -77,7 +77,7 @@ export const LOGIN_CONFIG: Record<string, LoginConfig> = {
     },
   },
 
-  // Claude - OAuth 중심, 이메일 로그인 버튼 필요
+  // Claude - OAuth-first, needs the email login button
   "claude.ai": {
     clickBeforeLogin:
       'button:contains("email"), a:contains("email"), [data-testid*="email"]',
@@ -148,7 +148,7 @@ export const LOGIN_CONFIG: Record<string, LoginConfig> = {
   },
 
   // ============================================
-  // 동적 SPA 로딩 (5개)
+  // Dynamic SPA loading (5)
   // ============================================
 
   // Zendesk
@@ -208,7 +208,7 @@ export const LOGIN_CONFIG: Record<string, LoginConfig> = {
   },
 
   // ============================================
-  // 모달/팝업 기반 (3개)
+  // Modal/popup based (3)
   // ============================================
 
   // Gamma
@@ -243,7 +243,7 @@ export const LOGIN_CONFIG: Record<string, LoginConfig> = {
   },
 
   // ============================================
-  // Shadow DOM (2개)
+  // Shadow DOM (2)
   // ============================================
 
   // Vercel v0
@@ -253,7 +253,7 @@ export const LOGIN_CONFIG: Record<string, LoginConfig> = {
     extraWaitTime: 3000,
   },
 
-  // Cursor - Shadow DOM 기반 로그인
+  // Cursor - Shadow DOM based login
   "cursor.sh": {
     waitForSelector: 'input[type="email"], input[name="email"]',
     type: "shadow-dom",
@@ -277,10 +277,10 @@ export const LOGIN_CONFIG: Record<string, LoginConfig> = {
   },
 
   // ============================================
-  // OAuth 버튼 → 리다이렉트 (3개)
+  // OAuth button → redirect (3)
   // ============================================
 
-  // Gemini - Google OAuth만 지원
+  // Gemini - supports Google OAuth only
   "gemini.google.com": {
     clickBeforeLogin: 'a[href*="signin"], button:contains("Sign in")',
     type: "oauth-button",
@@ -303,10 +303,10 @@ export const LOGIN_CONFIG: Record<string, LoginConfig> = {
   },
 
   // ============================================
-  // 2-Step 로그인 (2개)
+  // 2-step login (2)
   // ============================================
 
-  // Microsoft - 이메일 → 비밀번호 2단계
+  // Microsoft - two steps: email → password
   "login.live.com": {
     waitForSelector: 'input[type="email"], input[name="loginfmt"]',
     type: "2-step",
@@ -329,7 +329,7 @@ export const LOGIN_CONFIG: Record<string, LoginConfig> = {
     },
   },
 
-  // GitHub - 일반 로그인 폼 (Shadow DOM 아님)
+  // GitHub - regular login form (not Shadow DOM)
   "github.com": {
     waitForSelector: 'input[name="login"], input[id="login_field"]',
     type: "standard",
@@ -343,24 +343,24 @@ export const LOGIN_CONFIG: Record<string, LoginConfig> = {
 };
 
 /**
- * 현재 도메인의 로그인 설정 가져오기
+ * Get the login settings for the current domain
  */
 export function getLoginConfig(hostname: string): LoginConfig | null {
-  // 정확한 매칭
+  // Exact match
   if (LOGIN_CONFIG[hostname]) {
     return LOGIN_CONFIG[hostname];
   }
 
-  // www 제거 후 매칭
+  // Match after stripping www
   const withoutWww = hostname.replace(/^www\./, "");
   if (LOGIN_CONFIG[withoutWww]) {
     return LOGIN_CONFIG[withoutWww];
   }
 
-  // 서브도메인 패턴 매칭 (예: *.okta.com)
+  // Subdomain pattern match (e.g. *.okta.com)
   const parts = hostname.split(".");
   if (parts.length >= 3) {
-    // tenant.okta.com -> okta.com 체크
+    // Check tenant.okta.com -> okta.com
     const baseDomain = parts.slice(-2).join(".");
     if (hostname.includes(".okta.") || hostname.endsWith(".okta.com")) {
       return LOGIN_CONFIG["login.okta.com"];
@@ -371,7 +371,7 @@ export function getLoginConfig(hostname: string): LoginConfig | null {
 }
 
 /**
- * 리다이렉트 URL인지 확인
+ * Check whether the URL is a redirect URL
  */
 export function isRedirectLoginUrl(url: string): boolean {
   const hostname = new URL(url).hostname;
@@ -390,7 +390,7 @@ export function isRedirectLoginUrl(url: string): boolean {
 }
 
 /**
- * 모든 설정된 도메인 목록
+ * List of all configured domains
  */
 export function getAllConfiguredDomains(): string[] {
   return Object.keys(LOGIN_CONFIG);

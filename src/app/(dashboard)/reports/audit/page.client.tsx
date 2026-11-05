@@ -81,10 +81,10 @@ export function AuditLogPageClient({
     Payment: t("reports.audit.entityTypes.payment"),
   };
 
-  // 검색 상태
+  // Search state
   const [searchQuery, setSearchQuery] = useState(initialFilters.search || "");
 
-  // 필터 상태 (Set 기반)
+  // Filter state (Set-based)
   const [selectedFilters, setSelectedFilters] = useState<
     Record<string, Set<string>>
   >({
@@ -99,7 +99,7 @@ export function AuditLogPageClient({
       : new Set(),
   });
 
-  // URL 쿼리 업데이트 함수
+  // Update the URL query
   const updateUrlParams = useCallback(
     (filters: {
       search?: string;
@@ -131,7 +131,7 @@ export function AuditLogPageClient({
     [router]
   );
 
-  // 필터 변경 핸들러 (AdvancedFilterBar용)
+  // Filter change handler (for AdvancedFilterBar)
   const handleFilterChange = useCallback(
     (filterId: string, values: Set<string>) => {
       setSelectedFilters((prev) => ({
@@ -156,12 +156,12 @@ export function AuditLogPageClient({
     [selectedFilters, searchQuery, updateUrlParams]
   );
 
-  // 검색 변경 핸들러
+  // Search change handler
   const handleSearchChange = useCallback((value: string) => {
     setSearchQuery(value);
   }, []);
 
-  // 모든 필터 초기화
+  // Reset all filters
   const clearAllFilters = useCallback(() => {
     setSearchQuery("");
     setSelectedFilters({
@@ -172,20 +172,20 @@ export function AuditLogPageClient({
     router.push("/reports/audit");
   }, [router]);
 
-  // 상세 보기 핸들러
+  // View details handler
   const handleViewDetail = (log: AuditLogEntry) => {
     setSelectedLog(log);
     setDetailDialogOpen(true);
   };
 
-  // CSV 내보내기 핸들러
+  // CSV export handler
   const handleExportCSV = () => {
     const params = new URLSearchParams(searchParams.toString());
     params.set("format", "csv");
     window.open(`/api/reports/audit/export?${params.toString()}`, "_blank");
   };
 
-  // 필터 정의
+  // Filter definitions
   const filters: FilterDefinition[] = useMemo(
     () => [
       {
@@ -218,7 +218,7 @@ export function AuditLogPageClient({
 
   return (
     <div className="space-y-6">
-      {/* 필터 바 */}
+      {/* Filter bar */}
       <AdvancedFilterBar
         searchValue={searchQuery}
         onSearchChange={handleSearchChange}
@@ -228,7 +228,7 @@ export function AuditLogPageClient({
         onFilterChange={handleFilterChange}
         onClearAllFilters={clearAllFilters}
       >
-        {/* 기간 선택 */}
+        {/* Period selector */}
         <DateRangeSelector
           currentPeriod={currentPeriod}
           startDate={currentStartDate}
@@ -249,7 +249,7 @@ export function AuditLogPageClient({
           }}
         />
 
-        {/* 내보내기 */}
+        {/* Export */}
         {canExport && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -276,7 +276,7 @@ export function AuditLogPageClient({
         )}
       </AdvancedFilterBar>
 
-      {/* 테이블 */}
+      {/* Table */}
       <Card className="gap-0 overflow-hidden py-0">
         <CardContent className="p-0">
           <AuditLogTable
@@ -287,7 +287,7 @@ export function AuditLogPageClient({
         </CardContent>
       </Card>
 
-      {/* 상세 다이얼로그 */}
+      {/* Details dialog */}
       <AuditLogDetailDialog
         log={selectedLog}
         open={detailDialogOpen}

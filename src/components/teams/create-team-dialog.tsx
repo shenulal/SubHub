@@ -53,7 +53,7 @@ export function CreateTeamDialog({
   const [isLoadingData, setIsLoadingData] = useState(false);
   const [isPending, startTransition] = useTransition();
 
-  // 다이얼로그 열릴 때 데이터 로드
+  // Load data when the dialog opens
   useEffect(() => {
     if (open) {
       setIsLoadingData(true);
@@ -68,7 +68,7 @@ export function CreateTeamDialog({
         })
         .finally(() => setIsLoadingData(false));
     } else {
-      // 다이얼로그 닫힐 때 초기화
+      // Reset when the dialog closes
       setName("");
       setDescription("");
       setParentId("__none__");
@@ -109,7 +109,7 @@ export function CreateTeamDialog({
     );
   };
 
-  // 멤버 필터링 (팀이 없는 멤버 + 검색어)
+  // Member filtering (members without a team + search term)
   const filteredUsers = users.filter((user) => {
     const matchesSearch =
       !memberSearch ||
@@ -132,7 +132,7 @@ export function CreateTeamDialog({
           </div>
         ) : (
           <div className="space-y-4">
-            {/* 팀 이름 */}
+            {/* Team name */}
             <div className="space-y-2">
               <Label htmlFor="team-name">
                 {t("teams.create.teamName")}{" "}
@@ -146,7 +146,7 @@ export function CreateTeamDialog({
               />
             </div>
 
-            {/* 설명 */}
+            {/* Description */}
             <div className="space-y-2">
               <Label htmlFor="team-description">
                 {t("teams.create.description")}
@@ -160,7 +160,7 @@ export function CreateTeamDialog({
               />
             </div>
 
-            {/* 부모 팀 */}
+            {/* Parent team */}
             <div className="space-y-2">
               <Label>{t("teams.create.parentTeam")}</Label>
               <Select value={parentId} onValueChange={setParentId}>
@@ -182,7 +182,7 @@ export function CreateTeamDialog({
               </Select>
             </div>
 
-            {/* 멤버 배정 */}
+            {/* Member assignment */}
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
                 <Users className="h-4 w-4" />
@@ -195,7 +195,7 @@ export function CreateTeamDialog({
                 )}
               </Label>
 
-              {/* 멤버 검색 */}
+              {/* Member search */}
               <div className="relative">
                 <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
                 <Input
@@ -206,7 +206,7 @@ export function CreateTeamDialog({
                 />
               </div>
 
-              {/* 멤버 목록 */}
+              {/* Member list */}
               <ScrollArea className="h-[200px] rounded-md border">
                 <div className="p-2">
                   {filteredUsers.length === 0 ? (

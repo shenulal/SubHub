@@ -1,5 +1,5 @@
 // prisma/schema.test.ts
-// RED Phase: Prisma Schema 변경 사항을 검증하는 스냅샷 테스트
+// RED phase: snapshot test that verifies Prisma schema changes
 import fs from "fs";
 import path from "path";
 import { describe, expect, it } from "vitest";

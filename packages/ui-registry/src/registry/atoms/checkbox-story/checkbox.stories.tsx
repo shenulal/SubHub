@@ -280,39 +280,39 @@ export const ShouldHandleIndeterminateState: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    // 🎯 목적: 부모 Checkbox가 자식 Checkbox의 선택 상태에 따라 indeterminate 상태를 올바르게 표시하는지 확인
+    // 🎯 Purpose: Verify the parent Checkbox shows the indeterminate state correctly based on its children's selection
 
     const parentCheckbox = canvas.getByTestId("parent-checkbox");
     const stateDisplay = canvas.getByTestId("state-display");
 
-    // 초기 상태: Option 1만 선택됨 (Partially Selected)
+    // Initial state: only Option 1 is selected (Partially Selected)
     await expect(stateDisplay).toHaveTextContent("State: Partially Selected");
     await expect(parentCheckbox).toHaveAttribute("data-state", "indeterminate");
 
-    // Option 2 선택
+    // Select Option 2
     const child1Checkbox = canvas.getByTestId("child-checkbox-1");
     await userEvent.click(child1Checkbox);
     await expect(stateDisplay).toHaveTextContent("State: Partially Selected");
     await expect(parentCheckbox).toHaveAttribute("data-state", "indeterminate");
 
-    // Option 3 선택 (모두 선택됨)
+    // Select Option 3 (all selected)
     const child2Checkbox = canvas.getByTestId("child-checkbox-2");
     await userEvent.click(child2Checkbox);
     await expect(stateDisplay).toHaveTextContent("State: All Selected");
     await expect(parentCheckbox).toBeChecked();
 
-    // 부모 Checkbox 클릭으로 모두 선택 해제
+    // Click the parent Checkbox to deselect all
     await userEvent.click(parentCheckbox);
     await expect(stateDisplay).toHaveTextContent("State: None Selected");
     await expect(parentCheckbox).not.toBeChecked();
 
-    // Option 1 선택 (다시 Partially Selected)
+    // Select Option 1 (Partially Selected again)
     const child0Checkbox = canvas.getByTestId("child-checkbox-0");
     await userEvent.click(child0Checkbox);
     await expect(stateDisplay).toHaveTextContent("State: Partially Selected");
     await expect(parentCheckbox).toHaveAttribute("data-state", "indeterminate");
 
-    // 부모 Checkbox 클릭으로 모두 선택
+    // Click the parent Checkbox to select all
     await userEvent.click(parentCheckbox);
     await expect(stateDisplay).toHaveTextContent("State: All Selected");
     await expect(parentCheckbox).toBeChecked();

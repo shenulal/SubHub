@@ -15,7 +15,7 @@ describe("withApiAuth", () => {
     vi.clearAllMocks();
   });
 
-  it("세션이 없으면 401을 반환해야 한다", async () => {
+  it("should return 401 when there is no session", async () => {
     vi.mocked(auth).mockResolvedValue(null as never);
 
     const handler = vi.fn();
@@ -26,11 +26,11 @@ describe("withApiAuth", () => {
 
     expect(response.status).toBe(401);
     const body = await response.json();
-    expect(body.error).toBe("인증이 필요합니다");
+    expect(body.error).toBe("Authentication required");
     expect(handler).not.toHaveBeenCalled();
   });
 
-  it("user가 없으면 401을 반환해야 한다", async () => {
+  it("should return 401 when there is no user", async () => {
     vi.mocked(auth).mockResolvedValue({} as never);
 
     const handler = vi.fn();
@@ -41,11 +41,11 @@ describe("withApiAuth", () => {
 
     expect(response.status).toBe(401);
     const body = await response.json();
-    expect(body.error).toBe("인증이 필요합니다");
+    expect(body.error).toBe("Authentication required");
     expect(handler).not.toHaveBeenCalled();
   });
 
-  it("organizationId가 없으면 403을 반환해야 한다", async () => {
+  it("should return 403 when organizationId is missing", async () => {
     vi.mocked(auth).mockResolvedValue({
       user: { id: "user-1", organizationId: null },
     } as never);
@@ -58,11 +58,11 @@ describe("withApiAuth", () => {
 
     expect(response.status).toBe(403);
     const body = await response.json();
-    expect(body.error).toBe("조직 정보가 필요합니다");
+    expect(body.error).toBe("Organization information is required");
     expect(handler).not.toHaveBeenCalled();
   });
 
-  it("유효한 세션이면 핸들러를 호출해야 한다", async () => {
+  it("should call the handler for a valid session", async () => {
     const mockSession = {
       user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
     };
@@ -82,7 +82,7 @@ describe("withApiAuth", () => {
     expect(body.success).toBe(true);
   });
 
-  it("핸들러에 세션 컨텍스트를 전달해야 한다", async () => {
+  it("should pass the session context to the handler", async () => {
     const mockSession = {
       user: {
         id: "user-123",
@@ -110,12 +110,12 @@ describe("withApiAuth", () => {
   });
 });
 
-describe("withApiAuth - 관리자 권한 검증", () => {
+describe("withApiAuth - admin permission check", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  it("ADMIN이 아닌 사용자는 requireAdmin 옵션 시 403을 반환해야 한다", async () => {
+  it("should return 403 for non-ADMIN users with the requireAdmin option", async () => {
     vi.mocked(auth).mockResolvedValue({
       user: { id: "user-1", organizationId: "org-1", role: "MEMBER" },
     } as never);
@@ -128,11 +128,11 @@ describe("withApiAuth - 관리자 권한 검증", () => {
 
     expect(response.status).toBe(403);
     const body = await response.json();
-    expect(body.error).toBe("관리자 권한이 필요합니다");
+    expect(body.error).toBe("Admin permission required");
     expect(handler).not.toHaveBeenCalled();
   });
 
-  it("ADMIN 사용자는 requireAdmin 옵션 시 핸들러를 호출해야 한다", async () => {
+  it("should call the handler for ADMIN users with the requireAdmin option", async () => {
     const mockSession = {
       user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
     };

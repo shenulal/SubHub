@@ -212,7 +212,7 @@ describe("costAnomalyScan", () => {
       const result = await processCostAnomalyScan();
 
       expect(result.success).toBe(true);
-      expect(result.errors).toContain("org-1: 관리자 없음");
+      expect(result.errors).toContain("org-1: No admin found");
     });
 
     it("should skip apps with no previous month cost (new apps)", async () => {
@@ -331,7 +331,7 @@ describe("costAnomalyScan", () => {
       expect(result.success).toBe(true);
       expect(result.emailsSent).toBe(0);
       expect(result.errors).toContain(
-        "org-1/app-1: 이메일 발송 실패 (admin@test.com) - SMTP error"
+        "org-1/app-1: Email delivery failed (admin@test.com) - SMTP error"
       );
     });
 
@@ -553,7 +553,7 @@ describe("costAnomalyScan", () => {
       expect(result.anomaliesFound).toBe(1);
       expect(mockSendEmail).toHaveBeenCalledWith(
         expect.objectContaining({
-          appName: "알 수 없는 앱",
+          appName: "Unknown app",
         })
       );
     });
@@ -608,7 +608,7 @@ describe("costAnomalyScan", () => {
       const result = await processCostAnomalyScan();
 
       expect(result.success).toBe(true);
-      expect(result.errors).toContain("org-1: 알 수 없는 오류");
+      expect(result.errors).toContain("org-1: Unknown error");
     });
 
     it("should handle unknown global errors", async () => {
@@ -617,7 +617,7 @@ describe("costAnomalyScan", () => {
       const result = await processCostAnomalyScan();
 
       expect(result.success).toBe(false);
-      expect(result.errors).toContain("알 수 없는 오류");
+      expect(result.errors).toContain("Unknown error");
     });
 
     it("should handle null useAmt sums", async () => {

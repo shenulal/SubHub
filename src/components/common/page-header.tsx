@@ -84,12 +84,12 @@ interface PageHeaderProps {
 }
 
 /**
- * 페이지 헤더 컴포넌트
- * - 제목 + 설명
- * - 뒤로가기 버튼 (옵션)
- * - 액션 버튼 그룹 (Discard, Save Draft, Publish 등)
- * - 배지 (카테고리 표시, 옵션)
- * - 브레드크럼 (경로 표시, 옵션)
+ * Page header component
+ * - Title + description
+ * - Back button (optional)
+ * - Action button group (Discard, Save Draft, Publish, etc.)
+ * - Badge (category, optional)
+ * - Breadcrumbs (path, optional)
  */
 export function PageHeader({
   title,
@@ -188,8 +188,8 @@ export function PageHeader({
 }
 
 /**
- * 폼 페이지 헤더 컴포넌트
- * - Discard, Save Draft, Publish 버튼 패턴
+ * Form page header component
+ * - Discard, Save Draft, Publish button pattern
  */
 interface FormPageHeaderProps {
   title: string;
@@ -214,7 +214,7 @@ export function FormPageHeader({
 
   if (onDiscard) {
     actions.push({
-      label: "취소",
+      label: "Cancel",
       variant: "ghost",
       onClick: onDiscard,
       disabled: isSubmitting,
@@ -223,7 +223,7 @@ export function FormPageHeader({
 
   if (onSaveDraft && isDraft) {
     actions.push({
-      label: "임시 저장",
+      label: "Save draft",
       variant: "outline",
       onClick: onSaveDraft,
       disabled: isSubmitting,
@@ -232,7 +232,7 @@ export function FormPageHeader({
 
   if (onPublish) {
     actions.push({
-      label: isDraft ? "등록" : "저장",
+      label: isDraft ? "Register" : "Save",
       variant: "default",
       onClick: onPublish,
       disabled: isSubmitting,

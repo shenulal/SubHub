@@ -34,8 +34,8 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 /**
- * 공식 문서의 기본 Demo 예제입니다.
- * 프로젝트가 없을 때 표시되며 생성 및 가져오기 액션을 제공합니다.
+ * The basic demo from the official documentation.
+ * Shown when there are no projects; offers create and import actions.
  */
 export const Demo: Story = {
   render: () => (
@@ -71,8 +71,8 @@ export const Demo: Story = {
 };
 
 /**
- * Outline 변형입니다.
- * 점선 테두리로 빈 상태를 강조합니다.
+ * The Outline variant.
+ * Highlights the empty state with a dashed border.
  */
 export const Outline: Story = {
   render: () => (
@@ -96,8 +96,8 @@ export const Outline: Story = {
 };
 
 /**
- * Background 변형입니다.
- * 그라데이션 배경을 사용하여 시각적 효과를 제공합니다.
+ * The Background variant.
+ * Uses a gradient background for visual effect.
  */
 export const Background: Story = {
   render: () => (
@@ -114,8 +114,8 @@ export const Background: Story = {
 };
 
 /**
- * Avatar를 사용한 빈 상태입니다.
- * 단일 아바타를 표시합니다.
+ * An empty state using an Avatar.
+ * Shows a single avatar.
  */
 export const WithAvatar: Story = {
   render: () => (
@@ -140,8 +140,8 @@ export const WithAvatar: Story = {
 };
 
 /**
- * Avatar Group을 사용한 빈 상태입니다.
- * 여러 아바타를 표시하여 팀 멤버 초대를 유도합니다.
+ * An empty state using an Avatar Group.
+ * Shows several avatars to encourage inviting team members.
  */
 export const AvatarGroup: Story = {
   render: () => (
@@ -180,8 +180,8 @@ export const AvatarGroup: Story = {
 };
 
 /**
- * InputGroup을 포함한 빈 상태입니다.
- * 검색 기능을 제공하는 빈 상태를 표시합니다.
+ * An empty state containing an InputGroup.
+ * Shows an empty state that offers search.
  */
 export const WithInputGroup: Story = {
   render: () => (

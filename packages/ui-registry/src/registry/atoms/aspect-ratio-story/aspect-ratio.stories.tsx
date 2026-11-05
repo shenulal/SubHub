@@ -172,49 +172,49 @@ export const ShouldMaintainAspectRatio: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    // 🎯 목적: AspectRatio 컴포넌트가 다양한 비율을 올바르게 유지하는지 확인
+    // 🎯 Purpose: Verify the AspectRatio component maintains various ratios correctly
 
-    // Container 확인
+    // Check the container
     const container = canvas.getByTestId("aspect-ratio-container");
     await expect(container).toBeInTheDocument();
 
-    // 16:9 AspectRatio 확인
+    // Check the 16:9 AspectRatio
     const ratio169 = canvas.getByTestId("ratio-16-9");
     await expect(ratio169).toBeInTheDocument();
     await expect(ratio169).toHaveTextContent("16:9");
 
-    // 16:9 컨테이너의 크기 확인
+    // Check the size of the 16:9 container
     const ratio169Container = canvas.getByTestId("ratio-16-9-container");
     const ratio169Element = ratio169Container.querySelector(
       '[data-testid="ratio-16-9"]',
     );
     if (ratio169Element) {
       const { width, height } = ratio169Element.getBoundingClientRect();
-      // 16:9 비율 검증 (오차 허용 범위 ±2%)
+      // Validate the 16:9 ratio (±2% tolerance)
       const expectedRatio = 16 / 9;
       const actualRatio = width / height;
       const ratioError = Math.abs(actualRatio - expectedRatio) / expectedRatio;
       await expect(ratioError).toBeLessThan(0.02);
     }
 
-    // 4:3 AspectRatio 확인
+    // Check the 4:3 AspectRatio
     const ratio43 = canvas.getByTestId("ratio-4-3");
     await expect(ratio43).toBeInTheDocument();
     await expect(ratio43).toHaveTextContent("4:3");
 
-    // 1:1 AspectRatio 확인
+    // Check the 1:1 AspectRatio
     const ratio11 = canvas.getByTestId("ratio-1-1");
     await expect(ratio11).toBeInTheDocument();
     await expect(ratio11).toHaveTextContent("1:1");
 
-    // 1:1 정사각형 비율 검증
+    // Validate the 1:1 square ratio
     const ratio11Container = canvas.getByTestId("ratio-1-1-container");
     const ratio11Element = ratio11Container.querySelector(
       '[data-testid="ratio-1-1"]',
     );
     if (ratio11Element) {
       const { width, height } = ratio11Element.getBoundingClientRect();
-      // 1:1 비율 검증 (오차 허용 범위 ±2%)
+      // Validate the 1:1 ratio (±2% tolerance)
       const actualRatio = width / height;
       const ratioError = Math.abs(actualRatio - 1);
       await expect(ratioError).toBeLessThan(0.02);

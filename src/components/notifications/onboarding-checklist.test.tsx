@@ -46,7 +46,7 @@ describe("OnboardingChecklist", () => {
   it("renders steps and progress from initial data", () => {
     render(<OnboardingChecklist initialProgress={progress} />);
     expect(
-      screen.getByRole("link", { name: /팀원 초대|Invite a teammate/ })
+      screen.getByRole("link", { name: /Invite a teammate/ })
     ).toHaveAttribute("href", "/settings/team");
     expect(screen.getByRole("progressbar")).toBeInTheDocument();
     expect(screen.getByText(/1/)).toBeInTheDocument();
@@ -79,9 +79,7 @@ describe("OnboardingChecklist", () => {
     const { container } = render(
       <OnboardingChecklist initialProgress={progress} />
     );
-    fireEvent.click(
-      screen.getByRole("button", { name: /체크리스트 숨기기|Hide checklist/ })
-    );
+    fireEvent.click(screen.getByRole("button", { name: /Hide checklist/ }));
     await waitFor(() => expect(dismissOnboarding).toHaveBeenCalled());
     expect(container).toBeEmptyDOMElement();
   });

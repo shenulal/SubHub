@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * AI Agent 플로팅 버튼
+ * AI Agent floating button
  * SMP-197 + SMP-198
  *
  * Materio FAB: 48px primary circle pinned bottom-right. The app footer
@@ -23,7 +23,7 @@ export function AiFloatingButton() {
         onClick={toggle}
         size="icon"
         className="bg-primary text-primary-foreground hover:bg-primary-dark fixed right-6 bottom-6 z-50 size-12 rounded-full shadow-lg transition-[transform,box-shadow] hover:-translate-y-0.5 hover:shadow-xl active:translate-y-0"
-        aria-label="AI 어시스턴트 열기"
+        aria-label="Open AI assistant"
       >
         <Bot className="size-6" />
       </Button>

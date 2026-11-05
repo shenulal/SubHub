@@ -2,7 +2,7 @@
 "use server";
 
 /**
- * Integration 생성/수정/삭제 관련 Server Actions
+ * Integration create/update/delete Server Actions
  */
 
 import { getCachedSession, requireOrganization } from "@/lib/auth/require-auth";
@@ -30,7 +30,7 @@ import type { IntegrationSettingsInput } from "./integrations.types";
 import { isRedirectError } from "./integrations.types";
 
 /**
- * 새 Integration 생성
+ * Create a new integration
  */
 async function _createIntegration(
   input: CreateIntegrationInput
@@ -38,15 +38,15 @@ async function _createIntegration(
   try {
     const session = await getCachedSession();
     if (!session?.user?.id) {
-      return { success: false, message: "인증이 필요합니다" };
+      return { success: false, message: "Authentication required" };
     }
     if (!session.user.organizationId) {
-      return { success: false, message: "조직에 속해 있어야 합니다" };
+      return { success: false, message: "You must belong to an organization" };
     }
 
     const organizationId = session.user.organizationId;
 
-    // 중복 체크
+    // Duplicate check
     const existing = await prisma.integration.findFirst({
       where: {
         organizationId,
@@ -57,24 +57,24 @@ async function _createIntegration(
     if (existing) {
       return {
         success: false,
-        message: "이미 동일한 유형의 연동이 존재합니다",
+        message: "An integration of this type already exists",
       };
     }
 
-    // Google Workspace인 경우 Private Key 정규화 및 연결 테스트
+    // For Google Workspace, normalize the private key and test the connection
     let normalizedCredentials = input.credentials;
     if (input.type === "GOOGLE_WORKSPACE") {
       const creds = input.credentials as IntegrationCredentials;
 
-      // Private Key 정규화:
-      // 1. 앞뒤 공백 제거
-      // 2. 앞뒤 따옴표 제거 (JSON에서 복사 시 포함될 수 있음)
-      // 3. \n 문자열을 실제 줄바꿈으로 변환
+      // Private key normalization:
+      // 1. Trim surrounding whitespace
+      // 2. Strip surrounding quotes (may be included when copied from JSON)
+      // 3. Convert literal \n sequences to real line breaks
       let normalizedPrivateKey = creds.privateKey?.trim();
       if (normalizedPrivateKey) {
-        // 앞뒤 따옴표 제거 (", ')
+        // Strip surrounding quotes (", ')
         normalizedPrivateKey = normalizedPrivateKey.replace(/^["']|["']$/g, "");
-        // \n 이스케이프 문자열을 실제 줄바꿈으로 변환
+        // Convert \n escape sequences to real line breaks
         normalizedPrivateKey = normalizedPrivateKey.replace(/\\n/g, "\n");
       }
 
@@ -89,14 +89,16 @@ async function _createIntegration(
         creds.adminEmail
       ) {
         try {
-          logger.info("[Integration] Google Workspace 연결 테스트 시작...");
+          logger.info(
+            "[Integration] Starting Google Workspace connection test..."
+          );
           logger.info(
             "[Integration] clientEmail: %s",
             creds.serviceAccountEmail
           );
           logger.info("[Integration] subject: %s", creds.adminEmail);
           logger.info(
-            "[Integration] privateKey 시작: %s",
+            "[Integration] privateKey prefix: %s",
             normalizedPrivateKey?.substring(0, 50)
           );
 
@@ -106,30 +108,30 @@ async function _createIntegration(
             subject: creds.adminEmail,
           });
           const connected = await service.testConnection();
-          logger.info("[Integration] 연결 테스트 결과: %s", connected);
+          logger.info("[Integration] Connection test result: %s", connected);
 
           if (!connected) {
             return {
               success: false,
-              message: "Google Workspace 연결 테스트 실패",
+              message: "Google Workspace connection test failed",
             };
           }
         } catch (error) {
           logger.error(
             { err: error },
-            "[Integration] Google Workspace 연결 테스트 에러"
+            "[Integration] Google Workspace connection test error"
           );
           const errorMessage =
-            error instanceof Error ? error.message : "알 수 없는 오류";
+            error instanceof Error ? error.message : "Unknown error";
           return {
             success: false,
-            message: `Google Workspace 연결 실패: ${errorMessage}`,
+            message: `Google Workspace connection failed: ${errorMessage}`,
           };
         }
       }
     }
 
-    // DA-98: ERP 타입일 때 인증 정보 암호화 + 연결 테스트
+    // DA-98: for ERP types, encrypt credentials and test the connection
     if (isERPIntegrationType(input.type)) {
       const erpCreds = normalizedCredentials as ERPCredentials;
       const adapter = getERPAdapter(input.type);
@@ -140,20 +142,20 @@ async function _createIntegration(
           if (!connected) {
             return {
               success: false,
-              message: `${adapter.name} 연결 테스트 실패`,
+              message: `${adapter.name} connection test failed`,
             };
           }
         } catch (error) {
           const errorMessage =
-            error instanceof Error ? error.message : "알 수 없는 오류";
+            error instanceof Error ? error.message : "Unknown error";
           return {
             success: false,
-            message: `${adapter.name} 연결 실패: ${errorMessage}`,
+            message: `${adapter.name} connection failed: ${errorMessage}`,
           };
         }
       }
 
-      // ERP 크리덴셜은 암호화하여 저장
+      // ERP credentials are stored encrypted
       normalizedCredentials = {
         encrypted: encryptJson(erpCreds),
         type: input.type,
@@ -174,11 +176,11 @@ async function _createIntegration(
 
     return { success: true, data: { integration } };
   } catch (error) {
-    logger.error({ err: error }, "Integration 생성 오류");
+    logger.error({ err: error }, "Integration creation error");
     if (isRedirectError(error)) throw error;
     return {
       success: false,
-      message: "연동 생성 중 오류가 발생했습니다",
+      message: "An error occurred while creating the integration",
     };
   }
 }
@@ -188,7 +190,7 @@ export const createIntegration = withLogging(
 );
 
 /**
- * Integration 상태 업데이트
+ * Update integration status
  */
 async function _updateIntegrationStatus(
   integrationId: string,
@@ -197,7 +199,7 @@ async function _updateIntegrationStatus(
   try {
     const session = await getCachedSession();
     if (!session?.user?.organizationId) {
-      return { success: false, message: "인증이 필요합니다" };
+      return { success: false, message: "Authentication required" };
     }
 
     const integration = await prisma.integration.findUnique({
@@ -205,11 +207,11 @@ async function _updateIntegrationStatus(
     });
 
     if (!integration) {
-      return { success: false, message: "연동을 찾을 수 없습니다" };
+      return { success: false, message: "Integration not found" };
     }
 
     if (integration.organizationId !== session.user.organizationId) {
-      return { success: false, message: "접근 권한이 없습니다" };
+      return { success: false, message: "You do not have access permission" };
     }
 
     await prisma.integration.update({
@@ -221,11 +223,11 @@ async function _updateIntegrationStatus(
 
     return { success: true };
   } catch (error) {
-    logger.error({ err: error }, "Integration 상태 업데이트 오류");
+    logger.error({ err: error }, "Integration status update error");
     if (isRedirectError(error)) throw error;
     return {
       success: false,
-      message: "연동 상태 업데이트 중 오류가 발생했습니다",
+      message: "An error occurred while updating the integration status",
     };
   }
 }
@@ -235,14 +237,14 @@ export const updateIntegrationStatus = withLogging(
 );
 
 /**
- * Integration 삭제
+ * Delete an integration
  */
 async function _deleteIntegration(integrationId: string): Promise<ActionState> {
   try {
     const { organizationId, role } = await requireOrganization();
 
     if (role !== "ADMIN") {
-      return { success: false, message: "관리자 권한이 필요합니다" };
+      return { success: false, message: "Admin permission required" };
     }
 
     const integration = await prisma.integration.findUnique({
@@ -250,11 +252,11 @@ async function _deleteIntegration(integrationId: string): Promise<ActionState> {
     });
 
     if (!integration) {
-      return { success: false, message: "연동을 찾을 수 없습니다" };
+      return { success: false, message: "Integration not found" };
     }
 
     if (integration.organizationId !== organizationId) {
-      return { success: false, message: "접근 권한이 없습니다" };
+      return { success: false, message: "You do not have access permission" };
     }
 
     await prisma.integration.delete({
@@ -265,11 +267,11 @@ async function _deleteIntegration(integrationId: string): Promise<ActionState> {
 
     return { success: true };
   } catch (error) {
-    logger.error({ err: error }, "Integration 삭제 오류");
+    logger.error({ err: error }, "Integration deletion error");
     if (isRedirectError(error)) throw error;
     return {
       success: false,
-      message: "연동 삭제 중 오류가 발생했습니다",
+      message: "An error occurred while deleting the integration",
     };
   }
 }
@@ -279,7 +281,7 @@ export const deleteIntegration = withLogging(
 );
 
 /**
- * 즉시 동기화 실행 (Team + User 전체 동기화)
+ * Run an immediate sync (full Team + User sync)
  */
 async function _syncIntegrationNow(
   integrationId: string
@@ -288,7 +290,7 @@ async function _syncIntegrationNow(
     const { organizationId, role } = await requireOrganization();
 
     if (role !== "ADMIN") {
-      return { success: false, message: "관리자 권한이 필요합니다" };
+      return { success: false, message: "Admin permission required" };
     }
 
     const integration = await prisma.integration.findUnique({
@@ -296,15 +298,15 @@ async function _syncIntegrationNow(
     });
 
     if (!integration) {
-      return { success: false, message: "연동을 찾을 수 없습니다" };
+      return { success: false, message: "Integration not found" };
     }
 
     if (integration.organizationId !== organizationId) {
-      return { success: false, message: "접근 권한이 없습니다" };
+      return { success: false, message: "You do not have access permission" };
     }
 
     if (integration.type === "GOOGLE_WORKSPACE") {
-      // Google Workspace 전체 동기화 (Team + User)
+      // Full Google Workspace sync (Team + User)
       const result = await fullGoogleWorkspaceSync(integrationId);
 
       revalidatePath("/settings/integrations");
@@ -314,21 +316,21 @@ async function _syncIntegrationNow(
       return { success: true, data: { result } };
     }
 
-    // DA-100: ERP 수동 동기화
+    // DA-100: manual ERP sync
     if (isERPIntegrationType(integration.type)) {
       const adapter = getERPAdapter(integration.type);
       if (!adapter) {
-        return { success: false, message: "지원하지 않는 ERP 유형입니다" };
+        return { success: false, message: "Unsupported ERP type" };
       }
 
-      // 크리덴셜 복호화
+      // Decrypt credentials
       const creds = integration.credentials as { encrypted?: string };
       if (!creds.encrypted) {
-        return { success: false, message: "ERP 인증 정보가 없습니다" };
+        return { success: false, message: "No ERP credentials found" };
       }
       const erpCredentials = decryptJson<ERPCredentials>(creds.encrypted);
 
-      // 최근 30일 데이터 동기화
+      // Sync the last 30 days of data
       const now = new Date();
       const fromDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
       const syncResult = await adapter.fetchPayments(erpCredentials, {
@@ -336,7 +338,7 @@ async function _syncIntegrationNow(
         toDate: now,
       });
 
-      // SyncLog 기록
+      // Write the SyncLog
       await prisma.syncLog.create({
         data: {
           integrationId,
@@ -379,21 +381,21 @@ async function _syncIntegrationNow(
           } as unknown as FullSyncResult,
         },
         message: syncResult.success
-          ? `${syncResult.totalCount}건의 ERP 결제 데이터를 동기화했습니다`
+          ? `Synced ${syncResult.totalCount} ERP payment records`
           : syncResult.errorMessage,
       };
     }
 
     return {
       success: false,
-      message: "지원하지 않는 연동 유형입니다",
+      message: "Unsupported integration type",
     };
   } catch (error) {
-    logger.error({ err: error }, "Integration 동기화 오류");
+    logger.error({ err: error }, "Integration sync error");
     if (isRedirectError(error)) throw error;
     return {
       success: false,
-      message: "연동 동기화 중 오류가 발생했습니다",
+      message: "An error occurred while syncing the integration",
     };
   }
 }
@@ -403,7 +405,7 @@ export const syncIntegrationNow = withLogging(
 );
 
 /**
- * Integration 설정 업데이트 (metadata 내 설정 값)
+ * Update integration settings (values in metadata)
  */
 async function _updateIntegrationSettings(
   integrationId: string,
@@ -412,7 +414,7 @@ async function _updateIntegrationSettings(
   try {
     const session = await getCachedSession();
     if (!session?.user?.organizationId) {
-      return { success: false, message: "인증이 필요합니다" };
+      return { success: false, message: "Authentication required" };
     }
 
     const integration = await prisma.integration.findUnique({
@@ -420,14 +422,14 @@ async function _updateIntegrationSettings(
     });
 
     if (!integration) {
-      return { success: false, message: "연동을 찾을 수 없습니다" };
+      return { success: false, message: "Integration not found" };
     }
 
     if (integration.organizationId !== session.user.organizationId) {
-      return { success: false, message: "접근 권한이 없습니다" };
+      return { success: false, message: "You do not have access permission" };
     }
 
-    // 기존 metadata와 병합
+    // Merge with existing metadata
     const existingMetadata =
       (integration.metadata as Record<string, unknown>) || {};
     const updatedMetadata = {
@@ -447,11 +449,11 @@ async function _updateIntegrationSettings(
 
     return { success: true };
   } catch (error) {
-    logger.error({ err: error }, "Integration 설정 업데이트 오류");
+    logger.error({ err: error }, "Integration settings update error");
     if (isRedirectError(error)) throw error;
     return {
       success: false,
-      message: "연동 설정 업데이트 중 오류가 발생했습니다",
+      message: "An error occurred while updating the integration settings",
     };
   }
 }

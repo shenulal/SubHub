@@ -20,7 +20,7 @@ import { formatMoney } from "@/lib/services/discovery/money";
 import { cn } from "@/lib/utils";
 import type { CalendarMarker } from "@/types/discovery";
 import { format, parseISO } from "date-fns";
-import { enUS, ko } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 import { ExternalLink, X } from "lucide-react";
 import { useLocale, useTranslations } from "next-intl";
 import Image from "next/image";
@@ -70,11 +70,8 @@ export function RenewalDayDetail({
   const t = useTranslations();
   const td = useTranslations("discovery.calendar");
   const locale = useLocale();
-  const dateLocale = locale === "ko" ? ko : enUS;
-  const dateFormat =
-    locale === "ko" ? "yyyy년 M월 d일 (EEEE)" : "MMMM d, yyyy (EEEE)";
-  const formattedDate = format(parseISO(date), dateFormat, {
-    locale: dateLocale,
+  const formattedDate = format(parseISO(date), "MMMM d, yyyy (EEEE)", {
+    locale: enUS,
   });
 
   const statusLabels: Record<RenewalItem["status"], string> = {

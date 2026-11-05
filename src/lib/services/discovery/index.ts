@@ -1,6 +1,6 @@
 // src/lib/services/discovery/index.ts
 /**
- * 앱 발견 서비스 모듈 export
+ * App discovery service module exports
  */
 
 export { discoverAppsFromGoogle, processDiscoveredApps } from "./appDiscovery";

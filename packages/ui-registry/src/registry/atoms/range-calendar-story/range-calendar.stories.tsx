@@ -61,11 +61,11 @@ export const ShouldDisplayTwoMonths: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    // 🎯 목적: Range Calendar가 2개월을 동시에 표시하는지 확인
+    // 🎯 Purpose: Verify the Range Calendar shows two months at once
     const container = canvas.getByTestId("range-calendar-container");
     await expect(container).toBeInTheDocument();
 
-    // Calendar grid 확인 (2개월 = 2개의 grid가 있어야 함)
+    // Check the calendar grids (2 months = 2 grids)
     await waitFor(
       () => {
         const grids = canvas.getAllByRole("grid");
@@ -74,7 +74,7 @@ export const ShouldDisplayTwoMonths: Story = {
       { timeout: 2000 },
     );
 
-    // 날짜 버튼이 존재하는지 확인
+    // Verify the date buttons exist
     await waitFor(
       () => {
         const dateButtons = canvas.getAllByRole("gridcell");

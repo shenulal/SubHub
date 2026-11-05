@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Building2, Mail, User } from "lucide-react";
-// MVP scope: avatar UI 비활성화 (backend에서 name만 처리)
+// MVP scope: avatar UI disabled (the backend only handles name)
 // import { RefreshCw } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useActionState, useEffect } from "react";
@@ -21,7 +21,7 @@ import { toast } from "sonner";
 interface ProfileFormProps {
   defaultValues: {
     name: string;
-    // MVP scope: avatar/title/department 비활성화
+    // MVP scope: avatar/title/department disabled
     title: string;
     department: string;
     avatarUrl: string;
@@ -44,7 +44,7 @@ function SubmitButton({
   );
 }
 
-// MVP scope: avatar 관련 유틸 비활성화
+// MVP scope: avatar utilities disabled
 // function generateRandomSeed(): string {
 //   return `avatar-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
 // }
@@ -64,7 +64,7 @@ export function ProfileForm({ defaultValues, userEmail }: ProfileFormProps) {
     success: false,
   });
 
-  // MVP scope: avatar 상태 비활성화
+  // MVP scope: avatar state disabled
   // const parsedAvatar = parseAvatarUrl(defaultValues.avatarUrl);
   // const [avatarSeed, setAvatarSeed] = useState<string>(...);
   // const [selectedVariant, setSelectedVariant] = useState<AvatarVariant>(...);
@@ -97,7 +97,7 @@ export function ProfileForm({ defaultValues, userEmail }: ProfileFormProps) {
       </div>
 
       <form action={formAction} className="space-y-6">
-        {/* MVP scope: 아바타 선택 섹션 비활성화 (backend에서 name만 처리) */}
+        {/* MVP scope: avatar picker section disabled (the backend only handles name) */}
         <div className="grid gap-5 sm:grid-cols-2">
           {/* Name Field - Editable Section */}
           <div className="min-w-0 space-y-1.5">

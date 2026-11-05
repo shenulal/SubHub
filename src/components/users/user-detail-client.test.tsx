@@ -42,7 +42,7 @@ vi.mock("next/link", () => ({
   }) => <a href={href}>{children}</a>,
 }));
 
-// Mock next-auth (server module 의존 차단)
+// Mock next-auth (blocks the server-module dependency)
 vi.mock("next-auth", () => ({
   __esModule: true,
   default: () => ({}),
@@ -60,11 +60,11 @@ vi.mock("@/components/team/transfer-admin-dialog", () => ({
 
 const mockUserData = {
   id: "user-1",
-  name: "홍길동",
+  name: "John Smith",
   email: "hong@test.com",
   role: "MEMBER",
   status: "ACTIVE",
-  department: "개발팀",
+  department: "Engineering",
   team: null,
   assignedAppCount: 5,
   lastLoginAt: new Date("2024-01-15"),
@@ -85,21 +85,23 @@ describe("UserDetailClient", () => {
     mockUseGetIdentity.mockReturnValue({ data: null });
   });
 
-  it("사용자 상세 정보를 렌더링한다", () => {
+  it("renders user details", () => {
     render(<UserDetailClient id="user-1" />);
 
-    // PageHeader에서 사용자 이름이 제목으로 표시됨
-    expect(screen.getByRole("heading", { name: "홍길동" })).toBeInTheDocument();
-    // 통합 카드 내부에 역할/상태 label (i18n key passthrough)
+    // PageHeader shows the user name as the title
+    expect(
+      screen.getByRole("heading", { name: "John Smith" })
+    ).toBeInTheDocument();
+    // Role/status labels inside the combined card (i18n key passthrough)
     expect(screen.getByText("users.role.member")).toBeInTheDocument();
     expect(screen.getByText("users.status.active")).toBeInTheDocument();
-    // 구독 보기 버튼
+    // View subscriptions button
     expect(
       screen.getByRole("button", { name: /users\.detail\.viewSubscriptions/ })
     ).toBeInTheDocument();
   });
 
-  it("로딩 중이면 로딩 상태를 표시한다", () => {
+  it("shows the loading state while loading", () => {
     mockUseShow.mockReturnValueOnce({
       query: { data: undefined, isLoading: true },
     });
@@ -109,7 +111,7 @@ describe("UserDetailClient", () => {
     expect(screen.getByText("users.detail.loading")).toBeInTheDocument();
   });
 
-  it("사용자가 없으면 에러 메시지를 표시한다", () => {
+  it("shows an error message when the user does not exist", () => {
     mockUseShow.mockReturnValueOnce({
       query: { data: { data: null }, isLoading: false },
     });
@@ -122,20 +124,20 @@ describe("UserDetailClient", () => {
     ).toHaveAttribute("href", "/users");
   });
 
-  it("부서 정보를 표시한다", () => {
+  it("shows department information", () => {
     render(<UserDetailClient id="user-1" />);
 
-    // department가 InfoItem value로 표시됨
-    expect(screen.getByText("개발팀")).toBeInTheDocument();
+    // department is shown as an InfoItem value
+    expect(screen.getByText("Engineering")).toBeInTheDocument();
   });
 
-  it("팀 이름이 있으면 부서 대신 팀 이름을 표시한다", () => {
+  it("shows the team name instead of the department when present", () => {
     mockUseShow.mockReturnValueOnce({
       query: {
         data: {
           data: {
             ...mockUserData,
-            team: { id: "team-1", name: "프론트엔드팀" },
+            team: { id: "team-1", name: "Frontend Team" },
           },
         },
         isLoading: false,
@@ -144,10 +146,10 @@ describe("UserDetailClient", () => {
 
     render(<UserDetailClient id="user-1" />);
 
-    expect(screen.getByText("프론트엔드팀")).toBeInTheDocument();
+    expect(screen.getByText("Frontend Team")).toBeInTheDocument();
   });
 
-  it("부서가 없으면 - 를 표시한다", () => {
+  it("shows - when there is no department", () => {
     mockUseShow.mockReturnValueOnce({
       query: {
         data: {
@@ -159,18 +161,18 @@ describe("UserDetailClient", () => {
 
     render(<UserDetailClient id="user-1" />);
 
-    // "-" 문자가 여러 곳에 있을 수 있음
+    // "-" may appear in several places
     expect(screen.getAllByText("-").length).toBeGreaterThanOrEqual(1);
   });
 
-  it("앱 접근 수를 표시한다", () => {
+  it("shows the app access count", () => {
     render(<UserDetailClient id="user-1" />);
 
     expect(screen.getByText("users.detail.appAccessCount")).toBeInTheDocument();
     expect(screen.getAllByText("5").length).toBeGreaterThanOrEqual(1);
   });
 
-  it("useShow를 올바른 파라미터로 호출한다", () => {
+  it("calls useShow with the correct parameters", () => {
     render(<UserDetailClient id="user-123" />);
 
     expect(mockUseShow).toHaveBeenCalledWith({
@@ -182,7 +184,7 @@ describe("UserDetailClient", () => {
     });
   });
 
-  it("이름이 없으면 이메일을 타이틀로 표시한다", () => {
+  it("shows the email as the title when there is no name", () => {
     mockUseShow.mockReturnValueOnce({
       query: {
         data: { data: { ...mockUserData, name: null } },
@@ -192,30 +194,30 @@ describe("UserDetailClient", () => {
 
     render(<UserDetailClient id="user-1" />);
 
-    // PageHeader 제목에 이메일이 표시됨
+    // The email is shown in the PageHeader title
     expect(
       screen.getByRole("heading", { name: "hong@test.com" })
     ).toBeInTheDocument();
   });
 
-  it("연결된 앱 섹션이 표시되지 않는다", () => {
+  it("does not show the connected apps section", () => {
     render(<UserDetailClient id="user-1" />);
 
-    // connectedApps key가 없어야 함
+    // The connectedApps key must not be present
     expect(
       screen.queryByText("users.detail.connectedApps")
     ).not.toBeInTheDocument();
   });
 
-  it("역할/상태가 카드 내부에만 표시된다", () => {
+  it("shows role/status only inside the card", () => {
     render(<UserDetailClient id="user-1" />);
 
-    // 카드 내부에 역할/상태 label이 있어야 함
+    // Role/status labels must be inside the card
     expect(screen.getByText("users.detail.role")).toBeInTheDocument();
     expect(screen.getByText("users.detail.status")).toBeInTheDocument();
   });
 
-  describe("구독 KPI 그리드", () => {
+  describe("subscription KPI grid", () => {
     const mockSubscriptionSummary = {
       total: 8,
       monthlyAmount: 250000,
@@ -223,7 +225,7 @@ describe("UserDetailClient", () => {
       currency: "KRW",
     };
 
-    it("구독 요약이 있으면 KPI 값을 표시한다", () => {
+    it("shows KPI values when a subscription summary exists", () => {
       mockUseShow.mockReturnValueOnce({
         query: {
           data: {
@@ -238,12 +240,12 @@ describe("UserDetailClient", () => {
 
       render(<UserDetailClient id="user-1" />);
 
-      // KPI 숫자 값 확인
+      // Check KPI numeric values
       expect(screen.getByText("8")).toBeInTheDocument();
       expect(screen.getByText(/250,000/)).toBeInTheDocument();
       expect(screen.getByText("2")).toBeInTheDocument();
 
-      // KPI 라벨 확인
+      // Check KPI labels
       expect(
         screen.getByText("users.detail.totalSubscriptions")
       ).toBeInTheDocument();
@@ -251,7 +253,7 @@ describe("UserDetailClient", () => {
       expect(screen.getByText("users.detail.renewingSoon")).toBeInTheDocument();
     });
 
-    it("구독 요약이 없으면 빈 메시지를 표시한다", () => {
+    it("shows the empty message when there is no subscription summary", () => {
       render(<UserDetailClient id="user-1" />);
 
       expect(
@@ -259,7 +261,7 @@ describe("UserDetailClient", () => {
       ).toBeInTheDocument();
     });
 
-    it("USD 통화일 때 $ 기호를 표시한다", () => {
+    it("shows the $ symbol for USD currency", () => {
       mockUseShow.mockReturnValueOnce({
         query: {
           data: {

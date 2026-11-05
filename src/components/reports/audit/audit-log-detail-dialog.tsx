@@ -110,7 +110,7 @@ export function AuditLogDetailDialog({
         </DialogHeader>
 
         <div className="space-y-6">
-          {/* 기본 정보 */}
+          {/* Basic information */}
           <div className="grid gap-4 sm:grid-cols-2 [&>div]:min-w-0">
             <div>
               <p className="text-muted-foreground text-sm">
@@ -168,7 +168,7 @@ export function AuditLogDetailDialog({
             </div>
           </div>
 
-          {/* 변경 사항 */}
+          {/* Changes */}
           {log.changes && Object.keys(log.changes).length > 0 && (
             <div>
               <p className="text-muted-foreground mb-2 text-sm">
@@ -180,7 +180,7 @@ export function AuditLogDetailDialog({
             </div>
           )}
 
-          {/* 메타데이터 */}
+          {/* Metadata */}
           {log.metadata && Object.keys(log.metadata).length > 0 && (
             <div>
               <p className="text-muted-foreground mb-2 text-sm">
@@ -192,7 +192,7 @@ export function AuditLogDetailDialog({
             </div>
           )}
 
-          {/* 로그 ID */}
+          {/* Log ID */}
           <div className="border-t pt-4">
             <p className="text-muted-foreground text-xs">
               {t("reports.audit.detail.fields.logId")}:{" "}

@@ -99,7 +99,7 @@ describe("users-write", () => {
       const result = await _transferAdminRole("member-1", "MEMBER");
 
       expect(result.success).toBe(true);
-      expect(result.message).toBe("관리자 권한이 이관되었습니다");
+      expect(result.message).toBe("Admin rights transferred");
       expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
       expect(mockPrisma.user.update).toHaveBeenCalledWith({
         where: { id: "member-1" },
@@ -122,14 +122,14 @@ describe("users-write", () => {
       const result = await _transferAdminRole("other-1", "MEMBER");
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("관리자만 권한을 이관할 수 있습니다");
+      expect(result.message).toBe("Only admins can transfer admin rights");
     });
 
     it("should block self-transfer", async () => {
       const result = await _transferAdminRole("admin-1", "MEMBER");
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("본인에게 이관할 수 없습니다");
+      expect(result.message).toBe("You cannot transfer to yourself");
     });
 
     it("should block when target user not found", async () => {
@@ -138,7 +138,7 @@ describe("users-write", () => {
       const result = await _transferAdminRole("nonexistent", "MEMBER");
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("대상 사용자를 찾을 수 없습니다");
+      expect(result.message).toBe("Target user not found");
     });
 
     it("should block when target is not ACTIVE", async () => {
@@ -152,7 +152,7 @@ describe("users-write", () => {
 
       expect(result.success).toBe(false);
       expect(result.message).toBe(
-        "활성 상태의 사용자에게만 이관할 수 있습니다"
+        "Admin rights can only be transferred to an active user"
       );
     });
 
@@ -168,7 +168,7 @@ describe("users-write", () => {
       const result = await _transferAdminRole("member-1", "MEMBER");
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("대상 사용자가 이미 관리자입니다");
+      expect(result.message).toBe("The target user is already an admin");
     });
 
     it("should handle transaction error", async () => {
@@ -184,7 +184,7 @@ describe("users-write", () => {
       const result = await _transferAdminRole("member-1", "MEMBER");
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("관리자 권한 이관에 실패했습니다");
+      expect(result.message).toBe("Failed to transfer admin rights");
     });
   });
 
@@ -204,7 +204,7 @@ describe("users-write", () => {
       const result = await _offboardUser("member-1");
 
       expect(result.success).toBe(true);
-      expect(result.message).toBe("사용자가 퇴사 처리되었습니다");
+      expect(result.message).toBe("The user has been offboarded");
       expect(mockPrisma.$transaction).toHaveBeenCalledTimes(1);
       // Verify transaction includes status update and session/account cleanup
       expect(mockPrisma.user.update).toHaveBeenCalledWith({
@@ -242,14 +242,14 @@ describe("users-write", () => {
       const result = await _offboardUser("other-1");
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("관리자만 퇴사 처리할 수 있습니다");
+      expect(result.message).toBe("Only admins can offboard users");
     });
 
     it("should block self-offboard", async () => {
       const result = await _offboardUser("admin-1");
 
       expect(result.success).toBe(false);
-      expect(result.message).toContain("본인은 퇴사 처리할 수 없습니다");
+      expect(result.message).toContain("You cannot offboard yourself");
     });
 
     it("should block offboard of ADMIN user", async () => {
@@ -263,7 +263,7 @@ describe("users-write", () => {
       const result = await _offboardUser("admin-2");
 
       expect(result.success).toBe(false);
-      expect(result.message).toContain("관리자는 퇴사 처리할 수 없습니다");
+      expect(result.message).toContain("Admins cannot be offboarded");
     });
 
     it("should block when user already TERMINATED", async () => {
@@ -277,7 +277,7 @@ describe("users-write", () => {
       const result = await _offboardUser("member-1");
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("이미 퇴사 처리된 사용자입니다.");
+      expect(result.message).toBe("This user has already been offboarded.");
     });
 
     it("should block when target user not found", async () => {
@@ -286,7 +286,7 @@ describe("users-write", () => {
       const result = await _offboardUser("nonexistent");
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("사용자를 찾을 수 없습니다");
+      expect(result.message).toBe("User not found");
     });
 
     it("should handle transaction error", async () => {
@@ -303,7 +303,7 @@ describe("users-write", () => {
       const result = await _offboardUser("member-1");
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("퇴사 처리에 실패했습니다");
+      expect(result.message).toBe("Failed to offboard the user");
     });
   });
 
@@ -323,7 +323,7 @@ describe("users-write", () => {
       const result = await _permanentlyDeleteUser("member-1");
 
       expect(result.success).toBe(true);
-      expect(result.message).toBe("사용자가 영구 삭제되었습니다");
+      expect(result.message).toBe("The user has been permanently deleted");
       expect(mockPrisma.auditLog.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
           action: "PERMANENTLY_DELETE_USER",
@@ -346,14 +346,14 @@ describe("users-write", () => {
       const result = await _permanentlyDeleteUser("other-1");
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("관리자만 사용자를 영구 삭제할 수 있습니다");
+      expect(result.message).toBe("Only admins can permanently delete users");
     });
 
     it("should block self-deletion", async () => {
       const result = await _permanentlyDeleteUser("admin-1");
 
       expect(result.success).toBe(false);
-      expect(result.message).toContain("본인은 삭제할 수 없습니다");
+      expect(result.message).toContain("You cannot delete yourself");
     });
 
     it("should block when user is not TERMINATED", async () => {
@@ -368,7 +368,7 @@ describe("users-write", () => {
 
       expect(result.success).toBe(false);
       expect(result.message).toContain(
-        "퇴사 처리된 사용자만 영구 삭제할 수 있습니다"
+        "Only offboarded users can be permanently deleted"
       );
     });
 
@@ -378,7 +378,7 @@ describe("users-write", () => {
       const result = await _permanentlyDeleteUser("nonexistent");
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("사용자를 찾을 수 없습니다");
+      expect(result.message).toBe("User not found");
     });
 
     it("should handle transaction error", async () => {
@@ -396,7 +396,7 @@ describe("users-write", () => {
       const result = await _permanentlyDeleteUser("member-1");
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("사용자 영구 삭제에 실패했습니다");
+      expect(result.message).toBe("Failed to permanently delete the user");
     });
 
     it("should reassign related data before deletion", async () => {

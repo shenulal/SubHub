@@ -4,9 +4,9 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * 🎯 목적: Switch 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: Radix UI Switch primitive 사용, checked/unchecked 상태 스타일 유지
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the Switch component for React 18/19 compatibility
+ * 📝 Note: Uses the Radix UI Switch primitive; keep the checked/unchecked state styles
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const Switch = React.forwardRef<
   React.ElementRef<typeof SwitchPrimitive.Root>,

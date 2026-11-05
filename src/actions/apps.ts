@@ -31,10 +31,10 @@ function isRedirectError(error: unknown): boolean {
   return hasRedirectDigest || hasRedirectMessage;
 }
 
-// URL 또는 상대 경로(/로 시작) 검증 함수
+// Validate a URL or a relative path (starting with /)
 const isValidUrlOrPath = (val: string | null | undefined) => {
   if (!val || val === "") return true;
-  if (val.startsWith("/")) return true; // 상대 경로 허용
+  if (val.startsWith("/")) return true; // allow relative paths
   try {
     new URL(val);
     return true;
@@ -47,19 +47,22 @@ const isValidUrlOrPath = (val: string | null | undefined) => {
 const createAppSchema = z.object({
   name: z
     .string()
-    .min(2, "앱 이름은 2자 이상이어야 합니다")
-    .max(100, "앱 이름은 100자 이하여야 합니다"),
+    .min(2, "App name must be at least 2 characters")
+    .max(100, "App name must be 100 characters or fewer"),
   category: z.string().nullish(),
   customLogoUrl: z
     .string()
     .nullish()
-    .refine(isValidUrlOrPath, { message: "유효한 URL을 입력하세요" }),
+    .refine(isValidUrlOrPath, { message: "Please enter a valid URL" }),
   customWebsite: z
     .string()
-    .url("유효한 URL을 입력하세요")
+    .url("Please enter a valid URL")
     .nullish()
     .or(z.literal("")),
-  notes: z.string().max(1000, "메모는 1000자 이하여야 합니다").nullish(),
+  notes: z
+    .string()
+    .max(1000, "Notes must be 1000 characters or fewer")
+    .nullish(),
   tags: z.string().nullish(),
   ownerId: z.string().nullish(),
   catalogId: z.string().nullish(),
@@ -78,7 +81,7 @@ interface GetAppsParams {
 }
 
 /**
- * 앱 목록 조회
+ * List apps
  */
 export async function getApps(
   params: GetAppsParams = {}
@@ -92,10 +95,10 @@ export async function getApps(
     limit = 20,
   } = params;
 
-  // MEMBER/VIEWER는 본인 팀 앱만 조회 가능
+  // MEMBER/VIEWER can only see their own teams' apps
   if (role === "MEMBER" || role === "VIEWER") {
     if (!teamId) {
-      // 팀 미소속 시 빈 결과 반환
+      // No team membership: return an empty result
       return {
         items: [],
         total: 0,
@@ -112,7 +115,7 @@ export async function getApps(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const where: any = { organizationId };
 
-  // MEMBER/VIEWER는 본인 팀에 배정된 앱만 조회
+  // MEMBER/VIEWER only see apps assigned to their teams
   if ((role === "MEMBER" || role === "VIEWER") && teamId) {
     where.teams = { some: { teamId } };
   }
@@ -132,7 +135,7 @@ export async function getApps(
   if (filter.search) {
     where.name = { contains: filter.search, mode: "insensitive" };
   }
-  // ADMIN만 teamIds 필터 사용 가능 (이미 MEMBER/VIEWER는 본인 팀으로 제한됨)
+  // Only ADMIN may use the teamIds filter (MEMBER/VIEWER are already limited to their teams)
   if (role === "ADMIN" && filter.teamIds && filter.teamIds.length > 0) {
     where.teams = {
       some: { teamId: { in: filter.teamIds } },
@@ -187,7 +190,7 @@ export async function getApps(
 }
 
 /**
- * 앱 상세 조회
+ * Get app details
  */
 export async function getApp(id: string): Promise<AppDetail | null> {
   const { organizationId, role, teamId } = await requireOrganization();
@@ -206,11 +209,11 @@ export async function getApp(id: string): Promise<AppDetail | null> {
     return null;
   }
 
-  // MEMBER/VIEWER는 본인 팀에 배정된 앱만 조회 가능
+  // MEMBER/VIEWER can only see apps assigned to their teams
   if (role === "MEMBER" || role === "VIEWER") {
     const isTeamApp = teamId && app.teams.some((at) => at.teamId === teamId);
     if (!isTeamApp) {
-      return null; // 권한 없음 → Not Found로 처리
+      return null; // No access → treat as Not Found
     }
   }
 
@@ -239,7 +242,7 @@ export async function getApp(id: string): Promise<AppDetail | null> {
 }
 
 /**
- * 앱 생성
+ * Create app
  */
 async function _createApp(
   _prevState: ActionState<{ id: string; matchedPaymentCount?: number }>,
@@ -248,9 +251,12 @@ async function _createApp(
   try {
     const { organizationId, userId, role } = await requireOrganization();
 
-    // 권한 검증: VIEWER는 앱 생성 불가
+    // Permission check: VIEWER cannot create apps
     if (role === "VIEWER") {
-      return { success: false, message: "앱 생성 권한이 없습니다" };
+      return {
+        success: false,
+        message: "You do not have permission to create apps",
+      };
     }
 
     // Parse form data
@@ -284,7 +290,10 @@ async function _createApp(
     });
 
     if (existingApp) {
-      return { success: false, message: "이미 등록된 앱 이름입니다" };
+      return {
+        success: false,
+        message: "An app with this name already exists",
+      };
     }
 
     // Validate ownerId belongs to same organization
@@ -295,7 +304,7 @@ async function _createApp(
       if (!owner) {
         return {
           success: false,
-          message: "지정된 소유자가 조직에 속하지 않습니다",
+          message: "The specified owner does not belong to this organization",
         };
       }
     }
@@ -308,7 +317,7 @@ async function _createApp(
       if (teams.length !== data.teamIds.length) {
         return {
           success: false,
-          message: "유효하지 않은 팀이 포함되어 있습니다",
+          message: "One or more teams are invalid",
         };
       }
     }
@@ -377,18 +386,18 @@ async function _createApp(
 
     return { success: true, data: { id: app.id, matchedPaymentCount } };
   } catch (error) {
-    logger.error({ err: error }, "앱 생성 오류");
+    logger.error({ err: error }, "App creation error");
     if (isRedirectError(error)) throw error;
     return {
       success: false,
-      message: "앱 생성 중 오류가 발생했습니다",
+      message: "An error occurred while creating the app",
     };
   }
 }
 export const createApp = withLogging("createApp", _createApp);
 
 /**
- * 앱 수정
+ * Update app
  */
 async function _updateApp(
   id: string,
@@ -398,9 +407,12 @@ async function _updateApp(
   try {
     const { organizationId, userId, role } = await requireOrganization();
 
-    // 권한 검증: ADMIN만 앱 수정 가능
+    // Permission check: only ADMIN can update apps
     if (role !== "ADMIN") {
-      return { success: false, message: "앱 수정 권한이 없습니다" };
+      return {
+        success: false,
+        message: "You do not have permission to edit this app",
+      };
     }
 
     // Check if app exists
@@ -409,7 +421,7 @@ async function _updateApp(
     });
 
     if (!existingApp) {
-      return { success: false, message: "앱을 찾을 수 없습니다" };
+      return { success: false, message: "App not found" };
     }
 
     // Parse form data
@@ -444,7 +456,10 @@ async function _updateApp(
       });
 
       if (duplicateApp) {
-        return { success: false, message: "이미 등록된 앱 이름입니다" };
+        return {
+          success: false,
+          message: "An app with this name already exists",
+        };
       }
     }
 
@@ -456,7 +471,7 @@ async function _updateApp(
       if (!owner) {
         return {
           success: false,
-          message: "지정된 소유자가 조직에 속하지 않습니다",
+          message: "The specified owner does not belong to this organization",
         };
       }
     }
@@ -469,7 +484,7 @@ async function _updateApp(
       if (teams.length !== data.teamIds.length) {
         return {
           success: false,
-          message: "유효하지 않은 팀이 포함되어 있습니다",
+          message: "One or more teams are invalid",
         };
       }
     }
@@ -529,25 +544,25 @@ async function _updateApp(
 
     return { success: true, data: { id: app.id } };
   } catch (error) {
-    logger.error({ err: error }, "앱 수정 오류");
+    logger.error({ err: error }, "App update error");
     if (isRedirectError(error)) throw error;
     return {
       success: false,
-      message: "앱 수정 중 오류가 발생했습니다",
+      message: "An error occurred while updating the app",
     };
   }
 }
 export const updateApp = withLogging("updateApp", _updateApp);
 
 /**
- * 앱 삭제
+ * Delete app
  */
 async function _deleteApp(id: string): Promise<ActionState> {
   try {
     const { organizationId, userId, role } = await requireOrganization();
 
     if (role !== "ADMIN") {
-      return { success: false, message: "관리자 권한이 필요합니다" };
+      return { success: false, message: "Admin permission required" };
     }
 
     // Check if app exists
@@ -556,7 +571,7 @@ async function _deleteApp(id: string): Promise<ActionState> {
     });
 
     if (!existingApp) {
-      return { success: false, message: "앱을 찾을 수 없습니다" };
+      return { success: false, message: "App not found" };
     }
 
     // Delete app (cascade will delete related subscriptions and user accesses)
@@ -578,11 +593,11 @@ async function _deleteApp(id: string): Promise<ActionState> {
 
     return { success: true };
   } catch (error) {
-    logger.error({ err: error }, "앱 삭제 오류");
+    logger.error({ err: error }, "App deletion error");
     if (isRedirectError(error)) throw error;
     return {
       success: false,
-      message: "앱 삭제 중 오류가 발생했습니다",
+      message: "An error occurred while deleting the app",
     };
   }
 }

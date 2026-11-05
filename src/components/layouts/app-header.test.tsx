@@ -9,7 +9,7 @@ vi.mock("@/actions/auth", () => ({
   logout: vi.fn(),
 }));
 
-import messages from "@/i18n/messages/ko.json";
+import messages from "@/i18n/messages/en.json";
 import { AppHeader } from "./app-header";
 
 // Mock useIsMobile
@@ -19,7 +19,7 @@ vi.mock("@/hooks/use-mobile", () => ({
 
 const renderWithProvider = (ui: React.ReactElement) => {
   return render(
-    <NextIntlClientProvider locale="ko" messages={messages}>
+    <NextIntlClientProvider locale="en" messages={messages}>
       <SidebarProvider>{ui}</SidebarProvider>
     </NextIntlClientProvider>
   );
@@ -30,50 +30,50 @@ describe("AppHeader", () => {
     vi.clearAllMocks();
   });
 
-  describe("렌더링", () => {
-    it("헤더가 렌더링되어야 한다", () => {
+  describe("rendering", () => {
+    it("renders the header", () => {
       renderWithProvider(<AppHeader />);
       expect(screen.getByTestId("app-header")).toBeInTheDocument();
     });
 
-    it("사이드바 토글 버튼이 있어야 한다", () => {
+    it("has a sidebar toggle button", () => {
       renderWithProvider(<AppHeader />);
-      // SidebarTrigger는 data-sidebar="trigger" 속성을 가짐
+      // SidebarTrigger has the data-sidebar="trigger" attribute
       expect(screen.getByText(/toggle sidebar/i)).toBeInTheDocument();
     });
   });
 
-  describe("검색", () => {
-    it("검색 버튼이 있어야 한다", () => {
+  describe("search", () => {
+    it("has a search button", () => {
       renderWithProvider(<AppHeader />);
-      // CommandSearch는 버튼으로 표시되며 "검색..." 텍스트를 포함
-      expect(screen.getByText(/검색/i)).toBeInTheDocument();
+      // CommandSearch renders as a button containing the "Search…" text
+      expect(screen.getByText(/Search/i)).toBeInTheDocument();
     });
   });
 
-  describe("알림", () => {
-    it("알림 버튼이 있어야 한다", () => {
+  describe("notifications", () => {
+    it("has a notifications button", () => {
       renderWithProvider(<AppHeader />);
-      expect(screen.getByLabelText(/알림/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/Notifications/i)).toBeInTheDocument();
     });
   });
 
-  describe("사용자 메뉴", () => {
-    it("사용자 아바타가 표시되어야 한다", () => {
+  describe("user menu", () => {
+    it("shows the user avatar", () => {
       renderWithProvider(<AppHeader />);
       expect(screen.getByTestId("user-menu-trigger")).toBeInTheDocument();
     });
 
-    it("사용자 메뉴 클릭 시 드롭다운이 표시되어야 한다", async () => {
+    it("shows the dropdown when the user menu is clicked", async () => {
       const user = userEvent.setup();
       renderWithProvider(<AppHeader />);
 
       const userMenuTrigger = screen.getByTestId("user-menu-trigger");
       await user.click(userMenuTrigger);
 
-      expect(screen.getByText("프로필")).toBeInTheDocument();
-      expect(screen.getByText("설정")).toBeInTheDocument();
-      expect(screen.getByText("로그아웃")).toBeInTheDocument();
+      expect(screen.getByText("Profile")).toBeInTheDocument();
+      expect(screen.getByText("Settings")).toBeInTheDocument();
+      expect(screen.getByText("Log out")).toBeInTheDocument();
     });
   });
 });

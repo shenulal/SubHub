@@ -42,11 +42,11 @@ const mockUsers = [
   {
     id: "user-1",
     email: "admin@example.com",
-    name: "관리자",
+    name: "Admin",
     avatarUrl: null,
     role: "ADMIN",
     status: "ACTIVE",
-    department: "경영팀",
+    department: "Management",
     jobTitle: "CTO",
     lastLoginAt: new Date("2024-01-15"),
     terminatedAt: null,
@@ -68,33 +68,33 @@ describe("UserPageClient", () => {
     mockUseCan.mockReturnValue({ data: { can: true } });
   });
 
-  it("사용자 관리 페이지를 렌더링한다", () => {
+  it("renders the user management page", () => {
     render(<UserPageClient />);
 
-    expect(screen.getByText("사용자 관리")).toBeInTheDocument();
+    expect(screen.getByText("Users")).toBeInTheDocument();
     expect(
-      screen.getByText(/조직의 사용자를 조회하고 관리하세요/)
+      screen.getByText(/Manage all users in your organization/)
     ).toBeInTheDocument();
   });
 
-  it("KPI 통계 카드를 표시한다", () => {
+  it("shows the KPI stat cards", () => {
     render(<UserPageClient />);
 
-    expect(screen.getByText("전체 사용자")).toBeInTheDocument();
-    expect(screen.getByText("활성 사용자")).toBeInTheDocument();
-    expect(screen.getByText("비활성")).toBeInTheDocument();
-    expect(screen.getByText("퇴사")).toBeInTheDocument();
+    expect(screen.getByText("Total Users")).toBeInTheDocument();
+    expect(screen.getByText("Active Users")).toBeInTheDocument();
+    expect(screen.getByText("Inactive Users")).toBeInTheDocument();
+    expect(screen.getByText("Terminated Users")).toBeInTheDocument();
   });
 
-  it("사용자 목록을 표시한다", () => {
+  it("shows the user list", () => {
     render(<UserPageClient />);
 
-    // "관리자"는 이름과 역할 배지에 모두 나타남
-    expect(screen.getAllByText("관리자").length).toBeGreaterThanOrEqual(1);
+    // "Admin" appears in both the name and the role badge
+    expect(screen.getAllByText("Admin").length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("admin@example.com")).toBeInTheDocument();
   });
 
-  it("로딩 중이면 로딩 상태를 표시한다", () => {
+  it("shows the loading state while loading", () => {
     mockUseList.mockReturnValueOnce({
       query: {
         data: undefined,
@@ -104,10 +104,10 @@ describe("UserPageClient", () => {
 
     render(<UserPageClient />);
 
-    expect(screen.getByText(/로딩 중/)).toBeInTheDocument();
+    expect(screen.getByText(/Loading/)).toBeInTheDocument();
   });
 
-  it("데이터가 없으면 빈 상태를 표시한다", () => {
+  it("shows the empty state when there is no data", () => {
     mockUseList.mockReturnValueOnce({
       query: {
         data: { data: [], total: 0 },
@@ -117,10 +117,10 @@ describe("UserPageClient", () => {
 
     render(<UserPageClient />);
 
-    expect(screen.getByText("등록된 사용자가 없습니다")).toBeInTheDocument();
+    expect(screen.getByText("No users found")).toBeInTheDocument();
   });
 
-  it("useList를 올바른 파라미터로 호출한다", () => {
+  it("calls useList with the correct parameters", () => {
     render(<UserPageClient />);
 
     expect(mockUseList).toHaveBeenCalledWith({

@@ -94,7 +94,7 @@ export function DomainManagement({
           <CardDescription>{t("settings.domains.description")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* 기본 도메인 (삭제 불가) - info-muted로 강조 */}
+          {/* Primary domain (cannot be deleted) - highlighted with info-muted */}
           {primaryDomain && (
             <div className="tonal-info flex min-w-0 items-center justify-between rounded-md px-3 py-2.5">
               <div className="flex min-w-0 items-center gap-2">
@@ -112,7 +112,7 @@ export function DomainManagement({
             </div>
           )}
 
-          {/* 도메인 추가 입력 */}
+          {/* Add-domain input */}
           <div className="flex min-w-0 gap-2">
             <Input
               className="min-w-0 flex-1"
@@ -135,7 +135,7 @@ export function DomainManagement({
             </Button>
           </div>
 
-          {/* 추가 도메인 목록 */}
+          {/* Additional domain list */}
           {domains.length === 0 ? (
             <div className="bg-muted flex flex-col items-center justify-center gap-1 rounded-md py-8 text-center">
               <span className="tonal-neutral mb-2 flex size-10 items-center justify-center rounded-md">
@@ -179,7 +179,7 @@ export function DomainManagement({
             </div>
           )}
 
-          {/* 도메인 수 표시 */}
+          {/* Domain count */}
           {domains.length > 0 && (
             <p className="text-muted-foreground text-[0.8125rem]">
               {t("settings.domains.count", { count: domains.length })}

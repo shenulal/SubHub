@@ -28,9 +28,9 @@ export function TenantSettingsForm({ tenant }: TenantSettingsFormProps) {
     const result = await updateTenantName(tenant.id, name);
     setLoading(null);
     if (result.success) {
-      toast.success(result.message ?? "저장되었습니다.");
+      toast.success(result.message ?? "Saved.");
     } else {
-      toast.error(result.message ?? "오류가 발생했습니다.");
+      toast.error(result.message ?? "An error occurred.");
     }
   };
 
@@ -39,9 +39,9 @@ export function TenantSettingsForm({ tenant }: TenantSettingsFormProps) {
     const result = await updateTenantDomain(tenant.id, domain);
     setLoading(null);
     if (result.success) {
-      toast.success(result.message ?? "저장되었습니다.");
+      toast.success(result.message ?? "Saved.");
     } else {
-      toast.error(result.message ?? "오류가 발생했습니다.");
+      toast.error(result.message ?? "An error occurred.");
     }
   };
 
@@ -50,37 +50,37 @@ export function TenantSettingsForm({ tenant }: TenantSettingsFormProps) {
     const result = await updateTenantLogoUrl(tenant.id, logoUrl);
     setLoading(null);
     if (result.success) {
-      toast.success(result.message ?? "저장되었습니다.");
+      toast.success(result.message ?? "Saved.");
     } else {
-      toast.error(result.message ?? "오류가 발생했습니다.");
+      toast.error(result.message ?? "An error occurred.");
     }
   };
 
   return (
     <div className="max-w-3xl space-y-5 [&_[data-slot=label]]:text-[0.9375rem]">
-      {/* 회사명 */}
+      {/* Company name */}
       <div className="space-y-2">
-        <Label htmlFor="name">회사명</Label>
+        <Label htmlFor="name">Company Name</Label>
         <div className="flex min-w-0 gap-2 [&>button]:h-10 [&>button]:shrink-0 [&>button]:px-[18px] [&>input]:min-w-0 [&>input]:flex-1">
           <Input
             id="name"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="회사명을 입력하세요"
+            placeholder="Enter the company name"
           />
           <Button
             onClick={handleSaveName}
             disabled={loading === "name" || name === tenant.name}
             size="sm"
           >
-            {loading === "name" ? "저장 중..." : "저장"}
+            {loading === "name" ? "Saving..." : "Save"}
           </Button>
         </div>
       </div>
 
-      {/* 도메인 */}
+      {/* Domain */}
       <div className="space-y-2">
-        <Label htmlFor="domain">도메인</Label>
+        <Label htmlFor="domain">Domain</Label>
         <div className="flex min-w-0 gap-2 [&>button]:h-10 [&>button]:shrink-0 [&>button]:px-[18px] [&>input]:min-w-0 [&>input]:flex-1">
           <Input
             id="domain"
@@ -93,17 +93,17 @@ export function TenantSettingsForm({ tenant }: TenantSettingsFormProps) {
             disabled={loading === "domain" || domain === (tenant.domain ?? "")}
             size="sm"
           >
-            {loading === "domain" ? "저장 중..." : "저장"}
+            {loading === "domain" ? "Saving..." : "Save"}
           </Button>
         </div>
         <p className="text-muted-foreground text-[0.8125rem]">
-          예: example.com (https:// 제외)
+          e.g. example.com (without https://)
         </p>
       </div>
 
-      {/* 로고 URL */}
+      {/* Logo URL */}
       <div className="space-y-2">
-        <Label htmlFor="logo">로고 URL</Label>
+        <Label htmlFor="logo">Logo URL</Label>
         <div className="flex min-w-0 gap-2 [&>button]:h-10 [&>button]:shrink-0 [&>button]:px-[18px] [&>input]:min-w-0 [&>input]:flex-1">
           <Input
             id="logo"
@@ -116,14 +116,14 @@ export function TenantSettingsForm({ tenant }: TenantSettingsFormProps) {
             disabled={loading === "logo" || logoUrl === (tenant.logoUrl ?? "")}
             size="sm"
           >
-            {loading === "logo" ? "저장 중..." : "저장"}
+            {loading === "logo" ? "Saving..." : "Save"}
           </Button>
         </div>
         {logoUrl && (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={logoUrl}
-            alt="로고 미리보기"
+            alt="Logo preview"
             className="h-12 w-auto max-w-full rounded-md border object-contain p-1"
             onError={(e) => {
               (e.target as HTMLImageElement).style.display = "none";

@@ -1,7 +1,7 @@
 // src/types/sso.ts
 /**
- * SSO 연동 관련 타입 정의
- * Google Workspace Admin SDK 연동에 사용
+ * SSO integration types
+ * Used for the Google Workspace Admin SDK integration
  */
 
 import type {
@@ -13,8 +13,8 @@ import type {
 // ==================== Google Workspace Types ====================
 
 /**
- * Google Workspace 사용자 정보
- * Admin SDK Directory API 응답 기반
+ * Google Workspace user
+ * Based on the Admin SDK Directory API response
  */
 export interface GoogleWorkspaceUser {
   id: string;
@@ -33,46 +33,46 @@ export interface GoogleWorkspaceUser {
   lastLoginTime?: string;
   thumbnailPhotoUrl?: string;
   customSchemas?: Record<string, unknown>;
-  /** Manager 관계 정보 */
+  /** Manager relationship */
   relations?: Array<{
     type: string; // "manager", "assistant", "custom"
-    value: string; // 이메일 주소
+    value: string; // email address
     customType?: string;
   }>;
-  /** 조직 내 직책/부서 정보 */
+  /** Job title/department within the organization */
   organizations?: Array<{
-    name?: string; // 조직명
-    title?: string; // 직책 (Job Title)
-    department?: string; // 부서
-    location?: string; // 근무지
+    name?: string; // organization name
+    title?: string; // job title
+    department?: string; // department
+    location?: string; // work location
     primary?: boolean;
   }>;
 }
 
 /**
- * Google Workspace Organizational Unit (OU) 정보
- * Admin SDK Directory API 응답 기반
+ * Google Workspace organizational unit (OU)
+ * Based on the Admin SDK Directory API response
  */
 export interface GoogleOrgUnit {
-  /** OU 고유 ID */
+  /** OU unique ID */
   orgUnitId: string;
-  /** OU 이름 (마지막 세그먼트) */
+  /** OU name (last segment) */
   name: string;
-  /** OU 설명 */
+  /** OU description */
   description?: string;
-  /** OU 전체 경로 (예: "/Engineering/Frontend") */
+  /** Full OU path (e.g. "/Engineering/Frontend") */
   orgUnitPath: string;
-  /** 부모 OU ID */
+  /** Parent OU ID */
   parentOrgUnitId?: string;
-  /** 부모 OU 경로 */
+  /** Parent OU path */
   parentOrgUnitPath?: string;
-  /** 차단 상속 여부 */
+  /** Whether inheritance is blocked */
   blockInheritance?: boolean;
 }
 
 /**
- * Google Workspace OAuth 토큰 정보
- * 사용자가 승인한 앱 목록 조회용
+ * Google Workspace OAuth token
+ * Used to list the apps a user has authorised
  */
 export interface GoogleOAuthToken {
   clientId: string;
@@ -86,18 +86,18 @@ export interface GoogleOAuthToken {
 }
 
 /**
- * Google Workspace 서비스 계정 자격 증명
+ * Google Workspace service account credentials
  */
 export interface ServiceAccountCredentials {
   clientEmail: string;
   privateKey: string;
-  subject: string; // 관리자 이메일 (위임용)
+  subject: string; // admin email (for delegation)
 }
 
 // ==================== Integration Types ====================
 
 /**
- * Integration 생성 입력
+ * Integration create input
  */
 export interface CreateIntegrationInput {
   type: IntegrationType;
@@ -106,22 +106,22 @@ export interface CreateIntegrationInput {
 }
 
 /**
- * Integration 자격 증명 (JSON 필드)
+ * Integration credentials (JSON field)
  */
 export interface IntegrationCredentials {
-  // Google Workspace 서비스 계정
+  // Google Workspace service account
   serviceAccountEmail?: string;
   privateKey?: string;
-  adminEmail?: string; // 위임 대상 관리자
+  adminEmail?: string; // admin to impersonate via delegation
 
-  // OAuth 토큰 (사용자 OAuth 방식)
+  // OAuth tokens (user OAuth flow)
   accessToken?: string;
   refreshToken?: string;
   expiresAt?: number;
 }
 
 /**
- * Integration 메타데이터 (JSON 필드)
+ * Integration metadata (JSON field)
  */
 export interface IntegrationMetadata {
   domain?: string;
@@ -132,7 +132,7 @@ export interface IntegrationMetadata {
 }
 
 /**
- * Integration 상세 정보 (조회용)
+ * Integration details (for reads)
  */
 export interface IntegrationWithStats {
   id: string;
@@ -143,7 +143,7 @@ export interface IntegrationWithStats {
   lastError: string | null;
   createdAt: Date;
   updatedAt: Date;
-  // 통계
+  // Statistics
   syncCount?: number;
   lastSyncResult?: SyncResult;
 }
@@ -151,7 +151,7 @@ export interface IntegrationWithStats {
 // ==================== Sync Types ====================
 
 /**
- * 동기화 결과
+ * Sync result
  */
 export interface SyncResult {
   status: SyncStatus;
@@ -160,31 +160,31 @@ export interface SyncResult {
   itemsUpdated: number;
   itemsSkipped?: number;
   errors: SyncError[];
-  duration?: number; // 밀리초
+  duration?: number; // milliseconds
 }
 
 /**
- * Team 동기화 결과 (OU -> Team)
+ * Team sync result (OU -> Team)
  */
 export interface TeamSyncResult extends SyncResult {
-  /** 삭제된 팀 수 (orphaned teams) */
+  /** Number of deleted teams (orphaned teams) */
   teamsDeleted?: number;
 }
 
 /**
- * 전체 Google Workspace 동기화 결과
+ * Full Google Workspace sync result
  */
 export interface FullSyncResult {
-  /** Team 동기화 결과 */
+  /** Team sync result */
   teamResult: TeamSyncResult;
-  /** User 동기화 결과 */
+  /** User sync result */
   userResult: SyncResult;
-  /** 총 소요 시간 (밀리초) */
+  /** Total duration (milliseconds) */
   totalDuration: number;
 }
 
 /**
- * 동기화 에러
+ * Sync error
  */
 export interface SyncError {
   code: string;
@@ -195,37 +195,37 @@ export interface SyncError {
 }
 
 /**
- * 사용자 동기화 옵션
+ * User sync options
  */
 export interface UserSyncOptions {
-  /** 신규 사용자 생성 여부 */
+  /** Whether to create new users */
   createNew?: boolean;
-  /** 기존 사용자 업데이트 여부 */
+  /** Whether to update existing users */
   updateExisting?: boolean;
-  /** 퇴사자 상태 자동 감지 여부 */
+  /** Whether to auto-detect departed employees */
   detectTerminated?: boolean;
-  /** 동기화 대상 OU 경로 (없으면 전체) */
+  /** OU path to sync (all if omitted) */
   orgUnitPath?: string;
-  /** 배치 크기 */
+  /** Batch size */
   batchSize?: number;
 }
 
 /**
- * 앱 발견 옵션
+ * App discovery options
  */
 export interface AppDiscoveryOptions {
-  /** 최소 사용자 수 (이 이상 사용하는 앱만 발견) */
+  /** Minimum user count (only discover apps used by at least this many) */
   minUsers?: number;
-  /** SaaS 카탈로그 매칭 여부 */
+  /** Whether to match against the SaaS catalog */
   matchCatalog?: boolean;
-  /** 기존 앱 업데이트 여부 */
+  /** Whether to update existing apps */
   updateExisting?: boolean;
 }
 
 // ==================== Discovery Types ====================
 
 /**
- * 발견된 앱 정보
+ * Discovered app
  */
 export interface DiscoveredApp {
   clientId: string;
@@ -233,14 +233,14 @@ export interface DiscoveredApp {
   scopes: string[];
   users: DiscoveredAppUser[];
   userCount: number;
-  /** 매칭된 SaaS 카탈로그 ID */
+  /** Matched SaaS catalog ID */
   catalogId?: string;
-  /** 매칭 신뢰도 (0-1) */
+  /** Match confidence (0-1) */
   matchConfidence?: number;
 }
 
 /**
- * 앱을 사용하는 사용자 정보
+ * User of an app
  */
 export interface DiscoveredAppUser {
   email: string;
@@ -249,7 +249,7 @@ export interface DiscoveredAppUser {
 }
 
 /**
- * SaaS 매칭 결과
+ * SaaS match result
  */
 export interface SaaSMatchResult {
   catalogId: string;
@@ -261,7 +261,7 @@ export interface SaaSMatchResult {
 // ==================== API Response Types ====================
 
 /**
- * 동기화 시작 응답
+ * Sync start response
  */
 export interface StartSyncResponse {
   success: boolean;
@@ -271,7 +271,7 @@ export interface StartSyncResponse {
 }
 
 /**
- * Integration 목록 응답
+ * Integration list response
  */
 export interface IntegrationListResponse {
   integrations: IntegrationWithStats[];

@@ -1,5 +1,5 @@
 // src/components/subscriptions/subscription-form-pricing.test.tsx
-import messages from "@/i18n/messages/ko.json";
+import messages from "@/i18n/messages/en.json";
 import { render, screen } from "@testing-library/react";
 import React from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -35,7 +35,7 @@ vi.mock("next-intl", () => ({
       return result;
     };
   },
-  useLocale: () => "ko",
+  useLocale: () => "en",
 }));
 
 vi.mock("@/components/ui/select", () => ({
@@ -199,40 +199,40 @@ describe("SubscriptionFormPricing", () => {
     selectedUserIds: [],
   };
 
-  it("요금 정보 카드 타이틀이 표시되어야 한다", () => {
+  it("shows the pricing card title", () => {
     render(<SubscriptionFormPricing {...defaultProps} />);
 
-    expect(screen.getByText("요금 정보")).toBeInTheDocument();
+    expect(screen.getByText("Pricing")).toBeInTheDocument();
   });
 
-  it("결제 주기와 요금 유형 셀렉트가 표시되어야 한다", () => {
+  it("shows the billing cycle and billing type selects", () => {
     render(<SubscriptionFormPricing {...defaultProps} />);
 
-    expect(screen.getByText("결제 주기 *")).toBeInTheDocument();
-    expect(screen.getByText("요금 유형")).toBeInTheDocument();
+    expect(screen.getByText("Billing cycle *")).toBeInTheDocument();
+    expect(screen.getByText("Billing Type")).toBeInTheDocument();
   });
 
-  it("통화와 금액 필드가 표시되어야 한다", () => {
+  it("shows the currency and amount fields", () => {
     render(<SubscriptionFormPricing {...defaultProps} />);
 
-    expect(screen.getByText("통화")).toBeInTheDocument();
-    expect(screen.getByText("금액 *")).toBeInTheDocument();
+    expect(screen.getByText("Currency")).toBeInTheDocument();
+    expect(screen.getByText("Amount *")).toBeInTheDocument();
   });
 
-  it("FLAT_RATE일 때 Seat 관리가 표시되지 않아야 한다", () => {
+  it("hides seat management for FLAT_RATE", () => {
     render(<SubscriptionFormPricing {...defaultProps} />);
 
-    expect(screen.queryByText(/총 Seat 수/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/Total seats/)).not.toBeInTheDocument();
   });
 
-  it("PER_SEAT일 때 Seat 관리가 표시되어야 한다", () => {
+  it("shows seat management for PER_SEAT", () => {
     mockWatchValues = { billingType: "PER_SEAT", totalLicenses: 50 };
     render(<SubscriptionFormPricing {...defaultProps} />);
 
-    expect(screen.getByText(/총 Seat 수/)).toBeInTheDocument();
+    expect(screen.getByText(/Total seats/)).toBeInTheDocument();
   });
 
-  it("PER_SEAT + isAdmin + users일 때 유저 배정이 표시되어야 한다", () => {
+  it("shows user assignment for PER_SEAT + isAdmin + users", () => {
     mockWatchValues = { billingType: "PER_SEAT", totalLicenses: 50 };
     const users = [
       { id: "u1", name: "User 1", email: "u1@test.com", teamId: null },
@@ -241,42 +241,44 @@ describe("SubscriptionFormPricing", () => {
       <SubscriptionFormPricing {...defaultProps} isAdmin={true} users={users} />
     );
 
-    expect(screen.getByText("유저 배정")).toBeInTheDocument();
+    expect(screen.getByText("Assign users")).toBeInTheDocument();
   });
 
-  it("amount 에러 메시지가 표시되어야 한다", () => {
+  it("shows the amount error message", () => {
     render(
       <SubscriptionFormPricing
         {...defaultProps}
         errors={{
-          amount: { message: "금액을 입력해주세요", type: "required" },
+          amount: { message: "Please enter an amount", type: "required" },
         }}
       />
     );
 
-    expect(screen.getByText("금액을 입력해주세요")).toBeInTheDocument();
+    expect(screen.getByText("Please enter an amount")).toBeInTheDocument();
   });
 
-  it("billingCycle 에러 메시지가 표시되어야 한다", () => {
+  it("shows the billingCycle error message", () => {
     render(
       <SubscriptionFormPricing
         {...defaultProps}
         errors={{
           billingCycle: {
-            message: "결제 주기를 선택해주세요",
+            message: "Please select a billing cycle",
             type: "required",
           },
         }}
       />
     );
 
-    expect(screen.getByText("결제 주기를 선택해주세요")).toBeInTheDocument();
+    expect(
+      screen.getByText("Please select a billing cycle")
+    ).toBeInTheDocument();
   });
 
-  it("isPending=true일 때 금액 입력이 비활성화되어야 한다", () => {
+  it("disables the amount input when isPending=true", () => {
     render(<SubscriptionFormPricing {...defaultProps} isPending={true} />);
 
-    const amountInput = screen.getByLabelText("금액 *");
+    const amountInput = screen.getByLabelText("Amount *");
     expect(amountInput).toBeDisabled();
   });
 });

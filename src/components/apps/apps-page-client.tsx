@@ -32,7 +32,7 @@ export function AppsPageClient({ role }: AppsPageClientProps) {
     category: new Set<string>(),
   });
 
-  // 컬럼 가시성 상태 (외부에서 관리)
+  // Column visibility state (managed externally)
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
   >({});
@@ -69,7 +69,7 @@ export function AppsPageClient({ role }: AppsPageClientProps) {
     return Array.from(unique);
   }, [apps]);
 
-  // 필터 정의
+  // Filter definitions
   const filters: FilterDefinition[] = useMemo(
     () => [
       {
@@ -77,7 +77,7 @@ export function AppsPageClient({ role }: AppsPageClientProps) {
         title: t("apps.filters.status.label"),
         options: [
           { label: t("apps.filters.status.active"), value: "ACTIVE" },
-          // MVP scope: Inactive, Pending Review 필터 비활성화
+          // MVP scope: Inactive and Pending Review filters disabled
           // { label: t("apps.filters.status.inactive"), value: "INACTIVE" },
           // {
           //   label: t("apps.filters.status.pendingReview"),
@@ -105,7 +105,7 @@ export function AppsPageClient({ role }: AppsPageClientProps) {
     });
   };
 
-  // 앱 통계 계산
+  // Compute app statistics
   const stats = useMemo(() => {
     const activeCount = apps.filter((app) => app.status === "ACTIVE").length;
     const inactiveCount = apps.filter(
@@ -117,7 +117,7 @@ export function AppsPageClient({ role }: AppsPageClientProps) {
     return { activeCount, inactiveCount, reviewCount };
   }, [apps]);
 
-  // 필터링된 앱 목록
+  // Filtered app list
   const filteredApps = useMemo(() => {
     let result = apps;
 
@@ -130,12 +130,12 @@ export function AppsPageClient({ role }: AppsPageClientProps) {
       );
     }
 
-    // Status 필터 (Set 기반)
+    // Status filter (Set-based)
     if (selectedFilters.status.size > 0) {
       result = result.filter((app) => selectedFilters.status.has(app.status));
     }
 
-    // Category 필터 (Set 기반)
+    // Category filter (Set-based)
     if (selectedFilters.category.size > 0) {
       result = result.filter(
         (app) => app.category && selectedFilters.category.has(app.category)
@@ -170,10 +170,10 @@ export function AppsPageClient({ role }: AppsPageClientProps) {
 
   return (
     <div className="min-w-0 space-y-6">
-      {/* 페이지 헤더 */}
+      {/* Page header */}
       <PageHeader title={t("apps.page.title")} />
 
-      {/* 통계 카드 */}
+      {/* Stats cards */}
       <KpiCardsGrid columns={2}>
         <KpiCard title={t("apps.kpi.total")} value={total} icon={AppWindow} />
         <KpiCard
@@ -189,7 +189,7 @@ export function AppsPageClient({ role }: AppsPageClientProps) {
               : undefined
           }
         />
-        {/* MVP scope: 비활성 앱, 검토 대기 KPI 비활성화
+        {/* MVP scope: inactive apps and pending review KPIs disabled
         <KpiCard
           title={t("apps.kpi.inactive")}
           value={stats.inactiveCount}
@@ -203,7 +203,7 @@ export function AppsPageClient({ role }: AppsPageClientProps) {
         */}
       </KpiCardsGrid>
 
-      {/* 필터 툴바 */}
+      {/* Filter toolbar */}
       <AdvancedFilterBar
         searchValue={searchQuery}
         onSearchChange={setSearchQuery}
@@ -220,7 +220,7 @@ export function AppsPageClient({ role }: AppsPageClientProps) {
         />
       </AdvancedFilterBar>
 
-      {/* 앱 목록 */}
+      {/* App list */}
       {isLoading ? (
         <div className="space-y-4">
           {/* KPI Cards Skeleton */}

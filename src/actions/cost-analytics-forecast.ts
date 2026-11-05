@@ -25,8 +25,8 @@ import {
 } from "./cost-analytics-utils";
 
 /**
- * 비용 이상 감지
- * 전월 대비 50% 이상 급증한 앱을 감지
+ * Cost anomaly detection
+ * Detects apps whose cost rose 50% or more versus last month
  */
 export async function detectCostAnomalies(
   options: {
@@ -38,14 +38,17 @@ export async function detectCostAnomalies(
     const session = await auth();
 
     if (!session?.user) {
-      return { success: false, message: "인증이 필요합니다" };
+      return { success: false, message: "Authentication required" };
     }
 
     if (!session.user.organizationId) {
-      return { success: false, message: "조직 정보가 필요합니다" };
+      return {
+        success: false,
+        message: "Organization information is required",
+      };
     }
 
-    // 현재 월과 이전 월 날짜 계산
+    // Calculate the current and previous month dates
     const now = new Date();
     const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
     const previousMonthStart = new Date(
@@ -65,14 +68,14 @@ export async function detectCostAnomalies(
     };
     applyPaymentRecordScope(currentWhere, scope);
 
-    // 현재 월 앱별 비용
+    // Per-app cost for the current month
     const currentMonthData = await prisma.paymentRecord.groupBy({
       by: ["matchedAppId"],
       where: currentWhere,
       _sum: { amount: true },
     });
 
-    // 이전 월 앱별 비용
+    // Per-app cost for the previous month
     const previousWhere: Record<string, unknown> = {
       organizationId: session.user.organizationId,
       matchStatus: { in: ["MANUAL", "AUTO_MATCHED"] },
@@ -87,7 +90,7 @@ export async function detectCostAnomalies(
       _sum: { amount: true },
     });
 
-    // 이전 월 데이터를 Map으로 변환
+    // Convert previous-month data to a Map
     const previousCostMap = new Map<string, number>();
     previousMonthData.forEach((item) => {
       if (item.matchedAppId) {
@@ -95,7 +98,7 @@ export async function detectCostAnomalies(
       }
     });
 
-    // 앱 정보 조회
+    // Fetch app info
     const appIds = currentMonthData
       .map((g) => g.matchedAppId)
       .filter((id): id is string => id !== null);
@@ -107,7 +110,7 @@ export async function detectCostAnomalies(
 
     const appMap = new Map(apps.map((app) => [app.id, app.name]));
 
-    // 이상 감지
+    // Detect anomalies
     const anomalies: CostAnomaly[] = [];
 
     currentMonthData.forEach((item) => {
@@ -116,7 +119,7 @@ export async function detectCostAnomalies(
       const currentCost = extractAmount(item._sum.amount);
       const previousCost = previousCostMap.get(item.matchedAppId) || 0;
 
-      // 이전 월 비용이 있고, 50% 이상 증가한 경우
+      // Previous-month cost exists and rose by 50% or more
       if (previousCost > 0) {
         const changeRate = ((currentCost - previousCost) / previousCost) * 100;
 
@@ -124,18 +127,18 @@ export async function detectCostAnomalies(
           const severity = getSeverity(changeRate);
           anomalies.push({
             appId: item.matchedAppId,
-            appName: appMap.get(item.matchedAppId) || "알 수 없음",
+            appName: appMap.get(item.matchedAppId) || "Unknown",
             currentCost,
             previousCost,
             changeRate: Math.round(changeRate),
             severity,
-            message: `전월 대비 ${Math.round(changeRate)}% 증가`,
+            message: `Up ${Math.round(changeRate)}% vs last month`,
           });
         }
       }
     });
 
-    // 심각도순 정렬
+    // Sort by severity
     anomalies.sort((a, b) => b.changeRate - a.changeRate);
 
     return {
@@ -146,30 +149,36 @@ export async function detectCostAnomalies(
       },
     };
   } catch (error) {
-    console.error("이상 비용 감지 오류:", error);
-    return { success: false, message: "이상 비용 감지 중 오류가 발생했습니다" };
+    console.error("Cost anomaly detection error:", error);
+    return {
+      success: false,
+      message: "An error occurred while detecting cost anomalies",
+    };
   }
 }
 
 /**
- * 비용 예측 조회
- * 구독 정보 기반으로 다음 달 예상 비용을 계산
+ * Get the cost forecast
+ * Calculates next month's expected cost from subscription data
  */
 export async function getForecastedCost(options: {
-  targetMonth?: string; // YYYY-MM 형식
+  targetMonth?: string; // YYYY-MM format
 }): Promise<ActionState<GetForecastedCostResult>> {
   try {
     const session = await auth();
 
     if (!session?.user) {
-      return { success: false, message: "인증이 필요합니다" };
+      return { success: false, message: "Authentication required" };
     }
 
     if (!session.user.organizationId) {
-      return { success: false, message: "조직 정보가 필요합니다" };
+      return {
+        success: false,
+        message: "Organization information is required",
+      };
     }
 
-    // 대상 월 결정 (기본값: 다음 달)
+    // Determine the target month (default: next month)
     const now = new Date();
     let targetMonth = options.targetMonth;
     if (!targetMonth) {
@@ -177,12 +186,12 @@ export async function getForecastedCost(options: {
       targetMonth = formatMonthKey(nextMonth);
     }
 
-    // 대상 월의 시작/종료일 계산
+    // Calculate the target month's start/end dates
     const [year, month] = targetMonth.split("-").map(Number);
     const targetMonthStart = new Date(year, month - 1, 1);
     const targetMonthEnd = new Date(year, month, 0);
 
-    // 활성 구독 조회
+    // Fetch active subscriptions
     const subscriptions = await prisma.subscription.findMany({
       where: {
         organizationId: session.user.organizationId,
@@ -193,14 +202,14 @@ export async function getForecastedCost(options: {
       },
     });
 
-    // 구독별 예측 비용 계산
+    // Calculate forecast cost per subscription
     const subscriptionBreakdown: SubscriptionForecast[] = [];
     let forecastedCost = 0;
 
     subscriptions.forEach((sub) => {
       let monthlyCost: number;
 
-      // PER_SEAT 구독은 usedLicenses * perSeatPrice로 더 정확한 예측
+      // PER_SEAT subscriptions use usedLicenses * perSeatPrice for a more accurate forecast
       if (
         sub.billingType === "PER_SEAT" &&
         sub.perSeatPrice !== null &&
@@ -229,7 +238,7 @@ export async function getForecastedCost(options: {
       });
     });
 
-    // 해당 월 실제 결제 내역 (있는 경우)
+    // Actual payment records for that month (if any)
     const actualPayments = await prisma.paymentRecord.aggregate({
       where: {
         organizationId: session.user.organizationId,
@@ -261,14 +270,17 @@ export async function getForecastedCost(options: {
       data: { forecast },
     };
   } catch (error) {
-    console.error("비용 예측 조회 오류:", error);
-    return { success: false, message: "비용 예측 조회 중 오류가 발생했습니다" };
+    console.error("Cost forecast error:", error);
+    return {
+      success: false,
+      message: "An error occurred while loading the cost forecast",
+    };
   }
 }
 
 /**
- * 비용 이상 감지 요약 (Dashboard V3 KPI Card용)
- * detectCostAnomalies()를 래핑하여 간소화된 결과 반환
+ * Cost anomaly summary (for the Dashboard V3 KPI card)
+ * Wraps detectCostAnomalies() and returns a simplified result
  */
 export async function getCostAnomalies(): Promise<ActionState<AnomalyKpiData>> {
   try {
@@ -277,14 +289,14 @@ export async function getCostAnomalies(): Promise<ActionState<AnomalyKpiData>> {
     if (!result.success || !result.data) {
       return {
         success: false,
-        message: result.message || "비용 이상 감지에 실패했습니다",
+        message: result.message || "Cost anomaly detection failed",
       };
     }
 
     const { anomalies } = result.data;
     const count = anomalies.length;
 
-    // Severity 계산: high (5건 이상), medium (3~4건), low (1~2건)
+    // Severity: high (5 or more), medium (3–4), low (1–2)
     let severity: "low" | "medium" | "high";
     if (count >= 5) {
       severity = "high";
@@ -299,10 +311,10 @@ export async function getCostAnomalies(): Promise<ActionState<AnomalyKpiData>> {
       data: { count, severity },
     };
   } catch (error) {
-    console.error("비용 이상 감지 요약 오류:", error);
+    console.error("Cost anomaly summary error:", error);
     return {
       success: false,
-      message: "비용 이상 감지 요약 중 오류가 발생했습니다",
+      message: "An error occurred while summarizing cost anomalies",
     };
   }
 }

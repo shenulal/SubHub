@@ -2,7 +2,7 @@
 "use server";
 
 /**
- * Integration 조회 관련 Server Actions
+ * Integration read Server Actions
  */
 
 import { getCachedSession } from "@/lib/auth/require-auth";
@@ -15,8 +15,8 @@ import { redirect } from "next/navigation";
 import type { GetIntegrationsParams, SyncLogEntry } from "./integrations.types";
 
 /**
- * Integration 목록 조회
- * 페이지에서 직접 호출되므로 인증 실패 시 redirect 사용
+ * List integrations
+ * Called directly from pages, so redirects on authentication failure
  */
 export async function getIntegrations(
   params: GetIntegrationsParams = {}
@@ -73,15 +73,15 @@ export async function getIntegrations(
 }
 
 /**
- * 단일 Integration 조회 (통계 포함)
- * - 인증/권한 실패 시 ActionState로 응답
+ * Get a single integration (with statistics)
+ * - Responds with ActionState on authentication/permission failure
  */
 export async function getIntegration(
   integrationId: string
 ): Promise<ActionState<{ integration: IntegrationWithStats }>> {
   const session = await getCachedSession();
   if (!session?.user?.organizationId) {
-    return { success: false, message: "인증이 필요합니다" };
+    return { success: false, message: "Authentication required" };
   }
 
   const integration = await prisma.integration.findUnique({
@@ -89,14 +89,14 @@ export async function getIntegration(
   });
 
   if (!integration) {
-    return { success: false, message: "연동을 찾을 수 없습니다" };
+    return { success: false, message: "Integration not found" };
   }
 
   if (integration.organizationId !== session.user.organizationId) {
-    return { success: false, message: "접근 권한이 없습니다" };
+    return { success: false, message: "You do not have access permission" };
   }
 
-  // 동기화 통계 조회
+  // Fetch sync statistics
   const [syncCount, lastSync] = await Promise.all([
     prisma.syncLog.count({
       where: { integrationId },
@@ -130,7 +130,7 @@ export async function getIntegration(
 }
 
 /**
- * 동기화 로그 조회
+ * Get sync logs
  */
 export async function getSyncLogs(
   integrationId: string,
@@ -138,7 +138,7 @@ export async function getSyncLogs(
 ): Promise<ActionState<{ logs: SyncLogEntry[] }>> {
   const session = await getCachedSession();
   if (!session?.user?.organizationId) {
-    return { success: false, message: "인증이 필요합니다" };
+    return { success: false, message: "Authentication required" };
   }
 
   const integration = await prisma.integration.findUnique({
@@ -146,11 +146,11 @@ export async function getSyncLogs(
   });
 
   if (!integration) {
-    return { success: false, message: "연동을 찾을 수 없습니다" };
+    return { success: false, message: "Integration not found" };
   }
 
   if (integration.organizationId !== session.user.organizationId) {
-    return { success: false, message: "접근 권한이 없습니다" };
+    return { success: false, message: "You do not have access permission" };
   }
 
   const logs = await prisma.syncLog.findMany({
@@ -159,7 +159,7 @@ export async function getSyncLogs(
     take: limit,
   });
 
-  // Date를 ISO 문자열로 직렬화
+  // Serialize Dates as ISO strings
   return {
     success: true,
     data: {

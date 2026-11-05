@@ -14,7 +14,7 @@ import type {
 import type { DevicePlatform, OsDefaultApp } from "@prisma/client";
 
 /**
- * 활성화된 OS 기본 앱 목록 조회 (플랫폼별)
+ * List enabled OS default apps (per platform)
  */
 export async function getOsDefaultApps(
   platform?: DevicePlatform
@@ -42,12 +42,12 @@ export async function getOsDefaultApps(
 }
 
 /**
- * DeviceApp이 OS 기본 앱인지 판별
+ * Determine whether a DeviceApp is an OS default app
  *
- * 판별 우선순위:
- * 1. bundleId 매칭 (가장 정확)
- * 2. namePattern 정규식 매칭
- * 3. name 완전 일치 (대소문자 무시)
+ * Match priority:
+ * 1. bundleId match (most accurate)
+ * 2. namePattern regex match
+ * 3. exact name match (case-insensitive)
  */
 export function isOsDefaultApp(
   deviceApp: { name: string; bundleIdentifier?: string | null },
@@ -57,7 +57,7 @@ export function isOsDefaultApp(
   const platformApps = osDefaultApps.filter((app) => app.platform === platform);
 
   for (const defaultApp of platformApps) {
-    // 1순위: bundleId 매칭 (가장 정확)
+    // Priority 1: bundleId match (most accurate)
     if (
       defaultApp.bundleId &&
       deviceApp.bundleIdentifier &&
@@ -67,7 +67,7 @@ export function isOsDefaultApp(
       return true;
     }
 
-    // 2순위: namePattern 정규식 매칭
+    // Priority 2: namePattern regex match
     if (defaultApp.namePattern) {
       try {
         const regex = new RegExp(defaultApp.namePattern, "i");
@@ -75,11 +75,11 @@ export function isOsDefaultApp(
           return true;
         }
       } catch {
-        // 잘못된 정규식 무시
+        // Ignore invalid regular expressions
       }
     }
 
-    // 3순위: 이름 완전 일치 (대소문자 무시)
+    // Priority 3: exact name match (case-insensitive)
     if (deviceApp.name.toLowerCase() === defaultApp.name.toLowerCase()) {
       return true;
     }
@@ -89,7 +89,7 @@ export function isOsDefaultApp(
 }
 
 /**
- * 여러 플랫폼 중 하나라도 OS 기본 앱이면 true 반환
+ * Returns true if the app is an OS default app on any of the platforms
  */
 export function checkIsOsDefault(
   app: { name: string; bundleIdentifier?: string | null },
@@ -102,7 +102,7 @@ export function checkIsOsDefault(
 }
 
 /**
- * OsDefaultApp 생성 (Admin 전용)
+ * Create an OsDefaultApp (Admin only)
  */
 async function _createOsDefaultApp(
   data: CreateOsDefaultAppInput
@@ -110,11 +110,11 @@ async function _createOsDefaultApp(
   const session = await auth();
 
   if (!session?.user) {
-    return { success: false, error: "인증이 필요합니다." };
+    return { success: false, error: "Authentication required." };
   }
 
   if (session.user.role !== "ADMIN") {
-    return { success: false, error: "관리자 권한이 필요합니다." };
+    return { success: false, error: "Admin permission required." };
   }
 
   try {
@@ -152,9 +152,9 @@ async function _createOsDefaultApp(
       "code" in error &&
       (error as { code: string }).code === "P2002"
     ) {
-      return { success: false, error: "이미 등록된 앱입니다." };
+      return { success: false, error: "This app is already registered." };
     }
-    return { success: false, error: "OS 기본 앱 생성에 실패했습니다." };
+    return { success: false, error: "Failed to create the OS default app." };
   }
 }
 export const createOsDefaultApp = withLogging(
@@ -163,7 +163,7 @@ export const createOsDefaultApp = withLogging(
 );
 
 /**
- * OsDefaultApp 수정 (Admin 전용)
+ * Update an OsDefaultApp (Admin only)
  */
 async function _updateOsDefaultApp(
   id: string,
@@ -172,11 +172,11 @@ async function _updateOsDefaultApp(
   const session = await auth();
 
   if (!session?.user) {
-    return { success: false, error: "인증이 필요합니다." };
+    return { success: false, error: "Authentication required." };
   }
 
   if (session.user.role !== "ADMIN") {
-    return { success: false, error: "관리자 권한이 필요합니다." };
+    return { success: false, error: "Admin permission required." };
   }
 
   try {
@@ -220,9 +220,9 @@ async function _updateOsDefaultApp(
       "code" in error &&
       (error as { code: string }).code === "P2025"
     ) {
-      return { success: false, error: "앱을 찾을 수 없습니다." };
+      return { success: false, error: "App not found." };
     }
-    return { success: false, error: "OS 기본 앱 수정에 실패했습니다." };
+    return { success: false, error: "Failed to update the OS default app." };
   }
 }
 export const updateOsDefaultApp = withLogging(
@@ -231,17 +231,17 @@ export const updateOsDefaultApp = withLogging(
 );
 
 /**
- * OsDefaultApp 삭제 (Admin 전용)
+ * Delete an OsDefaultApp (Admin only)
  */
 async function _deleteOsDefaultApp(id: string): Promise<ActionState<void>> {
   const session = await auth();
 
   if (!session?.user) {
-    return { success: false, error: "인증이 필요합니다." };
+    return { success: false, error: "Authentication required." };
   }
 
   if (session.user.role !== "ADMIN") {
-    return { success: false, error: "관리자 권한이 필요합니다." };
+    return { success: false, error: "Admin permission required." };
   }
 
   try {
@@ -258,9 +258,9 @@ async function _deleteOsDefaultApp(id: string): Promise<ActionState<void>> {
       "code" in error &&
       (error as { code: string }).code === "P2025"
     ) {
-      return { success: false, error: "앱을 찾을 수 없습니다." };
+      return { success: false, error: "App not found." };
     }
-    return { success: false, error: "OS 기본 앱 삭제에 실패했습니다." };
+    return { success: false, error: "Failed to delete the OS default app." };
   }
 }
 export const deleteOsDefaultApp = withLogging(

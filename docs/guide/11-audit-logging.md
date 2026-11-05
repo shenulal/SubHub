@@ -1,23 +1,23 @@
-# 11. 감사 로그 (Audit Logging) 가이드
+# 11. Audit Logging Guide
 
-이 문서는 SaaS Management Platform의 감사 로그 생성, 조회, 테스트 패턴을 설명합니다.
+This document describes the patterns for creating, querying and testing audit logs in SubHub.
 
-## 목차
+## Table of Contents
 
-1. [핵심 개념](#1-핵심-개념)
-2. [감사 로그 스키마](#2-감사-로그-스키마)
-3. [감사 로그 생성 패턴](#3-감사-로그-생성-패턴)
-4. [표준 액션 명명 규칙](#4-표준-액션-명명-규칙)
-5. [감사 로그 조회](#5-감사-로그-조회)
-6. [테스트 패턴](#6-테스트-패턴)
+1. [Core Concepts](#1-core-concepts)
+2. [Audit Log Schema](#2-audit-log-schema)
+3. [Audit Log Creation Patterns](#3-audit-log-creation-patterns)
+4. [Standard Action Naming Conventions](#4-standard-action-naming-conventions)
+5. [Querying Audit Logs](#5-querying-audit-logs)
+6. [Test Patterns](#6-test-patterns)
 
 ---
 
-## 1. 핵심 개념
+## 1. Core Concepts
 
-### 1.1 감사 로그란?
+### 1.1 What Is an Audit Log?
 
-시스템에서 발생하는 중요한 이벤트를 기록하여 **보안**, **컴플라이언스**, **디버깅**에 활용합니다.
+An audit log records significant events that occur in the system, for use in **security**, **compliance** and **debugging**.
 
 ```
 ┌─────────────────────────────────────────────────────────┐
@@ -31,30 +31,30 @@
 └─────────────────────────────────────────────────────────┘
 ```
 
-### 1.2 감사 로그 생성 시점
+### 1.2 When to Create an Audit Log
 
-| 액션 유형  | 필수 | 설명                              |
-| ---------- | :--: | --------------------------------- |
-| **CREATE** | Yes  | 리소스 생성 (앱, 구독, 사용자 등) |
-| **UPDATE** | Yes  | 리소스 수정                       |
-| **DELETE** | Yes  | 리소스 삭제                       |
-| **LOGIN**  | Yes  | 사용자 로그인                     |
-| **LOGOUT** | Yes  | 사용자 로그아웃                   |
-| **SYNC**   | Yes  | 외부 시스템 동기화                |
-| **EXPORT** | Yes  | 데이터 내보내기                   |
-| **IMPORT** | Yes  | 데이터 가져오기                   |
-| **VIEW**   |  No  | 단순 조회 (선택적)                |
+| Action Type | Required | Description                                          |
+| ----------- | :------: | ---------------------------------------------------- |
+| **CREATE**  |   Yes    | Resource creation (apps, subscriptions, users, etc.) |
+| **UPDATE**  |   Yes    | Resource update                                      |
+| **DELETE**  |   Yes    | Resource deletion                                    |
+| **LOGIN**   |   Yes    | User sign-in                                         |
+| **LOGOUT**  |   Yes    | User sign-out                                        |
+| **SYNC**    |   Yes    | External system synchronisation                      |
+| **EXPORT**  |   Yes    | Data export                                          |
+| **IMPORT**  |   Yes    | Data import                                          |
+| **VIEW**    |    No    | Simple read access (optional)                        |
 
-### 1.3 Multi-Tenant 격리
+### 1.3 Multi-Tenant Isolation
 
-감사 로그도 `organizationId`로 격리됩니다:
+Audit logs are also isolated by `organizationId`:
 
 ```typescript
-// ✅ 올바른 패턴
+// ✅ Correct pattern
 await prisma.auditLog.create({
   data: {
     action: "CREATE_APP",
-    organizationId, // 필수
+    organizationId, // Required
     userId,
     // ...
   },
@@ -63,11 +63,11 @@ await prisma.auditLog.create({
 
 ---
 
-## 2. 감사 로그 스키마
+## 2. Audit Log Schema
 
-### 2.1 Prisma 모델
+### 2.1 Prisma Model
 
-**파일**: `prisma/schema.prisma`
+**File**: `prisma/schema.prisma`
 
 ```prisma
 model AuditLog {
@@ -83,8 +83,8 @@ model AuditLog {
   entityType String  @map("entity_type")
   entityId   String? @map("entity_id")
 
-  changes  Json?   // 변경 전후 데이터
-  metadata Json?   // 추가 컨텍스트 정보
+  changes  Json?   // Before/after data
+  metadata Json?   // Additional context information
 
   ipAddress String? @map("ip_address")
   userAgent String? @map("user_agent")
@@ -99,27 +99,27 @@ model AuditLog {
 }
 ```
 
-### 2.2 필드 설명
+### 2.2 Field Descriptions
 
-| 필드             | 타입     | 필수 | 설명                               |
-| ---------------- | -------- | :--: | ---------------------------------- |
-| `id`             | String   | Yes  | CUID 고유 식별자                   |
-| `organizationId` | String   | Yes  | 테넌트 격리용                      |
-| `userId`         | String   |  No  | 수행한 사용자 (시스템 작업은 null) |
-| `action`         | String   | Yes  | 수행한 액션 (CREATE_APP 등)        |
-| `entityType`     | String   | Yes  | 대상 엔티티 타입 (App, User 등)    |
-| `entityId`       | String   |  No  | 대상 엔티티 ID                     |
-| `changes`        | Json     |  No  | 변경 전후 데이터                   |
-| `metadata`       | Json     |  No  | 추가 정보 (앱 이름 등)             |
-| `ipAddress`      | String   |  No  | 요청 IP 주소                       |
-| `userAgent`      | String   |  No  | 브라우저/클라이언트 정보           |
-| `createdAt`      | DateTime | Yes  | 생성 시각                          |
+| Field            | Type     | Required | Description                                          |
+| ---------------- | -------- | :------: | ---------------------------------------------------- |
+| `id`             | String   |   Yes    | CUID unique identifier                               |
+| `organizationId` | String   |   Yes    | For tenant isolation                                 |
+| `userId`         | String   |    No    | User who performed the action (null for system jobs) |
+| `action`         | String   |   Yes    | Action performed (CREATE_APP, etc.)                  |
+| `entityType`     | String   |   Yes    | Target entity type (App, User, etc.)                 |
+| `entityId`       | String   |    No    | Target entity ID                                     |
+| `changes`        | Json     |    No    | Before/after data                                    |
+| `metadata`       | Json     |    No    | Additional information (app name, etc.)              |
+| `ipAddress`      | String   |    No    | Request IP address                                   |
+| `userAgent`      | String   |    No    | Browser/client information                           |
+| `createdAt`      | DateTime |   Yes    | Creation timestamp                                   |
 
 ---
 
-## 3. 감사 로그 생성 패턴
+## 3. Audit Log Creation Patterns
 
-### 3.1 기본 패턴
+### 3.1 Basic Pattern
 
 ```typescript
 import { prisma } from "@/lib/db";
@@ -128,7 +128,7 @@ import { requireOrganization } from "@/lib/auth/require-auth";
 export async function createApp(formData: FormData) {
   const { organizationId, userId } = await requireOrganization();
 
-  // 1. 비즈니스 로직 수행
+  // 1. Perform the business logic
   const app = await prisma.app.create({
     data: {
       name: formData.get("name") as string,
@@ -136,7 +136,7 @@ export async function createApp(formData: FormData) {
     },
   });
 
-  // 2. 감사 로그 생성
+  // 2. Create the audit log
   await prisma.auditLog.create({
     data: {
       action: "CREATE_APP",
@@ -152,29 +152,29 @@ export async function createApp(formData: FormData) {
 }
 ```
 
-### 3.2 수정 시 변경 내역 기록
+### 3.2 Recording Changes on Update
 
 ```typescript
 export async function updateApp(id: string, formData: FormData) {
   const { organizationId, userId } = await requireOrganization();
 
-  // 1. 기존 데이터 조회
+  // 1. Fetch the existing data
   const existingApp = await prisma.app.findFirst({
     where: { id, organizationId },
   });
 
   if (!existingApp) {
-    return { success: false, message: "앱을 찾을 수 없습니다" };
+    return { success: false, message: "App not found" };
   }
 
-  // 2. 업데이트 수행
+  // 2. Perform the update
   const newName = formData.get("name") as string;
   const app = await prisma.app.update({
     where: { id },
     data: { name: newName },
   });
 
-  // 3. 변경 내역과 함께 감사 로그 생성
+  // 3. Create the audit log together with the change history
   await prisma.auditLog.create({
     data: {
       action: "UPDATE_APP",
@@ -194,14 +194,14 @@ export async function updateApp(id: string, formData: FormData) {
 }
 ```
 
-### 3.3 삭제 시 패턴
+### 3.3 Deletion Pattern
 
 ```typescript
 export async function deleteApp(id: string) {
   const { organizationId, userId, role } = await requireOrganization();
 
   if (role !== "ADMIN") {
-    return { success: false, message: "관리자 권한이 필요합니다" };
+    return { success: false, message: "Administrator permission is required" };
   }
 
   const existingApp = await prisma.app.findFirst({
@@ -209,23 +209,23 @@ export async function deleteApp(id: string) {
   });
 
   if (!existingApp) {
-    return { success: false, message: "앱을 찾을 수 없습니다" };
+    return { success: false, message: "App not found" };
   }
 
-  // 1. 삭제 수행
+  // 1. Perform the deletion
   await prisma.app.delete({ where: { id } });
 
-  // 2. 감사 로그 (삭제된 엔티티 정보 보존)
+  // 2. Audit log (preserves the deleted entity's information)
   await prisma.auditLog.create({
     data: {
       action: "DELETE_APP",
       entityType: "App",
-      entityId: id, // 삭제된 ID 기록
+      entityId: id, // Record the deleted ID
       userId,
       organizationId,
       metadata: {
         appName: existingApp.name,
-        deletedData: existingApp, // 필요시 전체 데이터 보존
+        deletedData: existingApp, // Preserve the full data when needed
       },
     },
   });
@@ -234,24 +234,24 @@ export async function deleteApp(id: string) {
 }
 ```
 
-### 3.4 시스템 작업 (userId 없음)
+### 3.4 System Jobs (No userId)
 
 ```typescript
-// Cron job, 외부 시스템 연동 등
+// Cron jobs, external system integrations, etc.
 export async function syncIntegration(integrationId: string) {
   const integration = await prisma.integration.findUnique({
     where: { id: integrationId },
   });
 
-  // 동기화 로직...
+  // Synchronisation logic...
 
-  // 시스템 작업은 userId가 null
+  // For system jobs, userId is null
   await prisma.auditLog.create({
     data: {
       action: "SYNC_INTEGRATION",
       entityType: "Integration",
       entityId: integrationId,
-      userId: null, // 시스템 작업
+      userId: null, // System job
       organizationId: integration!.organizationId,
       metadata: {
         syncedAt: new Date().toISOString(),
@@ -262,18 +262,18 @@ export async function syncIntegration(integrationId: string) {
 }
 ```
 
-### 3.5 트랜잭션 내 감사 로그
+### 3.5 Audit Logs Within a Transaction
 
-중요한 작업은 트랜잭션으로 묶어 일관성 보장:
+Wrap critical operations in a transaction to guarantee consistency:
 
 ```typescript
 await prisma.$transaction(async (tx) => {
-  // 1. 비즈니스 로직
+  // 1. Business logic
   const app = await tx.app.create({
     data: { name: "New App", organizationId },
   });
 
-  // 2. 감사 로그 (같은 트랜잭션)
+  // 2. Audit log (same transaction)
   await tx.auditLog.create({
     data: {
       action: "CREATE_APP",
@@ -290,75 +290,75 @@ await prisma.$transaction(async (tx) => {
 
 ---
 
-## 4. 표준 액션 명명 규칙
+## 4. Standard Action Naming Conventions
 
-### 4.1 액션 이름 형식
+### 4.1 Action Name Format
 
 ```
-{동사}_{엔티티}
+{VERB}_{ENTITY}
 ```
 
-- **동사**: CREATE, UPDATE, DELETE, LOGIN, LOGOUT, SYNC, EXPORT, IMPORT
-- **엔티티**: APP, SUBSCRIPTION, USER, INTEGRATION, ORGANIZATION, PAYMENT
+- **Verb**: CREATE, UPDATE, DELETE, LOGIN, LOGOUT, SYNC, EXPORT, IMPORT
+- **Entity**: APP, SUBSCRIPTION, USER, INTEGRATION, ORGANIZATION, PAYMENT
 
-### 4.2 표준 액션 목록
+### 4.2 Standard Action List
 
-#### 앱 관련
+#### App Actions
 
-| 액션               | 설명           |
-| ------------------ | -------------- |
-| `CREATE_APP`       | 앱 생성        |
-| `UPDATE_APP`       | 앱 수정        |
-| `DELETE_APP`       | 앱 삭제        |
-| `ASSIGN_APP_OWNER` | 앱 소유자 지정 |
+| Action             | Description         |
+| ------------------ | ------------------- |
+| `CREATE_APP`       | Create an app       |
+| `UPDATE_APP`       | Update an app       |
+| `DELETE_APP`       | Delete an app       |
+| `ASSIGN_APP_OWNER` | Assign an app owner |
 
-#### 구독 관련
+#### Subscription Actions
 
-| 액션                  | 설명      |
-| --------------------- | --------- |
-| `CREATE_SUBSCRIPTION` | 구독 생성 |
-| `UPDATE_SUBSCRIPTION` | 구독 수정 |
-| `DELETE_SUBSCRIPTION` | 구독 삭제 |
-| `RENEW_SUBSCRIPTION`  | 구독 갱신 |
+| Action                | Description           |
+| --------------------- | --------------------- |
+| `CREATE_SUBSCRIPTION` | Create a subscription |
+| `UPDATE_SUBSCRIPTION` | Update a subscription |
+| `DELETE_SUBSCRIPTION` | Delete a subscription |
+| `RENEW_SUBSCRIPTION`  | Renew a subscription  |
 
-#### 사용자 관련
+#### User Actions
 
-| 액션              | 설명            |
-| ----------------- | --------------- |
-| `CREATE_USER`     | 사용자 생성     |
-| `UPDATE_USER`     | 사용자 수정     |
-| `DELETE_USER`     | 사용자 삭제     |
-| `INVITE_USER`     | 사용자 초대     |
-| `DEACTIVATE_USER` | 사용자 비활성화 |
+| Action            | Description       |
+| ----------------- | ----------------- |
+| `CREATE_USER`     | Create a user     |
+| `UPDATE_USER`     | Update a user     |
+| `DELETE_USER`     | Delete a user     |
+| `INVITE_USER`     | Invite a user     |
+| `DEACTIVATE_USER` | Deactivate a user |
 
-#### 인증 관련
+#### Authentication Actions
 
-| 액션             | 설명            |
+| Action           | Description     |
 | ---------------- | --------------- |
-| `LOGIN`          | 로그인          |
-| `LOGOUT`         | 로그아웃        |
-| `LOGIN_FAILED`   | 로그인 실패     |
-| `PASSWORD_RESET` | 비밀번호 재설정 |
+| `LOGIN`          | Sign in         |
+| `LOGOUT`         | Sign out        |
+| `LOGIN_FAILED`   | Sign-in failure |
+| `PASSWORD_RESET` | Password reset  |
 
-#### 연동 관련
+#### Integration Actions
 
-| 액션                 | 설명        |
-| -------------------- | ----------- |
-| `CREATE_INTEGRATION` | 연동 생성   |
-| `UPDATE_INTEGRATION` | 연동 수정   |
-| `DELETE_INTEGRATION` | 연동 삭제   |
-| `SYNC_INTEGRATION`   | 연동 동기화 |
-| `SYNC_FAILED`        | 동기화 실패 |
+| Action               | Description                |
+| -------------------- | -------------------------- |
+| `CREATE_INTEGRATION` | Create an integration      |
+| `UPDATE_INTEGRATION` | Update an integration      |
+| `DELETE_INTEGRATION` | Delete an integration      |
+| `SYNC_INTEGRATION`   | Synchronise an integration |
+| `SYNC_FAILED`        | Synchronisation failure    |
 
-#### 데이터 관련
+#### Data Actions
 
-| 액션          | 설명            |
-| ------------- | --------------- |
-| `EXPORT_DATA` | 데이터 내보내기 |
-| `IMPORT_DATA` | 데이터 가져오기 |
-| `BULK_UPDATE` | 대량 수정       |
+| Action        | Description |
+| ------------- | ----------- |
+| `EXPORT_DATA` | Export data |
+| `IMPORT_DATA` | Import data |
+| `BULK_UPDATE` | Bulk update |
 
-### 4.3 엔티티 타입 목록
+### 4.3 Entity Type List
 
 ```typescript
 const entityTypes = [
@@ -375,11 +375,11 @@ const entityTypes = [
 
 ---
 
-## 5. 감사 로그 조회
+## 5. Querying Audit Logs
 
-### 5.1 목록 조회 (페이지네이션)
+### 5.1 List Query (Pagination)
 
-**파일**: `src/actions/audit.ts`
+**File**: `src/actions/audit.ts`
 
 ```typescript
 export interface AuditLogFilters {
@@ -408,12 +408,12 @@ export async function getAuditLogs(
 
   const where: Record<string, unknown> = { organizationId };
 
-  // 필터 조건 추가
+  // Add filter conditions
   if (filters.action) where.action = filters.action;
   if (filters.userId) where.userId = filters.userId;
   if (filters.entityType) where.entityType = filters.entityType;
 
-  // 날짜 범위
+  // Date range
   if (filters.startDate || filters.endDate) {
     where.createdAt = {};
     if (filters.startDate) {
@@ -453,7 +453,7 @@ export async function getAuditLogs(
 }
 ```
 
-### 5.2 필터 옵션 조회
+### 5.2 Fetching Filter Options
 
 ```typescript
 export async function getAuditLogFilterOptions(): Promise<AuditLogFilterOptions> {
@@ -498,9 +498,9 @@ export async function getAuditLogFilterOptions(): Promise<AuditLogFilterOptions>
 
 ---
 
-## 6. 테스트 패턴
+## 6. Test Patterns
 
-### 6.1 감사 로그 생성 검증
+### 6.1 Verifying Audit Log Creation
 
 ```typescript
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -560,7 +560,7 @@ describe("createApp - Audit Logging", () => {
 });
 ```
 
-### 6.2 삭제 시 감사 로그 검증
+### 6.2 Verifying the Audit Log on Deletion
 
 ```typescript
 it("should create audit log with deleted data on app deletion", async () => {
@@ -596,7 +596,7 @@ it("should create audit log with deleted data on app deletion", async () => {
 });
 ```
 
-### 6.3 감사 로그 조회 테스트
+### 6.3 Audit Log Query Tests
 
 ```typescript
 describe("getAuditLogs", () => {
@@ -645,32 +645,32 @@ describe("getAuditLogs", () => {
 
 ---
 
-## 체크리스트
+## Checklist
 
-### 감사 로그 생성 시
+### When Creating Audit Logs
 
-- [ ] `organizationId` 포함 (Multi-tenant 격리)
-- [ ] 적절한 `action` 이름 사용 (표준 명명 규칙)
-- [ ] `entityType`과 `entityId` 설정
-- [ ] 삭제 시 `metadata`에 삭제된 데이터 보존
-- [ ] 수정 시 `changes`에 변경 전후 데이터 기록
+- [ ] Include `organizationId` (multi-tenant isolation)
+- [ ] Use an appropriate `action` name (standard naming convention)
+- [ ] Set `entityType` and `entityId`
+- [ ] On deletion, preserve the deleted data in `metadata`
+- [ ] On update, record before/after data in `changes`
 
-### 감사 로그 조회 시
+### When Querying Audit Logs
 
-- [ ] `organizationId`로 필터링 (다른 조직 접근 방지)
-- [ ] 페이지네이션 적용
-- [ ] 최신순 정렬 (`createdAt: "desc"`)
+- [ ] Filter by `organizationId` (prevents access to other organisations)
+- [ ] Apply pagination
+- [ ] Sort newest first (`createdAt: "desc"`)
 
-### 테스트 시
+### When Testing
 
-- [ ] 감사 로그 생성 함수 호출 검증
-- [ ] 올바른 `action`, `entityType` 검증
-- [ ] `organizationId` 포함 검증
+- [ ] Verify the audit log creation function is called
+- [ ] Verify the correct `action` and `entityType`
+- [ ] Verify `organizationId` is included
 
 ---
 
-## 관련 문서
+## Related Documents
 
-- [08-multi-tenant-patterns.md](./08-multi-tenant-patterns.md) - Multi-tenant 패턴
-- [09-error-handling-strategy.md](./09-error-handling-strategy.md) - 에러 처리 전략
-- [05-common-patterns.md](./05-common-patterns.md) - 공통 테스트 패턴
+- [08-multi-tenant-patterns.md](./08-multi-tenant-patterns.md) - Multi-tenant patterns
+- [09-error-handling-strategy.md](./09-error-handling-strategy.md) - Error handling strategy
+- [05-common-patterns.md](./05-common-patterns.md) - Common test patterns

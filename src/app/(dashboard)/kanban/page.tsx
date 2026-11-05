@@ -8,23 +8,23 @@ import { getTranslations } from "next-intl/server";
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("kanban");
   return {
-    title: `${t("page.title")} | SaaS 관리 플랫폼`,
+    title: `${t("page.title")}`,
     description: t("page.description"),
   };
 }
 
 export default async function KanbanPage() {
-  // 환경변수로 V2 기능 활성화 제어 (기본: 비활성화)
+  // V2 features are toggled by an environment variable (default: disabled)
   if (process.env.ENABLE_V2_FEATURES !== "true") {
     return (
       <V2ComingSoon
-        feature="칸반 보드"
-        description="드래그 앤 드롭으로 작업을 관리하세요."
+        feature="Kanban board"
+        description="Manage tasks with drag and drop."
       />
     );
   }
 
-  // V2 활성화 시 기존 로직
+  // Existing logic when V2 is enabled
   const { role } = await requireOrganization();
   const canManage = role === "ADMIN" || role === "MEMBER";
 

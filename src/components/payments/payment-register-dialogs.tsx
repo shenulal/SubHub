@@ -44,7 +44,7 @@ export function RegisterAppDialog({
 
   const handleSuccess = useCallback(
     async (createdAppId?: string) => {
-      // 결제 행에서 앱을 등록한 경우, 해당 결제의 매칭을 MANUAL로 설정
+      // When an app is registered from a payment row, set that payment's match to MANUAL
       if (createdAppId && paymentRecord) {
         await updatePaymentMatch(paymentRecord.id, createdAppId);
       }

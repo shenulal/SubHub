@@ -1,7 +1,8 @@
 // src/lib/services/notification/email.utils.ts
+import { formatMoney } from "@/lib/fx/convert";
 import { Resend } from "resend";
 
-// Resend 클라이언트 지연 초기화 (빌드 타임에 환경변수 없어도 동작)
+// Lazily initialise the Resend client (works at build time without environment variables)
 let resend: Resend | null = null;
 
 export function getResendClient(): Resend {
@@ -13,31 +14,28 @@ export function getResendClient(): Resend {
 }
 
 /**
- * 이메일 설정
+ * E-mail configuration
  */
 export const EmailConfig = {
-  fromEmail: process.env.EMAIL_FROM || "noreply@saas-mgmt.com",
-  fromName: process.env.EMAIL_FROM_NAME || "SaaS 관리 플랫폼",
+  fromEmail: process.env.EMAIL_FROM || "noreply@subhub.local",
+  fromName: process.env.EMAIL_FROM_NAME || "SubHub",
   get from() {
     return `${this.fromName} <${this.fromEmail}>`;
   },
 };
 
 /**
- * 금액 포맷팅
+ * Formats an amount
  */
 export function formatCurrency(amount: number, currency: string): string {
-  return new Intl.NumberFormat("ko-KR", {
-    style: "currency",
-    currency: currency,
-  }).format(amount);
+  return formatMoney(amount, currency, "en-US");
 }
 
 /**
- * 날짜 포맷팅
+ * Formats a date
  */
 export function formatDate(date: Date): string {
-  return new Intl.DateTimeFormat("ko-KR", {
+  return new Intl.DateTimeFormat("en-US", {
     year: "numeric",
     month: "long",
     day: "numeric",
@@ -45,7 +43,7 @@ export function formatDate(date: Date): string {
 }
 
 /**
- * 기본 URL 가져오기
+ * Returns the base URL
  */
 export function getBaseUrl(): string {
   return process.env.NEXTAUTH_URL || "http://localhost:3000";

@@ -17,22 +17,22 @@ import { revalidatePath } from "next/cache";
 import { cookies } from "next/headers";
 
 /**
- * 빌드 프로세스 실행 (API Route 호출)
- * child_process는 Server Action에서 번들링 문제가 있어 API Route로 분리
+ * Run the build process (via an API route)
+ * child_process has bundling issues in Server Actions, so it lives in an API route
  */
 async function executeBuildProcess(
   buildId: string,
   version: string
 ): Promise<void> {
   try {
-    // 쿠키 가져오기 (인증 정보 전달용)
+    // Read cookies (to forward auth credentials)
     const cookieStore = await cookies();
     const cookieHeader = cookieStore
       .getAll()
       .map((c) => `${c.name}=${c.value}`)
       .join("; ");
 
-    // 내부 self-call은 localhost 사용 (CloudFront/WAF 우회)
+    // Internal self-calls use localhost (bypasses CloudFront/WAF)
     const baseUrl = `http://localhost:${process.env.PORT || 3000}`;
     const response = await fetch(
       `${baseUrl}/api/v1/extensions/builds/execute`,
@@ -57,14 +57,15 @@ async function executeBuildProcess(
       data: {
         status: "FAILED",
         completedAt: new Date(),
-        errorMessage: error instanceof Error ? error.message : "빌드 실행 실패",
+        errorMessage:
+          error instanceof Error ? error.message : "Build execution failed",
       },
     });
   }
 }
 
 /**
- * Build 목록 조회
+ * Fetch the build list
  */
 export async function getBuilds(
   params: PaginationParams & { status?: string; platform?: string } = {}
@@ -72,7 +73,7 @@ export async function getBuilds(
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
-      return { success: false, error: "인증이 필요합니다" };
+      return { success: false, error: "Authentication required" };
     }
 
     const { page = 1, limit = 20, status, platform } = params;
@@ -117,13 +118,13 @@ export async function getBuilds(
     logger.error({ err: error }, "[getBuilds] Error");
     return {
       success: false,
-      error: error instanceof Error ? error.message : "빌드 목록 조회 실패",
+      error: error instanceof Error ? error.message : "Failed to fetch builds",
     };
   }
 }
 
 /**
- * Build 상세 조회
+ * Fetch build details
  */
 export async function getBuild(
   id: string
@@ -131,7 +132,7 @@ export async function getBuild(
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
-      return { success: false, error: "인증이 필요합니다" };
+      return { success: false, error: "Authentication required" };
     }
 
     const build = await prisma.extensionBuild.findUnique({
@@ -139,7 +140,7 @@ export async function getBuild(
     });
 
     if (!build || build.organizationId !== session.user.organizationId) {
-      return { success: false, error: "빌드를 찾을 수 없습니다" };
+      return { success: false, error: "Build not found" };
     }
 
     return { success: true, data: build };
@@ -147,13 +148,14 @@ export async function getBuild(
     logger.error({ err: error }, "[getBuild] Error");
     return {
       success: false,
-      error: error instanceof Error ? error.message : "빌드 조회 실패",
+      error:
+        error instanceof Error ? error.message : "Failed to fetch the build",
     };
   }
 }
 
 /**
- * 새 Build 트리거
+ * Trigger a new build
  */
 async function _triggerBuild(
   input: TriggerBuildInput & { version?: string }
@@ -161,28 +163,27 @@ async function _triggerBuild(
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
-      return { success: false, error: "인증이 필요합니다" };
+      return { success: false, error: "Authentication required" };
     }
 
-    // 입력 검증
+    // Validate input
     const validation = triggerBuildSchema.safeParse(input);
     if (!validation.success) {
       return {
         success: false,
-        error:
-          validation.error.issues[0]?.message || "입력값이 올바르지 않습니다",
+        error: validation.error.issues[0]?.message || "Invalid input",
       };
     }
 
-    // 현재는 CHROME 플랫폼만 지원
+    // Only the CHROME platform is supported for now
     if (input.platform !== "CHROME") {
       return {
         success: false,
-        error: "현재 Chrome Extension 빌드만 지원됩니다",
+        error: "Only Chrome extension builds are currently supported",
       };
     }
 
-    // 최신 빌드 버전 조회
+    // Look up the latest build version
     const latestBuild = await prisma.extensionBuild.findFirst({
       where: {
         organizationId: session.user.organizationId,
@@ -191,7 +192,7 @@ async function _triggerBuild(
       orderBy: { createdAt: "desc" },
     });
 
-    // 버전 자동 증가 (없으면 1.0.0)
+    // Auto-increment the version (1.0.0 if none)
     let version = input.version;
     if (!version) {
       if (latestBuild?.version) {
@@ -212,7 +213,7 @@ async function _triggerBuild(
       },
     });
 
-    // 백그라운드에서 빌드 실행 (fire-and-forget)
+    // Run the build in the background (fire-and-forget)
     executeBuildProcess(build.id, version).catch((err) => {
       logger.error({ err }, "[triggerBuild] Background build error");
     });
@@ -223,34 +224,35 @@ async function _triggerBuild(
     logger.error({ err: error }, "[triggerBuild] Error");
     return {
       success: false,
-      error: error instanceof Error ? error.message : "빌드 트리거 실패",
+      error:
+        error instanceof Error ? error.message : "Failed to trigger the build",
     };
   }
 }
 export const triggerBuild = withLogging("triggerBuild", _triggerBuild);
 
 /**
- * Build 삭제
+ * Delete a build
  */
 async function _deleteBuild(id: string): Promise<ActionState> {
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
-      return { success: false, error: "인증이 필요합니다" };
+      return { success: false, error: "Authentication required" };
     }
 
-    // 기존 항목 확인
+    // Check the existing entry
     const existing = await prisma.extensionBuild.findUnique({
       where: { id },
     });
 
     if (!existing || existing.organizationId !== session.user.organizationId) {
-      return { success: false, error: "빌드를 찾을 수 없습니다" };
+      return { success: false, error: "Build not found" };
     }
 
-    // 진행 중인 빌드는 삭제 불가
+    // Builds in progress cannot be deleted
     if (existing.status === "BUILDING") {
-      return { success: false, error: "진행 중인 빌드는 삭제할 수 없습니다" };
+      return { success: false, error: "A build in progress cannot be deleted" };
     }
 
     await prisma.extensionBuild.delete({
@@ -263,14 +265,15 @@ async function _deleteBuild(id: string): Promise<ActionState> {
     logger.error({ err: error }, "[deleteBuild] Error");
     return {
       success: false,
-      error: error instanceof Error ? error.message : "빌드 삭제 실패",
+      error:
+        error instanceof Error ? error.message : "Failed to delete the build",
     };
   }
 }
 export const deleteBuild = withLogging("deleteBuild", _deleteBuild);
 
 /**
- * 실패한 Build 재시도
+ * Retry a failed build
  */
 async function _retryBuild(
   id: string
@@ -278,21 +281,21 @@ async function _retryBuild(
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
-      return { success: false, error: "인증이 필요합니다" };
+      return { success: false, error: "Authentication required" };
     }
 
-    // 기존 항목 확인
+    // Check the existing entry
     const existing = await prisma.extensionBuild.findUnique({
       where: { id },
     });
 
     if (!existing || existing.organizationId !== session.user.organizationId) {
-      return { success: false, error: "빌드를 찾을 수 없습니다" };
+      return { success: false, error: "Build not found" };
     }
 
-    // 실패한 빌드만 재시도 가능
+    // Only failed builds can be retried
     if (existing.status !== "FAILED") {
-      return { success: false, error: "실패한 빌드만 재시도할 수 있습니다" };
+      return { success: false, error: "Only failed builds can be retried" };
     }
 
     const updated = await prisma.extensionBuild.update({
@@ -304,7 +307,7 @@ async function _retryBuild(
       },
     });
 
-    // 백그라운드에서 빌드 실행 (fire-and-forget)
+    // Run the build in the background (fire-and-forget)
     executeBuildProcess(updated.id, existing.version).catch((err) => {
       logger.error({ err }, "[retryBuild] Background build error");
     });
@@ -315,14 +318,15 @@ async function _retryBuild(
     logger.error({ err: error }, "[retryBuild] Error");
     return {
       success: false,
-      error: error instanceof Error ? error.message : "빌드 재시도 실패",
+      error:
+        error instanceof Error ? error.message : "Failed to retry the build",
     };
   }
 }
 export const retryBuild = withLogging("retryBuild", _retryBuild);
 
 /**
- * Extension 배포 설정 타입
+ * Extension deployment settings type
  */
 export type ExtensionDeployMethod = "auto" | "webstore" | "manual";
 
@@ -332,7 +336,7 @@ export interface ExtensionDeploySettings {
 }
 
 /**
- * Extension 배포 설정 조회
+ * Fetch extension deployment settings
  */
 export async function getExtensionDeploySettings(): Promise<
   ActionState<ExtensionDeploySettings>
@@ -340,7 +344,7 @@ export async function getExtensionDeploySettings(): Promise<
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
-      return { success: false, error: "인증이 필요합니다" };
+      return { success: false, error: "Authentication required" };
     }
 
     const org = await prisma.organization.findUnique({
@@ -362,13 +366,16 @@ export async function getExtensionDeploySettings(): Promise<
     logger.error({ err: error }, "[getExtensionDeploySettings] Error");
     return {
       success: false,
-      error: error instanceof Error ? error.message : "배포 설정 조회 실패",
+      error:
+        error instanceof Error
+          ? error.message
+          : "Failed to fetch deployment settings",
     };
   }
 }
 
 /**
- * Extension 배포 설정 업데이트
+ * Update extension deployment settings
  */
 async function _updateExtensionDeploySettings(input: {
   extensionDeployMethod: ExtensionDeployMethod;
@@ -377,25 +384,25 @@ async function _updateExtensionDeploySettings(input: {
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
-      return { success: false, error: "인증이 필요합니다" };
+      return { success: false, error: "Authentication required" };
     }
 
-    // 관리자 권한 확인
+    // Check admin permission
     if (session.user.role !== "ADMIN") {
       return {
         success: false,
-        error: "관리자만 배포 설정을 변경할 수 있습니다",
+        error: "Only admins can change deployment settings",
       };
     }
 
-    // 유효성 검사
+    // Validation
     const validMethods: ExtensionDeployMethod[] = [
       "auto",
       "webstore",
       "manual",
     ];
     if (!validMethods.includes(input.extensionDeployMethod)) {
-      return { success: false, error: "올바르지 않은 배포 방식입니다" };
+      return { success: false, error: "Invalid deployment method" };
     }
 
     if (
@@ -404,11 +411,11 @@ async function _updateExtensionDeploySettings(input: {
     ) {
       return {
         success: false,
-        error: "웹스토어 URL을 입력해주세요",
+        error: "Please enter the Chrome Web Store URL",
       };
     }
 
-    // 현재 settings 조회 후 merge
+    // Read current settings, then merge
     const current = await prisma.organization.findUnique({
       where: { id: session.user.organizationId },
       select: { settings: true },
@@ -436,7 +443,10 @@ async function _updateExtensionDeploySettings(input: {
     logger.error({ err: error }, "[updateExtensionDeploySettings] Error");
     return {
       success: false,
-      error: error instanceof Error ? error.message : "배포 설정 업데이트 실패",
+      error:
+        error instanceof Error
+          ? error.message
+          : "Failed to update deployment settings",
     };
   }
 }
@@ -446,8 +456,8 @@ export const updateExtensionDeploySettings = withLogging(
 );
 
 /**
- * 초기 빌드 자동 생성 (로그인 시 빌드가 없는 경우)
- * JWT 콜백에서 호출 가능 - cookies() 사용 없이 prisma 직접 사용
+ * Auto-create the initial build (when none exists at login)
+ * Callable from the JWT callback - uses prisma directly without cookies()
  */
 export async function triggerInitialBuild(
   organizationId: string
@@ -462,7 +472,7 @@ export async function triggerInitialBuild(
       },
     });
 
-    // 내부 self-call은 localhost 사용 (CloudFront/WAF 우회)
+    // Internal self-calls use localhost (bypasses CloudFront/WAF)
     const baseUrl = `http://localhost:${process.env.PORT || 3000}`;
     const internalSecret = process.env.AUTH_SECRET || "dev-secret-123";
 
@@ -486,7 +496,7 @@ export async function triggerInitialBuild(
 }
 
 /**
- * 최신 완료된 빌드 조회 (수동 배포 시 다운로드용)
+ * Fetch the latest completed build (for download in manual deployment)
  */
 export async function getLatestBuild(): Promise<
   ActionState<ExtensionBuildItem | null>
@@ -494,7 +504,7 @@ export async function getLatestBuild(): Promise<
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
-      return { success: false, error: "인증이 필요합니다" };
+      return { success: false, error: "Authentication required" };
     }
 
     const build = await prisma.extensionBuild.findFirst({
@@ -511,7 +521,10 @@ export async function getLatestBuild(): Promise<
     logger.error({ err: error }, "[getLatestBuild] Error");
     return {
       success: false,
-      error: error instanceof Error ? error.message : "최신 빌드 조회 실패",
+      error:
+        error instanceof Error
+          ? error.message
+          : "Failed to fetch the latest build",
     };
   }
 }

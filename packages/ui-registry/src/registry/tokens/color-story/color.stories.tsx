@@ -9,8 +9,8 @@ import {
 import type { Meta, StoryObj } from "@storybook/nextjs-vite";
 import { useEffect, useState } from "react";
 
-// 🎨 Tailwind 기본 색상 정의 (OKLCH 형식)
-// 📝 Tailwind CSS v4 공식 OKLCH 팔레트 사용
+// 🎨 Tailwind default color definitions (OKLCH format)
+// 📝 Uses the official Tailwind CSS v4 OKLCH palette
 const tailwindColors = {
   slate: {
     50: "oklch(0.984 0.003 247.858)",
@@ -306,22 +306,22 @@ type Color = {
   description?: string;
 };
 
-// 🎨 shadcn 토큰 색상 타일 컴포넌트 (다크모드 감지 포함)
+// 🎨 shadcn token color tile component (with dark mode detection)
 const ColorTile = ({ value }: Pick<Color, "value">) => {
   const [colorValue, setColorValue] = useState("");
 
   useEffect(() => {
-    // 🌓 CSS 변수 값을 읽어서 표시용으로만 사용
+    // 🌓 Reads the CSS variable value for display only
     const updateColor = () => {
       const styles = getComputedStyle(document.documentElement);
       const cssValue = styles.getPropertyValue(value);
       setColorValue(cssValue.trim());
     };
 
-    // 초기 로드 시 색상 읽기
+    // Read the color on initial load
     updateColor();
 
-    // 🔄 MutationObserver로 다크모드 실시간 감지
+    // 🔄 Detect dark mode changes in real time with a MutationObserver
     const observer = new MutationObserver((mutations) => {
       mutations.forEach((mutation) => {
         if (
@@ -343,8 +343,8 @@ const ColorTile = ({ value }: Pick<Color, "value">) => {
     };
   }, [value]);
 
-  // 🎯 목적: CSS 변수명을 Tailwind 클래스명으로 변환
-  // 📝 로직: Tailwind v4는 bg-{name} 형식을 자동으로 --color-{name}으로 매핑
+  // 🎯 Purpose: Convert a CSS variable name to a Tailwind class name
+  // 📝 Logic: Tailwind v4 automatically maps bg-{name} to --color-{name}
   //   - --primary → bg-primary → --color-primary
   //   - --chart-1 → bg-chart-1 → --color-chart-1
   //   - --primary-foreground → bg-primary-foreground → --color-primary-foreground
@@ -365,13 +365,13 @@ const ColorTile = ({ value }: Pick<Color, "value">) => {
 };
 
 /**
- * 🎨 shadcn/ui 디자인 시스템 색상 토큰 및 Tailwind CSS 색상 팔레트
+ * 🎨 shadcn/ui design system color tokens and the Tailwind CSS color palette
  *
- * 이 스토리는 두 가지 색상 시스템을 제공합니다:
- * 1. **shadcn Design Tokens**: 프로젝트에서 사용되는 디자인 시스템 토큰 (CSS 변수)
- * 2. **Tailwind Palette**: Tailwind CSS의 전체 색상 팔레트 (22개 색상 × 11개 shade)
+ * This story presents two color systems:
+ * 1. **shadcn Design Tokens**: the design system tokens used in the project (CSS variables)
+ * 2. **Tailwind Palette**: the full Tailwind CSS color palette (22 colors × 11 shades)
  *
- * 다크모드 전환 시 shadcn 토큰 값이 실시간으로 업데이트됩니다.
+ * shadcn token values update in real time when dark mode is toggled.
  */
 const meta = {
   title: "foundation/Color",
@@ -412,10 +412,10 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 /**
- * 🎯 Primary: 주요 색상 토큰
+ * 🎯 Primary: primary color tokens
  *
- * 애플리케이션의 배경, 텍스트, 주요 브랜드 색상 등 기본 색상 토큰입니다.
- * 다크모드 전환 시 자동으로 업데이트됩니다.
+ * Base color tokens such as the application background, text and primary brand colors.
+ * They update automatically when dark mode is toggled.
  */
 export const Primary: Story = {
   args: {
@@ -423,41 +423,41 @@ export const Primary: Story = {
       {
         name: "Background",
         value: "--background",
-        description: "애플리케이션의 메인 배경 색상",
+        description: "Main background color of the application",
       },
       {
         name: "Foreground",
         value: "--foreground",
-        description: "애플리케이션의 메인 텍스트 색상",
+        description: "Main text color of the application",
       },
       {
         name: "Primary",
         value: "--primary",
-        description: "주요 액션을 위한 브랜드 색상",
+        description: "Brand color for primary actions",
       },
       {
         name: "Primary Foreground",
         value: "--primary-foreground",
-        description: "Primary 배경 위의 텍스트 색상",
+        description: "Text color on Primary backgrounds",
       },
       {
         name: "Secondary",
         value: "--secondary",
-        description: "덜 중요한 액션을 위한 보조 색상",
+        description: "Supporting color for less important actions",
       },
       {
         name: "Secondary Foreground",
         value: "--secondary-foreground",
-        description: "Secondary 배경 위의 텍스트 색상",
+        description: "Text color on Secondary backgrounds",
       },
     ],
   },
 };
 
 /**
- * 🗂️ Surface: 표면 색상 토큰
+ * 🗂️ Surface: surface color tokens
  *
- * 카드, 팝오버, 코드 블록 등 UI 표면 요소를 위한 색상 토큰입니다.
+ * Color tokens for UI surfaces such as cards, popovers and code blocks.
  */
 export const Surface: Story = {
   args: {
@@ -465,61 +465,61 @@ export const Surface: Story = {
       {
         name: "Card",
         value: "--card",
-        description: "카드 컴포넌트의 배경 색상",
+        description: "Background color of card components",
       },
       {
         name: "Card Foreground",
         value: "--card-foreground",
-        description: "Card 배경 위의 텍스트 색상",
+        description: "Text color on Card backgrounds",
       },
       {
         name: "Popover",
         value: "--popover",
-        description: "팝오버 컴포넌트의 배경 색상",
+        description: "Background color of popover components",
       },
       {
         name: "Popover Foreground",
         value: "--popover-foreground",
-        description: "Popover 배경 위의 텍스트 색상",
+        description: "Text color on Popover backgrounds",
       },
       {
         name: "Surface",
         value: "--surface",
-        description: "일반 표면 요소의 배경 색상",
+        description: "Background color of general surface elements",
       },
       {
         name: "Surface Foreground",
         value: "--surface-foreground",
-        description: "Surface 배경 위의 텍스트 색상",
+        description: "Text color on Surface backgrounds",
       },
       {
         name: "Code",
         value: "--code",
-        description: "코드 블록의 배경 색상",
+        description: "Background color of code blocks",
       },
       {
         name: "Code Foreground",
         value: "--code-foreground",
-        description: "코드 블록의 텍스트 색상",
+        description: "Text color of code blocks",
       },
       {
         name: "Code Highlight",
         value: "--code-highlight",
-        description: "코드 블록의 하이라이트 배경 색상",
+        description: "Highlight background color of code blocks",
       },
       {
         name: "Code Number",
         value: "--code-number",
-        description: "코드 블록의 라인 번호 색상",
+        description: "Line number color of code blocks",
       },
     ],
   },
 };
 
 /**
- * ⚡ State: 상태 및 유틸리티 색상 토큰
+ * ⚡ State: state and utility color tokens
  *
- * 비활성화, 강조, 파괴적 액션, 선택 영역 등 다양한 상태를 나타내는 색상 토큰입니다.
+ * Color tokens for states such as disabled, accent, destructive actions and selection.
  */
 export const State: Story = {
   args: {
@@ -527,51 +527,51 @@ export const State: Story = {
       {
         name: "Muted",
         value: "--muted",
-        description: "비활성화/뮤트된 요소의 배경 색상",
+        description: "Background color of disabled/muted elements",
       },
       {
         name: "Muted Foreground",
         value: "--muted-foreground",
-        description: "보조 텍스트의 색상",
+        description: "Color of secondary text",
       },
       {
         name: "Accent",
         value: "--accent",
-        description: "강조 및 하이라이트를 위한 색상",
+        description: "Color for accents and highlights",
       },
       {
         name: "Accent Foreground",
         value: "--accent-foreground",
-        description: "Accent 배경 위의 텍스트 색상",
+        description: "Text color on Accent backgrounds",
       },
       {
         name: "Destructive",
         value: "--destructive",
-        description: "파괴적/에러 액션을 위한 색상",
+        description: "Color for destructive/error actions",
       },
       {
         name: "Destructive Foreground",
         value: "--destructive-foreground",
-        description: "Destructive 배경 위의 텍스트 색상",
+        description: "Text color on Destructive backgrounds",
       },
       {
         name: "Selection",
         value: "--selection",
-        description: "텍스트 선택 영역의 배경 색상",
+        description: "Background color of text selections",
       },
       {
         name: "Selection Foreground",
         value: "--selection-foreground",
-        description: "선택된 텍스트의 색상",
+        description: "Color of selected text",
       },
     ],
   },
 };
 
 /**
- * 🔲 Border: 테두리 및 입력 색상 토큰
+ * 🔲 Border: border and input color tokens
  *
- * 폼 컨트롤과 구분선을 위한 색상 토큰입니다.
+ * Color tokens for form controls and dividers.
  */
 export const Border: Story = {
   args: {
@@ -579,26 +579,26 @@ export const Border: Story = {
       {
         name: "Border",
         value: "--border",
-        description: "UI 요소의 기본 테두리 색상",
+        description: "Default border color of UI elements",
       },
       {
         name: "Input",
         value: "--input",
-        description: "입력 필드의 테두리 색상",
+        description: "Border color of input fields",
       },
       {
         name: "Ring",
         value: "--ring",
-        description: "포커스 링 색상",
+        description: "Focus ring color",
       },
     ],
   },
 };
 
 /**
- * 📊 Chart: 차트 색상 팔레트
+ * 📊 Chart: chart color palette
  *
- * 데이터 시각화 컴포넌트를 위한 색상 팔레트입니다.
+ * The color palette for data visualization components.
  */
 export const Chart: Story = {
   args: {
@@ -606,36 +606,36 @@ export const Chart: Story = {
       {
         name: "Chart 1",
         value: "--chart-1",
-        description: "차트 팔레트의 첫 번째 색상",
+        description: "First color of the chart palette",
       },
       {
         name: "Chart 2",
         value: "--chart-2",
-        description: "차트 팔레트의 두 번째 색상",
+        description: "Second color of the chart palette",
       },
       {
         name: "Chart 3",
         value: "--chart-3",
-        description: "차트 팔레트의 세 번째 색상",
+        description: "Third color of the chart palette",
       },
       {
         name: "Chart 4",
         value: "--chart-4",
-        description: "차트 팔레트의 네 번째 색상",
+        description: "Fourth color of the chart palette",
       },
       {
         name: "Chart 5",
         value: "--chart-5",
-        description: "차트 팔레트의 다섯 번째 색상",
+        description: "Fifth color of the chart palette",
       },
     ],
   },
 };
 
 /**
- * 🧭 Sidebar: 사이드바 색상 토큰
+ * 🧭 Sidebar: sidebar color tokens
  *
- * 내비게이션 사이드바 컴포넌트를 위한 색상 토큰입니다.
+ * Color tokens for the navigation sidebar component.
  */
 export const Sidebar: Story = {
   args: {
@@ -643,52 +643,52 @@ export const Sidebar: Story = {
       {
         name: "Sidebar",
         value: "--sidebar",
-        description: "사이드바의 배경 색상",
+        description: "Background color of the sidebar",
       },
       {
         name: "Sidebar Foreground",
         value: "--sidebar-foreground",
-        description: "사이드바의 텍스트 색상",
+        description: "Text color of the sidebar",
       },
       {
         name: "Sidebar Primary",
         value: "--sidebar-primary",
-        description: "사이드바의 주요 색상",
+        description: "Primary color of the sidebar",
       },
       {
         name: "Sidebar Primary Foreground",
         value: "--sidebar-primary-foreground",
-        description: "Sidebar Primary 배경 위의 텍스트 색상",
+        description: "Text color on Sidebar Primary backgrounds",
       },
       {
         name: "Sidebar Accent",
         value: "--sidebar-accent",
-        description: "사이드바의 강조 색상",
+        description: "Accent color of the sidebar",
       },
       {
         name: "Sidebar Accent Foreground",
         value: "--sidebar-accent-foreground",
-        description: "Sidebar Accent 배경 위의 텍스트 색상",
+        description: "Text color on Sidebar Accent backgrounds",
       },
       {
         name: "Sidebar Border",
         value: "--sidebar-border",
-        description: "사이드바의 테두리 색상",
+        description: "Border color of the sidebar",
       },
       {
         name: "Sidebar Ring",
         value: "--sidebar-ring",
-        description: "사이드바의 포커스 링 색상",
+        description: "Focus ring color of the sidebar",
       },
     ],
   },
 };
 
 /**
- * 🎨 Tailwind Palette: Tailwind CSS 전체 색상 팔레트
+ * 🎨 Tailwind Palette: the full Tailwind CSS color palette
  *
- * Tailwind CSS의 22개 색상 시스템 (각 11개 shade: 50-950)과 shadcn 토큰을 함께 보여줍니다.
- * 다크모드 전환 시 shadcn 토큰 값이 실시간으로 업데이트됩니다.
+ * Shows Tailwind CSS's 22-color system (11 shades each: 50-950) alongside the shadcn tokens.
+ * shadcn token values update in real time when dark mode is toggled.
  */
 export const TailwindPalette: Story = {
   args: {
@@ -698,7 +698,7 @@ export const TailwindPalette: Story = {
     const [tokens, setTokens] = useState<Record<string, string>>({});
     const [isDarkMode, setIsDarkMode] = useState(false);
 
-    // 🌓 CSS 변수 값을 가져오는 함수 (다크모드 실시간 감지)
+    // 🌓 Reads a CSS variable value (detects dark mode in real time)
     const updateTokens = () => {
       const styles = getComputedStyle(document.documentElement);
       const tokenList = [
@@ -751,11 +751,11 @@ export const TailwindPalette: Story = {
       setIsDarkMode(document.documentElement.classList.contains("dark"));
     };
 
-    // 🔄 초기 로드 및 다크모드 변경 감지
+    // 🔄 Initial load and dark mode change detection
     useEffect(() => {
       updateTokens();
 
-      // MutationObserver로 클래스 변경 감지
+      // Detect class changes with a MutationObserver
       const observer = new MutationObserver((mutations) => {
         mutations.forEach((mutation) => {
           if (
@@ -777,7 +777,7 @@ export const TailwindPalette: Story = {
       };
     }, []);
 
-    // 단일 컬러 박스 컴포넌트
+    // Single color swatch component
     const ColorBox = ({ name, value }: { name: string; value: string }) => (
       <div key={name} style={{ textAlign: "center" }}>
         <div
@@ -794,7 +794,7 @@ export const TailwindPalette: Story = {
       </div>
     );
 
-    // Tailwind 팔레트 렌더링 함수
+    // Renders the Tailwind palette
     const renderTailwindColors = (
       colors: Record<string, string | Record<string, string>>,
       parent = "",
@@ -828,8 +828,8 @@ export const TailwindPalette: Story = {
       });
     };
 
-    // 🎯 목적: Tailwind 클래스 매핑으로 shadcn 토큰 표시
-    // 📝 로직: Tailwind v4는 bg-{name} 형식을 자동으로 --color-{name}으로 매핑
+    // 🎯 Purpose: Show shadcn tokens through Tailwind class mapping
+    // 📝 Logic: Tailwind v4 automatically maps bg-{name} to --color-{name}
     //   - --primary → bg-primary → --color-primary
     //   - --chart-1 → bg-chart-1 → --color-chart-1
     //   - --sidebar → bg-sidebar → --color-sidebar
@@ -879,7 +879,7 @@ export const TailwindPalette: Story = {
 
     return (
       <div>
-        {/* 현재 테마 표시 */}
+        {/* Current theme indicator */}
         <div
           style={{
             marginBottom: "1rem",
@@ -892,7 +892,7 @@ export const TailwindPalette: Story = {
           {isDarkMode ? "Dark Mode" : "Light Mode"}
         </div>
 
-        {/* shadcn 토큰 */}
+        {/* shadcn tokens */}
         <h2 style={{ marginBottom: "1rem" }}>Shadcn Design Tokens</h2>
         <div
           style={{
@@ -931,7 +931,7 @@ export const TailwindPalette: Story = {
           })}
         </div>
 
-        {/* Tailwind 팔레트 */}
+        {/* Tailwind palette */}
         <h2 style={{ marginBottom: "1rem" }}>Tailwind Color Palette</h2>
         {renderTailwindColors(tailwindColors)}
       </div>

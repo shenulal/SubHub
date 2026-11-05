@@ -55,16 +55,16 @@ import {
 } from "recharts";
 
 /**
- * 🎯 목적: Figma 디자인을 기반으로 만든 대시보드 템플릿
+ * 🎯 Purpose: A dashboard template built from the Figma design
  *
- * 이 템플릿은 Data Table, Calendar, Chart 컴포넌트를 포함한
- * 완전한 대시보드 레이아웃을 제공합니다.
+ * This template provides a complete dashboard layout
+ * including Data Table, Calendar and Chart components.
  *
- * 📐 디자인 토큰 사용:
+ * 📐 Design tokens used:
  * - Typography: text-2xl (24px), text-3xl (30px)
  * - Spacing: p-8 (32px), gap-6 (24px), space-y-8 (32px)
  * - Layout: max-w-7xl, h-96 (384px)
- * - 모든 값은 Storybook 디자인 토큰을 준수합니다
+ * - All values follow the Storybook design tokens
  */
 const meta: Meta = {
   title: "templates/Test Dashboard",
@@ -82,7 +82,7 @@ const meta: Meta = {
 export default meta;
 type Story = StoryObj<typeof meta>;
 
-// 🎯 차트 데이터
+// 🎯 Chart data
 const chartData = [
   { month: "Jan", value: 186 },
   { month: "Feb", value: 305 },
@@ -99,7 +99,7 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-// 🎯 테이블 데이터
+// 🎯 Table data
 const invoiceData = [
   { id: 1, email: "david291@gmail.com", amount: 2173.52, status: "Success" },
   {
@@ -129,7 +129,7 @@ const invoiceData = [
 ];
 
 /**
- * 전체 대시보드 템플릿
+ * Full dashboard template
  */
 export const Default: Story = {
   render: () => {
@@ -143,7 +143,7 @@ export const Default: Story = {
     const [currentMonth, setCurrentMonth] = useState(new Date(2025, 0));
     const [emailFilter, setEmailFilter] = useState("");
 
-    // 🎯 전체 선택 처리
+    // 🎯 Handle select-all
     const handleSelectAll = (checked: boolean) => {
       if (checked) {
         setSelectedRowIds(new Set(invoiceData.map((item) => item.id)));
@@ -152,7 +152,7 @@ export const Default: Story = {
       }
     };
 
-    // 🎯 개별 선택 처리
+    // 🎯 Handle individual selection
     const handleSelectRow = (id: number, checked: boolean) => {
       const newSelectedIds = new Set(selectedRowIds);
       if (checked) {
@@ -163,7 +163,7 @@ export const Default: Story = {
       setSelectedRowIds(newSelectedIds);
     };
 
-    // 🎯 필터링된 데이터
+    // 🎯 Filtered data
     const filteredData = invoiceData.filter((item) =>
       item.email.toLowerCase().includes(emailFilter.toLowerCase()),
     );
@@ -171,12 +171,12 @@ export const Default: Story = {
     return (
       <div className="bg-background min-h-screen p-8">
         <div className="mx-auto" style={{ maxWidth: "1625px" }}>
-          {/* 🎯 목적: 2컬럼 그리드 레이아웃 - 디자인 토큰 기반 */}
+          {/* 🎯 Purpose: Two-column grid layout based on design tokens */}
           <div
             className="grid gap-6"
             style={{ gridTemplateColumns: "768px 1fr" }}
           >
-            {/* 왼쪽 컬럼: 차트 카드 (전체 높이) */}
+            {/* Left column: chart card (full height) */}
             <Card className="shadow-sm">
               <CardHeader className="border-b">
                 <div className="flex items-center justify-between">
@@ -245,9 +245,9 @@ export const Default: Story = {
               </CardFooter>
             </Card>
 
-            {/* 오른쪽 컬럼: 캘린더와 테이블 (세로 배치) */}
+            {/* Right column: calendar and table (stacked) */}
             <div className="flex flex-col gap-6">
-              {/* 캘린더 카드 */}
+              {/* Calendar card */}
               <Card className="shadow-sm">
                 <CardContent className="p-0">
                   <div className="flex gap-4 p-3">
@@ -297,7 +297,7 @@ export const Default: Story = {
                 </CardContent>
               </Card>
 
-              {/* 데이터 테이블 */}
+              {/* Data table */}
               <Card className="shadow-sm">
                 <CardHeader className="pb-4">
                   <div className="flex items-center justify-between">

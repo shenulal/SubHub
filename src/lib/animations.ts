@@ -1,10 +1,10 @@
 // src/lib/animations.ts
-// 공통 Framer Motion 애니메이션 유틸리티
+// Shared Framer Motion animation utilities
 
 import type { Variants } from "framer-motion";
 
 /**
- * Staggered 진입 애니메이션 (부모 컨테이너용)
+ * Staggered entrance animation (for parent containers)
  */
 export const staggerContainer: Variants = {
   hidden: { opacity: 0 },
@@ -18,7 +18,7 @@ export const staggerContainer: Variants = {
 };
 
 /**
- * Fade-in + slide up 진입 애니메이션 (자식 아이템용)
+ * Fade-in + slide-up entrance animation (for child items)
  */
 export const fadeInUp: Variants = {
   hidden: { opacity: 0, y: 20 },
@@ -33,7 +33,7 @@ export const fadeInUp: Variants = {
 };
 
 /**
- * Fade-in 애니메이션 (단순)
+ * Simple fade-in animation
  */
 export const fadeIn: Variants = {
   hidden: { opacity: 0 },
@@ -47,7 +47,7 @@ export const fadeIn: Variants = {
 };
 
 /**
- * Scale + Fade 진입 애니메이션 (카드용)
+ * Scale + fade entrance animation (for cards)
  */
 export const scaleIn: Variants = {
   hidden: { opacity: 0, scale: 0.95 },
@@ -62,7 +62,7 @@ export const scaleIn: Variants = {
 };
 
 /**
- * Slide-in from left 애니메이션
+ * Slide-in-from-left animation
  */
 export const slideInLeft: Variants = {
   hidden: { opacity: 0, x: -30 },
@@ -77,7 +77,7 @@ export const slideInLeft: Variants = {
 };
 
 /**
- * 테이블 행 stagger 애니메이션
+ * Table row stagger animation
  */
 export const tableRowStagger: Variants = {
   hidden: { opacity: 0 },

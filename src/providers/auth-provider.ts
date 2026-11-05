@@ -28,13 +28,13 @@ const fetchSession = async (): Promise<SessionResponse | null> => {
 };
 
 /**
- * Refine AuthProvider 스켈레톤.
- * - NextAuth v5 세션을 활용해 인증 상태를 확인한다.
- * - 실제 로그인/로그아웃 로직은 기존 NextAuth 흐름에 맞춰 후속 구현한다.
+ * Refine AuthProvider skeleton.
+ * - Checks authentication state using the NextAuth v5 session.
+ * - Full login/logout logic will follow the existing NextAuth flow in a later iteration.
  */
 export const authProvider: AuthProvider = {
   login: async ({ providerName, email, password }) => {
-    // 추후 NextAuth signIn 확장 예정. 현재는 리디렉션만 수행.
+    // NextAuth signIn to be extended later; currently only redirects.
     await signIn(providerName, { email, password });
     return {
       success: true,

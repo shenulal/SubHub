@@ -1,32 +1,32 @@
 // src/lib/erp-double-entry.ts
-// 복식부기 → 단건 변환 엔진
-// ERP 데이터의 차변/대변 구조를 SMP PaymentCSVRow 단건으로 변환
+// Double-entry → single-entry conversion engine
+// Converts the debit/credit structure of ERP data into single SubHub PaymentCSVRow entries
 
 import type { DoubleEntryConfig } from "./erp-format-presets";
 
-/** 복식부기 원본 행 */
+/** Raw double-entry row */
 export interface DoubleEntryRow {
-  /** 원본 CSV 행 데이터 */
+  /** Raw CSV row data */
   rawData: Record<string, string>;
-  /** 날짜 문자열 */
+  /** Date string */
   date: string;
-  /** 금액 (파싱 전 문자열) */
+  /** Amount (unparsed string) */
   amount: string;
-  /** 차변 계정 코드 */
+  /** Debit account code */
   debitAccount?: string;
-  /** 차변 계정명 */
+  /** Debit account name */
   debitAccountName?: string;
-  /** 대변 계정 코드 */
+  /** Credit account code */
   creditAccount?: string;
-  /** 대변 계정명 */
+  /** Credit account name */
   creditAccountName?: string;
-  /** 적요/메모 */
+  /** Description/memo */
   memo?: string;
-  /** 거래처명 */
+  /** Vendor name */
   merchant?: string;
 }
 
-/** 변환 결과 행 */
+/** Converted result row */
 export interface ConvertedEntry {
   date: string;
   amount: number;
@@ -34,12 +34,12 @@ export interface ConvertedEntry {
   category?: string;
   memo?: string;
   rawData: Record<string, string>;
-  /** 부가세 합산 금액 (별도 추적용) */
+  /** VAT amount added (tracked separately) */
   vatAmount?: number;
 }
 
 /**
- * 계정 코드가 지정된 접두사 중 하나와 매칭되는지 확인
+ * Check whether an account code matches one of the given prefixes
  */
 function matchesAccountPrefix(
   accountCode: string | undefined,
@@ -51,7 +51,7 @@ function matchesAccountPrefix(
 }
 
 /**
- * 비용 계정 행인지 확인
+ * Check whether the row is an expense account row
  */
 function isExpenseRow(row: DoubleEntryRow, config: DoubleEntryConfig): boolean {
   if (config.expenseAccountPrefixes.length === 0) return true;
@@ -59,7 +59,7 @@ function isExpenseRow(row: DoubleEntryRow, config: DoubleEntryConfig): boolean {
 }
 
 /**
- * 부가세(매입세액) 행인지 확인
+ * Check whether the row is a VAT (input VAT) row
  */
 function isVATRow(row: DoubleEntryRow, config: DoubleEntryConfig): boolean {
   if (config.vatAccountPrefixes.length === 0) return false;
@@ -67,7 +67,7 @@ function isVATRow(row: DoubleEntryRow, config: DoubleEntryConfig): boolean {
 }
 
 /**
- * 금액 문자열을 숫자로 변환 (간단 버전, 기존 parsePaymentAmount와 호환)
+ * Convert an amount string to a number (simple version, compatible with parsePaymentAmount)
  */
 function parseAmount(amountStr: string): number {
   if (!amountStr || !amountStr.trim()) return 0;
@@ -80,7 +80,7 @@ function parseAmount(amountStr: string): number {
 }
 
 /**
- * 날짜별로 행을 그룹핑 (같은 전표의 차변/대변을 묶기 위함)
+ * Group rows by date (to keep debits/credits of the same voucher together)
  */
 function groupByDate(rows: DoubleEntryRow[]): Map<string, DoubleEntryRow[]> {
   const groups = new Map<string, DoubleEntryRow[]>();
@@ -94,8 +94,8 @@ function groupByDate(rows: DoubleEntryRow[]): Map<string, DoubleEntryRow[]> {
 }
 
 /**
- * DEBIT_EXPENSE_ONLY 모드: 차변 중 비용 계정만 추출
- * 같은 날짜의 부가세(매입세액) 행이 있으면 비용에 합산
+ * DEBIT_EXPENSE_ONLY mode: extract only expense accounts from debits
+ * If there is a VAT (input VAT) row on the same date, add it to the expenses
  */
 function convertDebitExpenseOnly(
   rows: DoubleEntryRow[],
@@ -108,7 +108,7 @@ function convertDebitExpenseOnly(
     const expenseRows = group.filter((r) => isExpenseRow(r, config));
     const vatRows = group.filter((r) => isVATRow(r, config));
 
-    // 부가세 총액 (비용 행 수로 나눠서 배분)
+    // Total VAT (split across the expense rows)
     const totalVAT = vatRows.reduce((sum, r) => sum + parseAmount(r.amount), 0);
     const vatPerExpense =
       expenseRows.length > 0 ? totalVAT / expenseRows.length : 0;
@@ -131,7 +131,7 @@ function convertDebitExpenseOnly(
 }
 
 /**
- * DEBIT_ALL 모드: 모든 차변 항목 추출
+ * DEBIT_ALL mode: extract all debit entries
  */
 function convertDebitAll(
   rows: DoubleEntryRow[],
@@ -139,7 +139,7 @@ function convertDebitAll(
 ): ConvertedEntry[] {
   return rows
     .filter((row) => {
-      // 차변 계정이 있는 행만 (대변 전용 행 제외)
+      // Only rows with a debit account (exclude credit-only rows)
       return row.debitAccount && row.debitAccount.trim() !== "";
     })
     .filter((row) => !isVATRow(row, config))
@@ -154,7 +154,7 @@ function convertDebitAll(
 }
 
 /**
- * NET_AMOUNT 모드: 차변 - 대변 순액 계산
+ * NET_AMOUNT mode: compute the net amount (debit - credit)
  */
 function convertNetAmount(rows: DoubleEntryRow[]): ConvertedEntry[] {
   const dateGroups = groupByDate(rows);
@@ -200,11 +200,11 @@ function convertNetAmount(rows: DoubleEntryRow[]): ConvertedEntry[] {
 }
 
 /**
- * 복식부기 행 배열을 단건 배열로 변환
+ * Convert an array of double-entry rows into single entries
  *
- * @param rows - 복식부기 원본 행 배열
- * @param config - 복식부기 설정 (프리셋에서 가져옴)
- * @returns 단건 변환 결과 배열
+ * @param rows - Raw double-entry rows
+ * @param config - Double-entry settings (taken from the preset)
+ * @returns Converted single-entry rows
  */
 export function convertDoubleEntry(
   rows: DoubleEntryRow[],
@@ -218,7 +218,7 @@ export function convertDoubleEntry(
     case "NET_AMOUNT":
       return convertNetAmount(rows);
     case "NONE":
-      // 복식부기가 아닌 경우 그대로 반환
+      // Not double-entry: return as-is
       return rows.map((row) => ({
         date: row.date,
         amount: parseAmount(row.amount),

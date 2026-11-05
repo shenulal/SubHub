@@ -1,9 +1,9 @@
 // src/lib/api/extension-auth.ts
 /**
- * Extension API 인증 미들웨어
+ * Extension API authentication middleware
  *
- * Chrome Extension이 Bearer 토큰으로 인증할 때 사용
- * ExtensionApiToken 테이블에서 토큰을 검증하고 organizationId를 반환
+ * Used when the Chrome Extension authenticates with a Bearer token
+ * Validates the token against the ExtensionApiToken table and returns the organizationId
  */
 
 import { prisma } from "@/lib/db";
@@ -12,23 +12,23 @@ import crypto from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
- * Bearer 토큰을 해시하여 저장된 값과 비교
- * 토큰은 SHA-256으로 해시되어 DB에 저장됨
+ * Hashes the Bearer token and compares it with the stored value
+ * Tokens are stored in the DB as SHA-256 hashes
  */
 export function hashToken(token: string): string {
   return crypto.createHash("sha256").update(token).digest("hex");
 }
 
 /**
- * 새 API 토큰 생성
- * 랜덤 32바이트를 Base64URL 인코딩하여 생성
+ * Generates a new API token
+ * Built from 32 random bytes, Base64URL-encoded
  */
 export function generateToken(): string {
   return crypto.randomBytes(32).toString("base64url");
 }
 
 /**
- * Authorization 헤더에서 Bearer 토큰 추출
+ * Extracts the Bearer token from the Authorization header
  */
 function extractBearerToken(request: NextRequest): string | null {
   const authHeader = request.headers.get("authorization");
@@ -43,10 +43,10 @@ function extractBearerToken(request: NextRequest): string | null {
 }
 
 /**
- * Extension 토큰 인증 수행
+ * Performs Extension token authentication
  *
- * @param request - NextRequest 객체
- * @returns ExtensionAuthContext 또는 null (인증 실패 시)
+ * @param request - NextRequest object
+ * @returns ExtensionAuthContext, or null on authentication failure
  */
 export async function validateExtensionToken(
   request: NextRequest
@@ -58,7 +58,7 @@ export async function validateExtensionToken(
 
   const hashedToken = hashToken(rawToken);
 
-  // 토큰 조회
+  // Look up the token
   const tokenRecord = await prisma.extensionApiToken.findUnique({
     where: { token: hashedToken },
     select: {
@@ -74,17 +74,17 @@ export async function validateExtensionToken(
     return null;
   }
 
-  // 비활성화 체크
+  // Check whether it is deactivated
   if (!tokenRecord.isActive) {
     return null;
   }
 
-  // 만료 체크
+  // Check expiry
   if (tokenRecord.expiresAt && tokenRecord.expiresAt < new Date()) {
     return null;
   }
 
-  // lastUsedAt 업데이트 (비동기로 처리하여 응답 지연 방지)
+  // Update lastUsedAt (asynchronously to avoid delaying the response)
   prisma.extensionApiToken
     .update({
       where: { id: tokenRecord.id },
@@ -101,7 +101,7 @@ export async function validateExtensionToken(
   };
 }
 
-// Extension 인증된 핸들러 타입
+// Handler type for Extension-authenticated requests
 export type ExtensionAuthenticatedHandler = (
   request: NextRequest,
   context: { auth: ExtensionAuthContext }
@@ -110,7 +110,7 @@ export type ExtensionAuthenticatedHandler = (
 import { logger } from "@/lib/logger";
 
 /**
- * Extension API 인증 래퍼 (HOF)
+ * Extension API authentication wrapper (HOF)
  *
  * @example
  * ```typescript
@@ -131,7 +131,7 @@ export function withExtensionAuth(handler: ExtensionAuthenticatedHandler) {
       );
     }
 
-    // 인증 컨텍스트 로깅
+    // Log the authentication context
     logger.debug(
       {
         orgId: auth.organizationId,

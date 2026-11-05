@@ -1,6 +1,6 @@
 // src/lib/services/notification/legacy-alerts.ts
 /**
- * Legacy "computed" alerts inherited from saaslens (renewals, offboarding,
+ * Legacy "computed" alerts inherited from the upstream base (renewals, offboarding,
  * shadow IT, cost anomalies, pending review). They are no longer rendered
  * directly: `backfillComputedAlerts()` converts them into persistent
  * `Notification` rows from the reminders cron.
@@ -95,7 +95,7 @@ export async function computeLegacyAlerts(
     .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
     .slice(0, MAX_LEGACY_ALERTS);
 }
-// ─── 1) 구독 갱신 알림 ──────────────────────────────────────────
+// ─── 1) Subscription renewal alerts ──────────────────────────────────────────
 
 async function fetchRenewalAlerts(
   organizationId: string,
@@ -137,7 +137,7 @@ async function fetchRenewalAlerts(
         id: `renewal-${sub.id}-${days}`,
         type: "renewal",
         title: `D-${daysLeft} ${sub.app.name}`,
-        detail: `${renewalDate.toLocaleDateString("ko-KR")}`,
+        detail: `${renewalDate.toLocaleDateString("en-US")}`,
         createdAt: now,
         link: `/apps/${sub.app.id}`,
       });
@@ -147,7 +147,7 @@ async function fetchRenewalAlerts(
   return notifications;
 }
 
-// ─── 2) 퇴사자 미회수 알림 ──────────────────────────────────────
+// ─── 2) Offboarded users with unrevoked access ──────────────────────────────────────
 
 async function fetchOffboardingAlerts(
   organizationId: string
@@ -177,7 +177,7 @@ async function fetchOffboardingAlerts(
   }));
 }
 
-// ─── 3) Shadow IT 알림 ──────────────────────────────────────────
+// ─── 3) Shadow IT alerts ──────────────────────────────────────────
 
 async function fetchShadowITAlerts(
   organizationId: string
@@ -205,7 +205,7 @@ async function fetchShadowITAlerts(
     }),
   ]);
 
-  // 화이트리스트 필터링
+  // Whitelist filtering
   const registeredPatterns = whitelistPatterns.map((w) => w.pattern);
   const filtered = pendingScans.filter(
     (scan) =>
@@ -226,7 +226,7 @@ async function fetchShadowITAlerts(
   }));
 }
 
-// ─── 4) 비용 이상 알림 ──────────────────────────────────────────
+// ─── 4) Cost anomaly alerts ──────────────────────────────────────────
 
 async function fetchCostAnomalyAlerts(
   organizationId: string,
@@ -264,7 +264,7 @@ async function fetchCostAnomalyAlerts(
     previousCosts.map((c) => [c.matchedAppId, Number(c._sum.useAmt) || 0])
   );
 
-  // 이상 감지된 앱 ID 수집
+  // Collect IDs of apps with anomalies
   const anomalyAppIds: string[] = [];
   const anomalyData = new Map<
     string,
@@ -290,7 +290,7 @@ async function fetchCostAnomalyAlerts(
 
   if (anomalyAppIds.length === 0) return [];
 
-  // 앱 이름 조회
+  // Look up app names
   const apps = await prisma.app.findMany({
     where: { id: { in: anomalyAppIds } },
     select: { id: true, name: true },
@@ -310,7 +310,7 @@ async function fetchCostAnomalyAlerts(
   });
 }
 
-// ─── 5) 검토 대기 앱 (항상 활성) ────────────────────────────────
+// ─── 5) Apps pending review (always on) ────────────────────────────────
 
 async function fetchPendingReviewAlerts(
   organizationId: string

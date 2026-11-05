@@ -1,13 +1,13 @@
 # SubHub — Repository Guidelines
 
-SubHub is HelloPixels' subscription-management product, derived from saaslens. The full
+SubHub is HelloPixels' subscription-management product, built on an open-source subscription-management base. The full
 engineering contract (settings registry, RBAC, i18n namespaces, testing, file limits,
 ownership conventions) is in **`docs/SUBHUB-AGENT-GUIDE.md`** — read it before any change.
 
 ## Essentials
 
-- Language: TypeScript, React 19, Next.js 15 App Router. English is the default locale;
-  Korean is supported (new keys may mirror English).
+- Language: TypeScript, React 19, Next.js 15 App Router. SubHub is English-only
+  (`locales = ["en"]`); write all UI text, comments and tests in English.
 - No hard-coded tunables: read everything through `@/lib/settings/service`
   (`src/lib/settings/registry.ts` is the catalogue).
 - RBAC on every write and sensitive read: `requirePermission("<resource>:<action>")`

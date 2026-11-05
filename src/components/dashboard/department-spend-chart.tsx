@@ -35,10 +35,10 @@ interface DepartmentSpendChartProps {
 }
 
 /**
- * 부서별 지출 분석 차트 컴포넌트
- * - Figma 디자인 적용: 얇은 도넛 차트 + 테이블 레이아웃
- * - 중앙: "월간 총계 (₩)" + 금액
- * - 하단: 부서별 리스트 (색상 점 + 이름 + 인원수 + 퍼센트)
+ * Spend-by-department chart component
+ * - Figma design: thin donut chart + table layout
+ * - Centre: "Monthly total" + amount
+ * - Bottom: per-department list (colour dot + name + headcount + percentage)
  */
 export function DepartmentSpendChart({
   data,
@@ -48,19 +48,19 @@ export function DepartmentSpendChart({
   const t = useTranslations("dashboardV2Seat.department");
   const locale = useLocale();
 
-  // 비용 순 정렬, 상위 5개 부서
+  // Sort by cost, top 5 departments
   const chartData = useMemo(() => {
     return [...data.departments]
       .sort((a, b) => b.totalCost - a.totalCost)
       .slice(0, 5);
   }, [data.departments]);
 
-  // 총 비용 계산
+  // Compute total cost
   const totalCost = useMemo(() => {
     return chartData.reduce((sum, item) => sum + item.totalCost, 0);
   }, [chartData]);
 
-  // 퍼센트 계산
+  // Compute percentages
   const dataWithPercent = useMemo(() => {
     return chartData.map((item) => ({
       ...item,
@@ -69,7 +69,7 @@ export function DepartmentSpendChart({
     }));
   }, [chartData, totalCost]);
 
-  // 로딩 상태
+  // Loading state
   if (isLoading) {
     return (
       <Card className={CARD_CLASSES}>
@@ -86,7 +86,7 @@ export function DepartmentSpendChart({
     );
   }
 
-  // 데이터 없음 상태
+  // Empty state
   if (chartData.length === 0) {
     return (
       <Card className={CARD_CLASSES}>
@@ -103,7 +103,7 @@ export function DepartmentSpendChart({
 
   return (
     <Card className={CARD_CLASSES}>
-      {/* 타이틀 */}
+      {/* Title */}
       <p
         className="text-foreground truncate text-lg font-medium"
         title={t("title")}
@@ -111,9 +111,9 @@ export function DepartmentSpendChart({
         {t("title")}
       </p>
 
-      {/* 콘텐츠 영역 */}
+      {/* Content area */}
       <div className="flex min-h-0 flex-1 flex-col gap-3">
-        {/* 도넛 차트 + 중앙 텍스트 */}
+        {/* Donut chart + centre text */}
         <div className="relative flex h-[180px] shrink-0 items-center justify-center">
           <ResponsiveContainer width={180} height={180}>
             <PieChart>
@@ -137,7 +137,7 @@ export function DepartmentSpendChart({
             </PieChart>
           </ResponsiveContainer>
 
-          {/* 중앙 텍스트 */}
+          {/* Centre text */}
           <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center px-8 text-center">
             <span className="text-muted-foreground max-w-[8.5rem] truncate text-xs">
               {t("monthlyTotal")}
@@ -151,14 +151,14 @@ export function DepartmentSpendChart({
           </div>
         </div>
 
-        {/* 테이블 영역 */}
+        {/* Table area */}
         <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
           {dataWithPercent.map((item, index) => (
             <div
               key={item.department}
               className="border-border flex min-w-0 items-center gap-2 border-t px-2 py-2"
             >
-              {/* 부서 이름 + 색상 점 */}
+              {/* Department name + colour dot */}
               <div className="flex min-w-0 flex-1 items-center gap-2">
                 <div
                   className="size-2.5 shrink-0 rounded-full"
@@ -174,7 +174,7 @@ export function DepartmentSpendChart({
                 </span>
               </div>
 
-              {/* 인원수 */}
+              {/* Headcount */}
               <div className="w-14 shrink-0 text-right">
                 <span className="text-muted-foreground text-xs tabular-nums">
                   {item.headcount}
@@ -182,7 +182,7 @@ export function DepartmentSpendChart({
                 </span>
               </div>
 
-              {/* 퍼센트 */}
+              {/* Percentage */}
               <div className="w-12 shrink-0 text-right">
                 <span className="text-foreground text-xs font-medium tabular-nums">
                   {item.percentage}%

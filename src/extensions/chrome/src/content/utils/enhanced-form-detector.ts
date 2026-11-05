@@ -1,12 +1,12 @@
 /**
  * Enhanced Form Detector
- * 실패한 SaaS들의 로그인 폼 감지를 위한 향상된 로직
+ * Enhanced logic for detecting login forms on SaaS sites where basic detection failed
  */
 
 import { getLoginConfig, LoginConfig } from "./login-url-config";
 import { deepQuerySelector, deepQuerySelectorAll } from "./shadow-dom";
 
-// 텍스트 기반 셀렉터를 위한 헬퍼 (contains 미지원 대체)
+// Helper for text-based selectors (substitute for unsupported :contains)
 function findElementByText(
   text: string,
   tagNames: string[] = ["button", "a"]
@@ -27,7 +27,7 @@ function findElementByText(
 }
 
 /**
- * 요소가 나타날 때까지 대기
+ * Wait until an element appears
  */
 async function waitForElement(
   selector: string,
@@ -38,15 +38,15 @@ async function waitForElement(
   const checkInterval = 500;
 
   while (Date.now() - startTime < timeout) {
-    // 일반 DOM 검색
+    // Regular DOM search
     let element = root.querySelector(selector) as HTMLElement;
     if (element) return element;
 
-    // Shadow DOM 검색
+    // Shadow DOM search
     element = deepQuerySelector(selector, root as Document) as HTMLElement;
     if (element) return element;
 
-    // 대기
+    // Wait
     await new Promise((resolve) => setTimeout(resolve, checkInterval));
   }
 
@@ -54,18 +54,18 @@ async function waitForElement(
 }
 
 /**
- * 모달 트리거 버튼 클릭
+ * Click the modal trigger button
  */
 async function clickLoginTrigger(config: LoginConfig): Promise<boolean> {
   if (!config.clickBeforeLogin) return false;
 
-  // :contains() 같은 비표준 셀렉터 처리
+  // Handle non-standard selectors such as :contains()
   const selectors = config.clickBeforeLogin.split(",").map((s) => s.trim());
 
   for (const selector of selectors) {
     let element: HTMLElement | null = null;
 
-    // 텍스트 기반 셀렉터 처리
+    // Handle text-based selectors
     if (selector.includes(":contains(")) {
       const match = selector.match(/:contains\(["']?(.+?)["']?\)/);
       if (match) {
@@ -75,14 +75,14 @@ async function clickLoginTrigger(config: LoginConfig): Promise<boolean> {
         element = findElementByText(text, tags);
       }
     } else {
-      // 표준 셀렉터
+      // Standard selector
       element = document.querySelector(selector) as HTMLElement;
     }
 
     if (element && element.offsetParent !== null) {
       console.log("[Shade] Clicking login trigger:", selector);
       element.click();
-      // 모달 렌더링 대기
+      // Wait for the modal to render
       await new Promise((resolve) => setTimeout(resolve, 1500));
       return true;
     }
@@ -92,7 +92,7 @@ async function clickLoginTrigger(config: LoginConfig): Promise<boolean> {
 }
 
 /**
- * 향상된 로그인 폼 감지
+ * Enhanced login form detection
  */
 export async function detectLoginFormEnhanced(): Promise<{
   found: boolean;
@@ -122,23 +122,23 @@ export async function detectLoginFormEnhanced(): Promise<{
     },
   };
 
-  // 설정이 있는 경우 향상된 감지 수행
+  // Run enhanced detection when settings exist
   if (config) {
     result.type = config.type;
 
-    // 1. 모달 트리거 클릭 필요한 경우
+    // 1. When a modal trigger click is required
     if (config.clickBeforeLogin) {
       const clicked = await clickLoginTrigger(config);
       console.log("[Shade] Login trigger clicked:", clicked);
     }
 
-    // 2. 추가 대기 시간
+    // 2. Extra wait time
     if (config.extraWaitTime) {
       console.log("[Shade] Extra wait time:", config.extraWaitTime);
       await new Promise((resolve) => setTimeout(resolve, config.extraWaitTime));
     }
 
-    // 3. 특정 셀렉터 대기
+    // 3. Wait for a specific selector
     if (config.waitForSelector) {
       console.log("[Shade] Waiting for selector:", config.waitForSelector);
       const element = await waitForElement(config.waitForSelector, 10000);
@@ -147,12 +147,12 @@ export async function detectLoginFormEnhanced(): Promise<{
       }
     }
 
-    // 4. Shadow DOM 타입인 경우 깊은 탐색
+    // 4. Deep search for the Shadow DOM type
     if (config.type === "shadow-dom") {
       return detectInShadowDOM(config);
     }
 
-    // 5. 커스텀 셀렉터로 필드 찾기
+    // 5. Find fields using custom selectors
     if (config.selectors) {
       if (config.selectors.email) {
         result.fields.email = document.querySelector(
@@ -172,7 +172,7 @@ export async function detectLoginFormEnhanced(): Promise<{
     }
   }
 
-  // 설정이 없거나 커스텀 셀렉터로 못 찾은 경우 일반 감지
+  // Fall back to generic detection when there are no settings or custom selectors found nothing
   if (!result.fields.email) {
     result.fields.email = findEmailField();
   }
@@ -196,7 +196,7 @@ export async function detectLoginFormEnhanced(): Promise<{
 }
 
 /**
- * Shadow DOM 내 로그인 폼 감지
+ * Detect login forms inside Shadow DOM
  */
 async function detectInShadowDOM(config: LoginConfig): Promise<{
   found: boolean;
@@ -217,7 +217,7 @@ async function detectInShadowDOM(config: LoginConfig): Promise<{
     },
   };
 
-  // 이메일 필드 찾기
+  // Find the email field
   const emailSelectors = [
     'input[type="email"]',
     'input[name="email"]',
@@ -233,7 +233,7 @@ async function detectInShadowDOM(config: LoginConfig): Promise<{
     }
   }
 
-  // 비밀번호 필드 찾기
+  // Find the password field
   const passwordSelectors = [
     'input[type="password"]',
     'input[name="password"]',
@@ -248,7 +248,7 @@ async function detectInShadowDOM(config: LoginConfig): Promise<{
     }
   }
 
-  // 제출 버튼 찾기
+  // Find the submit button
   const submitSelectors = [
     'button[type="submit"]',
     'input[type="submit"]',
@@ -258,7 +258,7 @@ async function detectInShadowDOM(config: LoginConfig): Promise<{
 
   for (const selector of submitSelectors) {
     if (selector.includes(":contains(")) {
-      // Shadow DOM 내 텍스트 기반 검색
+      // Text-based search inside Shadow DOM
       const buttons = deepQuerySelectorAll("button");
       const match = selector.match(/:contains\(["']?(.+?)["']?\)/);
       if (match) {
@@ -285,7 +285,7 @@ async function detectInShadowDOM(config: LoginConfig): Promise<{
 }
 
 /**
- * 이메일/사용자명 필드 찾기
+ * Find the email/username field
  */
 function findEmailField(): HTMLInputElement | undefined {
   const selectors = [
@@ -298,6 +298,7 @@ function findEmailField(): HTMLInputElement | undefined {
     'input[id*="email" i]',
     'input[id*="user" i]',
     'input[placeholder*="email" i]',
+    // Matches the Korean "email" placeholder on third-party Korean-language sites (must stay Korean)
     'input[placeholder*="이메일" i]',
   ];
 
@@ -312,7 +313,7 @@ function findEmailField(): HTMLInputElement | undefined {
 }
 
 /**
- * 비밀번호 필드 찾기
+ * Find the password field
  */
 function findPasswordField(): HTMLInputElement | undefined {
   const element = document.querySelector(
@@ -325,7 +326,7 @@ function findPasswordField(): HTMLInputElement | undefined {
 }
 
 /**
- * 제출 버튼 찾기
+ * Find the submit button
  */
 function findSubmitButton(): HTMLElement | undefined {
   const selectors = [
@@ -341,7 +342,7 @@ function findSubmitButton(): HTMLElement | undefined {
     }
   }
 
-  // 텍스트 기반 검색
+  // Text-based search (the Korean entries match login buttons on third-party Korean-language sites)
   const buttonTexts = [
     "Sign in",
     "Log in",
@@ -367,7 +368,7 @@ function findSubmitButton(): HTMLElement | undefined {
 }
 
 /**
- * 요소 가시성 확인
+ * Check element visibility
  */
 function isVisible(element: HTMLElement): boolean {
   if (!element) return false;
@@ -386,16 +387,16 @@ function isVisible(element: HTMLElement): boolean {
 }
 
 /**
- * 동적 폼 로딩 감지 및 재시도
+ * Detect dynamic form loading and retry
  */
 export function setupDynamicFormObserver(callback: () => void): void {
-  // 폼이나 입력 필드가 추가되면 콜백 실행
+  // Run the callback when a form or input field is added
   const observer = new MutationObserver((mutations) => {
     for (const mutation of mutations) {
       if (mutation.type === "childList") {
         for (const node of mutation.addedNodes) {
           if (node instanceof HTMLElement) {
-            // 폼이나 입력 필드가 추가되었는지 확인
+            // Check whether a form or input field was added
             if (
               node.tagName === "FORM" ||
               node.tagName === "INPUT" ||
@@ -418,7 +419,7 @@ export function setupDynamicFormObserver(callback: () => void): void {
     subtree: true,
   });
 
-  // 10초 후 자동 해제
+  // Automatically disconnect after 10 seconds
   setTimeout(() => {
     observer.disconnect();
   }, 10000);

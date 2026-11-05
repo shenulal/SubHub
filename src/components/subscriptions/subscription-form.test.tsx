@@ -1,5 +1,5 @@
 // src/components/subscriptions/subscription-form.test.tsx
-import messages from "@/i18n/messages/ko.json";
+import messages from "@/i18n/messages/en.json";
 import type { SubscriptionDetail } from "@/types/subscription";
 import { render, screen } from "@testing-library/react";
 import React from "react";
@@ -7,7 +7,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { SubscriptionForm } from "./subscription-form";
 import type { AppWithTeams } from "./subscription-form-assignment";
 
-// next-intl mock: ko.json 메시지 기반으로 번역 함수 제공
+// next-intl mock: translation function backed by the en.json messages
 function getNestedValue(obj: Record<string, unknown>, path: string): string {
   const value = path.split(".").reduce<unknown>((acc, key) => {
     if (
@@ -38,7 +38,7 @@ vi.mock("next-intl", () => ({
       return result;
     };
   },
-  useLocale: () => "ko",
+  useLocale: () => "en",
 }));
 
 // Mock next/navigation
@@ -49,7 +49,7 @@ vi.mock("next/navigation", () => ({
   }),
 }));
 
-// Mock shadcn/ui components (radix-ui 기반 → React dual-copy 방지)
+// Mock shadcn/ui components (radix-ui based -> avoids a duplicate React copy)
 vi.mock("@/components/ui/select", () => ({
   Select: ({
     children,
@@ -210,7 +210,7 @@ vi.mock("./subscription-form-period", () => ({
     isPending: boolean;
   }) => (
     <div data-testid="form-period">
-      <label htmlFor="startDate">시작일 *</label>
+      <label htmlFor="startDate">Start date *</label>
       <input id="startDate" type="date" />
     </div>
   ),
@@ -227,19 +227,19 @@ vi.mock("./subscription-form-renewal", () => ({
     <div data-testid="form-renewal">
       <label>
         <input type="checkbox" defaultChecked />
-        자동 갱신
+        Auto renewal
       </label>
       <label>
         <input type="checkbox" defaultChecked />
-        30일 전 알림
+        30 days before
       </label>
       <label>
         <input type="checkbox" />
-        60일 전 알림
+        60 days before
       </label>
       <label>
         <input type="checkbox" />
-        90일 전 알림
+        90 days before
       </label>
     </div>
   ),
@@ -256,8 +256,8 @@ vi.mock("./subscription-form-pricing", () => ({
     register: (name: string) => Record<string, unknown>;
   }) => (
     <div data-testid="form-pricing">
-      <label htmlFor="billingCycle">결제 주기 *</label>
-      <label htmlFor="amount">금액 *</label>
+      <label htmlFor="billingCycle">Billing cycle *</label>
+      <label htmlFor="amount">Amount *</label>
       <input id="amount" type="number" {...register("amount")} />
       {errors.amount?.message && (
         <p className="text-destructive text-sm">{errors.amount.message}</p>
@@ -361,7 +361,7 @@ const mockSubscription: SubscriptionDetail = {
   renewalAlert60: false,
   renewalAlert90: false,
   contractUrl: null,
-  notes: "테스트 메모",
+  notes: "Test note",
   createdAt: new Date("2024-01-01"),
   updatedAt: new Date("2024-01-01"),
   teamId: null,
@@ -405,97 +405,97 @@ describe("SubscriptionForm", () => {
     capturedOnFinishPayload = null;
   });
 
-  describe("신규 생성 모드", () => {
-    it("빈 폼을 렌더링해야 한다", () => {
+  describe("create mode", () => {
+    it("renders an empty form", () => {
       render(<SubscriptionForm apps={mockApps} />);
 
-      expect(screen.getByText(/앱 선택/)).toBeInTheDocument();
-      expect(screen.getByText("결제 주기 *")).toBeInTheDocument();
-      expect(screen.getByLabelText(/금액/)).toBeInTheDocument();
-      expect(screen.getByLabelText(/시작일/)).toBeInTheDocument();
+      expect(screen.getByText(/Select app/)).toBeInTheDocument();
+      expect(screen.getByText("Billing cycle *")).toBeInTheDocument();
+      expect(screen.getByLabelText(/Amount/)).toBeInTheDocument();
+      expect(screen.getByLabelText(/Start date/)).toBeInTheDocument();
     });
 
-    it("구독 등록 버튼이 표시되어야 한다", () => {
+    it("shows the add subscription button", () => {
       render(<SubscriptionForm apps={mockApps} />);
 
       expect(
-        screen.getByRole("button", { name: /구독 등록/i })
+        screen.getByRole("button", { name: /Add subscription/i })
       ).toBeInTheDocument();
     });
 
-    it("앱 선택 관련 UI가 존재해야 한다", () => {
+    it("has the app selection UI", () => {
       render(<SubscriptionForm apps={mockApps} />);
 
-      expect(screen.getByText("앱을 선택하세요")).toBeInTheDocument();
+      expect(screen.getByText("Select an app")).toBeInTheDocument();
     });
 
-    it("결제 주기 관련 UI가 존재해야 한다", () => {
+    it("has the billing cycle UI", () => {
       render(<SubscriptionForm apps={mockApps} />);
 
-      expect(screen.getByText("결제 주기 *")).toBeInTheDocument();
+      expect(screen.getByText("Billing cycle *")).toBeInTheDocument();
     });
   });
 
-  describe("수정 모드", () => {
-    it("기존 데이터로 폼을 채워야 한다", () => {
+  describe("edit mode", () => {
+    it("fills the form with existing data", () => {
       render(
         <SubscriptionForm apps={mockApps} subscription={mockSubscription} />
       );
 
       expect(screen.getByDisplayValue("10000")).toBeInTheDocument();
-      expect(screen.getByDisplayValue("테스트 메모")).toBeInTheDocument();
+      expect(screen.getByDisplayValue("Test note")).toBeInTheDocument();
     });
 
-    it("저장 버튼이 표시되어야 한다", () => {
+    it("shows the save button", () => {
       render(
         <SubscriptionForm apps={mockApps} subscription={mockSubscription} />
       );
 
-      expect(screen.getByRole("button", { name: /저장/i })).toBeInTheDocument();
+      expect(screen.getByRole("button", { name: /Save/i })).toBeInTheDocument();
     });
 
-    it("자동 갱신 체크박스가 선택되어 있어야 한다", () => {
+    it("has the auto-renewal checkbox checked", () => {
       render(
         <SubscriptionForm apps={mockApps} subscription={mockSubscription} />
       );
 
-      const autoRenewalCheckbox = screen.getByLabelText("자동 갱신");
+      const autoRenewalCheckbox = screen.getByLabelText("Auto renewal");
       expect(autoRenewalCheckbox).toBeChecked();
     });
 
-    it("갱신 알림 체크박스 상태가 올바르게 설정되어야 한다", () => {
+    it("sets the renewal alert checkbox states correctly", () => {
       render(
         <SubscriptionForm apps={mockApps} subscription={mockSubscription} />
       );
 
-      expect(screen.getByLabelText("30일 전 알림")).toBeChecked();
-      expect(screen.getByLabelText("60일 전 알림")).not.toBeChecked();
-      expect(screen.getByLabelText("90일 전 알림")).not.toBeChecked();
+      expect(screen.getByLabelText("30 days before")).toBeChecked();
+      expect(screen.getByLabelText("60 days before")).not.toBeChecked();
+      expect(screen.getByLabelText("90 days before")).not.toBeChecked();
     });
   });
 
-  describe("유효성 검사", () => {
-    it("필수 필드 라벨이 표시되어야 한다", () => {
+  describe("validation", () => {
+    it("shows the required field labels", () => {
       render(<SubscriptionForm apps={mockApps} />);
 
-      expect(screen.getByText("앱 선택 *")).toBeInTheDocument();
-      expect(screen.getByText("결제 주기 *")).toBeInTheDocument();
-      expect(screen.getByText("금액 *")).toBeInTheDocument();
-      expect(screen.getByText("시작일 *")).toBeInTheDocument();
+      expect(screen.getByText("Select app *")).toBeInTheDocument();
+      expect(screen.getByText("Billing cycle *")).toBeInTheDocument();
+      expect(screen.getByText("Amount *")).toBeInTheDocument();
+      expect(screen.getByText("Start date *")).toBeInTheDocument();
     });
   });
 
-  describe("취소 버튼", () => {
-    it("취소 버튼이 존재해야 한다", () => {
+  describe("cancel button", () => {
+    it("has a cancel button", () => {
       render(<SubscriptionForm apps={mockApps} />);
 
-      const cancelButton = screen.getByRole("button", { name: /취소/i });
+      const cancelButton = screen.getByRole("button", { name: /Cancel/i });
       expect(cancelButton).toBeInTheDocument();
     });
   });
 
-  describe("레이아웃", () => {
-    it("2컬럼 grid가 아닌 단일 컬럼이어야 한다", () => {
+  describe("layout", () => {
+    it("uses a single column rather than a 2-column grid", () => {
       const { container } = render(<SubscriptionForm apps={mockApps} />);
 
       const gridDiv = container.querySelector(
@@ -504,50 +504,52 @@ describe("SubscriptionForm", () => {
       expect(gridDiv).not.toBeInTheDocument();
     });
 
-    it("계약서 카드가 존재하지 않아야 한다", () => {
+    it("has no contract card", () => {
       render(<SubscriptionForm apps={mockApps} />);
 
-      expect(screen.queryByText("계약서")).not.toBeInTheDocument();
+      expect(screen.queryByText("Contract")).not.toBeInTheDocument();
     });
 
-    it("메모가 별도 카드로 하단에 표시되어야 한다", () => {
+    it("shows notes as a separate card at the bottom", () => {
       render(<SubscriptionForm apps={mockApps} />);
 
-      expect(screen.getByText("메모")).toBeInTheDocument();
+      expect(screen.getByText("Notes")).toBeInTheDocument();
     });
 
-    it("요금 서브컴포넌트가 렌더링되어야 한다", () => {
+    it("renders the pricing subcomponent", () => {
       render(<SubscriptionForm apps={mockApps} />);
 
       expect(screen.getByTestId("form-pricing")).toBeInTheDocument();
     });
 
-    it("상태 필드가 기본 정보 카드에 포함되어야 한다", () => {
+    it("includes the status field in the basic info card", () => {
       render(<SubscriptionForm apps={mockApps} />);
 
-      expect(screen.getByText("상태")).toBeInTheDocument();
+      expect(screen.getByText("Status")).toBeInTheDocument();
     });
   });
 
-  describe("에러 메시지 표시", () => {
-    it("notes 에러 메시지가 표시되어야 한다", () => {
-      mockErrors = { notes: { message: "메모는 1000자 이하여야 합니다" } };
+  describe("error messages", () => {
+    it("shows the notes error message", () => {
+      mockErrors = {
+        notes: { message: "Notes must be 1000 characters or fewer" },
+      };
       render(<SubscriptionForm apps={mockApps} />);
       expect(
-        screen.getByText("메모는 1000자 이하여야 합니다")
+        screen.getByText("Notes must be 1000 characters or fewer")
       ).toBeInTheDocument();
     });
   });
 
-  describe("금액 전송 (amount는 string으로 서버에 전달)", () => {
-    it("onSubmit 시 amount가 string으로 전달되어야 한다", async () => {
+  describe("amount submission (amount is sent to the server as a string)", () => {
+    it("passes amount as a string on submit", async () => {
       // subscription.amount = 10000 → defaultValues.amount = "10000"
       render(
         <SubscriptionForm apps={mockApps} subscription={mockSubscription} />
       );
 
       const form = screen
-        .getByRole("button", { name: /저장/i })
+        .getByRole("button", { name: /Save/i })
         .closest("form");
       expect(form).toBeInTheDocument();
 
@@ -558,7 +560,7 @@ describe("SubscriptionForm", () => {
       expect(capturedOnFinishPayload!.amount).toBe("10000");
     });
 
-    it("PER_SEAT 구독도 perSeatPrice validation 없이 저장되어야 한다", async () => {
+    it("saves PER_SEAT subscriptions without perSeatPrice validation", async () => {
       const perSeatSub: SubscriptionDetail = {
         ...mockSubscription,
         billingType: "PER_SEAT",
@@ -567,7 +569,7 @@ describe("SubscriptionForm", () => {
       render(<SubscriptionForm apps={mockApps} subscription={perSeatSub} />);
 
       const form = screen
-        .getByRole("button", { name: /저장/i })
+        .getByRole("button", { name: /Save/i })
         .closest("form");
       form?.dispatchEvent(new Event("submit", { bubbles: true }));
 
@@ -577,21 +579,21 @@ describe("SubscriptionForm", () => {
     });
   });
 
-  describe("hideActions 모드", () => {
-    it("hideActions=true 시 액션 버튼이 숨겨져야 한다", () => {
+  describe("hideActions mode", () => {
+    it("hides the action buttons when hideActions=true", () => {
       render(
         <SubscriptionForm apps={mockApps} hideActions formId="test-form" />
       );
 
       expect(
-        screen.queryByRole("button", { name: /구독 등록/i })
+        screen.queryByRole("button", { name: /Add subscription/i })
       ).not.toBeInTheDocument();
       expect(
-        screen.queryByRole("button", { name: /취소/i })
+        screen.queryByRole("button", { name: /Cancel/i })
       ).not.toBeInTheDocument();
     });
 
-    it("formId가 form 요소에 설정되어야 한다", () => {
+    it("sets formId on the form element", () => {
       const { container } = render(
         <SubscriptionForm apps={mockApps} hideActions formId="my-form" />
       );

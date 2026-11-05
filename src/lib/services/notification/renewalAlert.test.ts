@@ -52,14 +52,14 @@ describe("Renewal Alert Service", () => {
   });
 
   describe("findUpcomingRenewals", () => {
-    it("30일 내 갱신 예정 구독을 찾아야 한다", async () => {
+    it("finds subscriptions renewing within 30 days", async () => {
       const mockSubscriptions = [
         {
           id: "sub-1",
-          renewalDate: new Date("2024-02-14"), // 30일 후
+          renewalDate: new Date("2024-02-14"), // in 30 days
           renewalAlert30: true,
           app: { name: "Slack" },
-          organization: { id: "org-1", name: "테스트 조직" },
+          organization: { id: "org-1", name: "Test Organization" },
           amount: 100000,
           currency: "KRW",
         },
@@ -75,7 +75,7 @@ describe("Renewal Alert Service", () => {
       expect(result[0].app.name).toBe("Slack");
     });
 
-    it("알림 비활성화된 구독은 제외해야 한다", async () => {
+    it("excludes subscriptions with alerts disabled", async () => {
       vi.mocked(prisma.subscription.findMany).mockResolvedValue([] as never);
 
       const result = await findUpcomingRenewals(30);
@@ -83,14 +83,14 @@ describe("Renewal Alert Service", () => {
       expect(result).toHaveLength(0);
     });
 
-    it("60일 내 갱신 예정 구독을 찾아야 한다", async () => {
+    it("finds subscriptions renewing within 60 days", async () => {
       const mockSubscriptions = [
         {
           id: "sub-2",
-          renewalDate: new Date("2024-03-14"), // 58일 후
+          renewalDate: new Date("2024-03-14"), // in 58 days
           renewalAlert60: true,
           app: { name: "Notion" },
-          organization: { id: "org-1", name: "테스트 조직" },
+          organization: { id: "org-1", name: "Test Organization" },
           amount: 50000,
           currency: "KRW",
         },
@@ -105,14 +105,14 @@ describe("Renewal Alert Service", () => {
       expect(result).toHaveLength(1);
     });
 
-    it("90일 내 갱신 예정 구독을 찾아야 한다", async () => {
+    it("finds subscriptions renewing within 90 days", async () => {
       const mockSubscriptions = [
         {
           id: "sub-3",
-          renewalDate: new Date("2024-04-14"), // 89일 후
+          renewalDate: new Date("2024-04-14"), // in 89 days
           renewalAlert90: true,
           app: { name: "Figma" },
-          organization: { id: "org-1", name: "테스트 조직" },
+          organization: { id: "org-1", name: "Test Organization" },
           amount: 200000,
           currency: "KRW",
         },
@@ -129,12 +129,12 @@ describe("Renewal Alert Service", () => {
   });
 
   describe("sendRenewalAlert", () => {
-    it("관리자에게 갱신 알림을 발송해야 한다", async () => {
+    it("sends renewal alerts to admins", async () => {
       const subscription = {
         id: "sub-1",
         renewalDate: new Date("2024-02-14"),
         app: { name: "Slack" },
-        organization: { id: "org-1", name: "테스트 조직" },
+        organization: { id: "org-1", name: "Test Organization" },
         amount: 100000,
         currency: "KRW",
       };
@@ -157,12 +157,12 @@ describe("Renewal Alert Service", () => {
       expect(result.failed).toBe(0);
     });
 
-    it("이미 발송된 알림은 건너뛰어야 한다", async () => {
+    it("skips alerts that were already sent", async () => {
       const subscription = {
         id: "sub-1",
         renewalDate: new Date("2024-02-14"),
         app: { name: "Slack" },
-        organization: { id: "org-1", name: "테스트 조직" },
+        organization: { id: "org-1", name: "Test Organization" },
         amount: 100000,
         currency: "KRW",
       };
@@ -181,7 +181,7 @@ describe("Renewal Alert Service", () => {
   });
 
   describe("processRenewalAlerts (delegates to reminders service)", () => {
-    it("legacy 플래그 모드로 통합 리마인더 서비스에 위임해야 한다", async () => {
+    it("delegates to the unified reminders service in legacy flag mode", async () => {
       vi.mocked(processSubscriptionReminders).mockResolvedValue({
         processedAt: new Date("2024-01-15T00:00:00Z"),
         organizations: 1,
@@ -202,7 +202,7 @@ describe("Renewal Alert Service", () => {
       expect(result).toHaveProperty("processedAt");
     });
 
-    it("호출 옵션을 그대로 전달해야 한다", async () => {
+    it("passes call options through unchanged", async () => {
       vi.mocked(processSubscriptionReminders).mockResolvedValue({
         processedAt: new Date(),
         organizations: 0,

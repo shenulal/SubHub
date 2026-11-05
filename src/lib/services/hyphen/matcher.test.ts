@@ -7,7 +7,7 @@ import {
 } from "./matcher";
 import type { ApprovalItem } from "./types";
 
-// Mock App 데이터
+// Mock app data
 const mockApps: AppForMatching[] = [
   { id: "app1", name: "Slack" },
   { id: "app2", name: "Notion" },
@@ -16,7 +16,7 @@ const mockApps: AppForMatching[] = [
   { id: "app5", name: "Custom App" },
 ];
 
-// Mock Transaction 생성 헬퍼
+// Mock transaction helper
 function createMockTransaction(
   useStore: string,
   storeBizNo?: string
@@ -25,17 +25,17 @@ function createMockTransaction(
     useDt: "20241201",
     useTm: "120000",
     apprNo: "123456",
-    useCard: "신한카드",
+    useCard: "Shinhan Card",
     useStore,
     useAmt: "10000",
-    useDiv: "승인",
+    useDiv: "승인", // Hyphen API value (approval) — functional, kept in Korean
     storeBizNo,
   };
 }
 
 describe("matcher", () => {
   describe("matchTransactionToApp", () => {
-    describe("글로벌 SaaS 패턴 매칭", () => {
+    describe("global SaaS pattern matching", () => {
       it("should match Slack transaction", () => {
         const transaction = createMockTransaction("SLACK TECHNOLOGIES");
         const result = matchTransactionToApp(transaction, mockApps);
@@ -43,12 +43,12 @@ describe("matcher", () => {
         expect(result.appId).toBe("app1");
         expect(result.appName).toBe("Slack");
         expect(result.confidence).toBeGreaterThanOrEqual(0.85);
-        // 앱 이름이 가맹점명에 포함되면 exact 매칭 (우선순위: 커스텀 > exact > pattern)
+        // If the app name is contained in the merchant name it is an exact match (priority: custom > exact > pattern)
         expect(["exact", "pattern"]).toContain(result.matchedBy);
       });
 
       it("should match Korean Slack name", () => {
-        const transaction = createMockTransaction("슬랙 결제");
+        const transaction = createMockTransaction("슬랙 payment");
         const result = matchTransactionToApp(transaction, mockApps);
 
         expect(result.appId).toBe("app1");
@@ -80,9 +80,9 @@ describe("matcher", () => {
       });
     });
 
-    describe("앱 이름 직접 매칭", () => {
+    describe("direct app name matching", () => {
       it("should match by exact app name in merchant", () => {
-        const transaction = createMockTransaction("Custom App 결제");
+        const transaction = createMockTransaction("Custom App payment");
         const result = matchTransactionToApp(transaction, mockApps);
 
         expect(result.appId).toBe("app5");
@@ -98,7 +98,7 @@ describe("matcher", () => {
       });
     });
 
-    describe("커스텀 패턴 매칭", () => {
+    describe("custom pattern matching", () => {
       it("should prioritize custom patterns", () => {
         const transaction = createMockTransaction("SPECIAL VENDOR");
         const customPatterns = [{ pattern: "SPECIAL", appId: "app5" }];
@@ -114,9 +114,9 @@ describe("matcher", () => {
       });
     });
 
-    describe("매칭 실패", () => {
+    describe("no match", () => {
       it("should return null when no match found", () => {
-        const transaction = createMockTransaction("일반 음식점");
+        const transaction = createMockTransaction("Local restaurant");
         const result = matchTransactionToApp(transaction, mockApps);
 
         expect(result.appId).toBeNull();
@@ -126,7 +126,7 @@ describe("matcher", () => {
       });
     });
 
-    describe("글로벌 패턴 - 앱 미등록", () => {
+    describe("global pattern - app not registered", () => {
       it("should identify SaaS even if app is not registered", () => {
         const transaction = createMockTransaction("FIGMA INC");
         const result = matchTransactionToApp(transaction, []);
@@ -144,7 +144,7 @@ describe("matcher", () => {
       const transactions = [
         { ...createMockTransaction("SLACK"), apprNo: "001" },
         { ...createMockTransaction("NOTION"), apprNo: "002" },
-        { ...createMockTransaction("일반 상점"), apprNo: "003" },
+        { ...createMockTransaction("Local store"), apprNo: "003" },
       ];
 
       const results = batchMatchTransactions(transactions, mockApps);
@@ -172,7 +172,7 @@ describe("matcher", () => {
         createMockTransaction("SLACK"),
         createMockTransaction("SLACK"),
         createMockTransaction("NOTION"),
-        createMockTransaction("일반 상점"),
+        createMockTransaction("Local store"),
       ];
 
       const candidates = extractSaaSCandidates(transactions);
@@ -203,8 +203,8 @@ describe("matcher", () => {
 
     it("should return empty array when no SaaS found", () => {
       const transactions = [
-        createMockTransaction("일반 음식점"),
-        createMockTransaction("주유소"),
+        createMockTransaction("Local restaurant"),
+        createMockTransaction("Gas station"),
       ];
 
       const candidates = extractSaaSCandidates(transactions);

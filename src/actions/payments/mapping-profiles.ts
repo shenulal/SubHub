@@ -36,7 +36,7 @@ async function _getMappingProfiles(): Promise<
 > {
   const session = await auth();
   if (!session?.user?.organizationId) {
-    return { success: false, message: "인증이 필요합니다" };
+    return { success: false, message: "Authentication required" };
   }
 
   const profiles = await prisma.csvMappingProfile.findMany({
@@ -74,7 +74,7 @@ async function _createMappingProfile(
 ): Promise<ActionState<{ id: string }>> {
   const session = await auth();
   if (!session?.user?.organizationId) {
-    return { success: false, message: "인증이 필요합니다" };
+    return { success: false, message: "Authentication required" };
   }
 
   const name = formData.get("name") as string;
@@ -84,7 +84,7 @@ async function _createMappingProfile(
   const isDefault = formData.get("isDefault") === "true";
 
   if (!name || !fieldMappingsJson) {
-    return { success: false, message: "프로필 이름과 매핑 정보가 필요합니다" };
+    return { success: false, message: "Profile name and mapping are required" };
   }
 
   let fieldMappings: Record<string, string>;
@@ -96,11 +96,11 @@ async function _createMappingProfile(
       doubleEntry = JSON.parse(doubleEntryJson);
     }
   } catch {
-    return { success: false, message: "매핑 정보 형식이 올바르지 않습니다" };
+    return { success: false, message: "Invalid mapping format" };
   }
 
   const profile = await prisma.$transaction(async (tx) => {
-    // isDefault 설정 시 기존 default 해제
+    // When setting isDefault, clear the existing default
     if (isDefault) {
       await tx.csvMappingProfile.updateMany({
         where: {
@@ -126,7 +126,7 @@ async function _createMappingProfile(
   revalidatePath("/settings/import");
   return {
     success: true,
-    message: `매핑 프로필 "${name}"이 저장되었습니다`,
+    message: `Mapping profile "${name}" saved`,
     data: { id: profile.id },
   };
 }
@@ -146,7 +146,7 @@ async function _updateMappingProfile(
 ): Promise<ActionState<void>> {
   const session = await auth();
   if (!session?.user?.organizationId) {
-    return { success: false, message: "인증이 필요합니다" };
+    return { success: false, message: "Authentication required" };
   }
 
   const id = formData.get("id") as string;
@@ -156,16 +156,16 @@ async function _updateMappingProfile(
   const isDefault = formData.get("isDefault") === "true";
 
   if (!id) {
-    return { success: false, message: "프로필 ID가 필요합니다" };
+    return { success: false, message: "Profile ID is required" };
   }
 
-  // 소유권 확인
+  // Verify ownership
   const existing = await prisma.csvMappingProfile.findFirst({
     where: { id, organizationId: session.user.organizationId },
   });
 
   if (!existing) {
-    return { success: false, message: "프로필을 찾을 수 없습니다" };
+    return { success: false, message: "Profile not found" };
   }
 
   const updateData: Record<string, unknown> = {};
@@ -176,7 +176,7 @@ async function _updateMappingProfile(
     } catch {
       return {
         success: false,
-        message: "매핑 정보 형식이 올바르지 않습니다",
+        message: "Invalid mapping format",
       };
     }
   }
@@ -186,7 +186,7 @@ async function _updateMappingProfile(
     } catch {
       return {
         success: false,
-        message: "복식부기 설정 형식이 올바르지 않습니다",
+        message: "Invalid double-entry settings format",
       };
     }
   }
@@ -196,7 +196,7 @@ async function _updateMappingProfile(
   }
 
   await prisma.$transaction(async (tx) => {
-    // isDefault 설정 시 기존 default 해제
+    // When setting isDefault, clear the existing default
     if (isDefault) {
       await tx.csvMappingProfile.updateMany({
         where: {
@@ -215,7 +215,7 @@ async function _updateMappingProfile(
   });
 
   revalidatePath("/settings/import");
-  return { success: true, message: "매핑 프로필이 업데이트되었습니다" };
+  return { success: true, message: "Mapping profile updated" };
 }
 
 export const updateMappingProfile = withLogging(
@@ -233,27 +233,27 @@ async function _deleteMappingProfile(
 ): Promise<ActionState<void>> {
   const session = await auth();
   if (!session?.user?.organizationId) {
-    return { success: false, message: "인증이 필요합니다" };
+    return { success: false, message: "Authentication required" };
   }
 
   const id = formData.get("id") as string;
   if (!id) {
-    return { success: false, message: "프로필 ID가 필요합니다" };
+    return { success: false, message: "Profile ID is required" };
   }
 
-  // 소유권 확인
+  // Verify ownership
   const existing = await prisma.csvMappingProfile.findFirst({
     where: { id, organizationId: session.user.organizationId },
   });
 
   if (!existing) {
-    return { success: false, message: "프로필을 찾을 수 없습니다" };
+    return { success: false, message: "Profile not found" };
   }
 
   await prisma.csvMappingProfile.delete({ where: { id } });
 
   revalidatePath("/settings/import");
-  return { success: true, message: "매핑 프로필이 삭제되었습니다" };
+  return { success: true, message: "Mapping profile deleted" };
 }
 
 export const deleteMappingProfile = withLogging(

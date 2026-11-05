@@ -1,15 +1,15 @@
 // src/types/budget.ts
-// 예산 설정 관련 타입 정의
+// Budget settings types
 import { ZERO_DECIMAL_CURRENCIES as FX_ZERO_DECIMAL } from "@/lib/fx/convert";
 import { SETTING_DEFINITIONS } from "@/lib/settings/registry";
 
 /**
- * 지원하는 통화 단위
+ * Supported currency units
  */
 export type Currency = string;
 
 /**
- * 통화 정보 (표시용)
+ * Currency info (for display)
  */
 export interface CurrencyInfo {
   code: Currency;
@@ -19,7 +19,7 @@ export interface CurrencyInfo {
 }
 
 /**
- * 지원하는 통화 목록
+ * Supported currencies
  */
 export const CURRENCIES: CurrencyInfo[] = [
   { code: "USD", symbol: "$", name: "US Dollar", locale: "en-US" },
@@ -36,19 +36,19 @@ export const CURRENCIES: CurrencyInfo[] = [
 export const ZERO_DECIMAL_CURRENCIES: ReadonlySet<string> = FX_ZERO_DECIMAL;
 
 /**
- * 예산 설정 인터페이스
+ * Budget settings interface
  */
 export interface BudgetSettings {
-  /** 통화 단위 */
+  /** Currency unit */
   currency: Currency;
-  /** 월별 예산 금액 (null = 전월 카드 매입 승인 내역 총액 사용) */
+  /** Monthly budget amount (null = use last month's total approved card spend) */
   monthlyBudget: number | null;
-  /** 예산 경고 임계값 (%, 기본 80) */
+  /** Budget alert threshold (%, default 80) */
   alertThreshold: number;
 }
 
 /**
- * 기본 예산 설정
+ * Default budget settings
  */
 export const DEFAULT_BUDGET_SETTINGS: BudgetSettings = {
   currency: SETTING_DEFINITIONS["finance.baseCurrency"].defaultValue,
@@ -58,7 +58,7 @@ export const DEFAULT_BUDGET_SETTINGS: BudgetSettings = {
 };
 
 /**
- * 통화 포맷팅 함수
+ * Currency formatting function
  */
 export function formatCurrencyAmount(
   amount: number,
@@ -75,7 +75,7 @@ export function formatCurrencyAmount(
 }
 
 /**
- * 통화 정보 조회
+ * Look up currency info
  */
 export function getCurrencyInfo(currency: Currency): CurrencyInfo | undefined {
   return CURRENCIES.find((c) => c.code === currency);

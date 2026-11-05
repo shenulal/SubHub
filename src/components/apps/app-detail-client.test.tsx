@@ -46,11 +46,11 @@ const mockAppData = {
   customLogoUrl: "https://example.com/slack.png",
   catalogLogoUrl: null,
   customWebsite: "https://slack.com",
-  notes: "팀 커뮤니케이션 도구",
+  notes: "Team communication tool",
   tags: ["chat", "team"],
   riskScore: null,
   discoveredAt: null,
-  ownerName: "홍길동",
+  ownerName: "John Smith",
   ownerEmail: "hong@test.com",
   subscriptionCount: 2,
   userAccessCount: 10,
@@ -70,42 +70,40 @@ describe("AppDetailClient", () => {
     mockUseCan.mockReturnValue({ data: { can: true } });
   });
 
-  it("앱 이름을 제목으로 렌더링한다", () => {
+  it("renders the app name as the title", () => {
     render(<AppDetailClient id="app-1" />);
 
-    // PageHeader와 AppDetail 모두 앱 이름을 표시할 수 있음
+    // Both PageHeader and AppDetail may show the app name
     const headings = screen.getAllByRole("heading", { name: "Slack" });
     expect(headings.length).toBeGreaterThanOrEqual(1);
-    expect(
-      screen.getByText("앱의 상세 정보를 확인하고 관리합니다")
-    ).toBeInTheDocument();
+    expect(screen.getByText("View and manage app details")).toBeInTheDocument();
   });
 
-  it("로딩 중이면 로딩 상태를 표시한다", () => {
+  it("shows the loading state while loading", () => {
     mockUseShow.mockReturnValueOnce({
       query: { data: undefined, isLoading: true },
     });
 
     render(<AppDetailClient id="app-1" />);
 
-    expect(screen.getByText(/로딩 중/)).toBeInTheDocument();
+    expect(screen.getByText(/Loading/)).toBeInTheDocument();
   });
 
-  it("앱이 없으면 에러 메시지를 표시한다", () => {
+  it("shows an error message when the app is missing", () => {
     mockUseShow.mockReturnValueOnce({
       query: { data: { data: null }, isLoading: false },
     });
 
     render(<AppDetailClient id="app-1" />);
 
-    expect(screen.getByText(/앱을 찾을 수 없습니다/)).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: /목록으로/ })).toHaveAttribute(
+    expect(screen.getByText(/App not found/)).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /Back to list/ })).toHaveAttribute(
       "href",
       "/apps"
     );
   });
 
-  it("useShow를 올바른 파라미터로 호출한다", () => {
+  it("calls useShow with the correct parameters", () => {
     render(<AppDetailClient id="app-123" />);
 
     expect(mockUseShow).toHaveBeenCalledWith({
@@ -117,11 +115,11 @@ describe("AppDetailClient", () => {
     });
   });
 
-  it("수정 버튼 링크가 올바른 경로를 가진다", () => {
+  it("edit button link has the correct path", () => {
     render(<AppDetailClient id="app-1" />);
 
-    // PageHeader와 AppDetail 모두 수정 링크를 가질 수 있음
-    const editLinks = screen.getAllByRole("link", { name: /수정/ });
+    // Both PageHeader and AppDetail may render an edit link
+    const editLinks = screen.getAllByRole("link", { name: /Edit/ });
     expect(editLinks.length).toBeGreaterThanOrEqual(1);
     expect(editLinks[0]).toHaveAttribute("href", "/apps/app-1/edit");
   });

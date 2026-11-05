@@ -22,19 +22,19 @@ interface KpiCardProps {
     value: number;
     type: "increase" | "decrease" | "neutral";
   };
-  /** CardFooter에 표시할 트렌드 요약 문구 */
+  /** Trend summary text shown in the CardFooter */
   trendSummary?: string;
   href?: string;
   className?: string;
 }
 
 /**
- * 개선된 KPI 카드 컴포넌트 (shadcn dashboard-01 패턴)
- * - @container 쿼리 기반 반응형
- * - CardAction 슬롯에 트렌드 Badge
- * - CardFooter에 트렌드 요약 문구
- * - Color Theme Guide 준수 배경색 + shadow-xs
- * - tabular-nums 숫자 정렬
+ * Enhanced KPI card component (shadcn dashboard-01 pattern)
+ * - Responsive via @container queries
+ * - Trend badge in the CardAction slot
+ * - Trend summary text in the CardFooter
+ * - Background colours per the Color Theme Guide + shadow-xs
+ * - tabular-nums number alignment
  */
 export function KpiCard({
   title,
@@ -125,7 +125,7 @@ export function KpiCard({
 }
 
 /**
- * KPI 카드 그리드 컨테이너
+ * KPI card grid container
  */
 interface KpiCardsGridProps {
   children: React.ReactNode;

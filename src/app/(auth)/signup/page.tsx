@@ -1,5 +1,5 @@
 // src/app/(auth)/signup/page.tsx
-// 회원가입 페이지 (이메일/비밀번호 + Google OAuth)
+// Sign-up page (email/password + Google OAuth)
 
 import { registerUser } from "@/actions/auth-credentials";
 import { AppleSignInButton } from "@/components/auth/apple-sign-in-button";
@@ -21,7 +21,7 @@ interface SignupPageProps {
 export default async function SignupPage({ searchParams }: SignupPageProps) {
   const t = await getTranslations();
   const { error } = await searchParams;
-  // 이미 로그인된 사용자 체크
+  // Check for an already signed-in user
   const session = await auth();
 
   if (session?.user) {
@@ -81,7 +81,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
 
   return (
     <div data-testid="signup-page" className="flex w-full flex-col gap-5">
-      {/* 헤더 */}
+      {/* Header */}
       <div className="flex flex-col gap-1">
         <h2 className="text-foreground text-2xl font-medium">
           {t("auth.signup.title")}
@@ -91,10 +91,10 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
         </p>
       </div>
 
-      {/* 에러 메시지 */}
+      {/* Error message */}
       <ErrorAlert error={error} config={errorConfig} labels={errorLabels} />
 
-      {/* Google 회원가입 버튼 - 이메일 중복 에러 시 숨김 */}
+      {/* Google sign-up button - hidden on duplicate-email errors */}
       {!["google", "credentials"].includes(
         errorConfig[error ?? ""]?.type ?? ""
       ) && (
@@ -129,7 +129,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
         </p>
       ) : (
         <>
-          {/* 구분선 */}
+          {/* Divider */}
           <div className="flex items-center gap-3">
             <Separator className="flex-1" />
             <span className="text-foreground/70 shrink-0 text-[0.9375rem]">
@@ -138,7 +138,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
             <Separator className="flex-1" />
           </div>
 
-          {/* 이메일/비밀번호 폼 */}
+          {/* Email/password form */}
           <form
             action={async (formData: FormData) => {
               "use server";
@@ -154,7 +154,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
             }}
             className="flex flex-col gap-5"
           >
-            {/* 이름 */}
+            {/* Name */}
             <div className="flex flex-col gap-1.5">
               <label
                 htmlFor="name"
@@ -171,7 +171,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
               />
             </div>
 
-            {/* 이메일 */}
+            {/* Email */}
             <div className="flex flex-col gap-1.5">
               <label
                 htmlFor="email"
@@ -188,7 +188,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
               />
             </div>
 
-            {/* 비밀번호 */}
+            {/* Password */}
             <div className="flex flex-col gap-1.5">
               <label
                 htmlFor="password"
@@ -208,7 +208,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
               </p>
             </div>
 
-            {/* 회원가입 버튼 */}
+            {/* Sign-up button */}
             <Button type="submit" className="w-full">
               {t("auth.signup.form.submit")}
             </Button>
@@ -216,7 +216,7 @@ export default async function SignupPage({ searchParams }: SignupPageProps) {
         </>
       )}
 
-      {/* 푸터 */}
+      {/* Footer */}
       <div className="flex flex-col gap-3 text-center">
         <p className="text-foreground/80 text-[0.9375rem]">
           {t("auth.signup.footer.hasAccount")}{" "}
@@ -268,7 +268,7 @@ function GoogleIcon({ className }: { className?: string }) {
 }
 
 /**
- * 에러 메시지 Alert 컴포넌트
+ * Error message alert component
  */
 function ErrorAlert({
   error,
@@ -290,7 +290,7 @@ function ErrorAlert({
     <div className="tonal-error flex flex-col gap-3 rounded-md p-4">
       <p className="text-[0.9375rem] font-medium">{errorConfig.message}</p>
 
-      {/* Google OAuth 에러: Google 로그인 버튼 표시 */}
+      {/* Google OAuth error: show the Google login button */}
       {errorConfig.type === "google" && (
         <form
           action={async () => {
@@ -305,7 +305,7 @@ function ErrorAlert({
         </form>
       )}
 
-      {/* Credentials 에러: 로그인 페이지 링크 */}
+      {/* Credentials error: link to the login page */}
       {errorConfig.type === "credentials" && (
         <Button asChild variant="outline" size="sm" className="w-full">
           <Link href="/login">{labels.loginLink}</Link>

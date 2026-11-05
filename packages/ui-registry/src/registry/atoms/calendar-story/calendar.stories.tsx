@@ -69,18 +69,18 @@ export const ShouldSelectDate: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    // 🎯 목적: Calendar에서 날짜를 클릭하면 선택되고 시각적으로 표시되는지 확인
-    // 날짜 버튼 찾기 (현재 월의 15일 찾기)
+    // 🎯 Purpose: Verify clicking a date in the Calendar selects it and shows it visually
+    // Find the date button (the 15th of the current month)
     const dateButtons = canvas.getAllByRole("button");
     const date15Button = dateButtons.find(
       (button) => button.textContent?.trim() === "15",
     );
 
     if (date15Button) {
-      // 날짜 클릭
+      // Click the date
       await userEvent.click(date15Button);
 
-      // 선택된 날짜가 aria-selected 속성을 가지는지 확인
+      // Verify the selected date has the aria-selected attribute
       await waitFor(() => {
         expect(date15Button).toHaveAttribute("aria-selected", "true");
       });

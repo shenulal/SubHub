@@ -26,8 +26,8 @@ describe("agentReminder", () => {
     it("should send email successfully with valid params", async () => {
       const params = {
         to: "user@example.com",
-        userName: "홍길동",
-        organizationName: "테스트 회사",
+        userName: "Ahmed Al Mansoori",
+        organizationName: "Test Company",
       };
 
       const result = await sendAgentInstallationReminderEmail(params);
@@ -39,8 +39,8 @@ describe("agentReminder", () => {
     it("should include user name in email", async () => {
       const params = {
         to: "user@example.com",
-        userName: "김철수",
-        organizationName: "테스트 회사",
+        userName: "Fatima Hassan",
+        organizationName: "Test Company",
       };
 
       const result = await sendAgentInstallationReminderEmail(params);
@@ -51,8 +51,8 @@ describe("agentReminder", () => {
     it("should include organization name in email", async () => {
       const params = {
         to: "user@example.com",
-        userName: "이영희",
-        organizationName: "ABC 주식회사",
+        userName: "Sara Ali",
+        organizationName: "ABC LLC",
       };
 
       const result = await sendAgentInstallationReminderEmail(params);
@@ -64,7 +64,7 @@ describe("agentReminder", () => {
       const params = {
         to: "user@example.com",
         userName: null as unknown as string,
-        organizationName: "테스트 회사",
+        organizationName: "Test Company",
       };
 
       // Should use email as fallback

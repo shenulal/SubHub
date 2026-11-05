@@ -1,10 +1,10 @@
 // src/lib/services/hibp/breach-checker.ts
 /**
  * Have I Been Pwned (HIBP) Breach Checker
- * k-Anonymity 기반 비밀번호 침해 여부 확인
+ * k-anonymity-based password breach check
  *
- * HIBP API는 SHA-1 해시의 앞 5자리(prefix)로 조회하여
- * 해당 prefix로 시작하는 모든 해시의 suffix와 침해 횟수를 반환합니다.
+ * The HIBP API is queried with the first 5 characters (prefix) of a SHA-1 hash and
+ * returns the suffixes and breach counts of all hashes starting with that prefix.
  */
 
 import crypto from "crypto";
@@ -19,13 +19,13 @@ export type HIBPCheckResult = {
 };
 
 /**
- * SHA-512 해시를 SHA-1로 변환
- * HIBP API는 SHA-1 해시만 지원하므로 변환이 필요합니다.
+ * Converts a SHA-512 hash to SHA-1
+ * The HIBP API only supports SHA-1 hashes, so a conversion is required.
  *
- * 주의: 실제로는 원본 비밀번호에서 SHA-1을 직접 생성해야 하지만,
- * Extension에서 이미 SHA-512로 해시된 값만 전송하므로
- * SHA-512 해시를 다시 SHA-1으로 해시합니다.
- * 이는 보안상 완벽하지 않지만, 원본 비밀번호를 서버로 전송하지 않기 위한 트레이드오프입니다.
+ * Note: ideally SHA-1 would be computed from the original password, but
+ * the extension only sends an already SHA-512-hashed value, so
+ * the SHA-512 hash is hashed again with SHA-1.
+ * This is not perfect from a security standpoint, but it is the trade-off for never sending the original password to the server.
  */
 function sha512ToSha1(sha512Hash: string): string {
   return crypto
@@ -36,27 +36,27 @@ function sha512ToSha1(sha512Hash: string): string {
 }
 
 /**
- * 비밀번호 해시로 HIBP 침해 여부 확인
+ * Checks HIBP for a breach using the password hash
  *
- * @param hashSha512 - SHA-512로 해시된 비밀번호
- * @returns HIBP 체크 결과
+ * @param hashSha512 - SHA-512-hashed password
+ * @returns HIBP check result
  */
 export async function checkCredentialHIBP(
   hashSha512: string
 ): Promise<HIBPCheckResult> {
   try {
-    // SHA-512 → SHA-1 변환
+    // SHA-512 → SHA-1 conversion
     const sha1Hash = sha512ToSha1(hashSha512);
 
-    // k-Anonymity: 앞 5자리로 range 쿼리
+    // k-anonymity: range query with the first 5 characters
     const prefix = sha1Hash.substring(0, 5);
     const suffix = sha1Hash.substring(5);
 
-    // HIBP API 호출
+    // Call the HIBP API
     const response = await fetch(`${HIBP_API_URL}/${prefix}`, {
       headers: {
         "User-Agent": "SMP-Extension-Checker",
-        "Add-Padding": "true", // 추가 보안을 위한 패딩
+        "Add-Padding": "true", // Padding for additional privacy
       },
     });
 
@@ -77,7 +77,7 @@ export async function checkCredentialHIBP(
 
     const text = await response.text();
 
-    // 응답 파싱: "SUFFIX:COUNT" 형식의 라인들
+    // Parse the response: lines in "SUFFIX:COUNT" format
     const lines = text.split("\n");
     for (const line of lines) {
       const parts = line.split(":");
@@ -94,7 +94,7 @@ export async function checkCredentialHIBP(
       }
     }
 
-    // 매칭되는 해시가 없으면 침해되지 않음
+    // No matching hash means not breached
     return {
       checked: true,
       breached: false,
@@ -110,14 +110,14 @@ export async function checkCredentialHIBP(
 }
 
 /**
- * 문자열을 SHA-1으로 해시 (테스트용)
+ * Hashes a string with SHA-1 (for tests)
  */
 export function hashSha1(input: string): string {
   return crypto.createHash("sha1").update(input).digest("hex").toUpperCase();
 }
 
 /**
- * 문자열을 SHA-512로 해시
+ * Hashes a string with SHA-512
  */
 export function hashSha512(input: string): string {
   return crypto.createHash("sha512").update(input).digest("hex");

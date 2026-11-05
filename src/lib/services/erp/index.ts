@@ -1,5 +1,5 @@
 // src/lib/services/erp/index.ts
-// ERP 어댑터 레지스트리 + 팩토리
+// ERP adapter registry + factory
 
 import type { IntegrationType } from "@prisma/client";
 import { oracleAdapter } from "./oracle";
@@ -21,19 +21,19 @@ const ADAPTER_REGISTRY: Map<IntegrationType, ERPPaymentAdapter> = new Map([
   ["ORACLE_ERP_CLOUD", oracleAdapter],
 ]);
 
-/** IntegrationType에 해당하는 ERP 어댑터 반환 */
+/** Returns the ERP adapter for an IntegrationType */
 export function getERPAdapter(
   type: IntegrationType
 ): ERPPaymentAdapter | undefined {
   return ADAPTER_REGISTRY.get(type);
 }
 
-/** ERP 타입인지 확인 */
+/** Checks whether the type is an ERP type */
 export function isERPIntegrationType(type: IntegrationType): boolean {
   return ADAPTER_REGISTRY.has(type);
 }
 
-/** 등록된 모든 ERP 어댑터 반환 */
+/** Returns all registered ERP adapters */
 export function getAllERPAdapters(): ERPPaymentAdapter[] {
   return Array.from(ADAPTER_REGISTRY.values());
 }

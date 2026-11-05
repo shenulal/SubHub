@@ -32,7 +32,7 @@ describe("getSubscriptionAnomalies", () => {
     });
   });
 
-  it("인증되지 않은 경우 에러를 throw해야 한다", async () => {
+  it("throws an error when unauthenticated", async () => {
     mockedRequireOrganization.mockRejectedValueOnce(
       new Error("NEXT_REDIRECT:/login")
     );
@@ -40,7 +40,7 @@ describe("getSubscriptionAnomalies", () => {
     await expect(getSubscriptionAnomalies()).rejects.toThrow("NEXT_REDIRECT");
   });
 
-  it("FLAT_RATE 구독 중 배정 사용자 0명인 항목을 반환해야 한다", async () => {
+  it("returns FLAT_RATE subscriptions with zero assigned users", async () => {
     vi.mocked(prisma.subscription.findMany)
       .mockResolvedValueOnce([
         {
@@ -61,7 +61,7 @@ describe("getSubscriptionAnomalies", () => {
     });
   });
 
-  it("PER_SEAT 구독 중 여유 시트가 있는 항목을 반환해야 한다", async () => {
+  it("returns PER_SEAT subscriptions with spare seats", async () => {
     vi.mocked(prisma.subscription.findMany)
       .mockResolvedValueOnce([] as never)
       .mockResolvedValueOnce([
@@ -88,7 +88,7 @@ describe("getSubscriptionAnomalies", () => {
     });
   });
 
-  it("PER_SEAT에서 usedLicenses >= totalLicenses인 구독은 제외해야 한다", async () => {
+  it("excludes PER_SEAT subscriptions where usedLicenses >= totalLicenses", async () => {
     vi.mocked(prisma.subscription.findMany)
       .mockResolvedValueOnce([] as never)
       .mockResolvedValueOnce([
@@ -107,7 +107,7 @@ describe("getSubscriptionAnomalies", () => {
     expect(result).toHaveLength(0);
   });
 
-  it("최대 5개까지만 반환해야 한다", async () => {
+  it("returns at most 5 items", async () => {
     const flatRateSubs = Array.from({ length: 4 }, (_, i) => ({
       id: `sub-flat-${i}`,
       billingType: "FLAT_RATE",
@@ -132,7 +132,7 @@ describe("getSubscriptionAnomalies", () => {
     expect(result).toHaveLength(5);
   });
 
-  it("빈 데이터일 때 빈 배열을 반환해야 한다", async () => {
+  it("returns an empty array for empty data", async () => {
     vi.mocked(prisma.subscription.findMany)
       .mockResolvedValueOnce([] as never)
       .mockResolvedValueOnce([] as never);
@@ -142,7 +142,7 @@ describe("getSubscriptionAnomalies", () => {
     expect(result).toHaveLength(0);
   });
 
-  it("perSeatPrice가 null인 경우 savableAmount가 0이어야 한다", async () => {
+  it("sets savableAmount to 0 when perSeatPrice is null", async () => {
     vi.mocked(prisma.subscription.findMany)
       .mockResolvedValueOnce([] as never)
       .mockResolvedValueOnce([

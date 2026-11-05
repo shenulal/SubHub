@@ -39,8 +39,8 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 /**
- * KbdGroup을 사용한 키보드 단축키 표시입니다.
- * 문장 내에서 여러 키 조합을 보여줍니다.
+ * Keyboard shortcuts shown with KbdGroup.
+ * Shows several key combinations within a sentence.
  */
 export const Group: Story = {
   render: () => (
@@ -58,8 +58,8 @@ export const Group: Story = {
 };
 
 /**
- * 버튼 내부에서 Kbd 사용 예제입니다.
- * 버튼의 액션과 관련된 키보드 단축키를 표시합니다.
+ * Using Kbd inside a button.
+ * Shows the keyboard shortcut for the button's action.
  */
 export const ButtonExample: Story = {
   render: () => (
@@ -75,8 +75,8 @@ export const ButtonExample: Story = {
 };
 
 /**
- * 툴팁과 함께 Kbd를 사용하는 예제입니다.
- * 툴팁 내부에서 키보드 단축키 정보를 제공합니다.
+ * Using Kbd with a tooltip.
+ * Provides keyboard shortcut information inside the tooltip.
  */
 export const TooltipExample: Story = {
   render: () => (
@@ -126,8 +126,8 @@ export const TooltipExample: Story = {
 };
 
 /**
- * Input Group과 함께 Kbd를 사용하는 예제입니다.
- * 검색 입력 필드에 키보드 단축키를 표시합니다.
+ * Using Kbd with an Input Group.
+ * Shows a keyboard shortcut in the search input field.
  */
 export const InputGroupExample: Story = {
   render: () => (

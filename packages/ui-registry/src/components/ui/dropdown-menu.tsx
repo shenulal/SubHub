@@ -7,19 +7,19 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * 🎯 목적: DropdownMenu Root 컴포넌트
- * 📝 주의사항: Radix UI DropdownMenu.Root primitive는 ref를 지원하지 않음
+ * 🎯 Purpose: DropdownMenu Root component
+ * 📝 Note: Radix UI DropdownMenu.Root primitive does not support ref
  */
 const DropdownMenu = DropdownMenuPrimitive.Root;
 
 /**
- * 🎯 목적: DropdownMenuPortal 컴포넌트
- * 📝 주의사항: Portal은 ref를 지원하지 않음
+ * 🎯 Purpose: DropdownMenuPortal component
+ * 📝 Note: Portal does not support ref
  */
 const DropdownMenuPortal = DropdownMenuPrimitive.Portal;
 
 /**
- * 🎯 목적: DropdownMenuTrigger 컴포넌트에 forwardRef 적용
+ * 🎯 Purpose: Apply forwardRef to the DropdownMenuTrigger component
  */
 const DropdownMenuTrigger = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.Trigger>,
@@ -36,8 +36,8 @@ const DropdownMenuTrigger = React.forwardRef<
 DropdownMenuTrigger.displayName = "DropdownMenuTrigger";
 
 /**
- * 🎯 목적: DropdownMenuContent 컴포넌트에 forwardRef 적용
- * 📝 주의사항: Portal 내부에서 렌더링, sideOffset 기본값 4
+ * 🎯 Purpose: Apply forwardRef to the DropdownMenuContent component
+ * 📝 Note: Renders inside a Portal; sideOffset defaults to 4
  */
 const DropdownMenuContent = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.Content>,
@@ -61,7 +61,7 @@ const DropdownMenuContent = React.forwardRef<
 DropdownMenuContent.displayName = "DropdownMenuContent";
 
 /**
- * 🎯 목적: DropdownMenuGroup 컴포넌트에 forwardRef 적용
+ * 🎯 Purpose: Apply forwardRef to the DropdownMenuGroup component
  */
 const DropdownMenuGroup = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.Group>,
@@ -78,8 +78,8 @@ const DropdownMenuGroup = React.forwardRef<
 DropdownMenuGroup.displayName = "DropdownMenuGroup";
 
 /**
- * 🎯 목적: DropdownMenuItem 컴포넌트에 forwardRef 적용
- * 📝 주의사항: inset prop (좌측 패딩), variant prop (default/destructive)
+ * 🎯 Purpose: Apply forwardRef to the DropdownMenuItem component
+ * 📝 Note: Supports the inset prop (left padding) and variant prop (default/destructive)
  */
 const DropdownMenuItem = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.Item>,
@@ -105,8 +105,8 @@ const DropdownMenuItem = React.forwardRef<
 DropdownMenuItem.displayName = "DropdownMenuItem";
 
 /**
- * 🎯 목적: DropdownMenuCheckboxItem 컴포넌트에 forwardRef 적용
- * 📝 주의사항: CheckIcon indicator 포함
+ * 🎯 Purpose: Apply forwardRef to the DropdownMenuCheckboxItem component
+ * 📝 Note: Includes the CheckIcon indicator
  */
 const DropdownMenuCheckboxItem = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.CheckboxItem>,
@@ -135,7 +135,7 @@ const DropdownMenuCheckboxItem = React.forwardRef<
 DropdownMenuCheckboxItem.displayName = "DropdownMenuCheckboxItem";
 
 /**
- * 🎯 목적: DropdownMenuRadioGroup 컴포넌트에 forwardRef 적용
+ * 🎯 Purpose: Apply forwardRef to the DropdownMenuRadioGroup component
  */
 const DropdownMenuRadioGroup = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.RadioGroup>,
@@ -152,8 +152,8 @@ const DropdownMenuRadioGroup = React.forwardRef<
 DropdownMenuRadioGroup.displayName = "DropdownMenuRadioGroup";
 
 /**
- * 🎯 목적: DropdownMenuRadioItem 컴포넌트에 forwardRef 적용
- * 📝 주의사항: CircleIcon indicator 포함
+ * 🎯 Purpose: Apply forwardRef to the DropdownMenuRadioItem component
+ * 📝 Note: Includes the CircleIcon indicator
  */
 const DropdownMenuRadioItem = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.RadioItem>,
@@ -181,8 +181,8 @@ const DropdownMenuRadioItem = React.forwardRef<
 DropdownMenuRadioItem.displayName = "DropdownMenuRadioItem";
 
 /**
- * 🎯 목적: DropdownMenuLabel 컴포넌트에 forwardRef 적용
- * 📝 주의사항: inset prop 지원
+ * 🎯 Purpose: Apply forwardRef to the DropdownMenuLabel component
+ * 📝 Note: Supports the inset prop
  */
 const DropdownMenuLabel = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.Label>,
@@ -206,7 +206,7 @@ const DropdownMenuLabel = React.forwardRef<
 DropdownMenuLabel.displayName = "DropdownMenuLabel";
 
 /**
- * 🎯 목적: DropdownMenuSeparator 컴포넌트에 forwardRef 적용
+ * 🎯 Purpose: Apply forwardRef to the DropdownMenuSeparator component
  */
 const DropdownMenuSeparator = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.Separator>,
@@ -224,8 +224,8 @@ const DropdownMenuSeparator = React.forwardRef<
 DropdownMenuSeparator.displayName = "DropdownMenuSeparator";
 
 /**
- * 🎯 목적: DropdownMenuShortcut 컴포넌트에 forwardRef 적용
- * 📝 주의사항: HTML span 요소 사용
+ * 🎯 Purpose: Apply forwardRef to the DropdownMenuShortcut component
+ * 📝 Note: Uses an HTML span element
  */
 const DropdownMenuShortcut = React.forwardRef<
   HTMLSpanElement,
@@ -246,14 +246,14 @@ const DropdownMenuShortcut = React.forwardRef<
 DropdownMenuShortcut.displayName = "DropdownMenuShortcut";
 
 /**
- * 🎯 목적: DropdownMenuSub 컴포넌트
- * 📝 주의사항: Sub는 ref를 지원하지 않음
+ * 🎯 Purpose: DropdownMenuSub component
+ * 📝 Note: Sub does not support ref
  */
 const DropdownMenuSub = DropdownMenuPrimitive.Sub;
 
 /**
- * 🎯 목적: DropdownMenuSubTrigger 컴포넌트에 forwardRef 적용
- * 📝 주의사항: inset prop, ChevronRightIcon 포함
+ * 🎯 Purpose: Apply forwardRef to the DropdownMenuSubTrigger component
+ * 📝 Note: Supports the inset prop; includes ChevronRightIcon
  */
 const DropdownMenuSubTrigger = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.SubTrigger>,
@@ -280,7 +280,7 @@ const DropdownMenuSubTrigger = React.forwardRef<
 DropdownMenuSubTrigger.displayName = "DropdownMenuSubTrigger";
 
 /**
- * 🎯 목적: DropdownMenuSubContent 컴포넌트에 forwardRef 적용
+ * 🎯 Purpose: Apply forwardRef to the DropdownMenuSubContent component
  */
 const DropdownMenuSubContent = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.SubContent>,

@@ -5,6 +5,7 @@ import { requireOrganization } from "@/lib/auth/require-auth";
 import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { withLogging } from "@/lib/logging";
+import { getSetting } from "@/lib/settings/service";
 import type { ActionState } from "@/types";
 import type {
   ReportFormat,
@@ -25,7 +26,7 @@ function isRedirectError(error: unknown): boolean {
 }
 
 /**
- * 리포트 일정 목록 조회
+ * List report schedules
  */
 export async function getReportSchedules(): Promise<ReportSchedule[]> {
   const { organizationId } = await requireOrganization();
@@ -39,7 +40,7 @@ export async function getReportSchedules(): Promise<ReportSchedule[]> {
 }
 
 /**
- * 단일 리포트 일정 조회
+ * Get a single report schedule
  */
 export async function getReportSchedule(
   id: string
@@ -65,7 +66,7 @@ interface CreateReportScheduleInput {
 }
 
 /**
- * 다음 발송 시간 계산
+ * Calculate the next send time
  */
 function calculateNextSendAt(
   frequency: ScheduleFrequency,
@@ -82,7 +83,7 @@ function calculateNextSendAt(
       next.setDate(next.getDate() + 1);
     }
   } else if (frequency === "WEEKLY") {
-    const targetDay = dayOfWeek ?? 1; // 기본값: 월요일
+    const targetDay = dayOfWeek ?? 1; // default: Monday
     const daysUntilTarget = (targetDay - next.getDay() + 7) % 7;
     next.setDate(
       next.getDate() +
@@ -103,7 +104,7 @@ function calculateNextSendAt(
 }
 
 /**
- * 리포트 일정 생성
+ * Create a report schedule
  */
 async function _createReportSchedule(
   input: CreateReportScheduleInput
@@ -112,11 +113,14 @@ async function _createReportSchedule(
     const { organizationId, userId, role } = await requireOrganization();
 
     if (role !== "ADMIN") {
-      return { success: false, message: "관리자 권한이 필요합니다" };
+      return { success: false, message: "Admin permission required" };
     }
 
     if (!input.recipients || input.recipients.length === 0) {
-      return { success: false, message: "수신자를 지정해야 합니다" };
+      return {
+        success: false,
+        message: "Please specify at least one recipient",
+      };
     }
 
     const hour = input.hour ?? 9;
@@ -127,6 +131,10 @@ async function _createReportSchedule(
       input.dayOfMonth
     );
 
+    // Explicit input first, otherwise the organization's general.timezone setting
+    const timezone =
+      input.timezone ?? (await getSetting(organizationId, "general.timezone"));
+
     const schedule = await prisma.reportSchedule.create({
       data: {
         organizationId,
@@ -136,7 +144,7 @@ async function _createReportSchedule(
         dayOfWeek: input.dayOfWeek,
         dayOfMonth: input.dayOfMonth,
         hour,
-        timezone: input.timezone ?? "Asia/Seoul",
+        timezone,
         recipients: input.recipients,
         isActive: true,
         nextSendAt,
@@ -148,11 +156,11 @@ async function _createReportSchedule(
 
     return { success: true, data: { id: schedule.id } };
   } catch (error) {
-    logger.error({ err: error }, "리포트 일정 생성 오류");
+    logger.error({ err: error }, "Report schedule creation error");
     if (isRedirectError(error)) throw error;
     return {
       success: false,
-      message: "리포트 일정 생성 중 오류가 발생했습니다",
+      message: "An error occurred while creating the report schedule",
     };
   }
 }
@@ -174,7 +182,7 @@ interface UpdateReportScheduleInput {
 }
 
 /**
- * 리포트 일정 수정
+ * Update a report schedule
  */
 async function _updateReportSchedule(
   id: string,
@@ -184,7 +192,7 @@ async function _updateReportSchedule(
     const { organizationId, role } = await requireOrganization();
 
     if (role !== "ADMIN") {
-      return { success: false, message: "관리자 권한이 필요합니다" };
+      return { success: false, message: "Admin permission required" };
     }
 
     const existingSchedule = await prisma.reportSchedule.findFirst({
@@ -192,14 +200,17 @@ async function _updateReportSchedule(
     });
 
     if (!existingSchedule) {
-      return { success: false, message: "리포트 일정을 찾을 수 없습니다" };
+      return { success: false, message: "Report schedule not found" };
     }
 
     if (input.recipients && input.recipients.length === 0) {
-      return { success: false, message: "수신자를 지정해야 합니다" };
+      return {
+        success: false,
+        message: "Please specify at least one recipient",
+      };
     }
 
-    // 발송 시간 관련 필드가 변경되면 nextSendAt 재계산
+    // Recalculate nextSendAt when send-time fields change
     let nextSendAt: Date | undefined;
     if (
       input.frequency !== undefined ||
@@ -237,11 +248,11 @@ async function _updateReportSchedule(
 
     return { success: true };
   } catch (error) {
-    logger.error({ err: error }, "리포트 일정 수정 오류");
+    logger.error({ err: error }, "Report schedule update error");
     if (isRedirectError(error)) throw error;
     return {
       success: false,
-      message: "리포트 일정 수정 중 오류가 발생했습니다",
+      message: "An error occurred while updating the report schedule",
     };
   }
 }
@@ -251,14 +262,14 @@ export const updateReportSchedule = withLogging(
 );
 
 /**
- * 리포트 일정 삭제
+ * Delete a report schedule
  */
 async function _deleteReportSchedule(id: string): Promise<ActionState> {
   try {
     const { organizationId, role } = await requireOrganization();
 
     if (role !== "ADMIN") {
-      return { success: false, message: "관리자 권한이 필요합니다" };
+      return { success: false, message: "Admin permission required" };
     }
 
     const existingSchedule = await prisma.reportSchedule.findFirst({
@@ -266,7 +277,7 @@ async function _deleteReportSchedule(id: string): Promise<ActionState> {
     });
 
     if (!existingSchedule) {
-      return { success: false, message: "리포트 일정을 찾을 수 없습니다" };
+      return { success: false, message: "Report schedule not found" };
     }
 
     await prisma.reportSchedule.delete({ where: { id } });
@@ -275,11 +286,11 @@ async function _deleteReportSchedule(id: string): Promise<ActionState> {
 
     return { success: true };
   } catch (error) {
-    logger.error({ err: error }, "리포트 일정 삭제 오류");
+    logger.error({ err: error }, "Report schedule deletion error");
     if (isRedirectError(error)) throw error;
     return {
       success: false,
-      message: "리포트 일정 삭제 중 오류가 발생했습니다",
+      message: "An error occurred while deleting the report schedule",
     };
   }
 }

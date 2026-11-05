@@ -34,8 +34,13 @@ vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
 }));
 
+vi.mock("@/lib/settings/service", () => ({
+  getSetting: vi.fn(),
+}));
+
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { getSetting } from "@/lib/settings/service";
 import {
   createReportSchedule,
   deleteReportSchedule,
@@ -54,14 +59,14 @@ describe("ReportSchedule Server Actions", () => {
   });
 
   describe("getReportSchedules", () => {
-    it("인증되지 않은 경우 /login으로 리다이렉트해야 한다", async () => {
+    it("redirects to /login when unauthenticated", async () => {
       mockedAuth.mockResolvedValue(null);
 
       await expect(getReportSchedules()).rejects.toThrow("NEXT_REDIRECT");
       expect(mockRedirect).toHaveBeenCalledWith("/login");
     });
 
-    it("리포트 일정 목록을 반환해야 한다", async () => {
+    it("returns the report schedule list", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1" },
         expires: "",
@@ -76,7 +81,7 @@ describe("ReportSchedule Server Actions", () => {
           frequency: "WEEKLY",
           dayOfWeek: 1,
           hour: 9,
-          timezone: "Asia/Seoul",
+          timezone: "Asia/Dubai",
           recipients: ["user@example.com"],
           isActive: true,
           lastSentAt: null,
@@ -99,7 +104,7 @@ describe("ReportSchedule Server Actions", () => {
   });
 
   describe("getReportSchedule", () => {
-    it("개별 리포트 일정을 반환해야 한다", async () => {
+    it("returns an individual report schedule", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1" },
         expires: "",
@@ -118,7 +123,7 @@ describe("ReportSchedule Server Actions", () => {
       expect(result?.reportType).toBe("RENEWAL");
     });
 
-    it("존재하지 않는 일정은 null을 반환해야 한다", async () => {
+    it("returns null for a non-existent schedule", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1" },
         expires: "",
@@ -133,7 +138,7 @@ describe("ReportSchedule Server Actions", () => {
   });
 
   describe("createReportSchedule", () => {
-    it("관리자가 아니면 에러를 반환해야 한다", async () => {
+    it("returns an error for a non-admin", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "MEMBER" },
         expires: "",
@@ -149,10 +154,10 @@ describe("ReportSchedule Server Actions", () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("관리자 권한이 필요합니다");
+      expect(result.message).toBe("Admin permission required");
     });
 
-    it("리포트 일정을 성공적으로 생성해야 한다", async () => {
+    it("creates a report schedule successfully", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
         expires: "",
@@ -169,6 +174,7 @@ describe("ReportSchedule Server Actions", () => {
         recipients: ["user@example.com"],
         isActive: true,
       } as never);
+      vi.mocked(getSetting).mockResolvedValue("Asia/Dubai" as never);
 
       const result = await createReportSchedule({
         reportType: "COST_ANALYSIS",
@@ -181,9 +187,15 @@ describe("ReportSchedule Server Actions", () => {
 
       expect(result.success).toBe(true);
       expect(result.data?.id).toBe("schedule-1");
+      expect(getSetting).toHaveBeenCalledWith("org-1", "general.timezone");
+      expect(prisma.reportSchedule.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({ timezone: "Asia/Dubai" }),
+        })
+      );
     });
 
-    it("수신자가 비어있으면 에러를 반환해야 한다", async () => {
+    it("returns an error when recipients are empty", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
         expires: "",
@@ -199,12 +211,12 @@ describe("ReportSchedule Server Actions", () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("수신자를 지정해야 합니다");
+      expect(result.message).toBe("Please specify at least one recipient");
     });
   });
 
   describe("updateReportSchedule", () => {
-    it("리포트 일정을 수정해야 한다", async () => {
+    it("updates a report schedule", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
         expires: "",
@@ -233,7 +245,7 @@ describe("ReportSchedule Server Actions", () => {
       );
     });
 
-    it("존재하지 않는 일정은 에러를 반환해야 한다", async () => {
+    it("returns an error for a non-existent schedule", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
         expires: "",
@@ -246,12 +258,12 @@ describe("ReportSchedule Server Actions", () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("리포트 일정을 찾을 수 없습니다");
+      expect(result.message).toBe("Report schedule not found");
     });
   });
 
   describe("deleteReportSchedule", () => {
-    it("관리자가 아니면 에러를 반환해야 한다", async () => {
+    it("returns an error for a non-admin", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "MEMBER" },
         expires: "",
@@ -260,10 +272,10 @@ describe("ReportSchedule Server Actions", () => {
       const result = await deleteReportSchedule("schedule-1");
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("관리자 권한이 필요합니다");
+      expect(result.message).toBe("Admin permission required");
     });
 
-    it("리포트 일정을 삭제해야 한다", async () => {
+    it("deletes a report schedule", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
         expires: "",

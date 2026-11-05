@@ -30,7 +30,7 @@ export interface DiscoveryInsights {
 }
 
 /**
- * 앱 발견/인벤토리 인사이트 조회
+ * Get app discovery/inventory insights
  */
 export async function getDiscoveryInsights(): Promise<DiscoveryInsights> {
   const { organizationId } = await requireOrganization();

@@ -14,7 +14,7 @@ vi.mock("@/lib/logger", () => ({
   },
 }));
 
-// NextRequest/NextResponse를 흉내내는 헬퍼 (clone 지원)
+// Helper that mimics NextRequest/NextResponse (supports clone)
 function fakeRequest(method: string, url: string, body?: unknown) {
   const makeReq = (): Record<string, unknown> => ({
     method,
@@ -40,9 +40,9 @@ describe("withLogging", () => {
     vi.clearAllMocks();
   });
 
-  // ─── 기본 동작 ───
+  // ─── Basic behaviour ───
 
-  describe("기본 동작", () => {
+  describe("basic behaviour", () => {
     it("should log 'start' and 'done' for successful execution", async () => {
       const fn = vi.fn().mockResolvedValue({ data: "test" });
       const wrapped = withLogging("GET /api/v1/apps", fn);
@@ -97,9 +97,9 @@ describe("withLogging", () => {
     });
   });
 
-  // ─── HTTP 상태 코드 감지 ───
+  // ─── HTTP status code detection ───
 
-  describe("HTTP 상태 코드 감지", () => {
+  describe("HTTP status code detection", () => {
     it("should log status 200 at info level", async () => {
       const fn = vi.fn().mockResolvedValue(fakeResponse(200, { data: [] }));
       const wrapped = withLogging("GET /api/v1/apps", fn);
@@ -125,7 +125,7 @@ describe("withLogging", () => {
         expect.objectContaining({ status: 400 }),
         "done"
       );
-      expect(mockInfo).toHaveBeenCalledTimes(1); // start만 info
+      expect(mockInfo).toHaveBeenCalledTimes(1); // only start is info
     });
 
     it("should log status 401 at warn level", async () => {
@@ -185,9 +185,9 @@ describe("withLogging", () => {
     });
   });
 
-  // ─── NextRequest 자동 감지 ───
+  // ─── NextRequest auto-detection ───
 
-  describe("NextRequest 자동 감지", () => {
+  describe("NextRequest auto-detection", () => {
     it("should extract method and path from request-like first arg", async () => {
       const req = fakeRequest(
         "GET",
@@ -297,9 +297,9 @@ describe("withLogging", () => {
     });
   });
 
-  // ─── Server Action 페이로드 로깅 ───
+  // ─── Server Action payload logging ───
 
-  describe("Server Action 페이로드 로깅", () => {
+  describe("Server Action payload logging", () => {
     it("should convert FormData to plain object in payload", async () => {
       const fd = new FormData();
       fd.set("name", "Slack");
@@ -322,7 +322,7 @@ describe("withLogging", () => {
     });
 
     it("should exclude prevState (ActionState) from payload", async () => {
-      const prevState = { success: false, message: "이전 에러" };
+      const prevState = { success: false, message: "Previous error" };
       const fd = new FormData();
       fd.set("name", "Notion");
 
@@ -397,9 +397,9 @@ describe("withLogging", () => {
     });
   });
 
-  // ─── ActionState 결과 요약 ───
+  // ─── ActionState result summary ───
 
-  describe("ActionState 결과 요약", () => {
+  describe("ActionState result summary", () => {
     it("should log success:true at info level with actual data", async () => {
       const fn = vi
         .fn()
@@ -421,7 +421,7 @@ describe("withLogging", () => {
     it("should log success:false at warn level with message", async () => {
       const fn = vi.fn().mockResolvedValue({
         success: false,
-        message: "이미 등록된 앱 이름입니다",
+        message: "An app with this name already exists",
       });
       const wrapped = withLogging("createApp", fn);
 
@@ -430,7 +430,10 @@ describe("withLogging", () => {
       expect(mockWarn).toHaveBeenCalledWith(
         expect.objectContaining({
           name: "createApp",
-          result: { success: false, message: "이미 등록된 앱 이름입니다" },
+          result: {
+            success: false,
+            message: "An app with this name already exists",
+          },
         }),
         "done"
       );
@@ -439,7 +442,7 @@ describe("withLogging", () => {
     it("should log success:false with validation errors at warn level", async () => {
       const fn = vi.fn().mockResolvedValue({
         success: false,
-        errors: { name: ["앱 이름은 2자 이상이어야 합니다"] },
+        errors: { name: ["App name must be at least 2 characters"] },
       });
       const wrapped = withLogging("createApp", fn);
 
@@ -449,7 +452,7 @@ describe("withLogging", () => {
         expect.objectContaining({
           result: {
             success: false,
-            errors: { name: ["앱 이름은 2자 이상이어야 합니다"] },
+            errors: { name: ["App name must be at least 2 characters"] },
           },
         }),
         "done"
@@ -497,9 +500,9 @@ describe("withLogging", () => {
     });
   });
 
-  // ─── 에러 케이스 ───
+  // ─── Error cases ───
 
-  describe("에러 시 로깅", () => {
+  describe("logging on error", () => {
     it("should log 'start' and 'fail' when function throws", async () => {
       const error = new Error("DB connection failed");
       const fn = vi.fn().mockRejectedValue(error);
@@ -575,11 +578,11 @@ describe("withLogging", () => {
     });
   });
 
-  // ─── Prisma 에러 정리 ───
+  // ─── Prisma error normalisation ───
 
-  describe("Prisma 에러 정리", () => {
+  describe("Prisma error normalisation", () => {
     it("should sanitize PrismaClientKnownRequestError to compact format", async () => {
-      // Prisma 에러를 흉내내는 Error (code + meta 포함)
+      // Error that mimics a Prisma error (with code + meta)
       const prismaError = new Error(
         [
           "",
@@ -608,7 +611,7 @@ describe("withLogging", () => {
       const failCall = mockError.mock.calls.find((c) => c[1] === "fail");
       const logged = failCall![0].err;
 
-      // 핵심 필드만 포함되는지 확인
+      // Verify only the key fields are included
       expect(logged).toEqual({
         type: "PrismaClientKnownRequestError",
         code: "P2003",
@@ -617,7 +620,7 @@ describe("withLogging", () => {
         meta: { modelName: "App", constraint: "apps_organization_id_fkey" },
       });
 
-      // stack trace, 소스 코드 스니펫이 없는지 확인
+      // Verify there is no stack trace or source snippet
       expect(logged).not.toHaveProperty("stack");
       expect(JSON.stringify(logged)).not.toContain("TURBOPACK");
       expect(JSON.stringify(logged)).not.toContain(".js:");
@@ -678,9 +681,9 @@ describe("withLogging", () => {
     });
   });
 
-  // ─── Query Params 로깅 ───
+  // ─── Query params logging ───
 
-  describe("Query Params 로깅", () => {
+  describe("query params logging", () => {
     it("should extract query params from URL in start log", async () => {
       const req = fakeRequest(
         "GET",
@@ -721,9 +724,9 @@ describe("withLogging", () => {
     });
   });
 
-  // ─── Request Body 로깅 ───
+  // ─── Request body logging ───
 
-  describe("Request Body 로깅", () => {
+  describe("request body logging", () => {
     it("should log request body for POST requests", async () => {
       const reqBody = { name: "Slack", category: "Communication" };
       const req = fakeRequest(
@@ -768,7 +771,7 @@ describe("withLogging", () => {
     });
 
     it("should handle clone not available gracefully", async () => {
-      // clone 미지원 request (레거시 호환)
+      // request without clone support (legacy compatibility)
       const req = { method: "POST", url: "http://localhost:3000/api/v1/apps" };
       const fn = vi.fn().mockResolvedValue({ status: 200 });
       const wrapped = withLogging("POST /api/v1/apps", fn);
@@ -780,9 +783,9 @@ describe("withLogging", () => {
     });
   });
 
-  // ─── Response Body 로깅 ───
+  // ─── Response body logging ───
 
-  describe("Response Body 로깅", () => {
+  describe("response body logging", () => {
     it("should log response body in done log for API routes", async () => {
       const resBody = { success: true, data: { id: "123" } };
       const req = fakeRequest("POST", "http://localhost:3000/api/v1/apps");
@@ -842,7 +845,7 @@ describe("withLogging", () => {
     });
 
     it("should handle clone not available on response gracefully", async () => {
-      // clone 미지원 response (레거시 호환)
+      // response without clone support (legacy compatibility)
       const req = fakeRequest("GET", "http://localhost:3000/api/v1/apps");
       const fn = vi.fn().mockResolvedValue({ status: 200 });
       const wrapped = withLogging("GET /api/v1/apps", fn);
@@ -854,10 +857,10 @@ describe("withLogging", () => {
     });
   });
 
-  // ─── 통합 시나리오 ───
+  // ─── End-to-end scenarios ───
 
-  describe("통합 시나리오", () => {
-    it("API 성공: start(info) → done(info, status:200)", async () => {
+  describe("end-to-end scenarios", () => {
+    it("API success: start(info) → done(info, status:200)", async () => {
       const req = fakeRequest("GET", "http://localhost:3000/api/v1/apps");
       const fn = vi.fn().mockResolvedValue(fakeResponse(200, { items: [] }));
       const wrapped = withLogging("GET /api/v1/apps", fn);
@@ -869,15 +872,15 @@ describe("withLogging", () => {
       expect(mockError).not.toHaveBeenCalled();
     });
 
-    it("API 인증 실패: start(info) → done(warn, status:401)", async () => {
+    it("API auth failure: start(info) → done(warn, status:401)", async () => {
       const req = fakeRequest("POST", "http://localhost:3000/api/v1/apps");
       const fn = vi.fn().mockResolvedValue(fakeResponse(401));
       const wrapped = withLogging("POST /api/v1/apps", fn);
 
       await wrapped(req);
 
-      expect(mockInfo).toHaveBeenCalledTimes(1); // start만
-      expect(mockWarn).toHaveBeenCalledTimes(1); // done은 warn
+      expect(mockInfo).toHaveBeenCalledTimes(1); // start only
+      expect(mockWarn).toHaveBeenCalledTimes(1); // done is warn
       expect(mockWarn).toHaveBeenCalledWith(
         expect.objectContaining({
           name: "POST /api/v1/apps",
@@ -889,7 +892,7 @@ describe("withLogging", () => {
       );
     });
 
-    it("API 서버 에러(throw): start(info) → fail(error)", async () => {
+    it("API server error (throw): start(info) → fail(error)", async () => {
       const req = fakeRequest("GET", "http://localhost:3000/api/v1/users");
       const fn = vi.fn().mockRejectedValue(new Error("Connection timeout"));
       const wrapped = withLogging("GET /api/v1/users", fn);
@@ -901,7 +904,7 @@ describe("withLogging", () => {
       expect(mockWarn).not.toHaveBeenCalled();
     });
 
-    it("Server Action 성공: start(info, payload) → done(info, result)", async () => {
+    it("Server Action success: start(info, payload) → done(info, result)", async () => {
       const fn = vi
         .fn()
         .mockResolvedValue({ success: true, data: { id: "abc" } });
@@ -911,7 +914,7 @@ describe("withLogging", () => {
 
       expect(result).toEqual({ success: true, data: { id: "abc" } });
       expect(mockInfo).toHaveBeenCalledTimes(2);
-      // start에 payload 포함
+      // start includes the payload
       expect(mockInfo).toHaveBeenCalledWith(
         expect.objectContaining({
           name: "createSubscription",
@@ -919,7 +922,7 @@ describe("withLogging", () => {
         }),
         "start"
       );
-      // done에 result 포함 (실제 data 포함)
+      // done includes the result (with the actual data)
       expect(mockInfo).toHaveBeenCalledWith(
         expect.objectContaining({
           result: { success: true, data: { id: "abc" } },
@@ -929,10 +932,10 @@ describe("withLogging", () => {
       expect(mockWarn).not.toHaveBeenCalled();
     });
 
-    it("Server Action 실패: start(info, payload) → done(warn, result)", async () => {
+    it("Server Action failure: start(info, payload) → done(warn, result)", async () => {
       const fn = vi
         .fn()
-        .mockResolvedValue({ success: false, message: "이미 등록된 앱" });
+        .mockResolvedValue({ success: false, message: "App already exists" });
       const wrapped = withLogging("createApp", fn);
 
       const fd = new FormData();
@@ -940,12 +943,12 @@ describe("withLogging", () => {
 
       await wrapped({ success: true }, fd);
 
-      expect(mockInfo).toHaveBeenCalledTimes(1); // start만
-      expect(mockWarn).toHaveBeenCalledTimes(1); // done은 warn
+      expect(mockInfo).toHaveBeenCalledTimes(1); // start only
+      expect(mockWarn).toHaveBeenCalledTimes(1); // done is warn
       expect(mockWarn).toHaveBeenCalledWith(
         expect.objectContaining({
           name: "createApp",
-          result: { success: false, message: "이미 등록된 앱" },
+          result: { success: false, message: "App already exists" },
         }),
         "done"
       );

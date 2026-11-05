@@ -12,7 +12,7 @@ vi.mock("next/navigation", () => ({
 import ReportsPage from "./page";
 
 describe("ReportsPage", () => {
-  it("/reports/cost로 리다이렉트해야 한다", () => {
+  it("redirects to /reports/cost", () => {
     ReportsPage();
     expect(mockRedirect).toHaveBeenCalledWith("/reports/cost");
   });

@@ -131,7 +131,7 @@ describe("RenewalCalendarPageClient", () => {
   it("navigates months through the URL and clears the selection", () => {
     renderPage();
     fireEvent.click(screen.getByTestId("day-10"));
-    fireEvent.click(screen.getByText("다음"));
+    fireEvent.click(screen.getByText("Next"));
     expect(push).toHaveBeenCalledWith(
       "/subscriptions/calendar?year=2026&month=12"
     );

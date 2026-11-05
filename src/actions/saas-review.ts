@@ -43,10 +43,10 @@ export interface SaasReviewData {
 async function requireAdminSession() {
   const session = await auth();
   if (!session?.user?.organizationId) {
-    throw new Error("인증이 필요합니다");
+    throw new Error("Authentication required");
   }
   if (session.user.role !== "ADMIN") {
-    throw new Error("관리자만 접근할 수 있습니다");
+    throw new Error("Only admins can access this");
   }
   return session.user;
 }
@@ -124,7 +124,7 @@ async function _approvePendingApp(appId: string): Promise<ActionState> {
       where: { id: appId, organizationId: user.organizationId! },
     });
     if (!app) {
-      return { success: false, message: "앱을 찾을 수 없습니다" };
+      return { success: false, message: "App not found" };
     }
 
     await prisma.$transaction(async (tx) => {
@@ -142,10 +142,13 @@ async function _approvePendingApp(appId: string): Promise<ActionState> {
     });
 
     revalidatePath("/settings/saas-review");
-    return { success: true, message: "앱이 승인되었습니다" };
+    return { success: true, message: "The app has been approved" };
   } catch (error) {
-    logger.error({ err: error }, "앱 승인 실패");
-    return { success: false, message: "앱 승인 중 오류가 발생했습니다" };
+    logger.error({ err: error }, "App approval failed");
+    return {
+      success: false,
+      message: "An error occurred while approving the app",
+    };
   }
 }
 export const approvePendingApp = withLogging(
@@ -161,7 +164,7 @@ async function _rejectPendingApp(appId: string): Promise<ActionState> {
       where: { id: appId, organizationId: user.organizationId! },
     });
     if (!app) {
-      return { success: false, message: "앱을 찾을 수 없습니다" };
+      return { success: false, message: "App not found" };
     }
 
     await prisma.app.update({
@@ -170,10 +173,13 @@ async function _rejectPendingApp(appId: string): Promise<ActionState> {
     });
 
     revalidatePath("/settings/saas-review");
-    return { success: true, message: "앱이 차단되었습니다" };
+    return { success: true, message: "The app has been blocked" };
   } catch (error) {
-    logger.error({ err: error }, "앱 차단 실패");
-    return { success: false, message: "앱 차단 중 오류가 발생했습니다" };
+    logger.error({ err: error }, "App block failed");
+    return {
+      success: false,
+      message: "An error occurred while blocking the app",
+    };
   }
 }
 export const rejectPendingApp = withLogging(

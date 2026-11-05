@@ -1,5 +1,5 @@
 // src/lib/services/erp/oracle.ts
-// Oracle ERP Cloud REST API 어댑터
+// Oracle ERP Cloud REST API adapter
 
 import { DEFAULT_BASE_CURRENCY } from "@/lib/fx/convert";
 import { logger } from "@/lib/logger";
@@ -10,20 +10,20 @@ import type {
   OracleCredentials,
 } from "./types";
 
-/** Oracle 금액 파싱 */
+/** Parses an Oracle amount */
 function parseAmount(value: string | number | null): number {
   if (value === null || value === undefined) return 0;
   if (typeof value === "number") return value;
   return parseFloat(value.replace(/,/g, "")) || 0;
 }
 
-/** Oracle 비용 계정 필터 */
+/** Oracle expense account filter */
 function isExpenseAccount(accountClass: string): boolean {
   const upper = accountClass.toUpperCase();
   return upper === "EXPENSE" || upper === "EXP";
 }
 
-/** OAuth 토큰 캐시 */
+/** OAuth token cache */
 let tokenCache: { accessToken: string; expiresAt: number } | null = null;
 
 async function getAccessToken(credentials: OracleCredentials): Promise<string> {
@@ -58,7 +58,7 @@ async function getAccessToken(credentials: OracleCredentials): Promise<string> {
   return tokenCache.accessToken;
 }
 
-/** 재시도 래퍼 */
+/** Retry wrapper */
 async function withRetry<T>(
   operation: () => Promise<T>,
   maxRetries = 3,
@@ -169,7 +169,7 @@ export const oracleAdapter: ERPPaymentAdapter = {
         items: [],
         totalCount: 0,
         errorMessage:
-          error instanceof Error ? error.message : "Oracle API 호출 실패",
+          error instanceof Error ? error.message : "Oracle API call failed",
       };
     }
   },

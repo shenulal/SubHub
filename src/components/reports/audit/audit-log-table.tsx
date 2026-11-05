@@ -14,7 +14,7 @@ import { Eye, FileText } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
 
-// 컬럼 가시성 드롭다운에서 사용할 컬럼 정의 (외부 노출용)
+// Column definitions for the column-visibility dropdown (exported)
 export function getAuditLogColumns(t: (key: string) => string) {
   return [
     { id: "createdAt", header: t("reports.audit.columns.createdAt") },
@@ -28,7 +28,7 @@ export function getAuditLogColumns(t: (key: string) => string) {
 interface AuditLogTableProps {
   logs: AuditLogEntry[];
   onViewDetail: (log: AuditLogEntry) => void;
-  // 외부에서 컬럼 가시성 상태 제어 시 사용
+  // Used when column visibility is controlled externally
   columnVisibility?: Record<string, boolean>;
   onColumnVisibilityChange?: (columnId: string, visible: boolean) => void;
   hideToolbar?: boolean;
@@ -124,12 +124,12 @@ export function AuditLogTable({
     setPagination,
   } = useDataTable({ defaultPageSize: 10 });
 
-  // 외부 상태가 제공되면 외부 상태 사용, 아니면 내부 상태 사용
+  // Use external state when provided, otherwise internal state
   const columnVisibility = externalColumnVisibility ?? internalColumnVisibility;
   const handleColumnVisibilityChange =
     externalOnColumnVisibilityChange ?? internalHandleColumnVisibilityChange;
 
-  // 컬럼 정의
+  // Column definitions
   const columns: DataTableColumn<AuditLogEntry>[] = useMemo(
     () => [
       {
@@ -207,7 +207,7 @@ export function AuditLogTable({
     [onViewDetail, t]
   );
 
-  // 정렬된 데이터
+  // Sorted data
   const sortedData = useMemo(() => {
     if (!sortState) return logs;
 
@@ -231,7 +231,7 @@ export function AuditLogTable({
     });
   }, [logs, sortState]);
 
-  // 페이지네이션된 데이터
+  // Paginated data
   const paginatedData = useMemo(() => {
     const start = pagination.pageIndex * pagination.pageSize;
     return sortedData.slice(start, start + pagination.pageSize);
@@ -258,20 +258,20 @@ export function AuditLogTable({
       data={paginatedData}
       columns={columns}
       getRowId={(row) => row.id}
-      // 컬럼 가시성
+      // Column visibility
       enableColumnVisibility
       columnVisibility={columnVisibility}
       onColumnVisibilityChange={handleColumnVisibilityChange}
-      // 정렬
+      // Sorting
       enableSorting
       sortState={sortState}
       onSortChange={setSortState}
-      // 페이지네이션
+      // Pagination
       enablePagination
       pagination={pagination}
       onPaginationChange={setPagination}
       totalCount={logs.length}
-      // 기타
+      // Other
       emptyMessage={t("reports.audit.empty.title")}
       hideToolbar={hideToolbar}
     />

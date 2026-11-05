@@ -1,25 +1,25 @@
 /**
- * SMP AI Agent Read Tool
- * SMP-197: AI가 DB 데이터를 자연어로 조회할 수 있도록 Server Actions를 Tool로 래핑
- * SMP-203: Read Tool 정리 — 섹션 구분 + RT 번호 정비
+ * SubHub AI Agent Read Tool
+ * SMP-197: wraps Server Actions as Tools so the AI can query DB data in natural language
+ * SMP-203: Read Tool cleanup — section grouping + RT numbering
  *
- * Read Tool은 사용자 승인 없이 자동 실행됩니다.
- * inputSchema 키 필수 (AI SDK v6 — parameters 사용 금지)
+ * Read Tools run automatically without user approval.
+ * The inputSchema key is required (AI SDK v6 — do not use parameters)
  *
- * 구성 (18종):
- *  - 앱 관리: search_apps, get_app_detail, get_dashboard_stats (3종)
- *  - 구독 관리: search_subscriptions, get_upcoming_renewals, get_renewal_alerts, get_subscription_suggestions (4종)
- *  - 비용 분석: get_monthly_cost_trend, detect_cost_anomalies, get_forecasted_cost, get_spend_by_category, get_top_spending_apps (5종)
- *  - 사용자/보안: get_users, get_security_insights, get_unused_apps, get_seat_optimization, get_teams, get_audit_logs (6종)
+ * Composition (18 tools):
+ *  - App management: search_apps, get_app_detail, get_dashboard_stats (3)
+ *  - Subscription management: search_subscriptions, get_upcoming_renewals, get_renewal_alerts, get_subscription_suggestions (4)
+ *  - Cost analytics: get_monthly_cost_trend, detect_cost_anomalies, get_forecasted_cost, get_spend_by_category, get_top_spending_apps (5)
+ *  - Users/security: get_users, get_security_insights, get_unused_apps, get_seat_optimization, get_teams, get_audit_logs (6)
  */
 
 import { jsonSchema, tool } from "ai";
 
-// ─── 앱 관리 (3종) ───
+// ─── App management (3) ───
 
 const search_apps = tool({
   description:
-    "앱을 이름으로 검색합니다. 사용자가 앱 이름을 언급하면 이 도구로 ID를 찾으세요.",
+    "Searches apps by name. When the user mentions an app name, use this tool to find its ID.",
   inputSchema: jsonSchema<{
     query?: string;
     status?: string;
@@ -30,14 +30,14 @@ const search_apps = tool({
     properties: {
       query: {
         type: "string",
-        description: "검색할 앱 이름 (예: Figma, Slack, Notion)",
+        description: "App name to search for (e.g. Figma, Slack, Notion)",
       },
       status: {
         type: "string",
-        description: "앱 상태 필터 (ACTIVE, INACTIVE 등)",
+        description: "App status filter (ACTIVE, INACTIVE, etc.)",
       },
-      category: { type: "string", description: "카테고리 필터" },
-      limit: { type: "number", description: "결과 수 (기본 10)" },
+      category: { type: "string", description: "Category filter" },
+      limit: { type: "number", description: "Number of results (default 10)" },
     },
     required: [],
   }),
@@ -67,24 +67,25 @@ const search_apps = tool({
 
 const get_app_detail = tool({
   description:
-    "앱 ID로 상세 정보를 조회합니다. 구독, 사용자 수, 비용 등 상세가 필요할 때 사용하세요.",
+    "Gets app details by app ID. Use when details such as subscriptions, user count or cost are needed.",
   inputSchema: jsonSchema<{ id: string }>({
     type: "object",
     properties: {
-      id: { type: "string", description: "앱 ID" },
+      id: { type: "string", description: "App ID" },
     },
     required: ["id"],
   }),
   execute: async ({ id }) => {
     const { getApp } = await import("@/actions/apps");
     const app = await getApp(id);
-    if (!app) return { error: "앱을 찾을 수 없습니다." };
+    if (!app) return { error: "App not found." };
     return { app };
   },
 });
 
 const get_dashboard_stats = tool({
-  description: "대시보드 통계를 조회합니다. 전체 앱 수, 활성 앱, 구독 수 등.",
+  description:
+    "Gets dashboard statistics: total apps, active apps, subscription count, etc.",
   inputSchema: jsonSchema<Record<string, never>>({
     type: "object",
     properties: {},
@@ -96,11 +97,11 @@ const get_dashboard_stats = tool({
   },
 });
 
-// ─── 구독 관리 (4종) ───
+// ─── Subscription management (4) ───
 
 const search_subscriptions = tool({
   description:
-    "구독 목록을 조회합니다. 앱 ID, 상태, 이름으로 필터링할 수 있습니다.",
+    "Lists subscriptions. Can be filtered by app ID, status or name.",
   inputSchema: jsonSchema<{
     appId?: string;
     status?: string;
@@ -109,10 +110,10 @@ const search_subscriptions = tool({
   }>({
     type: "object",
     properties: {
-      appId: { type: "string", description: "앱 ID로 필터" },
-      status: { type: "string", description: "구독 상태 필터" },
-      search: { type: "string", description: "앱 이름으로 검색" },
-      limit: { type: "number", description: "결과 수 (기본 10)" },
+      appId: { type: "string", description: "Filter by app ID" },
+      status: { type: "string", description: "Subscription status filter" },
+      search: { type: "string", description: "Search by app name" },
+      limit: { type: "number", description: "Number of results (default 10)" },
     },
     required: [],
   }),
@@ -136,7 +137,7 @@ const search_subscriptions = tool({
 
 const get_upcoming_renewals = tool({
   description:
-    "갱신 예정 구독을 조회합니다. 곧 갱신되는 구독을 확인할 때 사용하세요.",
+    "Lists upcoming renewals. Use to check subscriptions renewing soon.",
   inputSchema: jsonSchema<Record<string, never>>({
     type: "object",
     properties: {},
@@ -149,13 +150,13 @@ const get_upcoming_renewals = tool({
 });
 
 const get_renewal_alerts = tool({
-  description: "갱신 알림 목록을 조회합니다.",
+  description: "Lists renewal alerts.",
   inputSchema: jsonSchema<{ sentOnly?: boolean }>({
     type: "object",
     properties: {
       sentOnly: {
         type: "boolean",
-        description: "발송된 알림만 필터",
+        description: "Only alerts that have been sent",
       },
     },
     required: [],
@@ -166,16 +167,16 @@ const get_renewal_alerts = tool({
   },
 });
 
-// ─── 비용 분석 (5종) ───
+// ─── Cost analytics (5) ───
 
 const get_monthly_cost_trend = tool({
-  description: "월별 비용 추이를 조회합니다.",
+  description: "Gets the monthly cost trend.",
   inputSchema: jsonSchema<{ months?: number }>({
     type: "object",
     properties: {
       months: {
         type: "number",
-        description: "추이 기간(개월, 기본 6)",
+        description: "Trend period in months (default 6)",
       },
     },
     required: [],
@@ -188,7 +189,8 @@ const get_monthly_cost_trend = tool({
 });
 
 const detect_cost_anomalies = tool({
-  description: "비용 이상 감지. 평소보다 높은 지출이 발생한 앱을 찾습니다.",
+  description:
+    "Detects cost anomalies: finds apps with higher-than-usual spend.",
   inputSchema: jsonSchema<Record<string, never>>({
     type: "object",
     properties: {},
@@ -202,13 +204,13 @@ const detect_cost_anomalies = tool({
 });
 
 const get_forecasted_cost = tool({
-  description: "비용 예측. 특정 월의 예상 비용을 계산합니다.",
+  description: "Cost forecast: calculates the expected cost for a given month.",
   inputSchema: jsonSchema<{ targetMonth?: string }>({
     type: "object",
     properties: {
       targetMonth: {
         type: "string",
-        description: "예측 대상 월 (YYYY-MM 형식, 기본 다음 달)",
+        description: "Target month (YYYY-MM format, default next month)",
       },
     },
     required: [],
@@ -221,7 +223,7 @@ const get_forecasted_cost = tool({
 });
 
 const get_spend_by_category = tool({
-  description: "카테고리별 지출 현황을 조회합니다.",
+  description: "Gets spend by category.",
   inputSchema: jsonSchema<Record<string, never>>({
     type: "object",
     properties: {},
@@ -234,11 +236,11 @@ const get_spend_by_category = tool({
 });
 
 const get_top_spending_apps = tool({
-  description: "지출 상위 앱을 조회합니다.",
+  description: "Gets the top-spending apps.",
   inputSchema: jsonSchema<{ limit?: number }>({
     type: "object",
     properties: {
-      limit: { type: "number", description: "상위 N개 (기본 10)" },
+      limit: { type: "number", description: "Top N (default 10)" },
     },
     required: [],
   }),
@@ -248,15 +250,15 @@ const get_top_spending_apps = tool({
   },
 });
 
-// ─── 사용자/보안 (6종) ───
+// ─── Users/security (6) ───
 
 const get_users = tool({
-  description: "사용자 목록을 조회합니다.",
+  description: "Lists users.",
   inputSchema: jsonSchema<{ search?: string; limit?: number }>({
     type: "object",
     properties: {
-      search: { type: "string", description: "이름/이메일 검색" },
-      limit: { type: "number", description: "결과 수 (기본 20)" },
+      search: { type: "string", description: "Search by name/email" },
+      limit: { type: "number", description: "Number of results (default 20)" },
     },
     required: [],
   }),
@@ -271,7 +273,7 @@ const get_users = tool({
 });
 
 const get_security_insights = tool({
-  description: "보안 인사이트를 조회합니다. 보안 점수, 위험 요소 등.",
+  description: "Gets security insights: security score, risk factors, etc.",
   inputSchema: jsonSchema<Record<string, never>>({
     type: "object",
     properties: {},
@@ -284,7 +286,8 @@ const get_security_insights = tool({
 });
 
 const get_unused_apps = tool({
-  description: "미사용 앱을 조회합니다. 비용 절감 대상을 찾을 때 유용합니다.",
+  description:
+    "Lists unused apps. Useful for finding cost-saving opportunities.",
   inputSchema: jsonSchema<Record<string, never>>({
     type: "object",
     properties: {},
@@ -298,7 +301,7 @@ const get_unused_apps = tool({
 
 const get_seat_optimization = tool({
   description:
-    "좌석 최적화 제안을 조회합니다. 남는 라이선스를 줄여 비용을 절감합니다.",
+    "Gets seat optimization suggestions: reduce unused licenses to cut costs.",
   inputSchema: jsonSchema<Record<string, never>>({
     type: "object",
     properties: {},
@@ -312,7 +315,7 @@ const get_seat_optimization = tool({
 });
 
 const get_teams = tool({
-  description: "팀 목록을 조회합니다.",
+  description: "Lists teams.",
   inputSchema: jsonSchema<Record<string, never>>({
     type: "object",
     properties: {},
@@ -325,7 +328,7 @@ const get_teams = tool({
 });
 
 const get_audit_logs = tool({
-  description: "감사 로그를 조회합니다. 누가 언제 무엇을 했는지 확인합니다.",
+  description: "Gets audit logs: who did what and when.",
   inputSchema: jsonSchema<{
     action?: string;
     userId?: string;
@@ -333,9 +336,9 @@ const get_audit_logs = tool({
   }>({
     type: "object",
     properties: {
-      action: { type: "string", description: "액션 타입 필터" },
-      userId: { type: "string", description: "사용자 ID 필터" },
-      limit: { type: "number", description: "결과 수 (기본 20)" },
+      action: { type: "string", description: "Action type filter" },
+      userId: { type: "string", description: "User ID filter" },
+      limit: { type: "number", description: "Number of results (default 20)" },
     },
     required: [],
   }),
@@ -350,17 +353,18 @@ const get_audit_logs = tool({
   },
 });
 
-// ─── 구독 추천 (구독 관리에 포함) ───
+// ─── Subscription suggestions (part of subscription management) ───
 
 const get_subscription_suggestions = tool({
   description:
-    "결제 내역 기반 구독 추천 목록을 조회합니다. 결제 패턴에서 감지된 앱별 추천 정보(금액, 주기, Seat/정액 판단, 배정 가능 유저)를 반환합니다. 사용자가 '구독 등록해줘', '추천 확인' 등을 말하면 이 Tool을 먼저 호출하세요.",
+    "Lists subscription suggestions based on payment history. Returns per-app suggestions detected from payment patterns (amount, billing cycle, per-seat vs flat fee, assignable users). When the user says things like 'register a subscription' or 'check suggestions', call this tool first.",
   inputSchema: jsonSchema<{ appName?: string }>({
     type: "object",
     properties: {
       appName: {
         type: "string",
-        description: "특정 앱만 필터 (예: Datadog). 생략하면 전체 추천 반환",
+        description:
+          "Filter to a specific app (e.g. Datadog). Omit to return all suggestions",
       },
     },
     required: [],
@@ -389,7 +393,7 @@ const get_subscription_suggestions = tool({
         : []),
     ];
 
-    // 앱 이름 필터
+    // App name filter
     const filtered = appName
       ? allSuggestions.filter((s) =>
           s.appName.toLowerCase().includes(appName.toLowerCase())
@@ -431,22 +435,22 @@ const get_subscription_suggestions = tool({
 // ─── Export ───
 
 export const readTools = {
-  // 앱 관리 (3종)
+  // App management (3)
   search_apps,
   get_app_detail,
   get_dashboard_stats,
-  // 구독 관리 + 추천 (4종)
+  // Subscription management + suggestions (4)
   search_subscriptions,
   get_upcoming_renewals,
   get_renewal_alerts,
   get_subscription_suggestions,
-  // 비용 분석 (5종)
+  // Cost analytics (5)
   get_monthly_cost_trend,
   detect_cost_anomalies,
   get_forecasted_cost,
   get_spend_by_category,
   get_top_spending_apps,
-  // 사용자/보안 (6종)
+  // Users/security (6)
   get_users,
   get_security_insights,
   get_unused_apps,

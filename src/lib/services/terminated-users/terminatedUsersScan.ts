@@ -2,7 +2,7 @@
 import { prisma } from "@/lib/db";
 import { sendTerminatedUserAlertEmail } from "@/lib/services/notification/email";
 
-// 조직 설정 타입
+// Organization settings type
 interface OrganizationSettings {
   notifications?: {
     emailEnabled?: boolean;
@@ -10,7 +10,7 @@ interface OrganizationSettings {
   };
 }
 
-// 스캔 결과 타입
+// Scan result type
 export interface TerminatedUserScanResult {
   success: boolean;
   processedAt: Date;
@@ -21,7 +21,7 @@ export interface TerminatedUserScanResult {
   errors: string[];
 }
 
-// 퇴사자 미회수 계정 스캔 처리
+// Scans offboarded users with unrevoked accounts
 export async function processTerminatedUsersScan(): Promise<TerminatedUserScanResult> {
   const result: TerminatedUserScanResult = {
     success: true,
@@ -34,7 +34,7 @@ export async function processTerminatedUsersScan(): Promise<TerminatedUserScanRe
   };
 
   try {
-    // 모든 조직 조회 (알림 설정 포함)
+    // Load all organizations (including notification settings)
     const organizations = await prisma.organization.findMany({
       select: {
         id: true,
@@ -62,21 +62,21 @@ export async function processTerminatedUsersScan(): Promise<TerminatedUserScanRe
         );
       } catch (error) {
         const errorMessage =
-          error instanceof Error ? error.message : "알 수 없는 오류";
+          error instanceof Error ? error.message : "Unknown error";
         result.errors.push(`${org.id}: ${errorMessage}`);
       }
     }
   } catch (error) {
     result.success = false;
     const errorMessage =
-      error instanceof Error ? error.message : "알 수 없는 오류";
+      error instanceof Error ? error.message : "Unknown error";
     result.errors.push(errorMessage);
   }
 
   return result;
 }
 
-// 개별 조직 처리
+// Process a single organization
 async function processOrganization(
   org: {
     id: string;
@@ -90,7 +90,7 @@ async function processOrganization(
   const offboardingAlerts = settings?.notifications?.offboardingAlerts ?? true;
   const emailEnabled = settings?.notifications?.emailEnabled ?? true;
 
-  // 퇴사자이면서 미회수 접근권한이 있는 사용자 조회
+  // Find offboarded users who still have unrevoked access
   const terminatedUsers = await prisma.user.findMany({
     where: {
       organizationId: org.id,
@@ -123,19 +123,19 @@ async function processOrganization(
   );
   result.totalUnrevokedAccess += totalAccess;
 
-  // 알림 비활성화된 경우 스킵
+  // Skip when notifications are disabled
   if (!offboardingAlerts || !emailEnabled) {
     return;
   }
 
-  // 관리자가 없는 경우
+  // No admins
   const admins = org.members.filter((m) => m.role === "ADMIN");
   if (admins.length === 0) {
-    result.errors.push(`${org.id}: 관리자 없음`);
+    result.errors.push(`${org.id}: No admin found`);
     return;
   }
 
-  // 각 퇴사자에 대해 알림 발송
+  // Send an alert for each offboarded user
   for (const user of terminatedUsers) {
     const unrevokedApps = user.appAccesses.map((access) => access.app.name);
 
@@ -153,7 +153,7 @@ async function processOrganization(
         result.emailsSent++;
       } else {
         result.errors.push(
-          `${org.id}/${user.id}: 이메일 발송 실패 - ${emailResult.error}`
+          `${org.id}/${user.id}: Email delivery failed - ${emailResult.error}`
         );
       }
     }

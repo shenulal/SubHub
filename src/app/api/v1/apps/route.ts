@@ -7,13 +7,13 @@ import { AppSource, AppStatus } from "@prisma/client";
 
 /**
  * GET /api/v1/apps
- * - 목록 조회 (필터/정렬/페이지네이션)
+ * - List (filter/sort/pagination)
  */
 import { withLogging } from "@/lib/logging";
 
 /**
  * GET /api/v1/apps
- * - 목록 조회 (필터/정렬/페이지네이션)
+ * - List (filter/sort/pagination)
  */
 export const GET = withLogging(
   "GET /api/v1/apps",
@@ -56,8 +56,8 @@ export const GET = withLogging(
 
 /**
  * POST /api/v1/apps
- * - 앱 생성 (FormData 기반 Server Action 래핑)
- * - 권한: ADMIN, MEMBER (VIEWER 차단)
+ * - Create an app (wraps the FormData-based Server Action)
+ * - Permission: ADMIN, MEMBER (VIEWER blocked)
  */
 export const POST = withLogging(
   "POST /api/v1/apps",
@@ -67,10 +67,10 @@ export const POST = withLogging(
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    // VIEWER는 앱 생성 불가
+    // VIEWER cannot create apps
     if (session.user.role === "VIEWER") {
       return NextResponse.json(
-        { message: "읽기 전용 사용자는 앱을 생성할 수 없습니다" },
+        { message: "Read-only users cannot create apps" },
         { status: 403 }
       );
     }

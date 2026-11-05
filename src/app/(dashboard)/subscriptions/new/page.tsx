@@ -25,14 +25,14 @@ export default async function NewSubscriptionPage() {
     getSubscriptionFormOptions(),
   ]);
 
-  // 앱 옵션: teams 포함
+  // App options: includes teams
   const appOptions = apps.map((app) => ({
     id: app.id,
     name: app.name,
     teams: app.teams ?? [],
   }));
 
-  // 사용자 옵션: ADMIN만 볼 수 있음 (teamId 포함 - 팀별 필터링용)
+  // User options: visible to ADMIN only (includes teamId for per-team filtering)
   const userOptions = isAdmin
     ? users.map((user) => ({
         id: user.id,

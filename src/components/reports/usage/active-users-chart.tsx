@@ -9,7 +9,6 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import { format, parseISO } from "date-fns";
-import { ko } from "date-fns/locale";
 import { useTranslations } from "next-intl";
 import { CartesianGrid, Line, LineChart, XAxis, YAxis } from "recharts";
 
@@ -33,7 +32,7 @@ export function ActiveUsersChart({ data }: ActiveUsersChartProps) {
   const t = useTranslations();
   const formatXAxis = (dateStr: string) => {
     try {
-      return format(parseISO(dateStr), "M/d", { locale: ko });
+      return format(parseISO(dateStr), "M/d");
     } catch {
       return dateStr;
     }
@@ -41,7 +40,7 @@ export function ActiveUsersChart({ data }: ActiveUsersChartProps) {
 
   const formatTooltipLabel = (dateStr: string) => {
     try {
-      return format(parseISO(dateStr), "yyyy년 M월 d일", { locale: ko });
+      return format(parseISO(dateStr), "MMM d, yyyy");
     } catch {
       return dateStr;
     }

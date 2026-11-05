@@ -1,8 +1,8 @@
 // src/lib/services/payment/rematch-service.ts
 /**
- * 벌크 재매칭 서비스
- * - PaymentRecord / CardTransaction의 UNMATCHED/PENDING 레코드를 재매칭
- * - 동시 실행 방지를 위한 SyncHistory 기반 잠금 사용
+ * Bulk rematching service
+ * - Rematches UNMATCHED/PENDING PaymentRecord / CardTransaction records
+ * - Uses a SyncHistory-based lock to prevent concurrent runs
  */
 
 import { prisma } from "@/lib/db";
@@ -38,8 +38,8 @@ export interface RematchResult {
 const STALE_LOCK_THRESHOLD_MS = 10 * 60 * 1000; // 10 minutes
 
 /**
- * 동시 실행 잠금 확인
- * 최근 10분 이내의 RUNNING 항목이 있으면 에러
+ * Checks the concurrency lock
+ * Errors if there is a RUNNING entry from the last 10 minutes
  */
 async function checkConcurrencyLock(organizationId: string): Promise<void> {
   const running = await prisma.syncHistory.findFirst({
@@ -55,13 +55,13 @@ async function checkConcurrencyLock(organizationId: string): Promise<void> {
 
   const age = Date.now() - running.startedAt.getTime();
   if (age < STALE_LOCK_THRESHOLD_MS) {
-    throw new Error("재매칭이 이미 진행 중입니다");
+    throw new Error("Rematching is already in progress");
   }
   // Stale lock (>10 min) → override and continue
 }
 
 /**
- * 벌크 재매칭 실행
+ * Runs bulk rematching
  */
 export async function rematchRecords(
   options: RematchOptions

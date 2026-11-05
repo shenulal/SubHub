@@ -43,7 +43,7 @@ import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { SuggestionUserAssignment } from "./suggestion-user-assignment";
 
-// 통합 Suggestion 타입 (소스 구분용)
+// Unified Suggestion type (tracks the source)
 type UnifiedSuggestion = CardTransactionSuggestion | PaymentRecordSuggestion;
 
 export function SubscriptionSuggestions() {
@@ -60,15 +60,15 @@ export function SubscriptionSuggestions() {
     YEARLY: t("billingCycle.YEARLY"),
     ONE_TIME: t("billingCycle.ONE_TIME"),
   };
-  // 앱별 선택된 사용자 ID 추적
+  // Track selected user IDs per app
   const [selectedUsersByApp, setSelectedUsersByApp] = useState<
     Record<string, string[]>
   >({});
-  // SMP-134: Seat 체크박스 상태 (appId → checked)
+  // SMP-134: Seat checkbox state (appId -> checked)
   const [seatCheckedByApp, setSeatCheckedByApp] = useState<
     Record<string, boolean>
   >({});
-  // SMP-134: 총 Seat 수 (appId → totalSeats)
+  // SMP-134: Total seats (appId -> totalSeats)
   const [totalSeatsByApp, setTotalSeatsByApp] = useState<
     Record<string, number | undefined>
   >({});
@@ -76,7 +76,7 @@ export function SubscriptionSuggestions() {
   const loadSuggestions = async () => {
     setIsLoading(true);
 
-    // 법인카드 거래 + CSV 결제 내역 양쪽에서 추천 로드
+    // Load suggestions from both corporate card transactions and CSV payment records
     const [cardResult, paymentResult] = await Promise.all([
       suggestFromCardTransactions(),
       suggestSubscriptionsFromPayments(),
@@ -89,7 +89,7 @@ export function SubscriptionSuggestions() {
     }
 
     if (paymentResult.success && paymentResult.data) {
-      // 이미 카드 추천에 있는 앱은 제외 (중복 방지)
+      // Exclude apps already in the card suggestions (avoid duplicates)
       const cardAppIds = new Set(cardResult.data?.map((s) => s.appId) ?? []);
       const uniquePaymentSuggestions = paymentResult.data.filter(
         (s) => !cardAppIds.has(s.appId)
@@ -99,7 +99,7 @@ export function SubscriptionSuggestions() {
 
     setSuggestions(allSuggestions);
 
-    // SMP-134: Seat 체크박스 초기값 설정 (billingType === PER_SEAT → checked)
+    // SMP-134: Initialise seat checkboxes (billingType === PER_SEAT -> checked)
     const initialSeatChecked: Record<string, boolean> = {};
     const initialTotalSeats: Record<string, number | undefined> = {};
     for (const s of allSuggestions) {
@@ -109,7 +109,7 @@ export function SubscriptionSuggestions() {
     setSeatCheckedByApp(initialSeatChecked);
     setTotalSeatsByApp(initialTotalSeats);
 
-    // SMP-134: assignedUserId가 있는 suggestion은 자동 선택(prefill)
+    // SMP-134: Prefill selection for suggestions that have an assignedUserId
     const initialSelectedUsers: Record<string, string[]> = {};
     for (const s of allSuggestions) {
       if (s.assignedUserId) {
@@ -129,7 +129,7 @@ export function SubscriptionSuggestions() {
     const isSeatBased = seatCheckedByApp[suggestion.appId] ?? false;
     const totalSeats = totalSeatsByApp[suggestion.appId];
 
-    // SMP-134: Seat 기반 구독 validation
+    // SMP-134: Seat-based subscription validation
     if (isSeatBased) {
       if (!totalSeats || totalSeats <= 0) {
         toast.error(t("seatRequiredError"));
@@ -149,7 +149,7 @@ export function SubscriptionSuggestions() {
     setCreatingId(suggestion.appId);
 
     startTransition(async () => {
-      // 소스에 따라 다른 create 함수 호출
+      // Call the create function that matches the source
       const result =
         suggestion.source === "card_transaction"
           ? await createSubscriptionFromCardSuggestion({
@@ -167,11 +167,11 @@ export function SubscriptionSuggestions() {
 
       if (result.success) {
         toast.success(t("registered", { appName: suggestion.appName }));
-        // 목록에서 제거
+        // Remove from the list
         setSuggestions((prev) =>
           prev.filter((s) => s.appId !== suggestion.appId)
         );
-        // 선택 상태 제거
+        // Clear the selection state
         setSelectedUsersByApp((prev) => {
           // eslint-disable-next-line @typescript-eslint/no-unused-vars
           const { [suggestion.appId]: _removed, ...rest } = prev;
@@ -199,7 +199,7 @@ export function SubscriptionSuggestions() {
     });
   };
 
-  // Confidence 배지 색상 (color-theme-guide.md 기준)
+  // Confidence badge colours (per color-theme-guide.md)
   const getConfidenceBadge = (confidence: number) => {
     if (confidence >= 0.8) {
       return (
@@ -245,7 +245,7 @@ export function SubscriptionSuggestions() {
   }
 
   if (suggestions.length === 0) {
-    return null; // 추천이 없으면 숨김
+    return null; // Hide when there are no suggestions
   }
 
   return (
@@ -277,7 +277,7 @@ export function SubscriptionSuggestions() {
             const selectedUserIds = selectedUsersByApp[suggestion.appId] ?? [];
             const isSeatChecked = seatCheckedByApp[suggestion.appId] ?? false;
             const totalSeats = totalSeatsByApp[suggestion.appId];
-            // SMP-134: Seat validation - 체크 시 totalSeats 필수 & 인원 초과 불가
+            // SMP-134: Seat validation - when checked, totalSeats is required and cannot be exceeded
             const isSeatInvalid =
               isSeatChecked &&
               (!totalSeats ||
@@ -289,7 +289,7 @@ export function SubscriptionSuggestions() {
                 key={suggestion.appId}
                 className="space-y-3 rounded-sm border p-4"
               >
-                {/* 상단: 앱 정보 + 등록 버튼 */}
+                {/* Top: app info + register button */}
                 <div className="flex items-center gap-4">
                   <Avatar className="h-12 w-12">
                     <AvatarImage src={suggestion.appLogoUrl || undefined} />
@@ -302,7 +302,7 @@ export function SubscriptionSuggestions() {
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="font-medium">{suggestion.appName}</span>
                       {getConfidenceBadge(suggestion.confidence)}
-                      {/* 소스 구분 배지 (color-theme-guide.md 기준) */}
+                      {/* Source badge (per color-theme-guide.md) */}
                       <Badge
                         variant="secondary"
                         className="bg-secondary text-secondary-foreground border-0"
@@ -312,7 +312,7 @@ export function SubscriptionSuggestions() {
                           ? t("source.card")
                           : t("source.csv")}
                       </Badge>
-                      {/* Phase 2: 유저 배정 배지 (자동) - success-muted */}
+                      {/* Phase 2: user assignment badge (automatic) - success-muted */}
                       {suggestion.assignedUserId && (
                         <Badge
                           variant="secondary"
@@ -322,7 +322,7 @@ export function SubscriptionSuggestions() {
                           {suggestion.assignedUserName}
                         </Badge>
                       )}
-                      {/* Team 배지 - info-muted */}
+                      {/* Team badge - info-muted */}
                       {suggestion.teamName && (
                         <Badge
                           variant="secondary"
@@ -332,7 +332,7 @@ export function SubscriptionSuggestions() {
                           {suggestion.teamName}
                         </Badge>
                       )}
-                      {/* Phase 3: 미배정 경고 - warning-muted */}
+                      {/* Phase 3: unassigned warning - warning-muted */}
                       {!suggestion.teamId && !suggestion.assignedUserId && (
                         <Badge
                           variant="secondary"
@@ -385,9 +385,9 @@ export function SubscriptionSuggestions() {
                   </Button>
                 </div>
 
-                {/* SMP-134: Seat 기반 체크박스 + 유저 배정 */}
+                {/* SMP-134: Seat-based checkbox + user assignment */}
                 <div className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-3 border-t pt-3">
-                  {/* 좌: 체크박스 + SMP-160 confidence badge */}
+                  {/* Left: checkbox + SMP-160 confidence badge */}
                   <div className="flex items-center gap-2">
                     <Checkbox
                       id={`seat-${suggestion.appId}`}
@@ -408,7 +408,7 @@ export function SubscriptionSuggestions() {
                     </Label>
                   </div>
 
-                  {/* 우: Seat 상세 (체크 시만 표시) */}
+                  {/* Right: seat details (only when checked) */}
                   {isSeatChecked ? (
                     <div className="flex items-center gap-3">
                       <Label className="shrink-0 text-sm">
@@ -451,7 +451,7 @@ export function SubscriptionSuggestions() {
                     <div />
                   )}
 
-                  {/* 유저 배정 - Seat 체크 시에만 표시 */}
+                  {/* User assignment - only when the seat box is checked */}
                   {isSeatChecked && (
                     <>
                       <div className="text-muted-foreground flex items-center gap-1 text-sm">

@@ -1,7 +1,7 @@
 // src/lib/auth/index.test.ts
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-// NextAuth 모듈 mock
+// Mock the NextAuth module
 vi.mock("next-auth", () => ({
   default: vi.fn(() => ({
     handlers: { GET: vi.fn(), POST: vi.fn() },
@@ -30,13 +30,13 @@ vi.mock("next-auth/providers/google", () => ({
   default: vi.fn(() => ({ id: "google", name: "Google" })),
 }));
 
-describe("NextAuth 설정", () => {
+describe("NextAuth configuration", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
   describe("exports", () => {
-    it("auth, signIn, signOut, handlers를 export해야 한다", async () => {
+    it("should export auth, signIn, signOut and handlers", async () => {
       const authModule = await import("./index");
 
       expect(authModule.auth).toBeDefined();
@@ -45,7 +45,7 @@ describe("NextAuth 설정", () => {
       expect(authModule.handlers).toBeDefined();
     });
 
-    it("handlers는 GET과 POST를 포함해야 한다", async () => {
+    it("handlers should include GET and POST", async () => {
       const { handlers } = await import("./index");
 
       expect(handlers).toHaveProperty("GET");
@@ -53,11 +53,11 @@ describe("NextAuth 설정", () => {
     });
   });
 
-  describe("설정 구조", () => {
-    it("NextAuth가 올바른 설정으로 호출되어야 한다", async () => {
+  describe("configuration structure", () => {
+    it("should call NextAuth with the correct configuration", async () => {
       const NextAuth = (await import("next-auth")).default;
 
-      // 모듈 재로드를 위해 캐시 클리어
+      // Clear the cache to reload the module
       vi.resetModules();
       await import("./index");
 
@@ -65,19 +65,19 @@ describe("NextAuth 설정", () => {
       const config = vi.mocked(NextAuth).mock
         .calls[0]?.[0] as unknown as Record<string, unknown>;
 
-      // adapter 설정 확인
+      // Check the adapter configuration
       expect(config).toHaveProperty("adapter");
 
-      // providers 설정 확인
+      // Check the providers configuration
       expect(config).toHaveProperty("providers");
       expect(Array.isArray(config?.providers)).toBe(true);
 
-      // callbacks 설정 확인
+      // Check the callbacks configuration
       expect(config).toHaveProperty("callbacks");
       const callbacks = config?.callbacks as Record<string, unknown>;
       expect(callbacks).toHaveProperty("session");
 
-      // pages 설정 확인
+      // Check the pages configuration
       expect(config).toHaveProperty("pages");
       const pages = config?.pages as Record<string, unknown>;
       expect(pages?.signIn).toBe("/login");

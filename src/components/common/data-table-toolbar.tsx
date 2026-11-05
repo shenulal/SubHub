@@ -23,7 +23,7 @@ import {
 import { cn } from "@/lib/utils";
 
 /**
- * 컬럼 선택 드롭다운
+ * Column picker dropdown
  */
 interface Column {
   id: string;
@@ -51,7 +51,7 @@ export function ColumnSelector({
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end" className="w-48">
-        <DropdownMenuLabel>표시 컬럼</DropdownMenuLabel>
+        <DropdownMenuLabel>Visible columns</DropdownMenuLabel>
         <DropdownMenuSeparator />
         {columns.map((column) => (
           <DropdownMenuCheckboxItem
@@ -68,7 +68,7 @@ export function ColumnSelector({
 }
 
 /**
- * 테이블 페이지네이션
+ * Table pagination
  */
 interface PaginationProps {
   currentPage: number;
@@ -166,7 +166,7 @@ export function DataTablePagination({
 }
 
 /**
- * 행 선택 체크박스
+ * Row selection checkbox
  */
 interface RowSelectionProps {
   checked: boolean;

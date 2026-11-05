@@ -5,9 +5,9 @@
 
 import { setMFADetected } from "../state";
 
-/** Username field name patterns - 확장됨 */
+/** Username field name patterns - extended */
 const USERNAME_PATTERNS = [
-  // 기본 패턴
+  // Base patterns
   "user",
   "username",
   "email",
@@ -15,7 +15,7 @@ const USERNAME_PATTERNS = [
   "account",
   "id",
   "identifier",
-  // 추가 패턴 (GitHub, Notion 등)
+  // Additional patterns (GitHub, Notion, etc.)
   "login_field",
   "signin",
   "sign-in",
@@ -25,7 +25,7 @@ const USERNAME_PATTERNS = [
   "useremail",
   "usermail",
   "mail",
-  // 한국어 패턴
+  // Korean patterns: match field names/labels on third-party Korean-language sites (must stay Korean)
   "이메일",
   "아이디",
   "사용자",
@@ -99,16 +99,16 @@ export const isUsernameField = (input: HTMLInputElement): boolean => {
     return true;
   }
 
-  // 추가 검사: 텍스트 입력 필드가 비밀번호 필드 앞에 있는 경우
+  // Extra check: a text input that precedes a password field
   if (type === "text") {
-    // 폼 내에서 첫 번째 텍스트 필드인 경우 username일 가능성 높음
+    // The first text field in a form is most likely the username
     const form = input.closest("form");
     if (form) {
       const inputs = form.querySelectorAll(
         'input[type="text"], input[type="email"], input:not([type])'
       );
       if (inputs.length > 0 && inputs[0] === input) {
-        // 같은 폼에 password 필드가 있는지 확인
+        // Check whether the same form has a password field
         const hasPasswordField = form.querySelector('input[type="password"]');
         if (hasPasswordField) {
           return true;
@@ -117,15 +117,15 @@ export const isUsernameField = (input: HTMLInputElement): boolean => {
     }
   }
 
-  // 추가 검사: 특정 사이트별 선택자
+  // Extra check: site-specific selectors
   const hostname = window.location.hostname;
 
-  // GitHub 전용
+  // GitHub only
   if (hostname.includes("github.com") && input.id === "login_field") {
     return true;
   }
 
-  // Notion 전용
+  // Notion only
   if (
     hostname.includes("notion.so") &&
     input.getAttribute("data-testid")?.includes("email")
@@ -133,9 +133,9 @@ export const isUsernameField = (input: HTMLInputElement): boolean => {
     return true;
   }
 
-  // Claude.ai 전용 (Magic Link / Passwordless)
+  // Claude.ai only (Magic Link / Passwordless)
   if (hostname.includes("claude.ai")) {
-    // Claude.ai 로그인 페이지의 이메일 입력 필드 감지
+    // Detect the email input on the Claude.ai login page (the Korean "email" placeholder must stay Korean)
     const isEmailLikeField =
       type === "email" ||
       input.placeholder?.toLowerCase().includes("이메일") ||
@@ -146,12 +146,12 @@ export const isUsernameField = (input: HTMLInputElement): boolean => {
     }
   }
 
-  // Passwordless/Magic Link 로그인 페이지 감지 (password 필드 없이 email만 있는 경우)
+  // Detect Passwordless/Magic Link login pages (email field with no password field)
   if (type === "text" || type === "email") {
     const form = input.closest("form");
     if (form) {
       const hasPasswordField = form.querySelector('input[type="password"]');
-      // password 필드가 없고, 현재 필드가 email처럼 보이면 username으로 인식
+      // No password field and the current field looks like email: treat it as the username (Korean placeholder must stay Korean)
       if (!hasPasswordField) {
         const isEmailLikeField =
           type === "email" ||

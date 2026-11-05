@@ -140,47 +140,47 @@ export const ShouldSelectDateAndTime: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    // 🎯 목적: DateTime Picker가 날짜와 시간을 모두 선택할 수 있는지 확인
+    // 🎯 Purpose: Verify the DateTime Picker can select both a date and a time
     const dateButton = canvas.getByRole("button", { name: /select date/i });
     await expect(dateButton).toBeInTheDocument();
 
-    // 날짜 선택: 트리거 버튼 클릭
+    // Date selection: click the trigger button
     await userEvent.click(dateButton);
 
-    // Calendar가 열렸는지 확인
+    // Verify the Calendar is open
     await waitFor(async () => {
       const dateButtons = await canvas.findAllByRole("button");
       await expect(dateButtons.length).toBeGreaterThan(1);
     });
 
-    // 날짜 버튼 찾기 (15일 선택)
+    // Find the date button (select the 15th)
     const dateButtons = canvas.getAllByRole("button");
     const date15Button = dateButtons.find(
       (button) => button.textContent?.trim() === "15",
     );
 
     if (date15Button) {
-      // 날짜 클릭
+      // Click the date
       await userEvent.click(date15Button);
 
-      // 날짜가 선택되었는지 확인 (버튼 텍스트 변경)
+      // Verify the date is selected (button text changes)
       await waitFor(() => {
         expect(dateButton.textContent).not.toMatch(/select date/i);
       });
     }
 
-    // 시간 입력: time input 찾기
+    // Time entry: find the time input
     const timeInput = canvas.getByRole("textbox", { name: /time/i });
     await expect(timeInput).toBeInTheDocument();
 
-    // 시간 값 확인 (기본값이 설정되어 있음)
+    // Check the time value (a default is set)
     await expect(timeInput).toHaveValue("10:30:00");
 
-    // 시간 변경
+    // Change the time
     await userEvent.clear(timeInput);
     await userEvent.type(timeInput, "14:30:00");
 
-    // 변경된 시간 값 확인
+    // Check the changed time value
     await waitFor(() => {
       expect(timeInput).toHaveValue("14:30:00");
     });

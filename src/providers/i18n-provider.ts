@@ -1,17 +1,8 @@
 import { I18nProvider } from "@refinedev/core";
 
-type Locale = "ko" | "en";
+type Locale = "en";
 
 const messages: Record<Locale, Record<string, string>> = {
-  ko: {
-    "buttons.create": "생성",
-    "buttons.edit": "수정",
-    "buttons.delete": "삭제",
-    "buttons.show": "상세",
-    "buttons.save": "저장",
-    "buttons.cancel": "취소",
-    "buttons.refresh": "새로고침",
-  },
   en: {
     "buttons.create": "Create",
     "buttons.edit": "Edit",
@@ -23,11 +14,11 @@ const messages: Record<Locale, Record<string, string>> = {
   },
 };
 
-let currentLocale: Locale = "ko";
+let currentLocale: Locale = "en";
 
 /**
- * Refine I18nProvider 스켈레톤.
- * - 초기에는 주요 버튼 키만 포함하며, 후속 작업에서 pages/notifications 등으로 확장한다.
+ * Refine I18nProvider skeleton.
+ * - Initially covers only the main button keys; to be extended to pages/notifications later.
  */
 export const i18nProvider: I18nProvider = {
   translate: (key: string, options?: Record<string, unknown>) => {
@@ -47,7 +38,7 @@ export const i18nProvider: I18nProvider = {
     );
   },
   changeLocale: async (lang: string) => {
-    if (lang === "en" || lang === "ko") {
+    if (lang === "en") {
       currentLocale = lang;
     }
     return Promise.resolve();

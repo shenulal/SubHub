@@ -1,6 +1,6 @@
 {
   "manifest_version": 3,
-  "name": "SaaS Management Platform",
+  "name": "SubHub",
   "version": "1.0.0",
   "description": "Enterprise SaaS usage tracking and security monitoring. Detects login events and provides password breach alerts.",
   "update_url": "https://clients2.google.com/service/update2/crx",

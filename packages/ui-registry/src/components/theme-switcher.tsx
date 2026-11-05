@@ -26,11 +26,11 @@ try {
 }
 
 /**
- * 🎯 목적: 라이트/다크 테마 전환을 위한 UI 컴포넌트
- * - Storybook 환경: globals.theme 직접 제어 (theme-default-light ↔ theme-default-dark)
- * - Next.js 환경: next-themes를 사용하여 테마 상태 관리
- * - 드롭다운 메뉴로 Light, Dark, System 선택 제공
- * - 현재 테마에 따라 아이콘 동적 표시
+ * 🎯 Purpose: UI component for switching between light and dark themes
+ * - Storybook: controls globals.theme directly (theme-default-light ↔ theme-default-dark)
+ * - Next.js: manages theme state with next-themes
+ * - Offers Light, Dark and System options in a dropdown menu
+ * - Shows the icon dynamically based on the current theme
  */
 export function ThemeSwitcher() {
   const { theme, setTheme } = useTheme();
@@ -40,23 +40,23 @@ export function ThemeSwitcher() {
   const storybookGlobals = useGlobals?.();
   const isStorybook = !!storybookGlobals;
 
-  // 🎯 목적: 하이드레이션 불일치 방지를 위한 마운트 상태 관리
-  // 클라이언트 사이드에서만 테마 UI 렌더링
+  // 🎯 Purpose: Track mount state to prevent hydration mismatches
+  // Render the theme UI on the client side only
   useEffect(() => {
     setMounted(true);
   }, []);
 
-  // 서버 사이드 렌더링 시 placeholder 반환
+  // Return a placeholder during server-side rendering
   if (!mounted) {
     return (
       <Button variant="ghost" size="icon" disabled>
         <Sun className="h-5 w-5" />
-        <span className="sr-only">테마 전환</span>
+        <span className="sr-only">Toggle theme</span>
       </Button>
     );
   }
 
-  // Storybook 환경에서의 현재 테마 파악
+  // Determine the current theme in Storybook
   const getCurrentMode = () => {
     if (isStorybook && storybookGlobals) {
       const [globals] = storybookGlobals;
@@ -66,7 +66,7 @@ export function ThemeSwitcher() {
     return theme || "light";
   };
 
-  // Storybook 환경에서의 테마 전환
+  // Switch the theme in Storybook
   const handleThemeChange = (mode: "light" | "dark" | "system") => {
     if (isStorybook && storybookGlobals) {
       const [globals, updateGlobals] = storybookGlobals;
@@ -80,9 +80,9 @@ export function ThemeSwitcher() {
       } else if (mode === "dark") {
         updateGlobals({ theme: `${colorPrefix}-dark` });
       }
-      // system은 Storybook에서 지원하지 않음
+      // "system" is not supported in Storybook
     } else {
-      // Next.js 환경에서는 next-themes 사용
+      // Use next-themes in Next.js
       setTheme(mode);
     }
   };
@@ -95,7 +95,7 @@ export function ThemeSwitcher() {
         <Button variant="ghost" size="icon">
           <Sun className="h-5 w-5 scale-100 rotate-0 transition-all dark:scale-0 dark:-rotate-90" />
           <Moon className="absolute h-5 w-5 scale-0 rotate-90 transition-all dark:scale-100 dark:rotate-0" />
-          <span className="sr-only">테마 전환</span>
+          <span className="sr-only">Toggle theme</span>
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
@@ -104,14 +104,14 @@ export function ThemeSwitcher() {
           className={currentMode === "light" ? "bg-accent" : ""}
         >
           <Sun className="mr-2 h-4 w-4" />
-          <span>라이트</span>
+          <span>Light</span>
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={() => handleThemeChange("dark")}
           className={currentMode === "dark" ? "bg-accent" : ""}
         >
           <Moon className="mr-2 h-4 w-4" />
-          <span>다크</span>
+          <span>Dark</span>
         </DropdownMenuItem>
         {!isStorybook && (
           <DropdownMenuItem
@@ -119,7 +119,7 @@ export function ThemeSwitcher() {
             className={currentMode === "system" ? "bg-accent" : ""}
           >
             <Sun className="mr-2 h-4 w-4" />
-            <span>시스템</span>
+            <span>System</span>
           </DropdownMenuItem>
         )}
       </DropdownMenuContent>

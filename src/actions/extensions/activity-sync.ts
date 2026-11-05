@@ -2,8 +2,8 @@
 "use server";
 
 /**
- * 소급 동기화: 기존 ExtensionLoginEvent → UserAppAccess 일괄 변환
- * ADMIN 권한 필요
+ * Backfill sync: bulk-convert existing ExtensionLoginEvent → UserAppAccess
+ * Requires ADMIN role
  */
 
 import { auth } from "@/lib/auth";
@@ -22,26 +22,26 @@ export interface SyncResult {
 }
 
 /**
- * 기존 ExtensionLoginEvent 레코드를 일괄 처리하여
- * UserAppAccess 레코드를 생성/갱신합니다.
+ * Processes existing ExtensionLoginEvent records in bulk
+ * to create/update UserAppAccess records.
  */
 export const syncLoginEventsToAppAccess = withLogging(
   "ext:activity-sync",
   async (): Promise<SyncResult> => {
     const session = await auth();
     if (!session?.user?.organizationId) {
-      throw new Error("인증이 필요합니다");
+      throw new Error("Authentication required");
     }
     if (session.user.role !== "ADMIN") {
-      throw new Error("관리자만 접근할 수 있습니다");
+      throw new Error("Only admins can access this");
     }
 
     const organizationId = session.user.organizationId;
 
-    // 디바이스 → 사용자 매핑 캐시
+    // Device → user mapping cache
     const deviceUserCache = new Map<string, string | null>();
 
-    // 도메인 → 매칭 결과 캐시
+    // Domain → match result cache
     const domainMatchCache = new Map<
       string,
       { appId: string; appName: string } | null
@@ -52,7 +52,7 @@ export const syncLoginEventsToAppAccess = withLogging(
     let matchedEvents = 0;
     let createdAccesses = 0;
 
-    // 배치로 이벤트 처리
+    // Process events in batches
     let cursor: string | undefined;
     let hasMore = true;
 
@@ -82,7 +82,7 @@ export const syncLoginEventsToAppAccess = withLogging(
       totalEvents += events.length;
 
       for (const event of events) {
-        // userId 해결
+        // Resolve userId
         let userId = event.userId;
 
         if (!userId) {
@@ -98,7 +98,7 @@ export const syncLoginEventsToAppAccess = withLogging(
 
         if (!userId) continue;
 
-        // 도메인 매칭
+        // Domain matching
         if (!domainMatchCache.has(event.domain)) {
           const match = await matchDomainToApp(event.domain, organizationId);
           domainMatchCache.set(
@@ -127,7 +127,7 @@ export const syncLoginEventsToAppAccess = withLogging(
         });
 
         if (existing) {
-          // 기존 레코드: lastUsedAt이 더 최신이면 갱신
+          // Existing record: update if lastUsedAt is newer
           if (!existing.lastUsedAt || event.capturedAt > existing.lastUsedAt) {
             await prisma.userAppAccess.update({
               where: {

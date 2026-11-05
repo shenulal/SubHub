@@ -1,25 +1,25 @@
 // src/components/payments/payment-csv-upload.test.tsx
 /**
- * PaymentCsvUpload 컴포넌트 테스트
+ * PaymentCsvUpload component tests
  *
- * SMP-78: CSV 업로드 시 Team/User 배정 기능 추가
+ * SMP-78: Team/User assignment on CSV upload
  *
- * Note: 이 컴포넌트는 Radix UI의 RadioGroup, Select 컴포넌트를 사용하며,
- * packages/ui-registry와 메인 프로젝트 간의 React 버전 충돌로 인해
- * 런타임 테스트가 제한됩니다.
+ * Note: this component uses the Radix UI RadioGroup and Select components, and
+ * runtime testing is limited by a React version conflict between
+ * packages/ui-registry and the main project.
  *
- * 핵심 로직은 Server Action 테스트 (payment-import.test.ts)에서 검증:
- * - Team/User 배정 파라미터 처리 ✓
- * - 상호 배타 검증 (teamId와 userId 둘 다 있으면 에러) ✓
- * - 조직 소속 검증 ✓
- * - 미배정 처리 ✓
+ * The core logic is verified in the Server Action tests (payment-import.test.ts):
+ * - Team/User assignment parameter handling ✓
+ * - Mutual exclusion check (error when both teamId and userId are set) ✓
+ * - Organisation membership check ✓
+ * - Unassigned handling ✓
  */
 import { describe, expect, it } from "vitest";
 
 describe("PaymentCsvUpload", () => {
-  it("SMP-78: Team/User 배정 UI가 구현되었음을 확인 (Server Action 테스트에서 검증)", () => {
-    // 핵심 로직은 src/actions/payment-import.test.ts 에서 검증됨
-    // UI 컴포넌트는 TypeScript 타입 체킹으로 컴파일 시 검증됨
+  it("SMP-78: confirms the Team/User assignment UI is implemented (verified in the Server Action tests)", () => {
+    // Core logic is verified in src/actions/payment-import.test.ts
+    // The UI component is verified at compile time by TypeScript type checking
     expect(true).toBe(true);
   });
 });

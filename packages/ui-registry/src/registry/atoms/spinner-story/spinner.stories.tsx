@@ -37,8 +37,8 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 /**
- * 기본 사용 예제입니다.
- * 결제 처리 중과 같은 실제 사용 사례를 보여줍니다.
+ * Basic usage.
+ * Shows a real-world case such as payment processing.
  */
 export const BasicUsage: Story = {
   render: () => (
@@ -59,8 +59,8 @@ export const BasicUsage: Story = {
 };
 
 /**
- * 다양한 크기의 스피너입니다.
- * size-3부터 size-8까지 다양한 크기로 사용할 수 있습니다.
+ * Spinners in various sizes.
+ * Available in sizes from size-3 to size-8.
  */
 export const Size: Story = {
   render: () => (
@@ -74,8 +74,8 @@ export const Size: Story = {
 };
 
 /**
- * 다양한 색상의 스피너입니다.
- * Tailwind 텍스트 색상 클래스를 사용하여 색상을 변경할 수 있습니다.
+ * Spinners in various colors.
+ * Change the color with Tailwind text color classes.
  */
 export const Color: Story = {
   render: () => (
@@ -90,8 +90,8 @@ export const Color: Story = {
 };
 
 /**
- * 버튼 로딩 상태입니다.
- * 버튼 내부에 스피너를 표시하여 진행 중인 작업을 나타냅니다.
+ * Button loading state.
+ * Shows a spinner inside the button to indicate work in progress.
  */
 export const ButtonLoading: Story = {
   render: () => (
@@ -113,8 +113,8 @@ export const ButtonLoading: Story = {
 };
 
 /**
- * 배지 로딩 상태입니다.
- * 배지 내부에 스피너를 표시하여 상태를 나타냅니다.
+ * Badge loading state.
+ * Shows a spinner inside the badge to indicate status.
  */
 export const BadgeLoading: Story = {
   render: () => (
@@ -136,8 +136,8 @@ export const BadgeLoading: Story = {
 };
 
 /**
- * 입력 그룹과 함께 사용하는 예제입니다.
- * 입력 필드 내에서 검증이나 검색 중임을 표시합니다.
+ * Used with an input group.
+ * Indicates validation or search in progress within the input field.
  */
 export const InputGroupExample: Story = {
   render: () => (
@@ -163,8 +163,8 @@ export const InputGroupExample: Story = {
 };
 
 /**
- * 빈 상태에서 사용하는 예제입니다.
- * 콘텐츠를 로딩 중일 때 Empty 컴포넌트와 함께 사용합니다.
+ * Used in an empty state.
+ * Used with the Empty component while content is loading.
  */
 export const EmptyState: Story = {
   render: () => (
@@ -188,8 +188,8 @@ export const EmptyState: Story = {
 };
 
 /**
- * 아이템 로딩 상태입니다.
- * 다운로드나 처리 중인 아이템을 표시합니다.
+ * Item loading state.
+ * Shows items that are downloading or processing.
  */
 export const ItemLoading: Story = {
   render: () => (

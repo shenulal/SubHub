@@ -1,5 +1,5 @@
 // src/lib/auth/index.ts
-// NextAuth.js v5 설정 (App Router) - JWT 전략
+// NextAuth.js v5 configuration (App Router) - JWT strategy
 
 import { triggerInitialBuild } from "@/actions/extensions/builds";
 import { prisma } from "@/lib/db";
@@ -42,22 +42,22 @@ const loadTokenUser = cache(async (email: string) =>
 );
 
 /**
- * NextAuth.js v5 설정
- * - Google OAuth 프로바이더
- * - Credentials 프로바이더 (이메일/OTP)
- * - Prisma 어댑터 (DB 연동)
- * - JWT 세션 전략 (Edge Runtime 지원)
- * - 세션에 organizationId, role 추가
+ * NextAuth.js v5 configuration
+ * - Google OAuth provider
+ * - Credentials provider (email/OTP)
+ * - Prisma adapter (DB integration)
+ * - JWT session strategy (Edge Runtime support)
+ * - Adds organizationId and role to the session
  */
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
-  trustHost: true, // Vercel 등 프록시 뒤에서 실행 시 필요
+  trustHost: true, // Required when running behind a proxy such as Vercel
   providers: [
     Google({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      allowDangerousEmailAccountLinking: true, // 초대된 사용자 계정 연결 허용
+      allowDangerousEmailAccountLinking: true, // Allow linking accounts of invited users
       authorization: {
         params: {
           prompt: "consent",
@@ -69,8 +69,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     Credentials({
       name: "credentials",
       credentials: {
-        email: { label: "이메일", type: "email" },
-        otp: { label: "인증 코드", type: "text" },
+        email: { label: "Email", type: "email" },
+        otp: { label: "Verification code", type: "text" },
       },
       async authorize(credentials) {
         if (!credentials?.email || !credentials?.otp) {
@@ -80,7 +80,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const email = credentials.email as string;
         const otp = credentials.otp as string;
 
-        // 사용자 조회 (초대 전용: DB에 존재해야 함)
+        // Look up the user (invite-only: must already exist in the DB)
         const user = await prisma.user.findUnique({
           where: { email },
           select: {
@@ -93,7 +93,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         if (!user) return null;
 
-        // 활성 OTP 토큰 조회 (만료되지 않은 것)
+        // Look up an active (unexpired) OTP token
         const otpToken = await prisma.otpToken.findFirst({
           where: {
             email,
@@ -104,13 +104,13 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         if (!otpToken) return null;
 
-        // 최대 시도 횟수 초과 시 토큰 삭제
+        // Delete the token once the maximum attempts are exceeded
         if (otpToken.attempts >= 5) {
           await prisma.otpToken.delete({ where: { id: otpToken.id } });
           return null;
         }
 
-        // OTP 코드 비교
+        // Compare the OTP code
         if (otpToken.code !== otp) {
           await prisma.otpToken.update({
             where: { id: otpToken.id },
@@ -119,7 +119,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           return null;
         }
 
-        // 성공: 토큰 삭제 (single-use)
+        // Success: delete the token (single-use)
         await prisma.otpToken.delete({ where: { id: otpToken.id } });
 
         return {
@@ -132,26 +132,26 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     }),
     ...optionalProviders(),
   ],
-  // JWT 세션 전략 (Edge Runtime에서 동작)
+  // JWT session strategy (works on the Edge Runtime)
   session: {
     strategy: "jwt",
-    maxAge: 30 * 24 * 60 * 60, // 30일
+    maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   callbacks: {
     /**
-     * JWT 콜백: 토큰에 사용자 정보 저장
-     * 주의: Edge Runtime(미들웨어)에서도 호출되므로 Prisma 호출 시 환경 체크 필요
+     * JWT callback: stores user info in the token
+     * Note: also invoked on the Edge Runtime (middleware), so check the environment before calling Prisma
      */
     async jwt({ token, user, trigger, account }) {
       // JWT Callback log removed
 
-      // 최초 로그인 시 (OAuth 콜백 - 서버 환경에서만 실행됨)
+      // On first sign-in (OAuth callback - runs only in the server environment)
       if (user && account && user.id) {
         token.id = user.id;
 
-        // 초기 로그인 시에만 DB 조회 및 lastLoginAt 업데이트
+        // Query the DB and update lastLoginAt only on initial sign-in
         try {
-          // 로그인 시간 업데이트 (findUnique + update를 하나로)
+          // Update the login time (findUnique + update combined)
           const dbUser = await prisma.user.update({
             where: { id: user.id },
             data: { lastLoginAt: new Date() },
@@ -167,7 +167,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           let role = dbUser?.role ?? "MEMBER";
           const teamId = dbUser?.teamId ?? null;
 
-          // 조직이 없는 경우, pending 초대 확인 및 자동 수락
+          // If there is no organization, check for a pending invitation and auto-accept it
           if (!organizationId && dbUser?.email) {
             const pendingInvitation = await prisma.invitation.findFirst({
               where: {
@@ -179,7 +179,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             });
 
             if (pendingInvitation) {
-              // 초대 수락 처리
+              // Accept the invitation
               await prisma.$transaction([
                 prisma.invitation.update({
                   where: { id: pendingInvitation.id },
@@ -206,7 +206,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           token.role = role;
           token.teamId = teamId;
 
-          // 관리자 로그인 시 빌드가 없으면 1.0.0 자동 생성
+          // On admin sign-in, auto-create build 1.0.0 if none exists
           if (organizationId && role === "ADMIN") {
             prisma.extensionBuild
               .count({ where: { organizationId } })
@@ -218,8 +218,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               .catch(console.error);
           }
         } catch (error) {
-          // Edge Runtime에서는 Prisma 사용 불가 - 기본값 사용
-          // 또는 user가 아직 DB에 없을 수 있음 (신규 가입)
+          // Prisma is unavailable on the Edge Runtime - use defaults
+          // or the user may not be in the DB yet (new sign-up)
           console.error("[JWT Callback] Error:", error);
           token.organizationId = null;
           token.role = "MEMBER";
@@ -227,20 +227,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         }
       }
 
-      // 세션 업데이트 트리거 시 또는 기존 토큰이 있을 때 (서버 환경에서 DB 동기화)
-      // 사용자 organizationId 변경 시 세션에 반영되도록 매번 DB 조회
-      // email로 찾기 (token.id와 DB user.id가 불일치할 수 있음)
+      // On a session update trigger or with an existing token (sync with the DB in the server environment)
+      // Query the DB every time so organizationId changes are reflected in the session
+      // Look up by email (token.id may not match the DB user.id)
       if ((trigger === "update" || token.id) && !user && token.email) {
         try {
           const dbUser = await loadTokenUser(token.email as string);
           if (dbUser) {
-            token.id = dbUser.id; // 실제 DB user.id로 동기화
+            token.id = dbUser.id; // Sync to the actual DB user.id
 
             let organizationId = dbUser.organizationId;
             let role = dbUser.role;
             const teamId = dbUser.teamId;
 
-            // 조직이 없는 경우, pending 초대 확인 및 자동 수락
+            // If there is no organization, check for a pending invitation and auto-accept it
             if (!organizationId) {
               const pendingInvitation = await prisma.invitation.findFirst({
                 where: {
@@ -279,14 +279,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             token.teamId = teamId;
           }
         } catch {
-          // Edge Runtime에서는 무시 (기존 토큰 값 유지)
+          // Ignore on the Edge Runtime (keep existing token values)
         }
       }
 
       return token;
     },
     /**
-     * 세션 콜백: JWT에서 세션으로 정보 전달
+     * Session callback: passes info from the JWT to the session
      */
     async session({ session, token }) {
       session.user.id = token.id as string;
@@ -296,7 +296,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return session;
     },
     /**
-     * authorized 콜백: 미들웨어에서 인증 확인
+     * authorized callback: checks authentication in the middleware
      */
     authorized({ auth, request }) {
       const publicRoutes = ["/login", "/api/auth"];
@@ -304,34 +304,34 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
       // Auth Authorized log removed
 
-      // 공개 라우트는 항상 허용
+      // Public routes are always allowed
       if (publicRoutes.some((route) => pathname.startsWith(route))) {
         return true;
       }
 
-      // 미인증 사용자는 로그인 페이지로 (false 반환 시 signIn 페이지로 리다이렉트)
+      // Unauthenticated users go to the login page (returning false redirects to the signIn page)
       if (!auth) {
         // console.log("[Auth Authorized] No auth, redirecting to login");
         return false;
       }
 
-      // 온보딩 페이지 허용
+      // Allow the onboarding page
       if (pathname === "/onboarding") {
         return true;
       }
 
-      // 초대 수락 페이지 허용 (organizationId 없이도 접근 가능)
+      // Allow the invitation acceptance page (accessible without organizationId)
       if (pathname.startsWith("/invite/")) {
         return true;
       }
 
-      // SUPER_ADMIN은 organizationId 없이 /super-admin 접근 허용
+      // SUPER_ADMIN may access /super-admin without an organizationId
       if ((auth.user?.role as string) === "SUPER_ADMIN") {
         if (pathname.startsWith("/super-admin")) return true;
         return Response.redirect(new URL("/super-admin", request.url));
       }
 
-      // 조직이 없는 경우 온보딩으로
+      // No organization: go to onboarding
       if (!auth.user?.organizationId) {
         // console.log("[Auth Authorized] No org, redirecting to onboarding");
         return Response.redirect(new URL("/onboarding", request.url));
@@ -340,38 +340,38 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       return true;
     },
     /**
-     * 리다이렉트 콜백: 로그인 후 리다이렉트 URL 처리
+     * Redirect callback: resolves the post-login redirect URL
      */
     async redirect({ url, baseUrl }) {
-      // 상대 경로는 baseUrl과 결합
+      // Combine relative paths with baseUrl
       if (url.startsWith("/")) {
-        // 루트 경로이거나 기본 리다이렉트인 경우 대시보드로
+        // Root path or default redirect: go to the dashboard
         if (url === "/" || url === baseUrl || url === `${baseUrl}/`) {
           return `${baseUrl}/dashboard`;
         }
         return `${baseUrl}${url}`;
       }
-      // 같은 origin이면 그대로 사용
+      // Same origin: use as is
       try {
         const urlObj = new URL(url);
         if (urlObj.origin === baseUrl) {
-          // 루트 경로인 경우 대시보드로
+          // Root path: go to the dashboard
           if (urlObj.pathname === "/" || urlObj.pathname === "") {
             return `${baseUrl}/dashboard`;
           }
           return url;
         }
       } catch {
-        // URL 파싱 실패 시 대시보드로
+        // URL parsing failed: go to the dashboard
         return `${baseUrl}/dashboard`;
       }
-      // 기본값도 대시보드로
+      // Default is also the dashboard
       return `${baseUrl}/dashboard`;
     },
   },
   pages: {
     signIn: "/login",
-    error: "/login", // 에러 발생 시에도 로그인 페이지로
+    error: "/login", // Errors also go to the login page
   },
   secret: process.env.AUTH_SECRET || "dev-secret-123",
 });

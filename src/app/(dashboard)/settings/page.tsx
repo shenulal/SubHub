@@ -4,8 +4,8 @@ import { requireOrganization } from "@/lib/auth/require-auth";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "설정 | SaaS 관리 플랫폼",
-  description: "계정 및 조직 설정을 관리합니다",
+  title: "Settings",
+  description: "Manage account and organization settings",
 };
 
 export default async function SettingsPage() {

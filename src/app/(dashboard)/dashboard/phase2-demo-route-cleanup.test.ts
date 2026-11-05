@@ -1,8 +1,8 @@
 // src/app/(dashboard)/dashboard/phase2-demo-route-cleanup.test.ts
-// Phase 2 RED: 데모 라우트 및 미사용 컴포넌트/액션 삭제 검증
-// - 삭제 대상 파일이 존재하지 않아야 함
-// - 프로덕션 유지 대상 파일이 모두 존재해야 함
-// - 삭제 대상 모듈을 프로덕션에서 import하지 않아야 함
+// Phase 2 RED: verify deletion of demo routes and unused components/actions
+// - Files slated for deletion must not exist
+// - All production files to keep must exist
+// - Production code must not import modules slated for deletion
 
 import { existsSync, readFileSync, readdirSync } from "fs";
 import path from "path";
@@ -11,10 +11,10 @@ import { describe, expect, it } from "vitest";
 const PROJECT_ROOT = path.resolve(__dirname, "../../../../");
 
 // ============================================================
-// 1. 삭제 대상 파일 목록
+// 1. Files to delete
 // ============================================================
 
-/** 데모 라우트 페이지 */
+/** Demo route pages */
 const DEMO_ROUTE_PAGES_TO_DELETE = [
   "src/app/(dashboard)/dashboard2/page.tsx",
   "src/app/(dashboard)/dashboard-v2-demo/page.tsx",
@@ -22,7 +22,7 @@ const DEMO_ROUTE_PAGES_TO_DELETE = [
   "src/app/(dashboard)/dashboard-v2-seat/page.tsx",
 ];
 
-/** dashboard-v2-demo 전체 삭제 (프로덕션 미사용) */
+/** Delete all of dashboard-v2-demo (unused in production) */
 const DASHBOARD_V2_DEMO_FILES_TO_DELETE = [
   "src/components/dashboard-v2-demo/index.ts",
   "src/components/dashboard-v2-demo/dashboard-v2-demo-client.tsx",
@@ -34,7 +34,7 @@ const DASHBOARD_V2_DEMO_FILES_TO_DELETE = [
   "src/components/dashboard-v2-demo/top-apps-table.tsx",
 ];
 
-/** dashboard-v2-cost 삭제 대상 (프로덕션 사용 3개 제외) */
+/** dashboard-v2-cost deletion targets (excluding 3 used in production) */
 const DASHBOARD_V2_COST_FILES_TO_DELETE = [
   "src/components/dashboard-v2-cost/dashboard-v2-cost-client.tsx",
   "src/components/dashboard-v2-cost/cost-kpi-cards.tsx",
@@ -42,7 +42,7 @@ const DASHBOARD_V2_COST_FILES_TO_DELETE = [
   "src/components/dashboard-v2-cost/savings-breakdown.tsx",
 ];
 
-/** dashboard-v2-seat 삭제 대상 (프로덕션 사용 1개 제외) */
+/** dashboard-v2-seat deletion targets (excluding 1 used in production) */
 const DASHBOARD_V2_SEAT_FILES_TO_DELETE = [
   "src/components/dashboard-v2-seat/dashboard-v2-seat-client.tsx",
   "src/components/dashboard-v2-seat/seat-kpi-cards.tsx",
@@ -50,7 +50,7 @@ const DASHBOARD_V2_SEAT_FILES_TO_DELETE = [
   "src/components/dashboard-v2-seat/optimization-actions.tsx",
 ];
 
-/** dashboard2 컴포넌트 삭제 대상 (프로덕션 사용 2개 제외) */
+/** dashboard2 component deletion targets (excluding 2 used in production) */
 const DASHBOARD2_COMPONENT_FILES_TO_DELETE = [
   "src/components/dashboard2/dashboard2-page-client.tsx",
   "src/components/dashboard2/kpi-cards.tsx",
@@ -75,7 +75,7 @@ const DASHBOARD2_COMPONENT_FILES_TO_DELETE = [
   "src/components/dashboard2/users-vs-licenses-chart.tsx",
 ];
 
-/** dashboard2 액션 삭제 대상 (dashboard2-seat, dashboard2-cost, dashboard2-renewals는 AI read-tool에서 사용하므로 유지) */
+/** dashboard2 action deletion targets (dashboard2-seat, dashboard2-cost and dashboard2-renewals are kept because the AI read-tool uses them) */
 const DASHBOARD2_ACTIONS_TO_DELETE = [
   "src/actions/dashboard2.ts",
   "src/actions/dashboard2-security.ts",
@@ -94,11 +94,11 @@ const ALL_FILES_TO_DELETE = [
 ];
 
 // ============================================================
-// 2. 프로덕션 유지 대상 파일 목록
+// 2. Production files to keep
 // ============================================================
 
 const PRODUCTION_MUST_KEEP_FILES = [
-  // Phase 3 통합 후: 모든 컴포넌트가 new-dashboard/에 위치
+  // After the Phase 3 consolidation: all components live in new-dashboard/
   "src/components/dashboard/new-dashboard-client.tsx",
   "src/components/dashboard/seat-utilization-chart.tsx",
   "src/components/dashboard/per-user-license-apps-chart.tsx",
@@ -106,14 +106,14 @@ const PRODUCTION_MUST_KEEP_FILES = [
   "src/components/dashboard/cost-apps-table.tsx",
   "src/components/dashboard/upcoming-renewals.tsx",
   "src/components/dashboard/department-spend-chart.tsx",
-  // 프로덕션 액션 (dashboard2-seat: 대시보드, dashboard2-cost/renewals: AI read-tool)
+  // Production actions (dashboard2-seat: dashboard, dashboard2-cost/renewals: AI read-tool)
   "src/actions/dashboard2-seat.ts",
   "src/actions/dashboard2-cost.ts",
   "src/actions/dashboard2-cost.constants.ts",
   "src/actions/dashboard2-renewals.ts",
-  // 프로덕션 타입
+  // Production types
   "src/types/dashboard2.ts",
-  // 페이지
+  // Pages
   "src/app/(dashboard)/dashboard/page.tsx",
 ];
 
@@ -144,30 +144,32 @@ function collectTsFiles(dir: string): string[] {
 // Tests
 // ============================================================
 
-describe("Phase 2: 데모 라우트 정리 안전성 검증", () => {
-  describe("삭제 대상 파일은 존재하지 않아야 한다", () => {
+describe("Phase 2: demo route cleanup safety checks", () => {
+  describe("files slated for deletion must not exist", () => {
     for (const filePath of ALL_FILES_TO_DELETE) {
-      it(`${filePath} 이(가) 삭제되어야 한다`, () => {
+      it(`${filePath} is deleted`, () => {
         const abs = path.resolve(PROJECT_ROOT, filePath);
-        expect(existsSync(abs), `삭제 대상 파일이 아직 존재: ${filePath}`).toBe(
-          false
-        );
+        expect(
+          existsSync(abs),
+          `File slated for deletion still exists: ${filePath}`
+        ).toBe(false);
       });
     }
   });
 
-  describe("프로덕션 필수 파일이 모두 존재해야 한다", () => {
+  describe("all required production files must exist", () => {
     for (const filePath of PRODUCTION_MUST_KEEP_FILES) {
-      it(`${filePath} 이(가) 존재해야 한다`, () => {
+      it(`${filePath} exists`, () => {
         const abs = path.resolve(PROJECT_ROOT, filePath);
-        expect(existsSync(abs), `프로덕션 필수 파일 누락: ${filePath}`).toBe(
-          true
-        );
+        expect(
+          existsSync(abs),
+          `Required production file missing: ${filePath}`
+        ).toBe(true);
       });
     }
   });
 
-  describe("삭제된 모듈을 프로덕션 코드에서 import하지 않아야 한다", () => {
+  describe("production code must not import deleted modules", () => {
     const productionDirs = [
       path.join(PROJECT_ROOT, "src/app"),
       path.join(PROJECT_ROOT, "src/components/dashboard"),
@@ -181,27 +183,27 @@ describe("Phase 2: 데모 라우트 정리 안전성 검증", () => {
       productionFiles.push(...collectTsFiles(dir));
     }
 
-    // 삭제 대상 + 삭제된 라우트 페이지 제외
+    // Exclude deletion targets + deleted route pages
     const deleteAbsPaths = new Set(
       ALL_FILES_TO_DELETE.map((f) => path.resolve(PROJECT_ROOT, f))
     );
     const filtered = productionFiles.filter((f) => !deleteAbsPaths.has(f));
 
-    // 삭제된 모듈 import 패턴
+    // Import patterns for deleted modules
     const deletedImportPatterns = [
-      // dashboard-v2-demo 전체 삭제
+      // All of dashboard-v2-demo deleted
       "@/components/dashboard-v2-demo",
-      // dashboard-v2-cost 삭제 대상
+      // dashboard-v2-cost deletion targets
       "@/components/dashboard-v2-cost/dashboard-v2-cost-client",
       "@/components/dashboard-v2-cost/cost-kpi-cards",
       "@/components/dashboard-v2-cost/optimization-hero",
       "@/components/dashboard-v2-cost/savings-breakdown",
-      // dashboard-v2-seat 삭제 대상
+      // dashboard-v2-seat deletion targets
       "@/components/dashboard-v2-seat/dashboard-v2-seat-client",
       "@/components/dashboard-v2-seat/seat-kpi-cards",
       "@/components/dashboard-v2-seat/app-efficiency-matrix",
       "@/components/dashboard-v2-seat/optimization-actions",
-      // dashboard2 삭제 대상 (개별)
+      // dashboard2 deletion targets (individual)
       "@/components/dashboard2/dashboard2-page-client",
       "@/components/dashboard2/kpi-cards",
       "@/components/dashboard2/alerts-banner",
@@ -220,14 +222,14 @@ describe("Phase 2: 데모 라우트 정리 안전성 검증", () => {
       "@/components/dashboard2/urgent-renewals-card",
       "@/components/dashboard2/user-overview-card",
       "@/components/dashboard2/users-vs-licenses-chart",
-      // 삭제된 액션 (dashboard2-cost, dashboard2-renewals는 AI read-tool에서 사용하므로 유지)
+      // Deleted actions (dashboard2-cost and dashboard2-renewals are kept because the AI read-tool uses them)
       "@/actions/dashboard2-security",
       "@/actions/dashboard2-summary",
       "@/actions/dashboard2-users",
       "@/actions/dashboard2-devices",
     ];
 
-    it("삭제된 모듈을 import하는 프로덕션 파일이 없어야 한다", () => {
+    it("has no production files importing deleted modules", () => {
       const violations: { file: string; pattern: string }[] = [];
 
       for (const filePath of filtered) {
@@ -244,30 +246,30 @@ describe("Phase 2: 데모 라우트 정리 안전성 검증", () => {
 
       expect(
         violations,
-        `프로덕션에서 삭제된 모듈 import 발견:\n${violations
+        `Deleted module imports found in production:\n${violations
           .map((v) => `  ${v.file} → ${v.pattern}`)
           .join("\n")}`
       ).toHaveLength(0);
     });
 
-    it("@/actions/dashboard2 barrel import가 프로덕션 코드에 없어야 한다", () => {
+    it("has no @/actions/dashboard2 barrel imports in production code", () => {
       const violations: string[] = [];
       for (const filePath of filtered) {
         const content = readFileSync(filePath, "utf-8");
-        // @/actions/dashboard2" 또는 @/actions/dashboard2' (barrel만, dashboard2-seat 아님)
+        // @/actions/dashboard2" or @/actions/dashboard2' (barrel only, not dashboard2-seat)
         if (/from\s+["']@\/actions\/dashboard2["']/.test(content)) {
           violations.push(path.relative(PROJECT_ROOT, filePath));
         }
       }
       expect(
         violations,
-        `@/actions/dashboard2 barrel import 발견:\n${violations.join("\n")}`
+        `@/actions/dashboard2 barrel imports found:\n${violations.join("\n")}`
       ).toHaveLength(0);
     });
   });
 
-  describe("보존된 index.ts가 삭제된 컴포넌트를 export하지 않아야 한다", () => {
-    it("dashboard2/index.ts는 seat-utilization-chart와 per-user-license-apps-chart만 export해야 한다", () => {
+  describe("retained index.ts files must not export deleted components", () => {
+    it("dashboard2/index.ts exports only seat-utilization-chart and per-user-license-apps-chart", () => {
       const indexPath = path.resolve(
         PROJECT_ROOT,
         "src/components/dashboard2/index.ts"
@@ -275,19 +277,19 @@ describe("Phase 2: 데모 라우트 정리 안전성 검증", () => {
       if (!existsSync(indexPath)) return;
       const content = readFileSync(indexPath, "utf-8");
 
-      // 삭제된 컴포넌트 export 금지
+      // Deleted components must not be exported
       expect(content).not.toContain("dashboard2-page-client");
       expect(content).not.toContain("kpi-cards");
       expect(content).not.toContain("alerts-banner");
       expect(content).not.toContain("shadow-it-table");
       expect(content).not.toContain("app-status-overview-card");
 
-      // 유지 대상 export 확인
+      // Check exports that are kept
       expect(content).toContain("seat-utilization-chart");
       expect(content).toContain("per-user-license-apps-chart");
     });
 
-    it("dashboard-v2-cost/index.ts는 cost-bar-chart, cost-apps-table, upcoming-renewals만 export해야 한다", () => {
+    it("dashboard-v2-cost/index.ts exports only cost-bar-chart, cost-apps-table and upcoming-renewals", () => {
       const indexPath = path.resolve(
         PROJECT_ROOT,
         "src/components/dashboard-v2-cost/index.ts"
@@ -305,7 +307,7 @@ describe("Phase 2: 데모 라우트 정리 안전성 검증", () => {
       expect(content).toContain("upcoming-renewals");
     });
 
-    it("dashboard-v2-seat/index.ts는 department-spend-chart만 export해야 한다", () => {
+    it("dashboard-v2-seat/index.ts exports only department-spend-chart", () => {
       const indexPath = path.resolve(
         PROJECT_ROOT,
         "src/components/dashboard-v2-seat/index.ts"
@@ -322,54 +324,54 @@ describe("Phase 2: 데모 라우트 정리 안전성 검증", () => {
     });
   });
 
-  describe("데모 라우트 디렉토리가 정리되어야 한다", () => {
-    it("dashboard-v2-demo 디렉토리가 존재하지 않아야 한다", () => {
+  describe("demo route directories are cleaned up", () => {
+    it("dashboard-v2-demo directory does not exist", () => {
       const dir = path.resolve(
         PROJECT_ROOT,
         "src/components/dashboard-v2-demo"
       );
-      expect(existsSync(dir), "dashboard-v2-demo 디렉토리 아직 존재").toBe(
+      expect(existsSync(dir), "dashboard-v2-demo directory still exists").toBe(
         false
       );
     });
 
-    it("dashboard2 라우트 디렉토리가 존재하지 않아야 한다", () => {
+    it("dashboard2 route directory does not exist", () => {
       const dir = path.resolve(PROJECT_ROOT, "src/app/(dashboard)/dashboard2");
-      expect(existsSync(dir), "dashboard2 라우트 디렉토리 아직 존재").toBe(
+      expect(existsSync(dir), "dashboard2 route directory still exists").toBe(
         false
       );
     });
 
-    it("dashboard-v2-demo 라우트 디렉토리가 존재하지 않아야 한다", () => {
+    it("dashboard-v2-demo route directory does not exist", () => {
       const dir = path.resolve(
         PROJECT_ROOT,
         "src/app/(dashboard)/dashboard-v2-demo"
       );
       expect(
         existsSync(dir),
-        "dashboard-v2-demo 라우트 디렉토리 아직 존재"
+        "dashboard-v2-demo route directory still exists"
       ).toBe(false);
     });
 
-    it("dashboard-v2-cost 라우트 디렉토리가 존재하지 않아야 한다", () => {
+    it("dashboard-v2-cost route directory does not exist", () => {
       const dir = path.resolve(
         PROJECT_ROOT,
         "src/app/(dashboard)/dashboard-v2-cost"
       );
       expect(
         existsSync(dir),
-        "dashboard-v2-cost 라우트 디렉토리 아직 존재"
+        "dashboard-v2-cost route directory still exists"
       ).toBe(false);
     });
 
-    it("dashboard-v2-seat 라우트 디렉토리가 존재하지 않아야 한다", () => {
+    it("dashboard-v2-seat route directory does not exist", () => {
       const dir = path.resolve(
         PROJECT_ROOT,
         "src/app/(dashboard)/dashboard-v2-seat"
       );
       expect(
         existsSync(dir),
-        "dashboard-v2-seat 라우트 디렉토리 아직 존재"
+        "dashboard-v2-seat route directory still exists"
       ).toBe(false);
     });
   });

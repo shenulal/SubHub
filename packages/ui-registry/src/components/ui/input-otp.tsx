@@ -7,9 +7,9 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * 🎯 목적: InputOTP 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: input-otp 라이브러리의 OTPInput 사용
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the InputOTP component for React 18/19 compatibility
+ * 📝 Note: Uses OTPInput from the input-otp library
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const InputOTP = React.forwardRef<
   React.ElementRef<typeof OTPInput>,
@@ -33,9 +33,9 @@ const InputOTP = React.forwardRef<
 InputOTP.displayName = "InputOTP";
 
 /**
- * 🎯 목적: InputOTPGroup 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: HTML div 요소 사용
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the InputOTPGroup component for React 18/19 compatibility
+ * 📝 Note: Uses an HTML div element
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const InputOTPGroup = React.forwardRef<
   HTMLDivElement,
@@ -53,9 +53,9 @@ const InputOTPGroup = React.forwardRef<
 InputOTPGroup.displayName = "InputOTPGroup";
 
 /**
- * 🎯 목적: InputOTPSlot 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: HTML div 요소 사용, OTPInputContext에서 슬롯 상태 가져옴
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the InputOTPSlot component for React 18/19 compatibility
+ * 📝 Note: Uses an HTML div element; reads slot state from OTPInputContext
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const InputOTPSlot = React.forwardRef<
   HTMLDivElement,
@@ -89,9 +89,9 @@ const InputOTPSlot = React.forwardRef<
 InputOTPSlot.displayName = "InputOTPSlot";
 
 /**
- * 🎯 목적: InputOTPSeparator 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: HTML div 요소 사용, 시각적 구분자 역할
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the InputOTPSeparator component for React 18/19 compatibility
+ * 📝 Note: Uses an HTML div element; acts as a visual separator
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const InputOTPSeparator = React.forwardRef<
   HTMLDivElement,

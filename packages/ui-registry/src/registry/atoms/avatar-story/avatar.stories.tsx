@@ -137,7 +137,7 @@ export const FallbackOnly: Story = {
 };
 
 /**
- * Avatar 이미지 폴백을 테스트합니다.
+ * Tests the Avatar image fallback.
  */
 export const ShouldShowFallbackOnImageError: Story = {
   name: "when image fails to load, should display fallback text",
@@ -160,9 +160,9 @@ export const ShouldShowFallbackOnImageError: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    // 🎯 목적: 이미지 로딩 실패 시 fallback 텍스트가 표시되는지 확인
+    // 🎯 Purpose: Verify fallback text is shown when the image fails to load
 
-    // Fallback이 표시될 때까지 대기
+    // Wait until the fallback is shown
     await waitFor(
       async () => {
         const fallback = await canvas.findByTestId("fallback");
@@ -172,11 +172,11 @@ export const ShouldShowFallbackOnImageError: Story = {
       { timeout: 3000 },
     );
 
-    // 두 번째 Avatar는 정상 이미지이므로 img가 로드되어야 함
+    // The second Avatar has a valid image, so the img should load
     const images = canvas.getAllByRole("img");
     await waitFor(
       () => {
-        // 최소 하나의 이미지가 로드됨
+        // At least one image has loaded
         expect(images.length).toBeGreaterThan(0);
       },
       { timeout: 3000 },

@@ -1,9 +1,9 @@
 // src/lib/services/saas-classifier.ts
 /**
- * LLM 기반 SaaS 여부 판별기
- * - Vercel AI SDK generateObject()로 Anthropic 모델 호출
- * - zod 스키마 기반 타입 안전 응답 파싱
- * - 네트워크 장애 시 null을 반환해 폴백 로직이 돌도록 처리
+ * LLM-based SaaS classifier
+ * - Calls the Anthropic model via Vercel AI SDK generateObject()
+ * - Type-safe response parsing with a zod schema
+ * - Returns null on network failure so the fallback logic runs
  */
 
 // Re-export types for backwards compatibility
@@ -52,7 +52,7 @@ const SaaSInferenceResultSchema = z.object({
   canonicalName: z.string().nullable(),
   website: z.string().nullable(),
   category: z.string().nullable(),
-  confidence: z.number(), // min/max 제거 — Anthropic API가 JSON Schema minimum/maximum 미지원
+  confidence: z.number(), // min/max removed — the Anthropic API does not support JSON Schema minimum/maximum
   suggestedPatterns: z.array(z.string()),
   reasoning: z.string().optional(),
   pricingModel: z
@@ -72,7 +72,7 @@ const BatchInferenceResultSchema = z.object({
 
 // ==================== Cache ====================
 
-// 간단한 메모리 캐시 (동일 요청 반복 방지)
+// Simple in-memory cache (avoids repeating identical requests)
 const inferenceCache = new Map<string, SaaSInferenceResult>();
 const failureCache = new Map<
   string,
@@ -82,8 +82,8 @@ const failureCache = new Map<
 // ==================== Batch Classification ====================
 
 /**
- * 배치 LLM 분류 함수
- * 최대 50건을 한 번에 처리하여 API 호출 횟수를 줄임
+ * Batch LLM classification
+ * Processes up to 50 items at once to reduce the number of API calls
  */
 export async function classifyMerchantsBatchWithLLM(
   merchants: BatchMerchantInput[],
@@ -92,7 +92,7 @@ export async function classifyMerchantsBatchWithLLM(
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
     console.warn(
-      "[LLM Batch] ANTHROPIC_API_KEY가 설정되지 않아 판별을 건너뜁니다."
+      "[LLM Batch] ANTHROPIC_API_KEY is not set; skipping classification."
     );
     return {
       results: merchants.map((m) => ({ id: m.id, inference: null })),
@@ -104,10 +104,10 @@ export async function classifyMerchantsBatchWithLLM(
     return { results: [] };
   }
 
-  // 배치 크기 제한
+  // Limit batch size
   const batch = merchants.slice(0, BATCH_SIZE);
 
-  // 입력 정제
+  // Sanitise input
   const sanitizedBatch = batch.map((m) => ({
     id: m.id,
     merchantName: truncate(sanitizeText(m.merchantName), 200) || "",
@@ -116,7 +116,7 @@ export async function classifyMerchantsBatchWithLLM(
     recurrenceHint: truncate(sanitizeText(m.recurrenceHint), 200),
   }));
 
-  // 캐시 체크 - 이미 처리된 항목 필터링
+  // Cache check — filter out items already processed
   const cachedResults: { id: string; inference: SaaSInferenceResult | null }[] =
     [];
   const uncached: typeof sanitizedBatch = [];
@@ -134,7 +134,7 @@ export async function classifyMerchantsBatchWithLLM(
     }
   }
 
-  // 모두 캐시 히트면 바로 반환
+  // Return immediately if everything is a cache hit
   if (uncached.length === 0) {
     return { results: cachedResults };
   }
@@ -164,7 +164,7 @@ export async function classifyMerchantsBatchWithLLM(
 
     const parsedResults = object.results;
 
-    // 결과를 ID로 매핑 및 캐시 저장
+    // Map results by ID and store them in the cache
     const resultMap = new Map<string, SaaSInferenceResult | null>();
     for (const r of parsedResults) {
       resultMap.set(r.id, r.inference);
@@ -178,19 +178,19 @@ export async function classifyMerchantsBatchWithLLM(
       }
     }
 
-    // 모든 입력에 대한 결과 구성
+    // Build results for all inputs
     const allResults = sanitizedBatch.map((m) => {
       const cached = cachedResults.find((c) => c.id === m.id);
       if (cached) return cached;
       return { id: m.id, inference: resultMap.get(m.id) ?? null };
     });
 
-    // 배치 분류 성공 로그
+    // Log successful batch classification
     const saasCount = parsedResults.filter((r) => r.inference?.isSaaS).length;
     console.log(
-      `[LLM Batch] 분류 완료 - 모델: ${DEFAULT_MODEL}, ` +
-        `처리: ${parsedResults.length}건, SaaS: ${saasCount}건` +
-        (usage ? `, 토큰: ${usage.totalTokens ?? "N/A"}` : "")
+      `[LLM Batch] Classification complete - model: ${DEFAULT_MODEL}, ` +
+        `processed: ${parsedResults.length}, SaaS: ${saasCount}` +
+        (usage ? `, tokens: ${usage.totalTokens ?? "N/A"}` : "")
     );
 
     return { results: allResults, usage };
@@ -199,7 +199,7 @@ export async function classifyMerchantsBatchWithLLM(
       error instanceof Error && error.name === "AbortError"
         ? "timeout"
         : "exception";
-    console.error("[LLM Batch] 판별 중 오류:", error);
+    console.error("[LLM Batch] Classification error:", error);
     return {
       results: merchants.map((m) => ({ id: m.id, inference: null })),
       errorCode: code,
@@ -215,7 +215,9 @@ export async function classifyMerchantWithLLM(
 ): Promise<SaaSInferencePayload> {
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) {
-    console.warn("[LLM] ANTHROPIC_API_KEY가 설정되지 않아 판별을 건너뜁니다.");
+    console.warn(
+      "[LLM] ANTHROPIC_API_KEY is not set; skipping classification."
+    );
     return { inference: null, errorCode: "missing_api_key" };
   }
 
@@ -269,9 +271,9 @@ export async function classifyMerchantWithLLM(
     const parsed = object;
     inferenceCache.set(cacheKey, parsed);
     console.log(
-      `[LLM] 분류 완료 - 모델: ${DEFAULT_MODEL}, 가맹점: "${sanitized.merchantName}", ` +
-        `결과: isSaaS=${parsed.isSaaS}, confidence=${parsed.confidence?.toFixed(2) ?? "N/A"}` +
-        (usage ? `, 토큰: ${usage.totalTokens ?? "N/A"}` : "")
+      `[LLM] Classification complete - model: ${DEFAULT_MODEL}, merchant: "${sanitized.merchantName}", ` +
+        `result: isSaaS=${parsed.isSaaS}, confidence=${parsed.confidence?.toFixed(2) ?? "N/A"}` +
+        (usage ? `, tokens: ${usage.totalTokens ?? "N/A"}` : "")
     );
 
     return { inference: parsed, usage };
@@ -295,7 +297,7 @@ export async function classifyMerchantWithLLM(
       else code = parseErrorCode(null, 0);
     }
 
-    console.error("[LLM] 판별 중 오류:", error);
+    console.error("[LLM] Classification error:", error);
     if (FAILURE_CACHE_CODES.has(code)) {
       failureCache.set(cacheKey, { errorCode: code, timestamp: Date.now() });
     }

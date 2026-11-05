@@ -7,9 +7,9 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * 🎯 목적: Accordion 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: Radix UI Accordion.Root primitive 사용
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the Accordion component for React 18/19 compatibility
+ * 📝 Note: Uses the Radix UI Accordion.Root primitive
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const Accordion = React.forwardRef<
   React.ElementRef<typeof AccordionPrimitive.Root>,
@@ -20,7 +20,7 @@ const Accordion = React.forwardRef<
 Accordion.displayName = "Accordion";
 
 /**
- * 🎯 목적: AccordionItem 컴포넌트에 forwardRef 적용
+ * 🎯 Purpose: Apply forwardRef to the AccordionItem component
  */
 const AccordionItem = React.forwardRef<
   React.ElementRef<typeof AccordionPrimitive.Item>,
@@ -38,8 +38,8 @@ const AccordionItem = React.forwardRef<
 AccordionItem.displayName = "AccordionItem";
 
 /**
- * 🎯 목적: AccordionTrigger 컴포넌트에 forwardRef 적용
- * 📝 주의사항: Header 내부에서 렌더링, ChevronDownIcon 포함, state에 따라 회전 애니메이션
+ * 🎯 Purpose: Apply forwardRef to the AccordionTrigger component
+ * 📝 Note: Renders inside Header, includes ChevronDownIcon, rotates based on state
  */
 const AccordionTrigger = React.forwardRef<
   React.ElementRef<typeof AccordionPrimitive.Trigger>,
@@ -65,8 +65,8 @@ const AccordionTrigger = React.forwardRef<
 AccordionTrigger.displayName = "AccordionTrigger";
 
 /**
- * 🎯 목적: AccordionContent 컴포넌트에 forwardRef 적용
- * 📝 주의사항: 내부에 div wrapper 포함, 애니메이션 적용
+ * 🎯 Purpose: Apply forwardRef to the AccordionContent component
+ * 📝 Note: Includes an inner div wrapper; animated
  */
 const AccordionContent = React.forwardRef<
   React.ElementRef<typeof AccordionPrimitive.Content>,

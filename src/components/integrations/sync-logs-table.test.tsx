@@ -22,7 +22,7 @@ describe("SyncLogsTable", () => {
       itemsFound: 5,
       itemsCreated: 1,
       itemsUpdated: 3,
-      errors: [{ code: "USER_ERROR", message: "일부 사용자 동기화 실패" }],
+      errors: [{ code: "USER_ERROR", message: "Some users failed to sync" }],
       startedAt: "2024-11-29T10:00:00Z",
       completedAt: "2024-11-29T10:03:00Z",
     },
@@ -32,7 +32,7 @@ describe("SyncLogsTable", () => {
       itemsFound: 0,
       itemsCreated: 0,
       itemsUpdated: 0,
-      errors: [{ code: "AUTH_ERROR", message: "인증 실패" }],
+      errors: [{ code: "AUTH_ERROR", message: "Authentication failed" }],
       startedAt: "2024-11-28T10:00:00Z",
       completedAt: "2024-11-28T10:00:30Z",
     },
@@ -41,18 +41,18 @@ describe("SyncLogsTable", () => {
   it("should render table headers", () => {
     render(<SyncLogsTable logs={mockLogs} />);
 
-    expect(screen.getByText("시작 시간")).toBeInTheDocument();
-    expect(screen.getByText("상태")).toBeInTheDocument();
-    expect(screen.getByText("발견")).toBeInTheDocument();
-    expect(screen.getByText("생성")).toBeInTheDocument();
-    expect(screen.getByText("업데이트")).toBeInTheDocument();
-    expect(screen.getByText("소요 시간")).toBeInTheDocument();
+    expect(screen.getByText("Started")).toBeInTheDocument();
+    expect(screen.getByText("Status")).toBeInTheDocument();
+    expect(screen.getByText("Found")).toBeInTheDocument();
+    expect(screen.getByText("Created")).toBeInTheDocument();
+    expect(screen.getByText("Updated")).toBeInTheDocument();
+    expect(screen.getByText("Duration")).toBeInTheDocument();
   });
 
   it("should render log entries", () => {
     render(<SyncLogsTable logs={mockLogs} />);
 
-    // 첫 번째 로그의 통계
+    // Stats for the first log
     expect(screen.getByText("10")).toBeInTheDocument(); // itemsFound
     expect(screen.getAllByText("2").length).toBeGreaterThan(0); // itemsCreated
     expect(screen.getByText("8")).toBeInTheDocument(); // itemsUpdated
@@ -60,33 +60,33 @@ describe("SyncLogsTable", () => {
 
   it("should render success status badge", () => {
     render(<SyncLogsTable logs={mockLogs} />);
-    expect(screen.getByText("성공")).toBeInTheDocument();
+    expect(screen.getByText("Success")).toBeInTheDocument();
   });
 
   it("should render partial status badge", () => {
     render(<SyncLogsTable logs={mockLogs} />);
-    expect(screen.getByText("부분 성공")).toBeInTheDocument();
+    expect(screen.getByText("Partial success")).toBeInTheDocument();
   });
 
   it("should render failed status badge", () => {
     render(<SyncLogsTable logs={mockLogs} />);
-    expect(screen.getByText("실패")).toBeInTheDocument();
+    expect(screen.getByText("Failed")).toBeInTheDocument();
   });
 
   it("should render empty state when no logs", () => {
     render(<SyncLogsTable logs={[]} />);
-    expect(screen.getByText(/동기화 기록이 없습니다/)).toBeInTheDocument();
+    expect(screen.getByText(/No sync logs/)).toBeInTheDocument();
   });
 
   it("should format duration correctly", () => {
     render(<SyncLogsTable logs={mockLogs} />);
-    // 5분 = 300초
-    expect(screen.getByText("5분 0초")).toBeInTheDocument();
+    // 5 minutes = 300 seconds
+    expect(screen.getByText("5m 0s")).toBeInTheDocument();
   });
 
   it("should show error indicator for logs with errors", () => {
     render(<SyncLogsTable logs={mockLogs} />);
-    // 오류가 있는 로그에는 오류 아이콘이 표시됨
+    // Logs with errors show an error icon
     const errorIcons = screen.getAllByTestId("error-indicator");
     expect(errorIcons.length).toBeGreaterThanOrEqual(2);
   });

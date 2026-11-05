@@ -5,8 +5,8 @@ import { prisma } from "@/lib/db";
 import { redirect } from "next/navigation";
 
 export const metadata = {
-  title: "조직 관리 | SaaS 관리 플랫폼",
-  description: "조직 정보를 관리합니다",
+  title: "Organization",
+  description: "Manage organization information",
 };
 
 export default async function OrganizationSettingsPage() {

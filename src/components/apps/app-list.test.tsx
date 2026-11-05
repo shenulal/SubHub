@@ -43,7 +43,7 @@ const mockApps: AppListItem[] = [
     category: "Collaboration",
     customLogoUrl: null,
     catalogLogoUrl: "https://example.com/slack.png",
-    ownerName: "홍길동",
+    ownerName: "John Smith",
     ownerEmail: "hong@test.com",
     subscriptionCount: 2,
     userAccessCount: 10,
@@ -90,14 +90,14 @@ describe("AppList", () => {
     mutateAsyncMock.mockReset();
   });
 
-  it("앱 목록이 비어있으면 안내 메시지를 표시해야 한다", () => {
+  it("shows a guidance message when the app list is empty", () => {
     render(<AppList apps={[]} />);
 
-    expect(screen.getByText("등록된 앱이 없습니다")).toBeInTheDocument();
-    expect(screen.getByText("첫 번째 앱 등록하기")).toBeInTheDocument();
+    expect(screen.getByText("No apps registered")).toBeInTheDocument();
+    expect(screen.getByText("Register first app")).toBeInTheDocument();
   });
 
-  it("앱 목록이 있으면 테이블을 표시해야 한다", () => {
+  it("shows the table when apps exist", () => {
     render(<AppList apps={mockApps} />);
 
     expect(screen.getByText("Slack")).toBeInTheDocument();
@@ -105,84 +105,84 @@ describe("AppList", () => {
     expect(screen.getByText("Legacy App")).toBeInTheDocument();
   });
 
-  it("앱 이름은 상세 페이지 링크여야 한다", () => {
+  it("links the app name to the detail page", () => {
     render(<AppList apps={mockApps} />);
 
     const slackLink = screen.getByText("Slack").closest("a");
     expect(slackLink).toHaveAttribute("href", "/apps/app-1");
   });
 
-  it("앱 상태에 따라 올바른 배지를 표시해야 한다", () => {
+  it("shows the correct badge for each app status", () => {
     render(<AppList apps={mockApps} />);
 
-    expect(screen.getByText("활성")).toBeInTheDocument();
-    expect(screen.getByText("비활성")).toBeInTheDocument();
-    expect(screen.getByText("차단됨")).toBeInTheDocument();
+    expect(screen.getByText("In Use")).toBeInTheDocument();
+    expect(screen.getByText("Disabled")).toBeInTheDocument();
+    expect(screen.getByText("Blocked")).toBeInTheDocument();
   });
 
-  it("카테고리가 없으면 - 를 표시해야 한다", () => {
+  it("shows - when there is no category", () => {
     render(<AppList apps={mockApps} />);
 
     const rows = screen.getAllByRole("row");
-    // Legacy App 행에 "-" 표시 확인
+    // Verify "-" is shown in the Legacy App row
     expect(rows[3]).toHaveTextContent("-");
   });
 
-  it("구독 수와 사용자 수를 표시해야 한다", () => {
+  it("shows the subscription and user counts", () => {
     render(<AppList apps={mockApps} />);
 
     const rows = screen.getAllByRole("row");
-    // Slack 행 (index 1)
+    // Slack row (index 1)
     expect(rows[1]).toHaveTextContent("2"); // subscriptionCount
     expect(rows[1]).toHaveTextContent("10"); // userAccessCount
   });
 
-  it("등록일을 포맷하여 표시해야 한다", () => {
+  it("shows the formatted created date", () => {
     render(<AppList apps={mockApps} />);
 
     expect(screen.getByText("2024.01.01")).toBeInTheDocument();
     expect(screen.getByText("2024.01.03")).toBeInTheDocument();
   });
 
-  it("로고 URL이 있으면 이미지를 표시해야 한다", () => {
+  it("shows an image when a logo URL exists", () => {
     render(<AppList apps={mockApps} />);
 
     const slackImg = screen.getByAltText("Slack");
     expect(slackImg).toHaveAttribute("src", "https://example.com/slack.png");
   });
 
-  it("로고 URL이 없으면 첫 글자를 표시해야 한다", () => {
+  it("shows the first letter when there is no logo URL", () => {
     render(<AppList apps={mockApps} />);
 
     expect(screen.getByText("L")).toBeInTheDocument(); // Legacy App
   });
 
-  it("관리 권한이 없으면 액션 대신 '-' 표시", () => {
+  it("shows '-' instead of actions without manage permission", () => {
     render(<AppList apps={mockApps} canManage={false} />);
 
-    // 테이블 마지막 헤더와 같은 열에 '-' 표시
+    // '-' is shown in the same column as the last table header
     expect(screen.getAllByText("-")[0]).toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: /수정/ })
+      screen.queryByRole("button", { name: /Edit/ })
     ).not.toBeInTheDocument();
   });
 
-  it("삭제 확인 시 refine deleteOne을 호출해야 한다", async () => {
+  it("calls refine deleteOne when deletion is confirmed", async () => {
     const user = userEvent.setup();
     mutateAsyncMock.mockResolvedValue({ data: { id: "app-1" } });
 
     render(<AppList apps={mockApps} />);
 
-    // 첫 번째 행의 메뉴 버튼 클릭
+    // Click the first row's menu button
     const menuButtons = screen.getAllByRole("button", { name: "" });
     await user.click(menuButtons[0]);
 
-    // 삭제 항목 클릭
-    const deleteMenuItem = screen.getByText("삭제");
+    // Click the delete item
+    const deleteMenuItem = screen.getByText("Delete");
     await user.click(deleteMenuItem);
 
-    // 확인 버튼 클릭
-    const confirmButton = screen.getByRole("button", { name: "삭제" });
+    // Click the confirm button
+    const confirmButton = screen.getByRole("button", { name: "Delete" });
     await user.click(confirmButton);
 
     expect(mutateAsyncMock).toHaveBeenCalledWith({

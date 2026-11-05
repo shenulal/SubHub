@@ -1,6 +1,6 @@
 // src/types/seat-analytics.ts
 
-// ==================== D-2: Seat 낭비 분석 ====================
+// ==================== D-2: Seat waste analysis ====================
 
 export interface SeatWastePerApp {
   appId: string;
@@ -8,9 +8,9 @@ export interface SeatWastePerApp {
   appLogoUrl: string | null;
   totalSeats: number;
   assignedSeats: number;
-  activeSeats: number; // 30일 이내 사용
+  activeSeats: number; // used within 30 days
   unassignedSeats: number;
-  inactiveSeats: number; // 할당됐지만 30일+ 미사용
+  inactiveSeats: number; // assigned but unused for 30+ days
   wastedSeats: number; // unassigned + inactive
   perSeatPrice: number;
   monthlyWaste: number; // wastedSeats * perSeatPrice
@@ -31,14 +31,14 @@ export interface SeatWasteAnalysis {
   apps: SeatWastePerApp[];
 }
 
-// ==================== D-3: 유저별/팀별 비용 ====================
+// ==================== D-3: Cost per user/team ====================
 
 export interface UserCostSubscription {
   subscriptionId: string;
   appName: string;
   appLogoUrl: string | null;
   perSeatPrice: number;
-  isActive: boolean; // 30일 이내 사용
+  isActive: boolean; // used within 30 days
 }
 
 export interface UserCostItem {
@@ -59,7 +59,7 @@ export interface TeamCostComparison {
   memberCount: number;
   totalMonthlyCost: number;
   costPerMember: number;
-  activeRate: number; // 활성 비율 (%)
+  activeRate: number; // active rate (%)
 }
 
 export interface UserCostBreakdown {
@@ -71,7 +71,7 @@ export interface TeamCostComparisonResult {
   teams: TeamCostComparison[];
 }
 
-// ==================== D-4: Seat 최적화 제안 ====================
+// ==================== D-4: Seat optimisation suggestions ====================
 
 export interface SeatOptimizationItem {
   subscriptionId: string;

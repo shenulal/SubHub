@@ -101,15 +101,15 @@ export interface ExtensionConfig {
 }
 
 /**
- * 빌드 시 webpack DefinePlugin으로 주입되는 전역 상수
- * 런타임 조건문 없이 직접 값이 대체됨
+ * Global constants injected by webpack DefinePlugin at build time
+ * Values are substituted directly, with no runtime conditionals
  */
 declare const __BUILD_API_URL__: string | undefined;
 declare const __BUILD_API_CREDENTIAL__: string | undefined;
 
 /**
  * Default configuration values
- * 빌드 시 DefinePlugin이 __BUILD_*__ 상수를 실제 값으로 대체
+ * At build time DefinePlugin replaces the __BUILD_*__ constants with real values
  */
 export const DEFAULT_CONFIG: ExtensionConfig = {
   api:

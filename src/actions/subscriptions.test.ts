@@ -111,7 +111,7 @@ describe("Subscriptions Server Actions", () => {
   });
 
   describe("getSubscriptions", () => {
-    it("인증되지 않은 경우 login으로 리다이렉트해야 한다", async () => {
+    it("redirects to login when unauthenticated", async () => {
       mockedAuth.mockResolvedValue(null);
 
       await expect(getSubscriptions()).rejects.toThrow("NEXT_REDIRECT:/login");
@@ -119,7 +119,7 @@ describe("Subscriptions Server Actions", () => {
       expect(mockRedirect).toHaveBeenCalledWith("/login");
     });
 
-    it("organizationId가 없는 경우 onboarding으로 리다이렉트해야 한다", async () => {
+    it("redirects to onboarding when organizationId is missing", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: null },
         expires: "",
@@ -132,7 +132,7 @@ describe("Subscriptions Server Actions", () => {
       expect(mockRedirect).toHaveBeenCalledWith("/onboarding");
     });
 
-    it("구독 목록을 반환해야 한다", async () => {
+    it("returns the subscription list", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1" },
         expires: "",
@@ -172,7 +172,7 @@ describe("Subscriptions Server Actions", () => {
       expect(result.total).toBe(1);
     });
 
-    it("필터 조건으로 구독을 조회해야 한다", async () => {
+    it("queries subscriptions with filters", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1" },
         expires: "",
@@ -198,7 +198,7 @@ describe("Subscriptions Server Actions", () => {
   });
 
   describe("getSubscription", () => {
-    it("구독 상세 정보를 반환해야 한다", async () => {
+    it("returns subscription details", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1" },
         expires: "",
@@ -213,7 +213,7 @@ describe("Subscriptions Server Actions", () => {
         currency: "KRW",
         startDate: new Date("2024-01-01"),
         renewalDate: new Date("2024-02-01"),
-        notes: "테스트 메모",
+        notes: "Test note",
         app: {
           id: "app-1",
           name: "Slack",
@@ -235,7 +235,7 @@ describe("Subscriptions Server Actions", () => {
       expect(result?.appName).toBe("Slack");
     });
 
-    it("존재하지 않는 구독은 null을 반환해야 한다", async () => {
+    it("returns null for a non-existent subscription", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1" },
         expires: "",
@@ -250,7 +250,7 @@ describe("Subscriptions Server Actions", () => {
   });
 
   describe("createSubscription", () => {
-    it("인증되지 않은 경우 login으로 리다이렉트해야 한다", async () => {
+    it("redirects to login when unauthenticated", async () => {
       mockedAuth.mockResolvedValue(null);
 
       const formData = new FormData();
@@ -266,7 +266,7 @@ describe("Subscriptions Server Actions", () => {
       expect(mockRedirect).toHaveBeenCalledWith("/login");
     });
 
-    it("필수 필드가 없으면 에러를 반환해야 한다", async () => {
+    it("returns an error when required fields are missing", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1" },
         expires: "",
@@ -281,7 +281,7 @@ describe("Subscriptions Server Actions", () => {
       expect(result.errors).toBeDefined();
     });
 
-    it("앱이 존재하지 않으면 에러를 반환해야 한다", async () => {
+    it("returns an error when the app does not exist", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1" },
         expires: "",
@@ -298,10 +298,10 @@ describe("Subscriptions Server Actions", () => {
       const result = await createSubscription({ success: false }, formData);
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("앱을 찾을 수 없습니다");
+      expect(result.message).toBe("App not found");
     });
 
-    it("구독을 성공적으로 생성해야 한다", async () => {
+    it("creates a subscription successfully", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1" },
         expires: "",
@@ -336,7 +336,7 @@ describe("Subscriptions Server Actions", () => {
   });
 
   describe("updateSubscription", () => {
-    it("인증되지 않은 경우 login으로 리다이렉트해야 한다", async () => {
+    it("redirects to login when unauthenticated", async () => {
       mockedAuth.mockResolvedValue(null);
 
       const formData = new FormData();
@@ -349,7 +349,7 @@ describe("Subscriptions Server Actions", () => {
       expect(mockRedirect).toHaveBeenCalledWith("/login");
     });
 
-    it("구독이 존재하지 않으면 에러를 반환해야 한다", async () => {
+    it("returns an error when the subscription does not exist", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1" },
         expires: "",
@@ -369,10 +369,10 @@ describe("Subscriptions Server Actions", () => {
       );
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("구독을 찾을 수 없습니다");
+      expect(result.message).toBe("Subscription not found");
     });
 
-    it("구독 정보를 성공적으로 수정해야 한다", async () => {
+    it("updates the subscription successfully", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1" },
         expires: "",
@@ -408,7 +408,7 @@ describe("Subscriptions Server Actions", () => {
   });
 
   describe("deleteSubscription", () => {
-    it("인증되지 않은 경우 login으로 리다이렉트해야 한다", async () => {
+    it("redirects to login when unauthenticated", async () => {
       mockedAuth.mockResolvedValue(null);
 
       await expect(deleteSubscription("sub-1")).rejects.toThrow(
@@ -418,7 +418,7 @@ describe("Subscriptions Server Actions", () => {
       expect(mockRedirect).toHaveBeenCalledWith("/login");
     });
 
-    it("구독이 존재하지 않으면 에러를 반환해야 한다", async () => {
+    it("returns an error when the subscription does not exist", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
         expires: "",
@@ -429,10 +429,10 @@ describe("Subscriptions Server Actions", () => {
       const result = await deleteSubscription("non-existent");
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("구독을 찾을 수 없습니다");
+      expect(result.message).toBe("Subscription not found");
     });
 
-    it("구독을 성공적으로 삭제해야 한다", async () => {
+    it("deletes the subscription successfully", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
         expires: "",

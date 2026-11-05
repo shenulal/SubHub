@@ -50,7 +50,7 @@ export function SuggestionRegisterDialog({
   const t = useTranslations("subscriptionSuggestions");
   const [isPending, startTransition] = useTransition();
 
-  // Dialog 내부 상태
+  // Dialog internal state
   const [seatChecked, setSeatChecked] = useState(false);
   const [totalSeats, setTotalSeats] = useState<number | undefined>(undefined);
   const [selectedUserIds, setSelectedUserIds] = useState<string[]>([]);
@@ -62,7 +62,7 @@ export function SuggestionRegisterDialog({
     ONE_TIME: t("billingCycle.ONE_TIME"),
   };
 
-  // Dialog 열릴 때 suggestion 데이터 기반 초기값 세팅
+  // Seed initial values from the suggestion when the dialog opens
   useEffect(() => {
     if (open && suggestion) {
       setSeatChecked(suggestion.billingType === "PER_SEAT");
@@ -169,7 +169,7 @@ export function SuggestionRegisterDialog({
           </DialogDescription>
         </DialogHeader>
 
-        {/* 앱 정보 요약 */}
+        {/* App info summary */}
         <div className="flex items-center gap-4">
           <Avatar className="h-12 w-12">
             <AvatarImage src={suggestion.appLogoUrl || undefined} />
@@ -205,7 +205,7 @@ export function SuggestionRegisterDialog({
 
         <Separator />
 
-        {/* Seat 설정 */}
+        {/* Seat settings */}
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <Checkbox
@@ -254,7 +254,7 @@ export function SuggestionRegisterDialog({
 
         <Separator />
 
-        {/* 사용자 배정 */}
+        {/* User assignment */}
         <div className="space-y-3">
           <div className="text-muted-foreground flex items-center gap-1 text-sm">
             <Users className="h-4 w-4" />

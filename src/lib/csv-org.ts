@@ -1,7 +1,7 @@
 // src/lib/csv-org.ts
 /**
- * 조직/사용자 연동 CSV 파싱 유틸리티
- * parseCSV(), detectDelimiter()는 src/lib/csv.ts 재사용
+ * CSV parsing utilities for organisation/user sync
+ * Reuses parseCSV() and detectDelimiter() from src/lib/csv.ts
  */
 
 import type { ValidationError, ValidationResult } from "./csv";
@@ -9,7 +9,7 @@ import { parseCSV } from "./csv";
 
 export type { ValidationError, ValidationResult };
 
-// ==================== 타입 정의 ====================
+// ==================== Type definitions ====================
 
 export interface OrgCSVRow {
   org_code: string;
@@ -24,12 +24,12 @@ export interface UserSyncCSVRow {
   org_code: string;
 }
 
-// ==================== 유효성 검증 ====================
+// ==================== Validation ====================
 
 /**
- * 조직 CSV 유효성 검증
- * - org_code, org_name 필수
- * - 순환 참조 DFS 감지
+ * Validate the organisation CSV
+ * - org_code and org_name are required
+ * - Detect circular references via DFS
  */
 export function validateOrgCSV(
   rows: Record<string, string>[]
@@ -49,7 +49,7 @@ export function validateOrgCSV(
       errors.push({
         row: rowNum,
         field: "org_code",
-        message: `${rowNum}행: org_code가 필요합니다`,
+        message: `Row ${rowNum}: org_code is required`,
       });
       return;
     }
@@ -58,7 +58,7 @@ export function validateOrgCSV(
       errors.push({
         row: rowNum,
         field: "org_name",
-        message: `${rowNum}행: org_name이 필요합니다`,
+        message: `Row ${rowNum}: org_name is required`,
       });
       return;
     }
@@ -67,7 +67,7 @@ export function validateOrgCSV(
       errors.push({
         row: rowNum,
         field: "org_code",
-        message: `${rowNum}행: 중복된 org_code입니다 (${org_code})`,
+        message: `Row ${rowNum}: Duplicate org_code (${org_code})`,
       });
       return;
     }
@@ -76,7 +76,7 @@ export function validateOrgCSV(
     valid.push({ org_code, parent_code, org_name });
   });
 
-  // 순환 참조 DFS 감지
+  // Detect circular references via DFS
   if (valid.length > 0) {
     const circularErrors = detectCircularReferences(valid);
     errors.push(...circularErrors);
@@ -90,7 +90,7 @@ export function validateOrgCSV(
 }
 
 /**
- * DFS로 순환 참조 감지
+ * Detect circular references using DFS
  */
 function detectCircularReferences(rows: OrgCSVRow[]): ValidationError[] {
   const errors: ValidationError[] = [];
@@ -101,7 +101,7 @@ function detectCircularReferences(rows: OrgCSVRow[]): ValidationError[] {
   const inStack = new Set<string>();
 
   function dfs(code: string): boolean {
-    if (inStack.has(code)) return true; // 순환 참조
+    if (inStack.has(code)) return true; // Circular reference
     if (visited.has(code)) return false;
 
     visited.add(code);
@@ -123,7 +123,7 @@ function detectCircularReferences(rows: OrgCSVRow[]): ValidationError[] {
       errors.push({
         row: 0,
         field: "parent_code",
-        message: `순환 참조가 감지되었습니다 (${row.org_code})`,
+        message: `Circular reference detected (${row.org_code})`,
       });
       break;
     }
@@ -133,9 +133,9 @@ function detectCircularReferences(rows: OrgCSVRow[]): ValidationError[] {
 }
 
 /**
- * 사용자 연동 CSV 유효성 검증
- * - name, email, org_code 필수
- * - 이메일 형식 검증
+ * Validate the user sync CSV
+ * - name, email and org_code are required
+ * - Validate email format
  */
 export function validateUserSyncCSV(
   rows: Record<string, string>[]
@@ -156,7 +156,7 @@ export function validateUserSyncCSV(
       errors.push({
         row: rowNum,
         field: "name",
-        message: `${rowNum}행: name이 필요합니다`,
+        message: `Row ${rowNum}: name is required`,
       });
       return;
     }
@@ -165,7 +165,7 @@ export function validateUserSyncCSV(
       errors.push({
         row: rowNum,
         field: "email",
-        message: `${rowNum}행: email이 필요합니다`,
+        message: `Row ${rowNum}: email is required`,
       });
       return;
     }
@@ -174,7 +174,7 @@ export function validateUserSyncCSV(
       errors.push({
         row: rowNum,
         field: "email",
-        message: `${rowNum}행: 유효한 이메일 형식이 아닙니다 (${email})`,
+        message: `Row ${rowNum}: Invalid email format (${email})`,
       });
       return;
     }
@@ -183,7 +183,7 @@ export function validateUserSyncCSV(
       errors.push({
         row: rowNum,
         field: "email",
-        message: `${rowNum}행: 중복된 이메일입니다 (${email})`,
+        message: `Row ${rowNum}: Duplicate email (${email})`,
       });
       return;
     }
@@ -192,7 +192,7 @@ export function validateUserSyncCSV(
       errors.push({
         row: rowNum,
         field: "org_code",
-        message: `${rowNum}행: org_code가 필요합니다`,
+        message: `Row ${rowNum}: org_code is required`,
       });
       return;
     }
@@ -208,22 +208,22 @@ function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
-// ==================== CSV 파서 재수출 ====================
+// ==================== CSV parser re-export ====================
 
 export { parseCSV };
 
-// ==================== 템플릿 생성 ====================
+// ==================== Template generation ====================
 
 export function generateOrgCSVTemplate(): string {
   return `org_code,parent_code,org_name
-ORG001,,본사
-ORG002,ORG001,개발팀
-ORG003,ORG001,영업팀
-ORG004,ORG002,프론트엔드팀`;
+ORG001,,Head Office
+ORG002,ORG001,Engineering
+ORG003,ORG001,Sales
+ORG004,ORG002,Frontend Team`;
 }
 
 export function generateUserSyncCSVTemplate(): string {
   return `employee_id,name,email,org_code
-EMP001,홍길동,hong@company.com,ORG002
-EMP002,김철수,kim@company.com,ORG003`;
+EMP001,Ahmed Al Mansoori,ahmed@company.com,ORG002
+EMP002,Sara Khan,sara@company.com,ORG003`;
 }

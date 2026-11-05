@@ -123,7 +123,7 @@ describe("pending-confirmations", () => {
 
       // Assert
       expect(result.success).toBe(false);
-      expect(result.message).toBe("인증이 필요합니다");
+      expect(result.message).toBe("Authentication required");
     });
 
     it("should filter by confidence range 0.5 to 0.8", async () => {
@@ -185,7 +185,7 @@ describe("pending-confirmations", () => {
 
       // Assert
       expect(result.success).toBe(true);
-      expect(result.message).toContain("승인");
+      expect(result.message).toContain("approved");
       expect(prisma.app.update).toHaveBeenCalledWith({
         where: { id: "app-1" },
         data: { status: "ACTIVE" },
@@ -207,7 +207,7 @@ describe("pending-confirmations", () => {
 
       // Assert
       expect(result.success).toBe(false);
-      expect(result.message).toBe("관리자만 확인할 수 있습니다");
+      expect(result.message).toBe("Only admins can confirm this");
     });
   });
 
@@ -251,7 +251,7 @@ describe("pending-confirmations", () => {
 
       // Assert
       expect(result.success).toBe(true);
-      expect(result.message).toContain("비-SaaS");
+      expect(result.message).toContain("non-SaaS");
       expect(prisma.$transaction).toHaveBeenCalled();
     });
   });

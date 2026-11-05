@@ -1,98 +1,98 @@
-# Vercel 배포 가이드
+# Vercel Deployment Guide
 
-## 개요
+## Overview
 
-SaaS Management Platform을 Vercel에 배포하기 위한 가이드입니다.
+This guide describes how to deploy SubHub to Vercel.
 
 ---
 
-## 1. 사전 준비
+## 1. Prerequisites
 
-### 1.1 필수 계정
+### 1.1 Required Accounts
 
-- [Vercel](https://vercel.com) 계정
-- [Supabase](https://supabase.com) 프로젝트 (PostgreSQL)
-- [Google Cloud Console](https://console.cloud.google.com) 프로젝트 (OAuth)
+- A [Vercel](https://vercel.com) account
+- A [Supabase](https://supabase.com) project (PostgreSQL)
+- A [Google Cloud Console](https://console.cloud.google.com) project (OAuth)
 
-### 1.2 로컬 환경 확인
+### 1.2 Verify the Local Environment
 
 ```bash
-# 빌드 테스트
+# Build test
 npm run build
 
-# 품질 검사
+# Quality checks
 npm run quality
 ```
 
 ---
 
-## 2. 환경 변수 설정
+## 2. Environment Variable Configuration
 
-### 2.1 필수 환경 변수 (Phase 4 배포)
+### 2.1 Required Environment Variables (Phase 4 Deployment)
 
-| 변수명                 | 설명                            | 획득 방법                        |
-| ---------------------- | ------------------------------- | -------------------------------- |
-| `DATABASE_URL`         | Supabase PostgreSQL 연결 문자열 | Supabase > Settings > Database   |
-| `NEXTAUTH_SECRET`      | NextAuth 세션 암호화 키         | `openssl rand -base64 32`        |
-| `NEXTAUTH_URL`         | 앱 URL                          | `https://your-domain.vercel.app` |
-| `GOOGLE_CLIENT_ID`     | Google OAuth 클라이언트 ID      | Google Cloud Console             |
-| `GOOGLE_CLIENT_SECRET` | Google OAuth 클라이언트 시크릿  | Google Cloud Console             |
+| Variable name          | Description                           | How to obtain                    |
+| ---------------------- | ------------------------------------- | -------------------------------- |
+| `DATABASE_URL`         | Supabase PostgreSQL connection string | Supabase > Settings > Database   |
+| `NEXTAUTH_SECRET`      | NextAuth session encryption key       | `openssl rand -base64 32`        |
+| `NEXTAUTH_URL`         | Application URL                       | `https://your-domain.vercel.app` |
+| `GOOGLE_CLIENT_ID`     | Google OAuth client ID                | Google Cloud Console             |
+| `GOOGLE_CLIENT_SECRET` | Google OAuth client secret            | Google Cloud Console             |
 
-### 2.2 선택 환경 변수 (Sprint 2+)
+### 2.2 Optional Environment Variables (Sprint 2+)
 
-| 변수명                      | 설명                         | 필요 시점      |
-| --------------------------- | ---------------------------- | -------------- |
-| `GOOGLE_ADMIN_CLIENT_EMAIL` | Google Workspace 서비스 계정 | SSO 연동 시    |
-| `GOOGLE_ADMIN_PRIVATE_KEY`  | 서비스 계정 Private Key      | SSO 연동 시    |
-| `GOOGLE_ADMIN_SUBJECT`      | 관리자 이메일                | SSO 연동 시    |
-| `UPSTASH_REDIS_REST_URL`    | Redis URL                    | 캐싱 필요 시   |
-| `UPSTASH_REDIS_REST_TOKEN`  | Redis 토큰                   | 캐싱 필요 시   |
-| `RESEND_API_KEY`            | 이메일 API 키                | 알림 기능 시   |
-| `RESEND_FROM_EMAIL`         | 발신 이메일                  | 알림 기능 시   |
-| `R2_ACCOUNT_ID`             | Cloudflare R2 계정 ID        | 파일 업로드 시 |
-| `R2_ACCESS_KEY_ID`          | R2 Access Key                | 파일 업로드 시 |
-| `R2_SECRET_ACCESS_KEY`      | R2 Secret Key                | 파일 업로드 시 |
-| `R2_BUCKET_NAME`            | R2 버킷명                    | 파일 업로드 시 |
-| `CRON_SECRET`               | Cron Job 인증 키             | Cron 사용 시   |
+| Variable name               | Description                      | When required             |
+| --------------------------- | -------------------------------- | ------------------------- |
+| `GOOGLE_ADMIN_CLIENT_EMAIL` | Google Workspace service account | For SSO integration       |
+| `GOOGLE_ADMIN_PRIVATE_KEY`  | Service account Private Key      | For SSO integration       |
+| `GOOGLE_ADMIN_SUBJECT`      | Admin email                      | For SSO integration       |
+| `UPSTASH_REDIS_REST_URL`    | Redis URL                        | When caching is needed    |
+| `UPSTASH_REDIS_REST_TOKEN`  | Redis token                      | When caching is needed    |
+| `RESEND_API_KEY`            | Email API key                    | For notification features |
+| `RESEND_FROM_EMAIL`         | Sender email                     | For notification features |
+| `R2_ACCOUNT_ID`             | Cloudflare R2 account ID         | For file uploads          |
+| `R2_ACCESS_KEY_ID`          | R2 Access Key                    | For file uploads          |
+| `R2_SECRET_ACCESS_KEY`      | R2 Secret Key                    | For file uploads          |
+| `R2_BUCKET_NAME`            | R2 bucket name                   | For file uploads          |
+| `CRON_SECRET`               | Cron Job authentication key      | When using Cron           |
 
 ---
 
-## 3. Supabase 설정
+## 3. Supabase Configuration
 
-### 3.1 프로젝트 생성
+### 3.1 Create a Project
 
-1. [Supabase Dashboard](https://supabase.com/dashboard)에서 새 프로젝트 생성
-2. **Settings > Database**에서 Connection String 복사
-3. `[YOUR-PASSWORD]`를 실제 비밀번호로 교체
+1. Create a new project in the [Supabase Dashboard](https://supabase.com/dashboard)
+2. Copy the Connection String from **Settings > Database**
+3. Replace `[YOUR-PASSWORD]` with the actual password
 
-### 3.2 DATABASE_URL 형식
+### 3.2 DATABASE_URL Format
 
 ```
 postgresql://postgres:[PASSWORD]@db.[PROJECT_REF].supabase.co:5432/postgres
 ```
 
-### 3.3 마이그레이션 적용
+### 3.3 Apply Migrations
 
 ```bash
-# 로컬에서 Prisma 클라이언트 생성
+# Generate the Prisma client locally
 npm run db:generate
 
-# 프로덕션 DB에 스키마 적용
+# Apply the schema to the production DB
 npm run db:push
 ```
 
 ---
 
-## 4. Google OAuth 설정
+## 4. Google OAuth Configuration
 
-### 4.1 Google Cloud Console 설정
+### 4.1 Google Cloud Console Setup
 
-1. [Google Cloud Console](https://console.cloud.google.com) 접속
-2. **APIs & Services > Credentials** 이동
-3. **+ CREATE CREDENTIALS > OAuth client ID** 클릭
-4. Application type: **Web application** 선택
+1. Open the [Google Cloud Console](https://console.cloud.google.com)
+2. Go to **APIs & Services > Credentials**
+3. Click **+ CREATE CREDENTIALS > OAuth client ID**
+4. Application type: select **Web application**
 
-### 4.2 OAuth 설정값
+### 4.2 OAuth Settings
 
 **Authorized JavaScript origins:**
 
@@ -106,24 +106,24 @@ https://your-domain.vercel.app
 https://your-domain.vercel.app/api/auth/callback/google
 ```
 
-### 4.3 환경 변수 복사
+### 4.3 Copy into Environment Variables
 
 - **Client ID** → `GOOGLE_CLIENT_ID`
 - **Client secret** → `GOOGLE_CLIENT_SECRET`
 
 ---
 
-## 5. Vercel 배포
+## 5. Vercel Deployment
 
-### 5.1 GitHub 연결
+### 5.1 Connect GitHub
 
-1. [Vercel Dashboard](https://vercel.com/dashboard)에서 **Add New > Project**
-2. GitHub 저장소 선택
-3. **Import** 클릭
+1. In the [Vercel Dashboard](https://vercel.com/dashboard), choose **Add New > Project**
+2. Select the GitHub repository
+3. Click **Import**
 
-### 5.2 프로젝트 설정
+### 5.2 Project Settings
 
-| 설정             | 값              |
+| Setting          | Value           |
 | ---------------- | --------------- |
 | Framework Preset | Next.js         |
 | Root Directory   | `./`            |
@@ -131,114 +131,114 @@ https://your-domain.vercel.app/api/auth/callback/google
 | Install Command  | `npm ci`        |
 | Output Directory | `.next`         |
 
-### 5.3 환경 변수 입력
+### 5.3 Enter Environment Variables
 
-**Environment Variables** 섹션에서 다음 변수 추가:
+Add the following variables in the **Environment Variables** section:
 
 - `DATABASE_URL`
 - `NEXTAUTH_SECRET`
-- `NEXTAUTH_URL` (자동으로 설정되지만 명시적으로 추가 권장)
+- `NEXTAUTH_URL` (set automatically, but adding it explicitly is recommended)
 - `GOOGLE_CLIENT_ID`
 - `GOOGLE_CLIENT_SECRET`
 
-### 5.4 배포
+### 5.4 Deploy
 
-1. **Deploy** 클릭
-2. 빌드 로그 확인
-3. 배포 완료 후 URL 확인
-
----
-
-## 6. 배포 후 확인
-
-### 6.1 기본 동작 테스트
-
-1. 배포된 URL 접속
-2. `/login` 리다이렉트 확인
-3. Google 로그인 시도
-4. `/onboarding`으로 리다이렉트 확인 (첫 로그인)
-5. 조직 생성 후 `/dashboard` 접근 확인
-
-### 6.2 문제 발생 시
-
-1. **Vercel > Project > Logs** 확인
-2. 환경 변수 설정 재확인
-3. Google OAuth Redirect URI 확인
+1. Click **Deploy**
+2. Review the build log
+3. Confirm the URL once deployment completes
 
 ---
 
-## 7. 도메인 설정 (선택)
+## 6. Post-Deployment Verification
 
-### 7.1 커스텀 도메인 추가
+### 6.1 Basic Functional Test
+
+1. Open the deployed URL
+2. Confirm the redirect to `/login`
+3. Attempt a Google sign-in
+4. Confirm the redirect to `/onboarding` (first sign-in)
+5. Create an organisation and confirm access to `/dashboard`
+
+### 6.2 If Problems Occur
+
+1. Check **Vercel > Project > Logs**
+2. Re-check the environment variable configuration
+3. Verify the Google OAuth Redirect URI
+
+---
+
+## 7. Domain Configuration (Optional)
+
+### 7.1 Add a Custom Domain
 
 1. **Vercel > Project > Settings > Domains**
-2. 도메인 추가 (예: `smp.yourdomain.com`)
-3. DNS 설정 (CNAME 또는 A 레코드)
+2. Add the domain (e.g. `smp.yourdomain.com`)
+3. Configure DNS (CNAME or A record)
 
-### 7.2 환경 변수 업데이트
+### 7.2 Update Environment Variables
 
-커스텀 도메인 사용 시 다음 변수 업데이트:
+When using a custom domain, update the following:
 
 - `NEXTAUTH_URL` → `https://smp.yourdomain.com`
-- Google OAuth Redirect URI 업데이트
+- Update the Google OAuth Redirect URI
 
 ---
 
-## 8. CI/CD 자동화
+## 8. CI/CD Automation
 
-### 8.1 자동 배포 (기본 설정)
+### 8.1 Automatic Deployment (Default)
 
-- `main` 브랜치에 push → 자동 프로덕션 배포
-- PR 생성 → Preview 배포 자동 생성
+- Push to the `main` branch → automatic production deployment
+- Open a PR → a Preview deployment is created automatically
 
-### 8.2 Branch Protection 권장 설정
+### 8.2 Recommended Branch Protection Settings
 
-- `main` 브랜치 직접 push 금지
-- PR 필수 + 최소 1명 리뷰
-- CI 통과 필수 (`npm run quality`)
-
----
-
-## 체크리스트
-
-### 배포 전
-
-- [ ] `npm run build` 성공
-- [ ] `npm run quality` 통과
-- [ ] Supabase 프로젝트 생성
-- [ ] Google OAuth 자격 증명 생성
-- [ ] `NEXTAUTH_SECRET` 생성
-
-### 배포 시
-
-- [ ] Vercel 환경 변수 모두 설정
-- [ ] Google OAuth Redirect URI 추가
-
-### 배포 후
-
-- [ ] 로그인 플로우 테스트
-- [ ] 조직 생성 테스트
-- [ ] 대시보드 접근 테스트
+- No direct pushes to the `main` branch
+- PR required + at least 1 reviewer
+- CI must pass (`npm run quality`)
 
 ---
 
-## 9. Git Author 설정 (중요)
+## Checklist
 
-Vercel 배포가 실패하는 주요 원인 중 하나는 Git 커밋 이메일이 Vercel 계정과 일치하지 않는 경우입니다.
+### Before Deployment
+
+- [ ] `npm run build` succeeds
+- [ ] `npm run quality` passes
+- [ ] Supabase project created
+- [ ] Google OAuth credentials created
+- [ ] `NEXTAUTH_SECRET` generated
+
+### During Deployment
+
+- [ ] All Vercel environment variables set
+- [ ] Google OAuth Redirect URI added
+
+### After Deployment
+
+- [ ] Sign-in flow tested
+- [ ] Organisation creation tested
+- [ ] Dashboard access tested
+
+---
+
+## 9. Git Author Configuration (Important)
+
+One of the main causes of failed Vercel deployments is a Git commit email that does not match the Vercel account.
 
 ```bash
-# 현재 설정 확인
+# Check the current setting
 git config user.email
 
-# Vercel 계정 이메일로 설정
+# Set it to the Vercel account email
 git config user.email "your-vercel-account@example.com"
 ```
 
-자세한 내용은 [12-git-workflow.md](./12-git-workflow.md) 참조.
+See [12-git-workflow.md](./12-git-workflow.md) for details.
 
 ---
 
-## 관련 문서
+## Related Documents
 
-- [06-coverage-checklist.md](./06-coverage-checklist.md) - PR 전 품질 검사
-- [12-git-workflow.md](./12-git-workflow.md) - Git 워크플로우 및 배포 연동
+- [06-coverage-checklist.md](./06-coverage-checklist.md) - Pre-PR quality checks
+- [12-git-workflow.md](./12-git-workflow.md) - Git workflow and deployment integration

@@ -9,10 +9,10 @@ import type { MatchSource, PaymentMatchStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
 /**
- * 통합 ID에서 실제 ID와 소스 추출
+ * Extract the actual ID and source from a unified ID
  * - 'card_xxx' → { source: 'card', id: 'xxx' }
  * - 'csv_xxx' → { source: 'csv', id: 'xxx' }
- * - 'xxx' → { source: null, id: 'xxx' } (레거시 지원)
+ * - 'xxx' → { source: null, id: 'xxx' } (legacy support)
  */
 function parseUnifiedId(unifiedId: string): {
   source: "card" | "csv" | null;
@@ -24,14 +24,14 @@ function parseUnifiedId(unifiedId: string): {
   if (unifiedId.startsWith("csv_")) {
     return { source: "csv", id: unifiedId.substring(4) };
   }
-  // prefix가 없으면 레거시 ID로 간주
+  // No prefix: treat as a legacy ID
   return { source: null, id: unifiedId };
 }
 
 /**
- * 결제 내역 매칭 업데이트
- * - PaymentRecord와 CardTransaction 모두 지원
- * - 통합 ID 형식 (card_xxx, csv_xxx) 지원
+ * Update payment record matching
+ * - Supports both PaymentRecord and CardTransaction
+ * - Supports unified ID formats (card_xxx, csv_xxx)
  */
 async function _updatePaymentMatch(
   paymentId: string,
@@ -43,29 +43,29 @@ async function _updatePaymentMatch(
     if (!session?.user) {
       return {
         success: false,
-        message: "인증이 필요합니다",
+        message: "Authentication required",
       };
     }
 
     if (!session.user.organizationId) {
       return {
         success: false,
-        message: "조직 정보가 필요합니다",
+        message: "Organization information is required",
       };
     }
 
     if (session.user.role !== "ADMIN") {
       return {
         success: false,
-        message: "관리자만 매칭을 수정할 수 있습니다",
+        message: "Only admins can change matching",
       };
     }
 
-    // 통합 ID 파싱
+    // Parse the unified ID
     const { source, id: actualId } = parseUnifiedId(paymentId);
 
     if (source === "csv") {
-      // PaymentRecord 업데이트
+      // Update PaymentRecord
       const paymentRecord = await prisma.paymentRecord.findFirst({
         where: { id: actualId, organizationId: session.user.organizationId },
       });
@@ -73,7 +73,7 @@ async function _updatePaymentMatch(
       if (!paymentRecord) {
         return {
           success: false,
-          message: "결제 내역을 찾을 수 없습니다",
+          message: "Payment record not found",
         };
       }
 
@@ -87,7 +87,7 @@ async function _updatePaymentMatch(
         },
       });
     } else if (source === "card") {
-      // CardTransaction 업데이트
+      // Update CardTransaction
       const cardTransaction = await prisma.cardTransaction.findFirst({
         where: { id: actualId, organizationId: session.user.organizationId },
       });
@@ -95,7 +95,7 @@ async function _updatePaymentMatch(
       if (!cardTransaction) {
         return {
           success: false,
-          message: "결제 내역을 찾을 수 없습니다",
+          message: "Payment record not found",
         };
       }
 
@@ -109,7 +109,7 @@ async function _updatePaymentMatch(
         },
       });
     } else {
-      // 레거시 ID: 순차적으로 찾기
+      // Legacy ID: look up sequentially
       const paymentRecord = await prisma.paymentRecord.findFirst({
         where: { id: actualId, organizationId: session.user.organizationId },
       });
@@ -142,7 +142,7 @@ async function _updatePaymentMatch(
         } else {
           return {
             success: false,
-            message: "결제 내역을 찾을 수 없습니다",
+            message: "Payment record not found",
           };
         }
       }
@@ -153,15 +153,13 @@ async function _updatePaymentMatch(
 
     return {
       success: true,
-      message: appId
-        ? "앱 매칭이 업데이트되었습니다"
-        : "앱 매칭이 해제되었습니다",
+      message: appId ? "App matching updated" : "App matching removed",
     };
   } catch (error) {
-    logger.error({ err: error }, "매칭 업데이트 오류");
+    logger.error({ err: error }, "Matching update error");
     return {
       success: false,
-      message: "매칭 업데이트 중 오류가 발생했습니다",
+      message: "An error occurred while updating the matching",
     };
   }
 }
@@ -171,9 +169,9 @@ export const updatePaymentMatch = withLogging(
 );
 
 /**
- * 결제 내역을 구독에 연결
- * - PaymentRecord와 CardTransaction 모두 지원
- * - 통합 ID 형식 (card_xxx, csv_xxx) 지원
+ * Link a payment record to a subscription
+ * - Supports both PaymentRecord and CardTransaction
+ * - Supports unified ID formats (card_xxx, csv_xxx)
  */
 async function _linkPaymentToSubscription(
   paymentId: string,
@@ -185,26 +183,26 @@ async function _linkPaymentToSubscription(
     if (!session?.user) {
       return {
         success: false,
-        message: "인증이 필요합니다",
+        message: "Authentication required",
       };
     }
 
     if (!session.user.organizationId) {
       return {
         success: false,
-        message: "조직 정보가 필요합니다",
+        message: "Organization information is required",
       };
     }
 
-    // 권한 검증: ADMIN만 결제 내역 연결 가능
+    // Permission check: only ADMIN can link payment records
     if (session.user.role !== "ADMIN") {
       return {
         success: false,
-        message: "관리자만 결제 내역을 연결할 수 있습니다",
+        message: "Only admins can link payment records",
       };
     }
 
-    // 구독이 해당 조직에 속하는지 확인
+    // Verify the subscription belongs to the organization
     const subscription = await prisma.subscription.findFirst({
       where: {
         id: subscriptionId,
@@ -215,15 +213,15 @@ async function _linkPaymentToSubscription(
     if (!subscription) {
       return {
         success: false,
-        message: "해당 구독을 찾을 수 없습니다",
+        message: "Subscription not found",
       };
     }
 
-    // 통합 ID 파싱
+    // Parse the unified ID
     const { source, id: actualId } = parseUnifiedId(paymentId);
 
     if (source === "csv") {
-      // PaymentRecord 업데이트
+      // Update PaymentRecord
       const paymentRecord = await prisma.paymentRecord.findFirst({
         where: { id: actualId, organizationId: session.user.organizationId },
       });
@@ -231,7 +229,7 @@ async function _linkPaymentToSubscription(
       if (!paymentRecord) {
         return {
           success: false,
-          message: "결제 내역을 찾을 수 없습니다",
+          message: "Payment record not found",
         };
       }
 
@@ -240,7 +238,7 @@ async function _linkPaymentToSubscription(
         data: { linkedSubscriptionId: subscriptionId },
       });
     } else if (source === "card") {
-      // CardTransaction 업데이트
+      // Update CardTransaction
       const cardTransaction = await prisma.cardTransaction.findFirst({
         where: { id: actualId, organizationId: session.user.organizationId },
       });
@@ -248,7 +246,7 @@ async function _linkPaymentToSubscription(
       if (!cardTransaction) {
         return {
           success: false,
-          message: "결제 내역을 찾을 수 없습니다",
+          message: "Payment record not found",
         };
       }
 
@@ -257,7 +255,7 @@ async function _linkPaymentToSubscription(
         data: { linkedSubscriptionId: subscriptionId },
       });
     } else {
-      // 레거시 ID: 순차적으로 찾기
+      // Legacy ID: look up sequentially
       const paymentRecord = await prisma.paymentRecord.findFirst({
         where: { id: actualId, organizationId: session.user.organizationId },
       });
@@ -280,7 +278,7 @@ async function _linkPaymentToSubscription(
         } else {
           return {
             success: false,
-            message: "결제 내역을 찾을 수 없습니다",
+            message: "Payment record not found",
           };
         }
       }
@@ -291,13 +289,13 @@ async function _linkPaymentToSubscription(
 
     return {
       success: true,
-      message: "결제 내역이 구독에 연결되었습니다",
+      message: "Payment record linked to the subscription",
     };
   } catch (error) {
-    logger.error({ err: error }, "구독 연결 오류");
+    logger.error({ err: error }, "Subscription link error");
     return {
       success: false,
-      message: "구독 연결 중 오류가 발생했습니다",
+      message: "An error occurred while linking the subscription",
     };
   }
 }
@@ -314,7 +312,7 @@ interface UpdatePaymentRecordInput {
 }
 
 /**
- * 결제 기록 수정
+ * Update a payment record
  */
 async function _updatePaymentRecord(
   id: string,
@@ -323,24 +321,27 @@ async function _updatePaymentRecord(
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return { success: false, message: "인증이 필요합니다" };
+      return { success: false, message: "Authentication required" };
     }
     if (!session.user.organizationId) {
-      return { success: false, message: "조직 정보가 필요합니다" };
+      return {
+        success: false,
+        message: "Organization information is required",
+      };
     }
     if (session.user.role !== "ADMIN") {
-      return { success: false, message: "관리자 권한이 필요합니다" };
+      return { success: false, message: "Admin permission required" };
     }
 
     const organizationId = session.user.organizationId;
 
-    // 결제 기록 존재 확인
+    // Verify the payment record exists
     const existingRecord = await prisma.paymentRecord.findFirst({
       where: { id, organizationId },
     });
 
     if (!existingRecord) {
-      return { success: false, message: "결제 기록을 찾을 수 없습니다" };
+      return { success: false, message: "Payment record not found" };
     }
 
     await prisma.paymentRecord.update({
@@ -361,10 +362,10 @@ async function _updatePaymentRecord(
 
     return { success: true };
   } catch (error) {
-    logger.error({ err: error }, "결제 기록 수정 오류");
+    logger.error({ err: error }, "Payment record update error");
     return {
       success: false,
-      message: "결제 기록 수정 중 오류가 발생했습니다",
+      message: "An error occurred while updating the payment record",
     };
   }
 }
@@ -374,30 +375,33 @@ export const updatePaymentRecord = withLogging(
 );
 
 /**
- * 결제 기록 삭제
+ * Delete a payment record
  */
 async function _deletePaymentRecord(id: string): Promise<ActionState> {
   try {
     const session = await auth();
     if (!session?.user?.id) {
-      return { success: false, message: "인증이 필요합니다" };
+      return { success: false, message: "Authentication required" };
     }
     if (!session.user.organizationId) {
-      return { success: false, message: "조직 정보가 필요합니다" };
+      return {
+        success: false,
+        message: "Organization information is required",
+      };
     }
     if (session.user.role !== "ADMIN") {
-      return { success: false, message: "관리자 권한이 필요합니다" };
+      return { success: false, message: "Admin permission required" };
     }
 
     const organizationId = session.user.organizationId;
 
-    // 결제 기록 존재 확인
+    // Verify the payment record exists
     const existingRecord = await prisma.paymentRecord.findFirst({
       where: { id, organizationId },
     });
 
     if (!existingRecord) {
-      return { success: false, message: "결제 기록을 찾을 수 없습니다" };
+      return { success: false, message: "Payment record not found" };
     }
 
     await prisma.paymentRecord.delete({ where: { id } });
@@ -406,10 +410,10 @@ async function _deletePaymentRecord(id: string): Promise<ActionState> {
 
     return { success: true };
   } catch (error) {
-    logger.error({ err: error }, "결제 기록 삭제 오류");
+    logger.error({ err: error }, "Payment record deletion error");
     return {
       success: false,
-      message: "결제 기록 삭제 중 오류가 발생했습니다",
+      message: "An error occurred while deleting the payment record",
     };
   }
 }

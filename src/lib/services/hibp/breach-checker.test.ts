@@ -13,7 +13,7 @@ describe("breach-checker", () => {
 
   describe("hashSha1", () => {
     it("should return uppercase SHA-1 hash", () => {
-      // 알려진 테스트 벡터: "password" → "5BAA61E4C9B93F3F0682250B6CF8331B7EE68FD8"
+      // Known test vector: "password" → "5BAA61E4C9B93F3F0682250B6CF8331B7EE68FD8"
       const result = hashSha1("password");
       expect(result).toBe("5BAA61E4C9B93F3F0682250B6CF8331B7EE68FD8");
     });

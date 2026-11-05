@@ -47,8 +47,8 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 /**
- * FieldDemo 예제입니다.
- * 결제 방법 폼을 통해 Field 컴포넌트의 다양한 기능을 보여줍니다.
+ * The FieldDemo example.
+ * Shows the Field component's features through a payment method form.
  */
 export const Demo: Story = {
   render: () => (
@@ -173,8 +173,8 @@ export const Demo: Story = {
 };
 
 /**
- * Input 필드 예제입니다.
- * 기본 텍스트 입력 필드와 비밀번호 필드를 보여줍니다.
+ * An Input field example.
+ * Shows a basic text input field and a password field.
  */
 export const FieldInput: Story = {
   render: () => (
@@ -202,8 +202,8 @@ export const FieldInput: Story = {
 };
 
 /**
- * Textarea 필드 예제입니다.
- * 여러 줄의 텍스트 입력을 위한 필드입니다.
+ * A Textarea field example.
+ * A field for multi-line text input.
  */
 export const FieldTextarea: Story = {
   render: () => (
@@ -228,8 +228,8 @@ export const FieldTextarea: Story = {
 };
 
 /**
- * Select 필드 예제입니다.
- * 드롭다운 선택 메뉴를 보여줍니다.
+ * A Select field example.
+ * Shows a dropdown select menu.
  */
 export const FieldSelect: Story = {
   render: () => (
@@ -259,8 +259,8 @@ export const FieldSelect: Story = {
 };
 
 /**
- * Checkbox 필드 예제입니다.
- * 체크박스와 레이블을 함께 사용합니다.
+ * A Checkbox field example.
+ * Uses a checkbox together with a label.
  */
 export const FieldCheckbox: Story = {
   render: () => (
@@ -286,8 +286,8 @@ export const FieldCheckbox: Story = {
 };
 
 /**
- * RadioGroup 필드 예제입니다.
- * 여러 옵션 중 하나를 선택할 수 있습니다.
+ * A RadioGroup field example.
+ * Lets the user choose one of several options.
  */
 export const FieldRadioGroup: Story = {
   render: () => (
@@ -316,8 +316,8 @@ export const FieldRadioGroup: Story = {
 };
 
 /**
- * Switch 필드 예제입니다.
- * 토글 스위치 컴포넌트를 보여줍니다.
+ * A Switch field example.
+ * Shows the toggle switch component.
  */
 export const FieldSwitch: Story = {
   render: () => (
@@ -341,8 +341,8 @@ export const FieldSwitch: Story = {
 };
 
 /**
- * Error 상태의 필드입니다.
- * 유효성 검사 실패 시 오류 메시지를 표시합니다.
+ * A field in the error state.
+ * Shows an error message when validation fails.
  */
 export const WithError: Story = {
   render: () => (

@@ -167,14 +167,14 @@ export const ShouldNavigateWhenClicked: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    // 🎯 목적: Breadcrumb 링크가 올바른 href를 가지고 있는지 확인
+    // 🎯 Purpose: Verify the Breadcrumb links have the correct href
     const homeLink = canvas.getByRole("link", { name: /home/i });
     const componentsLink = canvas.getByRole("link", { name: /components/i });
 
     await expect(homeLink).toHaveAttribute("href", "/");
     await expect(componentsLink).toHaveAttribute("href", "/components");
 
-    // 링크 클릭 가능 확인
+    // Verify the links are clickable
     await userEvent.click(homeLink);
     await userEvent.click(componentsLink);
   },

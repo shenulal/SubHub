@@ -25,7 +25,7 @@ export function AppNewPageClient({
 
   return (
     <div className="space-y-6">
-      {/* 타이틀과 동일 선상의 버튼 */}
+      {/* Button aligned with the title */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="text-foreground min-w-0 text-2xl font-medium">
           {title}

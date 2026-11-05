@@ -1,62 +1,11 @@
 // src/lib/services/export/pdf.ts
 /**
- * PDF 리포트 생성 서비스
- * jsPDF를 사용하여 텍스트 기반 PDF 생성
- * 한글 폰트(Noto Sans KR) 지원
+ * PDF report generation service
+ * Generates text-based PDFs with jsPDF
+ * Uses jsPDF's built-in Helvetica (Latin) font
  */
 
 import { jsPDF } from "jspdf";
-
-// 폰트 로드 상태 캐시
-let fontLoaded = false;
-let fontBase64Cache: string | null = null;
-
-/**
- * 한글 폰트를 jsPDF에 등록
- */
-async function loadKoreanFont(doc: jsPDF): Promise<void> {
-  if (fontLoaded && fontBase64Cache) {
-    doc.addFileToVFS("NotoSansKR-Regular.ttf", fontBase64Cache);
-    doc.addFont("NotoSansKR-Regular.ttf", "NotoSansKR", "normal");
-    doc.setFont("NotoSansKR");
-    return;
-  }
-
-  try {
-    // public 폴더에서 폰트 로드
-    const response = await fetch("/fonts/NotoSansKR-Regular.ttf");
-    if (!response.ok) {
-      console.warn("한글 폰트 로드 실패, 기본 폰트 사용");
-      return;
-    }
-
-    const arrayBuffer = await response.arrayBuffer();
-    const base64 = arrayBufferToBase64(arrayBuffer);
-
-    // 캐시에 저장
-    fontBase64Cache = base64;
-    fontLoaded = true;
-
-    // jsPDF에 폰트 등록
-    doc.addFileToVFS("NotoSansKR-Regular.ttf", base64);
-    doc.addFont("NotoSansKR-Regular.ttf", "NotoSansKR", "normal");
-    doc.setFont("NotoSansKR");
-  } catch (error) {
-    console.warn("한글 폰트 로드 중 오류 발생, 기본 폰트 사용:", error);
-  }
-}
-
-/**
- * ArrayBuffer를 Base64 문자열로 변환
- */
-function arrayBufferToBase64(buffer: ArrayBuffer): string {
-  const bytes = new Uint8Array(buffer);
-  let binary = "";
-  for (let i = 0; i < bytes.byteLength; i++) {
-    binary += String.fromCharCode(bytes[i]);
-  }
-  return btoa(binary);
-}
 
 export interface KeyValueItem {
   label: string;
@@ -104,7 +53,7 @@ export interface PDFReportConfig {
   sections: PDFSection[];
 }
 
-// 색상 상수
+// Colour constants
 const COLORS = {
   primary: [68, 114, 196] as [number, number, number], // #4472C4
   text: [51, 51, 51] as [number, number, number], // #333333
@@ -113,12 +62,12 @@ const COLORS = {
   white: [255, 255, 255] as [number, number, number],
 };
 
-// 여백 및 크기 상수
+// Margin and size constants
 const MARGIN = 20;
 const LINE_HEIGHT = 7;
 
 /**
- * PDF 리포트 생성
+ * Generates the PDF report
  */
 export async function generatePDFReport(
   config: PDFReportConfig
@@ -129,19 +78,18 @@ export async function generatePDFReport(
     format: "a4",
   });
 
-  // 한글 폰트 로드
-  await loadKoreanFont(doc);
+  doc.setFont("helvetica", "normal");
 
   let yPosition = MARGIN;
   const pageWidth = doc.internal.pageSize.getWidth();
   const contentWidth = pageWidth - MARGIN * 2;
 
-  // 헤더 섹션
+  // Header section
   yPosition = addHeader(doc, config, yPosition, contentWidth);
 
-  // 각 섹션 추가
+  // Add each section
   for (const section of config.sections) {
-    // 페이지 넘김 확인
+    // Check for a page break
     if (yPosition > doc.internal.pageSize.getHeight() - 50) {
       doc.addPage();
       yPosition = MARGIN;
@@ -162,17 +110,17 @@ export async function generatePDFReport(
         break;
     }
 
-    yPosition += 10; // 섹션 간 간격
+    yPosition += 10; // Spacing between sections
   }
 
-  // 푸터 추가
+  // Add the footer
   addFooter(doc);
 
   return doc.output("arraybuffer");
 }
 
 /**
- * 이미지 섹션 추가
+ * Adds an image section
  */
 function addImageSection(
   doc: jsPDF,
@@ -205,7 +153,7 @@ function addImageSection(
 }
 
 /**
- * 헤더 추가
+ * Adds the header
  */
 function addHeader(
   doc: jsPDF,
@@ -215,7 +163,7 @@ function addHeader(
 ): number {
   const pageWidth = doc.internal.pageSize.getWidth();
 
-  // 조직 이름
+  // Organization name
   if (config.organizationName) {
     doc.setFontSize(10);
     doc.setTextColor(...COLORS.gray);
@@ -223,13 +171,13 @@ function addHeader(
     yPosition += LINE_HEIGHT;
   }
 
-  // 메인 타이틀
+  // Main title
   doc.setFontSize(24);
   doc.setTextColor(...COLORS.primary);
   doc.text(config.title, MARGIN, yPosition + 5);
   yPosition += 15;
 
-  // 서브타이틀
+  // Subtitle
   if (config.subtitle) {
     doc.setFontSize(14);
     doc.setTextColor(...COLORS.gray);
@@ -237,14 +185,14 @@ function addHeader(
     yPosition += LINE_HEIGHT;
   }
 
-  // 생성 날짜
+  // Generation date
   const generatedAt = config.generatedAt || new Date();
   doc.setFontSize(9);
   doc.setTextColor(...COLORS.gray);
   const dateText = `Generated: ${formatDate(generatedAt)}`;
   doc.text(dateText, pageWidth - MARGIN - doc.getTextWidth(dateText), MARGIN);
 
-  // 헤더 라인
+  // Header line
   yPosition += 5;
   doc.setDrawColor(...COLORS.primary);
   doc.setLineWidth(0.5);
@@ -254,7 +202,7 @@ function addHeader(
 }
 
 /**
- * 테이블 섹션 추가
+ * Adds a table section
  */
 function addTableSection(
   doc: jsPDF,
@@ -262,18 +210,18 @@ function addTableSection(
   yPosition: number,
   contentWidth: number
 ): number {
-  // 섹션 제목
+  // Section title
   yPosition = addSectionTitle(doc, section.title, yPosition);
 
   const colCount = section.headers.length;
   const colWidth = contentWidth / colCount;
   const rowHeight = 8;
 
-  // 헤더 배경
+  // Header background
   doc.setFillColor(...COLORS.primary);
   doc.rect(MARGIN, yPosition, contentWidth, rowHeight, "F");
 
-  // 헤더 텍스트
+  // Header text
   doc.setFontSize(10);
   doc.setTextColor(...COLORS.white);
   section.headers.forEach((header, index) => {
@@ -282,17 +230,17 @@ function addTableSection(
 
   yPosition += rowHeight;
 
-  // 데이터 행
+  // Data rows
   doc.setTextColor(...COLORS.text);
   section.rows.forEach((row, rowIndex) => {
-    // 짝수 행 배경
+    // Even-row background
     if (rowIndex % 2 === 0) {
       doc.setFillColor(...COLORS.lightGray);
       doc.rect(MARGIN, yPosition, contentWidth, rowHeight, "F");
     }
 
     row.forEach((cell, cellIndex) => {
-      // 긴 텍스트 잘라내기
+      // Truncate long text
       const maxWidth = colWidth - 4;
       let displayText = cell;
       while (
@@ -310,7 +258,7 @@ function addTableSection(
 
     yPosition += rowHeight;
 
-    // 페이지 넘김 확인
+    // Check for a page break
     if (yPosition > doc.internal.pageSize.getHeight() - 30) {
       doc.addPage();
       yPosition = MARGIN;
@@ -321,24 +269,24 @@ function addTableSection(
 }
 
 /**
- * 키-값 섹션 추가
+ * Adds a key-value section
  */
 function addKeyValueSection(
   doc: jsPDF,
   section: KeyValueSection,
   yPosition: number
 ): number {
-  // 섹션 제목
+  // Section title
   yPosition = addSectionTitle(doc, section.title, yPosition);
 
   doc.setFontSize(11);
 
   section.items.forEach((item) => {
-    // 라벨
+    // Label
     doc.setTextColor(...COLORS.gray);
     doc.text(item.label + ":", MARGIN, yPosition);
 
-    // 값
+    // Value
     doc.setTextColor(...COLORS.text);
     doc.text(item.value, MARGIN + 60, yPosition);
 
@@ -349,7 +297,7 @@ function addKeyValueSection(
 }
 
 /**
- * 텍스트 섹션 추가
+ * Adds a text section
  */
 function addTextSection(
   doc: jsPDF,
@@ -357,13 +305,13 @@ function addTextSection(
   yPosition: number,
   contentWidth: number
 ): number {
-  // 섹션 제목
+  // Section title
   yPosition = addSectionTitle(doc, section.title, yPosition);
 
   doc.setFontSize(10);
   doc.setTextColor(...COLORS.text);
 
-  // 텍스트 줄바꿈 처리
+  // Wrap text
   const lines = doc.splitTextToSize(section.content, contentWidth);
   lines.forEach((line: string) => {
     doc.text(line, MARGIN, yPosition);
@@ -374,7 +322,7 @@ function addTextSection(
 }
 
 /**
- * 섹션 제목 추가
+ * Adds a section title
  */
 function addSectionTitle(doc: jsPDF, title: string, yPosition: number): number {
   doc.setFontSize(14);
@@ -384,7 +332,7 @@ function addSectionTitle(doc: jsPDF, title: string, yPosition: number): number {
 }
 
 /**
- * 푸터 추가
+ * Adds the footer
  */
 function addFooter(doc: jsPDF): void {
   const pageCount = doc.getNumberOfPages();
@@ -397,7 +345,7 @@ function addFooter(doc: jsPDF): void {
   for (let i = 1; i <= pageCount; i++) {
     doc.setPage(i);
 
-    // 페이지 번호
+    // Page number
     const pageText = `Page ${i} of ${pageCount}`;
     doc.text(
       pageText,
@@ -405,17 +353,17 @@ function addFooter(doc: jsPDF): void {
       pageHeight - 10
     );
 
-    // 푸터 라인
+    // Footer line
     doc.setDrawColor(...COLORS.lightGray);
     doc.line(MARGIN, pageHeight - 15, pageWidth - MARGIN, pageHeight - 15);
 
-    // 생성 정보
-    doc.text("SaaS Management Platform", MARGIN, pageHeight - 10);
+    // Generator information
+    doc.text("SubHub", MARGIN, pageHeight - 10);
   }
 }
 
 /**
- * 날짜 포맷팅
+ * Formats a date
  */
 function formatDate(date: Date): string {
   const year = date.getFullYear();
@@ -428,14 +376,14 @@ function formatDate(date: Date): string {
 }
 
 /**
- * PDF Blob 생성 (다운로드용)
+ * Creates a PDF Blob (for download)
  */
 export function createPDFBlob(buffer: ArrayBuffer): Blob {
   return new Blob([buffer], { type: "application/pdf" });
 }
 
 /**
- * PDF 다운로드 트리거 (클라이언트 사이드)
+ * Triggers a PDF download (client side)
  */
 export function downloadPDF(buffer: ArrayBuffer, filename: string): void {
   const blob = createPDFBlob(buffer);

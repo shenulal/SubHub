@@ -7,10 +7,10 @@ const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 const nextConfig: NextConfig = {
   output: "standalone",
 
-  // 서브모듈 패키지 트랜스파일 설정
+  // Transpile the submodule packages
   transpilePackages: ["packages/ui-registry"],
 
-  // 이미지 최적화 설정
+  // Image optimisation settings
   images: {
     remotePatterns: [
       {
@@ -65,15 +65,15 @@ const nextConfig: NextConfig = {
   turbopack: { root: __dirname },
   outputFileTracingRoot: __dirname,
 
-  // 실험적 기능
+  // Experimental features
   experimental: {
-    // Server Actions 최적화
+    // Server Actions optimisation
     serverActions: {
       bodySizeLimit: "2mb",
     },
   },
 
-  // recharts 이중 인스턴스 방지: 모든 recharts import를 root node_modules로 통일
+  // Prevent duplicate recharts instances: resolve every recharts import to the root node_modules
   webpack: (config) => {
     config.resolve.alias = {
       ...config.resolve.alias,

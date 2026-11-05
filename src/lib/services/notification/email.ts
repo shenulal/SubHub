@@ -1,13 +1,13 @@
 // src/lib/services/notification/email.ts
 /**
- * 이메일 서비스 통합 모듈
+ * Unified e-mail service module
  *
- * 모든 이메일 기능을 재-export하여 기존 import 호환성 유지:
- * - email.types.ts: 타입 정의
- * - email.utils.ts: 유틸리티 + 설정
- * - email-alerts.ts: 갱신/퇴사자 알림
- * - email-notifications.ts: 확인/주간요약 알림
- * - email-onboarding.ts: 환영/초대 이메일
+ * Re-exports all e-mail functions to keep existing imports working:
+ * - email.types.ts: type definitions
+ * - email.utils.ts: utilities + configuration
+ * - email-alerts.ts: renewal / offboarded-user alerts
+ * - email-notifications.ts: confirmation / weekly summary notifications
+ * - email-onboarding.ts: welcome / invitation e-mails
  */
 
 // Types re-export

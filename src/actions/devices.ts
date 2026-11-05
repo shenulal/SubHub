@@ -21,7 +21,7 @@ import type { ActionState } from "@/types";
 import type { DeviceAppApprovalStatus } from "@prisma/client";
 
 /**
- * 디바이스 목록 조회 Server Action
+ * Server Action: list devices
  */
 export async function fetchDevices(
   options: DeviceFilterOptions = {}
@@ -29,7 +29,7 @@ export async function fetchDevices(
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
-      return { success: false, error: "인증이 필요합니다" };
+      return { success: false, error: "Authentication required" };
     }
 
     const result = await getDevices(session.user.organizationId, options);
@@ -38,13 +38,13 @@ export async function fetchDevices(
     logger.error({ err: error }, "[fetchDevices] Error");
     return {
       success: false,
-      error: error instanceof Error ? error.message : "디바이스 목록 조회 실패",
+      error: error instanceof Error ? error.message : "Failed to fetch devices",
     };
   }
 }
 
 /**
- * 디바이스 상세 조회 Server Action
+ * Server Action: get device details
  */
 export async function fetchDeviceById(
   deviceId: string
@@ -52,12 +52,12 @@ export async function fetchDeviceById(
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
-      return { success: false, error: "인증이 필요합니다" };
+      return { success: false, error: "Authentication required" };
     }
 
     const device = await getDeviceById(deviceId, session.user.organizationId);
     if (!device) {
-      return { success: false, error: "디바이스를 찾을 수 없습니다" };
+      return { success: false, error: "Device not found" };
     }
 
     return { success: true, data: device };
@@ -65,19 +65,20 @@ export async function fetchDeviceById(
     logger.error({ err: error }, "[fetchDeviceById] Error");
     return {
       success: false,
-      error: error instanceof Error ? error.message : "디바이스 조회 실패",
+      error:
+        error instanceof Error ? error.message : "Failed to fetch the device",
     };
   }
 }
 
 /**
- * 디바이스 통계 조회 Server Action
+ * Server Action: get device statistics
  */
 export async function fetchDeviceStats(): Promise<ActionState<DeviceStats>> {
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
-      return { success: false, error: "인증이 필요합니다" };
+      return { success: false, error: "Authentication required" };
     }
 
     const stats = await getDeviceStats(session.user.organizationId);
@@ -86,13 +87,14 @@ export async function fetchDeviceStats(): Promise<ActionState<DeviceStats>> {
     logger.error({ err: error }, "[fetchDeviceStats] Error");
     return {
       success: false,
-      error: error instanceof Error ? error.message : "통계 조회 실패",
+      error:
+        error instanceof Error ? error.message : "Failed to load statistics",
     };
   }
 }
 
 /**
- * Shadow IT 앱 목록 조회 Server Action
+ * Server Action: list Shadow IT apps
  */
 export async function fetchShadowITApps(): Promise<
   ActionState<ShadowITAppSummary[]>
@@ -100,7 +102,7 @@ export async function fetchShadowITApps(): Promise<
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
-      return { success: false, error: "인증이 필요합니다" };
+      return { success: false, error: "Authentication required" };
     }
 
     const apps = await getShadowITApps(session.user.organizationId);
@@ -109,13 +111,16 @@ export async function fetchShadowITApps(): Promise<
     logger.error({ err: error }, "[fetchShadowITApps] Error");
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Shadow IT 앱 조회 실패",
+      error:
+        error instanceof Error
+          ? error.message
+          : "Failed to load Shadow IT apps",
     };
   }
 }
 
 /**
- * 앱 승인 상태 변경 Server Action (Admin 전용)
+ * Server Action: change app approval status (Admin only)
  */
 async function _setDeviceAppApprovalStatus(
   appName: string,
@@ -124,12 +129,12 @@ async function _setDeviceAppApprovalStatus(
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
-      return { success: false, error: "인증이 필요합니다" };
+      return { success: false, error: "Authentication required" };
     }
 
-    // Admin만 앱 승인 상태 변경 가능
+    // Only Admin can change app approval status
     if (session.user.role !== "ADMIN") {
-      return { success: false, error: "권한이 없습니다" };
+      return { success: false, error: "Permission denied" };
     }
 
     const result = await updateDeviceAppApprovalStatus(
@@ -143,7 +148,8 @@ async function _setDeviceAppApprovalStatus(
     logger.error({ err: error }, "[setDeviceAppApprovalStatus] Error");
     return {
       success: false,
-      error: error instanceof Error ? error.message : "상태 변경 실패",
+      error:
+        error instanceof Error ? error.message : "Failed to change the status",
     };
   }
 }
@@ -153,7 +159,7 @@ export const setDeviceAppApprovalStatus = withLogging(
 );
 
 /**
- * 에이전트 미설치 사용자 목록 조회 Server Action
+ * Server Action: list users without the agent installed
  */
 export async function fetchUsersWithoutAgent(): Promise<
   ActionState<{ id: string; name: string | null; email: string }[]>
@@ -161,7 +167,7 @@ export async function fetchUsersWithoutAgent(): Promise<
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
-      return { success: false, error: "인증이 필요합니다" };
+      return { success: false, error: "Authentication required" };
     }
 
     const users = await getUsersWithoutAgent(session.user.organizationId);
@@ -170,7 +176,7 @@ export async function fetchUsersWithoutAgent(): Promise<
     logger.error({ err: error }, "[fetchUsersWithoutAgent] Error");
     return {
       success: false,
-      error: error instanceof Error ? error.message : "사용자 목록 조회 실패",
+      error: error instanceof Error ? error.message : "Failed to load users",
     };
   }
 }

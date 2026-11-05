@@ -4,18 +4,18 @@ import { Meta } from '@storybook/addon-docs/blocks';
 
 # Component Patterns
 
-shadcn-storybook-registry에서 사용하는 고급 컴포넌트 패턴입니다.
+Advanced component patterns used in shadcn-storybook-registry.
 
 ## Compound Components
 
-**Compound Components** 패턴은 여러 컴포넌트가 암묵적으로 상태를 공유하는 패턴입니다.
+The **Compound Components** pattern is one in which several components implicitly share state.
 
-### 개념
+### Concept
 
-부모 컴포넌트가 Context를 통해 자식 컴포넌트들에게 상태를 제공합니다:
+The parent component provides state to its child components through Context:
 
 ```typescript
-// ✅ Compound Components 패턴
+// ✅ Compound Components pattern
 <Dialog>
   <DialogTrigger>Open</DialogTrigger>
   <DialogContent>
@@ -27,12 +27,12 @@ shadcn-storybook-registry에서 사용하는 고급 컴포넌트 패턴입니다
 </Dialog>
 ```
 
-### 구현 예시: Dialog
+### Implementation Example: Dialog
 
 ```typescript
 import * as React from "react";
 
-// Context로 상태 공유
+// Share state via Context
 const DialogContext = React.createContext<{
   open: boolean;
   setOpen: (open: boolean) => void;
@@ -41,7 +41,7 @@ const DialogContext = React.createContext<{
   setOpen: () => {},
 });
 
-// 부모 컴포넌트
+// Parent component
 function Dialog({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = React.useState(false);
 
@@ -52,7 +52,7 @@ function Dialog({ children }: { children: React.ReactNode }) {
   );
 }
 
-// 자식 컴포넌트들이 Context 사용
+// Child components consume the Context
 function DialogTrigger({ children }: { children: React.ReactNode }) {
   const { setOpen } = React.useContext(DialogContext);
   return <button onClick={() => setOpen(true)}>{children}</button>;
@@ -70,15 +70,15 @@ function DialogContent({ children }: { children: React.ReactNode }) {
 }
 ```
 
-### 장점
+### Benefits
 
-- ✅ **암묵적 상태 공유**: props drilling 제거
-- ✅ **유연한 구성**: 컴포넌트 순서와 구조 자유롭게 변경 가능
-- ✅ **가독성**: 컴포넌트 계층이 명확함
+- ✅ **Implicit state sharing**: Eliminates props drilling
+- ✅ **Flexible composition**: Component order and structure can be changed freely
+- ✅ **Readability**: The component hierarchy is clear
 
-### shadcn/ui 적용 사례
+### shadcn/ui Use Cases
 
-다음 컴포넌트들이 Compound Components 패턴을 사용합니다:
+The following components use the Compound Components pattern:
 
 - **Dialog**: `<Dialog>`, `<DialogTrigger>`, `<DialogContent>`, `<DialogHeader>`
 - **Popover**: `<Popover>`, `<PopoverTrigger>`, `<PopoverContent>`
@@ -88,14 +88,14 @@ function DialogContent({ children }: { children: React.ReactNode }) {
 
 ## Render Props
 
-**Render Props** 패턴은 함수를 prop으로 전달하여 렌더링을 위임하는 패턴입니다.
+The **Render Props** pattern delegates rendering by passing a function as a prop.
 
-### 개념
+### Concept
 
-컴포넌트가 렌더링 로직을 외부에서 주입받습니다:
+The component receives its rendering logic from outside:
 
 ```typescript
-// ✅ Render Props 패턴
+// ✅ Render Props pattern
 <DataProvider
   render={(data) => (
     <div>
@@ -107,7 +107,7 @@ function DialogContent({ children }: { children: React.ReactNode }) {
 />
 ```
 
-### 구현 예시: DataProvider
+### Implementation Example: DataProvider
 
 ```typescript
 interface DataProviderProps<T> {
@@ -121,7 +121,7 @@ function DataProvider<T>({ data, render, loading }: DataProviderProps<T>) {
   const [items, setItems] = React.useState<T[]>([]);
 
   React.useEffect(() => {
-    // 데이터 로딩 시뮬레이션
+    // Simulate data loading
     setTimeout(() => {
       setItems(data);
       setIsLoading(false);
@@ -135,7 +135,7 @@ function DataProvider<T>({ data, render, loading }: DataProviderProps<T>) {
   return <>{render(items)}</>;
 }
 
-// 사용 예시
+// Usage example
 <DataProvider
   data={users}
   loading={(isLoading) => <Skeleton />}
@@ -151,7 +151,7 @@ function DataProvider<T>({ data, render, loading }: DataProviderProps<T>) {
 
 ### Children as Function
 
-`children`을 함수로 받는 변형 패턴:
+A variant pattern that receives `children` as a function:
 
 ```typescript
 interface ToggleProps {
@@ -165,7 +165,7 @@ function Toggle({ children }: ToggleProps) {
   return <>{children(isOn, toggle)}</>;
 }
 
-// 사용 예시
+// Usage example
 <Toggle>
   {(isOn, toggle) => (
     <Button onClick={toggle}>{isOn ? "ON" : "OFF"}</Button>
@@ -173,22 +173,22 @@ function Toggle({ children }: ToggleProps) {
 </Toggle>;
 ```
 
-### 장점
+### Benefits
 
-- ✅ **재사용성**: 로직과 렌더링 분리
-- ✅ **유연성**: 다양한 UI를 동일한 로직으로 구현
-- ✅ **Type Safety**: TypeScript 제네릭으로 타입 안전성 확보
+- ✅ **Reusability**: Separates logic from rendering
+- ✅ **Flexibility**: Implements a variety of UIs with the same logic
+- ✅ **Type Safety**: Ensures type safety with TypeScript generics
 
 ## Custom Hooks
 
-**Custom Hooks**는 재사용 가능한 로직을 캡슐화하는 패턴입니다.
+**Custom Hooks** is a pattern for encapsulating reusable logic.
 
-### 개념
+### Concept
 
-컴포넌트 로직을 함수로 추출하여 재사용합니다:
+Component logic is extracted into a function and reused:
 
 ```typescript
-// ✅ Custom Hook 패턴
+// ✅ Custom Hook pattern
 function useDialog() {
   const [open, setOpen] = React.useState(false);
 
@@ -199,7 +199,7 @@ function useDialog() {
   return { open, openDialog, closeDialog, toggleDialog };
 }
 
-// 사용 예시
+// Usage example
 function MyComponent() {
   const dialog = useDialog();
 
@@ -214,7 +214,7 @@ function MyComponent() {
 }
 ```
 
-### 구현 예시: useToggle
+### Implementation Example: useToggle
 
 ```typescript
 function useToggle(initialValue = false) {
@@ -236,11 +236,11 @@ function useToggle(initialValue = false) {
 }
 ```
 
-### 구현 예시: useLocalStorage
+### Implementation Example: useLocalStorage
 
 ```typescript
 function useLocalStorage<T>(key: string, initialValue: T) {
-  // 초기값 로드
+  // Load the initial value
   const [storedValue, setStoredValue] = React.useState<T>(() => {
     try {
       const item = window.localStorage.getItem(key);
@@ -251,7 +251,7 @@ function useLocalStorage<T>(key: string, initialValue: T) {
     }
   });
 
-  // 값 저장
+  // Save the value
   const setValue = (value: T | ((val: T) => T)) => {
     try {
       const valueToStore =
@@ -266,7 +266,7 @@ function useLocalStorage<T>(key: string, initialValue: T) {
   return [storedValue, setValue] as const;
 }
 
-// 사용 예시
+// Usage example
 function ThemeToggle() {
   const [theme, setTheme] = useLocalStorage("theme", "light");
 
@@ -280,7 +280,7 @@ function ThemeToggle() {
 
 ### shadcn/ui Custom Hooks
 
-프로젝트에서 사용하는 주요 Custom Hooks:
+Key Custom Hooks used in the project:
 
 #### useToast
 
@@ -317,20 +317,20 @@ function ResponsiveComponent() {
 }
 ```
 
-### 장점
+### Benefits
 
-- ✅ **로직 재사용**: 여러 컴포넌트에서 동일한 로직 공유
-- ✅ **가독성**: 컴포넌트 코드 간결화
-- ✅ **테스트 용이**: Hook을 독립적으로 테스트 가능
-- ✅ **타입 안전성**: TypeScript 제네릭 활용
+- ✅ **Logic reuse**: Share the same logic across multiple components
+- ✅ **Readability**: Keeps component code concise
+- ✅ **Easy to test**: Hooks can be tested independently
+- ✅ **Type safety**: Leverages TypeScript generics
 
 ## Controlled vs Uncontrolled
 
-**Controlled**와 **Uncontrolled** 컴포넌트 패턴입니다.
+The **Controlled** and **Uncontrolled** component patterns.
 
 ### Controlled Components
 
-상태를 부모 컴포넌트가 제어:
+State is controlled by the parent component:
 
 ```typescript
 function ControlledInput() {
@@ -347,7 +347,7 @@ function ControlledInput() {
 
 ### Uncontrolled Components
 
-상태를 DOM이 제어 (`ref` 사용):
+State is controlled by the DOM (using `ref`):
 
 ```typescript
 function UncontrolledInput() {
@@ -368,7 +368,7 @@ function UncontrolledInput() {
 
 ### Hybrid Pattern
 
-shadcn/ui는 **Controlled와 Uncontrolled를 모두 지원**하는 Hybrid 패턴을 사용합니다:
+shadcn/ui uses a Hybrid pattern that **supports both Controlled and Uncontrolled** usage:
 
 ```typescript
 interface DialogProps {
@@ -382,7 +382,7 @@ function Dialog({ open, defaultOpen, onOpenChange }: DialogProps) {
     defaultOpen ?? false
   );
 
-  // Controlled인 경우 open 사용, Uncontrolled인 경우 내부 상태 사용
+  // Use open when Controlled; use internal state when Uncontrolled
   const isOpen = open !== undefined ? open : uncontrolledOpen;
 
   const handleOpenChange = (newOpen: boolean) => {
@@ -393,34 +393,34 @@ function Dialog({ open, defaultOpen, onOpenChange }: DialogProps) {
   };
 
   return (
-    // Dialog 구현
+    // Dialog implementation
     <div>{isOpen ? "Open" : "Closed"}</div>
   );
 }
 
-// Controlled 사용
+// Controlled usage
 <Dialog open={open} onOpenChange={setOpen} />
 
-// Uncontrolled 사용
+// Uncontrolled usage
 <Dialog defaultOpen={false} />
 ```
 
-### 선택 기준
+### Selection Criteria
 
-| Pattern | 사용 시기 | 예시 |
+| Pattern | When to Use | Example |
 |---------|----------|------|
-| **Controlled** | 부모가 상태를 관리해야 할 때 | Form validation, 동기화 |
-| **Uncontrolled** | 단순한 입력, 성능 최적화 | Simple forms, file inputs |
-| **Hybrid** | 양쪽 모두 지원하고 싶을 때 | shadcn/ui 컴포넌트들 |
+| **Controlled** | When the parent must manage state | Form validation, synchronisation |
+| **Uncontrolled** | Simple inputs, performance optimisation | Simple forms, file inputs |
+| **Hybrid** | When you want to support both | shadcn/ui components |
 
 ## Higher-Order Components (HOC)
 
-**HOC**는 컴포넌트를 인자로 받아 새로운 컴포넌트를 반환하는 함수입니다.
+An **HOC** is a function that takes a component as an argument and returns a new component.
 
-### 개념
+### Concept
 
 ```typescript
-// HOC 함수
+// HOC function
 function withLoading<P extends object>(
   Component: React.ComponentType<P>
 ) {
@@ -435,13 +435,13 @@ function withLoading<P extends object>(
   };
 }
 
-// 사용 예시
+// Usage example
 const UserCardWithLoading = withLoading(UserCard);
 
 <UserCardWithLoading isLoading={true} user={user} />;
 ```
 
-### 구현 예시: withAuth
+### Implementation Example: withAuth
 
 ```typescript
 function withAuth<P extends object>(
@@ -458,21 +458,21 @@ function withAuth<P extends object>(
   };
 }
 
-// 사용 예시
+// Usage example
 const ProtectedDashboard = withAuth(Dashboard);
 ```
 
-### 주의사항
+### Caveats
 
-- ⚠️ **HOC는 Modern React에서는 Custom Hooks로 대체 권장**
-- ⚠️ Ref forwarding 필요
-- ⚠️ 디버깅 어려움
+- ⚠️ **In modern React, replacing HOCs with Custom Hooks is recommended**
+- ⚠️ Ref forwarding is required
+- ⚠️ Harder to debug
 
 ```typescript
-// ❌ HOC 대신
+// ❌ Instead of an HOC
 const UserCardWithLoading = withLoading(UserCard);
 
-// ✅ Custom Hook 사용
+// ✅ Use a Custom Hook
 function UserCardWithLoading(props) {
   const { isLoading } = useUserData();
   if (isLoading) return <Skeleton />;
@@ -482,12 +482,12 @@ function UserCardWithLoading(props) {
 
 ## Composition Pattern
 
-**Composition** 패턴은 작은 컴포넌트들을 조합하여 복잡한 UI를 구성합니다.
+The **Composition** pattern builds complex UIs by combining small components.
 
-### 개념
+### Concept
 
 ```typescript
-// ✅ Composition 패턴
+// ✅ Composition pattern
 <Card>
   <CardHeader>
     <CardTitle>Title</CardTitle>
@@ -502,13 +502,13 @@ function UserCardWithLoading(props) {
 </Card>
 ```
 
-### 장점
+### Benefits
 
-- ✅ **재사용성**: 작은 컴포넌트를 다양하게 조합
-- ✅ **유연성**: 필요한 부분만 조합 가능
-- ✅ **가독성**: 컴포넌트 구조가 명확
+- ✅ **Reusability**: Combine small components in many ways
+- ✅ **Flexibility**: Compose only the parts you need
+- ✅ **Readability**: The component structure is clear
 
-### 구현 예시: Card
+### Implementation Example: Card
 
 ```typescript
 function Card({ children, ...props }: React.HTMLAttributes<HTMLDivElement>) {
@@ -535,7 +535,7 @@ function CardTitle({ children, ...props }: React.HTMLAttributes<HTMLHeadingEleme
   );
 }
 
-// 사용 예시: 필요한 부분만 조합
+// Usage example: compose only the parts you need
 <Card>
   <CardHeader>
     <CardTitle>Only Title</CardTitle>
@@ -554,9 +554,9 @@ function CardTitle({ children, ...props }: React.HTMLAttributes<HTMLHeadingEleme
 
 ## Polymorphic Components
 
-**Polymorphic Components**는 `as` prop으로 렌더링할 HTML 태그를 동적으로 변경하는 패턴입니다.
+**Polymorphic Components** is a pattern that dynamically changes the rendered HTML tag via the `as` prop.
 
-### 개념
+### Concept
 
 ```typescript
 // ✅ Polymorphic Component
@@ -569,7 +569,7 @@ function CardTitle({ children, ...props }: React.HTMLAttributes<HTMLHeadingEleme
 </Button>
 ```
 
-### 구현 예시
+### Implementation Example
 
 ```typescript
 type PolymorphicProps<E extends React.ElementType> = {
@@ -590,23 +590,23 @@ function Button<E extends React.ElementType = "button">({
   );
 }
 
-// 사용 예시
+// Usage example
 <Button>Default Button</Button>
 <Button as="a" href="/home">Link Button</Button>
 <Button as="div" role="button">Div Button</Button>
 ```
 
-### 장점
+### Benefits
 
-- ✅ **유연성**: 동일한 스타일로 다양한 HTML 태그 사용
-- ✅ **Type Safety**: TypeScript로 prop 타입 자동 추론
-- ✅ **접근성**: 올바른 semantic HTML 선택 가능
+- ✅ **Flexibility**: Use a variety of HTML tags with the same styling
+- ✅ **Type Safety**: Prop types are inferred automatically by TypeScript
+- ✅ **Accessibility**: Allows the correct semantic HTML to be chosen
 
 ## Best Practices
 
-### 1. Compound Components 우선 사용
+### 1. Prefer Compound Components
 
-복잡한 상태 공유가 필요한 경우 Compound Components 사용:
+Use Compound Components when complex state sharing is required:
 
 ```typescript
 // ✅ Good: Compound Components
@@ -617,47 +617,47 @@ function Button<E extends React.ElementType = "button">({
   </SelectContent>
 </Select>
 
-// ❌ Bad: 모든 props를 부모에게 전달
+// ❌ Bad: Passing all props to the parent
 <Select
   trigger={<button>Select</button>}
   content={[{ value: "1", label: "Option 1" }]}
 />
 ```
 
-### 2. Custom Hooks로 로직 분리
+### 2. Separate Logic with Custom Hooks
 
-재사용 가능한 로직은 Custom Hook으로 추출:
+Extract reusable logic into a Custom Hook:
 
 ```typescript
 // ✅ Good: Custom Hook
 function useFormValidation(schema) {
   const [errors, setErrors] = React.useState({});
   const validate = (data) => {
-    // validation 로직
+    // validation logic
   };
   return { errors, validate };
 }
 
-// ❌ Bad: 컴포넌트 내부에 로직 중복
+// ❌ Bad: Logic duplicated inside components
 function Form1() {
   const [errors, setErrors] = React.useState({});
-  // validation 로직 중복
+  // duplicated validation logic
 }
 ```
 
-### 3. TypeScript 제네릭 활용
+### 3. Use TypeScript Generics
 
-타입 안전성을 위해 제네릭 사용:
+Use generics for type safety:
 
 ```typescript
-// ✅ Good: 제네릭으로 타입 안전성 확보
+// ✅ Good: Ensure type safety with generics
 function useData<T>(fetcher: () => Promise<T>) {
   const [data, setData] = React.useState<T | null>(null);
   // ...
   return data;
 }
 
-// ❌ Bad: any 사용
+// ❌ Bad: Using any
 function useData(fetcher: () => Promise<any>) {
   // ...
 }

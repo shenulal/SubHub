@@ -124,11 +124,11 @@ const mockApp: AppDetail = {
   customLogoUrl: "https://example.com/slack.png",
   catalogLogoUrl: null,
   customWebsite: "https://slack.com",
-  notes: "팀 커뮤니케이션 도구",
+  notes: "Team communication tool",
   tags: ["chat", "team"],
   riskScore: null,
   discoveredAt: null,
-  ownerName: "홍길동",
+  ownerName: "John Smith",
   ownerEmail: "hong@test.com",
   subscriptionCount: 2,
   userAccessCount: 10,
@@ -148,7 +148,7 @@ describe("AppEditForm", () => {
     mockOnFinish.mockResolvedValue({ data: { id: "app-1" } });
   });
 
-  it("기존 앱 정보로 폼이 채워져야 한다", () => {
+  it("pre-fills the form with the existing app data", () => {
     mockValues = {
       name: mockApp.name,
       status: mockApp.status,
@@ -168,18 +168,18 @@ describe("AppEditForm", () => {
     expect(screen.getByDisplayValue("https://slack.com")).toBeInTheDocument();
     expect(screen.getByDisplayValue("chat, team")).toBeInTheDocument();
     expect(
-      screen.getByDisplayValue("팀 커뮤니케이션 도구")
+      screen.getByDisplayValue("Team communication tool")
     ).toBeInTheDocument();
   });
 
-  it("저장 버튼과 취소 버튼이 있어야 한다", () => {
+  it("has save and cancel buttons", () => {
     render(<AppEditForm app={mockApp} />);
 
-    expect(screen.getByRole("button", { name: /저장/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /취소/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Save/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Cancel/ })).toBeInTheDocument();
   });
 
-  it("상태 선택 필드가 있어야 한다", () => {
+  it("has a status select field", () => {
     mockValues = {
       name: mockApp.name,
       status: mockApp.status,
@@ -194,21 +194,21 @@ describe("AppEditForm", () => {
     expect(screen.getByTestId("select-mock")).toBeInTheDocument();
   });
 
-  it("취소 버튼 클릭시 이전 페이지로 이동해야 한다", async () => {
+  it("navigates back when cancel is clicked", async () => {
     const user = userEvent.setup();
     render(<AppEditForm app={mockApp} />);
 
-    const cancelButton = screen.getByRole("button", { name: /취소/ });
+    const cancelButton = screen.getByRole("button", { name: /Cancel/ });
     await user.click(cancelButton);
 
     expect(mockRouter.back).toHaveBeenCalled();
   });
 
-  it("폼 제출 성공 시 앱 상세 페이지로 이동해야 한다", async () => {
+  it("navigates to the app detail page after a successful submit", async () => {
     const user = userEvent.setup();
     render(<AppEditForm app={mockApp} />);
 
-    const submitButton = screen.getByRole("button", { name: /저장/ });
+    const submitButton = screen.getByRole("button", { name: /Save/ });
     await user.click(submitButton);
 
     await vi.waitFor(() => {
@@ -220,21 +220,21 @@ describe("AppEditForm", () => {
     });
   });
 
-  it("서버 에러 발생 시 에러 메시지를 표시해야 한다", async () => {
-    mockOnFinish.mockRejectedValueOnce(new Error("앱을 찾을 수 없습니다"));
+  it("shows an error message on a server error", async () => {
+    mockOnFinish.mockRejectedValueOnce(new Error("App not found"));
 
     const user = userEvent.setup();
     render(<AppEditForm app={mockApp} />);
 
-    const submitButton = screen.getByRole("button", { name: /저장/ });
+    const submitButton = screen.getByRole("button", { name: /Save/ });
     await user.click(submitButton);
 
     await vi.waitFor(() => {
-      expect(screen.getByText("앱을 찾을 수 없습니다")).toBeInTheDocument();
+      expect(screen.getByText("App not found")).toBeInTheDocument();
     });
   });
 
-  it("모든 폼 필드가 올바른 name 속성을 가져야 한다", () => {
+  it("gives every form field the correct name attribute", () => {
     mockValues = {
       name: mockApp.name,
       status: mockApp.status,
@@ -246,20 +246,23 @@ describe("AppEditForm", () => {
     };
     render(<AppEditForm app={mockApp} />);
 
-    expect(screen.getByLabelText(/앱 이름/)).toHaveAttribute("name", "name");
-    expect(screen.getByLabelText(/카테고리/)).toHaveAttribute(
+    expect(screen.getByLabelText(/App name/)).toHaveAttribute("name", "name");
+    expect(screen.getByLabelText(/Category/)).toHaveAttribute(
       "name",
       "category"
     );
-    expect(screen.getByLabelText(/로고 URL/)).toHaveAttribute(
+    expect(screen.getByLabelText(/Logo URL/)).toHaveAttribute(
       "name",
       "customLogoUrl"
     );
-    expect(screen.getByLabelText(/웹사이트/)).toHaveAttribute(
+    expect(screen.getByLabelText(/Website/)).toHaveAttribute(
       "name",
       "customWebsite"
     );
-    expect(screen.getByLabelText(/태그/)).toHaveAttribute("name", "tags");
-    expect(screen.getByLabelText(/메모/)).toHaveAttribute("name", "notes");
+    expect(screen.getByLabelText(/Tags/)).toHaveAttribute("name", "tags");
+    expect(screen.getByLabelText(/Description/)).toHaveAttribute(
+      "name",
+      "notes"
+    );
   });
 });

@@ -231,13 +231,13 @@ export const ShouldRenderBothOrientations: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    // 🎯 목적: Separator 컴포넌트가 horizontal과 vertical 방향을 올바르게 렌더링하는지 확인
+    // 🎯 Purpose: Verify the Separator component renders horizontal and vertical orientations correctly
 
-    // Container 확인
+    // Check the container
     const container = canvas.getByTestId("separator-container");
     await expect(container).toBeInTheDocument();
 
-    // Horizontal Separator 확인
+    // Check the horizontal Separator
     const horizontalSeparator = canvas.getByTestId("horizontal-separator");
     await expect(horizontalSeparator).toBeInTheDocument();
     await expect(horizontalSeparator).toHaveAttribute(
@@ -245,7 +245,7 @@ export const ShouldRenderBothOrientations: Story = {
       "horizontal",
     );
 
-    // Vertical Separator 확인
+    // Check the vertical Separator
     const verticalSeparator1 = canvas.getByTestId("vertical-separator-1");
     await expect(verticalSeparator1).toBeInTheDocument();
     await expect(verticalSeparator1).toHaveAttribute(
@@ -260,7 +260,7 @@ export const ShouldRenderBothOrientations: Story = {
       "vertical",
     );
 
-    // Separated items 확인
+    // Check the separated items
     const item1 = canvas.getByTestId("item-1");
     await expect(item1).toHaveTextContent("Item 1");
 

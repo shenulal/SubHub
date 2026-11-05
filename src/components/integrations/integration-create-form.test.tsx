@@ -80,36 +80,36 @@ describe("IntegrationCreateForm", () => {
     mockOnFinish.mockResolvedValue({ data: { id: "int-1" } });
   });
 
-  it("입력 필드와 버튼을 렌더링한다", () => {
+  it("renders the input fields and buttons", () => {
     render(<IntegrationCreateForm />);
 
-    expect(screen.getByLabelText(/연동 유형/)).toBeInTheDocument();
-    expect(screen.getByLabelText(/도메인/)).toBeInTheDocument();
-    expect(screen.getByLabelText(/관리자 이메일/)).toBeInTheDocument();
-    expect(screen.getByLabelText(/서비스 계정 이메일/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Integration type/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Domain/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Admin email/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Service account email/)).toBeInTheDocument();
     expect(
-      screen.getByLabelText(/서비스 계정 Private Key/)
+      screen.getByLabelText(/Service account private key/)
     ).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /생성/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Create/ })).toBeInTheDocument();
   });
 
-  it("성공 시 onFinish를 호출하고 리다이렉트한다", async () => {
+  it("calls onFinish and redirects on success", async () => {
     const user = userEvent.setup();
     render(<IntegrationCreateForm />);
 
-    await user.type(screen.getByLabelText(/도메인/), "example.com");
-    await user.click(screen.getByRole("button", { name: /생성/ }));
+    await user.type(screen.getByLabelText(/Domain/), "example.com");
+    await user.click(screen.getByRole("button", { name: /Create/ }));
 
     expect(mockOnFinish).toHaveBeenCalled();
     expect(mockRouter.push).toHaveBeenCalledWith("/integrations");
   });
 
-  it("로딩 중이면 버튼을 비활성화한다", async () => {
+  it("disables the button while loading", async () => {
     mockFormLoading = true;
     const user = userEvent.setup();
     render(<IntegrationCreateForm />);
 
-    const submit = screen.getByRole("button", { name: /생성/ });
+    const submit = screen.getByRole("button", { name: /Create/ });
     await user.click(submit);
 
     expect(submit).toBeDisabled();

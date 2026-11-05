@@ -1,25 +1,25 @@
-# Google Workspace 연동 가이드
+# Google Workspace Integration Guide
 
-> **문서 목적**: Google Workspace Admin SDK 연동 설정 및 트러블슈팅 가이드
-> **작성일**: 2025-12-11
-> **상태**: ✅ 구현 완료
+> **Document purpose**: Setup and troubleshooting guide for the Google Workspace Admin SDK integration
+> **Date written**: 2025-12-11
+> **Status**: ✅ Implemented
 
 ---
 
-## 1. 개요
+## 1. Overview
 
-### 1.1 기능 설명
+### 1.1 Feature Description
 
-Google Workspace 연동을 통해 다음 기능을 사용할 수 있습니다:
+The Google Workspace integration provides the following capabilities:
 
-| 기능                 | 설명                                                |
-| -------------------- | --------------------------------------------------- |
-| **사용자 동기화**    | Google Workspace 사용자를 자동으로 가져와 DB에 저장 |
-| **팀(OU) 동기화**    | Organizational Unit 구조를 Team 모델로 변환         |
-| **OAuth 토큰 조회**  | 사용자별 연결된 앱 발견 (SaaS Discovery)            |
-| **관리자 권한 확인** | Google Workspace Super Admin 여부 동기화            |
+| Capability                | Description                                                            |
+| ------------------------- | ---------------------------------------------------------------------- |
+| **User sync**             | Automatically imports Google Workspace users and stores them in the DB |
+| **Team (OU) sync**        | Converts the Organizational Unit structure into the Team model         |
+| **OAuth token lookup**    | Discovers connected apps per user (SaaS Discovery)                     |
+| **Admin privilege check** | Syncs whether a user is a Google Workspace Super Admin                 |
 
-### 1.2 아키텍처
+### 1.2 Architecture
 
 ```
 Google Workspace Admin API
@@ -28,19 +28,19 @@ Google Workspace Admin API
 │     GoogleWorkspaceService             │
 │  (src/lib/services/sso/googleWorkspace.ts)
 ├────────────────────────────────────────┤
-│ - listUsers()      사용자 목록 조회    │
-│ - listOrgUnits()   OU 목록 조회        │
-│ - listTokens()     OAuth 토큰 조회     │
-│ - testConnection() 연결 테스트         │
+│ - listUsers()      List users          │
+│ - listOrgUnits()   List OUs            │
+│ - listTokens()     List OAuth tokens   │
+│ - testConnection() Test connection     │
 └────────────────────────────────────────┘
          ↓
 ┌────────────────────────────────────────┐
 │     fullGoogleWorkspaceSync            │
 │  (src/lib/services/sso/googleSync.ts)  │
 ├────────────────────────────────────────┤
-│ 1. Team 동기화 (OU → Team)             │
-│ 2. User 동기화 (확장 필드 포함)        │
-│ 3. Manager 관계 설정 (2-pass)          │
+│ 1. Team sync (OU → Team)               │
+│ 2. User sync (incl. extended fields)   │
+│ 3. Manager relationships (2-pass)      │
 └────────────────────────────────────────┘
          ↓
     PostgreSQL (Prisma)
@@ -48,23 +48,23 @@ Google Workspace Admin API
 
 ---
 
-## 2. 사전 설정 (Google Cloud Console)
+## 2. Prerequisites (Google Cloud Console)
 
-### 2.1 서비스 계정 생성
+### 2.1 Create a Service Account
 
-1. [Google Cloud Console](https://console.cloud.google.com) 접속
+1. Open the [Google Cloud Console](https://console.cloud.google.com)
 2. **IAM & Admin** → **Service Accounts** → **Create Service Account**
-3. 서비스 계정 이름 입력 (예: `smp-workspace-directory-sync`)
-4. **Create and Continue** → 역할은 선택하지 않아도 됨 → **Done**
+3. Enter a service account name (e.g. `smp-workspace-directory-sync`)
+4. **Create and Continue** → no role needs to be selected → **Done**
 
-### 2.2 JSON 키 발급
+### 2.2 Issue a JSON Key
 
-1. 생성된 서비스 계정 클릭
-2. **Keys** 탭 → **Add Key** → **Create new key**
-3. **JSON** 선택 → **Create**
-4. 다운로드된 JSON 파일 안전하게 보관
+1. Click the newly created service account
+2. **Keys** tab → **Add Key** → **Create new key**
+3. Select **JSON** → **Create**
+4. Store the downloaded JSON file securely
 
-JSON 파일 구조:
+JSON file structure:
 
 ```json
 {
@@ -78,160 +78,160 @@ JSON 파일 구조:
 }
 ```
 
-### 2.3 Domain-Wide Delegation 활성화
+### 2.3 Enable Domain-Wide Delegation
 
-1. 서비스 계정 상세 페이지 → **Advanced settings** 확장
-2. **Domain-wide Delegation** 섹션
-3. **Enable Google Workspace Domain-wide Delegation** 체크 (이미 활성화되어 있으면 생략)
-4. **Client ID** 복사 (숫자 형태, 예: `110467399430507439402`)
+1. Service account details page → expand **Advanced settings**
+2. **Domain-wide Delegation** section
+3. Tick **Enable Google Workspace Domain-wide Delegation** (skip if already enabled)
+4. Copy the **Client ID** (numeric, e.g. `110467399430507439402`)
 
 ---
 
-## 3. 사전 설정 (Google Admin Console)
+## 3. Prerequisites (Google Admin Console)
 
-### 3.1 API 스코프 승인
+### 3.1 Authorise API Scopes
 
-1. [Google Admin Console](https://admin.google.com) 접속 (Super Admin 계정으로)
+1. Open the [Google Admin Console](https://admin.google.com) (with a Super Admin account)
 2. **Security** → **Access and data control** → **API controls**
 3. **Domain-wide delegation** → **MANAGE DOMAIN WIDE DELEGATION**
-4. **Add new** 클릭
+4. Click **Add new**
 
-### 3.2 Client ID 및 스코프 등록
+### 3.2 Register the Client ID and Scopes
 
-| 필드             | 값                                        |
-| ---------------- | ----------------------------------------- |
-| **Client ID**    | Google Cloud Console에서 복사한 Client ID |
-| **OAuth scopes** | 아래 3개 스코프 (쉼표로 구분)             |
+| Field            | Value                                              |
+| ---------------- | -------------------------------------------------- |
+| **Client ID**    | The Client ID copied from the Google Cloud Console |
+| **OAuth scopes** | The 3 scopes below (comma-separated)               |
 
 ```
 https://www.googleapis.com/auth/admin.directory.user.readonly,https://www.googleapis.com/auth/admin.directory.user.security,https://www.googleapis.com/auth/admin.directory.orgunit.readonly
 ```
 
-5. **Authorize** 클릭
+5. Click **Authorize**
 
-**참고**: 설정 적용까지 1-2분 소요될 수 있습니다.
+**Note**: The settings may take 1–2 minutes to take effect.
 
 ---
 
-## 4. 앱에서 연동 추가
+## 4. Adding the Integration in the App
 
-### 4.1 필요한 정보
+### 4.1 Required Information
 
-| 필드                   | 설명                                | 예시                                  |
-| ---------------------- | ----------------------------------- | ------------------------------------- |
-| **관리자 이메일**      | Google Workspace Super Admin 이메일 | `admin@company.com`                   |
-| **서비스 계정 이메일** | JSON 파일의 `client_email` 값       | `smp@project.iam.gserviceaccount.com` |
-| **Private Key**        | JSON 파일의 `private_key` 값        | `-----BEGIN PRIVATE KEY-----...`      |
+| Field                     | Description                                 | Example                               |
+| ------------------------- | ------------------------------------------- | ------------------------------------- |
+| **Admin email**           | Google Workspace Super Admin email          | `admin@company.com`                   |
+| **Service account email** | The `client_email` value from the JSON file | `smp@project.iam.gserviceaccount.com` |
+| **Private Key**           | The `private_key` value from the JSON file  | `-----BEGIN PRIVATE KEY-----...`      |
 
-### 4.2 연동 추가 절차
+### 4.2 Steps to Add the Integration
 
-1. `/integrations` 페이지 접속
-2. **연동 추가** 버튼 클릭
-3. 연동 유형: **Google Workspace** 선택
-4. 필수 정보 입력
-5. **연동 추가** 클릭
+1. Go to the `/integrations` page
+2. Click the **Add Integration** button
+3. Integration type: select **Google Workspace**
+4. Enter the required information
+5. Click **Add Integration**
 
-### 4.3 Private Key 입력 방법
+### 4.3 Entering the Private Key
 
-JSON 파일에서 `private_key` 값을 복사할 때:
+When copying the `private_key` value from the JSON file:
 
 ```json
 "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBg...\n-----END PRIVATE KEY-----\n"
 ```
 
-- **따옴표 포함 복사 가능**: 시스템이 자동으로 제거
-- **\n 이스케이프 문자 그대로 복사 가능**: 시스템이 자동으로 실제 줄바꿈으로 변환
+- **You may copy it including the quotation marks**: the system strips them automatically
+- **You may copy the \n escape sequences as they are**: the system converts them to real line breaks automatically
 
 ---
 
-## 5. 트러블슈팅
+## 5. Troubleshooting
 
-### 5.1 오류: `unauthorized_client`
+### 5.1 Error: `unauthorized_client`
 
 ```
 Client is unauthorized to retrieve access tokens using this method,
 or client not authorized for any of the scopes requested.
 ```
 
-**원인**: Google Admin Console에서 API 스코프가 승인되지 않음
+**Cause**: The API scopes have not been authorised in the Google Admin Console
 
-**해결**:
+**Resolution**:
 
 1. Google Admin Console → Security → API controls → Domain-wide delegation
-2. Client ID와 스코프가 올바르게 등록되어 있는지 확인
-3. 스코프가 정확히 3개 모두 포함되어 있는지 확인
-4. 설정 후 1-2분 대기 후 재시도
+2. Confirm that the Client ID and scopes are registered correctly
+3. Confirm that all 3 scopes are included exactly
+4. Wait 1–2 minutes after saving the settings, then retry
 
-### 5.2 오류: `invalid_grant: Invalid signature for token`
+### 5.2 Error: `invalid_grant: Invalid signature for token`
 
 ```
 java.security.SignatureException: Invalid signature for token
 ```
 
-**원인**: Private Key가 서비스 계정과 불일치
+**Cause**: The Private Key does not match the service account
 
-**해결**:
+**Resolution**:
 
-1. Google Cloud Console에서 새 키 생성
-2. 기존 키 삭제 후 새 키로 재시도
-3. Private Key가 손상되지 않았는지 확인 (복사/붙여넣기 과정에서 변형 가능)
+1. Create a new key in the Google Cloud Console
+2. Delete the old key and retry with the new key
+3. Confirm the Private Key has not been corrupted (it can be altered during copy/paste)
 
-### 5.3 오류: `ERR_OSSL_UNSUPPORTED`
+### 5.3 Error: `ERR_OSSL_UNSUPPORTED`
 
 ```
 error:1E08010C:DECODER routines::unsupported
 ```
 
-**원인**: Private Key 형식 오류 (따옴표 포함 등)
+**Cause**: Private Key format error (e.g. surrounding quotation marks included)
 
-**해결**:
+**Resolution**:
 
-- 시스템이 자동으로 처리하도록 업데이트됨
-- 여전히 발생 시 Private Key를 텍스트 에디터에서 열어 형식 확인
+- The system has been updated to handle this automatically
+- If it still occurs, open the Private Key in a text editor and check its format
 
-### 5.4 오류: `Not Authorized`
+### 5.4 Error: `Not Authorized`
 
-**원인**: 관리자 이메일(subject)이 Super Admin 권한이 없음
+**Cause**: The admin email (subject) does not have Super Admin privileges
 
-**해결**:
+**Resolution**:
 
-- Google Admin Console에서 해당 계정이 Super Admin인지 확인
-- 다른 Super Admin 계정으로 시도
+- Confirm in the Google Admin Console that the account is a Super Admin
+- Try a different Super Admin account
 
 ---
 
-## 6. 관련 코드
+## 6. Related Code
 
-### 6.1 주요 파일
+### 6.1 Key Files
 
-| 파일                                                        | 설명                        |
-| ----------------------------------------------------------- | --------------------------- |
-| `src/lib/services/sso/googleWorkspace.ts`                   | Google Admin SDK 클라이언트 |
-| `src/lib/services/sso/googleSync.ts`                        | 통합 동기화 서비스          |
-| `src/lib/services/sso/userSync.ts`                          | 사용자 동기화 로직          |
-| `src/lib/services/sso/teamSync.ts`                          | 팀(OU) 동기화 로직          |
-| `src/actions/integrations.ts`                               | Integration Server Actions  |
-| `src/components/integrations/integration-create-dialog.tsx` | 연동 추가 다이얼로그        |
+| File                                                        | Description                |
+| ----------------------------------------------------------- | -------------------------- |
+| `src/lib/services/sso/googleWorkspace.ts`                   | Google Admin SDK client    |
+| `src/lib/services/sso/googleSync.ts`                        | Unified sync service       |
+| `src/lib/services/sso/userSync.ts`                          | User sync logic            |
+| `src/lib/services/sso/teamSync.ts`                          | Team (OU) sync logic       |
+| `src/actions/integrations.ts`                               | Integration Server Actions |
+| `src/components/integrations/integration-create-dialog.tsx` | Add-integration dialog     |
 
-### 6.2 Private Key 정규화 로직
+### 6.2 Private Key Normalisation Logic
 
-`src/actions/integrations.ts`에서 처리:
+Handled in `src/actions/integrations.ts`:
 
 ```typescript
-// Private Key 정규화:
-// 1. 앞뒤 공백 제거
-// 2. 앞뒤 따옴표 제거 (JSON에서 복사 시 포함될 수 있음)
-// 3. \n 문자열을 실제 줄바꿈으로 변환
+// Private Key normalisation:
+// 1. Trim leading/trailing whitespace
+// 2. Strip leading/trailing quotation marks (may be included when copied from JSON)
+// 3. Convert the literal \n sequence into real line breaks
 let normalizedPrivateKey = creds.privateKey?.trim();
 if (normalizedPrivateKey) {
-  // 앞뒤 따옴표 제거 (", ')
+  // Strip leading/trailing quotation marks (", ')
   normalizedPrivateKey = normalizedPrivateKey.replace(/^["']|["']$/g, "");
-  // \n 이스케이프 문자열을 실제 줄바꿈으로 변환
+  // Convert \n escape sequences into real line breaks
   normalizedPrivateKey = normalizedPrivateKey.replace(/\\n/g, "\n");
 }
 ```
 
-### 6.3 API 스코프
+### 6.3 API Scopes
 
 ```typescript
 scopes: [
@@ -243,30 +243,30 @@ scopes: [
 
 ---
 
-## 7. 향후 개선 사항
+## 7. Future Improvements
 
-### 7.1 Google Workspace Marketplace 앱 등록
+### 7.1 Google Workspace Marketplace App Listing
 
-현재는 사용자가 직접 Service Account를 생성하고 Domain-Wide Delegation을 설정해야 합니다.
+Currently, users must create a Service Account themselves and configure Domain-Wide Delegation.
 
-**개선 계획**:
+**Improvement plan**:
 
-- Google Workspace Marketplace에 앱 등록
-- OAuth 동의 화면만으로 간편 연동 가능하도록 개선
-- 참고: https://developers.google.com/workspace/marketplace
+- List the app on the Google Workspace Marketplace
+- Enable one-step integration through the OAuth consent screen alone
+- Reference: https://developers.google.com/workspace/marketplace
 
-### 7.2 추가 연동 지원
+### 7.2 Additional Integration Support
 
-| IdP                |  상태   | 우선순위 |
-| ------------------ | :-----: | :------: |
-| Google Workspace   | ✅ 완료 |    -     |
-| Okta               | 🔜 예정 |    P1    |
-| Microsoft Entra ID | 🔜 예정 |    P1    |
+| IdP                |   Status   | Priority |
+| ------------------ | :--------: | :------: |
+| Google Workspace   |  ✅ Done   |    -     |
+| Okta               | 🔜 Planned |    P1    |
+| Microsoft Entra ID | 🔜 Planned |    P1    |
 
 ---
 
-## 8. 참고 문서
+## 8. References
 
 - [Google Admin SDK Directory API](https://developers.google.com/admin-sdk/directory)
-- [Domain-Wide Delegation 가이드](https://developers.google.com/admin-sdk/directory/v1/guides/delegation)
-- [Google Workspace Team Sync 구현 보고서](../plan/complete/google-workspace-team-sync-plan.md)
+- [Domain-Wide Delegation guide](https://developers.google.com/admin-sdk/directory/v1/guides/delegation)
+- [Google Workspace Team Sync implementation report](../plan/complete/google-workspace-team-sync-plan.md)

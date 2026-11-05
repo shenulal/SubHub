@@ -25,9 +25,9 @@ interface NotificationSettingsFormProps {
 }
 
 const RENEWAL_ALERT_OPTIONS = [
-  { value: 30, label: "30일 전" },
-  { value: 60, label: "60일 전" },
-  { value: 90, label: "90일 전" },
+  { value: 30, label: "30 days before" },
+  { value: 60, label: "60 days before" },
+  { value: 90, label: "90 days before" },
 ];
 
 export function NotificationSettingsForm({
@@ -159,7 +159,7 @@ export function NotificationSettingsForm({
 
   return (
     <div className="space-y-4">
-      {/* 이메일 알림 활성화 */}
+      {/* Enable email notifications */}
       <div className="hover:bg-purple-gray space-y-3 rounded-lg border p-4 transition-colors">
         <div className="flex items-center gap-2">
           <Mail className="h-5 w-5" />
@@ -188,7 +188,7 @@ export function NotificationSettingsForm({
         </div>
       </div>
 
-      {/* 갱신 알림 */}
+      {/* Renewal alerts */}
       <div className="hover:bg-purple-gray space-y-3 rounded-lg border p-4 transition-colors">
         <div className="flex items-center gap-2">
           <Calendar className="h-5 w-5" />
@@ -223,7 +223,7 @@ export function NotificationSettingsForm({
         </div>
       </div>
 
-      {/* 퇴사자 알림 */}
+      {/* Offboarded user alerts */}
       <div className="hover:bg-purple-gray space-y-3 rounded-lg border p-4 transition-colors">
         <div className="flex items-center gap-2">
           <UserMinus className="h-5 w-5" />
@@ -252,7 +252,7 @@ export function NotificationSettingsForm({
         </div>
       </div>
 
-      {/* Shadow IT 알림 */}
+      {/* Shadow IT alerts */}
       <div className="hover:bg-purple-gray space-y-3 rounded-lg border p-4 transition-colors">
         <div className="flex items-center gap-2">
           <AlertTriangle className="h-5 w-5" />
@@ -281,7 +281,7 @@ export function NotificationSettingsForm({
         </div>
       </div>
 
-      {/* 비용 이상 감지 알림 */}
+      {/* Cost anomaly alerts */}
       <div className="hover:bg-purple-gray space-y-3 rounded-lg border p-4 transition-colors">
         <div className="flex items-center gap-2">
           <DollarSign className="h-5 w-5" />
@@ -342,7 +342,7 @@ export function NotificationSettingsForm({
         </div>
       </div>
 
-      {/* 주간 요약 */}
+      {/* Weekly digest */}
       <div className="hover:bg-purple-gray space-y-3 rounded-lg border p-4 transition-colors">
         <div className="flex items-center gap-2">
           <FileText className="h-5 w-5" />

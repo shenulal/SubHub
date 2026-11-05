@@ -21,7 +21,7 @@ export const STATUS_COLORS: Record<PaymentMatchStatus, string> = {
   UNMATCHED: "tonal-neutral",
 };
 
-// 컬럼 가시성 드롭다운에서 사용할 컬럼 정의 (외부 노출용)
+// Column definitions for the column-visibility dropdown (exported)
 export function getPaymentRecordColumns(t: ReturnType<typeof useTranslations>) {
   return [
     { id: "source", header: t("payments.table.columns.source") },

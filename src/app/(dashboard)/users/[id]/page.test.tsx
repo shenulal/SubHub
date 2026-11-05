@@ -45,7 +45,7 @@ import type { UserDetail } from "@/types/user";
 const mockUser: UserDetail = {
   id: "user-1",
   email: "test@example.com",
-  name: "테스트 사용자",
+  name: "Test User",
   avatarUrl: null,
   role: "MEMBER",
   status: "ACTIVE",
@@ -66,7 +66,7 @@ describe("UserDetailPage", () => {
     vi.clearAllMocks();
   });
 
-  it("사용자가 있으면 UserDetailClient를 렌더링한다", async () => {
+  it("renders UserDetailClient when the user exists", async () => {
     vi.mocked(getUserCached).mockResolvedValue(mockUser);
 
     const page = await UserDetailPage({
@@ -79,7 +79,7 @@ describe("UserDetailPage", () => {
     );
   });
 
-  it("사용자를 찾을 수 없으면 notFound를 호출해야 한다", async () => {
+  it("calls notFound when the user cannot be found", async () => {
     vi.mocked(getUserCached).mockResolvedValue(null);
     const { notFound } = await import("next/navigation");
 

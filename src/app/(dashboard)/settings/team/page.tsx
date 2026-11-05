@@ -32,7 +32,7 @@ const NESTED_CARD = "border-border dark:border-border rounded-md shadow-none";
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("teamMembers.page");
   return {
-    title: `${t("title")} | SaaS 관리 플랫폼`,
+    title: `${t("title")}`,
     description: t("description"),
   };
 }

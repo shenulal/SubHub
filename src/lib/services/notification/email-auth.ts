@@ -1,5 +1,5 @@
 // src/lib/services/notification/email-auth.ts
-// 인증 관련 이메일 발송 (회원가입 인증, 비밀번호 재설정)
+// Authentication e-mails (sign-up verification, password reset)
 
 import { Resend } from "resend";
 
@@ -13,7 +13,7 @@ function getResend(): Resend {
   return resendClient;
 }
 
-const FROM_EMAIL = process.env.EMAIL_FROM || "noreply@saas-mgmt.com";
+const FROM_EMAIL = process.env.EMAIL_FROM || "noreply@subhub.local";
 const BASE_URL = process.env.NEXTAUTH_URL || "http://localhost:3000";
 
 export interface VerificationEmailParams {
@@ -34,7 +34,7 @@ export interface EmailResult {
 }
 
 /**
- * 이메일 인증 메일 발송
+ * Sends the e-mail verification message
  */
 export async function sendVerificationEmail(
   params: VerificationEmailParams
@@ -46,29 +46,29 @@ export async function sendVerificationEmail(
     const { error } = await getResend().emails.send({
       from: FROM_EMAIL,
       to,
-      subject: "[SaaS 관리 플랫폼] 이메일 인증을 완료해주세요",
+      subject: "[SubHub] Please verify your email address",
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2>이메일 인증</h2>
-          <p>${userName ? `안녕하세요, ${userName}님!` : "안녕하세요!"}</p>
-          <p>SaaS 관리 플랫폼에 가입해 주셔서 감사합니다.</p>
-          <p>아래 버튼을 클릭하여 이메일 인증을 완료해주세요.</p>
+          <h2>Email verification</h2>
+          <p>${userName ? `Hello ${userName},` : "Hello,"}</p>
+          <p>Thank you for signing up for SubHub.</p>
+          <p>Please click the button below to verify your email address.</p>
           <div style="margin: 30px 0;">
             <a href="${verifyUrl}"
                style="background-color: #0070f3; color: white; padding: 12px 24px;
                       text-decoration: none; border-radius: 6px; display: inline-block;">
-              이메일 인증하기
+              Verify email
             </a>
           </div>
           <p style="color: #666; font-size: 14px;">
-            이 링크는 24시간 동안 유효합니다.
+            This link is valid for 24 hours.
           </p>
           <p style="color: #666; font-size: 14px;">
-            본인이 요청하지 않은 경우 이 메일을 무시하세요.
+            If you did not make this request, please ignore this email.
           </p>
           <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;" />
           <p style="color: #999; font-size: 12px;">
-            버튼이 작동하지 않으면 아래 링크를 복사하여 브라우저에 붙여넣으세요:<br />
+            If the button does not work, copy the link below and paste it into your browser:<br />
             <a href="${verifyUrl}" style="color: #0070f3;">${verifyUrl}</a>
           </p>
         </div>
@@ -76,22 +76,22 @@ export async function sendVerificationEmail(
     });
 
     if (error) {
-      console.error("인증 이메일 발송 실패:", error);
+      console.error("Failed to send verification email:", error);
       return { success: false, error: error.message };
     }
 
     return { success: true };
   } catch (error) {
-    console.error("인증 이메일 발송 오류:", error);
+    console.error("Verification email error:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "이메일 발송 실패",
+      error: error instanceof Error ? error.message : "Email delivery failed",
     };
   }
 }
 
 /**
- * 비밀번호 재설정 이메일 발송
+ * Sends the password reset e-mail
  */
 export async function sendPasswordResetEmail(
   params: PasswordResetEmailParams
@@ -103,29 +103,29 @@ export async function sendPasswordResetEmail(
     const { error } = await getResend().emails.send({
       from: FROM_EMAIL,
       to,
-      subject: "[SaaS 관리 플랫폼] 비밀번호 재설정",
+      subject: "[SubHub] Password reset",
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2>비밀번호 재설정</h2>
-          <p>${userName ? `안녕하세요, ${userName}님!` : "안녕하세요!"}</p>
-          <p>비밀번호 재설정을 요청하셨습니다.</p>
-          <p>아래 버튼을 클릭하여 새 비밀번호를 설정하세요.</p>
+          <h2>Password reset</h2>
+          <p>${userName ? `Hello ${userName},` : "Hello,"}</p>
+          <p>We received a request to reset your password.</p>
+          <p>Please click the button below to set a new password.</p>
           <div style="margin: 30px 0;">
             <a href="${resetUrl}"
                style="background-color: #0070f3; color: white; padding: 12px 24px;
                       text-decoration: none; border-radius: 6px; display: inline-block;">
-              비밀번호 재설정
+              Reset password
             </a>
           </div>
           <p style="color: #666; font-size: 14px;">
-            이 링크는 1시간 동안 유효합니다.
+            This link is valid for 1 hour.
           </p>
           <p style="color: #666; font-size: 14px;">
-            본인이 요청하지 않은 경우 이 메일을 무시하세요. 비밀번호는 변경되지 않습니다.
+            If you did not make this request, please ignore this email. Your password will not be changed.
           </p>
           <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;" />
           <p style="color: #999; font-size: 12px;">
-            버튼이 작동하지 않으면 아래 링크를 복사하여 브라우저에 붙여넣으세요:<br />
+            If the button does not work, copy the link below and paste it into your browser:<br />
             <a href="${resetUrl}" style="color: #0070f3;">${resetUrl}</a>
           </p>
         </div>
@@ -133,16 +133,16 @@ export async function sendPasswordResetEmail(
     });
 
     if (error) {
-      console.error("비밀번호 재설정 이메일 발송 실패:", error);
+      console.error("Failed to send password reset email:", error);
       return { success: false, error: error.message };
     }
 
     return { success: true };
   } catch (error) {
-    console.error("비밀번호 재설정 이메일 발송 오류:", error);
+    console.error("Password reset email error:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "이메일 발송 실패",
+      error: error instanceof Error ? error.message : "Email delivery failed",
     };
   }
 }
@@ -162,12 +162,12 @@ export async function sendOtpEmail(
     const { error } = await getResend().emails.send({
       from: FROM_EMAIL,
       to,
-      subject: "[SaaS 관리 플랫폼] 로그인 인증 코드",
+      subject: "[SubHub] Sign-in verification code",
       html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2>로그인 인증 코드</h2>
-          <p>${userName ? `안녕하세요, ${userName}님!` : "안녕하세요!"}</p>
-          <p>SaaS 관리 플랫폼 로그인을 위한 인증 코드입니다.</p>
+          <h2>Sign-in verification code</h2>
+          <p>${userName ? `Hello ${userName},` : "Hello,"}</p>
+          <p>Here is your verification code for signing in to SubHub.</p>
           <div style="margin: 30px 0; text-align: center;">
             <div style="display: inline-block; background-color: #f4f4f5;
                         padding: 16px 32px; border-radius: 8px;
@@ -177,14 +177,14 @@ export async function sendOtpEmail(
             </div>
           </div>
           <p style="color: #666; font-size: 14px;">
-            이 코드는 <strong>10분</strong> 동안 유효합니다.
+            This code is valid for <strong>10 minutes</strong>.
           </p>
           <p style="color: #666; font-size: 14px;">
-            본인이 요청하지 않은 경우 이 메일을 무시하세요.
+            If you did not make this request, please ignore this email.
           </p>
           <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;" />
           <p style="color: #999; font-size: 12px;">
-            이 코드를 다른 사람과 공유하지 마세요.
+            Do not share this code with anyone.
           </p>
         </div>
       `,
@@ -197,7 +197,7 @@ export async function sendOtpEmail(
   } catch (error) {
     return {
       success: false,
-      error: error instanceof Error ? error.message : "이메일 발송 실패",
+      error: error instanceof Error ? error.message : "Email delivery failed",
     };
   }
 }

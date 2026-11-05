@@ -37,7 +37,7 @@ vi.mock("@/lib/db", () => ({
     corporateCard: {
       count: vi.fn(),
     },
-    // SMP-78: paymentRecord 추가
+    // SMP-78: added paymentRecord
     paymentRecord: {
       count: vi.fn(),
     },
@@ -83,7 +83,7 @@ describe("Teams Server Actions", () => {
   });
 
   describe("getTeams", () => {
-    it("팀 목록을 반환해야 한다", async () => {
+    it("returns the team list", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
         expires: "",
@@ -92,7 +92,7 @@ describe("Teams Server Actions", () => {
       const mockTeams = [
         {
           id: "team-1",
-          name: "개발팀",
+          name: "Engineering",
           description: null,
           organizationId: "org-1",
           parentId: null,
@@ -111,12 +111,12 @@ describe("Teams Server Actions", () => {
 
       expect(result.success).toBe(true);
       expect(result.data).toHaveLength(1);
-      expect(result.data![0].name).toBe("개발팀");
+      expect(result.data![0].name).toBe("Engineering");
     });
   });
 
   describe("getTeam", () => {
-    it("팀을 찾을 수 없는 경우 실패를 반환해야 한다", async () => {
+    it("returns a failure when the team is not found", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
         expires: "",
@@ -127,10 +127,10 @@ describe("Teams Server Actions", () => {
       const result = await getTeam("non-existent-team");
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("팀을 찾을 수 없습니다");
+      expect(result.message).toBe("Team not found");
     });
 
-    it("다른 조직의 팀에 접근하면 실패를 반환해야 한다", async () => {
+    it("returns a failure when accessing another organization's team", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
         expires: "",
@@ -138,7 +138,7 @@ describe("Teams Server Actions", () => {
 
       vi.mocked(prisma.team.findUnique).mockResolvedValue({
         id: "team-1",
-        organizationId: "org-2", // 다른 조직
+        organizationId: "org-2", // different organization
         _count: { members: 0, children: 0 },
         parent: null,
       } as never);
@@ -146,24 +146,24 @@ describe("Teams Server Actions", () => {
       const result = await getTeam("team-1");
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("접근 권한이 없습니다");
+      expect(result.message).toBe("You do not have access permission");
     });
   });
 
   describe("createTeam", () => {
-    it("ADMIN이 아닌 경우 실패해야 한다", async () => {
+    it("fails for a non-ADMIN", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "MEMBER" },
         expires: "",
       });
 
-      const result = await createTeam({ name: "새 팀" });
+      const result = await createTeam({ name: "New team" });
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("관리자 권한이 필요합니다");
+      expect(result.message).toBe("Admin permission required");
     });
 
-    it("빈 이름으로 팀을 생성하면 실패해야 한다", async () => {
+    it("fails to create a team with an empty name", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
         expires: "",
@@ -172,10 +172,10 @@ describe("Teams Server Actions", () => {
       const result = await createTeam({ name: "   " });
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("팀 이름을 입력해주세요");
+      expect(result.message).toBe("Please enter a team name");
     });
 
-    it("팀을 성공적으로 생성해야 한다", async () => {
+    it("creates a team successfully", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
         expires: "",
@@ -183,8 +183,8 @@ describe("Teams Server Actions", () => {
 
       const createdTeam = {
         id: "new-team",
-        name: "새 팀",
-        description: "테스트 설명",
+        name: "New team",
+        description: "Test description",
         organizationId: "org-1",
         parentId: null,
         googleOrgUnitId: null,
@@ -196,15 +196,15 @@ describe("Teams Server Actions", () => {
       vi.mocked(prisma.team.create).mockResolvedValue(createdTeam as never);
 
       const result = await createTeam({
-        name: "새 팀",
-        description: "테스트 설명",
+        name: "New team",
+        description: "Test description",
       });
 
       expect(result.success).toBe(true);
-      expect(result.data?.name).toBe("새 팀");
+      expect(result.data?.name).toBe("New team");
     });
 
-    it("멤버와 함께 팀을 생성해야 한다", async () => {
+    it("creates a team with members", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
         expires: "",
@@ -212,7 +212,7 @@ describe("Teams Server Actions", () => {
 
       const createdTeam = {
         id: "new-team",
-        name: "새 팀",
+        name: "New team",
         organizationId: "org-1",
       };
 
@@ -226,7 +226,7 @@ describe("Teams Server Actions", () => {
       } as never);
 
       const result = await createTeam({
-        name: "새 팀",
+        name: "New team",
         memberIds: ["member-1", "member-2"],
       });
 
@@ -236,19 +236,19 @@ describe("Teams Server Actions", () => {
   });
 
   describe("updateTeam", () => {
-    it("ADMIN이 아닌 경우 실패해야 한다", async () => {
+    it("fails for a non-ADMIN", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "MEMBER" },
         expires: "",
       });
 
-      const result = await updateTeam("team-1", { name: "수정된 팀" });
+      const result = await updateTeam("team-1", { name: "Updated team" });
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("관리자 권한이 필요합니다");
+      expect(result.message).toBe("Admin permission required");
     });
 
-    it("Google Workspace 연동 팀 이름 변경 시 실패해야 한다", async () => {
+    it("fails to rename a Google Workspace synced team", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
         expires: "",
@@ -257,18 +257,18 @@ describe("Teams Server Actions", () => {
       vi.mocked(prisma.team.findUnique).mockResolvedValue({
         id: "team-1",
         organizationId: "org-1",
-        googleOrgUnitId: "ou-123", // 연동된 팀
+        googleOrgUnitId: "ou-123", // synced team
       } as never);
 
-      const result = await updateTeam("team-1", { name: "새 이름" });
+      const result = await updateTeam("team-1", { name: "New name" });
 
       expect(result.success).toBe(false);
       expect(result.message).toBe(
-        "Google Workspace에서 동기화된 팀의 이름은 수정할 수 없습니다"
+        "Teams synced from Google Workspace cannot be renamed"
       );
     });
 
-    it("자기 자신을 부모로 설정하면 실패해야 한다", async () => {
+    it("fails when setting itself as the parent", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
         expires: "",
@@ -283,10 +283,10 @@ describe("Teams Server Actions", () => {
       const result = await updateTeam("team-1", { parentId: "team-1" });
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("자기 자신을 부모 팀으로 설정할 수 없습니다");
+      expect(result.message).toBe("A team cannot be its own parent");
     });
 
-    it("수동 팀의 이름을 변경할 수 있어야 한다", async () => {
+    it("can rename a manual team", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
         expires: "",
@@ -295,16 +295,16 @@ describe("Teams Server Actions", () => {
       vi.mocked(prisma.team.findUnique).mockResolvedValue({
         id: "team-1",
         organizationId: "org-1",
-        googleOrgUnitId: null, // 수동 생성 팀
+        googleOrgUnitId: null, // manually created team
       } as never);
 
-      // $transaction mock - callback을 실행하고 결과 반환
+      // $transaction mock - runs the callback and returns the result
       vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
         const mockTx = {
           team: {
             update: vi.fn().mockResolvedValue({
               id: "team-1",
-              name: "수정된 팀",
+              name: "Updated team",
               organizationId: "org-1",
             }),
           },
@@ -312,13 +312,13 @@ describe("Teams Server Actions", () => {
         return callback(mockTx as never);
       });
 
-      const result = await updateTeam("team-1", { name: "수정된 팀" });
+      const result = await updateTeam("team-1", { name: "Updated team" });
 
       expect(result.success).toBe(true);
-      expect(result.data?.name).toBe("수정된 팀");
+      expect(result.data?.name).toBe("Updated team");
     });
 
-    it("멤버를 추가/제거할 수 있어야 한다", async () => {
+    it("can add/remove members", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
         expires: "",
@@ -332,26 +332,26 @@ describe("Teams Server Actions", () => {
 
       const mockUpdateMany = vi.fn().mockResolvedValue({ count: 1 });
 
-      // $transaction mock - 멤버 추가/제거 시나리오
+      // $transaction mock - member add/remove scenario
       vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
         const mockTx = {
           team: {
             update: vi.fn().mockResolvedValue({
               id: "team-1",
-              name: "팀",
+              name: "Team",
               organizationId: "org-1",
             }),
           },
           user: {
             findMany: vi
               .fn()
-              .mockResolvedValueOnce([{ id: "member-1" }, { id: "member-3" }]) // 유효한 멤버
-              .mockResolvedValueOnce([{ id: "member-1" }, { id: "member-2" }]) // 현재 멤버
-              .mockResolvedValueOnce([{ id: "member-3", teamId: null }]), // 추가할 멤버의 이전 팀 정보
+              .mockResolvedValueOnce([{ id: "member-1" }, { id: "member-3" }]) // valid members
+              .mockResolvedValueOnce([{ id: "member-1" }, { id: "member-2" }]) // current members
+              .mockResolvedValueOnce([{ id: "member-3", teamId: null }]), // previous team of the member being added
             updateMany: mockUpdateMany,
           },
           subscription: {
-            findMany: vi.fn().mockResolvedValue([]), // 구독 없음
+            findMany: vi.fn().mockResolvedValue([]), // no subscriptions
           },
           subscriptionUser: {
             deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
@@ -361,15 +361,15 @@ describe("Teams Server Actions", () => {
       });
 
       const result = await updateTeam("team-1", {
-        memberIds: ["member-1", "member-3"], // member-2 제거, member-3 추가
+        memberIds: ["member-1", "member-3"], // remove member-2, add member-3
       });
 
       expect(result.success).toBe(true);
-      // $transaction이 호출되었는지 확인
+      // Verify $transaction was called
       expect(prisma.$transaction).toHaveBeenCalled();
     });
 
-    it("팀에서 제거된 멤버는 해당 팀의 구독 배정에서도 제거되어야 한다", async () => {
+    it("removes members removed from the team from that team's subscription assignments", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
         expires: "",
@@ -385,26 +385,26 @@ describe("Teams Server Actions", () => {
         .fn()
         .mockResolvedValue({ count: 1 });
 
-      // $transaction mock - 구독 배정 정리 테스트
+      // $transaction mock - subscription assignment cleanup
       vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
         const mockTx = {
           team: {
             update: vi.fn().mockResolvedValue({
               id: "team-1",
-              name: "팀",
+              name: "Team",
               organizationId: "org-1",
             }),
           },
           user: {
             findMany: vi
               .fn()
-              .mockResolvedValueOnce([{ id: "member-1" }]) // 유효한 멤버 (member-1만)
-              .mockResolvedValueOnce([{ id: "member-1" }, { id: "member-2" }]), // 현재 멤버 (member-2 제거됨)
+              .mockResolvedValueOnce([{ id: "member-1" }]) // valid members (member-1 only)
+              .mockResolvedValueOnce([{ id: "member-1" }, { id: "member-2" }]), // current members (member-2 removed)
             updateMany: vi.fn().mockResolvedValue({ count: 1 }),
           },
           subscription: {
             findMany: vi.fn().mockResolvedValue([
-              { id: "sub-1" }, // team-1에 배정된 구독
+              { id: "sub-1" }, // subscription assigned to team-1
             ]),
           },
           subscriptionUser: {
@@ -415,15 +415,15 @@ describe("Teams Server Actions", () => {
       });
 
       const result = await updateTeam("team-1", {
-        memberIds: ["member-1"], // member-2 제거
+        memberIds: ["member-1"], // remove member-2
       });
 
       expect(result.success).toBe(true);
       expect(prisma.$transaction).toHaveBeenCalled();
-      // subscriptionUser.deleteMany가 호출되었는지 확인 (member-2의 구독 배정 제거)
+      // Verify subscriptionUser.deleteMany was called (member-2's assignments removed)
     });
 
-    it("다른 팀에서 이동한 멤버는 이전 팀의 구독 배정에서 제거되어야 한다", async () => {
+    it("removes members moved from another team from the previous team's subscription assignments", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
         expires: "",
@@ -439,27 +439,27 @@ describe("Teams Server Actions", () => {
         .fn()
         .mockResolvedValue({ count: 1 });
 
-      // $transaction mock - 팀 이동 시 이전 팀 구독 배정 정리
+      // $transaction mock - clean up previous team's assignments on team move
       vi.mocked(prisma.$transaction).mockImplementation(async (callback) => {
         const mockTx = {
           team: {
             update: vi.fn().mockResolvedValue({
               id: "team-2",
-              name: "팀2",
+              name: "Team 2",
               organizationId: "org-1",
             }),
           },
           user: {
             findMany: vi
               .fn()
-              .mockResolvedValueOnce([{ id: "member-1" }]) // 유효한 멤버
-              .mockResolvedValueOnce([]) // 현재 team-2 멤버 (없음)
-              .mockResolvedValueOnce([{ id: "member-1", teamId: "team-1" }]), // 추가할 멤버의 이전 팀 (team-1)
+              .mockResolvedValueOnce([{ id: "member-1" }]) // valid members
+              .mockResolvedValueOnce([]) // current team-2 members (none)
+              .mockResolvedValueOnce([{ id: "member-1", teamId: "team-1" }]), // previous team of the member being added (team-1)
             updateMany: vi.fn().mockResolvedValue({ count: 1 }),
           },
           subscription: {
             findMany: vi.fn().mockResolvedValue([
-              { id: "sub-1" }, // team-1에 배정된 구독
+              { id: "sub-1" }, // subscription assigned to team-1
             ]),
           },
           subscriptionUser: {
@@ -470,17 +470,17 @@ describe("Teams Server Actions", () => {
       });
 
       const result = await updateTeam("team-2", {
-        memberIds: ["member-1"], // team-1에서 team-2로 이동
+        memberIds: ["member-1"], // move from team-1 to team-2
       });
 
       expect(result.success).toBe(true);
       expect(prisma.$transaction).toHaveBeenCalled();
-      // subscriptionUser.deleteMany가 호출되었는지 확인 (member-1의 team-1 구독 배정 제거)
+      // Verify subscriptionUser.deleteMany was called (member-1's team-1 assignments removed)
     });
   });
 
   describe("deleteTeam", () => {
-    it("ADMIN이 아닌 경우 실패해야 한다", async () => {
+    it("fails for a non-ADMIN", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "MEMBER" },
         expires: "",
@@ -489,10 +489,10 @@ describe("Teams Server Actions", () => {
       const result = await deleteTeam("team-1");
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("관리자 권한이 필요합니다");
+      expect(result.message).toBe("Admin permission required");
     });
 
-    it("Google Workspace 연동 팀은 삭제할 수 없어야 한다", async () => {
+    it("cannot delete a Google Workspace synced team", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
         expires: "",
@@ -501,16 +501,16 @@ describe("Teams Server Actions", () => {
       vi.mocked(prisma.team.findUnique).mockResolvedValue({
         id: "team-1",
         organizationId: "org-1",
-        googleOrgUnitId: "ou-123", // 연동된 팀
+        googleOrgUnitId: "ou-123", // synced team
       } as never);
 
       const result = await deleteTeam("team-1");
 
       expect(result.success).toBe(false);
-      expect(result.message).toContain("Google Workspace에서 동기화된 팀은");
+      expect(result.message).toContain("Teams synced from Google Workspace");
     });
 
-    it("수동 팀을 삭제할 수 있어야 한다", async () => {
+    it("can delete a manual team", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
         expires: "",
@@ -519,7 +519,7 @@ describe("Teams Server Actions", () => {
       vi.mocked(prisma.team.findUnique).mockResolvedValue({
         id: "team-1",
         organizationId: "org-1",
-        googleOrgUnitId: null, // 수동 생성 팀
+        googleOrgUnitId: null, // manually created team
       } as never);
 
       vi.mocked(prisma.team.delete).mockResolvedValue({} as never);
@@ -527,12 +527,12 @@ describe("Teams Server Actions", () => {
       const result = await deleteTeam("team-1");
 
       expect(result.success).toBe(true);
-      expect(result.message).toBe("팀이 삭제되었습니다");
+      expect(result.message).toBe("Team deleted");
     });
   });
 
   describe("getTeamImpact", () => {
-    it("팀 영향도를 정확히 계산해야 한다", async () => {
+    it("calculates the team impact correctly", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
         expires: "",
@@ -547,8 +547,8 @@ describe("Teams Server Actions", () => {
       vi.mocked(prisma.appTeam.count).mockResolvedValue(2);
       vi.mocked(prisma.subscription.count).mockResolvedValue(1);
       vi.mocked(prisma.corporateCard.count).mockResolvedValue(0);
-      vi.mocked(prisma.team.count).mockResolvedValue(1); // 하위 팀
-      // SMP-78: paymentRecord.count mock 추가
+      vi.mocked(prisma.team.count).mockResolvedValue(1); // child team
+      // SMP-78: added paymentRecord.count mock
       vi.mocked(prisma.paymentRecord.count).mockResolvedValue(5);
 
       const result = await getTeamImpact("team-1");
@@ -564,7 +564,7 @@ describe("Teams Server Actions", () => {
       });
     });
 
-    it("팀을 찾을 수 없는 경우 실패해야 한다", async () => {
+    it("fails when the team is not found", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
         expires: "",
@@ -575,12 +575,12 @@ describe("Teams Server Actions", () => {
       const result = await getTeamImpact("non-existent-team");
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("팀을 찾을 수 없습니다");
+      expect(result.message).toBe("Team not found");
     });
   });
 
   describe("getTeamMembers", () => {
-    it("팀 멤버 목록을 반환해야 한다", async () => {
+    it("returns the team member list", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
         expires: "",
@@ -594,7 +594,7 @@ describe("Teams Server Actions", () => {
       const mockMembers = [
         {
           id: "member-1",
-          name: "홍길동",
+          name: "Ahmed Hassan",
           email: "hong@test.com",
           role: "MEMBER",
           status: "ACTIVE",
@@ -602,11 +602,15 @@ describe("Teams Server Actions", () => {
         },
         {
           id: "member-2",
-          name: "김철수",
+          name: "Omar Khalid",
           email: "kim@test.com",
           role: "MEMBER",
           status: "ACTIVE",
-          manager: { id: "member-1", name: "홍길동", email: "hong@test.com" },
+          manager: {
+            id: "member-1",
+            name: "Ahmed Hassan",
+            email: "hong@test.com",
+          },
         },
       ];
 
@@ -616,34 +620,34 @@ describe("Teams Server Actions", () => {
 
       expect(result.success).toBe(true);
       expect(result.data).toHaveLength(2);
-      expect(result.data![0].name).toBe("홍길동");
-      expect(result.data![1].manager?.name).toBe("홍길동");
+      expect(result.data![0].name).toBe("Ahmed Hassan");
+      expect(result.data![1].manager?.name).toBe("Ahmed Hassan");
     });
   });
 
-  // Phase 4: 법인카드 유저 배정 관련 검증 테스트
+  // Phase 4: corporate card user assignment checks
   describe("Corporate Card Assignment Design Verification", () => {
-    it("CorporateCard.assignedUserId는 User를 직접 참조하므로 팀 이동 시 변경 불필요", () => {
+    it("does not need to change CorporateCard.assignedUserId on team move because it references User directly", () => {
       /**
-       * 설계 검증 (코드 변경 없이 동작 확인):
+       * Design check (verifies behaviour without code changes):
        *
-       * 시나리오: 김철수(마케팅팀)에게 법인카드 A 배정 → 김철수를 개발팀으로 이동
+       * Scenario: corporate card A assigned to Omar Khalid (Marketing) → Omar Khalid moves to Engineering
        *
-       * DB 상태:
-       * 1. CorporateCard.assignedUserId = "user-kim" (변경 없음)
-       * 2. User("user-kim").teamId = "team-dev" (마케팅 → 개발)
+       * DB state:
+       * 1. CorporateCard.assignedUserId = "user-kim" (unchanged)
+       * 2. User("user-kim").teamId = "team-dev" (Marketing → Engineering)
        *
-       * 조회 시:
+       * On read:
        * - CorporateCard + assignedUser + assignedUser.team JOIN
-       * - 결과: 법인카드 A의 배정 유저 = 김철수, 소속 팀 = 개발팀 (최신)
+       * - Result: corporate card A's assignee = Omar Khalid, team = Engineering (latest)
        *
-       * 이 테스트는 updateTeam()이 CorporateCard 테이블을 수정하지 않아야 함을 검증.
-       * 실제로 teams.ts 코드에는 CorporateCard 관련 로직이 없으므로,
-       * 이 동작은 "변경 없음"이 곧 올바른 동작임.
+       * This test verifies that updateTeam() must not modify the CorporateCard table.
+       * teams.ts has no CorporateCard logic at all,
+       * so "no change" is the correct behaviour.
        */
 
-      // teams.ts에 CorporateCard 업데이트 로직이 없음을 확인
-      // (코드 변경 시 이 테스트가 실패하도록 마커 역할)
+      // Confirm teams.ts has no CorporateCard update logic
+      // (acts as a marker so this test fails if the code changes)
       const updateTeamDoesNotTouchCorporateCard = true;
       expect(updateTeamDoesNotTouchCorporateCard).toBe(true);
     });

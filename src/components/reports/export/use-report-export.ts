@@ -41,7 +41,7 @@ async function exportPDF(config: ReportExportConfig) {
   const buffer = await generatePDFReport({
     title: config.pdf.title,
     subtitle: config.pdf.subtitle,
-    organizationName: config.pdf.organizationName ?? "SaaS Management Platform",
+    organizationName: config.pdf.organizationName ?? "SubHub",
     generatedAt: new Date(),
     sections: config.pdf.sections,
   });

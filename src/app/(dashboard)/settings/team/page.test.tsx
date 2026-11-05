@@ -30,7 +30,7 @@ describe("TeamPage", () => {
     vi.clearAllMocks();
   });
 
-  it("관리자가 아닐 때 안내를 표시해야 한다", async () => {
+  it("shows a notice for non-admins", async () => {
     const { auth } = await import("@/lib/auth");
     vi.mocked(auth).mockResolvedValue({
       user: { id: "user-1", organizationId: "org-1", role: "MEMBER" },
@@ -40,11 +40,11 @@ describe("TeamPage", () => {
     render(page);
 
     expect(
-      screen.getByText(/관리자만 팀원을 초대할 수 있습니다/)
+      screen.getByText(/Only administrators can manage team members/)
     ).toBeInTheDocument();
   });
 
-  it("관리자일 때 초대 폼과 목록을 표시해야 한다", async () => {
+  it("shows the invite form and list for admins", async () => {
     const { auth } = await import("@/lib/auth");
     vi.mocked(auth).mockResolvedValue({
       user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
@@ -72,13 +72,15 @@ describe("TeamPage", () => {
     const page = await TeamPage();
     render(page);
 
-    // PageHeader와 Card 제목에 "멤버 초대"가 중복되므로 getAllByText 사용
-    expect(screen.getAllByText("멤버 초대").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getByLabelText("이메일")).toBeInTheDocument();
+    // "Invite Member" appears in both the PageHeader and the Card title, so use getAllByText
+    expect(screen.getAllByText("Invite Member").length).toBeGreaterThanOrEqual(
+      1
+    );
+    expect(screen.getByLabelText("Email")).toBeInTheDocument();
     expect(screen.getByText(/test@example.com/)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /재발송/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Resend/i })).toBeInTheDocument();
     expect(
-      screen.getByRole("button", { name: /초대 취소/i })
+      screen.getByRole("button", { name: /Cancel invite/i })
     ).toBeInTheDocument();
   });
 });

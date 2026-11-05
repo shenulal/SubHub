@@ -2,10 +2,10 @@ import { readFileSync, writeFileSync } from "fs";
 import { join } from "path";
 
 /**
- * 🎯 목적: Storybook 스토리 파일에 Figma URL을 자동으로 추가하는 스크립트
+ * 🎯 Purpose: Script that automatically adds Figma URLs to Storybook story files
  *
- * 이 스크립트는 figma-mapping.json 파일에서 Figma URL 정보를 읽어
- * 각 스토리 파일의 meta 객체에 design parameter를 추가합니다.
+ * It reads Figma URL information from figma-mapping.json
+ * and adds a design parameter to each story file's meta object.
  */
 
 interface FigmaData {
@@ -18,39 +18,39 @@ interface FigmaMapping {
   [key: string]: FigmaData;
 }
 
-// Figma URL 매핑 데이터 로드
+// Load the Figma URL mapping data
 const figmaMapping = JSON.parse(
   readFileSync("scripts/figma-mapping.json", "utf-8"),
 ) as FigmaMapping;
 
-// 각 스토리 파일에 Figma URL 추가
+// Add the Figma URL to each story file
 Object.entries(figmaMapping).forEach(
   ([storyName, figmaData]: [string, FigmaData]) => {
-    // 스토리 파일 경로 결정
+    // Resolve the story file path
     let storyPath: string;
     const componentName = storyName.replace("-story", "");
 
-    // 경로 매핑 규칙
+    // Path mapping rules
     if (storyName.includes("chart")) {
-      // Chart 관련 스토리는 chart-story 폴더 안에 있음
+      // Chart stories live in the chart-story folder
       storyPath = `src/registry/atoms/chart-story/${componentName}.stories.tsx`;
     } else if (
       ["color", "typography", "spacing", "shadow", "radius"].includes(
         componentName,
       )
     ) {
-      // 토큰 스토리
+      // Token stories
       storyPath = `src/registry/tokens/${storyName}/${componentName}.stories.tsx`;
     } else if (storyName === "typography-components-story") {
-      // Foundation 스토리
+      // Foundation stories
       storyPath =
         "src/registry/foundation/typography-components-story/typography-components.stories.tsx";
     } else if (storyName === "dashboard-template-story") {
-      // Template 스토리
+      // Template stories
       storyPath =
         "src/registry/templates/dashboard-template-story/dashboard-template.stories.tsx";
     } else {
-      // 일반 Atoms
+      // Regular atoms
       storyPath = `src/registry/atoms/${storyName}/${componentName}.stories.tsx`;
     }
 
@@ -58,18 +58,18 @@ Object.entries(figmaMapping).forEach(
       const fullPath = join(process.cwd(), storyPath);
       let content = readFileSync(fullPath, "utf-8");
 
-      // 이미 Figma URL이 있는지 확인
+      // Check whether a Figma URL already exists
       if (content.includes("design:")) {
-        console.log(`⏭️  건너뛰기: ${storyName} (이미 Figma URL이 있음)`);
+        console.log(`⏭️  Skipped: ${storyName} (Figma URL already present)`);
         return;
       }
 
-      // meta 객체에 design parameter 추가
-      // parameters가 이미 있는 경우를 처리
+      // Add the design parameter to the meta object
+      // Handle the case where parameters already exist
       const parametersMatch = content.match(/parameters:\s*{([^}]*)}/);
 
       if (parametersMatch) {
-        // parameters가 이미 있는 경우 - design 필드 추가
+        // parameters already exist - add the design field
         const oldParameters = parametersMatch[0];
         const newParameters = oldParameters.replace(
           /parameters:\s*{/,
@@ -77,7 +77,7 @@ Object.entries(figmaMapping).forEach(
         );
         content = content.replace(oldParameters, newParameters);
       } else {
-        // parameters가 없는 경우 - parameters 객체 자체를 추가
+        // No parameters - add the parameters object itself
         const metaRegex = /(const meta.*?=\s*{[\s\S]*?)(tags:\s*\[.*?\],)/;
         content = content.replace(
           metaRegex,
@@ -86,14 +86,14 @@ Object.entries(figmaMapping).forEach(
       }
 
       writeFileSync(fullPath, content);
-      console.log(`✅ 성공: ${storyName}`);
+      console.log(`✅ Success: ${storyName}`);
     } catch (error) {
       const errorMessage =
         error instanceof Error ? error.message : String(error);
-      console.error(`❌ 오류: ${storyName} - ${errorMessage}`);
+      console.error(`❌ Error: ${storyName} - ${errorMessage}`);
     }
   },
 );
 
-console.log("\n🎉 Figma URL 추가 작업 완료!");
-console.log("⚠️  참고: node-id가 실제 값으로 업데이트되어야 합니다.");
+console.log("\n🎉 Finished adding Figma URLs!");
+console.log("⚠️  Note: node-id must be updated to the real values.");

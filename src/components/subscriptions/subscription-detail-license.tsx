@@ -10,8 +10,8 @@ interface SubscriptionDetailLicenseProps {
   totalLicenses: number | null;
   usedLicenses: number | null;
   billingType: BillingType;
-  perSeatPrice: number | null; // P2에서 재사용
-  currency?: string; // P2에서 재사용
+  perSeatPrice: number | null; // Reused in P2
+  currency?: string; // Reused in P2
 }
 
 export function SubscriptionDetailLicense({
@@ -24,7 +24,7 @@ export function SubscriptionDetailLicense({
   const used = usedLicenses ?? 0;
   const usagePercent = (used / totalLicenses) * 100;
   const isPerSeat = billingType === "PER_SEAT";
-  const label = isPerSeat ? "Seat 사용량" : "라이선스 사용량";
+  const label = isPerSeat ? "Seat Usage" : "License Usage";
 
   return (
     <Card>
@@ -36,14 +36,14 @@ export function SubscriptionDetailLicense({
               variant="secondary"
               className="bg-info-muted text-info-muted-foreground border-0"
             >
-              Seat 기반
+              Per Seat
             </Badge>
           )}
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
         <div className="flex items-center justify-between text-sm">
-          <span className="text-muted-foreground">사용 중</span>
+          <span className="text-muted-foreground">In use</span>
           <span className="font-medium">
             {used} / {totalLicenses}
             {isPerSeat ? " Seat" : ""}
@@ -52,7 +52,7 @@ export function SubscriptionDetailLicense({
         <Progress value={usagePercent} className="h-2" />
         <p className="text-muted-foreground text-xs">
           {totalLicenses - used}
-          {isPerSeat ? " Seat" : "개"} 남음
+          {isPerSeat ? " seats" : ""} remaining
         </p>
       </CardContent>
     </Card>

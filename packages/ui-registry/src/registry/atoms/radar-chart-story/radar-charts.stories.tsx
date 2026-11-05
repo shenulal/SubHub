@@ -26,8 +26,8 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 /**
- * 기본 Radar Chart입니다. 데스크톱 방문자 데이터를 다각형 형태로 시각화하며,
- * 여러 지표를 동시에 비교할 수 있습니다. 성능 분석이나 다차원 데이터 표현에 적합합니다.
+ * The default Radar Chart. It visualizes desktop visitor data as a polygon
+ * and compares several metrics at once. Suited to performance analysis and multi-dimensional data.
  */
 export const RadarDefault: Story = {
   args: {
@@ -41,8 +41,8 @@ export const RadarDefault: Story = {
 };
 
 /**
- * 데이터 포인트에 점이 표시되는 Radar Chart입니다. 각 지표의 정확한 위치를 점으로 강조하여
- * 데이터 값을 더 명확하게 파악할 수 있습니다. 세밀한 데이터 분석이 필요할 때 사용합니다.
+ * A Radar Chart with dots on the data points. Highlighting each metric's exact position with a dot
+ * makes values clearer. Use it when detailed analysis is needed.
  */
 export const RadarDots: Story = {
   args: {
@@ -56,8 +56,8 @@ export const RadarDots: Story = {
 };
 
 /**
- * 선만 표시되는 Radar Chart입니다. 영역 채우기 없이 윤곽선만 표시하여
- * 여러 데이터 시리즈를 겹쳐 비교할 때 가독성을 높입니다. 복잡한 비교 분석에 적합합니다.
+ * A lines-only Radar Chart. Showing outlines without fill
+ * improves readability when overlaying several series. Suited to complex comparisons.
  */
 export const RadarLinesOnly: Story = {
   args: {
@@ -71,8 +71,8 @@ export const RadarLinesOnly: Story = {
 };
 
 /**
- * 커스텀 레이블이 적용된 Radar Chart입니다. 축 레이블의 형식을 사용자 정의하여
- * 데이터를 더 직관적으로 표현할 수 있습니다. 특수한 단위나 표기법이 필요할 때 사용합니다.
+ * A Radar Chart with custom labels. Customizing the axis label format
+ * presents the data more intuitively. Use it when special units or notation are needed.
  */
 export const RadarLabelCustom: Story = {
   args: {
@@ -86,8 +86,8 @@ export const RadarLabelCustom: Story = {
 };
 
 /**
- * 커스텀 그리드가 적용된 Radar Chart입니다. 그리드 선의 간격, 색상, 스타일을 조정하여
- * 차트의 가독성을 향상시킬 수 있습니다. 브랜드 아이덴티티에 맞춘 커스터마이징에 적합합니다.
+ * A Radar Chart with a custom grid. Adjusting grid spacing, color and style
+ * improves readability. Suited to customizing for a brand identity.
  */
 export const RadarGridCustom: Story = {
   args: {
@@ -101,8 +101,8 @@ export const RadarGridCustom: Story = {
 };
 
 /**
- * 그리드가 없는 Radar Chart입니다. 배경 그리드를 제거하여 데이터 영역만 강조하고
- * 미니멀한 디자인을 구현합니다. 시각적 단순함이 필요하거나 프레젠테이션용으로 적합합니다.
+ * A Radar Chart without a grid. Removing the background grid highlights only the data area
+ * for a minimal design. Suited to presentations or wherever visual simplicity is needed.
  */
 export const RadarGridNone: Story = {
   args: {
@@ -116,8 +116,8 @@ export const RadarGridNone: Story = {
 };
 
 /**
- * 원형 그리드가 적용된 Radar Chart입니다. 기본 다각형 대신 동심원 그리드를 사용하여
- * 중심에서부터의 거리를 더 직관적으로 표현합니다. 균등 분포 데이터 분석에 적합합니다.
+ * A Radar Chart with a circular grid. Using concentric circles instead of the default polygon
+ * shows distance from the center more intuitively. Suited to analyzing evenly distributed data.
  */
 export const RadarGridCircle: Story = {
   args: {
@@ -131,8 +131,8 @@ export const RadarGridCircle: Story = {
 };
 
 /**
- * 방사선이 없는 원형 그리드 Radar Chart입니다. 동심원만 표시하고 방사선을 제거하여
- * 더욱 깔끔한 시각화를 제공합니다. 축 레이블이 충분할 때 시각적 노이즈를 줄이는 데 유용합니다.
+ * A circular-grid Radar Chart without radial lines. Showing only the concentric circles
+ * gives a cleaner visualization. Useful for reducing visual noise when axis labels suffice.
  */
 export const RadarGridCircleNoLines: Story = {
   args: {
@@ -146,8 +146,8 @@ export const RadarGridCircleNoLines: Story = {
 };
 
 /**
- * 영역이 채워진 원형 그리드 Radar Chart입니다. 동심원 그리드와 함께 데이터 영역을 색으로 채워
- * 각 지표의 범위를 시각적으로 강조합니다. 전체적인 분포 패턴 파악에 효과적입니다.
+ * A filled circular-grid Radar Chart. Filling the data area alongside the concentric grid
+ * visually emphasizes each metric's range. Effective for seeing the overall distribution.
  */
 export const RadarGridCircleFill: Story = {
   args: {
@@ -161,8 +161,8 @@ export const RadarGridCircleFill: Story = {
 };
 
 /**
- * 영역이 채워진 Radar Chart입니다. 다각형 그리드와 함께 데이터 영역을 색으로 채워
- * 각 축의 성능을 한눈에 파악할 수 있습니다. 종합적인 성능 비교나 리포팅에 적합합니다.
+ * A filled Radar Chart. Filling the data area alongside the polygon grid
+ * shows each axis's performance at a glance. Suited to overall performance comparison and reporting.
  */
 export const RadarGridFill: Story = {
   args: {
@@ -176,8 +176,8 @@ export const RadarGridFill: Story = {
 };
 
 /**
- * 여러 데이터 시리즈를 표시하는 Radar Chart입니다. 두 개 이상의 데이터셋을 겹쳐서 표시하여
- * 직접적인 비교가 가능합니다. 경쟁사 분석이나 시계열 비교에 효과적입니다.
+ * A Radar Chart with multiple data series. Overlaying two or more datasets
+ * allows direct comparison. Effective for competitor analysis or time-series comparison.
  */
 export const RadarMultiple: Story = {
   args: {
@@ -191,8 +191,8 @@ export const RadarMultiple: Story = {
 };
 
 /**
- * 범례가 포함된 Radar Chart입니다. 여러 시리즈를 구분할 수 있도록 범례를 추가하여
- * 각 데이터셋의 의미를 명확히 전달합니다. 복잡한 다중 비교 차트에 필수적입니다.
+ * A Radar Chart with a legend. Adding a legend to distinguish the series
+ * makes each dataset's meaning clear. Essential for complex multi-series comparisons.
  */
 export const RadarLegend: Story = {
   args: {
@@ -214,9 +214,9 @@ export const ShouldRenderChart: Story = {
   },
   render: () => <ChartRadarDefault />,
   play: async ({ canvasElement }) => {
-    // 🎯 목적: Radar Chart가 정상적으로 렌더링되고 Chart container가 존재하는지 확인
+    // 🎯 Purpose: Verify the Radar chart renders correctly and the Chart container exists
 
-    // ChartContainer가 렌더링되었는지 확인
+    // Verify ChartContainer has rendered
     const chartContainer = canvasElement.querySelector("[data-chart]");
     await expect(chartContainer).toBeInTheDocument();
   },

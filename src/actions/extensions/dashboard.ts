@@ -7,7 +7,7 @@ import type { ActionState } from "@/types";
 import type { ExtensionDashboardStats } from "@/types/extension";
 
 /**
- * Extension Dashboard 통계 조회
+ * Fetch extension dashboard statistics
  */
 export async function getExtensionDashboard(): Promise<
   ActionState<ExtensionDashboardStats>
@@ -15,14 +15,14 @@ export async function getExtensionDashboard(): Promise<
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
-      return { success: false, error: "인증이 필요합니다" };
+      return { success: false, error: "Authentication required" };
     }
 
     const organizationId = session.user.organizationId;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
-    // 디바이스 통계
+    // Device statistics
     const [activeDevices, inactiveDevices] = await Promise.all([
       prisma.extensionDevice.count({
         where: {
@@ -38,7 +38,7 @@ export async function getExtensionDashboard(): Promise<
       }),
     ]);
 
-    // 블랙리스트/화이트리스트 카운트
+    // Blacklist/whitelist counts
     const [blockedSitesCount, trackedSitesCount] = await Promise.all([
       prisma.extensionBlacklist.count({
         where: {
@@ -54,7 +54,7 @@ export async function getExtensionDashboard(): Promise<
       }),
     ]);
 
-    // 오늘 총 사용 시간
+    // Total usage time today
     const usageToday = await prisma.extensionUsage.aggregate({
       where: {
         organizationId,
@@ -65,7 +65,7 @@ export async function getExtensionDashboard(): Promise<
       },
     });
 
-    // 최근 동기화 상태 (ExtensionConfig에서 조회)
+    // Latest sync status (from ExtensionConfig)
     const syncConfigs = await prisma.extensionConfig.findMany({
       where: {
         organizationId,
@@ -108,7 +108,10 @@ export async function getExtensionDashboard(): Promise<
     console.error("[getExtensionDashboard] Error:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "대시보드 통계 조회 실패",
+      error:
+        error instanceof Error
+          ? error.message
+          : "Failed to fetch dashboard statistics",
     };
   }
 }

@@ -52,10 +52,10 @@ interface ImportResult {
 
 const CHUNK_SIZE = 50;
 
-// CSV 템플릿
+// CSV templates
 const APP_TEMPLATE = `name,category,vendor,description,website
-Slack,COLLABORATION,Slack Technologies,팀 커뮤니케이션 도구,https://slack.com
-Notion,PRODUCTIVITY,Notion Labs,올인원 협업 도구,https://notion.so`;
+Slack,COLLABORATION,Slack Technologies,Team communication tool,https://slack.com
+Notion,PRODUCTIVITY,Notion Labs,All-in-one collaboration tool,https://notion.so`;
 
 const SUBSCRIPTION_TEMPLATE = `appName,planName,billingCycle,price,renewalDate,seats
 Slack,Business+,MONTHLY,100000,2024-12-01,50
@@ -90,7 +90,7 @@ export function CsvUploadForm() {
   const [isPending, startTransition] = useTransition();
   const [dragActive, setDragActive] = useState(false);
 
-  // 진행률 다이얼로그 상태
+  // Progress dialog state
   const [progressOpen, setProgressOpen] = useState(false);
   const [progressProcessed, setProgressProcessed] = useState(0);
   const [progressErrors, setProgressErrors] = useState(0);
@@ -133,7 +133,7 @@ export function CsvUploadForm() {
       const text = e.target?.result as string;
       if (text) {
         const lines = text.split(/\r?\n/).filter((l) => l.trim() !== "");
-        setTotalRecords(Math.max(0, lines.length - 1)); // 헤더 제외
+        setTotalRecords(Math.max(0, lines.length - 1)); // Exclude header
       }
     };
     reader.readAsText(selectedFile);
@@ -151,7 +151,7 @@ export function CsvUploadForm() {
     const csvContent = await file.text();
 
     if (importType === "users") {
-      // 청크 업로드 + 진행률 다이얼로그
+      // Chunked upload + progress dialog
       const chunks = splitCsvIntoChunks(csvContent, CHUNK_SIZE);
 
       setProgressProcessed(0);
@@ -175,11 +175,11 @@ export function CsvUploadForm() {
       setProgressComplete(true);
       setResult({
         success: true,
-        message: `${processed}명의 사용자가 등록되었습니다`,
+        message: `${processed} users registered`,
         created: processed,
       });
     } else {
-      // 기존 방식 (apps, subscriptions)
+      // Legacy path (apps, subscriptions)
       startTransition(async () => {
         let response;
         switch (importType) {
@@ -255,7 +255,7 @@ export function CsvUploadForm() {
           <CardDescription>{t("description")}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-6">
-          {/* 등록 유형 선택 */}
+          {/* Import type selection */}
           <div className="space-y-2">
             <Label>{t("importType")}</Label>
             <Select
@@ -280,7 +280,7 @@ export function CsvUploadForm() {
             </Select>
           </div>
 
-          {/* 템플릿 다운로드 */}
+          {/* Template download */}
           <div>
             <Button variant="outline" onClick={downloadTemplate}>
               <Download className="mr-2 h-4 w-4" />
@@ -291,7 +291,7 @@ export function CsvUploadForm() {
             </p>
           </div>
 
-          {/* 파일 업로드 영역 */}
+          {/* File upload area */}
           <div
             className={`relative rounded-lg border-2 border-dashed p-8 text-center transition-colors ${
               dragActive
@@ -316,7 +316,7 @@ export function CsvUploadForm() {
             </p>
           </div>
 
-          {/* 선택된 파일 표시 */}
+          {/* Selected file */}
           {file && (
             <div className="bg-muted rounded-lg p-4">
               <div className="flex items-center justify-between">
@@ -333,7 +333,7 @@ export function CsvUploadForm() {
             </div>
           )}
 
-          {/* 업로드 버튼 */}
+          {/* Upload button */}
           <Button onClick={handleUpload} disabled={!file || isUploading}>
             {isUploading ? (
               <>
@@ -348,7 +348,7 @@ export function CsvUploadForm() {
             )}
           </Button>
 
-          {/* 결과 표시 */}
+          {/* Result */}
           {result && !progressOpen && (
             <Alert variant={result.success ? "default" : "destructive"}>
               {result.success ? (
@@ -389,7 +389,7 @@ export function CsvUploadForm() {
             </Alert>
           )}
 
-          {/* 필드 설명 */}
+          {/* Field descriptions */}
           <Tabs defaultValue="apps">
             <TabsList>
               <TabsTrigger value="apps">{t("fields.apps")}</TabsTrigger>

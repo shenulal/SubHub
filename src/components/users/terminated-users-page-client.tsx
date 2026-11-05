@@ -19,7 +19,7 @@ export function TerminatedUsersPageClient() {
 
   const users = data?.data ?? [];
 
-  // 로딩 상태 - Skeleton UI
+  // Loading state - skeleton UI
   if (isLoading) {
     return (
       <div className="space-y-6">

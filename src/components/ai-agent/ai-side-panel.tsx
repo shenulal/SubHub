@@ -1,10 +1,10 @@
 "use client";
 
 /**
- * AI Agent 사이드 패널 — useChat() 기반 Chat UI + Write Tool 승인 플로우
+ * AI Agent side panel — useChat()-based chat UI + Write Tool approval flow
  * SMP-197 (Read Tool + Chat UI) + SMP-198 (Write Tool + Approval)
- * SMP-204: React duplicate key 수정 — msg.id + msgIndex
- * SMP-206: AI 응답 마크다운 렌더링 — react-markdown 통합
+ * SMP-204: fix React duplicate keys — msg.id + msgIndex
+ * SMP-206: Markdown rendering for AI responses — react-markdown integration
  */
 
 import { Button } from "@/components/ui/button";
@@ -47,7 +47,7 @@ export function AiSidePanel() {
     }
   }, [messages]);
 
-  // Write Tool pending_approval 감지 → 승인 다이얼로그 트리거
+  // Detect Write Tool pending_approval → open the approval dialog
   // AI SDK v6: tool parts = type "tool-<name>" or "dynamic-tool", state "output-available", result in "output"
   useEffect(() => {
     for (const msg of messages) {
@@ -103,7 +103,7 @@ export function AiSidePanel() {
       {
         id: crypto.randomUUID(),
         role: "assistant" as const,
-        parts: [{ type: "text" as const, text: "작업이 취소되었습니다." }],
+        parts: [{ type: "text" as const, text: "The action was cancelled." }],
       },
     ]);
   }
@@ -123,7 +123,7 @@ export function AiSidePanel() {
               <Bot className="size-5" />
             </span>
             <h3 className="text-foreground truncate text-lg font-medium">
-              AI 어시스턴트
+              AI Assistant
             </h3>
           </div>
           <Button
@@ -147,10 +147,11 @@ export function AiSidePanel() {
                 <Bot className="size-6" />
               </span>
               <p className="text-center text-[0.9375rem] leading-relaxed">
-                안녕하세요! SMP AI 어시스턴트입니다.
+                Hello! I am the SubHub AI Assistant.
                 <br />
-                앱, 구독, 비용 등을 자연어로 조회하거나
-                <br />앱 등록/수정/삭제를 요청해보세요.
+                Ask about apps, subscriptions, costs and more in plain language,
+                <br />
+                or ask me to add, update or delete apps.
               </p>
             </div>
           )}
@@ -202,14 +203,14 @@ export function AiSidePanel() {
               <div className="bg-muted flex items-center gap-2 rounded-lg rounded-tl-sm px-3.5 py-2">
                 <Loader2 className="text-primary size-4 animate-spin" />
                 <span className="text-muted-foreground text-[0.8125rem]">
-                  생각 중...
+                  Thinking...
                 </span>
               </div>
             </div>
           )}
           {error && (
             <div className="tonal-error rounded-md px-3.5 py-2 text-[0.8125rem]">
-              오류가 발생했습니다. 다시 시도해주세요.
+              An error occurred. Please try again.
             </div>
           )}
         </div>
@@ -224,7 +225,7 @@ export function AiSidePanel() {
             onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
               setInput(e.target.value)
             }
-            placeholder="메시지를 입력하세요..."
+            placeholder="Type a message..."
             disabled={isLoading}
             className="min-w-0 flex-1"
           />
@@ -239,7 +240,7 @@ export function AiSidePanel() {
         </form>
       </div>
 
-      {/* Write Tool 승인 다이얼로그 */}
+      {/* Write Tool approval dialog */}
       <AiApprovalDialog
         open={!!pendingAction}
         pendingAction={pendingAction}

@@ -20,9 +20,9 @@ const alertVariants = cva(
 );
 
 /**
- * 🎯 목적: Alert 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: role="alert" 속성 유지 필수 (접근성)
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the Alert component for React 18/19 compatibility
+ * 📝 Note: The role="alert" attribute must be kept (accessibility)
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const Alert = React.forwardRef<
   HTMLDivElement,
@@ -41,8 +41,8 @@ const Alert = React.forwardRef<
 Alert.displayName = "Alert";
 
 /**
- * 🎯 목적: AlertTitle 컴포넌트에 forwardRef 적용
- * 📝 주의사항: col-start-2 그리드 레이아웃 유지
+ * 🎯 Purpose: Apply forwardRef to the AlertTitle component
+ * 📝 Note: Keep the col-start-2 grid layout
  */
 const AlertTitle = React.forwardRef<
   HTMLDivElement,
@@ -63,8 +63,8 @@ const AlertTitle = React.forwardRef<
 AlertTitle.displayName = "AlertTitle";
 
 /**
- * 🎯 목적: AlertDescription 컴포넌트에 forwardRef 적용
- * 📝 주의사항: text-muted-foreground 스타일 유지
+ * 🎯 Purpose: Apply forwardRef to the AlertDescription component
+ * 📝 Note: Keep the text-muted-foreground style
  */
 const AlertDescription = React.forwardRef<
   HTMLDivElement,

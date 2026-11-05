@@ -21,12 +21,12 @@ const CARD_CLASSES = "h-[440px] gap-4 overflow-clip px-5";
 const ROW_GRID =
   "grid grid-cols-[2rem_minmax(0,1fr)_3.5rem_3.5rem] items-center gap-3";
 
-// 앱 이름 이니셜 추출
+// Extract app name initials
 function getAppInitial(name: string): string {
   return name.charAt(0).toUpperCase();
 }
 
-// 앱 이름 기반 색상 (아바타 배경, Materio tonal tokens)
+// Colour derived from the app name (avatar background, Materio tonal tokens)
 function getAppColor(name: string): string {
   const colors: Record<string, string> = {
     S: "tonal-primary",
@@ -41,8 +41,8 @@ function getAppColor(name: string): string {
 }
 
 /**
- * 라이선스 발급 Top 5 (Materio list table)
- * - 컬럼: 순위, 앱 이름, 사용, 발급
+ * Top 5 licence allocations (Materio list table)
+ * - Columns: rank, app name, used, allocated
  * - Long app names truncate with a tooltip so numbers stay aligned.
  */
 export function PerUserLicenseAppsChart({
@@ -51,12 +51,12 @@ export function PerUserLicenseAppsChart({
 }: PerUserLicenseAppsChartProps) {
   const t = useTranslations("dashboard2.licenseApps");
 
-  // 정렬된 데이터 (발급 수 내림차순, 상위 5개)
+  // Sorted data (by allocations descending, top 5)
   const sortedData = useMemo(() => {
     return [...data].slice(0, 5);
   }, [data]);
 
-  // 로딩 상태
+  // Loading state
   if (isLoading) {
     return (
       <Card className={CARD_CLASSES}>
@@ -68,7 +68,7 @@ export function PerUserLicenseAppsChart({
 
   return (
     <Card className={CARD_CLASSES}>
-      {/* 헤더: 타이틀 */}
+      {/* Header: title */}
       <p
         className="text-foreground truncate text-lg font-medium"
         title={t("title")}
@@ -80,7 +80,7 @@ export function PerUserLicenseAppsChart({
         <DashboardEmptyState icon={KeyRound} message={t("empty")} />
       ) : (
         <div className="flex min-h-0 flex-1 flex-col">
-          {/* 헤더 행 */}
+          {/* Header row */}
           <div
             className={cn(
               ROW_GRID,
@@ -93,7 +93,7 @@ export function PerUserLicenseAppsChart({
             <span className="truncate text-right">{t("issued")}</span>
           </div>
 
-          {/* 데이터 행 */}
+          {/* Data rows */}
           <ul className="divide-border flex min-h-0 flex-1 flex-col divide-y overflow-y-auto">
             {sortedData.map((app, index) => (
               <li key={app.appId} className={cn(ROW_GRID, "h-[52px] px-2")}>
@@ -132,9 +132,9 @@ export function PerUserLicenseAppsChart({
 }
 
 /**
- * 순위 배지 컴포넌트
- * - 1위: primary 배경
- * - 2-5위: tonal primary
+ * Rank badge component
+ * - Rank 1: primary background
+ * - Ranks 2-5: tonal primary
  */
 function RankBadge({ rank }: { rank: number }) {
   return (

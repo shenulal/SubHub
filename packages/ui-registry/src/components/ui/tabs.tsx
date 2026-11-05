@@ -4,9 +4,9 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * 🎯 목적: Tabs 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: Radix UI Tabs.Root primitive 사용
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the Tabs component for React 18/19 compatibility
+ * 📝 Note: Uses the Radix UI Tabs.Root primitive
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const Tabs = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.Root>,
@@ -24,7 +24,7 @@ const Tabs = React.forwardRef<
 Tabs.displayName = "Tabs";
 
 /**
- * 🎯 목적: TabsList 컴포넌트에 forwardRef 적용
+ * 🎯 Purpose: Apply forwardRef to the TabsList component
  */
 const TabsList = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.List>,
@@ -45,8 +45,8 @@ const TabsList = React.forwardRef<
 TabsList.displayName = "TabsList";
 
 /**
- * 🎯 목적: TabsTrigger 컴포넌트에 forwardRef 적용
- * 📝 주의사항: state에 따라 active 스타일 적용
+ * 🎯 Purpose: Apply forwardRef to the TabsTrigger component
+ * 📝 Note: Applies the active style based on state
  */
 const TabsTrigger = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.Trigger>,
@@ -67,7 +67,7 @@ const TabsTrigger = React.forwardRef<
 TabsTrigger.displayName = "TabsTrigger";
 
 /**
- * 🎯 목적: TabsContent 컴포넌트에 forwardRef 적용
+ * 🎯 Purpose: Apply forwardRef to the TabsContent component
  */
 const TabsContent = React.forwardRef<
   React.ElementRef<typeof TabsPrimitive.Content>,

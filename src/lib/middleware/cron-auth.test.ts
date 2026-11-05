@@ -18,7 +18,7 @@ describe("withCronAuth", () => {
     vi.unstubAllEnvs();
   });
 
-  it("Authorization 헤더가 없으면 401을 반환해야 한다", async () => {
+  it("should return 401 when the Authorization header is missing", async () => {
     const handler = withCronAuth(mockHandler);
     const request = new NextRequest("http://localhost/api/cron/test");
 
@@ -30,7 +30,7 @@ describe("withCronAuth", () => {
     expect(body).toEqual({ error: "Unauthorized" });
   });
 
-  it("CRON_SECRET이 설정되지 않으면 401을 반환해야 한다", async () => {
+  it("should return 401 when CRON_SECRET is not set", async () => {
     delete process.env.CRON_SECRET;
     const handler = withCronAuth(mockHandler);
     const request = new NextRequest("http://localhost/api/cron/test", {
@@ -45,7 +45,7 @@ describe("withCronAuth", () => {
     expect(body).toEqual({ error: "Unauthorized" });
   });
 
-  it("잘못된 토큰이면 401을 반환해야 한다", async () => {
+  it("should return 401 for an invalid token", async () => {
     const handler = withCronAuth(mockHandler);
     const request = new NextRequest("http://localhost/api/cron/test", {
       headers: { authorization: "Bearer wrong-secret" },
@@ -59,7 +59,7 @@ describe("withCronAuth", () => {
     expect(body).toEqual({ error: "Unauthorized" });
   });
 
-  it("올바른 토큰이면 핸들러를 호출해야 한다", async () => {
+  it("should call the handler for a valid token", async () => {
     const handler = withCronAuth(mockHandler);
     const request = new NextRequest("http://localhost/api/cron/test", {
       headers: { authorization: "Bearer test-secret" },
@@ -73,8 +73,8 @@ describe("withCronAuth", () => {
     expect(body).toEqual({ success: true });
   });
 
-  describe("skipInDevelopment 옵션", () => {
-    it("개발 환경 + skipInDevelopment=true면 인증 없이 통과", async () => {
+  describe("skipInDevelopment option", () => {
+    it("passes without authentication in development with skipInDevelopment=true", async () => {
       vi.stubEnv("NODE_ENV", "development");
       const handler = withCronAuth(mockHandler, { skipInDevelopment: true });
       const request = new NextRequest("http://localhost/api/cron/test");
@@ -85,7 +85,7 @@ describe("withCronAuth", () => {
       expect(mockHandler).toHaveBeenCalled();
     });
 
-    it("개발 환경 + skipInDevelopment=false면 인증 필요", async () => {
+    it("requires authentication in development with skipInDevelopment=false", async () => {
       vi.stubEnv("NODE_ENV", "development");
       const handler = withCronAuth(mockHandler, { skipInDevelopment: false });
       const request = new NextRequest("http://localhost/api/cron/test");
@@ -96,7 +96,7 @@ describe("withCronAuth", () => {
       expect(mockHandler).not.toHaveBeenCalled();
     });
 
-    it("production + skipInDevelopment=true면 인증 필요", async () => {
+    it("requires authentication in production with skipInDevelopment=true", async () => {
       vi.stubEnv("NODE_ENV", "production");
       const handler = withCronAuth(mockHandler, { skipInDevelopment: true });
       const request = new NextRequest("http://localhost/api/cron/test");

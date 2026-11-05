@@ -15,7 +15,6 @@ vi.mock("next/link", () => ({
   }) => <a href={href}>{children}</a>,
 }));
 vi.mock("next/image", () => ({
-  // eslint-disable-next-line @next/next/no-img-element
   default: ({ alt, src }: { alt: string; src: string }) => (
     <img alt={alt} src={src} />
   ),
@@ -99,19 +98,17 @@ describe("RenewalPipeline", () => {
       expect(screen.getByTestId(`pipeline-lane-${key}`)).toBeInTheDocument();
     }
     expect(screen.getByTestId("pipeline-lane-week")).toHaveTextContent(
-      "7일 이내"
+      "Next 7 days"
     );
     expect(screen.getByTestId("pipeline-lane-week")).toHaveTextContent("Slack");
     expect(screen.getByTestId("pipeline-lane-week")).toHaveTextContent(
-      "2일 남음"
+      "2 days"
     );
     expect(screen.getByTestId("pipeline-lane-overdue")).toHaveTextContent(
-      "3일 지연"
+      "3 days overdue"
     );
     expect(screen.getAllByTestId("pipeline-card")).toHaveLength(2);
-    expect(
-      screen.getByText(/환율이 최신이 아닐 수 있습니다/)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/FX rates may be out of date/)).toBeInTheDocument();
   });
 
   it("toggles between board and list and notifies the parent", () => {
@@ -121,7 +118,7 @@ describe("RenewalPipeline", () => {
       "data-view",
       "board"
     );
-    fireEvent.click(screen.getByRole("tab", { name: /목록/ }));
+    fireEvent.click(screen.getByRole("tab", { name: /List/ }));
     expect(onViewChange).toHaveBeenCalledWith("list");
     expect(screen.getByTestId("renewal-pipeline")).toHaveAttribute(
       "data-view",

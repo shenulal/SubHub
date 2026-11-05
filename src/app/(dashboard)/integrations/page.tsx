@@ -4,8 +4,8 @@ import { requireOrganization, type UserRole } from "@/lib/auth/require-auth";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "연동 관리 | SaaS 관리 플랫폼",
-  description: "SSO/IdP 연동을 관리합니다",
+  title: "Integrations",
+  description: "Manage SSO/IdP integrations",
 };
 
 export default async function IntegrationsPage() {

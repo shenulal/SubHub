@@ -16,14 +16,14 @@ import { revalidatePath } from "next/cache";
 import { cache } from "react";
 import { z } from "zod";
 
-// ==================== 스키마 정의 ====================
+// ==================== Schema definitions ====================
 
 const registerCardSchema = z.object({
   cardCd: z.string().min(3).max(3),
   cardNo: z.string().min(14).max(20),
   cardNm: z.string().nullable().optional(),
   loginMethod: z.enum(["ID", "CERT"]),
-  userId: z.string().nullable().optional(), // 카드사 로그인 ID
+  userId: z.string().nullable().optional(), // Card issuer login ID
   userPw: z.string().nullable().optional(),
   signCert: z.string().nullable().optional(),
   signPri: z.string().nullable().optional(),
@@ -31,13 +31,13 @@ const registerCardSchema = z.object({
   bizNo: z.string().nullable().optional(),
   userIdx: z.string().nullable().optional(),
   teamId: z.string().nullable().optional(),
-  assignedUserId: z.string().nullable().optional(), // 배정 유저 ID
+  assignedUserId: z.string().nullable().optional(), // Assigned user ID
 });
 
-// ==================== 법인카드 등록 ====================
+// ==================== Corporate card registration ====================
 
 /**
- * 법인카드 등록
+ * Register a corporate card
  */
 async function _registerCorporateCard(
   formData: FormData
@@ -45,21 +45,21 @@ async function _registerCorporateCard(
   try {
     const session = await getCachedSession();
     if (!session?.user?.organizationId) {
-      return { success: false, message: "인증이 필요합니다" };
+      return { success: false, message: "Authentication required" };
     }
     if (session.user.role !== "ADMIN") {
-      return { success: false, message: "관리자만 카드를 등록할 수 있습니다" };
+      return { success: false, message: "Only admins can register cards" };
     }
 
     const organizationId = session.user.organizationId;
 
-    // FormData 파싱
+    // Parse FormData
     const rawData = {
       cardCd: formData.get("cardCd") as string,
       cardNo: formData.get("cardNo") as string,
       cardNm: formData.get("cardNm") as string | null,
       loginMethod: formData.get("loginMethod") as string,
-      userId: formData.get("userId") as string | null, // 카드사 로그인 ID
+      userId: formData.get("userId") as string | null, // Card issuer login ID
       userPw: formData.get("userPw") as string | null,
       signCert: formData.get("signCert") as string | null,
       signPri: formData.get("signPri") as string | null,
@@ -67,10 +67,10 @@ async function _registerCorporateCard(
       bizNo: formData.get("bizNo") as string | null,
       userIdx: formData.get("userIdx") as string | null,
       teamId: (formData.get("teamId") as string) || null,
-      assignedUserId: (formData.get("assignedUserId") as string) || null, // 배정 유저 ID
+      assignedUserId: (formData.get("assignedUserId") as string) || null, // Assigned user ID
     };
 
-    // 유효성 검증
+    // Validation
     const result = registerCardSchema.safeParse(rawData);
     if (!result.success) {
       const fieldErrors = result.error.flatten().fieldErrors;
@@ -79,14 +79,14 @@ async function _registerCorporateCard(
         .join("; ");
       return {
         success: false,
-        message: `입력값 검증 실패: ${errorMessages}`,
+        message: `Input validation failed: ${errorMessages}`,
         errors: fieldErrors as Record<string, string[]>,
       };
     }
 
     const data = result.data;
 
-    // 중복 확인
+    // Duplicate check
     const existingCard = await prisma.corporateCard.findFirst({
       where: {
         organizationId,
@@ -95,35 +95,36 @@ async function _registerCorporateCard(
     });
 
     if (existingCard) {
-      return { success: false, message: "이미 등록된 카드입니다" };
+      return { success: false, message: "This card is already registered" };
     }
 
-    // 로그인 방식별 필수 필드 검증
+    // Validate required fields per login method
     if (data.loginMethod === "ID") {
       if (!data.userId || !data.userPw) {
         return {
           success: false,
-          message: "ID 로그인 시 아이디와 비밀번호는 필수입니다",
+          message: "User ID and password are required for ID login",
         };
       }
     } else if (data.loginMethod === "CERT") {
       if (!data.signCert || !data.signPri || !data.signPw) {
         return {
           success: false,
-          message: "인증서 로그인 시 인증서, 개인키, 비밀번호는 필수입니다",
+          message:
+            "Certificate, private key and password are required for certificate login",
         };
       }
     }
 
-    // Team과 User 상호 배타 검증
+    // Team and user assignments are mutually exclusive
     if (data.teamId && data.assignedUserId) {
       return {
         success: false,
-        message: "팀 배정과 유저 배정 중 하나만 선택할 수 있습니다",
+        message: "Select either a team or a user assignment, not both",
       };
     }
 
-    // 팀 유효성 검사 (teamId가 있는 경우)
+    // Validate the team (when teamId is set)
     if (data.teamId) {
       const team = await prisma.team.findFirst({
         where: {
@@ -135,12 +136,12 @@ async function _registerCorporateCard(
       if (!team) {
         return {
           success: false,
-          message: "유효하지 않은 팀입니다",
+          message: "Invalid team",
         };
       }
     }
 
-    // 유저 유효성 검사 (assignedUserId가 있는 경우)
+    // Validate the user (when assignedUserId is set)
     if (data.assignedUserId) {
       const user = await prisma.user.findFirst({
         where: {
@@ -152,12 +153,12 @@ async function _registerCorporateCard(
       if (!user) {
         return {
           success: false,
-          message: "유효하지 않은 사용자입니다",
+          message: "Invalid user",
         };
       }
     }
 
-    // 인증 정보 암호화 (원본 카드번호 포함)
+    // Encrypt credentials (including the original card number)
     const credentials: CardCredentials =
       data.loginMethod === "ID"
         ? {
@@ -180,7 +181,7 @@ async function _registerCorporateCard(
 
     const encryptedCredentials = encryptJson(credentials);
 
-    // 카드 등록
+    // Register the card
     const card = await prisma.corporateCard.create({
       data: {
         organizationId,
@@ -197,7 +198,7 @@ async function _registerCorporateCard(
       },
     });
 
-    // 감사 로그
+    // Audit log
     await prisma.auditLog.create({
       data: {
         action: "CREATE_CORPORATE_CARD",
@@ -218,12 +219,12 @@ async function _registerCorporateCard(
 
     return { success: true, data: { id: card.id } };
   } catch (error) {
-    logger.error({ err: error }, "법인카드 등록 실패");
+    logger.error({ err: error }, "Corporate card registration failed");
     const errorMessage =
-      error instanceof Error ? error.message : "알 수 없는 오류";
+      error instanceof Error ? error.message : "Unknown error";
     return {
       success: false,
-      message: `법인카드 등록에 실패했습니다: ${errorMessage}`,
+      message: `Failed to register the corporate card: ${errorMessage}`,
     };
   }
 }
@@ -232,10 +233,10 @@ export const registerCorporateCard = withLogging(
   _registerCorporateCard
 );
 
-// ==================== 법인카드 조회 ====================
+// ==================== Corporate card queries ====================
 
 /**
- * 거래 분류 요약 (SaaS/Non-SaaS/미분류)
+ * Transaction classification summary (SaaS/Non-SaaS/unclassified)
  */
 export interface CardTransactionSummary {
   totalCount: number;
@@ -245,7 +246,7 @@ export interface CardTransactionSummary {
 }
 
 /**
- * 배정 정보 타입
+ * Assignment info type
  */
 export interface CardAssignment {
   type: "none" | "team" | "user";
@@ -253,11 +254,11 @@ export interface CardAssignment {
   teamName: string | null;
   userId: string | null;
   userName: string | null;
-  userTeamName: string | null; // 유저 배정 시 해당 유저의 팀
+  userTeamName: string | null; // The user's team when assigned to a user
 }
 
 /**
- * 법인카드 목록 조회 타입
+ * Corporate card list type
  */
 export type CorporateCardWithCount = CorporateCard & {
   _count: { transactions: number };
@@ -266,7 +267,7 @@ export type CorporateCardWithCount = CorporateCard & {
 };
 
 /**
- * 카드별 거래 분류 요약 조회
+ * Fetch the transaction classification summary per card
  */
 export async function getCardTransactionSummary(
   organizationId: string,
@@ -326,7 +327,7 @@ export async function getCardTransactionSummary(
 }
 
 /**
- * 법인카드 목록 조회
+ * Fetch corporate cards
  */
 export async function getCorporateCards(): Promise<CorporateCardWithCount[]> {
   const session = await getCachedSession();
@@ -364,7 +365,7 @@ export async function getCorporateCards(): Promise<CorporateCardWithCount[]> {
         card.id
       );
 
-      // 배정 정보 구성
+      // Build assignment info
       let assignment: CardAssignment;
       if (card.assignedUser) {
         assignment = {
@@ -403,7 +404,7 @@ export async function getCorporateCards(): Promise<CorporateCardWithCount[]> {
 }
 
 /**
- * 법인카드 상세 조회
+ * Fetch corporate card details
  */
 export async function getCorporateCard(
   cardId: string
@@ -421,22 +422,22 @@ export async function getCorporateCard(
   });
 }
 
-// 동일 요청 내에서 카드 상세를 중복 조회할 때 DB 호출을 한 번으로 줄이기 위해 캐시 제공
+// Cached so repeated card-detail lookups within one request hit the DB only once
 export const getCorporateCardCached = cache(getCorporateCard);
 
-// ==================== 법인카드 삭제 ====================
+// ==================== Corporate card deletion ====================
 
 /**
- * 법인카드 삭제
+ * Delete a corporate card
  */
 async function _deleteCorporateCard(cardId: string): Promise<ActionState> {
   try {
     const session = await getCachedSession();
     if (!session?.user?.organizationId) {
-      return { success: false, message: "인증이 필요합니다" };
+      return { success: false, message: "Authentication required" };
     }
     if (session.user.role !== "ADMIN") {
-      return { success: false, message: "관리자만 카드를 삭제할 수 있습니다" };
+      return { success: false, message: "Only admins can delete cards" };
     }
 
     const organizationId = session.user.organizationId;
@@ -449,7 +450,7 @@ async function _deleteCorporateCard(cardId: string): Promise<ActionState> {
     });
 
     if (!card) {
-      return { success: false, message: "카드를 찾을 수 없습니다" };
+      return { success: false, message: "Card not found" };
     }
 
     await prisma.corporateCard.delete({
@@ -474,8 +475,8 @@ async function _deleteCorporateCard(cardId: string): Promise<ActionState> {
 
     return { success: true };
   } catch (error) {
-    logger.error({ err: error }, "법인카드 삭제 실패");
-    return { success: false, message: "법인카드 삭제에 실패했습니다" };
+    logger.error({ err: error }, "Corporate card deletion failed");
+    return { success: false, message: "Failed to delete the corporate card" };
   }
 }
 export const deleteCorporateCard = withLogging(
@@ -483,10 +484,10 @@ export const deleteCorporateCard = withLogging(
   _deleteCorporateCard
 );
 
-// ==================== 법인카드 수정 ====================
+// ==================== Corporate card update ====================
 
 /**
- * 법인카드 팀 배정 수정
+ * Update a corporate card's team assignment
  */
 async function _updateCorporateCardTeam(
   cardId: string,
@@ -495,10 +496,10 @@ async function _updateCorporateCardTeam(
   try {
     const session = await getCachedSession();
     if (!session?.user?.organizationId) {
-      return { success: false, message: "인증이 필요합니다" };
+      return { success: false, message: "Authentication required" };
     }
     if (session.user.role !== "ADMIN") {
-      return { success: false, message: "관리자만 카드를 수정할 수 있습니다" };
+      return { success: false, message: "Only admins can edit cards" };
     }
 
     const organizationId = session.user.organizationId;
@@ -511,10 +512,10 @@ async function _updateCorporateCardTeam(
     });
 
     if (!card) {
-      return { success: false, message: "카드를 찾을 수 없습니다" };
+      return { success: false, message: "Card not found" };
     }
 
-    // 팀 유효성 검사 (teamId가 있는 경우)
+    // Validate the team (when teamId is set)
     if (teamId) {
       const team = await prisma.team.findFirst({
         where: {
@@ -524,7 +525,7 @@ async function _updateCorporateCardTeam(
       });
 
       if (!team) {
-        return { success: false, message: "유효하지 않은 팀입니다" };
+        return { success: false, message: "Invalid team" };
       }
     }
 
@@ -550,10 +551,10 @@ async function _updateCorporateCardTeam(
 
     revalidatePath("/payments/cards");
 
-    return { success: true, message: "카드 팀 배정이 수정되었습니다" };
+    return { success: true, message: "Card team assignment updated" };
   } catch (error) {
-    logger.error({ err: error }, "법인카드 수정 실패");
-    return { success: false, message: "법인카드 수정에 실패했습니다" };
+    logger.error({ err: error }, "Corporate card update failed");
+    return { success: false, message: "Failed to update the corporate card" };
   }
 }
 export const updateCorporateCardTeam = withLogging(

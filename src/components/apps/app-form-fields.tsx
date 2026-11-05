@@ -42,9 +42,9 @@ interface AppFormFieldsProps {
   includeStatus?: boolean;
   disabled?: boolean;
   teamOptions?: TeamOption[];
-  /** MEMBER/VIEWER 역할 여부 (팀 선택 제한용) */
+  /** Whether the user is MEMBER/VIEWER (restricts team selection) */
   isRestricted?: boolean;
-  /** 사용자의 팀 ID (팀 미소속 시 null) */
+  /** The user's team ID (null when not in a team) */
   userTeamId?: string | null;
 }
 
@@ -191,7 +191,7 @@ export function AppFormFields({
         )}
       </div>
 
-      {/* Team 배정 - MultiSelect */}
+      {/* Team assignment - MultiSelect */}
       <div className="space-y-2">
         <Label>{t("apps.form.fields.assignedTeam")}</Label>
         {isRestricted && !userTeamId ? (

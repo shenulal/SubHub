@@ -58,10 +58,10 @@ const roleIcons: Record<UserRole, typeof Shield> = {
   VIEWER: Eye,
 };
 
-// Status Colors 매핑 (color-theme-guide.md 기준)
-// INACTIVE: warning-muted (일시적, 복구 가능)
-// TERMINATED: destructive-muted (영구적)
-// PENDING: info-muted (대기 중)
+// Status colour mapping (per color-theme-guide.md)
+// INACTIVE: warning-muted (temporary, recoverable)
+// TERMINATED: destructive-muted (permanent)
+// PENDING: info-muted (pending)
 type StatusStyle = {
   variant: "secondary" | "warning" | "info" | "error";
 };

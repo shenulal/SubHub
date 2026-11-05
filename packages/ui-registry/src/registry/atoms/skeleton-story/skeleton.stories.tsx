@@ -71,7 +71,7 @@ export const Card: Story = {
 };
 
 /**
- * Skeleton 로딩 상태를 테스트합니다.
+ * Tests the Skeleton loading state.
  */
 export const ShouldShowLoadingState: Story = {
   name: "when loading, should display skeleton, then show actual content",
@@ -127,9 +127,9 @@ export const ShouldShowLoadingState: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    // 🎯 목적: 로딩 중일 때 Skeleton이 표시되고, 로딩 완료 후 실제 콘텐츠가 표시되는지 확인
+    // 🎯 Purpose: Verify the Skeleton is shown while loading and the real content appears afterwards
 
-    // 초기 로딩 상태 확인 (Skeleton 표시)
+    // Check the initial loading state (Skeleton shown)
     const skeletonAvatar = canvas.getByTestId("skeleton-avatar");
     await expect(skeletonAvatar).toBeInTheDocument();
 
@@ -139,7 +139,7 @@ export const ShouldShowLoadingState: Story = {
     const skeletonLine2 = canvas.getByTestId("skeleton-line2");
     await expect(skeletonLine2).toBeInTheDocument();
 
-    // 로딩 완료 대기 (2초 후 실제 콘텐츠 표시)
+    // Wait for loading to finish (real content appears after 2 seconds)
     await waitFor(
       async () => {
         const actualAvatar = await canvas.findByTestId("actual-avatar");

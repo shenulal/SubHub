@@ -4,7 +4,7 @@ import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import { TerminatedUsersList } from "./terminated-users-list";
 
-// Mock next-auth (server module 의존 차단)
+// Mock next-auth (blocks the server-module dependency)
 vi.mock("next-auth", () => ({
   __esModule: true,
   default: () => ({}),
@@ -15,10 +15,10 @@ vi.mock("next-auth", () => ({
 vi.mock("next-intl", () => ({
   useTranslations: () => {
     const t = (key: string, params?: Record<string, unknown>) => {
-      // billingType 키는 실제 번역값 반환
+      // billingType keys return the real translated value
       const translations: Record<string, string> = {
         "users.terminated.billingType.PER_SEAT": "Per Seat",
-        "users.terminated.billingType.FLAT_RATE": "정액제",
+        "users.terminated.billingType.FLAT_RATE": "Flat Rate",
       };
       if (translations[key]) return translations[key];
       if (params) {
@@ -73,10 +73,10 @@ const mockTerminatedUsers: TerminatedUserWithAccess[] = [
   {
     id: "user-1",
     email: "terminated1@example.com",
-    name: "퇴사자1",
+    name: "Terminated User 1",
     avatarUrl: "https://example.com/avatar1.png",
-    department: "개발팀",
-    jobTitle: "개발자",
+    department: "Engineering",
+    jobTitle: "Developer",
     terminatedAt: new Date("2024-01-15"),
     unrevokedAccessCount: 5,
     appAccesses: [
@@ -137,10 +137,10 @@ const mockTerminatedUsers: TerminatedUserWithAccess[] = [
   {
     id: "user-2",
     email: "terminated2@example.com",
-    name: "퇴사자2",
+    name: "Terminated User 2",
     avatarUrl: null,
-    department: "마케팅팀",
-    jobTitle: "마케터",
+    department: "Marketing",
+    jobTitle: "Marketer",
     terminatedAt: new Date("2024-01-10"),
     unrevokedAccessCount: 1,
     appAccesses: [
@@ -160,102 +160,100 @@ const mockTerminatedUsers: TerminatedUserWithAccess[] = [
 ];
 
 describe("TerminatedUsersList", () => {
-  it("퇴사자 목록이 비어있으면 안내 메시지를 표시해야 한다", () => {
+  it("shows an empty-state message when there are no terminated users", () => {
     render(<TerminatedUsersList users={[]} />);
 
-    expect(
-      screen.getByText("미회수 접근 권한이 있는 퇴사자가 없습니다")
-    ).toBeInTheDocument();
+    expect(screen.getByText("No terminated users")).toBeInTheDocument();
   });
 
-  it("퇴사자 정보를 표시해야 한다", () => {
+  it("shows terminated user details", () => {
     render(<TerminatedUsersList users={mockTerminatedUsers} />);
 
-    expect(screen.getByText("퇴사자1")).toBeInTheDocument();
-    expect(screen.getByText("퇴사자2")).toBeInTheDocument();
+    expect(screen.getByText("Terminated User 1")).toBeInTheDocument();
+    expect(screen.getByText("Terminated User 2")).toBeInTheDocument();
     expect(screen.getByText("terminated1@example.com")).toBeInTheDocument();
   });
 
-  it("부서 정보를 표시해야 한다", () => {
+  it("shows department information", () => {
     render(<TerminatedUsersList users={mockTerminatedUsers} />);
 
-    // 부서가 텍스트 내에 포함되어 있는지 확인
-    expect(screen.getByText(/개발팀/)).toBeInTheDocument();
-    expect(screen.getByText(/마케팅팀/)).toBeInTheDocument();
+    // Check that the department is included in the text
+    expect(screen.getByText(/Engineering/)).toBeInTheDocument();
+    expect(screen.getByText(/Marketing/)).toBeInTheDocument();
   });
 
-  it("퇴사일을 포맷하여 표시해야 한다", () => {
+  it("shows the formatted termination date", () => {
     render(<TerminatedUsersList users={mockTerminatedUsers} />);
 
-    // 퇴사일이 텍스트 내에 포함되어 있는지 확인
+    // Check that the termination date is included in the text
     expect(screen.getByText(/2024\.01\.15/)).toBeInTheDocument();
-    // 2024.01.10은 퇴사일과 마지막 사용일 모두에 나타남
+    // 2024.01.10 appears as both a termination date and a last-used date
     const dateElements = screen.getAllByText(/2024\.01\.10/);
     expect(dateElements.length).toBeGreaterThanOrEqual(1);
   });
 
-  it("미회수 앱 수를 표시해야 한다", () => {
+  it("shows the number of unrevoked apps", () => {
     render(<TerminatedUsersList users={mockTerminatedUsers} />);
 
-    expect(screen.getByText("5개 앱")).toBeInTheDocument();
-    expect(screen.getByText("1개 앱")).toBeInTheDocument();
+    expect(screen.getByText("5 apps")).toBeInTheDocument();
+    expect(screen.getByText("1 app")).toBeInTheDocument();
   });
 
-  it("앱 접근 정보를 표시해야 한다", () => {
+  it("shows app access information", () => {
     render(<TerminatedUsersList users={mockTerminatedUsers} />);
 
-    // Slack은 두 명 모두 접근권한이 있으므로 getAllByText 사용
+    // Both users have Slack access, so use getAllByText
     const slackElements = screen.getAllByText("Slack");
     expect(slackElements.length).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("Notion")).toBeInTheDocument();
     expect(screen.getByText("Jira")).toBeInTheDocument();
   });
 
-  it("접근 레벨을 표시해야 한다", () => {
+  it("shows the access level", () => {
     render(<TerminatedUsersList users={mockTerminatedUsers} />);
 
     expect(screen.getByText("admin")).toBeInTheDocument();
-    // "user"는 여러 번 나타남
+    // "user" appears several times
     const userLevels = screen.getAllByText("user");
     expect(userLevels.length).toBeGreaterThanOrEqual(1);
   });
 
-  it("개별 회수 버튼이 존재해야 한다", () => {
+  it("renders an individual revoke button", () => {
     render(<TerminatedUsersList users={mockTerminatedUsers} />);
 
-    // 총 4개의 앱 접근권한 (3 + 1)
-    const revokeButtons = screen.getAllByRole("button", { name: /회수/i });
+    // 4 app accesses in total (3 + 1)
+    const revokeButtons = screen.getAllByRole("button", { name: /revoke/i });
     expect(revokeButtons.length).toBeGreaterThanOrEqual(4);
   });
 
-  it("전체 회수 버튼이 존재해야 한다", () => {
+  it("renders a revoke-all button", () => {
     render(<TerminatedUsersList users={mockTerminatedUsers} />);
 
     const allRevokeButtons = screen.getAllByRole("button", {
-      name: /전체 회수/i,
+      name: /revoke all/i,
     });
-    expect(allRevokeButtons.length).toBe(2); // 퇴사자 2명
+    expect(allRevokeButtons.length).toBe(2); // 2 terminated users
   });
 
-  it("아바타가 있으면 이미지를 표시해야 한다", () => {
+  it("shows the avatar image when present", () => {
     render(<TerminatedUsersList users={mockTerminatedUsers} />);
 
-    const avatarImg = screen.getByAltText("퇴사자1");
+    const avatarImg = screen.getByAltText("Terminated User 1");
     expect(avatarImg).toHaveAttribute("src", "https://example.com/avatar1.png");
   });
 
-  it("구독 할당의 billingType 뱃지를 표시해야 한다", () => {
+  it("shows the billingType badge for subscription assignments", () => {
     render(<TerminatedUsersList users={mockTerminatedUsers} />);
 
     expect(screen.getByText("Per Seat")).toBeInTheDocument();
-    expect(screen.getByText("정액제")).toBeInTheDocument();
+    expect(screen.getByText("Flat Rate")).toBeInTheDocument();
   });
 
-  it("아바타가 없으면 이름 첫 글자를 표시해야 한다", () => {
+  it("shows the first letter of the name when there is no avatar", () => {
     render(<TerminatedUsersList users={mockTerminatedUsers} />);
 
-    // "퇴" (퇴사자2의 첫 글자)
-    const avatarPlaceholder = screen.getAllByText("퇴");
+    // "T" (first letter of Terminated User 2)
+    const avatarPlaceholder = screen.getAllByText("T");
     expect(avatarPlaceholder.length).toBeGreaterThanOrEqual(1);
   });
 });

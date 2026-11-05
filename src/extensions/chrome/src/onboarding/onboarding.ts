@@ -64,10 +64,10 @@ function showSuccess(userName?: string): void {
   if (formState) formState.style.display = "none";
   if (successState) successState.style.display = "block";
   if (welcomeMsg && userName) {
-    welcomeMsg.textContent = `${userName}님, Extension이 활성화되었습니다.`;
+    welcomeMsg.textContent = `${userName}, the extension is now active.`;
   }
 
-  // 3초 후 탭 닫기
+  // Close the tab after 3 seconds
   setTimeout(() => {
     window.close();
   }, 3000);
@@ -83,8 +83,8 @@ function setLoading(loading: boolean): void {
   if (btn) {
     btn.disabled = loading;
     btn.innerHTML = loading
-      ? '<span class="spinner"></span>확인 중...'
-      : "확인";
+      ? '<span class="spinner"></span>Verifying...'
+      : "Verify";
   }
   if (emailInput) {
     emailInput.disabled = loading;
@@ -102,7 +102,7 @@ async function handleSubmit(e: Event): Promise<void> {
   const email = emailInput?.value?.trim();
 
   if (!email) {
-    showError("이메일을 입력하세요.");
+    showError("Please enter your email.");
     return;
   }
 
@@ -122,7 +122,7 @@ async function handleSubmit(e: Event): Promise<void> {
     );
 
     if (!verifyResponse.ok) {
-      showError("서버 연결에 실패했습니다. 잠시 후 다시 시도해주세요.");
+      showError("Could not connect to the server. Please try again shortly.");
       setLoading(false);
       return;
     }
@@ -131,7 +131,7 @@ async function handleSubmit(e: Event): Promise<void> {
 
     if (!verifyData.success || !verifyData.data?.verified) {
       showError(
-        "이메일을 확인할 수 없습니다. 조직에 등록된 이메일을 사용하세요."
+        "We could not verify this email. Please use the email registered with your organisation."
       );
       setLoading(false);
       return;
@@ -152,7 +152,7 @@ async function handleSubmit(e: Event): Promise<void> {
       );
 
       if (!completeResponse.ok) {
-        showError("온보딩 완료 처리에 실패했습니다. 다시 시도해주세요.");
+        showError("Failed to complete onboarding. Please try again.");
         setLoading(false);
         return;
       }
@@ -160,7 +160,7 @@ async function handleSubmit(e: Event): Promise<void> {
       const completeData = await completeResponse.json();
 
       if (!completeData.success) {
-        showError("온보딩 완료 처리에 실패했습니다.");
+        showError("Failed to complete onboarding.");
         setLoading(false);
         return;
       }
@@ -186,7 +186,7 @@ async function handleSubmit(e: Event): Promise<void> {
     showSuccess(userName);
   } catch (error) {
     console.error("Onboarding error:", error);
-    showError("오류가 발생했습니다. 잠시 후 다시 시도해주세요.");
+    showError("An error occurred. Please try again shortly.");
     setLoading(false);
   }
 }

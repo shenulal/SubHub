@@ -53,29 +53,29 @@ describe("IntegrationStatusForm", () => {
     mockValues = { status: "ACTIVE" };
   });
 
-  it("상태 선택과 버튼을 렌더링한다", () => {
+  it("renders the status select and buttons", () => {
     render(<IntegrationStatusForm id="int-1" defaultStatus="ACTIVE" />);
 
-    expect(screen.getAllByText(/상태/).length).toBeGreaterThan(0);
-    expect(screen.getByRole("button", { name: /저장/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /취소/ })).toBeInTheDocument();
+    expect(screen.getAllByText(/Status/).length).toBeGreaterThan(0);
+    expect(screen.getByRole("button", { name: /Save/ })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Cancel/ })).toBeInTheDocument();
   });
 
-  it("성공 시 onFinish 호출 후 리다이렉트", async () => {
+  it("calls onFinish and redirects on success", async () => {
     const user = userEvent.setup();
     render(<IntegrationStatusForm id="int-1" defaultStatus="ACTIVE" />);
 
-    await user.click(screen.getByRole("button", { name: /저장/ }));
+    await user.click(screen.getByRole("button", { name: /Save/ }));
 
     expect(mockOnFinish).toHaveBeenCalledWith({ status: "ACTIVE" });
     expect(mockRouter.push).toHaveBeenCalledWith("/integrations/int-1");
   });
 
-  it("로딩 중이면 버튼을 비활성화한다", () => {
+  it("disables the button while loading", () => {
     mockFormLoading = true;
     render(<IntegrationStatusForm id="int-1" defaultStatus="ACTIVE" />);
 
-    const submit = screen.getByRole("button", { name: /저장/ });
+    const submit = screen.getByRole("button", { name: /Save/ });
     expect(submit).toBeDisabled();
   });
 });

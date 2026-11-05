@@ -549,7 +549,7 @@ model PaymentRecord {
   transactionDate      DateTime           @map("transaction_date")
   merchantName         String             @map("merchant_name")
   amount               Decimal            @db.Decimal(10, 2)
-  currency             String             @default("KRW")
+  currency             String             @default("AED")
   cardLast4            String?            @map("card_last_4")
   approvalNumber       String?            @map("approval_number")
   category             String?
@@ -718,7 +718,7 @@ model ReportSchedule {
   dayOfWeek      Int?              @map("day_of_week")
   dayOfMonth     Int?              @map("day_of_month")
   hour           Int               @default(9)
-  timezone       String            @default("Asia/Seoul")
+  timezone       String            @default("Asia/Dubai")
   recipients     String[]
   isActive       Boolean           @default(true) @map("is_active")
   lastSentAt     DateTime?         @map("last_sent_at")
@@ -1065,11 +1065,11 @@ model ExtensionBlockLog {
   @@map("extension_block_logs")
 }
 
-// 도메인 SaaS 스캔 히스토리 - 검토 대기 앱 리스트용
+// Domain SaaS scan history - feeds the pending-review app list
 model SaaSDomainScanHistory {
   id             String   @id @default(cuid())
   organizationId String   @map("organization_id")
-  domain         String // 메인 도메인 (google.com)
+  domain         String // Primary domain (google.com)
   isSaaS         Boolean  @map("is_saas")
   serviceName    String?  @map("service_name")
   category       String?
@@ -1079,7 +1079,7 @@ model SaaSDomainScanHistory {
   reasoning      String?
   scannedAt      DateTime @default(now()) @map("scanned_at")
 
-  // 악성 URL 검사 관련 필드
+  // Malicious-URL check fields
   isMalicious           Boolean   @default(false) @map("is_malicious")
   threatType            String?   @map("threat_type") // MALWARE, SOCIAL_ENGINEERING, UNWANTED_SOFTWARE, POTENTIALLY_HARMFUL_APPLICATION
   safeBrowsingCheckedAt DateTime? @map("safe_browsing_checked_at")
@@ -1367,7 +1367,7 @@ enum ExtensionAuthType {
   SSO
 }
 
-// DA-84: CSV 필드 매핑 프로필 (조직별 커스텀 매핑 저장)
+// DA-84: CSV field mapping profile (stores per-organisation custom mappings)
 model CsvMappingProfile {
   id             String       @id @default(cuid())
   organizationId String       @map("organization_id")

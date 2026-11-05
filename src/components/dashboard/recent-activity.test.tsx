@@ -1,5 +1,5 @@
 // src/components/dashboard/recent-activity.test.tsx
-import messages from "@/i18n/messages/ko.json";
+import messages from "@/i18n/messages/en.json";
 import type { RecentActivityItem } from "@/types/dashboard";
 import { render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
@@ -9,7 +9,7 @@ import { RecentActivity } from "./recent-activity";
 describe("RecentActivity", () => {
   const renderWithIntl = (ui: React.ReactElement) =>
     render(
-      <NextIntlClientProvider locale="ko" messages={messages}>
+      <NextIntlClientProvider locale="en" messages={messages}>
         {ui}
       </NextIntlClientProvider>
     );
@@ -31,10 +31,10 @@ describe("RecentActivity", () => {
       action: "CREATE_APP",
       entityType: "App",
       entityId: "app-1",
-      userName: "홍길동",
+      userName: "John Smith",
       userEmail: "hong@test.com",
       createdAt: new Date("2025-11-30T11:30:00Z"),
-      description: "앱을 추가했습니다",
+      description: "Added an app",
     },
     {
       id: "log-2",
@@ -44,76 +44,72 @@ describe("RecentActivity", () => {
       userName: undefined,
       userEmail: "system@test.com",
       createdAt: new Date("2025-11-30T10:00:00Z"),
-      description: "사용자를 퇴사 처리했습니다",
+      description: "Offboarded a user",
     },
     {
       id: "log-3",
       action: "CREATE_SUBSCRIPTION",
       entityType: "Subscription",
       entityId: "sub-1",
-      userName: "김철수",
+      userName: "Ahmed Khan",
       userEmail: undefined,
       createdAt: new Date("2025-11-30T09:00:00Z"),
-      description: "구독을 등록했습니다",
+      description: "Registered a subscription",
     },
   ];
 
-  describe("렌더링", () => {
-    it("카드 제목이 표시되어야 한다", () => {
+  describe("rendering", () => {
+    it("shows the card title", () => {
       renderWithIntl(<RecentActivity activities={mockActivities} />);
 
-      expect(screen.getByText("최근 활동")).toBeInTheDocument();
+      expect(screen.getByText("Recent activity")).toBeInTheDocument();
     });
 
-    it("활동 목록이 표시되어야 한다", () => {
+    it("shows the activity list", () => {
       renderWithIntl(<RecentActivity activities={mockActivities} />);
 
-      expect(screen.getByText("홍길동")).toBeInTheDocument();
-      expect(screen.getByText("앱을 추가했습니다")).toBeInTheDocument();
+      expect(screen.getByText("John Smith")).toBeInTheDocument();
+      expect(screen.getByText("Added an app")).toBeInTheDocument();
     });
 
-    it("사용자 이름이 없으면 이메일이 표시되어야 한다", () => {
+    it("shows the email when there is no user name", () => {
       renderWithIntl(<RecentActivity activities={mockActivities} />);
 
       expect(screen.getByText("system@test.com")).toBeInTheDocument();
     });
 
-    it("사용자 이름과 이메일이 없으면 시스템이 표시되어야 한다", () => {
+    it("shows System when there is no user name or email", () => {
       const activitiesWithNoUser: RecentActivityItem[] = [
         {
           id: "log-4",
           action: "SYSTEM_UPDATE",
           entityType: "System",
           createdAt: new Date("2025-11-30T08:00:00Z"),
-          description: "시스템 업데이트",
+          description: "System update",
         },
       ];
 
       renderWithIntl(<RecentActivity activities={activitiesWithNoUser} />);
 
-      expect(screen.getByText("시스템")).toBeInTheDocument();
+      expect(screen.getByText("System")).toBeInTheDocument();
     });
   });
 
-  describe("빈 데이터 처리", () => {
-    it("활동 내역이 없을 때 안내 메시지가 표시되어야 한다", () => {
+  describe("empty data", () => {
+    it("shows an empty-state message when there is no activity", () => {
       renderWithIntl(<RecentActivity activities={[]} />);
 
-      expect(
-        screen.getByText("아직 활동 내역이 없습니다.")
-      ).toBeInTheDocument();
+      expect(screen.getByText("No recent activity yet.")).toBeInTheDocument();
     });
   });
 
-  describe("활동 설명", () => {
-    it("각 활동의 설명이 표시되어야 한다", () => {
+  describe("activity description", () => {
+    it("shows the description of each activity", () => {
       renderWithIntl(<RecentActivity activities={mockActivities} />);
 
-      expect(screen.getByText("앱을 추가했습니다")).toBeInTheDocument();
-      expect(
-        screen.getByText("사용자를 퇴사 처리했습니다")
-      ).toBeInTheDocument();
-      expect(screen.getByText("구독을 등록했습니다")).toBeInTheDocument();
+      expect(screen.getByText("Added an app")).toBeInTheDocument();
+      expect(screen.getByText("Offboarded a user")).toBeInTheDocument();
+      expect(screen.getByText("Registered a subscription")).toBeInTheDocument();
     });
   });
 });

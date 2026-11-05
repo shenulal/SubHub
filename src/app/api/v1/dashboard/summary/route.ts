@@ -20,7 +20,7 @@ import { requireOrganization } from "@/lib/auth/require-auth";
 import { getUnifiedUnmatchedCount } from "@/lib/services/payment/unified-payment";
 
 /**
- * 기간 프리셋에 따른 날짜 범위 계산
+ * Calculate the date range for a period preset
  */
 function getDateRangeFromPreset(preset: string): {
   startDate: Date;
@@ -51,7 +51,7 @@ function getDateRangeFromPreset(preset: string): {
 }
 
 /**
- * 기간 프리셋에 따른 월 수 계산
+ * Calculate the number of months for a period preset
  */
 function getMonthsFromPreset(preset: string): number {
   switch (preset) {
@@ -68,8 +68,8 @@ function getMonthsFromPreset(preset: string): number {
 
 /**
  * GET /api/v1/dashboard/summary
- * - 대시보드 요약 데이터를 반환
- * - 기존 페이지 로직과 동일한 데이터 소스를 사용
+ * - Returns dashboard summary data
+ * - Uses the same data sources as the existing page logic
  * - Query params: preset (7d, 30d, 1y), startDate, endDate (custom)
  */
 import { withLogging } from "@/lib/logging";
@@ -81,13 +81,13 @@ export const GET = withLogging(
   async (request: NextRequest) => {
     const { organizationId } = await requireOrganization();
 
-    // 기간 파라미터 파싱
+    // Parse the period parameter
     const searchParams = request.nextUrl.searchParams;
     const preset = searchParams.get("preset") || "30d";
     const customStartDate = searchParams.get("startDate");
     const customEndDate = searchParams.get("endDate");
 
-    // 날짜 범위 계산
+    // Calculate the date range
     let startDate: Date;
     let endDate: Date;
 
@@ -137,7 +137,7 @@ export const GET = withLogging(
       getRecentActivity(),
       getSecurityInsights(),
       getDepartmentInsights(),
-      getPendingConfirmations(3), // 대시보드에는 최대 3개만 표시
+      getPendingConfirmations(3), // Show at most 3 on the dashboard
     ]);
 
     const costStats = costStatsRes.success

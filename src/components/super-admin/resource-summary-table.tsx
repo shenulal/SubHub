@@ -16,7 +16,7 @@ interface ResourceSummaryTableProps {
 
 export function ResourceSummaryTable({ data }: ResourceSummaryTableProps) {
   const formatCurrency = (amount: number, currency: string) =>
-    new Intl.NumberFormat("ko-KR", {
+    new Intl.NumberFormat("en-US", {
       style: "currency",
       currency,
       maximumFractionDigits: 0,
@@ -25,7 +25,7 @@ export function ResourceSummaryTable({ data }: ResourceSummaryTableProps) {
   if (data.length === 0) {
     return (
       <div className="text-muted-foreground flex h-32 items-center justify-center text-sm">
-        활성 구독이 없습니다.
+        No active subscriptions.
       </div>
     );
   }
@@ -34,9 +34,9 @@ export function ResourceSummaryTable({ data }: ResourceSummaryTableProps) {
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>앱</TableHead>
-          <TableHead className="text-right">구독 수</TableHead>
-          <TableHead className="text-right">월 비용</TableHead>
+          <TableHead>App</TableHead>
+          <TableHead className="text-right">Subscriptions</TableHead>
+          <TableHead className="text-right">Monthly Cost</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>

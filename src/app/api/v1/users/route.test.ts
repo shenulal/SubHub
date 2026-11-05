@@ -15,7 +15,7 @@ vi.mock("@/actions/users", () => ({
 const mockAuth = vi.mocked(auth);
 const mockGetUsers = vi.mocked(getUsers);
 
-describe("/api/v1/users 계약", () => {
+describe("/api/v1/users contract", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });

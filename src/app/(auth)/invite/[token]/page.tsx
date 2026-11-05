@@ -30,7 +30,7 @@ export default async function InviteAcceptPage({
   const result = await acceptInvitation(token);
 
   if (result.success) {
-    // 세션 갱신 후 /apps로 리다이렉트 (JWT에 organizationId 반영)
+    // Refresh the session, then redirect to /apps (reflects organizationId in the JWT)
     redirect("/api/auth/refresh-session?callbackUrl=/dashboard");
   }
 

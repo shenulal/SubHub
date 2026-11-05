@@ -8,11 +8,11 @@ import { NextRequest, NextResponse } from "next/server";
 export const GET = withCronAuth(
   withLogging("cron:shadow-it-scan", async (request: NextRequest) => {
     try {
-      logger.info("[Cron] Shadow IT 스캔 시작");
+      logger.info("[Cron] Shadow IT scan started");
 
       const result = await processShadowITScan();
 
-      logger.info({ result }, "[Cron] Shadow IT 스캔 완료");
+      logger.info({ result }, "[Cron] Shadow IT scan completed");
 
       return NextResponse.json({
         success: result.success,
@@ -25,12 +25,12 @@ export const GET = withCronAuth(
         errors: result.errors.length > 0 ? result.errors : undefined,
       });
     } catch (error) {
-      logger.error({ err: error }, "[Cron] Shadow IT 스캔 오류");
+      logger.error({ err: error }, "[Cron] Shadow IT scan error");
 
       return NextResponse.json(
         {
           success: false,
-          error: error instanceof Error ? error.message : "알 수 없는 오류",
+          error: error instanceof Error ? error.message : "Unknown error",
         },
         { status: 500 }
       );

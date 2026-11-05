@@ -23,7 +23,7 @@ import { Check, PlusCircle, Search, X } from "lucide-react";
 import * as React from "react";
 
 /**
- * 필터 옵션 타입
+ * Filter option type
  */
 export interface FilterOption {
   label: string;
@@ -32,7 +32,7 @@ export interface FilterOption {
 }
 
 /**
- * 필터 정의 타입
+ * Filter definition type
  */
 export interface FilterDefinition {
   id: string;
@@ -41,7 +41,7 @@ export interface FilterDefinition {
 }
 
 /**
- * 선택된 필터 값 타입
+ * Selected filter values type
  */
 export type SelectedFilters = Record<string, Set<string>>;
 
@@ -56,7 +56,7 @@ interface FacetedFilterProps {
 }
 
 /**
- * FacetedFilter 컴포넌트 - 다중 선택 가능한 필터 드롭다운
+ * FacetedFilter component - multi-select filter dropdown
  */
 function FacetedFilter({
   title,
@@ -184,11 +184,11 @@ interface AdvancedFilterBarProps {
 }
 
 /**
- * 고급 필터 바 컴포넌트
- * 레퍼런스: shadcnuikit.com/dashboard/products
- * - 검색 입력 (좌측)
- * - 다중 필터 드롭다운 (FacetedFilter)
- * - 추가 액션 버튼 (children)
+ * Advanced filter bar component
+ * Reference: shadcnuikit.com/dashboard/products
+ * - Search input (left)
+ * - Multiple filter dropdowns (FacetedFilter)
+ * - Additional action buttons (children)
  */
 export function AdvancedFilterBar({
   searchValue,
@@ -213,7 +213,7 @@ export function AdvancedFilterBar({
       )}
     >
       <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-        {/* 검색 입력 */}
+        {/* Search input */}
         <div className="relative w-full sm:w-64 lg:w-80">
           <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2" />
           <Input
@@ -224,7 +224,7 @@ export function AdvancedFilterBar({
           />
         </div>
 
-        {/* 필터 드롭다운들 */}
+        {/* Filter dropdowns */}
         {filters.map((filter) => (
           <FacetedFilter
             key={filter.id}
@@ -235,7 +235,7 @@ export function AdvancedFilterBar({
           />
         ))}
 
-        {/* 필터 초기화 버튼 */}
+        {/* Reset filters button */}
         {hasActiveFilters && (
           <Button
             variant="ghost"
@@ -249,7 +249,7 @@ export function AdvancedFilterBar({
         )}
       </div>
 
-      {/* 우측 액션 영역 (Columns 버튼 등) */}
+      {/* Right-hand action area (Columns button, etc.) */}
       {children && (
         <div className="flex shrink-0 flex-wrap items-center gap-2">
           {children}
@@ -260,7 +260,7 @@ export function AdvancedFilterBar({
 }
 
 /**
- * useAdvancedFilter 훅 - 필터 상태 관리
+ * useAdvancedFilter hook - manages filter state
  */
 export function useAdvancedFilter(filterIds: string[]) {
   const [searchValue, setSearchValue] = React.useState("");

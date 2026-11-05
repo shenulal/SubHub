@@ -1,65 +1,65 @@
-# 12. Git 워크플로우 가이드
+# 12. Git Workflow Guide
 
-이 문서는 SaaS Management Platform의 Git 브랜치 전략, 커밋 컨벤션, PR 프로세스를 설명합니다.
+This document describes SubHub's Git branching strategy, commit conventions and PR process.
 
-## 목차
+## Table of Contents
 
-1. [브랜치 전략](#1-브랜치-전략)
-2. [커밋 메시지 컨벤션](#2-커밋-메시지-컨벤션)
-3. [Pull Request 프로세스](#3-pull-request-프로세스)
-4. [코드 리뷰 가이드](#4-코드-리뷰-가이드)
-5. [Vercel 배포 연동](#5-vercel-배포-연동)
-6. [체크리스트](#6-체크리스트)
+1. [Branch Strategy](#1-branch-strategy)
+2. [Commit Message Conventions](#2-commit-message-conventions)
+3. [Pull Request Process](#3-pull-request-process)
+4. [Code Review Guide](#4-code-review-guide)
+5. [Vercel Deployment Integration](#5-vercel-deployment-integration)
+6. [Checklist](#6-checklist)
 
 ---
 
-## 1. 브랜치 전략
+## 1. Branch Strategy
 
-### 1.1 브랜치 구조
+### 1.1 Branch Structure
 
 ```
 main (production)
   │
-  ├── feature/*     ─ 새 기능 개발
-  ├── fix/*         ─ 버그 수정
-  ├── refactor/*    ─ 리팩토링
-  ├── docs/*        ─ 문서 작업
-  └── chore/*       ─ 설정, 의존성 등
+  ├── feature/*     ─ New feature development
+  ├── fix/*         ─ Bug fixes
+  ├── refactor/*    ─ Refactoring
+  ├── docs/*        ─ Documentation work
+  └── chore/*       ─ Configuration, dependencies, etc.
 ```
 
-### 1.2 브랜치 명명 규칙
+### 1.2 Branch Naming Conventions
 
-| 접두사      | 용도               | 예시                                 |
-| ----------- | ------------------ | ------------------------------------ |
-| `feature/`  | 새로운 기능        | `feature/subscription-renewal-alert` |
-| `fix/`      | 버그 수정          | `fix/login-redirect-loop`            |
-| `refactor/` | 코드 리팩토링      | `refactor/apps-service-cleanup`      |
-| `docs/`     | 문서 작업          | `docs/api-reference`                 |
-| `chore/`    | 설정, 빌드, 의존성 | `chore/upgrade-nextjs`               |
+| Prefix      | Purpose                            | Example                              |
+| ----------- | ---------------------------------- | ------------------------------------ |
+| `feature/`  | New feature                        | `feature/subscription-renewal-alert` |
+| `fix/`      | Bug fix                            | `fix/login-redirect-loop`            |
+| `refactor/` | Code refactoring                   | `refactor/apps-service-cleanup`      |
+| `docs/`     | Documentation work                 | `docs/api-reference`                 |
+| `chore/`    | Configuration, build, dependencies | `chore/upgrade-nextjs`               |
 
-### 1.3 브랜치 생성
+### 1.3 Creating a Branch
 
 ```bash
-# main에서 새 브랜치 생성
+# Create a new branch from main
 git checkout main
 git pull origin main
 git checkout -b feature/my-feature
 
-# 작업 완료 후 푸시
+# Push once the work is complete
 git push -u origin feature/my-feature
 ```
 
-### 1.4 브랜치 규칙
+### 1.4 Branch Rules
 
-- **main**: 항상 배포 가능한 상태 유지
-- **feature 브랜치**: 작업 완료 후 PR 생성 → 머지 → 삭제
-- **직접 main 푸시 금지**: 모든 변경은 PR을 통해 진행
+- **main**: Always kept in a deployable state
+- **feature branches**: Once work is complete, open a PR → merge → delete
+- **No direct pushes to main**: All changes go through a PR
 
 ---
 
-## 2. 커밋 메시지 컨벤션
+## 2. Commit Message Conventions
 
-### 2.1 형식
+### 2.1 Format
 
 ```
 <type>(<scope>): <subject>
@@ -69,314 +69,314 @@ git push -u origin feature/my-feature
 <footer>
 ```
 
-### 2.2 Type (필수)
+### 2.2 Type (Required)
 
-| Type       | 설명                      | 예시                                      |
-| ---------- | ------------------------- | ----------------------------------------- |
-| `feat`     | 새로운 기능               | `feat(apps): 앱 소유자 지정 기능 추가`    |
-| `fix`      | 버그 수정                 | `fix(auth): 세션 만료 시 리다이렉트 수정` |
-| `refactor` | 리팩토링 (기능 변경 없음) | `refactor(apps): 서비스 레이어 분리`      |
-| `test`     | 테스트 추가/수정          | `test(apps): createApp 단위 테스트 추가`  |
-| `docs`     | 문서 작성/수정            | `docs: TDD 가이드 추가`                   |
-| `chore`    | 빌드, 설정, 의존성        | `chore: vitest 설정 업데이트`             |
-| `style`    | 코드 스타일 (포맷팅 등)   | `style: prettier 적용`                    |
-| `perf`     | 성능 개선                 | `perf(db): 앱 목록 쿼리 최적화`           |
+| Type       | Description                        | Example                                      |
+| ---------- | ---------------------------------- | -------------------------------------------- |
+| `feat`     | New feature                        | `feat(apps): add app owner assignment`       |
+| `fix`      | Bug fix                            | `fix(auth): fix redirect on session expiry`  |
+| `refactor` | Refactoring (no behaviour change)  | `refactor(apps): separate the service layer` |
+| `test`     | Add/update tests                   | `test(apps): add createApp unit tests`       |
+| `docs`     | Write/update documentation         | `docs: add TDD guide`                        |
+| `chore`    | Build, configuration, dependencies | `chore: update vitest configuration`         |
+| `style`    | Code style (formatting, etc.)      | `style: apply prettier`                      |
+| `perf`     | Performance improvement            | `perf(db): optimise app list query`          |
 
-### 2.3 Scope (선택)
+### 2.3 Scope (Optional)
 
-영향받는 모듈/기능 영역:
+The affected module/feature area:
 
 ```
 apps, subscriptions, users, auth, integrations,
 dashboard, reports, settings, api, db, ui
 ```
 
-### 2.4 Subject (필수)
+### 2.4 Subject (Required)
 
-- 한국어 또는 영어
-- 50자 이내
-- 명령문 형태 (동사로 시작)
-- 마침표 생략
+- English
+- 50 characters or fewer
+- Imperative mood (start with a verb)
+- No trailing full stop
 
-### 2.5 예시
+### 2.5 Examples
 
 ```bash
-# 좋은 예시
-feat(apps): 앱 검색 필터 기능 추가
-fix(auth): 로그인 후 리다이렉트 오류 수정
-refactor(subscriptions): 구독 서비스 코드 정리
-test(apps): createApp Server Action 테스트 추가
-docs: 개발 가이드 문서 업데이트
-chore: Next.js 15.5 업그레이드
+# Good examples
+feat(apps): add app search filter
+fix(auth): fix redirect error after sign-in
+refactor(subscriptions): clean up subscription service code
+test(apps): add createApp Server Action tests
+docs: update development guide documents
+chore: upgrade to Next.js 15.5
 
-# 나쁜 예시
-updated code                    # 너무 모호
-fix bug                         # 무엇을 수정했는지 불명확
-WIP                             # 임시 커밋
-앱 기능 추가                    # type 누락
+# Bad examples
+updated code                    # Too vague
+fix bug                         # Unclear what was fixed
+WIP                             # Temporary commit
+add app feature                 # Missing type
 ```
 
-### 2.6 Body (선택)
+### 2.6 Body (Optional)
 
-- 72자에서 줄바꿈
-- "무엇을"보다 "왜"를 설명
-- 변경 사항의 동기와 맥락 제공
+- Wrap at 72 characters
+- Explain "why" rather than "what"
+- Provide the motivation and context for the change
 
 ```bash
-git commit -m "feat(apps): 앱 소유자 지정 기능 추가
+git commit -m "feat(apps): add app owner assignment
 
-- 앱별로 담당자를 지정하여 책임 소재 명확화
-- 소유자는 조직 내 사용자만 가능 (Multi-tenant 검증)
-- 관련 감사 로그 생성"
+- Assign an owner to each app to clarify accountability
+- Owners must be users within the organisation (multi-tenant validation)
+- Create the related audit log"
 ```
 
 ---
 
-## 3. Pull Request 프로세스
+## 3. Pull Request Process
 
-### 3.1 PR 생성 전 체크리스트
+### 3.1 Checklist Before Opening a PR
 
 ```bash
-# 1. 코드 품질 검사
+# 1. Code quality checks
 npm run quality  # lint + type-check + test
 
-# 2. 테스트 커버리지 확인
+# 2. Check test coverage
 npm run test:coverage
 
-# 3. 변경 사항 확인
+# 3. Review the changes
 git diff main...HEAD
 ```
 
-### 3.2 PR 템플릿
+### 3.2 PR Template
 
 ```markdown
-## 변경 사항
+## Changes
 
-- 무엇을 변경했는지 요약
+- Summary of what was changed
 
-## 변경 이유
+## Reason for Change
 
-- 왜 이 변경이 필요한지
+- Why this change is needed
 
-## 테스트
+## Testing
 
-- [ ] 단위 테스트 작성/수정
-- [ ] `npm run quality` 통과
-- [ ] 로컬에서 수동 테스트 완료
+- [ ] Unit tests written/updated
+- [ ] `npm run quality` passes
+- [ ] Manual testing completed locally
 
-## 스크린샷 (UI 변경 시)
+## Screenshots (for UI changes)
 
-## 관련 이슈
+## Related Issues
 
 Closes #123
 ```
 
-### 3.3 PR 크기 가이드
+### 3.3 PR Size Guide
 
-| 크기   | 변경 라인 | 권장        |
-| ------ | --------- | ----------- |
-| Small  | < 100     | 이상적      |
-| Medium | 100 - 300 | 적절        |
-| Large  | 300 - 500 | 분할 고려   |
-| XL     | > 500     | 반드시 분할 |
+| Size   | Changed Lines | Recommendation     |
+| ------ | ------------- | ------------------ |
+| Small  | < 100         | Ideal              |
+| Medium | 100 - 300     | Appropriate        |
+| Large  | 300 - 500     | Consider splitting |
+| XL     | > 500         | Must be split      |
 
-### 3.4 PR 생성 명령어
+### 3.4 PR Creation Commands
 
 ```bash
-# GitHub CLI 사용
-gh pr create --title "feat(apps): 앱 소유자 지정 기능" --body "설명..."
+# Using the GitHub CLI
+gh pr create --title "feat(apps): app owner assignment" --body "Description..."
 
-# 또는 웹에서 직접 생성
+# Or create it directly on the web
 ```
 
 ---
 
-## 4. 코드 리뷰 가이드
+## 4. Code Review Guide
 
-### 4.1 리뷰어 체크리스트
+### 4.1 Reviewer Checklist
 
-#### 기능 검증
+#### Functional Verification
 
-- [ ] 요구사항에 맞게 구현되었는가?
-- [ ] 엣지 케이스가 처리되었는가?
-- [ ] 에러 핸들링이 적절한가?
+- [ ] Is it implemented according to the requirements?
+- [ ] Are edge cases handled?
+- [ ] Is error handling appropriate?
 
-#### 코드 품질
+#### Code Quality
 
-- [ ] 500줄 제한을 준수하는가?
-- [ ] 함수/메서드가 단일 책임을 가지는가?
-- [ ] 네이밍이 명확한가?
-- [ ] 불필요한 주석이 없는가?
+- [ ] Does it respect the 500-line limit?
+- [ ] Does each function/method have a single responsibility?
+- [ ] Is naming clear?
+- [ ] Are there no unnecessary comments?
 
-#### 테스트
+#### Testing
 
-- [ ] 테스트가 있는가?
-- [ ] 테스트가 의미 있는가? (커버리지만을 위한 테스트가 아닌가)
-- [ ] 80% 이상 커버리지를 달성하는가?
+- [ ] Are there tests?
+- [ ] Are the tests meaningful? (Not written purely for coverage?)
+- [ ] Does it achieve 80% or higher coverage?
 
-#### 보안
+#### Security
 
-- [ ] organizationId로 Multi-tenant 격리가 되어 있는가?
-- [ ] 민감한 정보가 노출되지 않는가?
-- [ ] SQL Injection, XSS 등 취약점이 없는가?
+- [ ] Is multi-tenant isolation enforced via organizationId?
+- [ ] Is no sensitive information exposed?
+- [ ] Are there no vulnerabilities such as SQL injection or XSS?
 
-#### 성능
+#### Performance
 
-- [ ] N+1 쿼리가 없는가?
-- [ ] 불필요한 데이터 로딩이 없는가?
+- [ ] Are there no N+1 queries?
+- [ ] Is there no unnecessary data loading?
 
-### 4.2 리뷰 코멘트 유형
+### 4.2 Review Comment Types
 
-| 접두사         | 의미             | 필수 대응 |
-| -------------- | ---------------- | :-------: |
-| `[BLOCKER]`    | 반드시 수정 필요 |    Yes    |
-| `[SUGGESTION]` | 개선 제안        |    No     |
-| `[QUESTION]`   | 질문/확인 필요   |  Answer   |
-| `[NIT]`        | 사소한 개선      |    No     |
+| Prefix         | Meaning                | Response Required |
+| -------------- | ---------------------- | :---------------: |
+| `[BLOCKER]`    | Must be fixed          |        Yes        |
+| `[SUGGESTION]` | Improvement suggestion |        No         |
+| `[QUESTION]`   | Question/clarification |      Answer       |
+| `[NIT]`        | Minor improvement      |        No         |
 
-### 4.3 리뷰 예시
+### 4.3 Review Examples
 
 ```markdown
-[BLOCKER] organizationId 필터가 누락되었습니다.
-다른 조직의 데이터에 접근할 수 있습니다.
+[BLOCKER] The organizationId filter is missing.
+Data belonging to other organisations could be accessed.
 
-[SUGGESTION] 이 로직을 별도 함수로 분리하면
-테스트하기 쉬워질 것 같습니다.
+[SUGGESTION] Extracting this logic into a separate function
+would likely make it easier to test.
 
-[QUESTION] 이 조건문의 의도가 무엇인가요?
-edge case 처리인지 확인이 필요합니다.
+[QUESTION] What is the intent of this conditional?
+Please confirm whether it handles an edge case.
 
-[NIT] 변수명을 `data` 대신 `appData`로 하면
-더 명확할 것 같습니다.
+[NIT] Naming the variable `appData` instead of `data`
+would be clearer.
 ```
 
 ---
 
-## 5. Vercel 배포 연동
+## 5. Vercel Deployment Integration
 
-### 5.1 Git Author 설정
+### 5.1 Git Author Configuration
 
-**중요**: Git 커밋 이메일이 Vercel 계정 이메일과 일치해야 합니다.
+**Important**: The Git commit email must match the Vercel account email.
 
 ```bash
-# 현재 설정 확인
+# Check the current setting
 git config user.email
 
-# Vercel 계정 이메일로 설정
+# Set it to the Vercel account email
 git config user.email "your-email@example.com"
 
-# 전역 설정
+# Global setting
 git config --global user.email "your-email@example.com"
 ```
 
-### 5.2 자동 배포
+### 5.2 Automatic Deployment
 
-| 브랜치      | 배포 환경  |
-| ----------- | ---------- |
-| `main`      | Production |
-| `feature/*` | Preview    |
+| Branch      | Deployment Environment |
+| ----------- | ---------------------- |
+| `main`      | Production             |
+| `feature/*` | Preview                |
 
-### 5.3 Preview 배포 활용
+### 5.3 Using Preview Deployments
 
 ```bash
-# PR 생성 시 자동으로 Preview URL 생성
-# https://saaslens-<hash>.vercel.app
+# A Preview URL is generated automatically when a PR is opened
+# https://subhub-<hash>.vercel.app
 
-# Preview에서 테스트 후 main 머지
+# Test on Preview, then merge to main
 ```
 
-### 5.4 배포 실패 시
+### 5.4 When a Deployment Fails
 
-1. Vercel 대시보드에서 빌드 로그 확인
-2. 로컬에서 빌드 테스트: `npm run build`
-3. 환경변수 확인
-
----
-
-## 6. 체크리스트
-
-### 브랜치 생성 시
-
-- [ ] main에서 최신 상태로 분기
-- [ ] 명명 규칙 준수 (feature/, fix/, etc.)
-
-### 커밋 시
-
-- [ ] 커밋 메시지 컨벤션 준수
-- [ ] 의미 있는 단위로 커밋 분리
-- [ ] WIP 커밋 지양
-
-### PR 생성 전
-
-- [ ] `npm run quality` 통과
-- [ ] 테스트 커버리지 80% 이상
-- [ ] PR 크기 500줄 이하
-
-### PR 생성 시
-
-- [ ] 명확한 제목과 설명
-- [ ] 관련 이슈 링크
-- [ ] 테스트 방법 명시
-
-### 코드 리뷰 시
-
-- [ ] Multi-tenant 격리 확인
-- [ ] 테스트 존재 여부 확인
-- [ ] 코드 품질 규칙 준수 확인
-
-### 머지 후
-
-- [ ] 브랜치 삭제
-- [ ] Vercel 배포 확인
+1. Check the build log in the Vercel dashboard
+2. Test the build locally: `npm run build`
+3. Check the environment variables
 
 ---
 
-## 빠른 참조
+## 6. Checklist
 
-### 자주 사용하는 명령어
+### When Creating a Branch
+
+- [ ] Branch from an up-to-date main
+- [ ] Follow the naming convention (feature/, fix/, etc.)
+
+### When Committing
+
+- [ ] Follow the commit message convention
+- [ ] Split commits into meaningful units
+- [ ] Avoid WIP commits
+
+### Before Opening a PR
+
+- [ ] `npm run quality` passes
+- [ ] Test coverage of 80% or higher
+- [ ] PR size of 500 lines or fewer
+
+### When Opening a PR
+
+- [ ] Clear title and description
+- [ ] Link to related issues
+- [ ] State how it was tested
+
+### During Code Review
+
+- [ ] Confirm multi-tenant isolation
+- [ ] Confirm tests exist
+- [ ] Confirm code quality rules are followed
+
+### After Merging
+
+- [ ] Delete the branch
+- [ ] Confirm the Vercel deployment
+
+---
+
+## Quick Reference
+
+### Frequently Used Commands
 
 ```bash
-# 브랜치 생성
+# Create a branch
 git checkout -b feature/new-feature
 
-# 커밋
+# Commit
 git add .
-git commit -m "feat(scope): 설명"
+git commit -m "feat(scope): description"
 
-# 푸시
+# Push
 git push -u origin feature/new-feature
 
-# PR 생성 (GitHub CLI)
+# Create a PR (GitHub CLI)
 gh pr create
 
-# main 최신화 후 리베이스
+# Update main, then rebase
 git checkout main && git pull
 git checkout feature/my-feature
 git rebase main
 
-# 충돌 해결 후 계속
+# Continue after resolving conflicts
 git add .
 git rebase --continue
 ```
 
-### 커밋 타입 요약
+### Commit Type Summary
 
 ```
-feat     새 기능
-fix      버그 수정
-refactor 리팩토링
-test     테스트
-docs     문서
-chore    설정/의존성
-style    코드 스타일
-perf     성능 개선
+feat     New feature
+fix      Bug fix
+refactor Refactoring
+test     Tests
+docs     Documentation
+chore    Configuration/dependencies
+style    Code style
+perf     Performance improvement
 ```
 
 ---
 
-## 관련 문서
+## Related Documents
 
-- [01-tdd-quick-start.md](./01-tdd-quick-start.md) - TDD 빠른 시작
-- [02-development-principles.md](./02-development-principles.md) - 개발 원칙
-- [06-coverage-checklist.md](./06-coverage-checklist.md) - 커버리지 체크리스트
-- [07-vercel-deployment.md](./07-vercel-deployment.md) - Vercel 배포
+- [01-tdd-quick-start.md](./01-tdd-quick-start.md) - TDD quick start
+- [02-development-principles.md](./02-development-principles.md) - Development principles
+- [06-coverage-checklist.md](./06-coverage-checklist.md) - Coverage checklist
+- [07-vercel-deployment.md](./07-vercel-deployment.md) - Vercel deployment

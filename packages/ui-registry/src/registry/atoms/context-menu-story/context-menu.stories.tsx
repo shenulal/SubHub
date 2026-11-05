@@ -103,17 +103,17 @@ export const ShouldOpenContextMenu: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    // 🎯 목적: Context Menu가 우클릭으로 열리고, 메뉴 아이템 선택이 가능한지 확인
+    // 🎯 Purpose: Verify the Context Menu opens on right-click and menu items can be selected
     const trigger = canvas.getByText(/right click here/i);
     await expect(trigger).toBeInTheDocument();
 
-    // 트리거에 우클릭하여 컨텍스트 메뉴 열기
+    // Right-click the trigger to open the context menu
     await userEvent.pointer([
       { target: trigger },
       { keys: "[MouseRight]", target: trigger },
     ]);
 
-    // 메뉴가 열렸는지 확인 (메뉴 아이템 확인)
+    // Verify the menu is open (check the menu items)
     await waitFor(async () => {
       const backItem = await canvas.findByRole("menuitem", {
         name: /back/i,
@@ -121,11 +121,11 @@ export const ShouldOpenContextMenu: Story = {
       await expect(backItem).toBeInTheDocument();
     });
 
-    // 다른 메뉴 아이템들도 확인
+    // Check the other menu items too
     const reloadItem = canvas.getByRole("menuitem", { name: /reload/i });
     await expect(reloadItem).toBeInTheDocument();
 
-    // 메뉴 아이템 클릭
+    // Click a menu item
     await userEvent.click(reloadItem);
   },
 };
@@ -182,9 +182,9 @@ export const ShouldOpenSubmenuAndToggleItems: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    // 🎯 목적: Context Menu의 서브메뉴 열기, 체크박스/라디오 아이템 토글 기능 확인
+    // 🎯 Purpose: Verify opening the Context Menu submenu and toggling checkbox/radio items
 
-    // 트리거 우클릭하여 컨텍스트 메뉴 열기
+    // Right-click the trigger to open the context menu
     const trigger = canvas.getByTestId("context-trigger");
     await expect(trigger).toBeInTheDocument();
 
@@ -193,38 +193,38 @@ export const ShouldOpenSubmenuAndToggleItems: Story = {
       { keys: "[MouseRight]", target: trigger },
     ]);
 
-    // 메뉴가 열렸는지 확인
+    // Verify the menu is open
     await waitFor(async () => {
       const backItem = await canvas.findByTestId("back-item");
       await expect(backItem).toBeInTheDocument();
     });
 
-    // 서브메뉴 트리거 확인
+    // Check the submenu trigger
     const submenuTrigger = canvas.getByTestId("submenu-trigger");
     await expect(submenuTrigger).toBeInTheDocument();
 
-    // 서브메뉴 트리거에 호버하여 서브메뉴 열기
+    // Hover the submenu trigger to open the submenu
     await userEvent.hover(submenuTrigger);
 
-    // 서브메뉴 아이템이 나타나는지 확인
+    // Verify the submenu items appear
     await waitFor(async () => {
       const savePageItem = await canvas.findByTestId("save-page-item");
       await expect(savePageItem).toBeInTheDocument();
     });
 
-    // 서브메뉴에서 나가기
+    // Leave the submenu
     await userEvent.unhover(submenuTrigger);
 
-    // 체크박스 아이템 확인
+    // Check the checkbox item
     const bookmarksCheckbox = canvas.getByTestId("bookmarks-checkbox");
     await expect(bookmarksCheckbox).toBeInTheDocument();
     await expect(bookmarksCheckbox).toHaveAttribute("data-state", "checked");
 
-    // 체크박스 클릭하여 토글 (checked → unchecked)
+    // Click the checkbox to toggle it (checked → unchecked)
     await userEvent.click(bookmarksCheckbox);
     await expect(bookmarksCheckbox).toHaveAttribute("data-state", "unchecked");
 
-    // 메뉴를 다시 열어서 라디오 아이템 테스트
+    // Reopen the menu to test the radio items
     await userEvent.pointer([
       { target: trigger },
       { keys: "[MouseRight]", target: trigger },
@@ -235,11 +235,11 @@ export const ShouldOpenSubmenuAndToggleItems: Story = {
       await expect(pedroRadio).toBeInTheDocument();
     });
 
-    // Pedro가 선택되어 있는지 확인
+    // Verify Pedro is selected
     const pedroRadio = canvas.getByTestId("pedro-radio");
     await expect(pedroRadio).toHaveAttribute("data-state", "checked");
 
-    // Colm 선택
+    // Select Colm
     const colmRadio = canvas.getByTestId("colm-radio");
     await userEvent.click(colmRadio);
     await expect(colmRadio).toHaveAttribute("data-state", "checked");

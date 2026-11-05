@@ -101,13 +101,13 @@ describe("rematchPaymentRecords", () => {
       user: { id: "user-1", organizationId: "org-1" },
     } as never);
     mockRematchRecords.mockRejectedValue(
-      new Error("재매칭이 이미 진행 중입니다")
+      new Error("Rematching is already in progress")
     );
 
     const result = await rematchPaymentRecords(["rec-1"]);
 
     expect(result.success).toBe(false);
-    expect(result.error).toContain("재매칭이 이미 진행 중입니다");
+    expect(result.error).toContain("Rematching is already in progress");
   });
 
   it("returns error on unexpected errors", async () => {
@@ -184,12 +184,12 @@ describe("rematchCardTransactions", () => {
       user: { id: "user-1", organizationId: "org-1" },
     } as never);
     mockRematchRecords.mockRejectedValue(
-      new Error("재매칭이 이미 진행 중입니다")
+      new Error("Rematching is already in progress")
     );
 
     const result = await rematchCardTransactions(["tx-1"]);
 
     expect(result.success).toBe(false);
-    expect(result.error).toContain("재매칭이 이미 진행 중입니다");
+    expect(result.error).toContain("Rematching is already in progress");
   });
 });

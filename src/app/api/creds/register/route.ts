@@ -1,8 +1,8 @@
 // src/app/api/creds/register/route.ts
 /**
- * Extension Login Capture API (호환용)
- * shade-chrome-extensions에서 호출하는 /api/creds/register 엔드포인트
- * /api/v1/extensions/login과 동일한 로직 사용
+ * Extension Login Capture API (compatibility)
+ * /api/creds/register endpoint called by shade-chrome-extensions
+ * Uses the same logic as /api/v1/extensions/login
  */
 
 import { withExtensionAuth } from "@/lib/api/extension-auth";
@@ -16,8 +16,8 @@ import { NextRequest, NextResponse } from "next/server";
 
 /**
  * POST /api/creds/register
- * Chrome Extension에서 로그인 캡처 시 호출하는 엔드포인트
- * 로그인 정보 저장 및 HIBP 침해 체크 수행
+ * Endpoint called by the Chrome Extension when it captures a login
+ * Stores login info and runs the HIBP breach check
  */
 export const POST = withLogging(
   "auth:register",
@@ -46,7 +46,7 @@ export const POST = withLogging(
         captured_at,
       } = parseResult.data;
 
-      // HIBP 체크 수행 (비동기, 실패해도 로그인 이벤트는 저장)
+      // Run the HIBP check (async; the login event is saved even if it fails)
       let hibpResult = {
         checked: false,
         breached: false,
@@ -63,7 +63,7 @@ export const POST = withLogging(
         logger.error({ err: hibpError }, "HIBP check failed");
       }
 
-      // 로그인 이벤트 저장
+      // Save the login event
       const loginEvent = await prisma.extensionLoginEvent.create({
         data: {
           organizationId: auth.organizationId,
@@ -82,7 +82,7 @@ export const POST = withLogging(
         },
       });
 
-      // 비차단 브릿지 호출: 로그인 도메인 → UserAppAccess 연결
+      // Non-blocking bridge call: link login domain → UserAppAccess
       bridgeLoginToAppAccess({
         domain,
         deviceId: device_id,

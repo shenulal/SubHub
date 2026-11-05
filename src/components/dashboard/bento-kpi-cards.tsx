@@ -24,15 +24,15 @@ import { TotalCostCard } from "./total-cost-card";
 
 /**
  * formatCurrency
- * 금액을 한국 원화 형식으로 포맷팅
+ * Formats an amount in the given currency
  */
 function formatCurrency(amount: number, currency: string): string {
-  return formatMoney(amount, currency, "ko", 0);
+  return formatMoney(amount, currency, "en", 0);
 }
 
 /**
  * BentoTotalCostCard
- * 총 비용 KPI 카드 (Bento 스타일)
+ * Total cost KPI card (Bento style)
  */
 interface BentoTotalCostCardProps {
   data: TotalCostKpiData;
@@ -119,7 +119,7 @@ export function BentoTotalCostCard({
 
 /**
  * BentoAnomalyCard
- * 비정상 항목 KPI 카드 (Bento 스타일)
+ * Anomalies KPI card (Bento style)
  */
 interface BentoAnomalyCardProps {
   data: AnomalyKpiData;
@@ -185,7 +185,7 @@ export function BentoAnomalyCard({
 
 /**
  * BentoTerminatedCard
- * 퇴사자 미회수 KPI 카드 (Bento 스타일)
+ * Unrecovered offboarded-user accounts KPI card (Bento style)
  */
 interface BentoTerminatedCardProps {
   data: TerminatedKpiData;
@@ -256,7 +256,7 @@ export function BentoTerminatedCard({
 
 /**
  * BentoAppsWithoutSubCard
- * 구독 미연결 앱 KPI 카드 (Bento 스타일)
+ * Apps without a subscription KPI card (Bento style)
  */
 interface BentoAppsWithoutSubCardProps {
   data: AppsWithoutSubKpiData;
@@ -333,7 +333,7 @@ export function BentoAppsWithoutSubCard({
 
 /**
  * BentoKpiCards
- * 4개의 KPI 카드를 Bento Grid 레이아웃으로 표시
+ * Shows the four KPI cards in a Bento grid layout
  */
 interface BentoKpiCardsProps {
   totalCost: TotalCostKpiData;

@@ -1,7 +1,7 @@
 // src/app/api/v1/extensions/health/route.ts
 /**
  * Extension Health Check API
- * 토큰 유효성 및 서버 연결 확인
+ * Checks token validity and server connectivity
  */
 
 import { withExtensionAuth } from "@/lib/api/extension-auth";
@@ -10,7 +10,7 @@ import { NextResponse } from "next/server";
 
 /**
  * GET /api/v1/extensions/health
- * 토큰 유효성 확인 및 서버 상태 응답
+ * Validates the token and responds with server status
  */
 export const GET = withLogging(
   "ext:health",

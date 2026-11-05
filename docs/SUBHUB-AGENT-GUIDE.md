@@ -1,6 +1,6 @@
 # SubHub — Engineering Guide for Feature Work
 
-SubHub is a fork of saaslens (Next.js 15 App Router, React 19, Prisma 6 / PostgreSQL,
+SubHub is built on an open-source subscription-management base (Next.js 15 App Router, React 19, Prisma 6 / PostgreSQL,
 NextAuth 5, shadcn/ui, next-intl, Vitest). This guide is the contract for anyone
 adding a feature. Read it fully before touching code.
 
@@ -41,12 +41,12 @@ adding a feature. Read it fully before touching code.
    tests do (see `src/actions/subscriptions.test.ts`). Target ≥80% on new files.
    Baseline: 124 pre-existing failures in upstream tests — do not make it worse.
 8. **Files ≤ 500 lines, functions ≤ 50 lines.** Split constants/types/sub-components.
-9. **i18n.** Each feature owns one namespace file: `src/i18n/messages/en/<area>.json`
-   and `ko/<area>.json` (areas: platform, approvals, taxonomy, lifecycle,
-   notifications, receipts, discovery). Keys are merged automatically. English is
-   the default locale; Korean may mirror English for new keys. Never edit
-   `en.json`/`ko.json` base files for new features. Test lookup resolves against the
-   merged Korean bundle (falls back to English, then the key).
+9. **i18n.** SubHub is English-only. Each feature owns one namespace file:
+   `src/i18n/messages/en/<area>.json` (areas: platform, approvals, taxonomy,
+   lifecycle, notifications, receipts, discovery). Keys are merged automatically.
+   Never edit the `en.json` base file for new features. Test lookup resolves
+   against the merged English bundle (supports ICU plural/select, falls back to the
+   key). Write comments and test names in English.
 10. **No `console.log`.** Use `logger` from `@/lib/logger`.
 
 ## 2. Conventions already in the codebase

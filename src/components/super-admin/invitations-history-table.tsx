@@ -25,10 +25,10 @@ const statusConfig: Record<
     variant: "secondary" | "destructive" | "outline" | "success" | "warning";
   }
 > = {
-  PENDING: { label: "대기 중", variant: "warning" },
-  ACCEPTED: { label: "수락됨", variant: "success" },
-  EXPIRED: { label: "만료됨", variant: "destructive" },
-  CANCELLED: { label: "취소됨", variant: "secondary" },
+  PENDING: { label: "Pending", variant: "warning" },
+  ACCEPTED: { label: "Accepted", variant: "success" },
+  EXPIRED: { label: "Expired", variant: "destructive" },
+  CANCELLED: { label: "Cancelled", variant: "secondary" },
 };
 
 interface InvitationsHistoryTableProps {
@@ -47,8 +47,8 @@ export function InvitationsHistoryTable({
     setLoadingId(null);
 
     if (result.success) {
-      toast.success(result.message ?? "재발송되었습니다.");
-      // 만료일 갱신 표시
+      toast.success(result.message ?? "Invitation resent.");
+      // Reflect the renewed expiry date
       setInvitations((prev) =>
         prev.map((inv) =>
           inv.id === id
@@ -60,14 +60,14 @@ export function InvitationsHistoryTable({
         )
       );
     } else {
-      toast.error(result.message ?? "재발송에 실패했습니다.");
+      toast.error(result.message ?? "Failed to resend the invitation.");
     }
   };
 
   if (invitations.length === 0) {
     return (
       <div className="text-muted-foreground flex h-32 items-center justify-center text-sm">
-        발송된 초대가 없습니다.
+        No invitations sent.
       </div>
     );
   }
@@ -76,12 +76,12 @@ export function InvitationsHistoryTable({
     <Table>
       <TableHeader>
         <TableRow>
-          <TableHead>이메일</TableHead>
-          <TableHead>역할</TableHead>
-          <TableHead>상태</TableHead>
-          <TableHead>발송일</TableHead>
-          <TableHead>만료일</TableHead>
-          <TableHead className="w-24">관리</TableHead>
+          <TableHead>Email</TableHead>
+          <TableHead>Role</TableHead>
+          <TableHead>Status</TableHead>
+          <TableHead>Sent</TableHead>
+          <TableHead>Expires</TableHead>
+          <TableHead className="w-24">Actions</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -99,7 +99,7 @@ export function InvitationsHistoryTable({
               </TableCell>
               <TableCell>
                 <Badge variant="primary">
-                  {inv.role === "ADMIN" ? "관리자" : inv.role}
+                  {inv.role === "ADMIN" ? "Admin" : inv.role}
                 </Badge>
               </TableCell>
               <TableCell>
@@ -111,15 +111,15 @@ export function InvitationsHistoryTable({
                   }
                 >
                   {isExpired && inv.status === "PENDING"
-                    ? "만료됨"
+                    ? "Expired"
                     : status.label}
                 </Badge>
               </TableCell>
               <TableCell className="text-muted-foreground text-sm">
-                {new Date(inv.createdAt).toLocaleDateString("ko-KR")}
+                {new Date(inv.createdAt).toLocaleDateString("en-US")}
               </TableCell>
               <TableCell className="text-muted-foreground text-sm">
-                {new Date(inv.expiresAt).toLocaleDateString("ko-KR")}
+                {new Date(inv.expiresAt).toLocaleDateString("en-US")}
               </TableCell>
               <TableCell>
                 {inv.status === "PENDING" && (
@@ -129,7 +129,7 @@ export function InvitationsHistoryTable({
                     disabled={loadingId === inv.id}
                     onClick={() => handleResend(inv.id)}
                   >
-                    {loadingId === inv.id ? "발송 중..." : "재발송"}
+                    {loadingId === inv.id ? "Sending..." : "Resend"}
                   </Button>
                 )}
               </TableCell>

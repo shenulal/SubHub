@@ -86,7 +86,7 @@ describe("Extension Build Actions", () => {
       const result = await getBuilds();
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe("인증이 필요합니다");
+      expect(result.error).toBe("Authentication required");
     });
   });
 
@@ -125,7 +125,7 @@ describe("Extension Build Actions", () => {
       const result = await getBuild("non-existent");
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe("빌드를 찾을 수 없습니다");
+      expect(result.error).toBe("Build not found");
     });
   });
 
@@ -218,7 +218,7 @@ describe("Extension Build Actions", () => {
       const result = await deleteBuild("build-1");
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain("진행 중인 빌드");
+      expect(result.error).toContain("build in progress");
     });
   });
 
@@ -258,7 +258,7 @@ describe("Extension Build Actions", () => {
       const result = await retryBuild("build-1");
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain("실패한 빌드만");
+      expect(result.error).toContain("Only failed builds");
     });
   });
 });

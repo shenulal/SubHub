@@ -1,12 +1,12 @@
 // src/types/extension-api.ts
-// Extension API 요청/응답 타입 및 Zod 검증 스키마
+// Extension API request/response types and Zod validation schemas
 
 import { z } from "zod";
 
 // ==================== Common Response Types ====================
 
 /**
- * Extension API 기본 응답
+ * Extension API base response
  */
 export type ExtensionApiResponse<T = unknown> = {
   success: boolean;
@@ -25,19 +25,19 @@ export type HealthCheckResponse = ExtensionApiResponse<{
 // ==================== Login Capture ====================
 
 /**
- * 로그인 캡처 요청
+ * Login capture request
  */
 export type LoginCaptureRequest = {
   device_id: string;
   domain: string;
   username: string;
-  password_hash: string; // SHA-512 해시
+  password_hash: string; // SHA-512 hash
   auth_type?: "PASSWORD" | "MAGIC_LINK" | "OAUTH" | "SSO";
   captured_at: number; // Unix timestamp (ms)
 };
 
 /**
- * 로그인 캡처 응답
+ * Login capture response
  */
 export type LoginCaptureResponse = ExtensionApiResponse<{
   id: string;
@@ -65,7 +65,7 @@ export const loginCaptureSchema = z.object({
 // ==================== Usage Sync ====================
 
 /**
- * 도메인별 사용량
+ * Usage per domain
  */
 export type UsageDomainData = {
   domain: string;
@@ -78,7 +78,7 @@ export type UsageDomainData = {
 };
 
 /**
- * 일별 사용량
+ * Daily usage
  */
 export type DailyUsageData = {
   date: string; // YYYY-MM-DD
@@ -87,7 +87,7 @@ export type DailyUsageData = {
 };
 
 /**
- * Usage Sync 요청
+ * Usage Sync request
  */
 export type UsageSyncRequest = {
   deviceId: string;
@@ -96,7 +96,7 @@ export type UsageSyncRequest = {
 };
 
 /**
- * Usage Sync 응답
+ * Usage Sync response
  */
 export type UsageSyncResponse = ExtensionApiResponse<{
   syncedCount: number;
@@ -134,7 +134,7 @@ export const usageSyncSchema = z.object({
 // ==================== Whitelist Sync ====================
 
 /**
- * Whitelist 도메인 항목
+ * Whitelist domain entry
  */
 export type WhitelistDomainItem = {
   pattern: string;
@@ -144,7 +144,7 @@ export type WhitelistDomainItem = {
 };
 
 /**
- * Whitelist Sync GET 응답
+ * Whitelist Sync GET response
  */
 export type WhitelistSyncGetResponse = ExtensionApiResponse<{
   whitelist: Array<{
@@ -155,7 +155,7 @@ export type WhitelistSyncGetResponse = ExtensionApiResponse<{
 }>;
 
 /**
- * Whitelist Sync POST 요청
+ * Whitelist Sync POST request
  */
 export type WhitelistSyncPostRequest = {
   device_id: string;
@@ -163,7 +163,7 @@ export type WhitelistSyncPostRequest = {
 };
 
 /**
- * Whitelist Sync POST 응답
+ * Whitelist Sync POST response
  */
 export type WhitelistSyncPostResponse = ExtensionApiResponse<{
   syncedCount: number;
@@ -184,7 +184,7 @@ export const whitelistSyncPostSchema = z.object({
 // ==================== Blacklist Sync ====================
 
 /**
- * Blacklist Sync GET 응답
+ * Blacklist Sync GET response
  */
 export type BlacklistSyncResponse = ExtensionApiResponse<{
   blacklist: Array<{
@@ -204,7 +204,7 @@ export type BlacklistSyncResponse = ExtensionApiResponse<{
 export type RemoteConfigData = {
   version: string;
   syncIntervals: {
-    blacklist: number; // 분 단위
+    blacklist: number; // in minutes
     whitelist: number;
     usage: number;
     config: number;
@@ -224,7 +224,7 @@ export type RemoteConfigData = {
 };
 
 /**
- * Config Sync 응답
+ * Config Sync response
  */
 export type ConfigSyncResponse = ExtensionApiResponse<{
   config: RemoteConfigData;
@@ -244,7 +244,7 @@ export type BrowsingLogItem = {
 };
 
 /**
- * Browsing Log Sync 요청
+ * Browsing Log Sync request
  */
 export type BrowsingLogSyncRequest = {
   device_id: string;
@@ -252,7 +252,7 @@ export type BrowsingLogSyncRequest = {
 };
 
 /**
- * Browsing Log Sync 응답
+ * Browsing Log Sync response
  */
 export type BrowsingLogSyncResponse = ExtensionApiResponse<{
   syncedCount: number;
@@ -285,7 +285,7 @@ export type BlockLogItem = {
 };
 
 /**
- * Block Log Sync 요청
+ * Block Log Sync request
  */
 export type BlockLogSyncRequest = {
   device_id: string;
@@ -293,7 +293,7 @@ export type BlockLogSyncRequest = {
 };
 
 /**
- * Block Log Sync 응답
+ * Block Log Sync response
  */
 export type BlockLogSyncResponse = ExtensionApiResponse<{
   syncedCount: number;
@@ -315,7 +315,7 @@ export const blockLogSyncSchema = z.object({
 // ==================== Onboarding ====================
 
 /**
- * 온보딩 이메일 검증 요청
+ * Onboarding email verification request
  */
 export type OnboardingVerifyRequest = {
   device_id: string;
@@ -323,7 +323,7 @@ export type OnboardingVerifyRequest = {
 };
 
 /**
- * 온보딩 이메일 검증 응답
+ * Onboarding email verification response
  */
 export type OnboardingVerifyResponse = ExtensionApiResponse<{
   verified: boolean;
@@ -337,7 +337,7 @@ export const onboardingVerifySchema = z.object({
 });
 
 /**
- * 온보딩 완료 요청
+ * Onboarding completion request
  */
 export type OnboardingCompleteRequest = {
   device_id: string;
@@ -346,7 +346,7 @@ export type OnboardingCompleteRequest = {
 };
 
 /**
- * 온보딩 완료 응답
+ * Onboarding completion response
  */
 export type OnboardingCompleteResponse = ExtensionApiResponse<{
   completed: boolean;
@@ -362,7 +362,7 @@ export const onboardingCompleteSchema = z.object({
 // ==================== Heartbeat ====================
 
 /**
- * Heartbeat 요청
+ * Heartbeat request
  */
 export type HeartbeatRequest = {
   device_id: string;
@@ -381,7 +381,7 @@ export const heartbeatSchema = z.object({
 // ==================== Extension Auth Context ====================
 
 /**
- * Extension 인증 컨텍스트 (미들웨어에서 반환)
+ * Extension auth context (returned by the middleware)
  */
 export type ExtensionAuthContext = {
   organizationId: string;

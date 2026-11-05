@@ -127,7 +127,7 @@ export const ShouldRenderAlert: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    // 🎯 목적: Alert가 올바르게 렌더링되고 텍스트가 표시되는지 확인
+    // 🎯 Purpose: Verify the Alert renders correctly and shows its text
     const alert = canvas.getByTestId("test-alert");
     await expect(alert).toBeInTheDocument();
 

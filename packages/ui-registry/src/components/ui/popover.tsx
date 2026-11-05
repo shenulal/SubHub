@@ -4,13 +4,13 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * 🎯 목적: Popover Root 컴포넌트
- * 📝 주의사항: Radix UI Popover.Root primitive는 ref를 지원하지 않음
+ * 🎯 Purpose: Popover Root component
+ * 📝 Note: Radix UI Popover.Root primitive does not support ref
  */
 const Popover = PopoverPrimitive.Root;
 
 /**
- * 🎯 목적: PopoverTrigger 컴포넌트에 forwardRef 적용
+ * 🎯 Purpose: Apply forwardRef to the PopoverTrigger component
  */
 const PopoverTrigger = React.forwardRef<
   React.ElementRef<typeof PopoverPrimitive.Trigger>,
@@ -27,8 +27,8 @@ const PopoverTrigger = React.forwardRef<
 PopoverTrigger.displayName = "PopoverTrigger";
 
 /**
- * 🎯 목적: PopoverContent 컴포넌트에 forwardRef 적용
- * 📝 주의사항: Portal 내부에서 렌더링, align/sideOffset props 지원
+ * 🎯 Purpose: Apply forwardRef to the PopoverContent component
+ * 📝 Note: Renders inside a Portal; supports the align/sideOffset props
  */
 const PopoverContent = React.forwardRef<
   React.ElementRef<typeof PopoverPrimitive.Content>,
@@ -53,7 +53,7 @@ const PopoverContent = React.forwardRef<
 PopoverContent.displayName = "PopoverContent";
 
 /**
- * 🎯 목적: PopoverAnchor 컴포넌트에 forwardRef 적용
+ * 🎯 Purpose: Apply forwardRef to the PopoverAnchor component
  */
 const PopoverAnchor = React.forwardRef<
   React.ElementRef<typeof PopoverPrimitive.Anchor>,

@@ -24,12 +24,12 @@ export interface InvitationWithInviter extends Invitation {
 }
 
 const inviteSchema = z.object({
-  email: z.string().email("유효한 이메일을 입력하세요"),
+  email: z.string().email("Please enter a valid email address"),
   role: z.enum(["ADMIN", "APPROVER", "MEMBER", "VIEWER"]),
   teamId: z.string().optional(),
 });
 
-// 초대 생성
+// Create an invitation
 async function _createInvitation(
   input: CreateInvitationInput | FormData
 ): Promise<ActionState> {
@@ -39,22 +39,22 @@ async function _createInvitation(
     if (!session?.user) {
       return {
         success: false,
-        message: "인증이 필요합니다",
+        message: "Authentication required",
       };
     }
 
     if (!session.user.organizationId) {
       return {
         success: false,
-        message: "조직 정보가 필요합니다",
+        message: "Organization information is required",
       };
     }
 
-    // 관리자 권한 확인
+    // Check admin permission
     if (session.user.role !== "ADMIN") {
       return {
         success: false,
-        message: "관리자만 팀원을 초대할 수 있습니다",
+        message: "Only admins can invite team members",
       };
     }
 
@@ -70,14 +70,14 @@ async function _createInvitation(
     if (!parsed.success) {
       return {
         success: false,
-        message: "입력값을 확인해주세요",
+        message: "Please check your input",
         errors: parsed.error.flatten().fieldErrors as Record<string, string[]>,
       };
     }
 
     const { email, role, teamId } = parsed.data;
 
-    // 이미 조직에 속한 사용자인지 확인
+    // Check whether the user already belongs to the organization
     const existingUser = await prisma.user.findFirst({
       where: {
         email,
@@ -88,11 +88,11 @@ async function _createInvitation(
     if (existingUser) {
       return {
         success: false,
-        message: "이미 조직에 속한 사용자입니다",
+        message: "This user already belongs to the organization",
       };
     }
 
-    // 대기 중인 초대가 있는지 확인
+    // Check for a pending invitation
     const existingInvitation = await prisma.invitation.findFirst({
       where: {
         email,
@@ -104,11 +104,11 @@ async function _createInvitation(
     if (existingInvitation) {
       return {
         success: false,
-        message: "이미 대기 중인 초대가 있습니다",
+        message: "A pending invitation already exists",
       };
     }
 
-    // 기존 초대 삭제 (ACCEPTED/EXPIRED/CANCELLED 상태 - 재초대 허용)
+    // Delete existing invitations (ACCEPTED/EXPIRED/CANCELLED - allow re-invites)
     await prisma.invitation.deleteMany({
       where: {
         email,
@@ -117,7 +117,7 @@ async function _createInvitation(
       },
     });
 
-    // 팀 유효성 검사 (teamId가 있는 경우)
+    // Validate the team (when a teamId is given)
     if (teamId) {
       const team = await prisma.team.findFirst({
         where: {
@@ -129,16 +129,16 @@ async function _createInvitation(
       if (!team) {
         return {
           success: false,
-          message: "유효하지 않은 팀입니다",
+          message: "Invalid team",
         };
       }
     }
 
-    // 만료일 설정 (7일 후)
+    // Set the expiry date (7 days later)
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
 
-    // 초대 생성
+    // Create the invitation
     const invitation = await prisma.invitation.create({
       data: {
         email,
@@ -155,12 +155,12 @@ async function _createInvitation(
       },
     });
 
-    // 초대 이메일 발송
+    // Send the invitation email
     await sendInvitationEmail({
       email: invitation.email,
       token: invitation.token,
       organizationName: invitation.organization.name,
-      inviterName: invitation.invitedBy?.name || "관리자",
+      inviterName: invitation.invitedBy?.name || "Administrator",
       role: invitation.role,
     });
 
@@ -168,13 +168,13 @@ async function _createInvitation(
 
     return {
       success: true,
-      message: "초대가 발송되었습니다",
+      message: "Invitation sent",
     };
   } catch (error) {
-    logger.error({ err: error }, "초대 생성 오류");
+    logger.error({ err: error }, "Invitation creation error");
     return {
       success: false,
-      message: "초대 생성 중 오류가 발생했습니다",
+      message: "An error occurred while creating the invitation",
     };
   }
 }
@@ -183,7 +183,7 @@ export const createInvitation = withLogging(
   _createInvitation
 );
 
-// 초대 목록 조회
+// List invitations
 export async function getInvitations(): Promise<
   ActionState<InvitationWithInviter[]>
 > {
@@ -193,14 +193,14 @@ export async function getInvitations(): Promise<
     if (!session?.user) {
       return {
         success: false,
-        message: "인증이 필요합니다",
+        message: "Authentication required",
       };
     }
 
     if (!session.user.organizationId) {
       return {
         success: false,
-        message: "조직 정보가 필요합니다",
+        message: "Organization information is required",
       };
     }
 
@@ -225,15 +225,15 @@ export async function getInvitations(): Promise<
       data: invitations,
     };
   } catch (error) {
-    logger.error({ err: error }, "초대 목록 조회 오류");
+    logger.error({ err: error }, "Invitation list error");
     return {
       success: false,
-      message: "초대 목록 조회 중 오류가 발생했습니다",
+      message: "An error occurred while loading invitations",
     };
   }
 }
 
-// 초대 취소
+// Cancel an invitation
 async function _cancelInvitation(
   input: string | FormData
 ): Promise<ActionState> {
@@ -243,22 +243,22 @@ async function _cancelInvitation(
     if (!session?.user) {
       return {
         success: false,
-        message: "인증이 필요합니다",
+        message: "Authentication required",
       };
     }
 
     if (!session.user.organizationId) {
       return {
         success: false,
-        message: "조직 정보가 필요합니다",
+        message: "Organization information is required",
       };
     }
 
-    // 관리자 권한 확인
+    // Check admin permission
     if (session.user.role !== "ADMIN") {
       return {
         success: false,
-        message: "관리자만 초대를 취소할 수 있습니다",
+        message: "Only admins can cancel invitations",
       };
     }
 
@@ -266,10 +266,10 @@ async function _cancelInvitation(
       input instanceof FormData ? (input.get("invitationId") as string) : input;
 
     if (!invitationId) {
-      return { success: false, message: "초대 ID가 필요합니다" };
+      return { success: false, message: "Invitation ID is required" };
     }
 
-    // 초대 확인
+    // Look up the invitation
     const invitation = await prisma.invitation.findFirst({
       where: {
         id: invitationId,
@@ -280,11 +280,11 @@ async function _cancelInvitation(
     if (!invitation) {
       return {
         success: false,
-        message: "초대를 찾을 수 없습니다",
+        message: "Invitation not found",
       };
     }
 
-    // 초대 취소
+    // Cancel the invitation
     await prisma.invitation.update({
       where: { id: invitationId },
       data: { status: "CANCELLED" },
@@ -294,13 +294,13 @@ async function _cancelInvitation(
 
     return {
       success: true,
-      message: "초대가 취소되었습니다",
+      message: "Invitation cancelled",
     };
   } catch (error) {
-    logger.error({ err: error }, "초대 취소 오류");
+    logger.error({ err: error }, "Invitation cancellation error");
     return {
       success: false,
-      message: "초대 취소 중 오류가 발생했습니다",
+      message: "An error occurred while cancelling the invitation",
     };
   }
 }
@@ -309,7 +309,7 @@ export const cancelInvitation = withLogging(
   _cancelInvitation
 );
 
-// 초대 재발송
+// Resend an invitation
 async function _resendInvitation(
   input: string | FormData
 ): Promise<ActionState> {
@@ -319,22 +319,22 @@ async function _resendInvitation(
     if (!session?.user) {
       return {
         success: false,
-        message: "인증이 필요합니다",
+        message: "Authentication required",
       };
     }
 
     if (!session.user.organizationId) {
       return {
         success: false,
-        message: "조직 정보가 필요합니다",
+        message: "Organization information is required",
       };
     }
 
-    // 관리자 권한 확인
+    // Check admin permission
     if (session.user.role !== "ADMIN") {
       return {
         success: false,
-        message: "관리자만 초대를 재발송할 수 있습니다",
+        message: "Only admins can resend invitations",
       };
     }
 
@@ -342,10 +342,10 @@ async function _resendInvitation(
       input instanceof FormData ? (input.get("invitationId") as string) : input;
 
     if (!invitationId) {
-      return { success: false, message: "초대 ID가 필요합니다" };
+      return { success: false, message: "Invitation ID is required" };
     }
 
-    // 초대 확인
+    // Look up the invitation
     const invitation = await prisma.invitation.findFirst({
       where: {
         id: invitationId,
@@ -360,23 +360,23 @@ async function _resendInvitation(
     if (!invitation) {
       return {
         success: false,
-        message: "초대를 찾을 수 없습니다",
+        message: "Invitation not found",
       };
     }
 
     if (invitation.status !== "PENDING") {
       return {
         success: false,
-        message: "대기 중인 초대만 재발송할 수 있습니다",
+        message: "Only pending invitations can be resent",
       };
     }
 
-    // 새 토큰 및 만료일 생성
+    // Create a new token and expiry date
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7);
     const newToken = crypto.randomUUID();
 
-    // 초대 업데이트
+    // Update the invitation
     const updatedInvitation = await prisma.invitation.update({
       where: { id: invitationId },
       data: {
@@ -390,12 +390,12 @@ async function _resendInvitation(
       },
     });
 
-    // 초대 이메일 재발송
+    // Resend the invitation email
     await sendInvitationEmail({
       email: updatedInvitation.email,
       token: updatedInvitation.token,
       organizationName: updatedInvitation.organization.name,
-      inviterName: updatedInvitation.invitedBy?.name || "관리자",
+      inviterName: updatedInvitation.invitedBy?.name || "Administrator",
       role: updatedInvitation.role,
     });
 
@@ -403,13 +403,13 @@ async function _resendInvitation(
 
     return {
       success: true,
-      message: "초대가 재발송되었습니다",
+      message: "Invitation resent",
     };
   } catch (error) {
-    logger.error({ err: error }, "초대 재발송 오류");
+    logger.error({ err: error }, "Invitation resend error");
     return {
       success: false,
-      message: "초대 재발송 중 오류가 발생했습니다",
+      message: "An error occurred while resending the invitation",
     };
   }
 }
@@ -418,10 +418,10 @@ export const resendInvitation = withLogging(
   _resendInvitation
 );
 
-// 초대 수락
+// Accept an invitation
 async function _acceptInvitation(token: string): Promise<ActionState> {
   try {
-    // 초대 확인
+    // Look up the invitation
     const invitation = await prisma.invitation.findFirst({
       where: {
         token,
@@ -432,11 +432,11 @@ async function _acceptInvitation(token: string): Promise<ActionState> {
     if (!invitation) {
       return {
         success: false,
-        message: "유효하지 않은 초대입니다",
+        message: "Invalid invitation",
       };
     }
 
-    // 만료 확인
+    // Check expiry
     if (new Date() > invitation.expiresAt) {
       await prisma.invitation.update({
         where: { id: invitation.id },
@@ -445,43 +445,43 @@ async function _acceptInvitation(token: string): Promise<ActionState> {
 
       return {
         success: false,
-        message: "초대가 만료되었습니다",
+        message: "The invitation has expired",
       };
     }
 
-    // 현재 로그인한 사용자 확인
+    // Check the currently signed-in user
     const session = await auth();
 
     if (!session?.user) {
       return {
         success: false,
-        message: "로그인이 필요합니다",
+        message: "Please sign in first",
       };
     }
 
-    // 이메일 일치 확인
+    // Check that the email matches
     if (session.user.email !== invitation.email) {
       return {
         success: false,
-        message: "초대받은 이메일로 로그인해 주세요",
+        message: "Please sign in with the invited email address",
       };
     }
 
-    // 이미 다른 조직에 속해 있는지 확인
+    // Check whether the user already belongs to another organization
     if (session.user.organizationId) {
       return {
         success: false,
-        message: "이미 다른 조직에 속해 있습니다",
+        message: "You already belong to another organization",
       };
     }
 
-    // 초대 수락 처리
+    // Accept the invitation
     await prisma.invitation.update({
       where: { id: invitation.id },
       data: { status: "ACCEPTED", token: crypto.randomUUID() },
     });
 
-    // 사용자 조직 연결 (upsert: 없으면 생성, 있으면 업데이트)
+    // Link the user to the organization (upsert: create if missing, otherwise update)
     await prisma.user.upsert({
       where: { email: session.user.email! },
       update: {
@@ -501,13 +501,13 @@ async function _acceptInvitation(token: string): Promise<ActionState> {
 
     return {
       success: true,
-      message: "초대를 수락했습니다",
+      message: "The invitation has been accepted",
     };
   } catch (error) {
-    logger.error({ err: error }, "초대 수락 오류");
+    logger.error({ err: error }, "Invitation acceptance error");
     return {
       success: false,
-      message: "초대 수락 중 오류가 발생했습니다",
+      message: "An error occurred while accepting the invitation",
     };
   }
 }

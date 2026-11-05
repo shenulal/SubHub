@@ -11,17 +11,17 @@ const COOKIE_NAME =
     : "authjs.session-token";
 
 /**
- * 세션 갱신 API
- * DB에서 최신 사용자 정보를 가져와 JWT 토큰을 재생성합니다.
- * 주로 초대 수락 후 organizationId를 세션에 반영하기 위해 사용됩니다.
+ * Session refresh API
+ * Loads the latest user data from the DB and regenerates the JWT.
+ * Mainly used to reflect organizationId in the session after accepting an invitation.
  */
 
 import { withLogging } from "@/lib/logging";
 
 /**
- * 세션 갱신 API
- * DB에서 최신 사용자 정보를 가져와 JWT 토큰을 재생성합니다.
- * 주로 초대 수락 후 organizationId를 세션에 반영하기 위해 사용됩니다.
+ * Session refresh API
+ * Loads the latest user data from the DB and regenerates the JWT.
+ * Mainly used to reflect organizationId in the session after accepting an invitation.
  */
 export const GET = withLogging(
   "auth:refresh-session",

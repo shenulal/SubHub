@@ -59,7 +59,7 @@ describe("auth-credentials", () => {
       });
 
       expect(result.success).toBe(true);
-      expect(result.message).toContain("인증");
+      expect(result.message).toContain("verify");
       expect(prisma.user.create).toHaveBeenCalled();
       expect(prisma.emailVerificationToken.create).toHaveBeenCalled();
     });
@@ -84,7 +84,7 @@ describe("auth-credentials", () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.message).toContain("이미");
+      expect(result.message).toContain("already");
       expect(prisma.user.create).not.toHaveBeenCalled();
     });
 
@@ -134,7 +134,7 @@ describe("auth-credentials", () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toBe("EMAIL_EXISTS_CREDENTIALS");
-      expect(result.message).toContain("이미 가입");
+      expect(result.message).toContain("already registered");
       expect(prisma.user.create).not.toHaveBeenCalled();
     });
 
@@ -159,7 +159,7 @@ describe("auth-credentials", () => {
 
       expect(result.success).toBe(false);
       expect(result.error).toBe("EMAIL_EXISTS");
-      expect(result.message).toContain("이미 사용");
+      expect(result.message).toContain("already in use");
       expect(prisma.user.create).not.toHaveBeenCalled();
     });
 
@@ -171,7 +171,7 @@ describe("auth-credentials", () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.message).toContain("이메일");
+      expect(result.message).toContain("email");
     });
 
     it("should reject registration with weak password", async () => {

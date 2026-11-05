@@ -1,12 +1,12 @@
 // src/lib/services/category-normalizer.ts
 /**
- * LLM 카테고리 → UI 드롭다운 표준 카테고리 정규화
- * - 표준 카테고리 상수 및 타입
- * - 앨리어스 매핑 테이블
- * - 정규화 함수 (순수 함수, 부수효과 없음)
+ * Normalises LLM categories to the standard UI dropdown categories
+ * - Standard category constants and types
+ * - Alias mapping table
+ * - Normalisation function (pure, no side effects)
  */
 
-/** UI 드롭다운에 표시되는 10개 표준 카테고리 */
+/** The 10 standard categories shown in the UI dropdown */
 export const APP_CATEGORIES = [
   "collaboration",
   "design",
@@ -23,8 +23,8 @@ export const APP_CATEGORIES = [
 export type AppCategoryValue = (typeof APP_CATEGORIES)[number];
 
 /**
- * LLM 출력 앨리어스 → 표준 카테고리 매핑 (키는 소문자)
- * 키 조회 시 입력값도 소문자로 변환하여 비교
+ * LLM output alias → standard category mapping (keys are lowercase)
+ * Input is lowercased before lookup
  */
 export const CATEGORY_ALIAS_MAP: Record<string, AppCategoryValue> = {
   // collaboration
@@ -112,12 +112,12 @@ export const CATEGORY_ALIAS_MAP: Record<string, AppCategoryValue> = {
 const STANDARD_SET = new Set<string>(APP_CATEGORIES);
 
 /**
- * LLM 카테고리 값을 UI 표준 카테고리로 정규화
+ * Normalises an LLM category value to a standard UI category
  *
- * 1. null/빈 문자열 → null
- * 2. 이미 표준 카테고리 → 그대로 반환
- * 3. 앨리어스 매핑 히트 → 표준 카테고리 반환
- * 4. 매핑 실패 → 원본 값 그대로 반환 (커스텀 카테고리 허용)
+ * 1. null/empty string → null
+ * 2. Already a standard category → returned as-is
+ * 3. Alias mapping hit → returns the standard category
+ * 4. No mapping → returns the original value (custom categories allowed)
  */
 export function normalizeCategory(raw: string | null): string | null {
   if (raw == null) return null;
@@ -126,13 +126,13 @@ export function normalizeCategory(raw: string | null): string | null {
 
   const lower = trimmed.toLowerCase();
 
-  // 이미 표준 카테고리인 경우
+  // Already a standard category
   if (STANDARD_SET.has(lower)) return lower;
 
-  // 앨리어스 매핑 조회
+  // Look up the alias mapping
   const mapped = CATEGORY_ALIAS_MAP[lower];
   if (mapped) return mapped;
 
-  // 매핑 없는 경우 원본 값 반환
+  // No mapping: return the original value
   return trimmed;
 }

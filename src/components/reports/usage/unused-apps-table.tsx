@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/table";
 import { DEFAULT_BASE_CURRENCY, formatMoney } from "@/lib/fx/convert";
 import { format, parseISO } from "date-fns";
-import { ko } from "date-fns/locale";
 import { AlertTriangle, ExternalLink } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
@@ -36,7 +35,7 @@ export function UnusedAppsTable({ apps }: UnusedAppsTableProps) {
   const formatLastUsed = (dateStr: string | null): string => {
     if (!dateStr) return t("reports.usage.unusedApps.lastUsed.none");
     try {
-      return format(parseISO(dateStr), "yyyy-MM-dd", { locale: ko });
+      return format(parseISO(dateStr), "yyyy-MM-dd");
     } catch {
       return dateStr;
     }
@@ -69,7 +68,7 @@ export function UnusedAppsTable({ apps }: UnusedAppsTableProps) {
     );
   }
 
-  // 잠재적 비용 낭비 계산 (실제 구독 금액 기반 월간 비용)
+  // Compute potential cost waste (monthly cost based on actual subscription amounts)
   const estimatedWaste = apps.reduce(
     (sum, app) => sum + app.monthlyWastedCost,
     0

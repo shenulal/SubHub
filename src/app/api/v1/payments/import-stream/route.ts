@@ -1,8 +1,8 @@
 // src/app/api/v1/payments/import-stream/route.ts
 /**
- * 결제 CSV 업로드 SSE 스트리밍 API
- * - 각 레코드 처리 시마다 프로그레스 이벤트를 SSE로 전송
- * - 클라이언트는 EventSource 또는 fetch + ReadableStream으로 수신
+ * Payment CSV upload SSE streaming API
+ * - Sends a progress event over SSE as each record is processed
+ * - Clients receive it via EventSource or fetch + ReadableStream
  */
 
 import type { PaymentImportResult } from "@/actions/payments/payment-import";
@@ -20,7 +20,7 @@ import { checkNonSaaSCache } from "@/lib/services/saas-matcher";
 import { revalidatePath } from "next/cache";
 import { NextRequest, NextResponse } from "next/server";
 
-// SSE 이벤트 타입
+// SSE event types
 type SseEvent =
   | { type: "start"; total: number }
   | {
@@ -42,7 +42,7 @@ export const POST = withApiAuth(
   async (request: NextRequest, { session }) => {
     const { organizationId } = session.user;
 
-    // 요청 바디 파싱
+    // Parse the request body
     let csvContent: string;
     let teamId: string | undefined;
     let userId: string | undefined;
@@ -54,68 +54,62 @@ export const POST = withApiAuth(
       userId = body.userId || undefined;
     } catch {
       return NextResponse.json(
-        { error: "요청 형식이 올바르지 않습니다" },
+        { error: "Invalid request format" },
         { status: 400 }
       );
     }
 
     if (!csvContent) {
       return NextResponse.json(
-        { error: "CSV 내용이 필요합니다" },
+        { error: "CSV content is required" },
         { status: 400 }
       );
     }
 
-    // 상호 배타 검증
+    // Mutual exclusivity check
     if (teamId && userId) {
       return NextResponse.json(
-        { error: "팀 배정과 유저 배정 중 하나만 선택할 수 있습니다" },
+        { error: "Select either a team or a user assignment, not both" },
         { status: 400 }
       );
     }
 
-    // teamId 유효성 검증
+    // Validate teamId
     if (teamId) {
       const team = await prisma.team.findFirst({
         where: { id: teamId, organizationId },
       });
       if (!team) {
-        return NextResponse.json(
-          { error: "유효하지 않은 팀입니다" },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: "Invalid team" }, { status: 400 });
       }
     }
 
-    // userId 유효성 검증
+    // Validate userId
     if (userId) {
       const user = await prisma.user.findFirst({
         where: { id: userId, organizationId },
       });
       if (!user) {
-        return NextResponse.json(
-          { error: "유효하지 않은 사용자입니다" },
-          { status: 400 }
-        );
+        return NextResponse.json({ error: "Invalid user" }, { status: 400 });
       }
     }
 
-    // CSV 파싱
+    // Parse CSV
     const parseResult = parsePaymentCSV(csvContent);
     if (!parseResult.success || !parseResult.data) {
       return NextResponse.json(
-        { error: parseResult.error || "CSV 파싱에 실패했습니다" },
+        { error: parseResult.error || "Failed to parse the CSV file" },
         { status: 400 }
       );
     }
     if (parseResult.data.length === 0) {
       return NextResponse.json(
-        { error: "가져올 결제 내역이 없습니다" },
+        { error: "No payment records to import" },
         { status: 400 }
       );
     }
 
-    // SSE 스트림 시작
+    // Start the SSE stream
     const stream = new ReadableStream({
       async start(controller) {
         const send = (event: SseEvent) => {
@@ -123,7 +117,7 @@ export const POST = withApiAuth(
         };
 
         try {
-          // 매칭 데이터 조회
+          // Fetch matching data
           const [apps, catalogs, customPatterns] = await Promise.all([
             prisma.app.findMany({
               where: { organizationId },
@@ -182,10 +176,10 @@ export const POST = withApiAuth(
             })
           );
 
-          // 배치 ID 생성
+          // Generate batch ID
           const batchId = `batch_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-          // 중복 검사
+          // Duplicate check
           const approvalNumbers = parseResult
             .data!.map((row) => row.approvalNumber)
             .filter((num): num is string => !!num);
@@ -222,7 +216,7 @@ export const POST = withApiAuth(
             return;
           }
 
-          // Non-SaaS 캐시 조회
+          // Fetch the Non-SaaS cache
           const normalizedNames = newRows.map((r) =>
             normalizeMerchantName(r.merchantName)
           );
@@ -231,10 +225,10 @@ export const POST = withApiAuth(
             normalizedNames
           );
 
-          // start 이벤트 전송
+          // Send the start event
           send({ type: "start", total: newRows.length });
 
-          // 레코드 처리 (onProgress로 SSE 이벤트 전송)
+          // Process records (SSE events sent via onProgress)
           const { paymentRecords, matchedCount } = await processPaymentRecords({
             newRows,
             appMatches,
@@ -250,17 +244,17 @@ export const POST = withApiAuth(
             },
           });
 
-          // saving 이벤트 전송
+          // Send the saving event
           send({ type: "saving" });
 
-          // DB에 저장
+          // Save to the DB
           const dbResult = await prisma.paymentRecord.createMany({
             data: paymentRecords as never[],
           });
 
           revalidatePath("/payments");
 
-          // complete 이벤트 전송
+          // Send the complete event
           send({
             type: "complete",
             result: {
@@ -276,10 +270,10 @@ export const POST = withApiAuth(
             },
           });
         } catch (error) {
-          logger.error({ err: error }, "결제 CSV 스트리밍 오류");
+          logger.error({ err: error }, "Payment CSV streaming error");
           send({
             type: "error",
-            message: "결제 내역 가져오기 중 오류가 발생했습니다",
+            message: "An error occurred while importing payment records",
           });
         } finally {
           controller.close();

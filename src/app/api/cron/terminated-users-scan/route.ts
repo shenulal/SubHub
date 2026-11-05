@@ -8,11 +8,13 @@ import { NextRequest, NextResponse } from "next/server";
 export const GET = withCronAuth(
   withLogging("cron:terminated-users-scan", async (request: NextRequest) => {
     try {
-      logger.info("[Cron] 퇴사자 미회수 계정 스캔 시작");
+      logger.info(
+        "[Cron] Scan for unrevoked accounts of departed users started"
+      );
 
       const result = await processTerminatedUsersScan();
 
-      logger.info({ result }, "[Cron] 퇴사자 스캔 완료");
+      logger.info({ result }, "[Cron] Departed-user scan completed");
 
       return NextResponse.json({
         success: result.success,
@@ -26,12 +28,12 @@ export const GET = withCronAuth(
         errors: result.errors.length > 0 ? result.errors : undefined,
       });
     } catch (error) {
-      logger.error({ err: error }, "[Cron] 퇴사자 스캔 오류");
+      logger.error({ err: error }, "[Cron] Departed-user scan error");
 
       return NextResponse.json(
         {
           success: false,
-          error: error instanceof Error ? error.message : "알 수 없는 오류",
+          error: error instanceof Error ? error.message : "Unknown error",
         },
         { status: 500 }
       );

@@ -5,7 +5,7 @@ import { cn } from "@/lib/utils";
 import * as React from "react";
 
 /**
- * 탭 필터 아이템 타입
+ * Tab filter item type
  */
 export interface TabFilterItem<T extends string = string> {
   value: T;
@@ -15,7 +15,7 @@ export interface TabFilterItem<T extends string = string> {
 }
 
 /**
- * 탭 필터 Props
+ * Tab filter props
  */
 interface TabFilterProps<T extends string = string> {
   items: TabFilterItem<T>[];
@@ -25,7 +25,7 @@ interface TabFilterProps<T extends string = string> {
 }
 
 /**
- * 배지 색상 매핑
+ * Badge colour mapping
  */
 const badgeVariantStyles: Record<string, string> = {
   default: "tonal-primary",
@@ -36,8 +36,8 @@ const badgeVariantStyles: Record<string, string> = {
 };
 
 /**
- * 탭 필터 컴포넌트
- * 레퍼런스: Orders 페이지 상단 (All / Completed / Processed / Returned / Canceled)
+ * Tab filter component
+ * Reference: top of the Orders page (All / Completed / Processed / Returned / Canceled)
  */
 export function TabFilter<T extends string = string>({
   items,
@@ -90,7 +90,7 @@ export function TabFilter<T extends string = string>({
 }
 
 /**
- * useTabFilter 훅 - 탭 필터 상태 관리
+ * useTabFilter hook - manages tab filter state
  */
 export function useTabFilter<T extends string>(defaultValue: T) {
   const [value, setValue] = React.useState<T>(defaultValue);

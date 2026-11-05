@@ -1,9 +1,9 @@
 // src/app/(dashboard)/dashboard/phase4-type-consolidation.test.ts
-// Phase 4 RED: 타입 시스템 통합 검증
-// 1) dashboard-v3.ts → dashboard.ts 병합
-// 2) dashboard2.ts에서 프로덕션 사용 타입 → dashboard.ts 이동, 나머지는 별도 유지
-// 3) RenewalReportData를 actions/ → types/로 이동
-// 4) dashboard2-seat.ts 중복 타입 제거
+// Phase 4 RED: type system consolidation checks
+// 1) Merge dashboard-v3.ts into dashboard.ts
+// 2) Move production types from dashboard2.ts to dashboard.ts; keep the rest separate
+// 3) Move RenewalReportData from actions/ to types/
+// 4) Remove duplicate types from dashboard2-seat.ts
 
 import { existsSync, readFileSync, readdirSync } from "fs";
 import path from "path";
@@ -20,7 +20,7 @@ function fileExists(relPath: string): boolean {
 }
 
 // ============================================================
-// Helper: 소스 파일 수집
+// Helper: collect source files
 // ============================================================
 function collectTsFiles(dir: string): string[] {
   // readdirSync is imported at top level
@@ -43,15 +43,15 @@ function collectTsFiles(dir: string): string[] {
   return results;
 }
 
-describe("Phase 4: 타입 시스템 통합 검증", () => {
-  // ─── 1. dashboard-v3.ts 삭제 ───
+describe("Phase 4: type system consolidation checks", () => {
+  // ─── 1. Delete dashboard-v3.ts ───
 
-  describe("dashboard-v3.ts가 삭제되어야 한다", () => {
-    it("src/types/dashboard-v3.ts 이 존재하지 않아야 한다", () => {
+  describe("dashboard-v3.ts must be deleted", () => {
+    it("src/types/dashboard-v3.ts does not exist", () => {
       expect(fileExists("src/types/dashboard-v3.ts")).toBe(false);
     });
 
-    it("@/types/dashboard-v3 import가 코드베이스에 없어야 한다", () => {
+    it("has no @/types/dashboard-v3 imports in the codebase", () => {
       const dirs = ["src/app", "src/components", "src/actions", "src/lib"];
       const allFiles = dirs.flatMap((d) => collectTsFiles(d));
       const violations: string[] = [];
@@ -63,14 +63,14 @@ describe("Phase 4: 타입 시스템 통합 검증", () => {
       }
       expect(
         violations,
-        `@/types/dashboard-v3를 import하는 파일:\n${violations.join("\n")}`
+        `Files importing @/types/dashboard-v3:\n${violations.join("\n")}`
       ).toHaveLength(0);
     });
   });
 
-  // ─── 2. dashboard-v3 타입이 dashboard.ts로 병합 ───
+  // ─── 2. dashboard-v3 types merged into dashboard.ts ───
 
-  describe("dashboard-v3 타입이 dashboard.ts에 존재해야 한다", () => {
+  describe("dashboard-v3 types must exist in dashboard.ts", () => {
     const expectedTypes = [
       "OptimizationHeroData",
       "RenewalItem",
@@ -85,16 +85,16 @@ describe("Phase 4: 타입 시스템 통합 검증", () => {
     ];
 
     for (const typeName of expectedTypes) {
-      it(`dashboard.ts에 ${typeName}이 정의되어야 한다`, () => {
+      it(`defines ${typeName} in dashboard.ts`, () => {
         const content = readFile("src/types/dashboard.ts");
         expect(content).toContain(`export interface ${typeName}`);
       });
     }
   });
 
-  // ─── 3. dashboard2.ts에서 프로덕션 Seat 타입 → dashboard.ts 이동 ───
+  // ─── 3. Move production Seat types from dashboard2.ts to dashboard.ts ───
 
-  describe("Seat 관련 프로덕션 타입이 dashboard.ts에 존재해야 한다", () => {
+  describe("Seat-related production types must exist in dashboard.ts", () => {
     const seatTypes = [
       "LowUtilizationApp",
       "TopLicenseApp",
@@ -103,55 +103,55 @@ describe("Phase 4: 타입 시스템 통합 검증", () => {
     ];
 
     for (const typeName of seatTypes) {
-      it(`dashboard.ts에 ${typeName}이 정의되어야 한다`, () => {
+      it(`defines ${typeName} in dashboard.ts`, () => {
         const content = readFile("src/types/dashboard.ts");
         expect(content).toContain(`export interface ${typeName}`);
       });
     }
   });
 
-  // ─── 4. RenewalReportData가 types/로 이동 ───
+  // ─── 4. RenewalReportData moved to types/ ───
 
-  describe("RenewalReportData가 타입 파일에 있어야 한다", () => {
-    it("dashboard.ts에 RenewalReportData가 정의되어야 한다", () => {
+  describe("RenewalReportData must live in the types file", () => {
+    it("defines RenewalReportData in dashboard.ts", () => {
       const content = readFile("src/types/dashboard.ts");
       expect(content).toContain("export interface RenewalReportData");
     });
 
-    it("actions/dashboard.ts에 RenewalReportData interface 정의가 없어야 한다", () => {
+    it("has no RenewalReportData interface in actions/dashboard.ts", () => {
       const content = readFile("src/actions/dashboard.ts");
       expect(content).not.toContain("export interface RenewalReportData");
     });
   });
 
-  // ─── 5. dashboard2-seat.ts 중복 타입 제거 ───
+  // ─── 5. Remove duplicate types from dashboard2-seat.ts ───
 
-  describe("dashboard2-seat.ts에서 중복 타입이 제거되어야 한다", () => {
-    it("dashboard2-seat.ts에 LowUtilizationApp interface가 없어야 한다", () => {
+  describe("duplicate types must be removed from dashboard2-seat.ts", () => {
+    it("has no LowUtilizationApp interface in dashboard2-seat.ts", () => {
       const content = readFile("src/actions/dashboard2-seat.ts");
       expect(content).not.toContain("export interface LowUtilizationApp");
     });
 
-    it("dashboard2-seat.ts에 TopLicenseApp interface가 없어야 한다", () => {
+    it("has no TopLicenseApp interface in dashboard2-seat.ts", () => {
       const content = readFile("src/actions/dashboard2-seat.ts");
       expect(content).not.toContain("export interface TopLicenseApp");
     });
 
-    it("dashboard2-seat.ts에 SeatWidgetData interface가 없어야 한다", () => {
+    it("has no SeatWidgetData interface in dashboard2-seat.ts", () => {
       const content = readFile("src/actions/dashboard2-seat.ts");
       expect(content).not.toContain("export interface SeatWidgetData");
     });
 
-    it("dashboard2-seat.ts가 dashboard.ts에서 타입을 import해야 한다", () => {
+    it("dashboard2-seat.ts imports types from dashboard.ts", () => {
       const content = readFile("src/actions/dashboard2-seat.ts");
       expect(content).toContain("@/types/dashboard");
     });
   });
 
-  // ─── 6. 기존 import가 @/types/dashboard로 마이그레이션 ───
+  // ─── 6. Existing imports migrated to @/types/dashboard ───
 
-  describe("모든 import가 @/types/dashboard를 사용해야 한다", () => {
-    it("@/types/dashboard2에서 Seat 타입을 import하는 파일이 없어야 한다 (dashboard2 비즈니스 타입 제외)", () => {
+  describe("all imports must use @/types/dashboard", () => {
+    it("has no files importing Seat types from @/types/dashboard2 (excluding dashboard2 business types)", () => {
       const dirs = [
         "src/components/dashboard",
         "src/app/(dashboard)/dashboard",
@@ -166,20 +166,20 @@ describe("Phase 4: 타입 시스템 통합 검증", () => {
       }
       expect(
         violations,
-        `new-dashboard/dashboard에서 @/types/dashboard2 import:\n${violations.join("\n")}`
+        `@/types/dashboard2 imports in new-dashboard/dashboard:\n${violations.join("\n")}`
       ).toHaveLength(0);
     });
   });
 
-  // ─── 7. dashboard.ts 파일 크기 제한 ───
+  // ─── 7. dashboard.ts file size limit ───
 
-  describe("dashboard.ts가 500줄을 초과하지 않아야 한다", () => {
-    it("dashboard.ts가 500줄 이내여야 한다", () => {
+  describe("dashboard.ts must not exceed 500 lines", () => {
+    it("dashboard.ts is within 500 lines", () => {
       const content = readFile("src/types/dashboard.ts");
       const lineCount = content.split("\n").length;
       expect(
         lineCount,
-        `dashboard.ts: ${lineCount}줄 (500줄 제한 초과)`
+        `dashboard.ts: ${lineCount} lines (exceeds the 500-line limit)`
       ).toBeLessThanOrEqual(500);
     });
   });

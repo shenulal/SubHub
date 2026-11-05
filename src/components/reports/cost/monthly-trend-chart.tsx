@@ -46,7 +46,7 @@ const chartConfig = {
   },
 } satisfies ChartConfig;
 
-// YYYY-MM 문자열을 locale-aware 월 표시로 포맷
+// Format a YYYY-MM string as a locale-aware month label
 function formatMonth(yearMonth: string, locale: string): string {
   const [year, month] = yearMonth.split("-").map(Number);
   const date = new Date(year, month - 1, 1);
@@ -56,7 +56,7 @@ function formatMonth(yearMonth: string, locale: string): string {
   }).format(date);
 }
 
-// 최근 24개월 옵션 생성
+// Build options for the last 24 months
 function generateMonthOptions(locale: string): MonthOption[] {
   const options: MonthOption[] = [];
   const now = new Date();
@@ -74,12 +74,12 @@ function generateMonthOptions(locale: string): MonthOption[] {
   return options;
 }
 
-// 금액 포맷
+// Amount format
 function formatCurrency(value: number, currency: string): string {
-  return formatMoney(value, currency, "ko", 0);
+  return formatMoney(value, currency, "en", 0);
 }
 
-// 축 금액 포맷 (간략화)
+// Axis amount format (compact)
 function formatAxisCurrency(value: number): string {
   if (value >= 1000000) {
     return `${(value / 1000000).toFixed(1)}M`;
@@ -106,7 +106,7 @@ export function MonthlyTrendChart({
   const { baseCurrency } = useBaseCurrency();
   const monthOptions = generateMonthOptions(locale);
 
-  // 기본 기간: 최근 6개월
+  // Default period: last 6 months
   const defaultEndMonth = monthOptions[0].value;
   const defaultStartMonth =
     monthOptions[5]?.value || monthOptions[monthOptions.length - 1].value;
@@ -117,10 +117,10 @@ export function MonthlyTrendChart({
   const [data, setData] = useState<MonthlyCostTrend[]>(initialData);
   const [isPending, startTransition] = useTransition();
 
-  // 기간 변경 시 데이터 재조회
+  // Refetch data when the period changes
   const fetchData = useCallback(() => {
     startTransition(async () => {
-      // 월 수 계산
+      // Compute number of months
       const start = new Date(startMonth + "-01");
       const end = new Date(endMonth + "-01");
       const months =
@@ -134,7 +134,7 @@ export function MonthlyTrendChart({
         userId: userId ?? undefined,
       });
       if (result.success && result.data) {
-        // 선택한 기간으로 필터링
+        // Filter to the selected period
         const filtered = result.data.trends.filter((item) => {
           return item.month >= startMonth && item.month <= endMonth;
         });
@@ -147,7 +147,7 @@ export function MonthlyTrendChart({
     fetchData();
   }, [fetchData]);
 
-  // 차트 데이터 변환
+  // Transform chart data
   const chartData = data.map((item) => ({
     month: item.month,
     label: formatMonth(item.month, locale),
@@ -163,7 +163,7 @@ export function MonthlyTrendChart({
             <CardDescription>{t("description")}</CardDescription>
           </div>
           <div className="flex flex-wrap items-center gap-2">
-            {/* 기간 선택 */}
+            {/* Period picker */}
             <div className="flex flex-wrap items-center gap-2">
               <Select value={startMonth} onValueChange={setStartMonth}>
                 <SelectTrigger className="w-[140px] shrink-0">
@@ -191,7 +191,7 @@ export function MonthlyTrendChart({
                 </SelectContent>
               </Select>
             </div>
-            {/* 차트 뷰 토글 */}
+            {/* Chart view toggle */}
             <div className="flex h-10 shrink-0 items-center rounded-md border p-1">
               <Button
                 variant={chartView === "line" ? "secondary" : "ghost"}
@@ -221,7 +221,7 @@ export function MonthlyTrendChart({
             <p className="text-muted-foreground">{t("noData")}</p>
           </div>
         ) : chartView === "line" ? (
-          /* Line Chart (Area Chart) - ChartContainer 패턴 */
+          /* Line Chart (Area Chart) - ChartContainer pattern */
           <ChartContainer
             config={chartConfig}
             className="aspect-auto h-[300px] w-full"
@@ -288,7 +288,7 @@ export function MonthlyTrendChart({
             </AreaChart>
           </ChartContainer>
         ) : (
-          /* Bar Chart - HTML 기반, 기존 그대로 유지 */
+          /* Bar Chart - HTML-based, kept as is */
           <div className="space-y-4">
             {data.map((trend) => {
               const maxCost = Math.max(...data.map((t) => t.saasCost));

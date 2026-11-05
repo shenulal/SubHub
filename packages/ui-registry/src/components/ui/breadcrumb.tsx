@@ -5,9 +5,9 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * 🎯 목적: Breadcrumb 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: aria-label="breadcrumb" 접근성 속성 유지 필수
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the Breadcrumb component for React 18/19 compatibility
+ * 📝 Note: The aria-label="breadcrumb" accessibility attribute must be kept
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const Breadcrumb = React.forwardRef<HTMLElement, React.ComponentProps<"nav">>(
   ({ ...props }, ref) => {
@@ -24,8 +24,8 @@ const Breadcrumb = React.forwardRef<HTMLElement, React.ComponentProps<"nav">>(
 Breadcrumb.displayName = "Breadcrumb";
 
 /**
- * 🎯 목적: BreadcrumbList 컴포넌트에 forwardRef 적용
- * 📝 주의사항: ol 태그 사용, flex 레이아웃 유지
+ * 🎯 Purpose: Apply forwardRef to the BreadcrumbList component
+ * 📝 Note: Uses an ol tag; keep the flex layout
  */
 const BreadcrumbList = React.forwardRef<
   HTMLOListElement,
@@ -46,7 +46,7 @@ const BreadcrumbList = React.forwardRef<
 BreadcrumbList.displayName = "BreadcrumbList";
 
 /**
- * 🎯 목적: BreadcrumbItem 컴포넌트에 forwardRef 적용
+ * 🎯 Purpose: Apply forwardRef to the BreadcrumbItem component
  */
 const BreadcrumbItem = React.forwardRef<
   HTMLLIElement,
@@ -64,8 +64,8 @@ const BreadcrumbItem = React.forwardRef<
 BreadcrumbItem.displayName = "BreadcrumbItem";
 
 /**
- * 🎯 목적: BreadcrumbLink 컴포넌트에 forwardRef 적용
- * 📝 주의사항: asChild 패턴 지원 (Radix UI Slot 호환)
+ * 🎯 Purpose: Apply forwardRef to the BreadcrumbLink component
+ * 📝 Note: Supports the asChild pattern (Radix UI Slot compatible)
  */
 const BreadcrumbLink = React.forwardRef<
   HTMLAnchorElement,
@@ -87,8 +87,8 @@ const BreadcrumbLink = React.forwardRef<
 BreadcrumbLink.displayName = "BreadcrumbLink";
 
 /**
- * 🎯 목적: BreadcrumbPage 컴포넌트에 forwardRef 적용
- * 📝 주의사항: aria-current="page" 접근성 속성 유지
+ * 🎯 Purpose: Apply forwardRef to the BreadcrumbPage component
+ * 📝 Note: Keep the aria-current="page" accessibility attribute
  */
 const BreadcrumbPage = React.forwardRef<
   HTMLSpanElement,
@@ -109,8 +109,8 @@ const BreadcrumbPage = React.forwardRef<
 BreadcrumbPage.displayName = "BreadcrumbPage";
 
 /**
- * 🎯 목적: BreadcrumbSeparator 컴포넌트에 forwardRef 적용
- * 📝 주의사항: ChevronRight 아이콘 기본값 유지
+ * 🎯 Purpose: Apply forwardRef to the BreadcrumbSeparator component
+ * 📝 Note: Keep ChevronRight as the default icon
  */
 const BreadcrumbSeparator = React.forwardRef<
   HTMLLIElement,
@@ -132,8 +132,8 @@ const BreadcrumbSeparator = React.forwardRef<
 BreadcrumbSeparator.displayName = "BreadcrumbSeparator";
 
 /**
- * 🎯 목적: BreadcrumbEllipsis 컴포넌트에 forwardRef 적용
- * 📝 주의사항: MoreHorizontal 아이콘 유지
+ * 🎯 Purpose: Apply forwardRef to the BreadcrumbEllipsis component
+ * 📝 Note: Keep the MoreHorizontal icon
  */
 const BreadcrumbEllipsis = React.forwardRef<
   HTMLSpanElement,

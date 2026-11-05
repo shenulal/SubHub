@@ -8,7 +8,7 @@ import { getTranslations } from "next-intl/server";
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("import.page");
   return {
-    title: `${t("title")} - SaaS 관리 플랫폼`,
+    title: `${t("title")}`,
     description: t("description"),
   };
 }

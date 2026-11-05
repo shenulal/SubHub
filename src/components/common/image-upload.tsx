@@ -24,8 +24,8 @@ interface ImageUploadProps {
 }
 
 /**
- * 이미지 업로드 컴포넌트 (드래그 & 드롭 지원)
- * 레퍼런스: Add Products 페이지의 이미지 업로드 영역
+ * Image upload component (supports drag & drop)
+ * Reference: image upload area on the Add Products page
  */
 export function ImageUpload({
   value,
@@ -46,7 +46,7 @@ export function ImageUpload({
   );
   const inputRef = React.useRef<HTMLInputElement>(null);
 
-  // value 변경 시 previewUrl 업데이트
+  // Update previewUrl when value changes
   React.useEffect(() => {
     setPreviewUrl(value || null);
   }, [value]);
@@ -102,22 +102,22 @@ export function ImageUpload({
   };
 
   const handleFile = (file: File) => {
-    // 파일 크기 검사
+    // Validate file size
     if (file.size > maxSize * 1024 * 1024) {
       toast.error(t("fileSizeError", { maxSize }));
       return;
     }
 
-    // 파일 타입 검사
+    // Validate file type
     if (!file.type.startsWith("image/")) {
       toast.error(t("fileTypeError"));
       return;
     }
 
-    // 파일 선택 콜백
+    // File selected callback
     onFileSelect?.(file);
 
-    // 미리보기 생성
+    // Generate preview
     const reader = new FileReader();
     reader.onload = () => {
       const url = reader.result as string;
@@ -224,7 +224,7 @@ interface MultiImageUploadProps {
 }
 
 /**
- * 다중 이미지 업로드 컴포넌트
+ * Multiple image upload component
  */
 export function MultiImageUpload({
   values = [],
@@ -239,11 +239,11 @@ export function MultiImageUpload({
   const t = useTranslations("imageUpload");
   const handleImageChange = (index: number, url: string | null) => {
     if (url === null) {
-      // 삭제
+      // Remove
       const newValues = values.filter((_, i) => i !== index);
       onChange?.(newValues);
     } else {
-      // 수정
+      // Replace
       const newValues = [...values];
       newValues[index] = url;
       onChange?.(newValues);
@@ -264,7 +264,7 @@ export function MultiImageUpload({
 
   return (
     <div className={cn("space-y-3", className)}>
-      {/* 메인 이미지 */}
+      {/* Main image */}
       <ImageUpload
         value={values[0] || null}
         onChange={(url) => {
@@ -285,10 +285,10 @@ export function MultiImageUpload({
         placeholder={t("mainImage")}
       />
 
-      {/* 추가 이미지 그리드 */}
+      {/* Additional image grid */}
       {values.length > 0 && (
         <div className="grid grid-cols-4 gap-2">
-          {/* 기존 이미지들 */}
+          {/* Existing images */}
           {values.slice(1).map((url, index) => (
             <div
               key={index}
@@ -315,7 +315,7 @@ export function MultiImageUpload({
             </div>
           ))}
 
-          {/* 추가 버튼 */}
+          {/* Add button */}
           {values.length < maxImages && !disabled && (
             <ImageUpload
               onChange={(url) => url && handleAddImage(url)}

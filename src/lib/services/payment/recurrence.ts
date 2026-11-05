@@ -1,13 +1,13 @@
 // src/lib/services/payment/recurrence.ts
 /**
- * 결제 반복 패턴 분석 통합 모듈
+ * Unified payment recurrence analysis module
  *
- * 모든 기능을 재-export하여 기존 import 호환성 유지:
- * - recurrence.types.ts: 타입 정의
- * - recurrence.utils.ts: 유틸리티 함수
- * - recurrence-detection.ts: 월 반복 결제 감지
- * - recurrence-saas.ts: SaaS 패턴 분석
- * - recurrence-interval.ts: 결제 간격 분석
+ * Re-exports everything to keep existing imports working:
+ * - recurrence.types.ts: type definitions
+ * - recurrence.utils.ts: utilities
+ * - recurrence-detection.ts: monthly recurring payment detection
+ * - recurrence-saas.ts: SaaS pattern analysis
+ * - recurrence-interval.ts: payment interval analysis
  */
 
 // Types re-export
@@ -22,7 +22,7 @@ export type {
   SaaSSubscriptionHint,
 } from "./recurrence.types";
 
-// Utils re-export (내부 사용)
+// Utils re-export (internal use)
 export {
   calculateDayVariation,
   calculateVariation,

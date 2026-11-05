@@ -20,7 +20,7 @@ import {
 import { revalidatePath } from "next/cache";
 
 /**
- * Whitelist 목록 조회
+ * Fetch the whitelist
  */
 export async function getWhitelists(
   params: PaginationParams = {}
@@ -28,7 +28,7 @@ export async function getWhitelists(
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
-      return { success: false, error: "인증이 필요합니다" };
+      return { success: false, error: "Authentication required" };
     }
 
     const { page = 1, limit = 20 } = params;
@@ -60,13 +60,16 @@ export async function getWhitelists(
     logger.error({ err: error }, "[getWhitelists] Error");
     return {
       success: false,
-      error: error instanceof Error ? error.message : "화이트리스트 조회 실패",
+      error:
+        error instanceof Error
+          ? error.message
+          : "Failed to fetch the whitelist",
     };
   }
 }
 
 /**
- * Whitelist 항목 생성
+ * Create a whitelist entry
  */
 async function _createWhitelist(
   input: CreateWhitelistInput
@@ -74,16 +77,15 @@ async function _createWhitelist(
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
-      return { success: false, error: "인증이 필요합니다" };
+      return { success: false, error: "Authentication required" };
     }
 
-    // 입력 검증
+    // Validate input
     const validation = createWhitelistSchema.safeParse(input);
     if (!validation.success) {
       return {
         success: false,
-        error:
-          validation.error.issues[0]?.message || "입력값이 올바르지 않습니다",
+        error: validation.error.issues[0]?.message || "Invalid input",
       };
     }
 
@@ -103,14 +105,17 @@ async function _createWhitelist(
     logger.error({ err: error }, "[createWhitelist] Error");
     return {
       success: false,
-      error: error instanceof Error ? error.message : "화이트리스트 생성 실패",
+      error:
+        error instanceof Error
+          ? error.message
+          : "Failed to create the whitelist entry",
     };
   }
 }
 export const createWhitelist = withLogging("createWhitelist", _createWhitelist);
 
 /**
- * Whitelist 항목 수정
+ * Update a whitelist entry
  */
 async function _updateWhitelist(
   id: string,
@@ -119,26 +124,25 @@ async function _updateWhitelist(
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
-      return { success: false, error: "인증이 필요합니다" };
+      return { success: false, error: "Authentication required" };
     }
 
-    // 입력 검증
+    // Validate input
     const validation = updateWhitelistSchema.safeParse(input);
     if (!validation.success) {
       return {
         success: false,
-        error:
-          validation.error.issues[0]?.message || "입력값이 올바르지 않습니다",
+        error: validation.error.issues[0]?.message || "Invalid input",
       };
     }
 
-    // 기존 항목 확인
+    // Check the existing entry
     const existing = await prisma.extensionWhitelist.findUnique({
       where: { id },
     });
 
     if (!existing || existing.organizationId !== session.user.organizationId) {
-      return { success: false, error: "화이트리스트 항목을 찾을 수 없습니다" };
+      return { success: false, error: "Whitelist entry not found" };
     }
 
     const updated = await prisma.extensionWhitelist.update({
@@ -152,29 +156,32 @@ async function _updateWhitelist(
     logger.error({ err: error }, "[updateWhitelist] Error");
     return {
       success: false,
-      error: error instanceof Error ? error.message : "화이트리스트 수정 실패",
+      error:
+        error instanceof Error
+          ? error.message
+          : "Failed to update the whitelist entry",
     };
   }
 }
 export const updateWhitelist = withLogging("updateWhitelist", _updateWhitelist);
 
 /**
- * Whitelist 항목 삭제
+ * Delete a whitelist entry
  */
 async function _deleteWhitelist(id: string): Promise<ActionState> {
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
-      return { success: false, error: "인증이 필요합니다" };
+      return { success: false, error: "Authentication required" };
     }
 
-    // 기존 항목 확인
+    // Check the existing entry
     const existing = await prisma.extensionWhitelist.findUnique({
       where: { id },
     });
 
     if (!existing || existing.organizationId !== session.user.organizationId) {
-      return { success: false, error: "화이트리스트 항목을 찾을 수 없습니다" };
+      return { success: false, error: "Whitelist entry not found" };
     }
 
     await prisma.extensionWhitelist.delete({
@@ -187,7 +194,10 @@ async function _deleteWhitelist(id: string): Promise<ActionState> {
     logger.error({ err: error }, "[deleteWhitelist] Error");
     return {
       success: false,
-      error: error instanceof Error ? error.message : "화이트리스트 삭제 실패",
+      error:
+        error instanceof Error
+          ? error.message
+          : "Failed to delete the whitelist entry",
     };
   }
 }

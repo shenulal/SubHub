@@ -1,6 +1,6 @@
 // src/components/layouts/app-sidebar.test.tsx
 import { SidebarProvider } from "@/components/ui/sidebar";
-import messages from "@/i18n/messages/ko.json";
+import messages from "@/i18n/messages/en.json";
 import { render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -29,7 +29,7 @@ vi.mock("@/hooks/use-mobile", () => ({
 
 const renderWithProvider = (ui: React.ReactElement) => {
   return render(
-    <NextIntlClientProvider locale="ko" messages={messages}>
+    <NextIntlClientProvider locale="en" messages={messages}>
       <SidebarProvider>{ui}</SidebarProvider>
     </NextIntlClientProvider>
   );
@@ -40,127 +40,129 @@ describe("AppSidebar", () => {
     vi.clearAllMocks();
   });
 
-  describe("렌더링", () => {
-    it("사이드바가 렌더링되어야 한다", () => {
+  describe("rendering", () => {
+    it("renders the sidebar", () => {
       renderWithProvider(<AppSidebar />);
-      // shadcn/ui Sidebar는 data-slot="sidebar"로 식별
+      // The shadcn/ui Sidebar is identified by data-slot="sidebar"
       expect(screen.getByTestId("app-sidebar")).toBeInTheDocument();
     });
 
-    it("브랜드명이 표시되어야 한다", () => {
+    it("shows the brand name", () => {
       renderWithProvider(<AppSidebar />);
-      expect(screen.getByText("SaaS Platform")).toBeInTheDocument();
+      expect(screen.getByRole("img", { name: "SubHub" })).toBeInTheDocument();
     });
   });
 
-  describe("메뉴 항목", () => {
-    it("대시보드 메뉴가 표시되어야 한다", () => {
+  describe("menu items", () => {
+    it("shows the dashboard menu", () => {
       renderWithProvider(<AppSidebar />);
-      // 대시보드는 그룹 라벨과 메뉴 아이템 모두에 있음
-      expect(screen.getAllByText("대시보드").length).toBeGreaterThanOrEqual(1);
+      // Dashboard can appear in both the group label and the menu item
+      expect(screen.getAllByText("Dashboard").length).toBeGreaterThanOrEqual(1);
     });
 
-    it("관리 그룹 메뉴들이 표시되어야 한다", () => {
+    it("shows the management group menus", () => {
       renderWithProvider(<AppSidebar />);
-      expect(screen.getByText("조직 관리")).toBeInTheDocument();
-      expect(screen.getByText("구독")).toBeInTheDocument();
-      expect(screen.getByText("결제")).toBeInTheDocument();
-      expect(screen.getByText("확장 프로그램")).toBeInTheDocument();
+      expect(screen.getByText("Organization")).toBeInTheDocument();
+      expect(screen.getByText("Subscriptions")).toBeInTheDocument();
+      expect(screen.getByText("Payments")).toBeInTheDocument();
+      expect(screen.getByText("Extensions")).toBeInTheDocument();
     });
 
-    it("대시보드 그룹에서 리포트 메뉴가 표시되어야 한다", () => {
+    it("shows the reports menu in the dashboard group", () => {
       renderWithProvider(<AppSidebar />);
-      expect(screen.getByText("리포트")).toBeInTheDocument();
+      expect(screen.getByText("Reports")).toBeInTheDocument();
     });
 
-    it("시스템 그룹 메뉴들이 표시되어야 한다", () => {
+    it("shows the system group menus", () => {
       renderWithProvider(<AppSidebar />);
-      expect(screen.getByText("연동")).toBeInTheDocument();
-      expect(screen.getByText("설정")).toBeInTheDocument();
-    });
-  });
-
-  describe("그룹 라벨", () => {
-    it("대시보드 그룹 라벨이 표시되어야 한다", () => {
-      renderWithProvider(<AppSidebar />);
-      // "대시보드" 텍스트가 그룹 라벨과 메뉴 아이템 모두에 있음
-      expect(screen.getAllByText("대시보드").length).toBeGreaterThanOrEqual(1);
-    });
-
-    it("관리 그룹 라벨이 표시되어야 한다", () => {
-      renderWithProvider(<AppSidebar />);
-      expect(screen.getByText("관리")).toBeInTheDocument();
-    });
-
-    it("시스템 그룹 라벨이 표시되어야 한다", () => {
-      renderWithProvider(<AppSidebar />);
-      expect(screen.getByText("시스템")).toBeInTheDocument();
+      expect(screen.getByText("Integrations")).toBeInTheDocument();
+      expect(screen.getByText("Settings")).toBeInTheDocument();
     });
   });
 
-  describe("네비게이션 링크", () => {
-    it("직접 링크 메뉴 항목이 올바른 href를 가져야 한다", () => {
+  describe("group labels", () => {
+    it("shows the dashboard group label", () => {
+      renderWithProvider(<AppSidebar />);
+      // The "Dashboard" text can appear in both the group label and the menu item
+      expect(screen.getAllByText("Dashboard").length).toBeGreaterThanOrEqual(1);
+    });
+
+    it("shows the management group label", () => {
+      renderWithProvider(<AppSidebar />);
+      expect(screen.getByText("Management")).toBeInTheDocument();
+    });
+
+    it("shows the system group label", () => {
+      renderWithProvider(<AppSidebar />);
+      expect(screen.getByText("System")).toBeInTheDocument();
+    });
+  });
+
+  describe("navigation links", () => {
+    it("direct-link menu items have the correct href", () => {
       renderWithProvider(<AppSidebar />);
 
-      // 서브메뉴가 없는 직접 링크들
-      expect(screen.getByRole("link", { name: /연동/ })).toHaveAttribute(
-        "href",
-        "/integrations"
-      );
-      expect(screen.getByRole("link", { name: /설정/ })).toHaveAttribute(
+      // Direct links without submenus
+      expect(
+        screen.getByRole("link", { name: /Integrations/ })
+      ).toHaveAttribute("href", "/integrations");
+      expect(screen.getByRole("link", { name: /Settings/ })).toHaveAttribute(
         "href",
         "/settings"
       );
     });
 
-    it("모든 메뉴 항목이 링크로 렌더링된다", () => {
+    it("renders every menu item as a link", () => {
       renderWithProvider(<AppSidebar />);
 
-      // 모든 메뉴가 서브메뉴 없이 단일 링크로 렌더링됨
-      expect(screen.getByRole("link", { name: /리포트/ })).toHaveAttribute(
+      // Every menu renders as a single link without submenus
+      expect(screen.getByRole("link", { name: /Reports/ })).toHaveAttribute(
         "href",
         "/reports"
       );
-      expect(screen.getByRole("link", { name: /조직 관리/ })).toHaveAttribute(
-        "href",
-        "/teams"
-      );
-      expect(screen.getByRole("link", { name: /결제/ })).toHaveAttribute(
+      expect(
+        screen.getByRole("link", { name: /Organization/ })
+      ).toHaveAttribute("href", "/teams");
+      expect(screen.getByRole("link", { name: /Payments/ })).toHaveAttribute(
         "href",
         "/payments"
       );
     });
   });
 
-  describe("활성 상태", () => {
-    it("연동 경로에서 연동 메뉴가 활성 상태여야 한다", async () => {
+  describe("active state", () => {
+    it("marks the integrations menu active on the integrations path", async () => {
       const { usePathname } = await import("next/navigation");
       vi.mocked(usePathname).mockReturnValue("/integrations");
 
       renderWithProvider(<AppSidebar />);
 
-      // 직접 링크인 연동 메뉴로 테스트
-      const integrationsLink = screen.getByRole("link", { name: /연동/ });
+      // Test with the direct-link integrations menu
+      const integrationsLink = screen.getByRole("link", {
+        name: /Integrations/,
+      });
       expect(integrationsLink).toHaveAttribute("data-active", "true");
     });
 
-    it("/apps 경로에서 구독 메뉴가 활성 상태여야 한다", async () => {
+    it("marks the subscriptions menu active on the /apps path", async () => {
       const { usePathname } = await import("next/navigation");
       vi.mocked(usePathname).mockReturnValue("/apps");
 
       renderWithProvider(<AppSidebar />);
 
-      const subscriptionsLink = screen.getByRole("link", { name: /구독/ });
+      const subscriptionsLink = screen.getByRole("link", {
+        name: /Subscriptions/,
+      });
       expect(subscriptionsLink).toHaveAttribute("data-active", "true");
     });
 
-    it("/users 경로에서 조직관리 메뉴가 활성 상태여야 한다", async () => {
+    it("marks the organization menu active on the /users path", async () => {
       const { usePathname } = await import("next/navigation");
       vi.mocked(usePathname).mockReturnValue("/users");
 
       renderWithProvider(<AppSidebar />);
 
-      const orgLink = screen.getByRole("link", { name: /조직 관리/ });
+      const orgLink = screen.getByRole("link", { name: /Organization/ });
       expect(orgLink).toHaveAttribute("data-active", "true");
     });
   });

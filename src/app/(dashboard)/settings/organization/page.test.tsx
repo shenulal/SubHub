@@ -28,23 +28,23 @@ describe("OrganizationSettingsPage", () => {
     vi.clearAllMocks();
   });
 
-  it("조직 정보 탭과 조직명을 표시해야 한다", async () => {
+  it("shows the organization info tab and organization name", async () => {
     vi.mocked(prisma.organization.findUnique).mockResolvedValue({
-      name: "테스트 조직",
+      name: "Test Organization",
       domain: "example.com",
       logoUrl: "https://example.com/logo.png",
-      settings: { address: "서울시 강남구" },
+      settings: { address: "Business Bay, Dubai" },
     } as never);
 
     const page = await OrganizationSettingsPage();
     render(page);
 
-    expect(screen.getByText("조직 정보")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("테스트 조직")).toBeInTheDocument();
+    expect(screen.getByText("Organization info")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Test Organization")).toBeInTheDocument();
     expect(screen.getByDisplayValue("example.com")).toBeInTheDocument();
     expect(
       screen.getByDisplayValue("https://example.com/logo.png")
     ).toBeInTheDocument();
-    expect(screen.getByDisplayValue("서울시 강남구")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("Business Bay, Dubai")).toBeInTheDocument();
   });
 });

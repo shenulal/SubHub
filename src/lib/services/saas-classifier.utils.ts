@@ -1,6 +1,6 @@
 // src/lib/services/saas-classifier.utils.ts
 /**
- * SaaS Classifier 유틸리티 함수
+ * SaaS classifier utilities
  */
 
 import type {
@@ -25,7 +25,7 @@ export function sanitizeText(
   input: string | undefined | null
 ): string | undefined {
   if (!input) return undefined;
-  // 카드번호/긴 숫자/이메일/URL은 제거하거나 마스킹
+  // Remove or mask card numbers, long digit runs, e-mail addresses and URLs
   let sanitized = input
     .replace(/\b\d{10,}\b/g, "[redacted-number]")
     .replace(
@@ -36,7 +36,7 @@ export function sanitizeText(
     .replace(/\s+/g, " ")
     .trim();
 
-  // 제어문자 제거
+  // Strip control characters
   sanitized = sanitized.replace(/[\u0000-\u001F\u007F]/g, "");
   return sanitized || undefined;
 }
@@ -130,10 +130,10 @@ const KNOWN_SAAS_LIST = [
   "Mixpanel",
   "Amplitude",
   "Segment",
-  // Korean SaaS
-  "카카오워크",
-  "네이버웍스",
-  "채널톡",
+  // Regional SaaS
+  "KakaoWork",
+  "Naver Works",
+  "Channel Talk",
   "Toss Payments",
 ];
 
@@ -305,18 +305,18 @@ export function buildBatchPrompt(merchants: BatchMerchantInput[]): string {
 }
 
 /**
- * 잘린 JSON 배열 복구 시도
- * LLM 응답이 max_tokens로 잘린 경우, 마지막 완전한 객체까지만 파싱
+ * Attempts to repair a truncated JSON array
+ * When the LLM response is cut off by max_tokens, parse up to the last complete object
  */
 function repairTruncatedJsonArray(jsonText: string): unknown[] | null {
-  // 마지막 완전한 '}' 찾기 → 그 뒤를 잘라서 ']' 추가
+  // Find the last complete '}' → truncate after it and append ']'
   let depth = 0;
   let lastCompleteObjEnd = -1;
 
   for (let i = 0; i < jsonText.length; i++) {
     const ch = jsonText[i];
     if (ch === '"') {
-      // 문자열 스킵
+      // Skip strings
       i++;
       while (i < jsonText.length) {
         if (jsonText[i] === "\\") {
@@ -342,7 +342,7 @@ function repairTruncatedJsonArray(jsonText: string): unknown[] | null {
     const parsed = JSON.parse(repaired);
     if (Array.isArray(parsed)) return parsed;
   } catch {
-    /* repair 실패 */
+    /* repair failed */
   }
   return null;
 }
@@ -356,7 +356,7 @@ export function parseJsonArrayFromResponse(
 
   const jsonText =
     jsonEnd === -1
-      ? content.slice(jsonStart) // ']'가 없으면 잘린 응답
+      ? content.slice(jsonStart) // No ']' means a truncated response
       : content.slice(jsonStart, jsonEnd + 1);
 
   let parsed: unknown[];
@@ -365,11 +365,11 @@ export function parseJsonArrayFromResponse(
     if (!Array.isArray(result)) return [];
     parsed = result;
   } catch {
-    // JSON 파싱 실패 → 잘린 응답 복구 시도
+    // JSON parse failed → try repairing the truncated response
     const repaired = repairTruncatedJsonArray(jsonText);
     if (!repaired) return [];
     console.warn(
-      `[LLM Batch] 잘린 JSON 복구 성공: ${repaired.length}건 파싱됨`
+      `[LLM Batch] Repaired truncated JSON: ${repaired.length} item(s) parsed`
     );
     parsed = repaired;
   }

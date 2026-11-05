@@ -26,22 +26,22 @@ function getSyncStatusStyle(status: string): SyncStatusColor {
     case "SUCCESS":
       return {
         className: "bg-success-muted text-success-muted-foreground",
-        label: "성공",
+        label: "Success",
       };
     case "PARTIAL":
       return {
         className: "bg-warning-muted text-warning-muted-foreground",
-        label: "부분 성공",
+        label: "Partial success",
       };
     case "FAILED":
       return {
         className: "bg-destructive-muted text-destructive-muted-foreground",
-        label: "실패",
+        label: "Failed",
       };
     case "RUNNING":
       return {
         className: "bg-info-muted text-info-muted-foreground",
-        label: "실행 중",
+        label: "Running",
       };
     default:
       return {
@@ -54,11 +54,11 @@ function getSyncStatusStyle(status: string): SyncStatusColor {
 function getSyncTypeLabel(type: string): string {
   switch (type) {
     case "CARD_SYNC":
-      return "카드 동기화";
+      return "Card sync";
     case "CSV_IMPORT":
-      return "CSV 가져오기";
+      return "CSV import";
     case "REMATCH":
-      return "재매칭";
+      return "Rematch";
     default:
       return type;
   }
@@ -124,7 +124,7 @@ export function SyncHistoryPanel({
     return (
       <Card className="border-border/50 rounded-sm shadow-sm">
         <CardHeader>
-          <CardTitle>동기화 이력</CardTitle>
+          <CardTitle>Sync history</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           {Array.from({ length: 3 }).map((_, i) => (
@@ -148,14 +148,14 @@ export function SyncHistoryPanel({
     return (
       <Card className="border-border/50 rounded-sm shadow-sm">
         <CardHeader>
-          <CardTitle>동기화 이력</CardTitle>
+          <CardTitle>Sync history</CardTitle>
         </CardHeader>
         <CardContent>
           <p
             data-testid="sync-history-empty"
             className="text-muted-foreground text-sm"
           >
-            동기화 이력이 없습니다.
+            No sync history yet.
           </p>
         </CardContent>
       </Card>
@@ -165,7 +165,7 @@ export function SyncHistoryPanel({
   return (
     <Card className="border-border/50 rounded-sm shadow-sm">
       <CardHeader>
-        <CardTitle>동기화 이력</CardTitle>
+        <CardTitle>Sync history</CardTitle>
       </CardHeader>
       <CardContent className="space-y-2" data-testid="sync-history-list">
         {entries.map((entry) => {
@@ -193,11 +193,11 @@ export function SyncHistoryPanel({
               </div>
 
               <div className="text-muted-foreground flex gap-3 text-xs">
-                <span>전체 {entry.totalRecords}건</span>
-                <span>성공 {entry.successCount}건</span>
+                <span>Total {entry.totalRecords}</span>
+                <span>Succeeded {entry.successCount}</span>
                 {entry.failedCount > 0 && (
                   <span className="text-destructive">
-                    실패 {entry.failedCount}건
+                    Failed {entry.failedCount}
                   </span>
                 )}
               </div>
@@ -220,7 +220,7 @@ export function SyncHistoryPanel({
             onClick={handleLoadMore}
             disabled={isPending}
           >
-            더보기
+            Load more
           </Button>
         )}
       </CardContent>

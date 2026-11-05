@@ -1,24 +1,24 @@
-/* 스토리북 테마별 배경색 설정 */
+/* Background color per Storybook theme */
 .sb-show-main,
 .sb-main-padded {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-/* 라이트 모드 (기본) */
+/* Light mode (default) */
 html:not(.dark) .sb-show-main,
 html:not(.dark) .sb-main-padded {
   background-color: var(--color-background);
   color: var(--color-foreground);
 }
 
-/* 다크 모드 */
+/* Dark mode */
 html.dark .sb-show-main,
 html.dark .sb-main-padded {
   background-color: var(--color-background);
   color: var(--color-foreground);
 }
 
-/* 스토리북 프리뷰 영역 */
+/* Storybook preview area */
 #storybook-preview-wrapper {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
@@ -33,7 +33,7 @@ html.dark #storybook-preview-wrapper {
   color: var(--color-foreground);
 }
 
-/* 도큐멘트 모드에서도 배경색 적용 */
+/* Apply the background color in docs mode too */
 .docs-story {
   transition: background-color 0.2s ease, color 0.2s ease;
 }
@@ -46,7 +46,7 @@ html.dark .docs-story {
   background-color: var(--color-background);
 }
 
-/* 테마 스위처를 라디오 버튼 스타일로 변경 */
+/* Style the theme switcher as radio buttons */
 [data-addon-id="themes"] {
   & > button {
     position: relative;
@@ -72,7 +72,7 @@ html.dark .docs-story {
     }
   }
   
-  /* 드롭다운 메뉴를 라디오 버튼 그룹처럼 보이도록 */
+  /* Make the dropdown menu look like a radio button group */
   [role="menu"] {
     & button {
       position: relative;

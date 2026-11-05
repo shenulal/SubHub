@@ -10,101 +10,101 @@ import {
 
 describe("CSV Export Service", () => {
   describe("escapeCSVValue", () => {
-    it("일반 문자열은 그대로 반환해야 한다", () => {
+    it("returns plain strings unchanged", () => {
       expect(escapeCSVValue("hello")).toBe("hello");
     });
 
-    it("쉼표가 포함된 문자열은 따옴표로 감싸야 한다", () => {
+    it("wraps strings containing commas in quotes", () => {
       expect(escapeCSVValue("hello, world")).toBe('"hello, world"');
     });
 
-    it("따옴표가 포함된 문자열은 이스케이프해야 한다", () => {
+    it("escapes strings containing quotes", () => {
       expect(escapeCSVValue('say "hello"')).toBe('"say ""hello"""');
     });
 
-    it("줄바꿈이 포함된 문자열은 따옴표로 감싸야 한다", () => {
+    it("wraps strings containing line breaks in quotes", () => {
       expect(escapeCSVValue("line1\nline2")).toBe('"line1\nline2"');
     });
 
-    it("null 값은 빈 문자열로 반환해야 한다", () => {
+    it("returns an empty string for null", () => {
       expect(escapeCSVValue(null)).toBe("");
     });
 
-    it("undefined 값은 빈 문자열로 반환해야 한다", () => {
+    it("returns an empty string for undefined", () => {
       expect(escapeCSVValue(undefined)).toBe("");
     });
 
-    it("숫자는 문자열로 변환해야 한다", () => {
+    it("converts numbers to strings", () => {
       expect(escapeCSVValue(12345)).toBe("12345");
     });
   });
 
   describe("formatCurrency", () => {
-    it("원화를 천단위 구분하여 포맷해야 한다", () => {
+    it("formats KRW with thousands separators", () => {
       expect(formatCurrency(1234567, "KRW")).toBe("₩1,234,567");
     });
 
-    it("달러를 소수점 2자리로 포맷해야 한다", () => {
-      // 한국 로케일에서 USD는 US$로 표시됨
-      expect(formatCurrency(1234.56, "USD")).toBe("US$1,234.56");
+    it("formats USD with 2 decimal places", () => {
+      // The en-US locale shows USD as $
+      expect(formatCurrency(1234.56, "USD")).toBe("$1,234.56");
     });
 
-    it("0은 ₩0으로 표시해야 한다", () => {
+    it("shows 0 as ₩0", () => {
       expect(formatCurrency(0, "KRW")).toBe("₩0");
     });
   });
 
   describe("formatDate", () => {
-    it("Date 객체를 YYYY-MM-DD 형식으로 변환해야 한다", () => {
+    it("converts a Date to YYYY-MM-DD", () => {
       const date = new Date("2024-12-01T00:00:00Z");
       expect(formatDate(date)).toBe("2024-12-01");
     });
 
-    it("null 값은 빈 문자열로 반환해야 한다", () => {
+    it("returns an empty string for null", () => {
       expect(formatDate(null)).toBe("");
     });
 
-    it("문자열 날짜도 처리해야 한다", () => {
+    it("handles string dates", () => {
       expect(formatDate("2024-12-01")).toBe("2024-12-01");
     });
   });
 
   describe("generateCSV", () => {
     const columns: CSVColumn[] = [
-      { key: "name", header: "이름" },
-      { key: "email", header: "이메일" },
-      { key: "amount", header: "금액" },
+      { key: "name", header: "Name" },
+      { key: "email", header: "Email" },
+      { key: "amount", header: "Amount" },
     ];
 
     const data = [
-      { name: "홍길동", email: "hong@example.com", amount: 10000 },
-      { name: "김철수", email: "kim@example.com", amount: 20000 },
+      { name: "Ahmed Ali", email: "hong@example.com", amount: 10000 },
+      { name: "Fatima Hassan", email: "kim@example.com", amount: 20000 },
     ];
 
-    it("헤더 행을 포함해야 한다", () => {
+    it("includes the header row", () => {
       const csv = generateCSV(columns, data);
       const lines = csv.split("\n");
-      expect(lines[0]).toBe("이름,이메일,금액");
+      expect(lines[0]).toBe("Name,Email,Amount");
     });
 
-    it("데이터 행들을 포함해야 한다", () => {
+    it("includes the data rows", () => {
       const csv = generateCSV(columns, data);
       const lines = csv.split("\n");
-      expect(lines[1]).toBe("홍길동,hong@example.com,10000");
-      expect(lines[2]).toBe("김철수,kim@example.com,20000");
+      expect(lines[1]).toBe("Ahmed Ali,hong@example.com,10000");
+      expect(lines[2]).toBe("Fatima Hassan,kim@example.com,20000");
     });
 
-    it("빈 데이터는 헤더만 반환해야 한다", () => {
+    it("returns only the header for empty data", () => {
       const csv = generateCSV(columns, []);
-      expect(csv).toBe("이름,이메일,금액");
+      expect(csv).toBe("Name,Email,Amount");
     });
 
-    it("formatter 함수를 적용해야 한다", () => {
+    it("applies the formatter function", () => {
       const columnsWithFormatter: CSVColumn[] = [
-        { key: "name", header: "이름" },
+        { key: "name", header: "Name" },
         {
           key: "amount",
-          header: "금액",
+          header: "Amount",
           formatter: (value) => formatCurrency(value as number, "KRW"),
         },
       ];
@@ -114,16 +114,16 @@ describe("CSV Export Service", () => {
       expect(lines[1]).toContain("₩10,000");
     });
 
-    it("특수 문자가 포함된 값을 이스케이프해야 한다", () => {
+    it("escapes values containing special characters", () => {
       const specialData = [
-        { name: "홍, 길동", email: "test@test.com", amount: 0 },
+        { name: "Ali, Ahmed", email: "test@test.com", amount: 0 },
       ];
       const csv = generateCSV(columns, specialData);
       const lines = csv.split("\n");
-      expect(lines[1]).toContain('"홍, 길동"');
+      expect(lines[1]).toContain('"Ali, Ahmed"');
     });
 
-    it("BOM을 포함한 UTF-8 CSV를 생성할 수 있어야 한다", () => {
+    it("can generate a UTF-8 CSV with a BOM", () => {
       const csv = generateCSV(columns, data, { includeBOM: true });
       expect(csv.charCodeAt(0)).toBe(0xfeff);
     });

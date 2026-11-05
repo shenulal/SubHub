@@ -1,7 +1,7 @@
 // src/app/api/v1/extensions/onboarding/complete/route.ts
 /**
- * Extension 온보딩 완료 API
- * ExtensionDevice에 userId 연결, 상태 APPROVED로 변경
+ * Extension onboarding completion API
+ * Links userId to the ExtensionDevice and sets status to APPROVED
  */
 
 import { withExtensionAuth } from "@/lib/api/extension-auth";
@@ -11,7 +11,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 /**
  * POST /api/v1/extensions/onboarding/complete
- * 온보딩 완료 처리
+ * Complete onboarding
  */
 export const POST = withExtensionAuth(
   async (request: NextRequest, { auth }) => {
@@ -32,7 +32,7 @@ export const POST = withExtensionAuth(
 
       const { device_id, email, user_id } = parseResult.data;
 
-      // 사용자가 실제로 해당 조직에 속하는지 확인
+      // Verify the user actually belongs to the organization
       const user = await prisma.user.findFirst({
         where: {
           id: user_id,
@@ -48,7 +48,7 @@ export const POST = withExtensionAuth(
         );
       }
 
-      // ExtensionDevice 업데이트 (upsert로 디바이스가 없으면 생성)
+      // Update ExtensionDevice (upsert creates the device if missing)
       const device = await prisma.extensionDevice.upsert({
         where: { deviceKey: device_id },
         create: {
@@ -69,7 +69,7 @@ export const POST = withExtensionAuth(
         },
       });
 
-      // AuditLog에 온보딩 완료 기록
+      // Record onboarding completion in the AuditLog
       await prisma.auditLog.create({
         data: {
           organizationId: auth.organizationId,

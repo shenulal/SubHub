@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import type { MerchantExtractConfig } from "./erp-format-presets";
 import { extractMerchantName } from "./erp-merchant-extractor";
 
+// Korean field names, skip patterns and memo values in the Douzone tests are functional test
+// input: they exercise the Korean header/keyword matching used for Korean ERP exports.
 const DUZON_CONFIG: MerchantExtractConfig = {
   fieldPriority: ["적요", "거래처명", "비고"],
   skipPatterns: ["카드결제", "법인카드", "미지급금", "보통예금"],
@@ -14,8 +16,8 @@ const SAP_CONFIG: MerchantExtractConfig = {
 };
 
 describe("erp-merchant-extractor", () => {
-  describe("extractMerchantName - 더존 패턴", () => {
-    it("적요에서 SaaS명 추출 (N월 패턴)", () => {
+  describe("extractMerchantName - Douzone patterns", () => {
+    it("extracts the SaaS name from the memo (month pattern)", () => {
       const row = {
         적요: "3월 Slack 구독료",
         거래처명: "미지급금",
@@ -24,21 +26,21 @@ describe("erp-merchant-extractor", () => {
       expect(extractMerchantName(row, DUZON_CONFIG)).toBe("Slack");
     });
 
-    it("적요에서 SaaS명 추출 (영문 시작 + 한글 설명)", () => {
+    it("extracts the SaaS name from the memo (English start + Korean description)", () => {
       const row = {
         적요: "Notion 팀플랜 결제",
         거래처명: "카드결제",
         비고: "",
       };
-      // "Notion 팀플랜 결제"에서 "결제" 키워드로 "Notion 팀플랜" 추출 시도
-      // 정규식이 영문+공백만 캡처하므로 "Notion" 또는 전체 반환
+      // Tries to extract the name before the Korean "payment" keyword
+      // The regex only captures English letters and spaces, so it returns "Notion" or the whole value
       const result = extractMerchantName(row, DUZON_CONFIG);
-      // extractFromMemo 정규식이 매칭 안 되면 다음 필드로 폴백
-      // 거래처명 "카드결제"는 skip → 비고 ""도 skip → fallback "Notion 팀플랜 결제"
+      // If the extractFromMemo regex does not match, fall back to the next field
+      // The vendor field ("card payment") is skipped → the empty remarks field is skipped → fallback to the full memo
       expect(result).toBe("Notion 팀플랜 결제");
     });
 
-    it("적요가 무의미하면 거래처명으로 폴백", () => {
+    it("falls back to the vendor name when the memo is meaningless", () => {
       const row = {
         적요: "카드결제",
         거래처명: "GitHub Inc",
@@ -47,57 +49,57 @@ describe("erp-merchant-extractor", () => {
       expect(extractMerchantName(row, DUZON_CONFIG)).toBe("GitHub Inc");
     });
 
-    it("거래처명도 skipPattern이면 비고로 폴백", () => {
+    it("falls back to remarks when the vendor name is also a skip pattern", () => {
       const row = {
         적요: "법인카드",
         거래처명: "미지급금",
         비고: "AWS 서버 비용",
       };
-      // 적요 "법인카드" → skip, 거래처명 "미지급금" → skip
-      // 비고 "AWS 서버 비용" → memo 필드로 extractFromMemo 시도
-      // "AWS 서버 비용" → 영문시작 + "비용" 키워드 → "AWS 서버" 캡처 또는 fallback
+      // Memo ("corporate card") → skip, vendor ("accounts payable") → skip
+      // Remarks ("AWS server cost") → treated as a memo field, extractFromMemo is tried
+      // Starts with English + Korean "cost" keyword → captures "AWS server" or falls back
       const result = extractMerchantName(row, DUZON_CONFIG);
-      // extractFromMemo regex: /^([A-Za-z]...+?)(?:\s+(?:...비용...))/
-      // "AWS 서버 비용" → "AWS 서버" 캡처 불가 (한글 포함) → fallback
-      expect(result).toBe("법인카드"); // fallback: 첫 길이>1 값
+      // extractFromMemo regex: /^([A-Za-z]...+?)(?:\s+(?:...cost keyword...))/
+      // Cannot capture "AWS server" because it contains Korean → fallback
+      expect(result).toBe("법인카드"); // fallback: first value longer than 1 character
     });
 
-    it("모든 필드가 무의미하면 fallback 값 반환", () => {
+    it("returns the fallback value when every field is meaningless", () => {
       const row = {
         적요: "카드결제",
         거래처명: "미지급금",
         비고: "",
       };
-      // fallback: 첫 번째 비-skip이지만 모두 skip이면 첫 길이>1 값
+      // fallback: first non-skip value; if all are skipped, the first value longer than 1 character
       const result = extractMerchantName(row, DUZON_CONFIG);
-      // "카드결제"가 fallback으로 반환됨 (길이 > 1)
+      // The memo value is returned as the fallback (length > 1)
       expect(result).toBe("카드결제");
     });
   });
 
-  describe("extractMerchantName - SAP 패턴", () => {
-    it("SupplierName 우선 추출", () => {
+  describe("extractMerchantName - SAP patterns", () => {
+    it("extracts SupplierName first", () => {
       const row = {
         SupplierName: "Slack Technologies",
-        DocumentItemText: "3월 구독료",
-        GLAccountName: "복리후생비",
+        DocumentItemText: "March subscription",
+        GLAccountName: "Employee Benefits",
       };
       expect(extractMerchantName(row, SAP_CONFIG)).toBe("Slack Technologies");
     });
 
-    it("SupplierName이 CLEARING이면 DocumentItemText로 폴백", () => {
+    it("falls back to DocumentItemText when SupplierName is CLEARING", () => {
       const row = {
         SupplierName: "CLEARING",
         DocumentItemText: "Notion Labs Inc",
-        GLAccountName: "소프트웨어비",
+        GLAccountName: "Software Expenses",
       };
-      // DocumentItemText는 memo 필드로 인식
-      // "Notion Labs Inc"는 전체가 영문이므로 그대로 반환
+      // DocumentItemText is treated as a memo field
+      // "Notion Labs Inc" is entirely English, so it is returned as-is
       const result = extractMerchantName(row, SAP_CONFIG);
       expect(result).toBe("Notion Labs Inc");
     });
 
-    it("모든 우선순위 필드 없으면 null", () => {
+    it("returns null when none of the priority fields exist", () => {
       const row = { Amount: "150000" };
       expect(extractMerchantName(row, SAP_CONFIG)).toBeNull();
     });

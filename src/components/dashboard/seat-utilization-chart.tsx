@@ -24,7 +24,7 @@ export interface SeatUtilizationChartProps {
   isLoading?: boolean;
 }
 
-// 차트용 데이터 타입
+// Chart data type
 interface ChartData {
   name: string;
   fullName: string;
@@ -33,12 +33,12 @@ interface ChartData {
   rate: number;
 }
 
-// 앱 이름 이니셜 추출
+// Extract app name initials
 function getAppInitial(name: string): string {
   return name.charAt(0).toUpperCase();
 }
 
-// 앱 이름 기반 색상
+// Colour derived from the app name
 function getAppColor(name: string): string {
   const colors: Record<string, string> = {
     S: "tonal-warning",
@@ -51,7 +51,7 @@ function getAppColor(name: string): string {
   return colors[initial] || "tonal-neutral";
 }
 
-// X축 커스텀 틱 컴포넌트 (앱 아바타 표시)
+// Custom X-axis tick component (shows app avatars)
 interface CustomAvatarTickProps {
   x?: number | string;
   y?: number | string;
@@ -91,11 +91,11 @@ function CustomAvatarTick({
 }
 
 /**
- * Seat 활용률 하위 Top 5 차트 컴포넌트 (Vertical Bar Chart)
- * - Figma 디자인 적용: 세로 막대 차트
- * - Y축: 0%, 10%, 20%, 30%, 40%, 50%
- * - X축: 앱 아바타
- * - 바 스타일: 보라색 테마
+ * Bottom 5 seat utilisation chart component (vertical bar chart)
+ * - Figma design: vertical bar chart
+ * - Y axis: 0%, 10%, 20%, 30%, 40%, 50%
+ * - X axis: app avatars
+ * - Bar style: purple theme
  */
 export function SeatUtilizationChart({
   data,
@@ -103,12 +103,12 @@ export function SeatUtilizationChart({
 }: SeatUtilizationChartProps) {
   const t = useTranslations("dashboard2.seatUtilization");
 
-  // 정렬된 데이터 (활용률 낮은 순, 상위 5개)
+  // Sorted data (lowest utilisation first, top 5)
   const sortedData = useMemo(() => {
     return [...data].slice(0, 5);
   }, [data]);
 
-  // ChartConfig 동적 생성
+  // Build ChartConfig dynamically
   const chartConfig = useMemo(() => {
     if (!sortedData.length) return {} as ChartConfig;
     const config: ChartConfig = {
@@ -117,7 +117,7 @@ export function SeatUtilizationChart({
     return config;
   }, [sortedData, t]);
 
-  // Recharts 호환 데이터로 변환
+  // Convert to Recharts-compatible data
   const chartData: ChartData[] = useMemo(() => {
     if (!sortedData.length) return [];
     return sortedData.map((app) => ({
@@ -130,7 +130,7 @@ export function SeatUtilizationChart({
     }));
   }, [sortedData]);
 
-  // 로딩 상태
+  // Loading state
   if (isLoading) {
     return (
       <Card className={CARD_CLASSES}>
@@ -140,7 +140,7 @@ export function SeatUtilizationChart({
     );
   }
 
-  // 빈 상태
+  // Empty state
   if (!sortedData.length) {
     return (
       <Card className={CARD_CLASSES}>
@@ -157,7 +157,7 @@ export function SeatUtilizationChart({
 
   return (
     <Card className={CARD_CLASSES}>
-      {/* 헤더: 타이틀 */}
+      {/* Header: title */}
       <p
         className="text-foreground truncate text-lg font-medium"
         title={t("title")}
@@ -165,7 +165,7 @@ export function SeatUtilizationChart({
         {t("title")}
       </p>
 
-      {/* 차트 영역 */}
+      {/* Chart area */}
       <div className="min-h-0 flex-1">
         <ChartContainer config={chartConfig} className="h-full w-full">
           <BarChart

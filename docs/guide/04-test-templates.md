@@ -1,19 +1,19 @@
-# Test Templates (테스트 템플릿)
+# Test Templates
 
-> **복사해서 사용하는 테스트 코드 템플릿**
+> **Copy-and-use test code templates**
 
 ---
 
-## 1. Server Actions 테스트
+## 1. Server Actions Tests
 
-### 1.1 기본 템플릿
+### 1.1 Basic Template
 
 ```typescript
 // src/actions/apps.test.ts
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { createApp, updateApp, deleteApp } from "./apps";
 
-// Prisma 모킹
+// Mock Prisma
 vi.mock("@/lib/db", () => ({
   prisma: {
     app: {
@@ -26,12 +26,12 @@ vi.mock("@/lib/db", () => ({
   },
 }));
 
-// revalidatePath 모킹
+// Mock revalidatePath
 vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
 }));
 
-// 인증 모킹
+// Mock authentication
 vi.mock("@/lib/auth", () => ({
   auth: vi.fn(() =>
     Promise.resolve({
@@ -120,9 +120,9 @@ describe("createApp", () => {
 
 ---
 
-## 2. React 컴포넌트 테스트
+## 2. React Component Tests
 
-### 2.1 기본 컴포넌트 템플릿
+### 2.1 Basic Component Template
 
 ```typescript
 // src/components/dashboard/app-card.test.tsx
@@ -131,11 +131,11 @@ import { render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { AppCard } from './app-card';
 
-// userEvent 인스턴스 생성
+// Create the userEvent instance
 const user = userEvent.setup();
 
 describe('AppCard', () => {
-  // 테스트 데이터 팩토리
+  // Test data factory
   const createMockApp = (overrides = {}) => ({
     id: '1',
     name: 'Slack',
@@ -145,7 +145,7 @@ describe('AppCard', () => {
     ...overrides,
   });
 
-  // 렌더 헬퍼
+  // Render helper
   const renderAppCard = (props = {}) => {
     const defaultProps = {
       app: createMockApp(),
@@ -172,7 +172,7 @@ describe('AppCard', () => {
     it('should render fallback avatar when no logo', () => {
       renderAppCard({ app: createMockApp({ logoUrl: null }) });
 
-      expect(screen.getByText('SL')).toBeInTheDocument(); // Slack 이니셜
+      expect(screen.getByText('SL')).toBeInTheDocument(); // Slack initials
     });
   });
 
@@ -190,10 +190,10 @@ describe('AppCard', () => {
       const onDelete = vi.fn();
       renderAppCard({ onDelete });
 
-      // 삭제 버튼 클릭
+      // Click the delete button
       await user.click(screen.getByRole('button', { name: /delete/i }));
 
-      // 확인 다이얼로그에서 확인 클릭
+      // Click confirm in the confirmation dialog
       await user.click(screen.getByRole('button', { name: /confirm/i }));
 
       expect(onDelete).toHaveBeenCalledWith('1');
@@ -202,7 +202,7 @@ describe('AppCard', () => {
 });
 ```
 
-### 2.2 Form 컴포넌트 템플릿
+### 2.2 Form Component Template
 
 ```typescript
 // src/components/forms/app-form.test.tsx
@@ -257,7 +257,7 @@ describe('AppForm', () => {
 
       await user.type(screen.getByLabelText(/name/i), 'Slack');
 
-      // Select 컴포넌트 선택
+      // Choose an option in the Select component
       await user.click(screen.getByRole('combobox', { name: /category/i }));
       await user.click(screen.getByRole('option', { name: /communication/i }));
 
@@ -288,9 +288,9 @@ describe('AppForm', () => {
 
 ---
 
-## 3. Custom Hook 테스트
+## 3. Custom Hook Tests
 
-### 3.1 기본 템플릿
+### 3.1 Basic Template
 
 ```typescript
 // src/hooks/use-apps.test.ts
@@ -298,7 +298,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 import { renderHook, act, waitFor } from "@testing-library/react";
 import { useApps } from "./use-apps";
 
-// fetch 모킹
+// Mock fetch
 global.fetch = vi.fn();
 
 describe("useApps", () => {
@@ -319,10 +319,10 @@ describe("useApps", () => {
 
     const { result } = renderHook(() => useApps("org-1"));
 
-    // 초기 로딩 상태
+    // Initial loading state
     expect(result.current.isLoading).toBe(true);
 
-    // 로딩 완료 대기
+    // Wait for loading to complete
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
     });
@@ -362,7 +362,7 @@ describe("useApps", () => {
 
     await waitFor(() => expect(result.current.apps).toHaveLength(2));
 
-    // refetch 호출
+    // Call refetch
     act(() => {
       result.current.refetch();
     });
@@ -374,9 +374,9 @@ describe("useApps", () => {
 
 ---
 
-## 4. Service/Business Logic 테스트
+## 4. Service/Business Logic Tests
 
-### 4.1 기본 템플릿
+### 4.1 Basic Template
 
 ```typescript
 // src/lib/services/subscription/renewal.test.ts
@@ -387,7 +387,7 @@ import {
   getUpcomingRenewals,
 } from "./renewal";
 
-// 의존성 모킹
+// Mock dependencies
 vi.mock("@/lib/db", () => ({
   prisma: {
     subscription: { findMany: vi.fn() },
@@ -405,7 +405,7 @@ import { sendEmail } from "@/lib/services/notification";
 describe("Renewal Service", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    // 날짜 고정
+    // Freeze the date
     vi.useFakeTimers();
     vi.setSystemTime(new Date("2024-01-15"));
   });
@@ -420,7 +420,7 @@ describe("Renewal Service", () => {
         {
           id: "sub-1",
           appId: "app-1",
-          renewalDate: new Date("2024-02-14"), // 30일 후
+          renewalDate: new Date("2024-02-14"), // 30 days later
           app: { name: "Slack", organization: { name: "Acme" } },
         },
       ];
@@ -488,9 +488,9 @@ describe("Renewal Service", () => {
 
 ---
 
-## 5. Zod Schema 테스트
+## 5. Zod Schema Tests
 
-### 5.1 기본 템플릿
+### 5.1 Basic Template
 
 ```typescript
 // src/lib/validation/app.test.ts
@@ -587,9 +587,9 @@ describe("subscriptionSchema", () => {
 
 ---
 
-## 6. Zustand Store 테스트
+## 6. Zustand Store Tests
 
-### 6.1 기본 템플릿
+### 6.1 Basic Template
 
 ```typescript
 // src/stores/app-store.test.ts
@@ -599,7 +599,7 @@ import { useAppStore } from "./app-store";
 
 describe("useAppStore", () => {
   beforeEach(() => {
-    // 스토어 리셋
+    // Reset the store
     act(() => {
       useAppStore.setState({
         apps: [],
@@ -676,9 +676,9 @@ describe("useAppStore", () => {
 
 ---
 
-## 7. 테스트 파일 시작 템플릿
+## 7. Test File Starter Template
 
-### 7.1 최소 템플릿
+### 7.1 Minimal Template
 
 ```typescript
 // src/[path]/[name].test.ts
@@ -705,9 +705,9 @@ describe("[functionName]", () => {
 
 ---
 
-## 8. FormData Server Action 테스트
+## 8. FormData Server Action Tests
 
-Server Actions에서 FormData를 사용하는 경우의 테스트 패턴입니다.
+This is the test pattern for Server Actions that use FormData.
 
 ```typescript
 import { describe, it, expect, vi, beforeEach } from "vitest";
@@ -752,13 +752,13 @@ describe("createApp with FormData", () => {
 });
 ```
 
-자세한 내용은 [10-form-data-patterns.md](./10-form-data-patterns.md) 참조.
+For details, see [10-form-data-patterns.md](./10-form-data-patterns.md).
 
 ---
 
-## 9. 다음 단계
+## 9. Next Steps
 
-- [05-common-patterns.md](./05-common-patterns.md) - 공통 테스트 패턴
-- [06-coverage-checklist.md](./06-coverage-checklist.md) - 커버리지 체크리스트
-- [08-multi-tenant-patterns.md](./08-multi-tenant-patterns.md) - Multi-tenant 테스트 패턴
-- [11-audit-logging.md](./11-audit-logging.md) - 감사 로그 테스트 패턴
+- [05-common-patterns.md](./05-common-patterns.md) - Common test patterns
+- [06-coverage-checklist.md](./06-coverage-checklist.md) - Coverage checklist
+- [08-multi-tenant-patterns.md](./08-multi-tenant-patterns.md) - Multi-tenant test patterns
+- [11-audit-logging.md](./11-audit-logging.md) - Audit log test patterns

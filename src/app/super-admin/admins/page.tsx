@@ -18,7 +18,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 export const metadata: Metadata = {
-  title: "관리자 관리 | Super Admin",
+  title: "Admin Management | Super Admin",
 };
 
 export default async function AdminsPage() {
@@ -28,25 +28,27 @@ export default async function AdminsPage() {
   ]);
 
   const noTenant =
-    !result.success && result.message === "테넌트 정보를 찾을 수 없습니다.";
+    !result.success && result.message === "Tenant information not found.";
 
   if (noTenant) {
     return (
       <div className="space-y-6">
         <div className="space-y-1">
-          <h1 className="text-foreground text-2xl font-medium">관리자 관리</h1>
+          <h1 className="text-foreground text-2xl font-medium">
+            Admin Management
+          </h1>
           <p className="text-muted-foreground text-[0.9375rem]">
-            테넌트 관리자를 초대하고 역할을 관리합니다.
+            Invite tenant administrators and manage their roles.
           </p>
         </div>
 
         <Card>
           <CardContent className="flex flex-col items-center justify-center gap-4 py-16 text-center">
             <p className="text-muted-foreground text-[0.9375rem]">
-              관리자를 초대하려면 먼저 테넌트를 생성해야 합니다.
+              You need to create a tenant before inviting administrators.
             </p>
             <Button asChild>
-              <Link href="/super-admin/tenant">테넌트 생성하기</Link>
+              <Link href="/super-admin/tenant">Create tenant</Link>
             </Button>
           </CardContent>
         </Card>
@@ -57,18 +59,20 @@ export default async function AdminsPage() {
   return (
     <div className="space-y-6">
       <div className="space-y-1">
-        <h1 className="text-foreground text-2xl font-medium">관리자 관리</h1>
+        <h1 className="text-foreground text-2xl font-medium">
+          Admin Management
+        </h1>
         <p className="text-muted-foreground text-[0.9375rem]">
-          테넌트 관리자를 초대하고 역할을 관리합니다.
+          Invite tenant administrators and manage their roles.
         </p>
       </div>
 
-      {/* 관리자 초대 */}
+      {/* Invite admin */}
       <Card>
         <CardHeader>
-          <CardTitle>관리자 초대</CardTitle>
+          <CardTitle>Invite Admin</CardTitle>
           <CardDescription>
-            이메일로 초대장을 발송합니다. ADMIN 역할로 가입됩니다.
+            Sends an invitation by email. The invitee joins with the ADMIN role.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -76,12 +80,12 @@ export default async function AdminsPage() {
         </CardContent>
       </Card>
 
-      {/* 초대 발송 이력 */}
+      {/* Invitation history */}
       <Card>
         <CardHeader>
-          <CardTitle>초대 발송 이력</CardTitle>
+          <CardTitle>Invitation History</CardTitle>
           <CardDescription>
-            발송된 초대 현황입니다. 대기 중인 초대는 재발송할 수 있습니다.
+            Status of sent invitations. Pending invitations can be resent.
           </CardDescription>
         </CardHeader>
         <CardContent className="px-0">
@@ -89,18 +93,18 @@ export default async function AdminsPage() {
             <InvitationsHistoryTable invitations={invitationsResult.data} />
           ) : (
             <div className="text-muted-foreground flex h-32 items-center justify-center text-sm">
-              발송된 초대가 없습니다.
+              No invitations have been sent.
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* 관리자 목록 */}
+      {/* Admin list */}
       <Card>
         <CardHeader>
-          <CardTitle>관리자 목록</CardTitle>
+          <CardTitle>Administrators</CardTitle>
           <CardDescription>
-            현재 ADMIN 역할을 가진 사용자 목록입니다.
+            Users who currently have the ADMIN role.
           </CardDescription>
         </CardHeader>
         <CardContent className="px-0">
@@ -108,7 +112,7 @@ export default async function AdminsPage() {
             <AdminsTable admins={result.data} />
           ) : (
             <div className="text-muted-foreground flex h-32 items-center justify-center text-sm">
-              {result.message ?? "데이터를 불러올 수 없습니다."}
+              {result.message ?? "Unable to load data."}
             </div>
           )}
         </CardContent>

@@ -8,7 +8,7 @@ export default async function SubscriptionSuggestionsPage() {
   const session = await getCachedSession();
   const role = session?.user?.role;
 
-  // ADMIN만 접근 가능
+  // ADMIN only
   if (role !== "ADMIN") {
     redirect("/subscriptions");
   }

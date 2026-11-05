@@ -10,7 +10,7 @@ interface RouteContext {
 
 /**
  * POST /api/v1/cards/[id]/retry-sync
- * 법인카드 동기화 재시도 (triggeredBy: RETRY)
+ * Retry corporate card sync (triggeredBy: RETRY)
  */
 export async function POST(
   request: NextRequest,
@@ -23,7 +23,7 @@ export async function POST(
 
   if (!session.user.organizationId) {
     return NextResponse.json(
-      { message: "조직 정보가 필요합니다" },
+      { message: "Organization information is required" },
       { status: 401 }
     );
   }
@@ -39,10 +39,7 @@ export async function POST(
   });
 
   if (!card) {
-    return NextResponse.json(
-      { message: "카드를 찾을 수 없습니다" },
-      { status: 404 }
-    );
+    return NextResponse.json({ message: "Card not found" }, { status: 404 });
   }
 
   try {
@@ -51,7 +48,7 @@ export async function POST(
     return NextResponse.json(result, { status: 200 });
   } catch (error) {
     return NextResponse.json(
-      { message: "카드 동기화 재시도 중 오류가 발생했습니다" },
+      { message: "An error occurred while retrying the card sync" },
       { status: 500 }
     );
   }

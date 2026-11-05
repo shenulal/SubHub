@@ -1,9 +1,10 @@
 // src/lib/services/report/email-sender.ts
 /**
- * 리포트 이메일 발송 서비스
+ * Report e-mail delivery service
  */
 
 import { prisma } from "@/lib/db";
+import { DEFAULT_BASE_CURRENCY, formatMoney } from "@/lib/fx/convert";
 import { generateCSV } from "@/lib/services/export/csv";
 import {
   generateExcelWorkbook,
@@ -38,10 +39,10 @@ export async function sendReportEmail(
   const { organizationId, organizationName, reportType, format, recipients } =
     params;
 
-  // 리포트 데이터 생성
+  // Build report data
   const reportData = await generateReportData(organizationId, reportType);
 
-  // 리포트 파일 생성
+  // Generate the report file
   const { buffer, filename, mimeType } = await generateReportFile(
     reportData,
     reportType,
@@ -49,28 +50,28 @@ export async function sendReportEmail(
     organizationName
   );
 
-  // 이메일 발송
+  // Send the e-mail
   const reportTypeLabels: Record<string, string> = {
-    COST_ANALYSIS: "비용 분석",
-    RENEWAL: "구독 갱신",
-    TERMINATED_USERS: "퇴사자 현황",
+    COST_ANALYSIS: "Cost Analysis",
+    RENEWAL: "Subscription Renewal",
+    TERMINATED_USERS: "Offboarded Users",
   };
 
   const reportLabel = reportTypeLabels[reportType] || reportType;
 
   await getResendClient().emails.send({
-    from: "SaaS Management Platform <reports@resend.dev>",
+    from: "SubHub <reports@resend.dev>",
     to: recipients,
-    subject: `[${organizationName}] ${reportLabel} 리포트 - ${new Date().toLocaleDateString("ko-KR")}`,
+    subject: `[${organizationName}] ${reportLabel} Report - ${new Date().toLocaleDateString("en-US")}`,
     html: `
       <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
-        <h2 style="color: #333;">📊 ${reportLabel} 리포트</h2>
-        <p>안녕하세요,</p>
-        <p>${organizationName}의 ${reportLabel} 리포트가 생성되었습니다.</p>
-        <p>첨부된 파일을 확인해 주세요.</p>
+        <h2 style="color: #333;">📊 ${reportLabel} Report</h2>
+        <p>Hello,</p>
+        <p>The ${reportLabel} report for ${organizationName} has been generated.</p>
+        <p>Please find the report attached.</p>
         <hr style="margin: 20px 0; border: none; border-top: 1px solid #eee;" />
         <p style="color: #666; font-size: 12px;">
-          이 이메일은 SaaS Management Platform에서 자동으로 발송되었습니다.
+          This is an automated message from SubHub.
         </p>
       </div>
     `,
@@ -98,7 +99,7 @@ async function generateReportData(
 
   switch (reportType) {
     case "COST_ANALYSIS": {
-      // 비용 분석 데이터
+      // Cost analysis data
       const payments = await prisma.paymentRecord.findMany({
         where: {
           organizationId,
@@ -117,14 +118,15 @@ async function generateReportData(
           date: p.transactionDate,
           description: p.merchantName,
           amount: Number(p.amount),
-          appName: p.matchedApp?.name || "미매칭",
+          currency: p.currency,
+          appName: p.matchedApp?.name || "Unmatched",
         })),
         generatedAt,
       };
     }
 
     case "RENEWAL": {
-      // 구독 갱신 데이터
+      // Subscription renewal data
       const now = new Date();
       const ninetyDaysFromNow = new Date();
       ninetyDaysFromNow.setDate(ninetyDaysFromNow.getDate() + 90);
@@ -157,7 +159,7 @@ async function generateReportData(
     }
 
     case "TERMINATED_USERS": {
-      // 퇴사자 현황 데이터
+      // Offboarded users data
       const terminatedUsers = await prisma.user.findMany({
         where: {
           organizationId,
@@ -213,7 +215,7 @@ async function generateReportFile(
       const sections = generatePDFSections(reportData);
       const buffer = await generatePDFReport({
         title: getReportTitle(reportType),
-        subtitle: `생성일: ${new Date().toLocaleDateString("ko-KR")}`,
+        subtitle: `Generated: ${new Date().toLocaleDateString("en-US")}`,
         organizationName,
         generatedAt: reportData.generatedAt,
         sections,
@@ -263,11 +265,11 @@ async function generateReportFile(
 
 function getReportTitle(reportType: string): string {
   const titles: Record<string, string> = {
-    COST_ANALYSIS: "비용 분석 리포트",
-    RENEWAL: "구독 갱신 리포트",
-    TERMINATED_USERS: "퇴사자 현황 리포트",
+    COST_ANALYSIS: "Cost Analysis Report",
+    RENEWAL: "Subscription Renewal Report",
+    TERMINATED_USERS: "Offboarded Users Report",
   };
-  return titles[reportType] || "리포트";
+  return titles[reportType] || "Report";
 }
 
 function generatePDFSections(reportData: ReportData): PDFSection[] {
@@ -278,14 +280,18 @@ function generatePDFSections(reportData: ReportData): PDFSection[] {
       return [
         {
           type: "table",
-          title: "결제 내역",
-          headers: ["날짜", "설명", "금액", "앱"],
+          title: "Payment History",
+          headers: ["Date", "Description", "Amount", "App"],
           rows: data
             .slice(0, 50)
             .map((d) => [
-              new Date(d.date as Date).toLocaleDateString("ko-KR"),
+              new Date(d.date as Date).toLocaleDateString("en-US"),
               (d.description as string) || "-",
-              `₩${(d.amount as number).toLocaleString()}`,
+              formatMoney(
+                d.amount as number,
+                (d.currency as string) || DEFAULT_BASE_CURRENCY,
+                "en-US"
+              ),
               (d.appName as string) || "-",
             ]),
         },
@@ -295,11 +301,11 @@ function generatePDFSections(reportData: ReportData): PDFSection[] {
       return [
         {
           type: "table",
-          title: "갱신 예정 구독",
-          headers: ["앱 이름", "갱신일", "금액", "D-Day"],
+          title: "Upcoming Renewals",
+          headers: ["App Name", "Renewal Date", "Amount", "D-Day"],
           rows: data.map((d) => [
             d.appName as string,
-            new Date(d.renewalDate as Date).toLocaleDateString("ko-KR"),
+            new Date(d.renewalDate as Date).toLocaleDateString("en-US"),
             `${d.currency}${(d.amount as number).toLocaleString()}`,
             `D-${d.daysUntilRenewal}`,
           ]),
@@ -310,15 +316,15 @@ function generatePDFSections(reportData: ReportData): PDFSection[] {
       return [
         {
           type: "table",
-          title: "퇴사자 미회수 현황",
-          headers: ["이름", "부서", "퇴사일", "미회수 앱"],
+          title: "Offboarded Users with Unrevoked Access",
+          headers: ["Name", "Department", "Offboarding Date", "Unrevoked Apps"],
           rows: data.map((d) => [
             d.name as string,
             (d.department as string) || "-",
             d.terminatedAt
-              ? new Date(d.terminatedAt as Date).toLocaleDateString("ko-KR")
+              ? new Date(d.terminatedAt as Date).toLocaleDateString("en-US")
               : "-",
-            `${d.unrevokedAccessCount}개`,
+            `${d.unrevokedAccessCount}`,
           ]),
         },
       ];
@@ -332,26 +338,26 @@ function getExcelColumns(reportType: string) {
   switch (reportType) {
     case "COST_ANALYSIS":
       return [
-        { key: "date", header: "날짜", width: 15 },
-        { key: "description", header: "설명", width: 30 },
-        { key: "amount", header: "금액", width: 15 },
-        { key: "appName", header: "앱", width: 20 },
+        { key: "date", header: "Date", width: 15 },
+        { key: "description", header: "Description", width: 30 },
+        { key: "amount", header: "Amount", width: 15 },
+        { key: "appName", header: "App", width: 20 },
       ];
     case "RENEWAL":
       return [
-        { key: "appName", header: "앱 이름", width: 20 },
-        { key: "renewalDate", header: "갱신일", width: 15 },
-        { key: "amount", header: "금액", width: 15 },
-        { key: "daysUntilRenewal", header: "남은 일수", width: 12 },
+        { key: "appName", header: "App Name", width: 20 },
+        { key: "renewalDate", header: "Renewal Date", width: 15 },
+        { key: "amount", header: "Amount", width: 15 },
+        { key: "daysUntilRenewal", header: "Days Remaining", width: 12 },
       ];
     case "TERMINATED_USERS":
       return [
-        { key: "name", header: "이름", width: 15 },
-        { key: "email", header: "이메일", width: 25 },
-        { key: "department", header: "부서", width: 15 },
-        { key: "terminatedAt", header: "퇴사일", width: 15 },
-        { key: "unrevokedAccessCount", header: "미회수 앱", width: 12 },
-        { key: "apps", header: "앱 목록", width: 40 },
+        { key: "name", header: "Name", width: 15 },
+        { key: "email", header: "Email", width: 25 },
+        { key: "department", header: "Department", width: 15 },
+        { key: "terminatedAt", header: "Offboarding Date", width: 15 },
+        { key: "unrevokedAccessCount", header: "Unrevoked Apps", width: 12 },
+        { key: "apps", header: "Apps", width: 40 },
       ];
     default:
       return [];

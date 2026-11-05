@@ -51,7 +51,7 @@ describe("IntegrationDetailCard", () => {
 
   it("should render active status badge", () => {
     render(<IntegrationDetailCard integration={mockIntegration} />);
-    expect(screen.getByText("활성")).toBeInTheDocument();
+    expect(screen.getByText("Active")).toBeInTheDocument();
   });
 
   it("should render pending status badge", () => {
@@ -60,7 +60,7 @@ describe("IntegrationDetailCard", () => {
         integration={{ ...mockIntegration, status: "PENDING" }}
       />
     );
-    expect(screen.getByText("대기")).toBeInTheDocument();
+    expect(screen.getByText("Pending")).toBeInTheDocument();
   });
 
   it("should render error status badge", () => {
@@ -69,7 +69,7 @@ describe("IntegrationDetailCard", () => {
         integration={{ ...mockIntegration, status: "ERROR" }}
       />
     );
-    expect(screen.getByText("오류")).toBeInTheDocument();
+    expect(screen.getByText("Error")).toBeInTheDocument();
   });
 
   it("should render disconnected status badge", () => {
@@ -78,42 +78,42 @@ describe("IntegrationDetailCard", () => {
         integration={{ ...mockIntegration, status: "DISCONNECTED" }}
       />
     );
-    expect(screen.getByText("연결 끊김")).toBeInTheDocument();
+    expect(screen.getByText("Disconnected")).toBeInTheDocument();
   });
 
   it("should render last sync time", () => {
     render(<IntegrationDetailCard integration={mockIntegration} />);
-    // "마지막 동기화"와 "마지막 동기화 결과" 두 개가 있으므로 getAllBy 사용
-    const syncTexts = screen.getAllByText(/마지막 동기화/);
+    // Both "Last sync" and "Last sync result" exist, so use getAllBy
+    const syncTexts = screen.getAllByText(/Last sync/);
     expect(syncTexts.length).toBeGreaterThanOrEqual(1);
   });
 
   it("should render sync statistics", () => {
     render(<IntegrationDetailCard integration={mockIntegration} />);
-    expect(screen.getByText("총 동기화 횟수")).toBeInTheDocument();
+    expect(screen.getByText("Total sync count")).toBeInTheDocument();
     expect(screen.getByText("5")).toBeInTheDocument();
   });
 
   it("should render last sync result when available", () => {
     render(<IntegrationDetailCard integration={mockIntegration} />);
-    expect(screen.getByText("발견")).toBeInTheDocument();
+    expect(screen.getByText("Found")).toBeInTheDocument();
     expect(screen.getByText("10")).toBeInTheDocument();
-    expect(screen.getByText("생성")).toBeInTheDocument();
+    expect(screen.getByText("Created")).toBeInTheDocument();
     expect(screen.getByText("2")).toBeInTheDocument();
-    expect(screen.getByText("업데이트")).toBeInTheDocument();
+    expect(screen.getByText("Updated")).toBeInTheDocument();
     expect(screen.getByText("8")).toBeInTheDocument();
   });
 
   it("should render sync button", () => {
     render(<IntegrationDetailCard integration={mockIntegration} />);
-    expect(screen.getByRole("button", { name: /동기화/i })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Sync/i })).toBeInTheDocument();
   });
 
-  it("관리 권한이 없으면 동기화 버튼을 비활성화한다", () => {
+  it("disables the sync button without manage permission", () => {
     render(
       <IntegrationDetailCard integration={mockIntegration} canManage={false} />
     );
-    expect(screen.getByRole("button", { name: /동기화/i })).toBeDisabled();
+    expect(screen.getByRole("button", { name: /Sync/i })).toBeDisabled();
   });
 
   it("should render sync button for non-active integrations", () => {
@@ -122,8 +122,8 @@ describe("IntegrationDetailCard", () => {
         integration={{ ...mockIntegration, status: "PENDING" }}
       />
     );
-    // 현재 컴포넌트는 PENDING 상태에서도 동기화 버튼을 표시함
-    const syncButton = screen.getByRole("button", { name: /동기화/i });
+    // The component currently shows the sync button in the PENDING state too
+    const syncButton = screen.getByRole("button", { name: /Sync/i });
     expect(syncButton).toBeInTheDocument();
   });
 

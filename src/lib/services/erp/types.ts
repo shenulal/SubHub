@@ -1,9 +1,9 @@
 // src/lib/services/erp/types.ts
-// ERP 연동 어댑터 공통 타입 정의
+// Shared types for ERP integration adapters
 
 import type { IntegrationType } from "@prisma/client";
 
-/** ERP에서 가져온 결제/지출 항목 (정규화된 형태) */
+/** Payment/expense item from the ERP (normalised) */
 export interface ERPPaymentItem {
   transactionDate: Date;
   merchantName: string;
@@ -11,13 +11,13 @@ export interface ERPPaymentItem {
   currency: string;
   category?: string;
   memo?: string;
-  /** ERP 내부 문서 번호 (중복 방지용) */
+  /** ERP internal document number (for deduplication) */
   documentNumber?: string;
-  /** 원본 데이터 */
+  /** Raw data */
   rawData: Record<string, unknown>;
 }
 
-/** ERP 동기화 결과 */
+/** ERP sync result */
 export interface ERPSyncResult {
   success: boolean;
   items: ERPPaymentItem[];
@@ -25,19 +25,19 @@ export interface ERPSyncResult {
   errorMessage?: string;
 }
 
-/** ERP 동기화 요청 파라미터 */
+/** ERP sync request parameters */
 export interface ERPSyncRequest {
-  /** 조회 시작일 */
+  /** Query start date */
   fromDate: Date;
-  /** 조회 종료일 */
+  /** Query end date */
   toDate: Date;
-  /** 회사 코드 (SAP) / Business Unit (Oracle) */
+  /** Company code (SAP) / Business Unit (Oracle) */
   companyCode?: string;
-  /** 최대 조회 건수 */
+  /** Maximum number of records */
   maxItems?: number;
 }
 
-/** SAP S/4HANA 크리덴셜 */
+/** SAP S/4HANA credentials */
 export interface SapCredentials {
   baseUrl: string;
   clientId: string;
@@ -47,7 +47,7 @@ export interface SapCredentials {
   companyCode?: string;
 }
 
-/** Oracle ERP Cloud 크리덴셜 */
+/** Oracle ERP Cloud credentials */
 export interface OracleCredentials {
   baseUrl: string;
   clientId: string;
@@ -56,18 +56,18 @@ export interface OracleCredentials {
   businessUnit?: string;
 }
 
-/** 통합 ERP 크리덴셜 타입 */
+/** Unified ERP credentials type */
 export type ERPCredentials = SapCredentials | OracleCredentials;
 
-/** ERP 결제 어댑터 인터페이스 */
+/** ERP payment adapter interface */
 export interface ERPPaymentAdapter {
-  /** 어댑터가 지원하는 IntegrationType */
+  /** IntegrationType supported by the adapter */
   readonly type: IntegrationType;
-  /** 어댑터 표시명 */
+  /** Adapter display name */
   readonly name: string;
-  /** 연결 테스트 */
+  /** Connection test */
   testConnection(credentials: ERPCredentials): Promise<boolean>;
-  /** 결제/지출 데이터 조회 */
+  /** Fetches payment/expense data */
   fetchPayments(
     credentials: ERPCredentials,
     request: ERPSyncRequest

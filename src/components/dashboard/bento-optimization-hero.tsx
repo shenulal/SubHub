@@ -104,7 +104,7 @@ export function BentoOptimizationHero({
     // Layout follows the dashboard container: stacked → total on top with two
     // halves below → three figures in one row on wide content areas.
     <Card className="optimization-hero-gradient grid gap-0 p-1 @xl:grid-cols-2 @4xl:grid-cols-[minmax(0,2fr)_minmax(0,1fr)_minmax(0,1fr)]">
-      {/* 섹션 1: 총 최적화 기회 */}
+      {/* Section 1: total optimisation opportunity */}
       <StatSection
         label={t("title")}
         value={money(data.monthlySavings)}
@@ -113,7 +113,7 @@ export function BentoOptimizationHero({
         className="@xl:col-span-2 @4xl:col-span-1"
       />
 
-      {/* 섹션 2: 미사용 Seat */}
+      {/* Section 2: unused seats */}
       <StatSection
         label={t("unusedLicenses")}
         value={money(data.breakdown.unusedLicenses.amount)}
@@ -123,7 +123,7 @@ export function BentoOptimizationHero({
         dividerClassName="border-t @4xl:border-t-0 @4xl:border-l"
       />
 
-      {/* 섹션 3: 미사용 앱 */}
+      {/* Section 3: unused apps */}
       <StatSection
         label={t("overProvisioned")}
         value={money(data.breakdown.unusedApps.amount)}

@@ -4,18 +4,55 @@ import { cleanup } from "@testing-library/react";
 import { afterEach, expect, vi } from "vitest";
 import { getAllMessages } from "./src/i18n/messages";
 
-const koMessages = getAllMessages("ko");
+const enMessages = getAllMessages("en");
 
-// jest-dom matchers 확장
+/**
+ * Minimal ICU MessageFormat support for the next-intl test stub: resolves
+ * `{n, plural, =0 {…} one {# item} other {# items}}` and `{k, select, a {…} other {…}}`
+ * before plain `{var}` substitution, so English plural messages render as in the app.
+ */
+function formatIcuMessage(
+  message: string,
+  values?: Record<string, unknown>
+): string {
+  const vals = values ?? {};
+  const branched = message.replace(
+    /\{(\w+),\s*(plural|select),\s*((?:[^{}]|\{[^{}]*\})*)\}/g,
+    (_match, name: string, kind: string, body: string) => {
+      const options = new Map<string, string>();
+      for (const opt of body.matchAll(/(=?[\w-]+)\s*\{([^{}]*)\}/g)) {
+        options.set(opt[1], opt[2]);
+      }
+      const raw = vals[name];
+      let chosen: string | undefined;
+      if (kind === "plural") {
+        const n = Number(raw);
+        chosen =
+          options.get(`=${n}`) ??
+          (n === 1 ? options.get("one") : undefined) ??
+          options.get("other");
+        return (chosen ?? "").replace(/#/g, String(raw));
+      }
+      chosen = options.get(String(raw)) ?? options.get("other");
+      return chosen ?? "";
+    }
+  );
+  return Object.entries(vals).reduce(
+    (acc, [k, v]) => acc.replace(new RegExp(`\\{${k}\\}`, "g"), String(v)),
+    branched
+  );
+}
+
+// Extend expect with jest-dom matchers
 expect.extend(matchers);
 
-// 각 테스트 후 cleanup
+// Clean up after each test
 afterEach(() => {
   cleanup();
   vi.clearAllMocks();
 });
 
-// Next.js navigation 모킹
+// Mock Next.js navigation
 vi.mock("next/navigation", () => ({
   useRouter: () => ({
     push: vi.fn(),
@@ -32,14 +69,14 @@ vi.mock("next/navigation", () => ({
   notFound: vi.fn(),
 }));
 
-// next/cache 모킹
+// Mock next/cache
 vi.mock("next/cache", () => ({
   revalidatePath: vi.fn(),
   revalidateTag: vi.fn(),
   unstable_cache: vi.fn((fn) => fn),
 }));
 
-// next/headers 모킹
+// Mock next/headers
 vi.mock("next/headers", () => ({
   cookies: () => ({
     get: vi.fn(),
@@ -49,7 +86,7 @@ vi.mock("next/headers", () => ({
   headers: () => new Headers(),
 }));
 
-// next-intl: stub that resolves keys against ko messages where possible.
+// next-intl: stub that resolves keys against the English messages where possible.
 // Falls back to the key when a message is not found (compatible with unit
 // tests that don't care about translation text).
 vi.mock("next-intl", async () => {
@@ -62,7 +99,7 @@ vi.mock("next-intl", async () => {
   ): string => {
     const full = namespace ? `${namespace}.${key}` : key;
     const parts = full.split(".");
-    let node: unknown = koMessages;
+    let node: unknown = enMessages;
     for (const part of parts) {
       if (node && typeof node === "object" && part in (node as object)) {
         node = (node as Record<string, unknown>)[part];
@@ -71,11 +108,7 @@ vi.mock("next-intl", async () => {
       }
     }
     if (typeof node !== "string") return full;
-    if (!values) return node;
-    return Object.entries(values).reduce(
-      (acc, [k, v]) => acc.replace(new RegExp(`\\{${k}\\}`, "g"), String(v)),
-      node
-    );
+    return formatIcuMessage(node, values);
   };
 
   return {
@@ -89,7 +122,7 @@ vi.mock("next-intl", async () => {
         lookup(namespace, k);
       return fn;
     },
-    useLocale: () => "ko",
+    useLocale: () => "en",
     useFormatter: () => ({
       dateTime: (d: Date) => d.toISOString(),
       number: (n: number) => String(n),
@@ -111,7 +144,7 @@ vi.mock("next-intl/server", () => {
   ): string => {
     const full = namespace ? `${namespace}.${key}` : key;
     const parts = full.split(".");
-    let node: unknown = koMessages;
+    let node: unknown = enMessages;
     for (const part of parts) {
       if (node && typeof node === "object" && part in (node as object)) {
         node = (node as Record<string, unknown>)[part];
@@ -120,11 +153,7 @@ vi.mock("next-intl/server", () => {
       }
     }
     if (typeof node !== "string") return full;
-    if (!values) return node;
-    return Object.entries(values).reduce(
-      (acc, [k, v]) => acc.replace(new RegExp(`\\{${k}\\}`, "g"), String(v)),
-      node
-    );
+    return formatIcuMessage(node, values);
   };
 
   return {
@@ -137,17 +166,17 @@ vi.mock("next-intl/server", () => {
         lookup(namespace as string, k);
       return fn;
     },
-    getLocale: async () => "ko",
+    getLocale: async () => "en",
     getFormatter: async () => ({
       dateTime: (d: Date) => d.toISOString(),
       number: (n: number) => String(n),
       relativeTime: (d: Date) => d.toISOString(),
     }),
-    getMessages: async () => koMessages,
+    getMessages: async () => enMessages,
   };
 });
 
-// ResizeObserver 모킹 (shadcn/ui 컴포넌트에 필요)
+// Mock ResizeObserver (needed by shadcn/ui components)
 class ResizeObserverMock {
   observe = vi.fn();
   unobserve = vi.fn();
@@ -155,7 +184,7 @@ class ResizeObserverMock {
 }
 global.ResizeObserver = ResizeObserverMock as unknown as typeof ResizeObserver;
 
-// matchMedia 모킹
+// Mock matchMedia
 Object.defineProperty(window, "matchMedia", {
   writable: true,
   value: vi.fn().mockImplementation((query) => ({
@@ -170,8 +199,8 @@ Object.defineProperty(window, "matchMedia", {
   })),
 });
 
-// IntersectionObserver 모킹 (callback 즉시 호출하여 카운트업 등 동작)
-// class 기반으로 정의하여 `new IntersectionObserver(...)` 호환
+// Mock IntersectionObserver (fires the callback immediately so count-up animations run)
+// Defined as a class so `new IntersectionObserver(...)` works
 global.IntersectionObserver = class MockIntersectionObserver {
   observe: ReturnType<typeof vi.fn>;
   unobserve: ReturnType<typeof vi.fn>;
@@ -193,11 +222,11 @@ global.IntersectionObserver = class MockIntersectionObserver {
   }
 } as unknown as typeof IntersectionObserver;
 
-// framer-motion 모킹 (jsdom 호환)
+// Mock framer-motion (jsdom compatible)
 vi.mock("framer-motion", async () => {
   const React = await import("react");
 
-  // motion 프록시: HTML 요소에 대해 일반 요소로 폴백
+  // motion proxy: falls back to plain elements for HTML tags
   const motionProxy = new Proxy(
     {},
     {
@@ -239,7 +268,7 @@ vi.mock("framer-motion", async () => {
       set: vi.fn(),
     }),
     useInView: () => true,
-    // animate() 모킹: onUpdate를 즉시 최종값으로 호출
+    // Mock animate(): calls onUpdate immediately with the final value
     animate: (
       from: number,
       to: number,
@@ -251,13 +280,13 @@ vi.mock("framer-motion", async () => {
   };
 });
 
-// scrollTo 모킹
+// Mock scrollTo
 window.scrollTo = vi.fn();
 
-// jsdom에서 requestSubmit 미구현 대응 (공용 폴리필)
+// jsdom lacks requestSubmit (shared polyfill)
 applyRequestSubmitPolyfill();
 
-// NEXT_REDIRECT 등 테스트 노이즈 필터링
+// Filter test noise such as NEXT_REDIRECT
 const originalConsoleError = console.error;
 console.error = (...args: unknown[]) => {
   const hasRedirect = args.some((arg) => {
@@ -268,7 +297,7 @@ console.error = (...args: unknown[]) => {
         return true;
       if (arg.message.includes("NEXT_REDIRECT")) return true;
     }
-    // 문자열 변환으로도 확인 (Unknown 타입 방지)
+    // Also check the string form (guards against unknown types)
     if (String(arg).includes("NEXT_REDIRECT")) return true;
     return false;
   });

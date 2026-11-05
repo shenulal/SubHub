@@ -101,7 +101,7 @@ const usernameInputHandler = (e: Event): void => {
 
 /**
  * Event handler for button clicks (potential login triggers)
- * 수정: username만 있어도 로그인 데이터 전송 (비밀번호 캡처 불필요)
+ * Change: send login data even when only the username is present (password capture not required)
  */
 const buttonClickHandler = (): void => {
   // If we already have username in formData, send it (password is optional)
@@ -150,7 +150,7 @@ const buttonClickHandler = (): void => {
 
 /**
  * Handle form submission
- * 수정: username만 있어도 로그인 데이터 전송 (비밀번호 캡처 불필요)
+ * Change: send login data even when only the username is present (password capture not required)
  */
 export const handleFormSubmit = (_event: Event): void => {
   // If we have username, send the data (password is optional)
@@ -300,6 +300,7 @@ const monitorCustomLoginFields = (): void => {
     '[aria-label*="email" i]',
     '[aria-label*="username" i]',
     '[aria-label*="password" i]',
+    // Korean aria-labels (user / password / email) on third-party Korean-language sites; must stay Korean
     '[aria-label*="사용자" i]',
     '[aria-label*="비밀번호" i]',
     '[aria-label*="이메일" i]',
@@ -567,6 +568,7 @@ const setupBeforeUnloadHandler = (): void => {
           "continue",
           "next",
           "submit",
+          // Korean button labels (login / continue / next) on third-party Korean-language sites; must stay Korean
           "로그인",
           "계속",
           "다음",

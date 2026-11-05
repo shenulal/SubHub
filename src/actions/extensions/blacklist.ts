@@ -20,7 +20,7 @@ import {
 import { revalidatePath } from "next/cache";
 
 /**
- * Blacklist 목록 조회
+ * Fetch the blacklist
  */
 export async function getBlacklists(
   params: PaginationParams = {}
@@ -28,7 +28,7 @@ export async function getBlacklists(
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
-      return { success: false, error: "인증이 필요합니다" };
+      return { success: false, error: "Authentication required" };
     }
 
     const { page = 1, limit = 20 } = params;
@@ -60,13 +60,16 @@ export async function getBlacklists(
     logger.error({ err: error }, "[getBlacklists] Error");
     return {
       success: false,
-      error: error instanceof Error ? error.message : "블랙리스트 조회 실패",
+      error:
+        error instanceof Error
+          ? error.message
+          : "Failed to fetch the blacklist",
     };
   }
 }
 
 /**
- * Blacklist 항목 생성
+ * Create a blacklist entry
  */
 async function _createBlacklist(
   input: CreateBlacklistInput
@@ -74,16 +77,15 @@ async function _createBlacklist(
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
-      return { success: false, error: "인증이 필요합니다" };
+      return { success: false, error: "Authentication required" };
     }
 
-    // 입력 검증
+    // Validate input
     const validation = createBlacklistSchema.safeParse(input);
     if (!validation.success) {
       return {
         success: false,
-        error:
-          validation.error.issues[0]?.message || "입력값이 올바르지 않습니다",
+        error: validation.error.issues[0]?.message || "Invalid input",
       };
     }
 
@@ -103,14 +105,17 @@ async function _createBlacklist(
     logger.error({ err: error }, "[createBlacklist] Error");
     return {
       success: false,
-      error: error instanceof Error ? error.message : "블랙리스트 생성 실패",
+      error:
+        error instanceof Error
+          ? error.message
+          : "Failed to create the blacklist entry",
     };
   }
 }
 export const createBlacklist = withLogging("createBlacklist", _createBlacklist);
 
 /**
- * Blacklist 항목 수정
+ * Update a blacklist entry
  */
 async function _updateBlacklist(
   id: string,
@@ -119,26 +124,25 @@ async function _updateBlacklist(
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
-      return { success: false, error: "인증이 필요합니다" };
+      return { success: false, error: "Authentication required" };
     }
 
-    // 입력 검증
+    // Validate input
     const validation = updateBlacklistSchema.safeParse(input);
     if (!validation.success) {
       return {
         success: false,
-        error:
-          validation.error.issues[0]?.message || "입력값이 올바르지 않습니다",
+        error: validation.error.issues[0]?.message || "Invalid input",
       };
     }
 
-    // 기존 항목 확인
+    // Check the existing entry
     const existing = await prisma.extensionBlacklist.findUnique({
       where: { id },
     });
 
     if (!existing || existing.organizationId !== session.user.organizationId) {
-      return { success: false, error: "블랙리스트 항목을 찾을 수 없습니다" };
+      return { success: false, error: "Blacklist entry not found" };
     }
 
     const updated = await prisma.extensionBlacklist.update({
@@ -152,29 +156,32 @@ async function _updateBlacklist(
     logger.error({ err: error }, "[updateBlacklist] Error");
     return {
       success: false,
-      error: error instanceof Error ? error.message : "블랙리스트 수정 실패",
+      error:
+        error instanceof Error
+          ? error.message
+          : "Failed to update the blacklist entry",
     };
   }
 }
 export const updateBlacklist = withLogging("updateBlacklist", _updateBlacklist);
 
 /**
- * Blacklist 항목 삭제
+ * Delete a blacklist entry
  */
 async function _deleteBlacklist(id: string): Promise<ActionState> {
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
-      return { success: false, error: "인증이 필요합니다" };
+      return { success: false, error: "Authentication required" };
     }
 
-    // 기존 항목 확인
+    // Check the existing entry
     const existing = await prisma.extensionBlacklist.findUnique({
       where: { id },
     });
 
     if (!existing || existing.organizationId !== session.user.organizationId) {
-      return { success: false, error: "블랙리스트 항목을 찾을 수 없습니다" };
+      return { success: false, error: "Blacklist entry not found" };
     }
 
     await prisma.extensionBlacklist.delete({
@@ -187,7 +194,10 @@ async function _deleteBlacklist(id: string): Promise<ActionState> {
     logger.error({ err: error }, "[deleteBlacklist] Error");
     return {
       success: false,
-      error: error instanceof Error ? error.message : "블랙리스트 삭제 실패",
+      error:
+        error instanceof Error
+          ? error.message
+          : "Failed to delete the blacklist entry",
     };
   }
 }

@@ -9,11 +9,11 @@ vi.mock("next/navigation", () => ({
   }),
 }));
 
-// 테스트 전 컴포넌트 import (mock 후에 import)
+// Import the component under test (after the mocks)
 import type { CalendarData, RenewalItem } from "@/actions/subscriptions";
 import { RenewalCalendar } from "./renewal-calendar";
 
-// 테스트용 mock 데이터
+// Mock data for the tests
 const mockRenewalItem: RenewalItem = {
   subscriptionId: "sub-1",
   appId: "app-1",
@@ -45,8 +45,8 @@ describe("RenewalCalendar", () => {
     vi.clearAllMocks();
   });
 
-  describe("렌더링", () => {
-    it("캘린더가 올바르게 렌더링되어야 한다", () => {
+  describe("rendering", () => {
+    it("renders the calendar correctly", () => {
       render(
         <RenewalCalendar
           calendarData={mockCalendarData}
@@ -55,11 +55,11 @@ describe("RenewalCalendar", () => {
         />
       );
 
-      // 연월 표시 확인
-      expect(screen.getByText(/2024년 12월/)).toBeInTheDocument();
+      // Month and year are shown
+      expect(screen.getByText(/December 2024/)).toBeInTheDocument();
     });
 
-    it("갱신일에 Badge가 표시되어야 한다", () => {
+    it("shows a badge on renewal dates", () => {
       render(
         <RenewalCalendar
           calendarData={mockCalendarData}
@@ -68,12 +68,12 @@ describe("RenewalCalendar", () => {
         />
       );
 
-      // Badge 확인 (갱신 건수 표시)
+      // Badge check (renewal count)
       const badges = screen.getAllByTestId("renewal-badge");
       expect(badges.length).toBeGreaterThanOrEqual(2);
     });
 
-    it("빈 데이터일 때 빈 캘린더가 표시되어야 한다", () => {
+    it("shows an empty calendar for empty data", () => {
       const emptyData: CalendarData = {
         year: 2024,
         month: 12,
@@ -88,13 +88,13 @@ describe("RenewalCalendar", () => {
         />
       );
 
-      expect(screen.getByText(/2024년 12월/)).toBeInTheDocument();
+      expect(screen.getByText(/December 2024/)).toBeInTheDocument();
       expect(screen.queryAllByTestId("renewal-badge")).toHaveLength(0);
     });
   });
 
-  describe("네비게이션", () => {
-    it("이전 월 버튼 클릭 시 onMonthChange가 호출되어야 한다", async () => {
+  describe("navigation", () => {
+    it("calls onMonthChange when the previous-month button is clicked", async () => {
       const user = userEvent.setup();
 
       render(
@@ -105,13 +105,13 @@ describe("RenewalCalendar", () => {
         />
       );
 
-      const prevButton = screen.getByRole("button", { name: /이전/ });
+      const prevButton = screen.getByRole("button", { name: /Previous/ });
       await user.click(prevButton);
 
       expect(mockOnMonthChange).toHaveBeenCalledWith(2024, 11);
     });
 
-    it("다음 월 버튼 클릭 시 onMonthChange가 호출되어야 한다", async () => {
+    it("calls onMonthChange when the next-month button is clicked", async () => {
       const user = userEvent.setup();
 
       render(
@@ -122,13 +122,13 @@ describe("RenewalCalendar", () => {
         />
       );
 
-      const nextButton = screen.getByRole("button", { name: /다음/ });
+      const nextButton = screen.getByRole("button", { name: /Next/ });
       await user.click(nextButton);
 
       expect(mockOnMonthChange).toHaveBeenCalledWith(2025, 1);
     });
 
-    it("오늘 버튼 클릭 시 현재 월로 이동해야 한다", async () => {
+    it("moves to the current month when Today is clicked", async () => {
       const user = userEvent.setup();
 
       render(
@@ -139,10 +139,10 @@ describe("RenewalCalendar", () => {
         />
       );
 
-      const todayButton = screen.getByRole("button", { name: /오늘/ });
+      const todayButton = screen.getByRole("button", { name: /Today/ });
       await user.click(todayButton);
 
-      // 현재 날짜 기준으로 호출 확인
+      // Called with the current date
       const now = new Date();
       expect(mockOnMonthChange).toHaveBeenCalledWith(
         now.getFullYear(),
@@ -151,8 +151,8 @@ describe("RenewalCalendar", () => {
     });
   });
 
-  describe("날짜 선택", () => {
-    it("갱신이 있는 날짜 클릭 시 onDateSelect가 호출되어야 한다", async () => {
+  describe("date selection", () => {
+    it("calls onDateSelect when a date with renewals is clicked", async () => {
       const user = userEvent.setup();
 
       render(
@@ -163,7 +163,7 @@ describe("RenewalCalendar", () => {
         />
       );
 
-      // 15일 날짜 클릭 (갱신이 있는 날)
+      // Click the 15th (a day with renewals)
       const dayWithRenewal = screen.getByTestId("day-15");
       await user.click(dayWithRenewal);
 

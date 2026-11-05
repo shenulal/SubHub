@@ -7,9 +7,9 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * 🎯 목적: Menubar 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: Radix UI Menubar.Root primitive 사용
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the Menubar component for React 18/19 compatibility
+ * 📝 Note: Uses the Radix UI Menubar.Root primitive
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const Menubar = React.forwardRef<
   React.ElementRef<typeof MenubarPrimitive.Root>,
@@ -30,13 +30,13 @@ const Menubar = React.forwardRef<
 Menubar.displayName = "Menubar";
 
 /**
- * 🎯 목적: MenubarMenu 컴포넌트
- * 📝 주의사항: Menu는 ref를 지원하지 않음
+ * 🎯 Purpose: MenubarMenu component
+ * 📝 Note: Menu does not support ref
  */
 const MenubarMenu = MenubarPrimitive.Menu;
 
 /**
- * 🎯 목적: MenubarGroup 컴포넌트에 forwardRef 적용
+ * 🎯 Purpose: Apply forwardRef to the MenubarGroup component
  */
 const MenubarGroup = React.forwardRef<
   React.ElementRef<typeof MenubarPrimitive.Group>,
@@ -49,13 +49,13 @@ const MenubarGroup = React.forwardRef<
 MenubarGroup.displayName = "MenubarGroup";
 
 /**
- * 🎯 목적: MenubarPortal 컴포넌트
- * 📝 주의사항: Portal은 ref를 지원하지 않음
+ * 🎯 Purpose: MenubarPortal component
+ * 📝 Note: Portal does not support ref
  */
 const MenubarPortal = MenubarPrimitive.Portal;
 
 /**
- * 🎯 목적: MenubarRadioGroup 컴포넌트에 forwardRef 적용
+ * 🎯 Purpose: Apply forwardRef to the MenubarRadioGroup component
  */
 const MenubarRadioGroup = React.forwardRef<
   React.ElementRef<typeof MenubarPrimitive.RadioGroup>,
@@ -72,7 +72,7 @@ const MenubarRadioGroup = React.forwardRef<
 MenubarRadioGroup.displayName = "MenubarRadioGroup";
 
 /**
- * 🎯 목적: MenubarTrigger 컴포넌트에 forwardRef 적용
+ * 🎯 Purpose: Apply forwardRef to the MenubarTrigger component
  */
 const MenubarTrigger = React.forwardRef<
   React.ElementRef<typeof MenubarPrimitive.Trigger>,
@@ -93,8 +93,8 @@ const MenubarTrigger = React.forwardRef<
 MenubarTrigger.displayName = "MenubarTrigger";
 
 /**
- * 🎯 목적: MenubarContent 컴포넌트에 forwardRef 적용
- * 📝 주의사항: Portal 내부에서 렌더링, align/alignOffset/sideOffset 기본값 설정
+ * 🎯 Purpose: Apply forwardRef to the MenubarContent component
+ * 📝 Note: Renders inside a Portal; sets align/alignOffset/sideOffset defaults
  */
 const MenubarContent = React.forwardRef<
   React.ElementRef<typeof MenubarPrimitive.Content>,
@@ -125,8 +125,8 @@ const MenubarContent = React.forwardRef<
 MenubarContent.displayName = "MenubarContent";
 
 /**
- * 🎯 목적: MenubarItem 컴포넌트에 forwardRef 적용
- * 📝 주의사항: inset prop, variant prop (default/destructive)
+ * 🎯 Purpose: Apply forwardRef to the MenubarItem component
+ * 📝 Note: Supports the inset prop and variant prop (default/destructive)
  */
 const MenubarItem = React.forwardRef<
   React.ElementRef<typeof MenubarPrimitive.Item>,
@@ -152,8 +152,8 @@ const MenubarItem = React.forwardRef<
 MenubarItem.displayName = "MenubarItem";
 
 /**
- * 🎯 목적: MenubarCheckboxItem 컴포넌트에 forwardRef 적용
- * 📝 주의사항: CheckIcon indicator 포함
+ * 🎯 Purpose: Apply forwardRef to the MenubarCheckboxItem component
+ * 📝 Note: Includes the CheckIcon indicator
  */
 const MenubarCheckboxItem = React.forwardRef<
   React.ElementRef<typeof MenubarPrimitive.CheckboxItem>,
@@ -182,8 +182,8 @@ const MenubarCheckboxItem = React.forwardRef<
 MenubarCheckboxItem.displayName = "MenubarCheckboxItem";
 
 /**
- * 🎯 목적: MenubarRadioItem 컴포넌트에 forwardRef 적용
- * 📝 주의사항: CircleIcon indicator 포함
+ * 🎯 Purpose: Apply forwardRef to the MenubarRadioItem component
+ * 📝 Note: Includes the CircleIcon indicator
  */
 const MenubarRadioItem = React.forwardRef<
   React.ElementRef<typeof MenubarPrimitive.RadioItem>,
@@ -211,8 +211,8 @@ const MenubarRadioItem = React.forwardRef<
 MenubarRadioItem.displayName = "MenubarRadioItem";
 
 /**
- * 🎯 목적: MenubarLabel 컴포넌트에 forwardRef 적용
- * 📝 주의사항: inset prop 지원
+ * 🎯 Purpose: Apply forwardRef to the MenubarLabel component
+ * 📝 Note: Supports the inset prop
  */
 const MenubarLabel = React.forwardRef<
   React.ElementRef<typeof MenubarPrimitive.Label>,
@@ -236,7 +236,7 @@ const MenubarLabel = React.forwardRef<
 MenubarLabel.displayName = "MenubarLabel";
 
 /**
- * 🎯 목적: MenubarSeparator 컴포넌트에 forwardRef 적용
+ * 🎯 Purpose: Apply forwardRef to the MenubarSeparator component
  */
 const MenubarSeparator = React.forwardRef<
   React.ElementRef<typeof MenubarPrimitive.Separator>,
@@ -254,8 +254,8 @@ const MenubarSeparator = React.forwardRef<
 MenubarSeparator.displayName = "MenubarSeparator";
 
 /**
- * 🎯 목적: MenubarShortcut 컴포넌트에 forwardRef 적용
- * 📝 주의사항: HTML span 요소 사용
+ * 🎯 Purpose: Apply forwardRef to the MenubarShortcut component
+ * 📝 Note: Uses an HTML span element
  */
 const MenubarShortcut = React.forwardRef<
   HTMLSpanElement,
@@ -276,14 +276,14 @@ const MenubarShortcut = React.forwardRef<
 MenubarShortcut.displayName = "MenubarShortcut";
 
 /**
- * 🎯 목적: MenubarSub 컴포넌트
- * 📝 주의사항: Sub는 ref를 지원하지 않음
+ * 🎯 Purpose: MenubarSub component
+ * 📝 Note: Sub does not support ref
  */
 const MenubarSub = MenubarPrimitive.Sub;
 
 /**
- * 🎯 목적: MenubarSubTrigger 컴포넌트에 forwardRef 적용
- * 📝 주의사항: inset prop, ChevronRightIcon 포함
+ * 🎯 Purpose: Apply forwardRef to the MenubarSubTrigger component
+ * 📝 Note: Supports the inset prop; includes ChevronRightIcon
  */
 const MenubarSubTrigger = React.forwardRef<
   React.ElementRef<typeof MenubarPrimitive.SubTrigger>,
@@ -310,7 +310,7 @@ const MenubarSubTrigger = React.forwardRef<
 MenubarSubTrigger.displayName = "MenubarSubTrigger";
 
 /**
- * 🎯 목적: MenubarSubContent 컴포넌트에 forwardRef 적용
+ * 🎯 Purpose: Apply forwardRef to the MenubarSubContent component
  */
 const MenubarSubContent = React.forwardRef<
   React.ElementRef<typeof MenubarPrimitive.SubContent>,

@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 # scripts/build-extension.sh
-# Chrome Extension 빌드 스크립트
+# Chrome extension build script
 #
 # Usage:
-#   ./scripts/build-extension.sh --env dev    # dev 서버 대상 빌드
-#   ./scripts/build-extension.sh --env local  # 로컬 서버 대상 빌드
+#   ./scripts/build-extension.sh --env dev    # Build targeting the dev server
+#   ./scripts/build-extension.sh --env local  # Build targeting the local server
 #
-# 전제 조건:
-#   - .env.local 파일이 프로젝트 루트에 존재해야 함 (DATABASE_URL 등)
-#   - node, npm이 설치되어 있어야 함
+# Prerequisites:
+#   - A .env.local file must exist at the project root (DATABASE_URL, etc.)
+#   - node and npm must be installed
 
 set -euo pipefail
 
@@ -16,7 +16,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 
 # ============================================================
-# 인자 파싱
+# Parse arguments
 # ============================================================
 ENV_TARGET=""
 
@@ -27,7 +27,7 @@ while [[ $# -gt 0 ]]; do
       shift 2
       ;;
     *)
-      echo "❌ 알 수 없는 옵션: $1"
+      echo "❌ Unknown option: $1"
       echo "Usage: $0 --env [dev|local]"
       exit 1
       ;;
@@ -35,13 +35,13 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ -z "$ENV_TARGET" ]]; then
-  echo "❌ --env 옵션이 필요합니다 (dev 또는 local)"
+  echo "❌ The --env option is required (dev or local)"
   echo "Usage: $0 --env [dev|local]"
   exit 1
 fi
 
 # ============================================================
-# 환경 설정
+# Environment settings
 # ============================================================
 case "$ENV_TARGET" in
   dev)
@@ -51,19 +51,19 @@ case "$ENV_TARGET" in
     BUILD_API_URL="http://localhost:3000"
     ;;
   *)
-    echo "❌ 지원하지 않는 환경: $ENV_TARGET (dev 또는 local만 가능)"
+    echo "❌ Unsupported environment: $ENV_TARGET (only dev or local)"
     exit 1
     ;;
 esac
 
 echo "======================================================"
-echo "  Chrome Extension 빌드 스크립트"
-echo "  환경: $ENV_TARGET | URL: $BUILD_API_URL"
+echo "  Chrome extension build script"
+echo "  Environment: $ENV_TARGET | URL: $BUILD_API_URL"
 echo "======================================================"
 echo ""
 
 # ============================================================
-# Node.js 빌드 실행 (인라인 mjs 스크립트)
+# Run the Node.js build (inline mjs script)
 # ============================================================
 cd "$PROJECT_ROOT"
 
@@ -76,7 +76,7 @@ import { join } from "path";
 import { config } from "dotenv";
 import { promisify } from "util";
 
-// 환경변수 로드
+// Load environment variables
 config({ path: ".env.local" });
 
 const prisma = new PrismaClient();
@@ -87,7 +87,7 @@ const EXTENSION_DIR = join(process.cwd(), "src", "extensions", "chrome");
 const BUILD_SCRIPT = join(EXTENSION_DIR, "build.js");
 const RELEASE_DIR = join(EXTENSION_DIR, "release");
 
-// 토큰 생성 유틸
+// Token generation helper
 function generateToken() {
   return randomBytes(32).toString("base64url");
 }
@@ -96,25 +96,25 @@ function hashToken(token) {
 }
 
 async function main() {
-  // 1. 현재 조직 정보 조회
+  // 1. Look up the current organisation
   const org = await prisma.organization.findFirst({
     select: { id: true, name: true },
     orderBy: { createdAt: "asc" },
   });
 
   if (!org) {
-    console.error("❌ 조직 정보를 찾을 수 없습니다. DB 연결을 확인하세요.");
+    console.error("❌ Organisation not found. Check the database connection.");
     process.exit(1);
   }
-  console.log("✅ 조직:", org.name, "(id:", org.id + ")");
+  console.log("✅ Organisation:", org.name, "(id:", org.id + ")");
 
-  // 2. 빌드 버전 결정 (manifest.json에서 읽기)
+  // 2. Determine the build version (read from manifest.json)
   const manifestPath = join(EXTENSION_DIR, "manifest.json");
   const manifest = JSON.parse((await import("fs")).readFileSync(manifestPath, "utf-8"));
   const version = manifest.version;
-  console.log("📦 버전:", version);
+  console.log("📦 Version:", version);
 
-  // 3. API 토큰 생성 또는 재사용
+  // 3. Create or reuse the API token
   const rawToken = generateToken();
   const hashedToken = hashToken(rawToken);
 
@@ -127,9 +127,9 @@ async function main() {
       isActive: true,
     },
   });
-  console.log("🔑 API 토큰 생성:", tokenRecord.name);
+  console.log("🔑 API token created:", tokenRecord.name);
 
-  // 4. ExtensionBuild 레코드 생성
+  // 4. Create the ExtensionBuild record
   const build = await prisma.extensionBuild.create({
     data: {
       organizationId: org.id,
@@ -137,14 +137,14 @@ async function main() {
       platform: "CHROME",
       status: "BUILDING",
       serverUrl: BUILD_API_URL,
-      buildLog: "[" + new Date().toISOString() + "] build-extension.sh 빌드 시작\n",
+      buildLog: "[" + new Date().toISOString() + "] build-extension.sh build started\n",
     },
   });
-  console.log("📋 빌드 레코드 생성 (id:", build.id + ")");
+  console.log("📋 Build record created (id:", build.id + ")");
 
-  // 5. build.js 실행
+  // 5. Run build.js
   console.log("");
-  console.log("🔨 webpack 빌드 시작...");
+  console.log("🔨 Starting webpack build...");
 
   let buildResult;
   try {
@@ -169,7 +169,7 @@ async function main() {
       buildResult = { success: true, buildLog: stdout + stderr };
     }
   } catch (error) {
-    // execFile 에러가 있어도 stdout에 JSON 결과가 있을 수 있음
+    // stdout may still contain the JSON result even if execFile reports an error
     try {
       buildResult = JSON.parse(error.stdout?.trim() || "{}");
     } catch {
@@ -181,7 +181,7 @@ async function main() {
     }
   }
 
-  // 6. DB 업데이트
+  // 6. Update the database
   if (buildResult.success && buildResult.zipPath) {
     await prisma.extensionBuild.update({
       where: { id: build.id },
@@ -196,15 +196,15 @@ async function main() {
     });
 
     console.log("");
-    console.log("✅ 빌드 성공!");
-    console.log("   ZIP 경로:", buildResult.zipPath);
-    console.log("   파일 크기:", (buildResult.fileSize / 1024).toFixed(2), "KB");
-    console.log("   체크섬:", buildResult.checksum);
+    console.log("✅ Build succeeded!");
+    console.log("   ZIP path:", buildResult.zipPath);
+    console.log("   File size:", (buildResult.fileSize / 1024).toFixed(2), "KB");
+    console.log("   Checksum:", buildResult.checksum);
     console.log("");
-    console.log("🔗 다운로드 URL:");
+    console.log("🔗 Download URL:");
     console.log("   " + BUILD_API_URL + "/api/v1/extensions/builds/" + build.id + "/download");
     console.log("");
-    console.log("💡 SMP 앱에서 Extensions → Builds 페이지를 새로고침하세요.");
+    console.log("💡 Refresh the Extensions → Builds page in SubHub.");
   } else {
     await prisma.extensionBuild.update({
       where: { id: build.id },
@@ -212,13 +212,13 @@ async function main() {
         status: "FAILED",
         completedAt: new Date(),
         buildLog: buildResult.buildLog,
-        errorMessage: buildResult.error || "빌드 실패",
+        errorMessage: buildResult.error || "Build failed",
       },
     });
 
     console.error("");
-    console.error("❌ 빌드 실패:", buildResult.error);
-    console.error("빌드 로그:");
+    console.error("❌ Build failed:", buildResult.error);
+    console.error("Build log:");
     console.error(buildResult.buildLog);
     process.exit(1);
   }
@@ -226,7 +226,7 @@ async function main() {
 
 main()
   .catch((err) => {
-    console.error("❌ 스크립트 오류:", err.message);
+    console.error("❌ Script error:", err.message);
     process.exit(1);
   })
   .finally(() => prisma.\$disconnect());

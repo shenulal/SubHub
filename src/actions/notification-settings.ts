@@ -24,18 +24,18 @@ async function _updateNotificationSettings(
     if (!session?.user) {
       return {
         success: false,
-        message: "인증이 필요합니다",
+        message: "Authentication required",
       };
     }
 
     if (!session.user.organizationId) {
       return {
         success: false,
-        message: "조직 정보가 필요합니다",
+        message: "Organization information is required",
       };
     }
 
-    // 구독 존재 및 조직 소속 확인
+    // Verify the subscription exists and belongs to the organization
     const subscription = await prisma.subscription.findFirst({
       where: {
         id: subscriptionId,
@@ -46,11 +46,11 @@ async function _updateNotificationSettings(
     if (!subscription) {
       return {
         success: false,
-        message: "구독을 찾을 수 없습니다",
+        message: "Subscription not found",
       };
     }
 
-    // 알림 설정 업데이트
+    // Update notification settings
     await prisma.subscription.update({
       where: { id: subscriptionId },
       data: { [field]: value },
@@ -60,13 +60,13 @@ async function _updateNotificationSettings(
 
     return {
       success: true,
-      message: "알림 설정이 업데이트되었습니다",
+      message: "Notification settings updated",
     };
   } catch (error) {
-    logger.error({ err: error }, "알림 설정 업데이트 오류");
+    logger.error({ err: error }, "Notification settings update error");
     return {
       success: false,
-      message: "알림 설정 업데이트 중 오류가 발생했습니다",
+      message: "An error occurred while updating notification settings",
     };
   }
 }

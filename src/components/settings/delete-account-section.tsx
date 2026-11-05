@@ -39,10 +39,10 @@ export function DeleteAccountSection() {
         toast.error(result.error);
         setIsDeleting(false);
       }
-      // 성공 시 리다이렉트됨
+      // Redirects on success
     } catch {
-      // redirect()는 NEXT_REDIRECT 에러를 throw하므로 여기서 catch됨
-      // 정상 동작이므로 무시
+      // redirect() throws a NEXT_REDIRECT error, which is caught here
+      // Expected behaviour, so ignore it
     }
   };
 

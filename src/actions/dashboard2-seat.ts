@@ -7,14 +7,14 @@ import type { SeatWidgetData } from "@/types/dashboard";
 import { SubscriptionStatus } from "@prisma/client";
 
 /**
- * Seat 현황 위젯 데이터 조회
- * - 위젯 A: 활용률 하위 Top 5 (낭비 중인 앱)
- * - 위젯 B: 라이선스 보유 수 상위 Top 5
+ * Get seat-status widget data
+ * - Widget A: bottom 5 by utilization (wasted seats)
+ * - Widget B: top 5 by number of licenses held
  */
 export async function getSeatWidgetData(): Promise<SeatWidgetData> {
   const { organizationId } = await requireOrganization();
 
-  // PER_SEAT 활성 구독 조회 (위젯 A: 활용률 계산용)
+  // Fetch active PER_SEAT subscriptions (Widget A: utilization)
   const perSeatSubscriptions = await prisma.subscription.findMany({
     where: {
       organizationId,
@@ -28,7 +28,7 @@ export async function getSeatWidgetData(): Promise<SeatWidgetData> {
     },
   });
 
-  // 활용률 계산
+  // Calculate utilization
   const appsWithUtilization = perSeatSubscriptions
     .filter((sub) => (sub.totalLicenses ?? 0) > 0)
     .map((sub) => {
@@ -44,12 +44,12 @@ export async function getSeatWidgetData(): Promise<SeatWidgetData> {
       };
     });
 
-  // 위젯 A: 활용률 낮은 순 정렬, Top 5
+  // Widget A: sort by lowest utilization, top 5
   const lowUtilizationApps = [...appsWithUtilization]
     .sort((a, b) => a.utilizationRate - b.utilizationRate)
     .slice(0, 5);
 
-  // FLAT_RATE 활성 구독 조회 (위젯 B: 개별 라이선스 앱 Top 5용)
+  // Fetch active FLAT_RATE subscriptions (Widget B: top 5 individually licensed apps)
   const flatRateSubscriptions = await prisma.subscription.findMany({
     where: {
       organizationId,
@@ -62,7 +62,7 @@ export async function getSeatWidgetData(): Promise<SeatWidgetData> {
     },
   });
 
-  // appId별 그룹핑: 동일 앱에 여러 FLAT_RATE 구독이 있으면 사용자 수 합산
+  // Group by appId: sum user counts when one app has several FLAT_RATE subscriptions
   const appMap = new Map<string, { appName: string; userCount: number }>();
   for (const sub of flatRateSubscriptions) {
     const existing = appMap.get(sub.appId) ?? {
@@ -73,7 +73,7 @@ export async function getSeatWidgetData(): Promise<SeatWidgetData> {
     appMap.set(sub.appId, existing);
   }
 
-  // 위젯 B: userCount 내림차순 Top 5
+  // Widget B: top 5 by userCount descending
   const topLicenseApps = [...appMap.entries()]
     .map(([appId, { appName, userCount }]) => ({ appId, appName, userCount }))
     .sort((a, b) => b.userCount - a.userCount)

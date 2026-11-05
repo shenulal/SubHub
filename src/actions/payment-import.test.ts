@@ -89,50 +89,50 @@ describe("payment-import actions", () => {
   });
 
   describe("importPaymentCSV", () => {
-    it("인증되지 않은 사용자는 에러를 반환해야 한다", async () => {
+    it("returns an error for an unauthenticated user", async () => {
       vi.mocked(auth).mockResolvedValue(null as never);
 
       const result = await importPaymentCSV(
-        "결제일,가맹점명,결제금액\n2024-01-15,SLACK,100000"
+        "Transaction Date,Merchant,Amount\n2024-01-15,SLACK,100000"
       );
 
       expect(result).toEqual({
         success: false,
-        message: "인증이 필요합니다",
+        message: "Authentication required",
       });
     });
 
-    it("조직 ID가 없는 사용자는 에러를 반환해야 한다", async () => {
+    it("returns an error for a user without an organization ID", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: null, role: "ADMIN" },
       } as never);
 
       const result = await importPaymentCSV(
-        "결제일,가맹점명,결제금액\n2024-01-15,SLACK,100000"
+        "Transaction Date,Merchant,Amount\n2024-01-15,SLACK,100000"
       );
 
       expect(result).toEqual({
         success: false,
-        message: "조직 정보가 필요합니다",
+        message: "Organization information is required",
       });
     });
 
-    it("ADMIN이 아닌 사용자는 에러를 반환해야 한다", async () => {
+    it("returns an error for a non-ADMIN user", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "MEMBER" },
       } as never);
 
       const result = await importPaymentCSV(
-        "결제일,가맹점명,결제금액\n2024-01-15,SLACK,100000"
+        "Transaction Date,Merchant,Amount\n2024-01-15,SLACK,100000"
       );
 
       expect(result).toEqual({
         success: false,
-        message: "관리자만 결제 내역을 가져올 수 있습니다",
+        message: "Only admins can import payment records",
       });
     });
 
-    it("유효한 카드사 CSV로 결제 내역을 가져와야 한다", async () => {
+    it("imports payment records from a valid card company CSV", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
@@ -154,13 +154,14 @@ describe("payment-import actions", () => {
 
       vi.mocked(prisma.merchantPattern.findMany).mockResolvedValue([]);
 
-      // 중복 체크를 위한 mock (빈 배열 = 중복 없음)
+      // Mock for the duplicate check (empty array = no duplicates)
       vi.mocked(prisma.paymentRecord.findMany).mockResolvedValue([]);
 
       vi.mocked(prisma.paymentRecord.createMany).mockResolvedValue({
         count: 2,
       });
 
+      // Kept in Korean: exercises the Korean card-company CSV header format the parser matches
       const csv = `결제일,가맹점명,결제금액,카드번호,승인번호
 2024-01-15,SLACK TECHNOLOGIES,100000,1234-****-****-5678,12345678
 2024-01-16,UNKNOWN VENDOR,50000,1234-****-****-5678,12345679`;
@@ -169,14 +170,14 @@ describe("payment-import actions", () => {
 
       expect(result.success).toBe(true);
       expect(result.data?.imported).toBe(2);
-      // 매칭 수는 실제 매칭 로직에 따라 달라질 수 있음
+      // The match count may vary with the actual matching logic
       expect(result.data?.matched).toBeGreaterThanOrEqual(0);
       expect(result.data?.unmatched).toBeGreaterThanOrEqual(0);
       expect(prisma.paymentRecord.createMany).toHaveBeenCalled();
       expect(revalidatePath).toHaveBeenCalledWith("/payments");
     });
 
-    it("빈 CSV는 에러를 반환해야 한다", async () => {
+    it("returns an error for an empty CSV", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
@@ -184,10 +185,10 @@ describe("payment-import actions", () => {
       const result = await importPaymentCSV("");
 
       expect(result.success).toBe(false);
-      expect(result.message).toContain("빈");
+      expect(result.message).toContain("empty");
     });
 
-    it("지원하지 않는 CSV 형식은 에러를 반환해야 한다", async () => {
+    it("returns an error for an unsupported CSV format", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
@@ -198,13 +199,13 @@ val1,val2,val3`;
       const result = await importPaymentCSV(csv);
 
       expect(result.success).toBe(false);
-      expect(result.message).toContain("지원하지 않는");
+      expect(result.message).toContain("Unsupported");
     });
 
-    // ==================== SMP-78: Team/User 배정 테스트 ====================
+    // ==================== SMP-78: Team/User assignment tests ====================
 
-    describe("Team/User 배정", () => {
-      const validCsv = `결제일,가맹점명,결제금액,카드번호,승인번호
+    describe("Team/User assignment", () => {
+      const validCsv = `Transaction Date,Merchant,Amount,Card Number,Approval
 2024-01-15,SLACK TECHNOLOGIES,100000,1234-****-****-5678,12345678`;
 
       beforeEach(() => {
@@ -221,10 +222,10 @@ val1,val2,val3`;
         });
       });
 
-      it("유효한 teamId와 함께 결제 내역을 가져와야 한다", async () => {
+      it("imports payment records with a valid teamId", async () => {
         vi.mocked(prisma.team.findFirst).mockResolvedValue({
           id: "team-1",
-          name: "마케팅팀",
+          name: "Marketing",
           organizationId: "org-1",
         } as never);
 
@@ -243,10 +244,10 @@ val1,val2,val3`;
         });
       });
 
-      it("유효한 userId와 함께 결제 내역을 가져와야 한다", async () => {
+      it("imports payment records with a valid userId", async () => {
         vi.mocked(prisma.user.findFirst).mockResolvedValue({
           id: "user-2",
-          name: "김철수",
+          name: "Omar Khalid",
           organizationId: "org-1",
         } as never);
 
@@ -265,7 +266,7 @@ val1,val2,val3`;
         });
       });
 
-      it("다른 조직의 teamId는 에러를 반환해야 한다", async () => {
+      it("returns an error for a teamId from another organization", async () => {
         vi.mocked(prisma.team.findFirst).mockResolvedValue(null);
 
         const result = await importPaymentCSV(validCsv, {
@@ -273,10 +274,10 @@ val1,val2,val3`;
         });
 
         expect(result.success).toBe(false);
-        expect(result.message).toBe("유효하지 않은 팀입니다");
+        expect(result.message).toBe("Invalid team");
       });
 
-      it("다른 조직의 userId는 에러를 반환해야 한다", async () => {
+      it("returns an error for a userId from another organization", async () => {
         vi.mocked(prisma.user.findFirst).mockResolvedValue(null);
 
         const result = await importPaymentCSV(validCsv, {
@@ -284,10 +285,10 @@ val1,val2,val3`;
         });
 
         expect(result.success).toBe(false);
-        expect(result.message).toBe("유효하지 않은 사용자입니다");
+        expect(result.message).toBe("Invalid user");
       });
 
-      it("teamId와 userId가 둘 다 있으면 에러를 반환해야 한다", async () => {
+      it("returns an error when both teamId and userId are given", async () => {
         const result = await importPaymentCSV(validCsv, {
           teamId: "team-1",
           userId: "user-2",
@@ -295,11 +296,11 @@ val1,val2,val3`;
 
         expect(result.success).toBe(false);
         expect(result.message).toBe(
-          "팀 배정과 유저 배정 중 하나만 선택할 수 있습니다"
+          "Select either a team or a user assignment, not both"
         );
       });
 
-      it("teamId와 userId 없이 결제 내역을 가져와야 한다 (미배정)", async () => {
+      it("imports payment records without teamId or userId (unassigned)", async () => {
         const result = await importPaymentCSV(validCsv);
 
         expect(result.success).toBe(true);
@@ -316,12 +317,12 @@ val1,val2,val3`;
   });
 
   describe("getPaymentRecords", () => {
-    it("조직의 결제 내역을 조회해야 한다", async () => {
+    it("lists the organization's payment records", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
 
-      // CardTransaction mock (빈 배열 - 카드 데이터 없음)
+      // CardTransaction mock (empty array - no card data)
       vi.mocked(prisma.cardTransaction.findMany).mockResolvedValue([]);
       vi.mocked(prisma.cardTransaction.count).mockResolvedValue(0);
 
@@ -353,12 +354,12 @@ val1,val2,val3`;
       expect(result.data?.total).toBe(1);
     });
 
-    it("matchStatus로 필터링해야 한다", async () => {
+    it("filters by matchStatus", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
 
-      // CardTransaction mock - PENDING 필터 시 카드 데이터도 포함될 수 있음
+      // CardTransaction mock - card data may be included with the PENDING filter
       vi.mocked(prisma.cardTransaction.findMany).mockResolvedValue([]);
       vi.mocked(prisma.cardTransaction.count).mockResolvedValue(0);
 
@@ -368,7 +369,7 @@ val1,val2,val3`;
 
       await getPaymentRecords({ page: 1, limit: 10, matchStatus: "PENDING" });
 
-      // PENDING 필터 시 PaymentRecord가 호출됨
+      // PaymentRecord is called with the PENDING filter
       expect(prisma.paymentRecord.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
@@ -380,12 +381,12 @@ val1,val2,val3`;
   });
 
   describe("updatePaymentMatch", () => {
-    it("csv_ prefix ID로 PaymentRecord를 업데이트해야 한다", async () => {
+    it("updates PaymentRecord with a csv_ prefixed ID", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
 
-      // PaymentRecord가 존재함
+      // PaymentRecord exists
       vi.mocked(prisma.paymentRecord.findFirst).mockResolvedValue({
         id: "pr-1",
         organizationId: "org-1",
@@ -397,7 +398,7 @@ val1,val2,val3`;
         matchStatus: "MANUAL",
       } as never);
 
-      // csv_ prefix 사용
+      // use the csv_ prefix
       const result = await updatePaymentMatch("csv_pr-1", "app-1");
 
       expect(result.success).toBe(true);
@@ -411,12 +412,12 @@ val1,val2,val3`;
       });
     });
 
-    it("card_ prefix ID로 CardTransaction을 업데이트해야 한다", async () => {
+    it("updates CardTransaction with a card_ prefixed ID", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
 
-      // CardTransaction이 존재함
+      // CardTransaction exists
       vi.mocked(prisma.cardTransaction.findFirst).mockResolvedValue({
         id: "ct-1",
         organizationId: "org-1",
@@ -427,7 +428,7 @@ val1,val2,val3`;
         matchedAppId: "app-1",
       } as never);
 
-      // card_ prefix 사용
+      // use the card_ prefix
       const result = await updatePaymentMatch("card_ct-1", "app-1");
 
       expect(result.success).toBe(true);
@@ -440,12 +441,12 @@ val1,val2,val3`;
       });
     });
 
-    it("앱 매칭을 해제해야 한다", async () => {
+    it("removes app matching", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
 
-      // PaymentRecord가 존재함
+      // PaymentRecord exists
       vi.mocked(prisma.paymentRecord.findFirst).mockResolvedValue({
         id: "pr-1",
         organizationId: "org-1",
@@ -469,15 +470,15 @@ val1,val2,val3`;
       });
     });
 
-    it("레거시 ID (prefix 없음)도 지원해야 한다", async () => {
+    it("supports legacy IDs (no prefix)", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
 
-      // PaymentRecord가 없음
+      // no PaymentRecord
       vi.mocked(prisma.paymentRecord.findFirst).mockResolvedValue(null);
 
-      // CardTransaction이 존재함
+      // CardTransaction exists
       vi.mocked(prisma.cardTransaction.findFirst).mockResolvedValue({
         id: "ct-1",
         organizationId: "org-1",
@@ -488,7 +489,7 @@ val1,val2,val3`;
         matchedAppId: "app-1",
       } as never);
 
-      // prefix 없이 호출
+      // call without a prefix
       const result = await updatePaymentMatch("ct-1", "app-1");
 
       expect(result.success).toBe(true);
@@ -501,24 +502,24 @@ val1,val2,val3`;
       });
     });
 
-    it("PaymentRecord도 CardTransaction도 없으면 에러를 반환해야 한다", async () => {
+    it("returns an error when there is neither a PaymentRecord nor a CardTransaction", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
 
-      // 둘 다 없음
+      // neither exists
       vi.mocked(prisma.paymentRecord.findFirst).mockResolvedValue(null);
       vi.mocked(prisma.cardTransaction.findFirst).mockResolvedValue(null);
 
       const result = await updatePaymentMatch("invalid-id", "app-1");
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("결제 내역을 찾을 수 없습니다");
+      expect(result.message).toBe("Payment record not found");
     });
   });
 
   describe("linkPaymentToSubscription", () => {
-    it("결제 내역을 구독에 연결해야 한다", async () => {
+    it("links a payment record to a subscription", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
@@ -542,7 +543,7 @@ val1,val2,val3`;
       });
     });
 
-    it("존재하지 않는 구독에 연결하면 에러를 반환해야 한다", async () => {
+    it("returns an error when linking to a non-existent subscription", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
@@ -552,12 +553,12 @@ val1,val2,val3`;
       const result = await linkPaymentToSubscription("pr-1", "invalid-sub");
 
       expect(result.success).toBe(false);
-      expect(result.message).toContain("구독");
+      expect(result.message).toContain("Subscription");
     });
   });
 
   describe("getPaymentSummaryByApp", () => {
-    it("앱별 결제 내역을 집계해야 한다", async () => {
+    it("aggregates payment records per app", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
@@ -590,7 +591,7 @@ val1,val2,val3`;
       expect(result.data?.totalAmount).toBe(230000);
     });
 
-    it("기간 없이 전체 데이터를 조회해야 한다", async () => {
+    it("queries all data without a period", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
@@ -607,20 +608,20 @@ val1,val2,val3`;
   });
 
   describe("updatePaymentRecord", () => {
-    it("관리자가 아니면 에러를 반환해야 한다", async () => {
+    it("returns an error for a non-admin", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "MEMBER" },
       } as never);
 
       const result = await updatePaymentRecord("payment-1", {
-        notes: "테스트 메모",
+        notes: "Test note",
       });
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("관리자 권한이 필요합니다");
+      expect(result.message).toBe("Admin permission required");
     });
 
-    it("결제 기록을 수정해야 한다", async () => {
+    it("updates a payment record", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
@@ -632,23 +633,23 @@ val1,val2,val3`;
 
       vi.mocked(prisma.paymentRecord.update).mockResolvedValue({
         id: "payment-1",
-        notes: "테스트 메모",
+        notes: "Test note",
       } as never);
 
       const result = await updatePaymentRecord("payment-1", {
-        notes: "테스트 메모",
+        notes: "Test note",
       });
 
       expect(result.success).toBe(true);
       expect(prisma.paymentRecord.update).toHaveBeenCalledWith(
         expect.objectContaining({
           where: { id: "payment-1" },
-          data: expect.objectContaining({ notes: "테스트 메모" }),
+          data: expect.objectContaining({ notes: "Test note" }),
         })
       );
     });
 
-    it("존재하지 않는 결제 기록은 에러를 반환해야 한다", async () => {
+    it("returns an error for a non-existent payment record", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
@@ -656,16 +657,16 @@ val1,val2,val3`;
       vi.mocked(prisma.paymentRecord.findFirst).mockResolvedValue(null);
 
       const result = await updatePaymentRecord("non-existent", {
-        notes: "테스트",
+        notes: "Test",
       });
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("결제 기록을 찾을 수 없습니다");
+      expect(result.message).toBe("Payment record not found");
     });
   });
 
   describe("deletePaymentRecord", () => {
-    it("관리자가 아니면 에러를 반환해야 한다", async () => {
+    it("returns an error for a non-admin", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "MEMBER" },
       } as never);
@@ -673,10 +674,10 @@ val1,val2,val3`;
       const result = await deletePaymentRecord("payment-1");
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("관리자 권한이 필요합니다");
+      expect(result.message).toBe("Admin permission required");
     });
 
-    it("결제 기록을 삭제해야 한다", async () => {
+    it("deletes a payment record", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
@@ -696,7 +697,7 @@ val1,val2,val3`;
       });
     });
 
-    it("존재하지 않는 결제 기록은 에러를 반환해야 한다", async () => {
+    it("returns an error for a non-existent payment record", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
@@ -706,7 +707,7 @@ val1,val2,val3`;
       const result = await deletePaymentRecord("non-existent");
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("결제 기록을 찾을 수 없습니다");
+      expect(result.message).toBe("Payment record not found");
     });
   });
 });

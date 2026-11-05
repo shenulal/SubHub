@@ -125,7 +125,7 @@ const mockDashboardV3Data: DashboardV3Data = {
   costTrend: [
     {
       month: "2026-01",
-      displayLabel: "1월",
+      displayLabel: "Jan",
       saasCost: 3000000,
       nonSaasCost: 500000,
     },

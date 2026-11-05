@@ -12,7 +12,7 @@ import type {
 } from "@/types/seat-analytics";
 
 const INACTIVE_DAYS_THRESHOLD = 30;
-const BUFFER_RATE = 1.15; // 15% 버퍼
+const BUFFER_RATE = 1.15; // 15% buffer
 
 function extractDecimal(val: unknown): number {
   if (val && typeof val === "object" && "toNumber" in val) {
@@ -22,8 +22,8 @@ function extractDecimal(val: unknown): number {
 }
 
 /**
- * Seat 최적화 제안
- * 앱별 권장 Seat 수 산출 + 절감 가능 비용
+ * Seat optimization suggestions
+ * Calculates the recommended seat count per app and the potential savings
  */
 export async function getSeatOptimizationSuggestions(): Promise<
   ActionState<SeatOptimizationSummary>
@@ -34,7 +34,7 @@ export async function getSeatOptimizationSuggestions(): Promise<
     const thresholdDate = new Date();
     thresholdDate.setDate(thresholdDate.getDate() - INACTIVE_DAYS_THRESHOLD);
 
-    // totalLicenses > 0인 모든 활성 구독 조회 (billingType 무관)
+    // Fetch all active subscriptions with totalLicenses > 0 (any billingType)
     const subscriptions = await prisma.subscription.findMany({
       where: {
         organizationId,
@@ -59,7 +59,7 @@ export async function getSeatOptimizationSuggestions(): Promise<
       };
     }
 
-    // UserAppAccess 배치 조회
+    // Batch-fetch UserAppAccess
     const appIds = subscriptions.map((s) => s.app.id);
     const allUserIds = subscriptions.flatMap((s) =>
       s.assignedUsers.map((u) => u.userId)
@@ -87,12 +87,12 @@ export async function getSeatOptimizationSuggestions(): Promise<
       const currentSeats = sub.totalLicenses ?? 0;
       let perSeatPrice = extractDecimal(sub.perSeatPrice);
 
-      // FLAT_RATE 등 perSeatPrice가 없는 경우: amount / totalLicenses로 추정
+      // When there is no perSeatPrice (e.g. FLAT_RATE): estimate as amount / totalLicenses
       if (perSeatPrice === 0 && currentSeats > 0) {
         perSeatPrice = Math.round(extractDecimal(sub.amount) / currentSeats);
       }
 
-      // 활성 유저 수 계산: 30일 이내 사용 기록이 있는 경우만 활성 (보수적 접근)
+      // Active users: only those with usage within 30 days (conservative approach)
       let activeUsers = 0;
       for (const su of sub.assignedUsers) {
         const key = `${sub.app.id}:${su.userId}`;
@@ -105,7 +105,7 @@ export async function getSeatOptimizationSuggestions(): Promise<
       const recommendedSeats = Math.ceil(activeUsers * BUFFER_RATE);
       const excessSeats = Math.max(0, currentSeats - recommendedSeats);
 
-      if (excessSeats <= 0) continue; // 최적화 불필요
+      if (excessSeats <= 0) continue; // no optimization needed
 
       const monthlySavings = excessSeats * perSeatPrice;
 
@@ -138,13 +138,16 @@ export async function getSeatOptimizationSuggestions(): Promise<
       },
     };
   } catch (error) {
-    console.error("Seat 최적화 제안 오류:", error);
-    return { success: false, error: "Seat 최적화 제안에 실패했습니다" };
+    console.error("Seat optimization suggestion error:", error);
+    return {
+      success: false,
+      error: "Failed to generate seat optimization suggestions",
+    };
   }
 }
 
 /**
- * 다운사이징 시뮬레이션
+ * Downsizing simulation
  */
 export async function simulateSeatReduction(
   subscriptionId: string,
@@ -169,13 +172,13 @@ export async function simulateSeatReduction(
     });
 
     if (!subscription) {
-      return { success: false, error: "구독을 찾을 수 없습니다" };
+      return { success: false, error: "Subscription not found" };
     }
 
     const currentSeats = subscription.totalLicenses ?? 0;
     const perSeatPrice = extractDecimal(subscription.perSeatPrice);
 
-    // UserAppAccess 조회
+    // Fetch UserAppAccess
     const userIds = subscription.assignedUsers.map((su) => su.userId);
     const appAccesses = await prisma.userAppAccess.findMany({
       where: {
@@ -187,7 +190,7 @@ export async function simulateSeatReduction(
 
     const accessMap = new Map(appAccesses.map((a) => [a.userId, a.lastUsedAt]));
 
-    // 비활성 유저 = 축소 시 영향받는 유저
+    // Inactive users = users affected by downsizing
     const affectedUsers = subscription.assignedUsers
       .filter((su) => {
         const lastUsed = accessMap.get(su.userId) ?? null;
@@ -215,13 +218,13 @@ export async function simulateSeatReduction(
       },
     };
   } catch (error) {
-    console.error("Seat 축소 시뮬레이션 오류:", error);
-    return { success: false, error: "시뮬레이션에 실패했습니다" };
+    console.error("Seat downsizing simulation error:", error);
+    return { success: false, error: "Simulation failed" };
   }
 }
 
 /**
- * 대시보드 위젯용 절감 기회 요약 (Top 3)
+ * Savings opportunity summary for the dashboard widget (top 3)
  */
 export async function getSavingsOpportunitySummary(): Promise<
   ActionState<SavingsOpportunitySummary>

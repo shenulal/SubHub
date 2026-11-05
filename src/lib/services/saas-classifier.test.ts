@@ -1,5 +1,5 @@
 // src/lib/services/saas-classifier.test.ts
-// SMP-196: Vercel AI SDK generateObject() 전환 후 테스트 업데이트
+// SMP-196: tests updated after migrating to Vercel AI SDK generateObject()
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import {
@@ -20,14 +20,14 @@ vi.mock("@ai-sdk/anthropic", () => ({
   anthropic: (model: string) => ({ modelId: model, provider: "anthropic" }),
 }));
 
-// 환경 변수 백업
+// Back up environment variables
 const originalEnv = process.env;
 
-// 테스트마다 고유한 merchantName을 생성하기 위한 카운터
+// Counter for generating a unique merchantName per test
 let testCounter = 0;
 const uniqueName = (base: string) => `${base}_${Date.now()}_${testCounter++}`;
 
-// 기본 SaaS 응답 헬퍼
+// Default SaaS response helper
 const makeSaaSResult = (overrides = {}) => ({
   isSaaS: true,
   canonicalName: "Slack",

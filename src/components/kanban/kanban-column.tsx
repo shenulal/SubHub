@@ -62,7 +62,7 @@ export function KanbanColumn({
         isOver && "bg-muted/60 ring-primary/20 ring-2"
       )}
     >
-      {/* 컬럼 헤더 */}
+      {/* Column header */}
       <div className="border-border flex min-w-0 items-center justify-between gap-2 border-b px-4 py-3">
         <div className="flex min-w-0 items-center gap-2">
           <span className="text-foreground truncate text-[0.9375rem] font-medium">
@@ -91,7 +91,7 @@ export function KanbanColumn({
         </div>
       </div>
 
-      {/* 카드 목록 */}
+      {/* Card list */}
       <div className="min-h-[200px] flex-1 space-y-4 overflow-y-auto p-4">
         {tasks.map((task) => (
           <KanbanCard

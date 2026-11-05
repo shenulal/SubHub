@@ -1,12 +1,12 @@
 /**
  * New Dashboard Components - Barrel Export
- * 모든 대시보드 컴포넌트가 이 디렉토리에 통합됨 (Phase 3 리팩토링)
+ * All dashboard components are consolidated in this directory (Phase 3 refactor)
  */
 
-// 메인 클라이언트
+// Main client
 export { NewDashboardClient } from "./new-dashboard-client";
 
-// 자체 구현 컴포넌트
+// In-house components
 export { AnomalyCard } from "./anomaly-card";
 export { AppsWithoutSubCard } from "./apps-without-sub-card";
 export {
@@ -20,7 +20,7 @@ export { BentoOptimizationHero } from "./bento-optimization-hero";
 export { TerminatedCard } from "./terminated-card";
 export { TotalCostCard } from "./total-cost-card";
 
-// 통합된 컴포넌트 (이전: dashboard/, dashboard2/, v2-cost/, v2-seat/, v3/)
+// Consolidated components (previously dashboard/, dashboard2/, v2-cost/, v2-seat/, v3/)
 export { AppsByCategory } from "./apps-by-category";
 export { CostAppsTable } from "./cost-apps-table";
 export { CostBarChart } from "./cost-bar-chart";

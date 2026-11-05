@@ -19,9 +19,9 @@ import { withCronAuth } from "@/lib/middleware";
 export const GET = withCronAuth(
   withLogging("cron:agent-reminder", async (request: NextRequest) => {
     try {
-      logger.info("[Cron] 에이전트 설치 리마인더 처리 시작");
+      logger.info("[Cron] Agent install reminder processing started");
 
-      // 모든 조직 조회
+      // Fetch all organizations
       const organizations = await prisma.organization.findMany({
         select: {
           id: true,
@@ -41,11 +41,11 @@ export const GET = withCronAuth(
         };
 
         try {
-          // 에이전트 미설치 사용자 조회
+          // Fetch users without the agent installed
           const usersWithoutAgent = await getUsersWithoutAgent(org.id);
           result.usersWithoutAgent = usersWithoutAgent.length;
 
-          // 각 사용자에게 리마인더 이메일 발송
+          // Send a reminder email to each user
           for (const user of usersWithoutAgent) {
             try {
               const emailResult = await sendAgentInstallationReminderEmail({
@@ -57,29 +57,29 @@ export const GET = withCronAuth(
               if (emailResult.success) {
                 result.emailsSent++;
                 logger.info(
-                  `[Cron] 리마인더 발송 완료: ${user.email} (${org.name})`
+                  `[Cron] Reminder sent: ${user.email} (${org.name})`
                 );
               } else {
                 result.errors.push(
-                  `${user.email}: ${emailResult.error || "발송 실패"}`
+                  `${user.email}: ${emailResult.error || "Send failed"}`
                 );
               }
             } catch (error) {
               result.errors.push(
-                `${user.email}: ${error instanceof Error ? error.message : "알 수 없는 오류"}`
+                `${user.email}: ${error instanceof Error ? error.message : "Unknown error"}`
               );
             }
           }
         } catch (error) {
           result.errors.push(
-            `조직 처리 오류: ${error instanceof Error ? error.message : "알 수 없는 오류"}`
+            `Organization processing error: ${error instanceof Error ? error.message : "Unknown error"}`
           );
         }
 
         results.push(result);
       }
 
-      // 요약 로그
+      // Summary log
       const summary = {
         totalOrganizations: results.length,
         totalUsersWithoutAgent: results.reduce(
@@ -90,7 +90,10 @@ export const GET = withCronAuth(
         totalErrors: results.reduce((sum, r) => sum + r.errors.length, 0),
       };
 
-      logger.info({ summary }, "[Cron] 에이전트 설치 리마인더 처리 완료");
+      logger.info(
+        { summary },
+        "[Cron] Agent install reminder processing completed"
+      );
 
       return NextResponse.json({
         success: true,
@@ -98,12 +101,15 @@ export const GET = withCronAuth(
         results,
       });
     } catch (error) {
-      logger.error({ err: error }, "[Cron] 에이전트 설치 리마인더 처리 오류");
+      logger.error(
+        { err: error },
+        "[Cron] Agent install reminder processing error"
+      );
 
       return NextResponse.json(
         {
           success: false,
-          error: error instanceof Error ? error.message : "알 수 없는 오류",
+          error: error instanceof Error ? error.message : "Unknown error",
         },
         { status: 500 }
       );

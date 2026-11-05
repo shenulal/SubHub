@@ -21,7 +21,7 @@ export interface BulkImportResult {
   errors: ValidationError[];
 }
 
-// 앱 일괄 등록
+// Bulk import apps
 async function _bulkImportApps(
   csvContent: string
 ): Promise<ActionState<BulkImportResult>> {
@@ -31,47 +31,47 @@ async function _bulkImportApps(
     if (!session?.user) {
       return {
         success: false,
-        message: "인증이 필요합니다",
+        message: "Authentication required",
       };
     }
 
     if (!session.user.organizationId) {
       return {
         success: false,
-        message: "조직 정보가 필요합니다",
+        message: "Organization information is required",
       };
     }
 
-    // 관리자 권한 확인
+    // Check admin permission
     if (session.user.role !== "ADMIN") {
       return {
         success: false,
-        message: "관리자만 일괄 등록할 수 있습니다",
+        message: "Only admins can bulk import",
       };
     }
 
-    // CSV 파싱
+    // Parse the CSV
     const rows = parseCSV(csvContent);
 
     if (rows.length === 0) {
       return {
         success: false,
-        message: "등록할 데이터가 없습니다",
+        message: "There is no data to import",
       };
     }
 
-    // 유효성 검증
+    // Validate
     const { valid, errors } = validateAppCSV(rows);
 
     if (errors.length > 0 && valid.length === 0) {
       return {
         success: false,
-        message: "유효한 데이터가 없습니다",
+        message: "There is no valid data",
         data: { created: 0, errors },
       };
     }
 
-    // 앱 생성
+    // Create apps
     const result = await prisma.app.createMany({
       data: valid.map((row) => ({
         name: row.name,
@@ -92,20 +92,20 @@ async function _bulkImportApps(
 
     return {
       success: true,
-      message: `${result.count}개의 앱이 등록되었습니다`,
+      message: `Imported ${result.count} apps`,
       data: { created: result.count, errors },
     };
   } catch (error) {
-    logger.error({ err: error }, "앱 일괄 등록 오류");
+    logger.error({ err: error }, "App bulk import error");
     return {
       success: false,
-      message: "앱 일괄 등록 중 오류가 발생했습니다",
+      message: "An error occurred while bulk importing apps",
     };
   }
 }
 export const bulkImportApps = withLogging("bulkImportApps", _bulkImportApps);
 
-// 구독 일괄 등록
+// Bulk import subscriptions
 async function _bulkImportSubscriptions(
   csvContent: string
 ): Promise<ActionState<BulkImportResult>> {
@@ -115,47 +115,47 @@ async function _bulkImportSubscriptions(
     if (!session?.user) {
       return {
         success: false,
-        message: "인증이 필요합니다",
+        message: "Authentication required",
       };
     }
 
     if (!session.user.organizationId) {
       return {
         success: false,
-        message: "조직 정보가 필요합니다",
+        message: "Organization information is required",
       };
     }
 
-    // 관리자 권한 확인
+    // Check admin permission
     if (session.user.role !== "ADMIN") {
       return {
         success: false,
-        message: "관리자만 일괄 등록할 수 있습니다",
+        message: "Only admins can bulk import",
       };
     }
 
-    // CSV 파싱
+    // Parse the CSV
     const rows = parseCSV(csvContent);
 
     if (rows.length === 0) {
       return {
         success: false,
-        message: "등록할 데이터가 없습니다",
+        message: "There is no data to import",
       };
     }
 
-    // 유효성 검증
+    // Validate
     const { valid, errors } = validateSubscriptionCSV(rows);
 
     if (errors.length > 0 && valid.length === 0) {
       return {
         success: false,
-        message: "유효한 데이터가 없습니다",
+        message: "There is no valid data",
         data: { created: 0, errors },
       };
     }
 
-    // 앱 이름으로 앱 ID 조회
+    // Look up app IDs by app name
     const appNames = [...new Set(valid.map((row) => row.appName))];
     const apps = await prisma.app.findMany({
       where: {
@@ -167,7 +167,7 @@ async function _bulkImportSubscriptions(
 
     const appNameToId = new Map(apps.map((app) => [app.name, app.id]));
 
-    // 존재하지 않는 앱 확인
+    // Check for apps that do not exist
     const subscriptionData: Array<{
       appId: string;
       billingCycle: BillingCycle;
@@ -186,7 +186,7 @@ async function _bulkImportSubscriptions(
         notFoundErrors.push({
           row: index + 1,
           field: "appName",
-          message: `${index + 1}행: 앱 "${row.appName}"을(를) 찾을 수 없습니다`,
+          message: `Row ${index + 1}: app "${row.appName}" not found`,
         });
         return;
       }
@@ -198,7 +198,7 @@ async function _bulkImportSubscriptions(
         renewalDate: row.renewalDate ? new Date(row.renewalDate) : null,
         startDate: new Date(),
         totalLicenses: row.seats ? parseInt(row.seats, 10) : null,
-        notes: row.planName ? `플랜: ${row.planName}` : null,
+        notes: row.planName ? `Plan: ${row.planName}` : null,
         organizationId: session.user.organizationId!,
       });
     });
@@ -208,12 +208,12 @@ async function _bulkImportSubscriptions(
     if (subscriptionData.length === 0) {
       return {
         success: false,
-        message: "등록할 유효한 구독이 없습니다",
+        message: "There are no valid subscriptions to import",
         data: { created: 0, errors: allErrors },
       };
     }
 
-    // 구독 생성
+    // Create subscriptions
     const result = await prisma.subscription.createMany({
       data: subscriptionData,
       skipDuplicates: true,
@@ -223,14 +223,14 @@ async function _bulkImportSubscriptions(
 
     return {
       success: true,
-      message: `${result.count}개의 구독이 등록되었습니다`,
+      message: `Imported ${result.count} subscriptions`,
       data: { created: result.count, errors: allErrors },
     };
   } catch (error) {
-    logger.error({ err: error }, "구독 일괄 등록 오류");
+    logger.error({ err: error }, "Subscription bulk import error");
     return {
       success: false,
-      message: "구독 일괄 등록 중 오류가 발생했습니다",
+      message: "An error occurred while bulk importing subscriptions",
     };
   }
 }
@@ -239,7 +239,7 @@ export const bulkImportSubscriptions = withLogging(
   _bulkImportSubscriptions
 );
 
-// 사용자 일괄 등록
+// Bulk import users
 async function _bulkImportUsers(
   csvContent: string
 ): Promise<ActionState<BulkImportResult>> {
@@ -249,47 +249,47 @@ async function _bulkImportUsers(
     if (!session?.user) {
       return {
         success: false,
-        message: "인증이 필요합니다",
+        message: "Authentication required",
       };
     }
 
     if (!session.user.organizationId) {
       return {
         success: false,
-        message: "조직 정보가 필요합니다",
+        message: "Organization information is required",
       };
     }
 
-    // 관리자 권한 확인
+    // Check admin permission
     if (session.user.role !== "ADMIN") {
       return {
         success: false,
-        message: "관리자만 일괄 등록할 수 있습니다",
+        message: "Only admins can bulk import",
       };
     }
 
-    // CSV 파싱
+    // Parse the CSV
     const rows = parseCSV(csvContent);
 
     if (rows.length === 0) {
       return {
         success: false,
-        message: "등록할 데이터가 없습니다",
+        message: "There is no data to import",
       };
     }
 
-    // 유효성 검증
+    // Validate
     const { valid, errors } = validateUserCSV(rows);
 
     if (errors.length > 0 && valid.length === 0) {
       return {
         success: false,
-        message: "유효한 데이터가 없습니다",
+        message: "There is no valid data",
         data: { created: 0, errors },
       };
     }
 
-    // 기존 사용자 이메일 조회
+    // Fetch existing user emails
     const emails = valid.map((row) => row.email);
     const existingUsers = await prisma.user.findMany({
       where: {
@@ -301,14 +301,14 @@ async function _bulkImportUsers(
 
     const existingEmails = new Set(existingUsers.map((u) => u.email));
 
-    // 중복 사용자 필터링
+    // Filter out duplicate users
     const newUsers = valid.filter((row) => !existingEmails.has(row.email));
     const duplicateErrors: ValidationError[] = valid
       .filter((row) => existingEmails.has(row.email))
       .map((row, index) => ({
         row: index + 1,
         field: "email",
-        message: `이미 존재하는 사용자입니다: ${row.email}`,
+        message: `User already exists: ${row.email}`,
       }));
 
     const allErrors = [...errors, ...duplicateErrors];
@@ -318,13 +318,13 @@ async function _bulkImportUsers(
         success: allErrors.length === 0,
         message:
           allErrors.length === 0
-            ? "등록할 새 사용자가 없습니다"
-            : "유효한 새 사용자가 없습니다",
+            ? "There are no new users to import"
+            : "There are no valid new users",
         data: { created: 0, errors: allErrors },
       };
     }
 
-    // 사용자 생성
+    // Create users
     const result = await prisma.user.createMany({
       data: newUsers.map((row) => ({
         email: row.email,
@@ -339,7 +339,7 @@ async function _bulkImportUsers(
       skipDuplicates: true,
     });
 
-    // 감사 로그 기록
+    // Write the audit log
     await prisma.auditLog.create({
       data: {
         action: "BULK_IMPORT_USERS",
@@ -361,14 +361,14 @@ async function _bulkImportUsers(
 
     return {
       success: true,
-      message: `${result.count}명의 사용자가 등록되었습니다`,
+      message: `Imported ${result.count} users`,
       data: { created: result.count, errors: allErrors },
     };
   } catch (error) {
-    logger.error({ err: error }, "사용자 일괄 등록 오류");
+    logger.error({ err: error }, "User bulk import error");
     return {
       success: false,
-      message: "사용자 일괄 등록 중 오류가 발생했습니다",
+      message: "An error occurred while bulk importing users",
     };
   }
 }
@@ -380,7 +380,7 @@ export interface ChunkImportResult {
   errors: string[];
 }
 
-// 사용자 CSV 청크 등록 (진행률 업로드용)
+// Import a chunk of the user CSV (for progress uploads)
 async function _importUsersChunk(
   csvChunk: string
 ): Promise<ActionState<ChunkImportResult>> {
@@ -388,15 +388,18 @@ async function _importUsersChunk(
     const session = await auth();
 
     if (!session?.user) {
-      return { success: false, message: "인증이 필요합니다" };
+      return { success: false, message: "Authentication required" };
     }
 
     if (!session.user.organizationId) {
-      return { success: false, message: "조직 정보가 필요합니다" };
+      return {
+        success: false,
+        message: "Organization information is required",
+      };
     }
 
     if (session.user.role !== "ADMIN") {
-      return { success: false, message: "관리자만 일괄 등록할 수 있습니다" };
+      return { success: false, message: "Only admins can bulk import" };
     }
 
     const rows = parseCSV(csvChunk);
@@ -404,7 +407,7 @@ async function _importUsersChunk(
     if (rows.length === 0) {
       return {
         success: true,
-        message: "처리할 데이터 없음",
+        message: "No data to process",
         data: { processed: 0, skipped: 0, errors: [] },
       };
     }
@@ -415,12 +418,12 @@ async function _importUsersChunk(
     if (valid.length === 0) {
       return {
         success: true,
-        message: "유효한 데이터 없음",
+        message: "No valid data",
         data: { processed: 0, skipped: 0, errors: errorMessages },
       };
     }
 
-    // 기존 사용자 이메일 조회 (중복 skip 처리)
+    // Fetch existing user emails (skip duplicates)
     const emails = valid.map((row) => row.email);
     const existingUsers = await prisma.user.findMany({
       where: {
@@ -437,7 +440,7 @@ async function _importUsersChunk(
     if (newUsers.length === 0) {
       return {
         success: true,
-        message: "모두 중복 skip",
+        message: "All rows skipped as duplicates",
         data: { processed: 0, skipped, errors: errorMessages },
       };
     }
@@ -461,14 +464,14 @@ async function _importUsersChunk(
 
     return {
       success: true,
-      message: `${result.count}명 등록 완료`,
+      message: `Imported ${result.count} users`,
       data: { processed: result.count, skipped, errors: errorMessages },
     };
   } catch (error) {
-    logger.error({ err: error }, "사용자 청크 등록 오류");
+    logger.error({ err: error }, "User chunk import error");
     return {
       success: false,
-      message: "청크 처리 중 오류가 발생했습니다",
+      message: "An error occurred while processing the chunk",
     };
   }
 }

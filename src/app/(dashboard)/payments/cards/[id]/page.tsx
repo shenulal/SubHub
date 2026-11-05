@@ -21,10 +21,10 @@ import {
   type CardCompanyCode,
 } from "@/lib/services/hyphen/types";
 import { formatDistanceToNow } from "date-fns";
-import { enUS, ko } from "date-fns/locale";
+import { enUS } from "date-fns/locale";
 import { CheckCircle, Clock, CreditCard, XCircle } from "lucide-react";
 import type { Metadata } from "next";
-import { getLocale, getTranslations } from "next-intl/server";
+import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
 
 interface Props {
@@ -50,8 +50,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function CardDetailPage({ params }: Props) {
   const t = await getTranslations("cards.detail");
-  const locale = await getLocale();
-  const dateLocale = locale === "en" ? enUS : ko;
+  const dateLocale = enUS;
   const { organizationId } = await requireAdmin();
 
   const { id } = await params;
@@ -61,7 +60,7 @@ export default async function CardDetailPage({ params }: Props) {
     notFound();
   }
 
-  // 초기 거래내역 조회 (SaaS 탭이 기본)
+  // Initial transaction fetch (SaaS tab is the default)
   const initialTransactions = await getCardTransactions({
     cardId: id,
     page: 1,
@@ -69,10 +68,10 @@ export default async function CardDetailPage({ params }: Props) {
     filter: "saas",
   });
 
-  // 분류 요약 데이터 조회
+  // Fetch classification summary data
   const summary = await getCardTransactionSummary(organizationId, id);
 
-  // 매칭용 앱 목록 조회
+  // Fetch the app list for matching
   const apps = await prisma.app.findMany({
     where: {
       organizationId,
@@ -117,7 +116,7 @@ export default async function CardDetailPage({ params }: Props) {
 
   return (
     <div className="space-y-6">
-      {/* 헤더 */}
+      {/* Header */}
       <div className="flex flex-wrap items-center gap-4">
         <span className="tonal-primary flex size-12 shrink-0 items-center justify-center rounded-md">
           <CreditCard className="size-6" />
@@ -133,7 +132,7 @@ export default async function CardDetailPage({ params }: Props) {
         <div className="shrink-0">{getSyncStatus()}</div>
       </div>
 
-      {/* 카드 정보 요약 */}
+      {/* Card info summary */}
       <Card className="border-border dark:border-border border shadow-none">
         <CardHeader>
           <CardTitle>{t("cardInfo")}</CardTitle>
@@ -189,10 +188,10 @@ export default async function CardDetailPage({ params }: Props) {
         </CardContent>
       </Card>
 
-      {/* 동기화 이력 */}
+      {/* Sync history */}
       <SyncHistoryPanel corporateCardId={id} limit={10} />
 
-      {/* 거래내역 테이블 */}
+      {/* Transactions table */}
       <Card className="border-border dark:border-border border shadow-none">
         <CardHeader>
           <CardTitle>{t("transactions")}</CardTitle>

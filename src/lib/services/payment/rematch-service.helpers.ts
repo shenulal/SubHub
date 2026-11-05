@@ -1,7 +1,7 @@
 // src/lib/services/payment/rematch-service.helpers.ts
 /**
- * rematch-service 내부 헬퍼 함수
- * - 레코드 로딩, DB 업데이트, 매칭 컨텍스트 로드
+ * Internal helpers for rematch-service
+ * - Record loading, DB updates, matching context loading
  */
 
 import { prisma } from "@/lib/db";
@@ -34,7 +34,7 @@ export interface MatchOutcome {
 }
 
 /**
- * 조직의 매칭 컨텍스트 로드 (앱 목록, 카탈로그+패턴)
+ * Loads the organization's matching context (apps, catalog + patterns)
  */
 export async function loadMatchingContext(organizationId: string): Promise<{
   apps: AppMatch[];
@@ -85,7 +85,7 @@ export async function loadMatchingContext(organizationId: string): Promise<{
 }
 
 /**
- * recordType에 따른 레코드 로딩
+ * Loads records by recordType
  */
 export async function loadRecords(
   recordType: "payment" | "card-transaction",
@@ -128,7 +128,7 @@ export async function loadRecords(
 }
 
 /**
- * 가맹점 매칭 수행 (4-Layer → Non-SaaS 필터 → LLM)
+ * Performs merchant matching (4-layer → non-SaaS filter → LLM)
  */
 export async function matchRecord(
   record: RecordToRematch,
@@ -188,7 +188,7 @@ export async function matchRecord(
 }
 
 /**
- * 매칭 결과로 레코드 DB 업데이트
+ * Updates the record in the DB with the match result
  */
 export async function persistMatchOutcome(
   recordId: string,
@@ -214,7 +214,7 @@ export async function persistMatchOutcome(
 }
 
 /**
- * Non-SaaS 캐시 로드
+ * Loads the non-SaaS cache
  */
 export async function loadNonSaaSSet(
   organizationId: string,

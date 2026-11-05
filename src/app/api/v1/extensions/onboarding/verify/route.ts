@@ -1,7 +1,7 @@
 // src/app/api/v1/extensions/onboarding/verify/route.ts
 /**
- * Extension 온보딩 이메일 검증 API
- * 이메일이 조직에 속한 사용자인지 확인
+ * Extension onboarding email verification API
+ * Checks whether the email belongs to a user in the organization
  */
 
 import { withExtensionAuth } from "@/lib/api/extension-auth";
@@ -11,7 +11,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 /**
  * POST /api/v1/extensions/onboarding/verify
- * 이메일 검증: User 테이블 또는 Invitation 확인 + 도메인 매칭
+ * Email verification: check the User table or Invitation + domain matching
  */
 export const POST = withExtensionAuth(
   async (request: NextRequest, { auth }) => {
@@ -32,17 +32,17 @@ export const POST = withExtensionAuth(
 
       const { email } = parseResult.data;
 
-      // 이메일 도메인 추출
+      // Extract the email domain
       const emailDomain = email.split("@")[1]?.toLowerCase();
       if (!emailDomain) {
-        // 구체적 실패 이유 비노출 (이메일 열거 방지)
+        // Do not expose the specific failure reason (prevents email enumeration)
         return NextResponse.json({
           success: true,
           data: { verified: false },
         });
       }
 
-      // 조직 도메인 확인
+      // Check organization domains
       const org = await prisma.organization.findUnique({
         where: { id: auth.organizationId },
         select: { domain: true, googlePrimaryDomain: true, settings: true },
@@ -55,7 +55,7 @@ export const POST = withExtensionAuth(
         });
       }
 
-      // 도메인 매칭 (organization.domain, googlePrimaryDomain, 또는 settings.domains)
+      // Domain matching (organization.domain, googlePrimaryDomain or settings.domains)
       const orgDomain = org.domain?.toLowerCase();
       const googleDomain = org.googlePrimaryDomain?.toLowerCase();
       const settings = (org.settings as Record<string, unknown>) || {};
@@ -74,7 +74,7 @@ export const POST = withExtensionAuth(
         });
       }
 
-      // 사용자 조회 (조직 내)
+      // Look up the user (within the organization)
       const user = await prisma.user.findFirst({
         where: {
           email: email.toLowerCase(),
@@ -94,7 +94,7 @@ export const POST = withExtensionAuth(
         });
       }
 
-      // 초대 확인 (PENDING 상태)
+      // Check invitations (PENDING status)
       const invitation = await prisma.invitation.findFirst({
         where: {
           email: email.toLowerCase(),
@@ -109,12 +109,12 @@ export const POST = withExtensionAuth(
           success: true,
           data: {
             verified: true,
-            // 초대된 사용자는 아직 User 레코드가 없을 수 있음
+            // Invited users may not have a User record yet
           },
         });
       }
 
-      // 검증 실패 (구체적 이유 비노출)
+      // Verification failed (specific reason not exposed)
       return NextResponse.json({
         success: true,
         data: { verified: false },

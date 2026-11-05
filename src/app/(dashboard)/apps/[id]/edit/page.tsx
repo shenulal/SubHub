@@ -29,8 +29,8 @@ export default async function AppEditPage({ params }: AppEditPageProps) {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <PageHeader
-        title={`${app.name} 수정`}
-        description="앱 정보를 수정합니다"
+        title={`Edit ${app.name}`}
+        description="Edit the app details"
         showBack
         backHref={`/apps/${id}`}
       />

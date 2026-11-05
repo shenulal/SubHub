@@ -17,8 +17,8 @@ import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
 /**
- * 🎯 목적: Form 컴포넌트 (react-hook-form FormProvider)
- * 📝 주의사항: FormProvider는 ref를 지원하지 않음
+ * 🎯 Purpose: Form component (react-hook-form FormProvider)
+ * 📝 Note: FormProvider does not support ref
  */
 const Form = FormProvider;
 
@@ -34,9 +34,9 @@ const FormFieldContext = React.createContext<FormFieldContextValue>(
 );
 
 /**
- * 🎯 목적: FormField 컴포넌트 (Context Provider + react-hook-form Controller)
- * 📝 주의사항: Generic 컴포넌트이며 Controller는 ref를 지원하지 않음
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support 검토 (ref 미지원 확인)
+ * 🎯 Purpose: FormField component (Context Provider + react-hook-form Controller)
+ * 📝 Note: Generic component; Controller does not support ref
+ * 🔄 History: 2025-10-11 - Reviewed for React 18/19 dual support (confirmed ref is not supported)
  */
 const FormField = <
   TFieldValues extends FieldValues = FieldValues,
@@ -83,9 +83,9 @@ const FormItemContext = React.createContext<FormItemContextValue>(
 );
 
 /**
- * 🎯 목적: FormItem 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: HTML div 요소 사용, Context Provider 내부 구조 유지
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the FormItem component for React 18/19 compatibility
+ * 📝 Note: Uses an HTML div element; keep the internal Context Provider structure
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const FormItem = React.forwardRef<HTMLDivElement, React.ComponentProps<"div">>(
   ({ className, ...props }, ref) => {
@@ -106,9 +106,9 @@ const FormItem = React.forwardRef<HTMLDivElement, React.ComponentProps<"div">>(
 FormItem.displayName = "FormItem";
 
 /**
- * 🎯 목적: FormLabel 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: Label 컴포넌트 사용 (이미 forwardRef 지원)
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the FormLabel component for React 18/19 compatibility
+ * 📝 Note: Uses the Label component (already supports forwardRef)
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const FormLabel = React.forwardRef<
   React.ElementRef<typeof LabelPrimitive.Root>,
@@ -130,9 +130,9 @@ const FormLabel = React.forwardRef<
 FormLabel.displayName = "FormLabel";
 
 /**
- * 🎯 목적: FormControl 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: Radix UI Slot primitive 사용
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the FormControl component for React 18/19 compatibility
+ * 📝 Note: Uses the Radix UI Slot primitive
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const FormControl = React.forwardRef<
   React.ElementRef<typeof SlotPrimitive.Slot>,
@@ -159,9 +159,9 @@ const FormControl = React.forwardRef<
 FormControl.displayName = "FormControl";
 
 /**
- * 🎯 목적: FormDescription 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: HTML p 요소 사용
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the FormDescription component for React 18/19 compatibility
+ * 📝 Note: Uses an HTML p element
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const FormDescription = React.forwardRef<
   HTMLParagraphElement,
@@ -182,9 +182,9 @@ const FormDescription = React.forwardRef<
 FormDescription.displayName = "FormDescription";
 
 /**
- * 🎯 목적: FormMessage 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: HTML p 요소 사용, 에러 메시지 표시
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the FormMessage component for React 18/19 compatibility
+ * 📝 Note: Uses an HTML p element; displays the error message
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const FormMessage = React.forwardRef<
   HTMLParagraphElement,

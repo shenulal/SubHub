@@ -7,13 +7,13 @@ import { buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 /**
- * 🎯 목적: AlertDialog Root 컴포넌트
- * 📝 주의사항: Radix UI AlertDialog.Root primitive는 ref를 지원하지 않음
+ * 🎯 Purpose: AlertDialog Root component
+ * 📝 Note: Radix UI AlertDialog.Root primitive does not support ref
  */
 const AlertDialog = AlertDialogPrimitive.Root;
 
 /**
- * 🎯 목적: AlertDialogTrigger 컴포넌트에 forwardRef 적용
+ * 🎯 Purpose: Apply forwardRef to the AlertDialogTrigger component
  */
 const AlertDialogTrigger = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Trigger>,
@@ -30,14 +30,14 @@ const AlertDialogTrigger = React.forwardRef<
 AlertDialogTrigger.displayName = "AlertDialogTrigger";
 
 /**
- * 🎯 목적: AlertDialogPortal 컴포넌트
- * 📝 주의사항: Portal은 ref를 지원하지 않음
+ * 🎯 Purpose: AlertDialogPortal component
+ * 📝 Note: Portal does not support ref
  */
 const AlertDialogPortal = AlertDialogPrimitive.Portal;
 
 /**
- * 🎯 목적: AlertDialogOverlay 컴포넌트에 forwardRef 적용
- * 📝 주의사항: 배경 어둡게 처리 (bg-black/50), 애니메이션 적용
+ * 🎯 Purpose: Apply forwardRef to the AlertDialogOverlay component
+ * 📝 Note: Dims the background (bg-black/50); animated
  */
 const AlertDialogOverlay = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Overlay>,
@@ -58,8 +58,8 @@ const AlertDialogOverlay = React.forwardRef<
 AlertDialogOverlay.displayName = "AlertDialogOverlay";
 
 /**
- * 🎯 목적: AlertDialogContent 컴포넌트에 forwardRef 적용
- * 📝 주의사항: Portal 내부에서 Overlay와 함께 렌더링, 중앙 배치
+ * 🎯 Purpose: Apply forwardRef to the AlertDialogContent component
+ * 📝 Note: Renders inside a Portal together with the Overlay; centered
  */
 const AlertDialogContent = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Content>,
@@ -83,8 +83,8 @@ const AlertDialogContent = React.forwardRef<
 AlertDialogContent.displayName = "AlertDialogContent";
 
 /**
- * 🎯 목적: AlertDialogHeader 컴포넌트에 forwardRef 적용
- * 📝 주의사항: HTML div 요소 사용
+ * 🎯 Purpose: Apply forwardRef to the AlertDialogHeader component
+ * 📝 Note: Uses an HTML div element
  */
 const AlertDialogHeader = React.forwardRef<
   HTMLDivElement,
@@ -102,8 +102,8 @@ const AlertDialogHeader = React.forwardRef<
 AlertDialogHeader.displayName = "AlertDialogHeader";
 
 /**
- * 🎯 목적: AlertDialogFooter 컴포넌트에 forwardRef 적용
- * 📝 주의사항: HTML div 요소 사용
+ * 🎯 Purpose: Apply forwardRef to the AlertDialogFooter component
+ * 📝 Note: Uses an HTML div element
  */
 const AlertDialogFooter = React.forwardRef<
   HTMLDivElement,
@@ -124,7 +124,7 @@ const AlertDialogFooter = React.forwardRef<
 AlertDialogFooter.displayName = "AlertDialogFooter";
 
 /**
- * 🎯 목적: AlertDialogTitle 컴포넌트에 forwardRef 적용
+ * 🎯 Purpose: Apply forwardRef to the AlertDialogTitle component
  */
 const AlertDialogTitle = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Title>,
@@ -142,7 +142,7 @@ const AlertDialogTitle = React.forwardRef<
 AlertDialogTitle.displayName = "AlertDialogTitle";
 
 /**
- * 🎯 목적: AlertDialogDescription 컴포넌트에 forwardRef 적용
+ * 🎯 Purpose: Apply forwardRef to the AlertDialogDescription component
  */
 const AlertDialogDescription = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Description>,
@@ -160,8 +160,8 @@ const AlertDialogDescription = React.forwardRef<
 AlertDialogDescription.displayName = "AlertDialogDescription";
 
 /**
- * 🎯 목적: AlertDialogAction 컴포넌트에 forwardRef 적용
- * 📝 주의사항: buttonVariants 기본 스타일 사용
+ * 🎯 Purpose: Apply forwardRef to the AlertDialogAction component
+ * 📝 Note: Uses the default buttonVariants style
  */
 const AlertDialogAction = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Action>,
@@ -178,8 +178,8 @@ const AlertDialogAction = React.forwardRef<
 AlertDialogAction.displayName = "AlertDialogAction";
 
 /**
- * 🎯 목적: AlertDialogCancel 컴포넌트에 forwardRef 적용
- * 📝 주의사항: buttonVariants outline 스타일 사용
+ * 🎯 Purpose: Apply forwardRef to the AlertDialogCancel component
+ * 📝 Note: Uses the outline buttonVariants style
  */
 const AlertDialogCancel = React.forwardRef<
   React.ElementRef<typeof AlertDialogPrimitive.Cancel>,

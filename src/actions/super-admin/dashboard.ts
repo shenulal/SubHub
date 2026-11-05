@@ -27,7 +27,7 @@ export interface AppSubscriptionSummary {
 }
 
 /**
- * Super Admin 전체 현황 통계
+ * Super Admin overview statistics
  */
 async function _getSuperAdminStats(): Promise<ActionState<SuperAdminStats>> {
   await requireSuperAdmin();
@@ -38,7 +38,7 @@ async function _getSuperAdminStats(): Promise<ActionState<SuperAdminStats>> {
   });
 
   if (!org) {
-    return { success: false, message: "테넌트 정보를 찾을 수 없습니다." };
+    return { success: false, message: "Tenant information not found." };
   }
 
   const [totalUsers, activeUsers, subscriptions, latestBuild] =
@@ -58,7 +58,7 @@ async function _getSuperAdminStats(): Promise<ActionState<SuperAdminStats>> {
       }),
     ]);
 
-  // 월 환산 비용 계산
+  // Compute the monthly-equivalent cost
   let monthlyTotalCost = 0;
   const currency =
     subscriptions[0]?.currency ?? (await getBaseCurrency(org.id));
@@ -100,7 +100,7 @@ export const getSuperAdminStats = withLogging(
 );
 
 /**
- * 앱별 구독 현황 요약
+ * Subscription summary per app
  */
 async function _getResourceUsage(): Promise<
   ActionState<AppSubscriptionSummary[]>
@@ -113,7 +113,7 @@ async function _getResourceUsage(): Promise<
   });
 
   if (!org) {
-    return { success: false, message: "테넌트 정보를 찾을 수 없습니다." };
+    return { success: false, message: "Tenant information not found." };
   }
 
   const subscriptions = await prisma.subscription.findMany({

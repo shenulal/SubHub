@@ -24,7 +24,7 @@ describe("Send Reports Cron API", () => {
     process.env.CRON_SECRET = "test-secret";
   });
 
-  it("인증 헤더가 없으면 401을 반환해야 한다", async () => {
+  it("returns 401 when the auth header is missing", async () => {
     const request = new NextRequest("http://localhost/api/cron/send-reports");
 
     const response = await GET(request);
@@ -34,7 +34,7 @@ describe("Send Reports Cron API", () => {
     expect(data.error).toBe("Unauthorized");
   });
 
-  it("인증 헤더가 잘못되면 401을 반환해야 한다", async () => {
+  it("returns 401 when the auth header is invalid", async () => {
     const request = new NextRequest("http://localhost/api/cron/send-reports", {
       headers: {
         authorization: "Bearer wrong-secret",
@@ -46,7 +46,7 @@ describe("Send Reports Cron API", () => {
     expect(response.status).toBe(401);
   });
 
-  it("인증이 성공하면 스케줄을 처리해야 한다", async () => {
+  it("processes schedules when authentication succeeds", async () => {
     const request = new NextRequest("http://localhost/api/cron/send-reports", {
       headers: {
         authorization: "Bearer test-secret",
@@ -61,7 +61,7 @@ describe("Send Reports Cron API", () => {
     expect(data.processed).toBe(0);
   });
 
-  it("CRON_SECRET이 설정되지 않으면 401을 반환해야 한다", async () => {
+  it("returns 401 when CRON_SECRET is not set", async () => {
     delete process.env.CRON_SECRET;
 
     const request = new NextRequest("http://localhost/api/cron/send-reports", {

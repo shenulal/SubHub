@@ -1,7 +1,7 @@
 // src/lib/services/discovery/login-access-bridge.ts
 /**
- * 로그인 이벤트 → UserAppAccess 브릿지 서비스
- * ExtensionLoginEvent에서 감지된 로그인을 UserAppAccess 레코드로 변환
+ * Login event → UserAppAccess bridge service
+ * Converts logins detected in ExtensionLoginEvent into UserAppAccess records
  */
 
 import { prisma } from "@/lib/db";
@@ -25,18 +25,18 @@ export interface BridgeResult {
 }
 
 /**
- * 로그인 이벤트를 UserAppAccess 레코드로 브릿지
+ * Bridges a login event to a UserAppAccess record
  *
- * 1. userId 해결: 직접 제공 or ExtensionDevice.userId 조회
- * 2. 도메인 매칭: matchDomainToApp() 호출
- * 3. UserAppAccess upsert: source EXTENSION_LOGIN, lastUsedAt 갱신
+ * 1. Resolve userId: provided directly or looked up from ExtensionDevice.userId
+ * 2. Domain matching: calls matchDomainToApp()
+ * 3. UserAppAccess upsert: source EXTENSION_LOGIN, refreshes lastUsedAt
  */
 export async function bridgeLoginToAppAccess(
   params: BridgeLoginParams
 ): Promise<BridgeResult> {
   const { domain, deviceId, organizationId, capturedAt } = params;
 
-  // 1. userId 해결
+  // 1. Resolve userId
   let userId = params.userId;
 
   if (!userId) {
@@ -56,7 +56,7 @@ export async function bridgeLoginToAppAccess(
     return { matched: false };
   }
 
-  // 2. 도메인 매칭
+  // 2. Domain matching
   const matchResult = await matchDomainToApp(domain, organizationId);
 
   if (!matchResult) {
@@ -68,7 +68,7 @@ export async function bridgeLoginToAppAccess(
   }
 
   // 3. UserAppAccess upsert (EXTENSION_LOGIN source)
-  // 기존 SSO_LOG 레코드가 있으면 lastUsedAt만 갱신 (source 변경 안 함)
+  // If an SSO_LOG record exists, refresh lastUsedAt only (source unchanged)
   const existing = await prisma.userAppAccess.findUnique({
     where: {
       userId_appId: {
@@ -80,7 +80,7 @@ export async function bridgeLoginToAppAccess(
   });
 
   if (existing) {
-    // 기존 레코드 있으면 lastUsedAt만 갱신
+    // If a record exists, refresh lastUsedAt only
     await prisma.userAppAccess.update({
       where: {
         userId_appId: {
@@ -93,7 +93,7 @@ export async function bridgeLoginToAppAccess(
       },
     });
   } else {
-    // 새 레코드 생성
+    // Create a new record
     await prisma.userAppAccess.create({
       data: {
         userId,

@@ -132,16 +132,16 @@ export const ShouldChangeDropdownMode: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    // 🎯 목적: Dropdown 모드 변경 시 Calendar가 올바르게 업데이트되는지 확인
+    // 🎯 Purpose: Verify the Calendar updates correctly when the dropdown mode changes
     const dropdownTrigger = canvas.getByTestId("dropdown-trigger");
     await expect(dropdownTrigger).toBeInTheDocument();
 
-    // Dropdown 열기
+    // Open the dropdown
     await userEvent.click(dropdownTrigger);
 
     await waitFor(
       () => {
-        // "Month Only" 옵션 선택
+        // Select the "Month Only" option
         const monthOnlyOption = canvas.getByRole("option", {
           name: /month only/i,
         });
@@ -150,13 +150,13 @@ export const ShouldChangeDropdownMode: Story = {
       { timeout: 2000 },
     );
 
-    // "Month Only" 선택
+    // Select "Month Only"
     const monthOnlyOption = canvas.getByRole("option", { name: /month only/i });
     await userEvent.click(monthOnlyOption);
 
     await waitFor(
       () => {
-        // Dropdown이 "Month Only"로 변경되었는지 확인
+        // Verify the dropdown changed to "Month Only"
         expect(dropdownTrigger).toHaveTextContent(/month only/i);
       },
       { timeout: 2000 },

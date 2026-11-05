@@ -1,9 +1,9 @@
 // src/app/(dashboard)/dashboard/phase3-component-consolidation.test.ts
-// Phase 3 RED: 프로덕션 컴포넌트를 new-dashboard/로 통합 검증
-// - 이동된 컴포넌트가 new-dashboard/에 존재해야 함
-// - 이전 디렉토리(dashboard/, dashboard2/, v2-cost/, v2-seat/, v3/)가 삭제되어야 함
-// - Bento pass-through 래퍼가 제거되어야 함
-// - new-dashboard-client가 이동된 컴포넌트를 직접 import해야 함
+// Phase 3 RED: verify production components are consolidated into new-dashboard/
+// - Moved components must exist in new-dashboard/
+// - Old directories (dashboard/, dashboard2/, v2-cost/, v2-seat/, v3/) must be deleted
+// - Bento pass-through wrappers must be removed
+// - new-dashboard-client must import the moved components directly
 
 import { existsSync, readFileSync } from "fs";
 import path from "path";
@@ -13,7 +13,7 @@ const PROJECT_ROOT = path.resolve(__dirname, "../../../../");
 const NEW_DASHBOARD = "src/components/dashboard";
 
 // ============================================================
-// 1. new-dashboard/에 존재해야 하는 이동된 파일
+// 1. Moved files that must exist in new-dashboard/
 // ============================================================
 
 const MOVED_FILES_MUST_EXIST = [
@@ -37,7 +37,7 @@ const MOVED_FILES_MUST_EXIST = [
 ];
 
 // ============================================================
-// 2. 자체 구현 컴포넌트 (이동 아님, 기존 유지)
+// 2. Self-implemented components (not moved, kept as is)
 // ============================================================
 
 const SELF_IMPLEMENTED_MUST_EXIST = [
@@ -53,7 +53,7 @@ const SELF_IMPLEMENTED_MUST_EXIST = [
 ];
 
 // ============================================================
-// 3. 삭제되어야 하는 Bento pass-through 래퍼
+// 3. Bento pass-through wrappers that must be deleted
 // ============================================================
 
 const BENTO_WRAPPERS_TO_DELETE = [
@@ -68,10 +68,10 @@ const BENTO_WRAPPERS_TO_DELETE = [
 ];
 
 // ============================================================
-// 4. 삭제되어야 하는 이전 디렉토리
+// 4. Old directories that must be deleted
 // ============================================================
 
-// Phase 5에서 new-dashboard/ → dashboard/ rename됨. dashboard/는 현재 존재.
+// Phase 5 renamed new-dashboard/ → dashboard/. dashboard/ currently exists.
 const OLD_DIRS_TO_DELETE = [
   "src/components/dashboard2",
   "src/components/dashboard-v2-cost",
@@ -83,49 +83,52 @@ const OLD_DIRS_TO_DELETE = [
 // Tests
 // ============================================================
 
-describe("Phase 3: 프로덕션 컴포넌트 통합 검증", () => {
-  describe("이동된 컴포넌트가 new-dashboard/에 존재해야 한다", () => {
+describe("Phase 3: production component consolidation checks", () => {
+  describe("moved components must exist in new-dashboard/", () => {
     for (const filePath of MOVED_FILES_MUST_EXIST) {
-      it(`${filePath} 존재`, () => {
+      it(`${filePath} exists`, () => {
         const abs = path.resolve(PROJECT_ROOT, filePath);
-        expect(existsSync(abs), `이동된 파일 누락: ${filePath}`).toBe(true);
+        expect(existsSync(abs), `Moved file missing: ${filePath}`).toBe(true);
       });
     }
   });
 
-  describe("자체 구현 컴포넌트가 유지되어야 한다", () => {
+  describe("self-implemented components must be kept", () => {
     for (const filePath of SELF_IMPLEMENTED_MUST_EXIST) {
-      it(`${filePath} 존재`, () => {
+      it(`${filePath} exists`, () => {
         const abs = path.resolve(PROJECT_ROOT, filePath);
-        expect(existsSync(abs), `자체 구현 파일 누락: ${filePath}`).toBe(true);
+        expect(
+          existsSync(abs),
+          `Self-implemented file missing: ${filePath}`
+        ).toBe(true);
       });
     }
   });
 
-  describe("Bento pass-through 래퍼가 삭제되어야 한다", () => {
+  describe("Bento pass-through wrappers must be deleted", () => {
     for (const filePath of BENTO_WRAPPERS_TO_DELETE) {
-      it(`${filePath} 삭제됨`, () => {
+      it(`${filePath} is deleted`, () => {
         const abs = path.resolve(PROJECT_ROOT, filePath);
-        expect(existsSync(abs), `Bento 래퍼 아직 존재: ${filePath}`).toBe(
+        expect(existsSync(abs), `Bento wrapper still exists: ${filePath}`).toBe(
           false
         );
       });
     }
   });
 
-  describe("이전 디렉토리가 완전히 삭제되어야 한다", () => {
+  describe("old directories must be fully deleted", () => {
     for (const dirPath of OLD_DIRS_TO_DELETE) {
-      it(`${dirPath}/ 삭제됨`, () => {
+      it(`${dirPath}/ is deleted`, () => {
         const abs = path.resolve(PROJECT_ROOT, dirPath);
-        expect(existsSync(abs), `이전 디렉토리 아직 존재: ${dirPath}`).toBe(
+        expect(existsSync(abs), `Old directory still exists: ${dirPath}`).toBe(
           false
         );
       });
     }
   });
 
-  describe("new-dashboard-client가 외부 디렉토리를 import하지 않아야 한다", () => {
-    it("@/components/dashboard/ import 없음", () => {
+  describe("new-dashboard-client must not import external directories", () => {
+    it("no @/components/dashboard/ imports", () => {
       const clientPath = path.resolve(
         PROJECT_ROOT,
         `${NEW_DASHBOARD}/new-dashboard-client.tsx`
@@ -134,7 +137,7 @@ describe("Phase 3: 프로덕션 컴포넌트 통합 검증", () => {
       expect(content).not.toMatch(/from\s+["']@\/components\/dashboard\//);
     });
 
-    it("@/components/dashboard2/ import 없음", () => {
+    it("no @/components/dashboard2/ imports", () => {
       const clientPath = path.resolve(
         PROJECT_ROOT,
         `${NEW_DASHBOARD}/new-dashboard-client.tsx`
@@ -143,7 +146,7 @@ describe("Phase 3: 프로덕션 컴포넌트 통합 검증", () => {
       expect(content).not.toMatch(/from\s+["']@\/components\/dashboard2\//);
     });
 
-    it("@/components/dashboard-v2-cost/ import 없음", () => {
+    it("no @/components/dashboard-v2-cost/ imports", () => {
       const clientPath = path.resolve(
         PROJECT_ROOT,
         `${NEW_DASHBOARD}/new-dashboard-client.tsx`
@@ -154,7 +157,7 @@ describe("Phase 3: 프로덕션 컴포넌트 통합 검증", () => {
       );
     });
 
-    it("@/components/dashboard-v2-seat/ import 없음", () => {
+    it("no @/components/dashboard-v2-seat/ imports", () => {
       const clientPath = path.resolve(
         PROJECT_ROOT,
         `${NEW_DASHBOARD}/new-dashboard-client.tsx`
@@ -165,7 +168,7 @@ describe("Phase 3: 프로덕션 컴포넌트 통합 검증", () => {
       );
     });
 
-    it("@/components/dashboard-v3/ import 없음", () => {
+    it("no @/components/dashboard-v3/ imports", () => {
       const clientPath = path.resolve(
         PROJECT_ROOT,
         `${NEW_DASHBOARD}/new-dashboard-client.tsx`
@@ -174,7 +177,7 @@ describe("Phase 3: 프로덕션 컴포넌트 통합 검증", () => {
       expect(content).not.toMatch(/from\s+["']@\/components\/dashboard-v3/);
     });
 
-    it("삭제된 bento- 래퍼를 import하지 않아야 한다", () => {
+    it("does not import deleted bento- wrappers", () => {
       const clientPath = path.resolve(
         PROJECT_ROOT,
         `${NEW_DASHBOARD}/new-dashboard-client.tsx`
@@ -191,8 +194,8 @@ describe("Phase 3: 프로덕션 컴포넌트 통합 검증", () => {
     });
   });
 
-  describe("new-dashboard/index.ts가 정리되어야 한다", () => {
-    it("삭제된 bento 래퍼를 export하지 않아야 한다", () => {
+  describe("new-dashboard/index.ts is cleaned up", () => {
+    it("does not export deleted bento wrappers", () => {
       const indexPath = path.resolve(PROJECT_ROOT, `${NEW_DASHBOARD}/index.ts`);
       const content = readFileSync(indexPath, "utf-8");
       expect(content).not.toContain("BentoAppsByCategory");
@@ -205,7 +208,7 @@ describe("Phase 3: 프로덕션 컴포넌트 통합 검증", () => {
       expect(content).not.toContain("BentoUpcomingRenewals");
     });
 
-    it("이동된 컴포넌트를 export해야 한다", () => {
+    it("exports the moved components", () => {
       const indexPath = path.resolve(PROJECT_ROOT, `${NEW_DASHBOARD}/index.ts`);
       const content = readFileSync(indexPath, "utf-8");
       expect(content).toContain("AppsByCategory");

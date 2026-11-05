@@ -17,9 +17,9 @@ export async function GET(
 
   if (!result.success) {
     const status =
-      result.message === "연동을 찾을 수 없습니다"
+      result.message === "Integration not found"
         ? 404
-        : result.message === "접근 권한이 없습니다"
+        : result.message === "You do not have access permission"
           ? 403
           : 400;
     return NextResponse.json({ error: result.message }, { status });

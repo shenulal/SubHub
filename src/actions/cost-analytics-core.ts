@@ -20,8 +20,8 @@ import {
 import { extractAmount, formatDateStr } from "./cost-analytics-utils";
 
 /**
- * 비용 통계 조회
- * 총 비용, 월 평균, 전월 대비 증감률 등 핵심 지표를 반환
+ * Get cost statistics
+ * Returns key metrics such as total cost, monthly average and change versus the previous period
  */
 export async function getCostStatistics(
   filters: CostAnalyticsFilters
@@ -30,23 +30,26 @@ export async function getCostStatistics(
     const session = await auth();
 
     if (!session?.user) {
-      return { success: false, message: "인증이 필요합니다" };
+      return { success: false, message: "Authentication required" };
     }
 
     if (!session.user.organizationId) {
-      return { success: false, message: "조직 정보가 필요합니다" };
+      return {
+        success: false,
+        message: "Organization information is required",
+      };
     }
 
     const { startDate, endDate, appIds } = filters;
     const scope = resolveReportScope(filters, session.user);
 
-    // 기본 날짜 설정 (지정되지 않은 경우 최근 30일)
+    // Default dates (last 30 days when not specified)
     const now = new Date();
     const periodEnd = endDate || now;
     const periodStart =
       startDate || new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
 
-    // PaymentRecord 현재 기간 집계 (SaaS 매칭된 결제만)
+    // Aggregate PaymentRecord for the current period (SaaS-matched payments only)
     const currentPaymentWhere: Record<string, unknown> = {
       organizationId: session.user.organizationId,
       matchStatus: {
@@ -64,7 +67,7 @@ export async function getCostStatistics(
       _count: { id: true },
     });
 
-    // CardTransaction 현재 기간 집계 (승인내역 기준, 앱 필터 없을 때만)
+    // Aggregate CardTransaction for the current period (approvals only, only without an app filter)
     let currentCardResult: {
       _sum: { useAmt: unknown };
       _count: { id: number };
@@ -75,7 +78,7 @@ export async function getCostStatistics(
     if (!appIds?.length) {
       const currentCardWhere: Record<string, unknown> = {
         organizationId: session.user.organizationId,
-        transactionType: "APPROVAL", // 승인내역 기준 조회
+        transactionType: "APPROVAL", // based on approvals
         matchedAppId: { not: null },
         useDt: {
           gte: formatDateStr(periodStart),
@@ -91,7 +94,7 @@ export async function getCostStatistics(
       });
     }
 
-    // 전체 비용 (SaaS + Non-SaaS) 집계 — matchedAppId 필터 없이
+    // Total cost (SaaS + Non-SaaS) — without the matchedAppId filter
     const allPaymentWhere: Record<string, unknown> = {
       organizationId: session.user.organizationId,
       matchStatus: {
@@ -128,12 +131,12 @@ export async function getCostStatistics(
     const totalCostAll =
       extractAmount(allPaymentResult._sum.amount) + allCardTotal;
 
-    // 이전 기간 계산 (동일한 기간 길이)
+    // Calculate the previous period (same length)
     const periodLength = periodEnd.getTime() - periodStart.getTime();
     const previousPeriodStart = new Date(periodStart.getTime() - periodLength);
     const previousPeriodEnd = new Date(periodStart.getTime() - 1);
 
-    // PaymentRecord 이전 기간 집계 (SaaS 매칭된 결제만)
+    // Aggregate PaymentRecord for the previous period (SaaS-matched payments only)
     const previousPaymentWhere: Record<string, unknown> = {
       organizationId: session.user.organizationId,
       matchStatus: {
@@ -151,7 +154,7 @@ export async function getCostStatistics(
       _count: { id: true },
     });
 
-    // CardTransaction 이전 기간 집계 (승인내역 기준, 앱 필터 없을 때만)
+    // Aggregate CardTransaction for the previous period (approvals only, only without an app filter)
     let previousCardResult: {
       _sum: { useAmt: unknown };
       _count: { id: number };
@@ -159,7 +162,7 @@ export async function getCostStatistics(
     if (!appIds?.length) {
       const previousCardWhere: Record<string, unknown> = {
         organizationId: session.user.organizationId,
-        transactionType: "APPROVAL", // 승인내역 기준 조회
+        transactionType: "APPROVAL", // based on approvals
         matchedAppId: { not: null },
         useDt: {
           gte: formatDateStr(previousPeriodStart),
@@ -175,7 +178,7 @@ export async function getCostStatistics(
       });
     }
 
-    // 통합 집계 (PaymentRecord + CardTransaction)
+    // Combined aggregation (PaymentRecord + CardTransaction)
     const currentPaymentTotal = extractAmount(currentPaymentResult._sum.amount);
     const currentCardTotal = Number(currentCardResult._sum.useAmt || 0);
     const currentTotal = currentPaymentTotal + currentCardTotal;
@@ -189,13 +192,13 @@ export async function getCostStatistics(
     const previousCardTotal = Number(previousCardResult._sum.useAmt || 0);
     const previousTotal = previousPaymentTotal + previousCardTotal;
 
-    // 증감률 계산
+    // Calculate the change rate
     const costChange =
       previousTotal > 0
         ? Math.round(((currentTotal - previousTotal) / previousTotal) * 100)
         : 0;
 
-    // 월 평균 계산 (전체 기간 기준)
+    // Calculate the monthly average (over the whole period)
     let monthlyAverage = currentTotal;
     {
       const allTimePaymentWhere: Record<string, unknown> = {
@@ -254,7 +257,7 @@ export async function getCostStatistics(
       const allTimeTotal =
         extractAmount(allTimePayment._sum.amount) + allTimeCardTotal;
 
-      // 가장 오래된 거래일 결정
+      // Determine the oldest transaction date
       let earliestDate: Date | null = earliestPayment?.transactionDate ?? null;
       if (
         earliestCardDate &&
@@ -293,14 +296,17 @@ export async function getCostStatistics(
       data: { statistics },
     };
   } catch (error) {
-    console.error("비용 통계 조회 오류:", error);
-    return { success: false, message: "비용 통계 조회 중 오류가 발생했습니다" };
+    console.error("Cost statistics error:", error);
+    return {
+      success: false,
+      message: "An error occurred while loading cost statistics",
+    };
   }
 }
 
 /**
- * 비용 상위 앱 조회
- * PaymentRecord + CardTransaction 통합, matchStatus 5종 사용
+ * Get top-cost apps
+ * Combines PaymentRecord + CardTransaction, using the 5 matchStatus values
  */
 export async function getTopCostApps(options: {
   limit?: number | null;
@@ -313,18 +319,21 @@ export async function getTopCostApps(options: {
     const session = await auth();
 
     if (!session?.user) {
-      return { success: false, message: "인증이 필요합니다" };
+      return { success: false, message: "Authentication required" };
     }
 
     if (!session.user.organizationId) {
-      return { success: false, message: "조직 정보가 필요합니다" };
+      return {
+        success: false,
+        message: "Organization information is required",
+      };
     }
 
     const { limit, startDate, endDate, teamId, userId } = options;
     const take = limit === undefined ? 5 : limit;
     const scope = resolveReportScope({ teamId, userId }, session.user);
 
-    // PaymentRecord groupBy (matchStatus 5종 통일)
+    // PaymentRecord groupBy (5 unified matchStatus values)
     const paymentWhere: Record<string, unknown> = {
       organizationId: session.user.organizationId,
       matchStatus: {
@@ -351,7 +360,7 @@ export async function getTopCostApps(options: {
       _count: { id: true },
     });
 
-    // CardTransaction groupBy (승인내역 기준, SaaS 매칭된 것만)
+    // CardTransaction groupBy (approvals only, SaaS-matched only)
     const cardWhere: Record<string, unknown> = {
       organizationId: session.user.organizationId,
       transactionType: "APPROVAL",
@@ -378,7 +387,7 @@ export async function getTopCostApps(options: {
       _count: { id: true },
     });
 
-    // 앱별 비용 병합 (PaymentRecord + CardTransaction)
+    // Merge per-app cost (PaymentRecord + CardTransaction)
     const costMap = new Map<string, { cost: number; count: number }>();
 
     for (const g of groupedPayments) {
@@ -397,11 +406,11 @@ export async function getTopCostApps(options: {
       costMap.set(g.matchedAppId, existing);
     }
 
-    // 비용 기준 정렬 후 top-N 추출
+    // Sort by cost and take the top N
     const sorted = [...costMap.entries()].sort((a, b) => b[1].cost - a[1].cost);
     const topEntries = take ? sorted.slice(0, take) : sorted;
 
-    // 앱 정보 조회
+    // Fetch app info
     const appIds = topEntries.map(([id]) => id);
 
     const apps = await prisma.app.findMany({
@@ -411,19 +420,19 @@ export async function getTopCostApps(options: {
 
     const appMap = new Map(apps.map((app) => [app.id, app]));
 
-    // 전체 비용 계산 (모든 앱의 합산, top-N만이 아닌 전체)
+    // Total cost (sum over all apps, not just the top N)
     let totalCost = 0;
     for (const [, val] of sorted) {
       totalCost += val.cost;
     }
 
-    // 결과 구성
+    // Build the result
     const appDistributions: AppCostDistribution[] = topEntries.map(
       ([appId, val]) => {
         const appInfo = appMap.get(appId);
         return {
           appId,
-          appName: appInfo?.name || "알 수 없음",
+          appName: appInfo?.name || "Unknown",
           appLogoUrl: appInfo?.customLogoUrl || undefined,
           totalCost: val.cost,
           percentage: totalCost > 0 ? (val.cost / totalCost) * 100 : 0,
@@ -437,10 +446,10 @@ export async function getTopCostApps(options: {
       data: { apps: appDistributions, totalCost },
     };
   } catch (error) {
-    console.error("상위 비용 앱 조회 오류:", error);
+    console.error("Top-cost apps error:", error);
     return {
       success: false,
-      message: "상위 비용 앱 조회 중 오류가 발생했습니다",
+      message: "An error occurred while loading top-cost apps",
     };
   }
 }

@@ -12,14 +12,14 @@ import { IntegrationStatus } from "@prisma/client";
 
 /**
  * GET /api/v1/integrations
- * - 연동 목록 조회
+ * - List integrations
  */
 export const GET = withLogging(
   "GET /api/v1/integrations",
   withApiAuth(async (request: NextRequest) => {
     const { searchParams } = new URL(request.url);
 
-    // 페이지네이션 검증
+    // Validate pagination
     const paginationResult = paginationSchema.safeParse({
       page: Number(searchParams.get("page") ?? "1"),
       limit: Number(searchParams.get("limit") ?? "20"),
@@ -61,7 +61,7 @@ export const GET = withLogging(
 
 /**
  * POST /api/v1/integrations
- * - 연동 생성 (ADMIN만 가능)
+ * - Create an integration (ADMIN only)
  */
 export const POST = withLogging(
   "POST /api/v1/integrations",
@@ -69,7 +69,7 @@ export const POST = withLogging(
     async (request: NextRequest) => {
       const body = await request.json();
 
-      // 입력 검증
+      // Validate input
       const validationResult = createIntegrationApiSchema.safeParse(body);
       if (!validationResult.success) {
         return NextResponse.json(

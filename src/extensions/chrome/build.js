@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 /**
- * Chrome Extension 빌드 스크립트
- * Node.js로 직접 실행 (Next.js 번들링에서 분리)
+ * Chrome extension build script
+ * Runs directly with Node.js (separate from the Next.js bundle)
  *
  * Usage: node src/extensions/chrome/build.js <version>
  */
@@ -19,19 +19,19 @@ const {
 const { createHash } = require("crypto");
 const { join } = require("path");
 
-// 경로 설정
+// Paths
 const EXTENSION_DIR = __dirname;
 const DIST_DIR = join(EXTENSION_DIR, "dist");
 const RELEASE_DIR = join(EXTENSION_DIR, "release");
 
 /**
- * webpack 설정 생성
- * 환경 변수로 전달된 BUILD_API_URL, BUILD_API_CREDENTIAL을 번들에 포함
+ * Create the webpack config
+ * Embeds BUILD_API_URL and BUILD_API_CREDENTIAL (passed as environment variables) into the bundle
  */
 function createWebpackConfig() {
   const CopyPlugin = require("copy-webpack-plugin");
 
-  // 환경 변수에서 빌드 시 주입할 값 읽기
+  // Read build-time values from environment variables
   const buildApiUrl = process.env.BUILD_API_URL || "http://localhost:3000";
   const buildApiCredential = process.env.BUILD_API_CREDENTIAL || "";
 
@@ -77,7 +77,7 @@ function createWebpackConfig() {
       minimize: true,
     },
     plugins: [
-      // 빌드 시 전역 상수로 주입 (런타임 조건문 없이 직접 대체)
+      // Inject as global constants at build time (direct replacement, no runtime conditionals)
       new webpack.DefinePlugin({
         __BUILD_API_URL__: JSON.stringify(buildApiUrl),
         __BUILD_API_CREDENTIAL__: JSON.stringify(buildApiCredential),
@@ -105,7 +105,7 @@ function createWebpackConfig() {
 }
 
 /**
- * webpack 컴파일 실행
+ * Run the webpack compilation
  */
 function runWebpackBuild() {
   return new Promise((resolve) => {
@@ -139,7 +139,7 @@ function runWebpackBuild() {
 }
 
 /**
- * ZIP 파일 생성
+ * Create the ZIP file
  */
 function createZip(version) {
   if (!existsSync(RELEASE_DIR)) {
@@ -169,47 +169,47 @@ function createZip(version) {
 }
 
 /**
- * 메인 함수
+ * Main function
  */
 async function main() {
   const version = process.argv[2] || "1.0.0";
 
   const result = {
     success: false,
-    buildLog: `[${new Date().toISOString()}] 빌드 시작 (버전: ${version})\n`,
+    buildLog: `[${new Date().toISOString()}] Build started (version: ${version})\n`,
   };
 
-  // manifest.json 버전 갱신 (빌드 전)
+  // Update the manifest.json version (before building)
   const manifestPath = join(EXTENSION_DIR, "manifest.json");
   const originalManifest = readFileSync(manifestPath, "utf-8");
 
   let exitCode = 1;
 
   try {
-    // 1. manifest.json version 필드를 빌드 버전으로 교체
+    // 1. Replace the manifest.json version field with the build version
     const manifest = JSON.parse(originalManifest);
     manifest.version = version;
     writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + "\n");
-    result.buildLog += `[manifest] version "${version}" 으로 갱신\n`;
+    result.buildLog += `[manifest] version updated to "${version}"\n`;
 
-    // 2. webpack 빌드
-    result.buildLog += "\n[webpack] 컴파일 시작...\n";
+    // 2. webpack build
+    result.buildLog += "\n[webpack] Compilation started...\n";
     const webpackResult = await runWebpackBuild();
     result.buildLog += webpackResult.log + "\n";
 
     if (!webpackResult.success) {
-      result.error = webpackResult.error || "webpack 빌드 실패";
+      result.error = webpackResult.error || "webpack build failed";
       result.buildLog += `\n[ERROR] ${webpackResult.error}`;
     } else {
-      result.buildLog += "[webpack] 컴파일 완료\n";
+      result.buildLog += "[webpack] Compilation complete\n";
 
-      // 3. ZIP 생성
-      result.buildLog += "\n[archiver] ZIP 파일 생성 중...\n";
+      // 3. Create the ZIP
+      result.buildLog += "\n[archiver] Creating ZIP file...\n";
       const zipResult = await createZip(version);
-      result.buildLog += `[archiver] ZIP 생성 완료: ${zipResult.zipPath}\n`;
-      result.buildLog += `[archiver] 파일 크기: ${(zipResult.fileSize / 1024).toFixed(2)} KB\n`;
-      result.buildLog += `[archiver] 체크섬: ${zipResult.checksum}\n`;
-      result.buildLog += `\n[${new Date().toISOString()}] 빌드 완료!\n`;
+      result.buildLog += `[archiver] ZIP created: ${zipResult.zipPath}\n`;
+      result.buildLog += `[archiver] File size: ${(zipResult.fileSize / 1024).toFixed(2)} KB\n`;
+      result.buildLog += `[archiver] Checksum: ${zipResult.checksum}\n`;
+      result.buildLog += `\n[${new Date().toISOString()}] Build complete!\n`;
 
       result.success = true;
       result.zipPath = zipResult.zipPath;
@@ -218,12 +218,12 @@ async function main() {
       exitCode = 0;
     }
   } catch (error) {
-    result.error = error.message || "알 수 없는 오류";
+    result.error = error.message || "Unknown error";
     result.buildLog += `\n[ERROR] ${result.error}\n`;
   } finally {
-    // manifest.json 원본 복원 (소스 오염 방지)
+    // Restore the original manifest.json (keeps the source clean)
     writeFileSync(manifestPath, originalManifest);
-    result.buildLog += `[manifest] 원본 복원 완료\n`;
+    result.buildLog += `[manifest] Original restored\n`;
   }
 
   console.log(JSON.stringify(result));

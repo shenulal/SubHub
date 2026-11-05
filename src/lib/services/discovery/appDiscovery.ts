@@ -1,7 +1,7 @@
 // src/lib/services/discovery/appDiscovery.ts
 /**
- * Google Workspace OAuth 토큰 기반 앱 발견 서비스
- * 사용자들이 승인한 OAuth 앱을 수집하여 SaaS 앱으로 등록
+ * App discovery service based on Google Workspace OAuth tokens
+ * Collects OAuth apps authorised by users and registers them as SaaS apps
  */
 
 import { prisma } from "@/lib/db";
@@ -16,7 +16,7 @@ import type {
 import type { Integration } from "@prisma/client";
 import { GoogleWorkspaceService } from "../sso/googleWorkspace";
 
-// 필터링할 Google 시스템 앱 clientId 패턴
+// Google system app clientId patterns to filter out
 const GOOGLE_SYSTEM_APPS = [
   "google.com",
   "googleapis.com",
@@ -24,7 +24,7 @@ const GOOGLE_SYSTEM_APPS = [
 ];
 
 /**
- * 사용자별 OAuth 토큰을 앱 단위로 집계
+ * Aggregates per-user OAuth tokens by app
  */
 export function processDiscoveredApps(
   usersWithTokens: { user: GoogleWorkspaceUser; tokens: GoogleOAuthToken[] }[]
@@ -33,7 +33,7 @@ export function processDiscoveredApps(
 
   for (const { user, tokens } of usersWithTokens) {
     for (const token of tokens) {
-      // Google 시스템 앱 필터링
+      // Filter out Google system apps
       if (
         GOOGLE_SYSTEM_APPS.some((pattern) => token.clientId.includes(pattern))
       ) {
@@ -63,7 +63,7 @@ export function processDiscoveredApps(
 }
 
 /**
- * Google Workspace에서 앱 발견 실행
+ * Runs app discovery against Google Workspace
  */
 export async function discoverAppsFromGoogle(
   integration: Integration,
@@ -81,7 +81,7 @@ export async function discoverAppsFromGoogle(
 
   try {
     const result = await prisma.$transaction(async (tx) => {
-      // 동기화 로그 생성
+      // Create the sync log
       const syncLog = await tx.syncLog.create({
         data: {
           integrationId: integration.id,
@@ -94,10 +94,10 @@ export async function discoverAppsFromGoogle(
       });
       syncLogId = syncLog.id;
 
-      // 사용자 목록 조회
+      // List users
       const users = await googleService.listUsers();
 
-      // 각 사용자의 OAuth 토큰 수집
+      // Collect each user's OAuth tokens
       const usersWithTokens: {
         user: GoogleWorkspaceUser;
         tokens: GoogleOAuthToken[];
@@ -110,7 +110,7 @@ export async function discoverAppsFromGoogle(
             usersWithTokens.push({ user, tokens });
           }
         } catch (tokenError) {
-          // 개별 사용자 토큰 조회 실패는 무시하고 계속 진행
+          // Ignore token lookup failures for individual users and continue
           errors.push({
             code: "TOKEN_FETCH_ERROR",
             message:
@@ -123,19 +123,19 @@ export async function discoverAppsFromGoogle(
         }
       }
 
-      // 앱 집계
+      // Aggregate apps
       const discoveredApps = processDiscoveredApps(usersWithTokens);
 
-      // 최소 사용자 수 필터링
+      // Filter by minimum user count
       const filteredApps = discoveredApps.filter(
         (app) => app.userCount >= minUsers
       );
       itemsFound = filteredApps.length;
 
-      // 각 앱 처리
+      // Process each app
       for (const discoveredApp of filteredApps) {
         try {
-          // SaaS 카탈로그 매칭 (옵션)
+          // SaaS catalog matching (optional)
           let catalogId: string | null = null;
           if (matchCatalog) {
             const catalog = await tx.saaSCatalog.findFirst({
@@ -149,7 +149,7 @@ export async function discoverAppsFromGoogle(
             catalogId = catalog?.id || null;
           }
 
-          // 기존 앱 확인
+          // Check for an existing app
           const existingApp = await tx.app.findFirst({
             where: {
               organizationId: integration.organizationId,
@@ -163,7 +163,7 @@ export async function discoverAppsFromGoogle(
           let appId: string;
 
           if (!existingApp) {
-            // 새 앱 생성
+            // Create a new app
             const newApp = await tx.app.create({
               data: {
                 name: discoveredApp.name,
@@ -180,14 +180,14 @@ export async function discoverAppsFromGoogle(
             appId = newApp.id;
             itemsCreated++;
           } else if (updateExisting) {
-            // 기존 앱 업데이트
+            // Update the existing app
             appId = existingApp.id;
             itemsUpdated++;
           } else {
             appId = existingApp.id;
           }
 
-          // 사용자-앱 접근 기록 생성
+          // Create user-app access records
           for (const appUser of discoveredApp.users) {
             const dbUser = await tx.user.findUnique({
               where: { email: appUser.email },
@@ -227,7 +227,7 @@ export async function discoverAppsFromGoogle(
         }
       }
 
-      // 동기화 완료 로그 업데이트
+      // Update the sync log as completed
       await tx.syncLog.update({
         where: { id: syncLogId },
         data: {
@@ -241,7 +241,7 @@ export async function discoverAppsFromGoogle(
         },
       });
 
-      // Integration 마지막 동기화 시간 업데이트
+      // Update the integration's last sync time
       await tx.integration.update({
         where: { id: integration.id },
         data: {
@@ -266,7 +266,7 @@ export async function discoverAppsFromGoogle(
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error";
 
-    // 실패 로그 업데이트
+    // Update the failure log
     if (syncLogId) {
       await prisma.syncLog.update({
         where: { id: syncLogId },

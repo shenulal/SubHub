@@ -1,5 +1,5 @@
 // src/app/(dashboard)/dashboard/phase5-directory-rename.test.ts
-// Phase 5 RED: new-dashboard/ → dashboard/ 디렉토리 rename 검증
+// Phase 5 RED: verify the new-dashboard/ → dashboard/ directory rename
 
 import { existsSync, readFileSync, readdirSync } from "fs";
 import path from "path";
@@ -27,18 +27,18 @@ function collectTsFiles(dir: string): string[] {
   return results;
 }
 
-describe("Phase 5: 디렉토리 rename 검증", () => {
+describe("Phase 5: directory rename checks", () => {
   describe("new-dashboard/ → dashboard/ rename", () => {
-    it("src/components/dashboard/ 디렉토리가 존재해야 한다", () => {
+    it("src/components/dashboard/ directory exists", () => {
       expect(fileExists("src/components/dashboard")).toBe(true);
     });
 
-    it("src/components/new-dashboard/ 디렉토리가 존재하지 않아야 한다", () => {
+    it("src/components/new-dashboard/ directory does not exist", () => {
       expect(fileExists("src/components/new-dashboard")).toBe(false);
     });
   });
 
-  describe("핵심 파일이 dashboard/에 존재해야 한다", () => {
+  describe("core files must exist in dashboard/", () => {
     const files = [
       "src/components/dashboard/new-dashboard-client.tsx",
       "src/components/dashboard/new-dashboard-client.test.tsx",
@@ -57,14 +57,14 @@ describe("Phase 5: 디렉토리 rename 검증", () => {
     ];
 
     for (const f of files) {
-      it(`${path.basename(f)} 존재`, () => {
-        expect(fileExists(f), `파일 누락: ${f}`).toBe(true);
+      it(`${path.basename(f)} exists`, () => {
+        expect(fileExists(f), `File missing: ${f}`).toBe(true);
       });
     }
   });
 
-  describe("import 경로가 @/components/dashboard를 사용해야 한다", () => {
-    it("page.tsx가 @/components/dashboard에서 import해야 한다", () => {
+  describe("import paths must use @/components/dashboard", () => {
+    it("page.tsx imports from @/components/dashboard", () => {
       const content = readFileSync(
         path.resolve(PROJECT_ROOT, "src/app/(dashboard)/dashboard/page.tsx"),
         "utf-8"
@@ -74,13 +74,13 @@ describe("Phase 5: 디렉토리 rename 검증", () => {
     });
   });
 
-  describe("코드베이스에 @/components/new-dashboard 참조가 없어야 한다", () => {
-    it("소스 코드에서 new-dashboard import이 없어야 한다", () => {
+  describe("the codebase has no @/components/new-dashboard references", () => {
+    it("has no new-dashboard imports in source code", () => {
       const dirs = ["src/app", "src/components", "src/actions", "src/lib"];
       const allFiles = dirs.flatMap((d) => collectTsFiles(d));
       const violations: string[] = [];
       for (const f of allFiles) {
-        // 테스트 파일 자체는 검사 제외
+        // Exclude the test file itself from the check
         if (f.endsWith(".test.ts") || f.endsWith(".test.tsx")) continue;
         const content = readFileSync(f, "utf-8");
         if (content.includes("@/components/new-dashboard")) {
@@ -89,7 +89,7 @@ describe("Phase 5: 디렉토리 rename 검증", () => {
       }
       expect(
         violations,
-        `@/components/new-dashboard 참조:\n${violations.join("\n")}`
+        `@/components/new-dashboard references:\n${violations.join("\n")}`
       ).toHaveLength(0);
     });
   });

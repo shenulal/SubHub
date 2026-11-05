@@ -19,8 +19,8 @@ export interface TenantInfo {
 }
 
 /**
- * 현재 테넌트(Organization) 정보 조회
- * SUPER_ADMIN 전용
+ * Fetch the current tenant (Organization)
+ * SUPER_ADMIN only
  */
 async function _getTenantInfo(): Promise<ActionState<TenantInfo>> {
   await requireSuperAdmin();
@@ -38,7 +38,7 @@ async function _getTenantInfo(): Promise<ActionState<TenantInfo>> {
   });
 
   if (!org) {
-    return { success: false, message: "테넌트 정보를 찾을 수 없습니다." };
+    return { success: false, message: "Tenant information not found." };
   }
 
   return {
@@ -58,25 +58,25 @@ async function _getTenantInfo(): Promise<ActionState<TenantInfo>> {
 export const getTenantInfo = withLogging("getTenantInfo", _getTenantInfo);
 
 const createTenantSchema = z.object({
-  name: z.string().min(1, "회사명을 입력해주세요").max(100),
+  name: z.string().min(1, "Please enter the company name").max(100),
   domain: z
     .string()
     .regex(
       /^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-      "올바른 도메인 형식을 입력해주세요 (예: example.com)"
+      "Please enter a valid domain (e.g. example.com)"
     )
     .optional()
     .or(z.literal("")),
   logoUrl: z
     .string()
-    .url("올바른 URL을 입력해주세요")
+    .url("Please enter a valid URL")
     .optional()
     .or(z.literal("")),
 });
 
 /**
- * 신규 테넌트(Organization) 생성
- * SUPER_ADMIN 전용
+ * Create a new tenant (Organization)
+ * SUPER_ADMIN only
  */
 async function _createTenant(
   name: string,
@@ -107,7 +107,7 @@ async function _createTenant(
 
   return {
     success: true,
-    message: "테넌트가 생성되었습니다.",
+    message: "Tenant created.",
     data: {
       id: org.id,
       name: org.name,
@@ -125,15 +125,15 @@ export const createTenant = withLogging("createTenant", _createTenant);
 const updateDomainSchema = z.object({
   domain: z
     .string()
-    .min(1, "도메인을 입력해주세요")
+    .min(1, "Please enter a domain")
     .regex(
       /^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-      "올바른 도메인 형식을 입력해주세요 (예: example.com)"
+      "Please enter a valid domain (e.g. example.com)"
     ),
 });
 
 /**
- * 테넌트 도메인 업데이트
+ * Update the tenant domain
  */
 async function _updateTenantDomain(
   orgId: string,
@@ -155,7 +155,7 @@ async function _updateTenantDomain(
   });
 
   revalidatePath("/super-admin/tenant");
-  return { success: true, message: "도메인이 업데이트되었습니다." };
+  return { success: true, message: "Domain updated." };
 }
 
 export const updateTenantDomain = withLogging(
@@ -164,11 +164,11 @@ export const updateTenantDomain = withLogging(
 );
 
 const updateNameSchema = z.object({
-  name: z.string().min(1, "회사명을 입력해주세요").max(100),
+  name: z.string().min(1, "Please enter the company name").max(100),
 });
 
 /**
- * 테넌트 회사명 업데이트
+ * Update the tenant company name
  */
 async function _updateTenantName(
   orgId: string,
@@ -187,7 +187,7 @@ async function _updateTenantName(
   });
 
   revalidatePath("/super-admin/tenant");
-  return { success: true, message: "회사명이 업데이트되었습니다." };
+  return { success: true, message: "Company name updated." };
 }
 
 export const updateTenantName = withLogging(
@@ -196,11 +196,11 @@ export const updateTenantName = withLogging(
 );
 
 const updateLogoSchema = z.object({
-  logoUrl: z.string().url("올바른 URL을 입력해주세요").or(z.literal("")),
+  logoUrl: z.string().url("Please enter a valid URL").or(z.literal("")),
 });
 
 /**
- * 테넌트 로고 URL 업데이트
+ * Update the tenant logo URL
  */
 async function _updateTenantLogoUrl(
   orgId: string,
@@ -219,7 +219,7 @@ async function _updateTenantLogoUrl(
   });
 
   revalidatePath("/super-admin/tenant");
-  return { success: true, message: "로고 URL이 업데이트되었습니다." };
+  return { success: true, message: "Logo URL updated." };
 }
 
 export const updateTenantLogoUrl = withLogging(

@@ -1,5 +1,5 @@
 // src/components/apps/app-form.test.tsx
-import messages from "@/i18n/messages/ko.json";
+import messages from "@/i18n/messages/en.json";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import React from "react";
@@ -7,7 +7,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { AppForm } from "./app-form";
 import { APP_TEMPLATES } from "./app-templates";
 
-// next-intl mock: ko.json 메시지 기반으로 번역 함수 제공
+// next-intl mock: provides a translation function backed by en.json messages
 function getNestedValue(obj: Record<string, unknown>, path: string): string {
   const value = path.split(".").reduce<unknown>((acc, key) => {
     if (
@@ -38,7 +38,7 @@ vi.mock("next-intl", () => ({
       return result;
     };
   },
-  useLocale: () => "ko",
+  useLocale: () => "en",
 }));
 
 const mockRouter = {
@@ -97,7 +97,7 @@ const mockSetValue = vi.fn((name: string, value: unknown) => {
 
 vi.mock("@refinedev/react-hook-form", () => ({
   useForm: (options?: { defaultValues?: Record<string, string> }) => {
-    // 초기화 시에만 기본값 설정 (이미 값이 있으면 덮어쓰지 않음)
+    // Set defaults only on initialisation (do not overwrite existing values)
     if (Object.keys(mockValues).length === 0) {
       mockValues = { ...(options?.defaultValues ?? {}) };
     }
@@ -143,29 +143,31 @@ describe("AppForm", () => {
     mockOnFinish.mockResolvedValue({ data: { id: "new-app-1" } });
   });
 
-  it("필수 입력 필드가 렌더링되어야 한다", () => {
+  it("renders the required input fields", () => {
     render(<AppForm />);
 
-    expect(screen.getByLabelText(/앱 이름/)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /등록/ })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: /취소/ })).toBeInTheDocument();
+    expect(screen.getByLabelText(/App name/)).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /Register/ })
+    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Cancel/ })).toBeInTheDocument();
   });
 
-  it("선택적 입력 필드가 렌더링되어야 한다", () => {
+  it("renders the optional input fields", () => {
     render(<AppForm />);
 
-    expect(screen.getByLabelText(/카테고리/)).toBeInTheDocument();
-    expect(screen.getByLabelText(/웹사이트/)).toBeInTheDocument();
-    expect(screen.getByLabelText(/설명/)).toBeInTheDocument();
-    expect(screen.getByLabelText(/태그/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Category/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Website/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Description/)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Tags/)).toBeInTheDocument();
   });
 
-  it("앱 이름이 비어있으면 브라우저 기본 validation이 동작해야 한다", async () => {
+  it("triggers native browser validation when the app name is empty", async () => {
     const user = userEvent.setup();
     render(<AppForm />);
 
-    const nameInput = screen.getByLabelText(/앱 이름/) as HTMLInputElement;
-    const submitButton = screen.getByRole("button", { name: /등록/ });
+    const nameInput = screen.getByLabelText(/App name/) as HTMLInputElement;
+    const submitButton = screen.getByRole("button", { name: /Register/ });
 
     await user.click(submitButton);
 
@@ -173,24 +175,24 @@ describe("AppForm", () => {
     expect(nameInput.validity.valueMissing).toBe(true);
   });
 
-  it("취소 버튼 클릭시 이전 페이지로 이동해야 한다", async () => {
+  it("navigates back when cancel is clicked", async () => {
     const user = userEvent.setup();
     render(<AppForm />);
 
-    const cancelButton = screen.getByRole("button", { name: /취소/ });
+    const cancelButton = screen.getByRole("button", { name: /Cancel/ });
     await user.click(cancelButton);
 
     expect(mockRouter.back).toHaveBeenCalled();
   });
 
-  it("폼 제출 성공 시 앱 목록 페이지로 이동해야 한다", async () => {
+  it("navigates to the app list after a successful submit", async () => {
     const user = userEvent.setup();
     render(<AppForm />);
 
-    const nameInput = screen.getByLabelText(/앱 이름/);
+    const nameInput = screen.getByLabelText(/App name/);
     await user.type(nameInput, "New Test App");
 
-    const submitButton = screen.getByRole("button", { name: /등록/ });
+    const submitButton = screen.getByRole("button", { name: /Register/ });
     await user.click(submitButton);
 
     await vi.waitFor(() => {
@@ -202,33 +204,37 @@ describe("AppForm", () => {
     });
   });
 
-  it("서버 에러 발생 시 에러 메시지를 표시해야 한다", async () => {
-    mockOnFinish.mockRejectedValueOnce(new Error("이미 등록된 앱 이름입니다"));
+  it("shows an error message on a server error", async () => {
+    mockOnFinish.mockRejectedValueOnce(
+      new Error("An app with this name already exists")
+    );
 
     const user = userEvent.setup();
     render(<AppForm />);
 
-    const nameInput = screen.getByLabelText(/앱 이름/);
+    const nameInput = screen.getByLabelText(/App name/);
     await user.type(nameInput, "Existing App");
 
-    const submitButton = screen.getByRole("button", { name: /등록/ });
+    const submitButton = screen.getByRole("button", { name: /Register/ });
     await user.click(submitButton);
 
     await vi.waitFor(() => {
-      expect(screen.getByText("이미 등록된 앱 이름입니다")).toBeInTheDocument();
+      expect(
+        screen.getByText("An app with this name already exists")
+      ).toBeInTheDocument();
     });
   });
 
-  it("로딩 중일 때 버튼이 비활성화되어야 한다", async () => {
+  it("disables the button while loading", async () => {
     mockFormLoading = true;
 
     const user = userEvent.setup();
     render(<AppForm />);
 
-    const nameInput = screen.getByLabelText(/앱 이름/);
+    const nameInput = screen.getByLabelText(/App name/);
     await user.type(nameInput, "Test App");
 
-    const submitButton = screen.getByRole("button", { name: /등록/ });
+    const submitButton = screen.getByRole("button", { name: /Register/ });
     await user.click(submitButton);
 
     // During loading, button should be disabled
@@ -237,17 +243,20 @@ describe("AppForm", () => {
     });
   });
 
-  it("모든 필드를 올바르게 제출해야 한다", async () => {
+  it("submits all fields correctly", async () => {
     const user = userEvent.setup();
     render(<AppForm />);
 
-    await user.type(screen.getByLabelText(/앱 이름/), "Slack");
-    await user.type(screen.getByLabelText(/카테고리/), "Collaboration");
-    await user.type(screen.getByLabelText(/웹사이트/), "https://slack.com");
-    await user.type(screen.getByLabelText(/태그/), "chat, team, messaging");
-    await user.type(screen.getByLabelText(/설명/), "팀 커뮤니케이션 도구");
+    await user.type(screen.getByLabelText(/App name/), "Slack");
+    await user.type(screen.getByLabelText(/Category/), "Collaboration");
+    await user.type(screen.getByLabelText(/Website/), "https://slack.com");
+    await user.type(screen.getByLabelText(/Tags/), "chat, team, messaging");
+    await user.type(
+      screen.getByLabelText(/Description/),
+      "Team communication tool"
+    );
 
-    const submitButton = screen.getByRole("button", { name: /등록/ });
+    const submitButton = screen.getByRole("button", { name: /Register/ });
     await user.click(submitButton);
 
     await vi.waitFor(() => {
@@ -256,24 +265,24 @@ describe("AppForm", () => {
           category: "Collaboration",
           customWebsite: "https://slack.com",
           name: "Slack",
-          notes: "팀 커뮤니케이션 도구",
+          notes: "Team communication tool",
           tags: "chat, team, messaging",
         })
       );
     });
   });
 
-  describe("템플릿 기능", () => {
-    it("빠른 입력 템플릿 버튼들이 렌더링되어야 한다", () => {
+  describe("template feature", () => {
+    it("renders the quick input template buttons", () => {
       render(<AppForm />);
 
-      expect(screen.getByText("빠른 입력:")).toBeInTheDocument();
+      expect(screen.getByText("Quick input:")).toBeInTheDocument();
       APP_TEMPLATES.forEach((template) => {
         expect(screen.getByAltText(template.name)).toBeInTheDocument();
       });
     });
 
-    it("Slack 템플릿 클릭 시 폼이 자동으로 채워져야 한다", async () => {
+    it("fills the form automatically when the Slack template is clicked", async () => {
       const user = userEvent.setup();
       render(<AppForm />);
 
@@ -294,11 +303,11 @@ describe("AppForm", () => {
       expect(mockSetValue).toHaveBeenCalledWith("customLogoUrl", "");
       expect(mockSetValue).toHaveBeenCalledWith(
         "tags",
-        slackTemplate.tags!["ko"]
+        slackTemplate.tags!["en"]
       );
     });
 
-    it("Claude 템플릿 클릭 시 폼이 자동으로 채워져야 한다", async () => {
+    it("fills the form automatically when the Claude template is clicked", async () => {
       const user = userEvent.setup();
       render(<AppForm />);
 
@@ -319,11 +328,11 @@ describe("AppForm", () => {
       expect(mockSetValue).toHaveBeenCalledWith("customLogoUrl", "");
       expect(mockSetValue).toHaveBeenCalledWith(
         "tags",
-        claudeTemplate.tags!["ko"]
+        claudeTemplate.tags!["en"]
       );
     });
 
-    it("ChatGPT 템플릿 클릭 시 폼이 자동으로 채워져야 한다", async () => {
+    it("fills the form automatically when the ChatGPT template is clicked", async () => {
       const user = userEvent.setup();
       render(<AppForm />);
 
@@ -344,11 +353,11 @@ describe("AppForm", () => {
       expect(mockSetValue).toHaveBeenCalledWith("customLogoUrl", "");
       expect(mockSetValue).toHaveBeenCalledWith(
         "tags",
-        openaiTemplate.tags!["ko"]
+        openaiTemplate.tags!["en"]
       );
     });
 
-    it("Cursor 템플릿 클릭 시 폼이 자동으로 채워져야 한다", async () => {
+    it("fills the form automatically when the Cursor template is clicked", async () => {
       const user = userEvent.setup();
       render(<AppForm />);
 
@@ -369,11 +378,11 @@ describe("AppForm", () => {
       expect(mockSetValue).toHaveBeenCalledWith("customLogoUrl", "");
       expect(mockSetValue).toHaveBeenCalledWith(
         "tags",
-        cursorTemplate.tags!["ko"]
+        cursorTemplate.tags!["en"]
       );
     });
 
-    it("로딩 중일 때 템플릿 버튼들이 비활성화되어야 한다", () => {
+    it("disables the template buttons while loading", () => {
       mockFormLoading = true;
       render(<AppForm />);
 

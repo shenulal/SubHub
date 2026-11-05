@@ -10,7 +10,7 @@ import { Suspense } from "react";
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("payments.page");
   return {
-    title: `${t("title")} | SaaS 관리 플랫폼`,
+    title: `${t("title")}`,
     description: t("description"),
   };
 }
@@ -19,7 +19,7 @@ export default async function PaymentsPage() {
   const t = await getTranslations("payments.page");
   const { organizationId } = await requireRole(["ADMIN", "APPROVER", "MEMBER"]);
 
-  // 매칭용 앱 목록 조회 (teams 포함 - 구독 등록 Dialog에서 사용)
+  // Fetch the app list for matching (includes teams - used by the subscription dialog)
   const appsRaw = await prisma.app.findMany({
     where: {
       organizationId,
@@ -51,7 +51,7 @@ export default async function PaymentsPage() {
     teams: app.teams.map((t) => ({ id: t.team.id, name: t.team.name })),
   }));
 
-  // 구독 목록 조회 (결제 연결용)
+  // Fetch subscriptions (for linking payments)
   const subscriptions = await prisma.subscription.findMany({
     where: {
       organizationId,

@@ -221,7 +221,7 @@ export function IntegrationDetailClient({
         ]}
       />
 
-      {/* 삭제 확인 다이얼로그 */}
+      {/* Delete confirmation dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>

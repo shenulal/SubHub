@@ -225,13 +225,13 @@ export async function updateInactiveThreshold(
   const { organizationId, role } = await requireOrganization();
 
   if (role !== "ADMIN") {
-    return { success: false, message: "관리자만 설정을 변경할 수 있습니다" };
+    return { success: false, message: "Only admins can change settings" };
   }
 
   if (minutes < 5 || minutes > 10080) {
     return {
       success: false,
-      message: "5분에서 10080분(7일) 사이 값을 입력하세요",
+      message: "Enter a value between 5 and 10080 minutes (7 days)",
     };
   }
 
@@ -240,7 +240,7 @@ export async function updateInactiveThreshold(
     data: { inactiveThresholdMinutes: minutes },
   });
 
-  return { success: true, message: "비활성 임계값이 업데이트되었습니다" };
+  return { success: true, message: "Inactivity threshold updated" };
 }
 
 /**
@@ -254,7 +254,7 @@ export async function deleteExtensionDevice(
   if (role !== "ADMIN") {
     return {
       success: false,
-      message: "관리자만 디바이스를 삭제할 수 있습니다",
+      message: "Only admins can delete devices",
     };
   }
 
@@ -264,7 +264,7 @@ export async function deleteExtensionDevice(
   });
 
   if (!device || device.organizationId !== organizationId) {
-    return { success: false, message: "디바이스를 찾을 수 없습니다" };
+    return { success: false, message: "Device not found" };
   }
 
   await prisma.extensionDevice.delete({
@@ -272,5 +272,5 @@ export async function deleteExtensionDevice(
   });
 
   revalidatePath("/extensions/status");
-  return { success: true, message: "디바이스가 삭제되었습니다" };
+  return { success: true, message: "Device deleted" };
 }

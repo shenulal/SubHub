@@ -71,7 +71,7 @@ export function KanbanCard({
       .slice(0, 2);
   };
 
-  // 데모용 진행률 계산 (랜덤)
+  // Demo progress calculation (random)
   const progress = Math.floor(Math.random() * 100);
   const attachments = Math.floor(Math.random() * 5);
   const comments = Math.floor(Math.random() * 10);
@@ -111,7 +111,7 @@ export function KanbanCard({
         )}
       </CardHeader>
       <CardContent className="space-y-3 px-4 pt-2 pb-4">
-        {/* 담당자 + 진행률 */}
+        {/* Assignee + progress */}
         <div className="flex items-center justify-between gap-2">
           <div className="flex -space-x-2">
             {task.assignee ? (
@@ -135,7 +135,7 @@ export function KanbanCard({
           </div>
         </div>
 
-        {/* 우선순위 + 메타 정보 */}
+        {/* Priority + metadata */}
         <div className="flex items-center justify-between gap-2">
           <Badge
             variant="outline"

@@ -1,8 +1,12 @@
 // src/lib/payment-csv.ts
+//
+// NOTE: the Korean header aliases, currency suffixes and date pattern in this file are functional.
+// They must match the column headers and values in Korean card company / bank / ERP exports
+// verbatim, so they must not be translated.
 
 import { parseCSV } from "./csv";
 
-// CSV 형식 타입
+// CSV format type
 export type PaymentCSVFormat =
   | "CARD_COMPANY"
   | "CARD_COMPANY_EN"
@@ -16,12 +20,12 @@ export type PaymentCSVFormat =
   | "CUSTOM"
   | "UNKNOWN";
 
-// ERP 세부 포맷인지 확인하는 헬퍼
+// Helper that checks whether a format is an ERP sub-format
 export function isERPFormat(format: PaymentCSVFormat): boolean {
   return format === "ERP" || format.startsWith("ERP_") || format === "CUSTOM";
 }
 
-// 파싱된 결제 데이터 행
+// Parsed payment data row
 export interface PaymentCSVRow {
   transactionDate: Date;
   merchantName: string;
@@ -33,14 +37,14 @@ export interface PaymentCSVRow {
   rawData: Record<string, string>;
 }
 
-// 유효성 검증 오류
+// Validation error
 export interface PaymentValidationError {
   row: number;
   field: string;
   message: string;
 }
 
-// 파싱 결과
+// Parse result
 export interface PaymentCSVParseResult {
   success: boolean;
   format?: PaymentCSVFormat;
@@ -49,7 +53,7 @@ export interface PaymentCSVParseResult {
   error?: string;
 }
 
-// 카드사 CSV 헤더 매핑 (한글)
+// Card company CSV header mapping (Korean headers)
 const CARD_COMPANY_HEADERS = {
   date: ["결제일", "거래일", "이용일", "사용일", "승인일"],
   merchant: ["가맹점명", "상호명", "가맹점", "이용가맹점", "사용처"],
@@ -58,7 +62,7 @@ const CARD_COMPANY_HEADERS = {
   approval: ["승인번호", "승인 번호"],
 };
 
-// ERP CSV 헤더 매핑 (기존 범용)
+// ERP CSV header mapping (original generic)
 const ERP_HEADERS = {
   date: ["거래일자", "일자", "전표일자"],
   merchant: ["거래처명", "거래처", "상대계정"],
@@ -67,7 +71,7 @@ const ERP_HEADERS = {
   memo: ["비고", "적요", "메모"],
 };
 
-// 더존 iCUBE 헤더 매핑
+// Douzone iCUBE header mapping
 const ERP_DUZON_ICUBE_HEADERS = {
   date: ["전표일자"],
   debitAccount: ["차변계정코드"],
@@ -81,7 +85,7 @@ const ERP_DUZON_ICUBE_HEADERS = {
   managementNumber: ["관리번호"],
 };
 
-// 더존 WEHAGO 헤더 매핑
+// Douzone WEHAGO header mapping
 const ERP_DUZON_WEHAGO_HEADERS = {
   date: ["전표일자", "일자"],
   debitAccount: ["차변계정코드", "차변코드"],
@@ -93,7 +97,7 @@ const ERP_DUZON_WEHAGO_HEADERS = {
   merchant: ["거래처명", "거래처"],
 };
 
-// SAP S/4HANA FI 헤더 매핑
+// SAP S/4HANA FI header mapping
 const ERP_SAP_FI_HEADERS = {
   date: ["PostingDate", "DocumentDate"],
   glAccount: ["GLAccount"],
@@ -106,7 +110,7 @@ const ERP_SAP_FI_HEADERS = {
   document: ["AccountingDocument"],
 };
 
-// Oracle ERP Cloud Journal 헤더 매핑
+// Oracle ERP Cloud Journal header mapping
 const ERP_ORACLE_JOURNAL_HEADERS = {
   date: ["AccountingDate", "JournalDate"],
   debitAmount: ["EnteredDebit", "DebitAmount"],
@@ -117,7 +121,7 @@ const ERP_ORACLE_JOURNAL_HEADERS = {
   journalName: ["JournalName"],
 };
 
-// 이카운트 헤더 매핑
+// ECOUNT header mapping
 const ERP_ECOUNT_HEADERS = {
   date: ["일자", "날짜"],
   merchant: ["거래처", "거래처명"],
@@ -126,7 +130,7 @@ const ERP_ECOUNT_HEADERS = {
   memo: ["적요", "비고"],
 };
 
-// 영문 카드사 CSV 헤더 매핑
+// English card company CSV header mapping
 const CARD_COMPANY_EN_HEADERS = {
   date: ["Transaction Date", "Date", "Trans Date", "Posted Date"],
   merchant: ["Merchant", "Description", "Merchant Name", "Vendor"],
@@ -136,7 +140,7 @@ const CARD_COMPANY_EN_HEADERS = {
 };
 
 /**
- * 금액 문자열을 숫자로 파싱
+ * Parse an amount string into a number
  */
 export function parsePaymentAmount(amountStr: string): number {
   if (!amountStr || !amountStr.trim()) {
@@ -145,21 +149,23 @@ export function parsePaymentAmount(amountStr: string): number {
 
   let cleaned = amountStr.trim();
 
-  // 회계 표기법 (괄호는 음수)
+  // Accounting notation (parentheses mean negative)
   const isNegativeParens = /^\(.*\)$/.test(cleaned);
   if (isNegativeParens) {
     cleaned = cleaned.replace(/[()]/g, "");
   }
 
-  // 통화 기호 제거
+  // Strip currency symbols and codes.
+  // The last pattern strips Korean currency suffixes (won/dollar/yen) found in Korean
+  // card statements; those Korean literals are functional and must stay as-is.
   cleaned = cleaned.replace(/[₩\\$€£¥]/g, "");
   cleaned = cleaned.replace(/^(USD|KRW|EUR|JPY|GBP)\s*/i, "");
   cleaned = cleaned.replace(/\s*(원|달러|엔)$/g, "");
 
-  // 쉼표 제거
+  // Remove thousands separators
   cleaned = cleaned.replace(/,/g, "");
 
-  // 공백 제거
+  // Trim whitespace
   cleaned = cleaned.trim();
 
   const value = parseFloat(cleaned);
@@ -172,7 +178,7 @@ export function parsePaymentAmount(amountStr: string): number {
 }
 
 /**
- * 다양한 날짜 형식을 파싱 (UTC 기준)
+ * Parse various date formats (UTC)
  */
 export function parsePaymentDate(dateStr: string): Date | null {
   if (!dateStr || !dateStr.trim()) {
@@ -181,13 +187,14 @@ export function parsePaymentDate(dateStr: string): Date | null {
 
   let cleaned = dateStr.trim();
 
-  // YYYY-MM-DD HH:MM:SS 또는 YYYY-MM-DD HH:MM 형식 → 날짜 부분만 추출
+  // YYYY-MM-DD HH:MM:SS or YYYY-MM-DD HH:MM → keep only the date part
   const datetimeMatch = cleaned.match(/^(\d{4}-\d{2}-\d{2})\s+\d{2}:\d{2}/);
   if (datetimeMatch) {
     cleaned = datetimeMatch[1];
   }
 
-  // 한글 날짜 형식: 2025년 12월 26일, 2025년12월26일
+  // Korean date format (year/month/day suffixes, with or without spaces), as found in
+  // Korean exports. The Korean suffixes in the regex below are functional and must stay.
   const koreanMatch = cleaned.match(/(\d{4})년\s*(\d{1,2})월\s*(\d{1,2})일/);
   if (koreanMatch) {
     const year = parseInt(koreanMatch[1], 10);
@@ -197,7 +204,7 @@ export function parsePaymentDate(dateStr: string): Date | null {
     return isNaN(date.getTime()) ? null : date;
   }
 
-  // YYYYMMDD (8자리 숫자)
+  // YYYYMMDD (8 digits)
   if (/^\d{8}$/.test(cleaned)) {
     const year = parseInt(cleaned.substring(0, 4), 10);
     const month = parseInt(cleaned.substring(4, 6), 10) - 1;
@@ -226,16 +233,16 @@ export function parsePaymentDate(dateStr: string): Date | null {
     return isNaN(date.getTime()) ? null : date;
   }
 
-  // YYYY-MM-DD 또는 YYYY/MM/DD
+  // YYYY-MM-DD or YYYY/MM/DD
   const standardized = cleaned.replace(/\//g, "-");
-  // YYYY-MM-DD 형식인지 확인하고 UTC로 파싱
+  // If it is YYYY-MM-DD, parse it as UTC
   if (/^\d{4}-\d{2}-\d{2}$/.test(standardized)) {
     const [year, month, day] = standardized.split("-").map(Number);
     const date = new Date(Date.UTC(year, month - 1, day));
     return isNaN(date.getTime()) ? null : date;
   }
 
-  // 그 외 형식
+  // Other formats
   const date = new Date(standardized);
   if (!isNaN(date.getTime())) {
     return date;
@@ -245,7 +252,7 @@ export function parsePaymentDate(dateStr: string): Date | null {
 }
 
 /**
- * 헤더 매칭 함수
+ * Header matching function
  */
 function matchHeader(
   headers: string[],
@@ -264,10 +271,10 @@ function matchHeader(
 }
 
 /**
- * CSV 형식 감지 - ERP 벤더별 세분화 포함
+ * Detect the CSV format, including per-vendor ERP sub-formats
  */
 export function detectCSVFormat(headers: string[]): PaymentCSVFormat {
-  // 카드사 한글 형식 감지
+  // Detect the Korean card company format
   const hasKoreanDate = matchHeader(headers, CARD_COMPANY_HEADERS.date);
   const hasKoreanMerchant = matchHeader(headers, CARD_COMPANY_HEADERS.merchant);
   const hasKoreanAmount = matchHeader(headers, CARD_COMPANY_HEADERS.amount);
@@ -276,9 +283,9 @@ export function detectCSVFormat(headers: string[]): PaymentCSVFormat {
     return "CARD_COMPANY";
   }
 
-  // ERP 세분화 감지 (구체적인 벤더부터 매칭)
+  // Detect ERP sub-formats (specific vendors first)
 
-  // 더존 iCUBE: 차변계정코드 + 대변계정코드가 핵심 식별자
+  // Douzone iCUBE: debit account code + credit account code are the key identifiers
   const hasDuzonDebit = matchHeader(
     headers,
     ERP_DUZON_ICUBE_HEADERS.debitAccount
@@ -289,7 +296,7 @@ export function detectCSVFormat(headers: string[]): PaymentCSVFormat {
   );
   const hasDuzonDate = matchHeader(headers, ERP_DUZON_ICUBE_HEADERS.date);
   if (hasDuzonDebit && hasDuzonCredit && hasDuzonDate) {
-    // iCUBE vs WEHAGO 구분: 관리번호 필드가 있으면 iCUBE
+    // iCUBE vs WEHAGO: a management number column means iCUBE
     const hasManagementNumber = matchHeader(
       headers,
       ERP_DUZON_ICUBE_HEADERS.managementNumber
@@ -300,7 +307,7 @@ export function detectCSVFormat(headers: string[]): PaymentCSVFormat {
     return "ERP_DUZON_WEHAGO";
   }
 
-  // SAP FI: PostingDate + GLAccount가 핵심 식별자
+  // SAP FI: PostingDate + GLAccount are the key identifiers
   const hasSAPDate = matchHeader(headers, ERP_SAP_FI_HEADERS.date);
   const hasSAPGL = matchHeader(headers, ERP_SAP_FI_HEADERS.glAccount);
   const hasSAPAmount = matchHeader(headers, ERP_SAP_FI_HEADERS.amount);
@@ -308,7 +315,7 @@ export function detectCSVFormat(headers: string[]): PaymentCSVFormat {
     return "ERP_SAP_FI";
   }
 
-  // Oracle Journal: AccountingDate + EnteredDebit/EnteredCredit가 핵심 식별자
+  // Oracle Journal: AccountingDate + EnteredDebit/EnteredCredit are the key identifiers
   const hasOracleDate = matchHeader(headers, ERP_ORACLE_JOURNAL_HEADERS.date);
   const hasOracleDebit = matchHeader(
     headers,
@@ -322,7 +329,7 @@ export function detectCSVFormat(headers: string[]): PaymentCSVFormat {
     return "ERP_ORACLE_JOURNAL";
   }
 
-  // 이카운트: 범용 ERP와 유사하지만 계정과목 + 적요 조합으로 구분
+  // ECOUNT: similar to generic ERP, distinguished by the account + description combination
   const hasEcountDate = matchHeader(headers, ERP_ECOUNT_HEADERS.date);
   const hasEcountMerchant = matchHeader(headers, ERP_ECOUNT_HEADERS.merchant);
   const hasEcountAmount = matchHeader(headers, ERP_ECOUNT_HEADERS.amount);
@@ -336,7 +343,7 @@ export function detectCSVFormat(headers: string[]): PaymentCSVFormat {
     return "ERP_ECOUNT";
   }
 
-  // 범용 ERP 형식 감지 (기존 로직)
+  // Detect the generic ERP format (original logic)
   const hasERPDate = matchHeader(headers, ERP_HEADERS.date);
   const hasERPMerchant = matchHeader(headers, ERP_HEADERS.merchant);
   const hasERPAmount = matchHeader(headers, ERP_HEADERS.amount);
@@ -345,7 +352,7 @@ export function detectCSVFormat(headers: string[]): PaymentCSVFormat {
     return "ERP";
   }
 
-  // 영문 카드사 형식 감지
+  // Detect the English card company format
   const hasEnDate = matchHeader(headers, CARD_COMPANY_EN_HEADERS.date);
   const hasEnMerchant = matchHeader(headers, CARD_COMPANY_EN_HEADERS.merchant);
   const hasEnAmount = matchHeader(headers, CARD_COMPANY_EN_HEADERS.amount);
@@ -358,12 +365,12 @@ export function detectCSVFormat(headers: string[]): PaymentCSVFormat {
 }
 
 /**
- * 카드 번호에서 마지막 4자리 추출
+ * Extract the last 4 digits of a card number
  */
 function extractCardLast4(cardNumber: string | undefined): string | undefined {
   if (!cardNumber) return undefined;
 
-  // 숫자만 추출
+  // Keep digits only
   const digits = cardNumber.replace(/\D/g, "");
 
   if (digits.length >= 4) {
@@ -374,7 +381,7 @@ function extractCardLast4(cardNumber: string | undefined): string | undefined {
 }
 
 /**
- * 원본 데이터를 정규화된 형식으로 변환
+ * Convert raw data into the normalised format
  */
 export function normalizePaymentData(
   row: Record<string, string>,
@@ -415,7 +422,7 @@ export function normalizePaymentData(
       merchantField = matchHeader(headers, ERP_DUZON_ICUBE_HEADERS.merchant);
       amountField = matchHeader(headers, ERP_DUZON_ICUBE_HEADERS.amount);
       memoField = matchHeader(headers, ERP_DUZON_ICUBE_HEADERS.memo);
-      // 차변계정명을 category로 매핑
+      // Map the debit account name to category
       categoryField = matchHeader(
         headers,
         ERP_DUZON_ICUBE_HEADERS.debitAccountName
@@ -447,7 +454,7 @@ export function normalizePaymentData(
       break;
 
     case "CUSTOM":
-      // CUSTOM 포맷은 외부에서 매핑 설정을 제공해야 하므로 여기서는 기본 ERP 로직 사용
+      // CUSTOM formats must supply their mapping externally, so use the default ERP logic here
       dateField = matchHeader(headers, ERP_HEADERS.date);
       merchantField = matchHeader(headers, ERP_HEADERS.merchant);
       amountField = matchHeader(headers, ERP_HEADERS.amount);
@@ -506,8 +513,8 @@ export function normalizePaymentData(
 }
 
 /**
- * CSV 행을 스캔하여 실제 헤더 행 인덱스를 찾는다.
- * 은행 명세서처럼 상단에 제목/요약 행이 있는 경우를 처리한다.
+ * Scan CSV rows to find the index of the actual header row.
+ * Handles files such as bank statements that have title/summary rows at the top.
  */
 function findHeaderRow(lines: string[], maxScanRows: number = 20): number {
   const headerKeywords = [
@@ -542,10 +549,10 @@ function findHeaderRow(lines: string[], maxScanRows: number = 20): number {
 }
 
 /**
- * 결제 CSV 파싱 메인 함수
+ * Main payment CSV parsing function
  */
 export function parsePaymentCSV(csvContent: string): PaymentCSVParseResult {
-  // UTF-8 BOM 제거
+  // Strip the UTF-8 BOM
   let content = csvContent;
   if (content.charCodeAt(0) === 0xfeff) {
     content = content.substring(1);
@@ -554,40 +561,40 @@ export function parsePaymentCSV(csvContent: string): PaymentCSVParseResult {
   if (!content.trim()) {
     return {
       success: false,
-      error: "빈 CSV 파일입니다",
+      error: "The CSV file is empty",
     };
   }
 
-  // 헤더 행 자동 탐색 (은행 명세서 등 상단 비데이터 행 스킵)
+  // Auto-detect the header row (skip non-data rows at the top, e.g. bank statements)
   const lines = content.split(/\r?\n/);
   const headerRowIndex = findHeaderRow(lines);
   const effectiveContent =
     headerRowIndex > 0 ? lines.slice(headerRowIndex).join("\n") : content;
 
-  // 기존 CSV 파서 사용
+  // Reuse the existing CSV parser
   const rows = parseCSV(effectiveContent);
 
   if (rows.length === 0) {
     return {
       success: false,
-      error: "데이터가 없습니다",
+      error: "No data available",
     };
   }
 
-  // 헤더 추출 (첫 번째 행의 키들)
+  // Extract headers (keys of the first row)
   const headers = Object.keys(rows[0]);
 
-  // 형식 감지
+  // Detect format
   const format = detectCSVFormat(headers);
 
   if (format === "UNKNOWN") {
     return {
       success: false,
-      error: "지원하지 않는 CSV 형식입니다",
+      error: "Unsupported CSV format",
     };
   }
 
-  // 데이터 정규화 및 유효성 검증
+  // Normalise and validate data
   const data: PaymentCSVRow[] = [];
   const errors: PaymentValidationError[] = [];
 
@@ -597,7 +604,7 @@ export function parsePaymentCSV(csvContent: string): PaymentCSVParseResult {
     const normalized = normalizePaymentData(row, format);
 
     if (!normalized) {
-      // 필수 필드 누락 체크
+      // Check for missing required fields
       const headersList = Object.keys(row);
       let dateField: string | undefined;
       let merchantField: string | undefined;
@@ -606,7 +613,7 @@ export function parsePaymentCSV(csvContent: string): PaymentCSVParseResult {
         dateField = matchHeader(headersList, CARD_COMPANY_HEADERS.date);
         merchantField = matchHeader(headersList, CARD_COMPANY_HEADERS.merchant);
       } else if (isERPFormat(format)) {
-        // ERP 계열 포맷은 벤더별 헤더를 사용하되, 범용 ERP 헤더로 폴백
+        // ERP formats use vendor-specific headers, falling back to generic ERP headers
         if (format === "ERP_DUZON_ICUBE" || format === "ERP_DUZON_WEHAGO") {
           dateField = matchHeader(headersList, ERP_DUZON_ICUBE_HEADERS.date);
           merchantField = matchHeader(
@@ -638,7 +645,7 @@ export function parsePaymentCSV(csvContent: string): PaymentCSVParseResult {
         errors.push({
           row: rowNum,
           field: "date",
-          message: `${rowNum}행: 유효하지 않은 날짜 형식입니다`,
+          message: `Row ${rowNum}: Invalid date format`,
         });
       }
 
@@ -646,7 +653,7 @@ export function parsePaymentCSV(csvContent: string): PaymentCSVParseResult {
         errors.push({
           row: rowNum,
           field: "merchant",
-          message: `${rowNum}행: 가맹점명이 필요합니다`,
+          message: `Row ${rowNum}: Merchant name is required`,
         });
       }
 

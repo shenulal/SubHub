@@ -1,6 +1,6 @@
 // src/app/(auth)/invite/[token]/page.test.tsx
 import { acceptInvitation } from "@/actions/invitations";
-import messages from "@/i18n/messages/ko.json";
+import messages from "@/i18n/messages/en.json";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import InviteAcceptPage from "./page";
@@ -35,10 +35,10 @@ vi.mock("next-intl/server", () => ({
 }));
 
 describe("InviteAcceptPage", () => {
-  it("성공 메시지를 표시해야 한다", async () => {
+  it("shows the success message", async () => {
     vi.mocked(acceptInvitation).mockResolvedValue({
       success: true,
-      message: "초대가 수락되었습니다",
+      message: "The invitation has been accepted",
     });
 
     const page = await InviteAcceptPage({
@@ -46,13 +46,13 @@ describe("InviteAcceptPage", () => {
     });
     render(page);
 
-    expect(screen.getByText(/초대를 수락했습니다/)).toBeInTheDocument();
+    expect(screen.getByText(/Invitation accepted/)).toBeInTheDocument();
   });
 
-  it("실패 시 에러 메시지를 표시해야 한다", async () => {
+  it("shows the error message on failure", async () => {
     vi.mocked(acceptInvitation).mockResolvedValue({
       success: false,
-      message: "초대가 만료되었습니다",
+      message: "The invitation has expired",
     });
 
     const page = await InviteAcceptPage({
@@ -60,7 +60,7 @@ describe("InviteAcceptPage", () => {
     });
     render(page);
 
-    expect(screen.getByText(/초대가 만료되었습니다/)).toBeInTheDocument();
-    expect(screen.getByText(/로그인 페이지로 이동/)).toBeInTheDocument();
+    expect(screen.getByText(/The invitation has expired/)).toBeInTheDocument();
+    expect(screen.getByText(/Go to login/)).toBeInTheDocument();
   });
 });

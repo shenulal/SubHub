@@ -6,13 +6,13 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * 🎯 목적: HoverCard Root 컴포넌트
- * 📝 주의사항: Radix UI HoverCard.Root primitive는 ref를 지원하지 않음
+ * 🎯 Purpose: HoverCard Root component
+ * 📝 Note: Radix UI HoverCard.Root primitive does not support ref
  */
 const HoverCard = HoverCardPrimitive.Root;
 
 /**
- * 🎯 목적: HoverCardTrigger 컴포넌트에 forwardRef 적용
+ * 🎯 Purpose: Apply forwardRef to the HoverCardTrigger component
  */
 const HoverCardTrigger = React.forwardRef<
   React.ElementRef<typeof HoverCardPrimitive.Trigger>,
@@ -29,8 +29,8 @@ const HoverCardTrigger = React.forwardRef<
 HoverCardTrigger.displayName = "HoverCardTrigger";
 
 /**
- * 🎯 목적: HoverCardContent 컴포넌트에 forwardRef 적용
- * 📝 주의사항: Portal 내부에서 렌더링, align/sideOffset props 지원
+ * 🎯 Purpose: Apply forwardRef to the HoverCardContent component
+ * 📝 Note: Renders inside a Portal; supports the align/sideOffset props
  */
 const HoverCardContent = React.forwardRef<
   React.ElementRef<typeof HoverCardPrimitive.Content>,

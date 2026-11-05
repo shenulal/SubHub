@@ -4,8 +4,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Suspense } from "react";
 
 export const metadata = {
-  title: "추천 앱 리스트 | SaaS Management Platform",
-  description: "AI 기반 SaaS 식별로 발견된 미등록 앱",
+  title: "Recommended Apps",
+  description:
+    "Unregistered apps discovered through AI-based SaaS identification",
 };
 
 function PageSkeleton() {
@@ -23,7 +24,7 @@ function PageSkeleton() {
 export default function RecommendedAppsPage() {
   return (
     <div className="space-y-6">
-      <h1 className="text-foreground text-xl font-medium">추천 앱 리스트</h1>
+      <h1 className="text-foreground text-xl font-medium">Recommended Apps</h1>
       <Suspense fallback={<PageSkeleton />}>
         <RecommendedAppsPageClient />
       </Suspense>

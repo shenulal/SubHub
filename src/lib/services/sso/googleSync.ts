@@ -1,7 +1,7 @@
 // src/lib/services/sso/googleSync.ts
 /**
- * Google Workspace 전체 동기화 서비스
- * Team (OU) 동기화 + User 동기화를 통합 실행
+ * Google Workspace full sync service
+ * Runs Team (OU) sync and User sync together
  */
 
 import { prisma } from "@/lib/db";
@@ -15,7 +15,7 @@ import { getTeamPathMap, syncTeamsFromGoogle } from "./teamSync";
 import { syncUsersFromGoogle } from "./userSync";
 
 /**
- * Integration 자격증명으로 GoogleWorkspaceService 생성
+ * Creates a GoogleWorkspaceService from the integration credentials
  */
 function createServiceFromCredentials(
   credentials: IntegrationCredentials
@@ -25,7 +25,7 @@ function createServiceFromCredentials(
     !credentials.privateKey ||
     !credentials.adminEmail
   ) {
-    throw new Error("Google Workspace 자격증명이 올바르지 않습니다");
+    throw new Error("Google Workspace credentials are invalid");
   }
 
   return new GoogleWorkspaceService({
@@ -36,8 +36,8 @@ function createServiceFromCredentials(
 }
 
 /**
- * Google Workspace 전체 동기화 실행
- * 순서: Team (OU) 동기화 → User 동기화 (Team 매핑 포함)
+ * Runs the full Google Workspace sync
+ * Order: Team (OU) sync → User sync (with team mapping)
  */
 export async function fullGoogleWorkspaceSync(
   integrationId: string
@@ -45,32 +45,30 @@ export async function fullGoogleWorkspaceSync(
   const startTime = Date.now();
   const errors: SyncError[] = [];
 
-  // 1. Integration 조회
+  // 1. Load the integration
   const integration = await prisma.integration.findUnique({
     where: { id: integrationId },
   });
 
   if (!integration) {
-    throw new Error(`Integration을 찾을 수 없습니다: ${integrationId}`);
+    throw new Error(`Integration not found: ${integrationId}`);
   }
 
   if (integration.type !== "GOOGLE_WORKSPACE") {
-    throw new Error(
-      `Google Workspace Integration이 아닙니다: ${integration.type}`
-    );
+    throw new Error(`Not a Google Workspace integration: ${integration.type}`);
   }
 
-  // 2. Google Service 생성
+  // 2. Create the Google service
   const credentials = integration.credentials as IntegrationCredentials;
   const googleService = createServiceFromCredentials(credentials);
 
-  // 3. 연결 테스트
+  // 3. Connection test
   const isConnected = await googleService.testConnection();
   if (!isConnected) {
-    throw new Error("Google Workspace 연결에 실패했습니다");
+    throw new Error("Failed to connect to Google Workspace");
   }
 
-  // 4. Team (OU) 동기화
+  // 4. Team (OU) sync
   const teamResult = await syncTeamsFromGoogle(
     integration,
     googleService,
@@ -81,10 +79,10 @@ export async function fullGoogleWorkspaceSync(
     errors.push(...teamResult.errors);
   }
 
-  // 5. Team 매핑 조회 (User 동기화에 사용)
+  // 5. Load the team mapping (used for user sync)
   const teamMap = await getTeamPathMap(integration.organizationId);
 
-  // 6. User 동기화 (Team 매핑 포함)
+  // 6. User sync (with team mapping)
   const userResult = await syncUsersFromGoogle(
     integration,
     googleService,
@@ -100,7 +98,7 @@ export async function fullGoogleWorkspaceSync(
     errors.push(...userResult.errors);
   }
 
-  // 7. Integration 상태 업데이트
+  // 7. Update the integration status
   await prisma.integration.update({
     where: { id: integrationId },
     data: {
@@ -120,7 +118,7 @@ export async function fullGoogleWorkspaceSync(
 }
 
 /**
- * 특정 조직의 Google Workspace 연동 상태 확인
+ * Checks an organization's Google Workspace integration status
  */
 export async function checkGoogleWorkspaceConnection(
   organizationId: string

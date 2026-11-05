@@ -1,6 +1,6 @@
 /**
- * JSDOM에서는 HTMLFormElement.requestSubmit이 미구현이므로
- * 테스트/스토리북에서 폼 submit 호출 시 에러를 방지하기 위한 폴리필.
+ * JSDOM does not implement HTMLFormElement.requestSubmit, so this polyfill
+ * prevents errors when tests/Storybook submit a form.
  */
 export function applyRequestSubmitPolyfill() {
   if (typeof HTMLFormElement === "undefined") return;

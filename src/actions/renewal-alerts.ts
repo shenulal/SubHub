@@ -30,7 +30,7 @@ interface RenewalAlertWithSubscription {
     id: string;
     app: { name: string };
     renewalDate: Date | null;
-    amount: number | { toNumber: () => number }; // Prisma Decimal 호환
+    amount: number | { toNumber: () => number }; // Prisma Decimal compatible
     currency: string;
   };
 }
@@ -41,7 +41,7 @@ interface GetRenewalAlertsOptions {
 }
 
 /**
- * 갱신 알림 목록 조회
+ * List renewal alerts
  */
 export async function getRenewalAlerts(
   options: GetRenewalAlertsOptions = {}
@@ -91,7 +91,7 @@ interface CreateRenewalAlertInput {
 }
 
 /**
- * 갱신 알림 생성
+ * Create a renewal alert
  */
 async function _createRenewalAlert(
   input: CreateRenewalAlertInput
@@ -99,18 +99,18 @@ async function _createRenewalAlert(
   try {
     const session = await getCachedSession();
     if (!session?.user?.organizationId) {
-      return { success: false, message: "인증이 필요합니다" };
+      return { success: false, message: "Authentication required" };
     }
 
     const organizationId = session.user.organizationId;
 
-    // 구독 존재 확인
+    // Verify the subscription exists
     const subscription = await prisma.subscription.findFirst({
       where: { id: input.subscriptionId, organizationId },
     });
 
     if (!subscription) {
-      return { success: false, message: "구독을 찾을 수 없습니다" };
+      return { success: false, message: "Subscription not found" };
     }
 
     const alert = await prisma.renewalAlert.create({
@@ -126,11 +126,11 @@ async function _createRenewalAlert(
 
     return { success: true, data: { id: alert.id } };
   } catch (error) {
-    logger.error({ err: error }, "갱신 알림 생성 오류");
+    logger.error({ err: error }, "Renewal alert creation error");
     if (isRedirectError(error)) throw error;
     return {
       success: false,
-      message: "갱신 알림 생성 중 오류가 발생했습니다",
+      message: "An error occurred while creating the renewal alert",
     };
   }
 }
@@ -140,7 +140,7 @@ export const createRenewalAlert = withLogging(
 );
 
 /**
- * 알림을 발송 완료로 표시
+ * Mark an alert as sent
  */
 async function _markAlertAsSent(alertId: string): Promise<ActionState> {
   try {
@@ -152,7 +152,7 @@ async function _markAlertAsSent(alertId: string): Promise<ActionState> {
     });
 
     if (!alert || alert.subscription.organizationId !== organizationId) {
-      return { success: false, message: "알림을 찾을 수 없습니다" };
+      return { success: false, message: "Alert not found" };
     }
 
     await prisma.renewalAlert.update({
@@ -164,25 +164,25 @@ async function _markAlertAsSent(alertId: string): Promise<ActionState> {
 
     return { success: true };
   } catch (error) {
-    logger.error({ err: error }, "알림 발송 상태 업데이트 오류");
+    logger.error({ err: error }, "Alert send-status update error");
     if (isRedirectError(error)) throw error;
     return {
       success: false,
-      message: "알림 발송 상태 업데이트 중 오류가 발생했습니다",
+      message: "An error occurred while updating the alert send status",
     };
   }
 }
 export const markAlertAsSent = withLogging("markAlertAsSent", _markAlertAsSent);
 
 /**
- * 갱신 알림 삭제
+ * Delete a renewal alert
  */
 async function _deleteRenewalAlert(alertId: string): Promise<ActionState> {
   try {
     const { organizationId, role } = await requireOrganization();
 
     if (role !== "ADMIN") {
-      return { success: false, message: "관리자 권한이 필요합니다" };
+      return { success: false, message: "Admin permission required" };
     }
 
     const alert = await prisma.renewalAlert.findFirst({
@@ -191,7 +191,7 @@ async function _deleteRenewalAlert(alertId: string): Promise<ActionState> {
     });
 
     if (!alert || alert.subscription.organizationId !== organizationId) {
-      return { success: false, message: "알림을 찾을 수 없습니다" };
+      return { success: false, message: "Alert not found" };
     }
 
     await prisma.renewalAlert.delete({ where: { id: alertId } });
@@ -200,11 +200,11 @@ async function _deleteRenewalAlert(alertId: string): Promise<ActionState> {
 
     return { success: true };
   } catch (error) {
-    logger.error({ err: error }, "갱신 알림 삭제 오류");
+    logger.error({ err: error }, "Renewal alert deletion error");
     if (isRedirectError(error)) throw error;
     return {
       success: false,
-      message: "갱신 알림 삭제 중 오류가 발생했습니다",
+      message: "An error occurred while deleting the renewal alert",
     };
   }
 }
@@ -214,8 +214,8 @@ export const deleteRenewalAlert = withLogging(
 );
 
 /**
- * 갱신 알림 자동 생성
- * 활성 구독의 갱신 설정에 따라 알림을 자동으로 생성합니다.
+ * Auto-generate renewal alerts
+ * Creates alerts automatically based on the renewal settings of active subscriptions.
  */
 async function _generateRenewalAlerts(): Promise<
   ActionState<{ created: number }>
@@ -224,12 +224,12 @@ async function _generateRenewalAlerts(): Promise<
     const { organizationId, role } = await requireOrganization();
 
     if (role !== "ADMIN") {
-      return { success: false, message: "관리자 권한이 필요합니다" };
+      return { success: false, message: "Admin permission required" };
     }
 
     const now = new Date();
 
-    // 활성 구독 중 갱신일이 설정된 것들 조회
+    // Fetch active subscriptions with a renewal date
     const subscriptions = await prisma.subscription.findMany({
       where: {
         organizationId,
@@ -256,7 +256,7 @@ async function _generateRenewalAlerts(): Promise<
         subscription.renewalAlerts.map((a) => a.alertType)
       );
 
-      // 30일 전 알림
+      // 30-day alert
       if (subscription.renewalAlert30 && !existingTypes.has("DAYS_30")) {
         const scheduledFor = new Date(subscription.renewalDate);
         scheduledFor.setDate(scheduledFor.getDate() - 30);
@@ -269,7 +269,7 @@ async function _generateRenewalAlerts(): Promise<
         }
       }
 
-      // 60일 전 알림
+      // 60-day alert
       if (subscription.renewalAlert60 && !existingTypes.has("DAYS_60")) {
         const scheduledFor = new Date(subscription.renewalDate);
         scheduledFor.setDate(scheduledFor.getDate() - 60);
@@ -282,7 +282,7 @@ async function _generateRenewalAlerts(): Promise<
         }
       }
 
-      // 90일 전 알림
+      // 90-day alert
       if (subscription.renewalAlert90 && !existingTypes.has("DAYS_90")) {
         const scheduledFor = new Date(subscription.renewalDate);
         scheduledFor.setDate(scheduledFor.getDate() - 90);
@@ -307,11 +307,11 @@ async function _generateRenewalAlerts(): Promise<
 
     return { success: true, data: { created: alertsToCreate.length } };
   } catch (error) {
-    logger.error({ err: error }, "갱신 알림 자동 생성 오류");
+    logger.error({ err: error }, "Renewal alert auto-generation error");
     if (isRedirectError(error)) throw error;
     return {
       success: false,
-      message: "갱신 알림 자동 생성 중 오류가 발생했습니다",
+      message: "An error occurred while auto-generating renewal alerts",
     };
   }
 }

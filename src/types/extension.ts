@@ -1,5 +1,5 @@
 // src/types/extension.ts
-// Extension 관련 TypeScript 타입 및 Zod 검증 스키마
+// Extension TypeScript types and Zod validation schemas
 
 import type { Prisma } from "@prisma/client";
 import { z } from "zod";
@@ -7,7 +7,7 @@ import { z } from "zod";
 // ==================== Whitelist Types ====================
 
 /**
- * Extension Whitelist 항목
+ * Extension whitelist entry
  */
 export type ExtensionWhitelistItem = Prisma.ExtensionWhitelistGetPayload<{
   select: {
@@ -23,12 +23,12 @@ export type ExtensionWhitelistItem = Prisma.ExtensionWhitelistGetPayload<{
 }>;
 
 /**
- * Extension Whitelist 상세 (현재는 Item과 동일)
+ * Extension whitelist detail (currently the same as Item)
  */
 export type ExtensionWhitelistDetail = ExtensionWhitelistItem;
 
 /**
- * Whitelist 생성 입력
+ * Whitelist create input
  */
 export type CreateWhitelistInput = {
   pattern: string;
@@ -37,7 +37,7 @@ export type CreateWhitelistInput = {
 };
 
 /**
- * Whitelist 수정 입력
+ * Whitelist update input
  */
 export type UpdateWhitelistInput = Partial<CreateWhitelistInput> & {
   enabled?: boolean;
@@ -46,7 +46,7 @@ export type UpdateWhitelistInput = Partial<CreateWhitelistInput> & {
 // ==================== Blacklist Types ====================
 
 /**
- * Extension Blacklist 항목
+ * Extension blacklist entry
  */
 export type ExtensionBlacklistItem = Prisma.ExtensionBlacklistGetPayload<{
   select: {
@@ -62,12 +62,12 @@ export type ExtensionBlacklistItem = Prisma.ExtensionBlacklistGetPayload<{
 }>;
 
 /**
- * Extension Blacklist 상세 (현재는 Item과 동일)
+ * Extension blacklist detail (currently the same as Item)
  */
 export type ExtensionBlacklistDetail = ExtensionBlacklistItem;
 
 /**
- * Blacklist 생성 입력
+ * Blacklist create input
  */
 export type CreateBlacklistInput = {
   pattern: string;
@@ -76,7 +76,7 @@ export type CreateBlacklistInput = {
 };
 
 /**
- * Blacklist 수정 입력
+ * Blacklist update input
  */
 export type UpdateBlacklistInput = Partial<CreateBlacklistInput> & {
   enabled?: boolean;
@@ -85,7 +85,7 @@ export type UpdateBlacklistInput = Partial<CreateBlacklistInput> & {
 // ==================== Config Types ====================
 
 /**
- * Extension Config 항목
+ * Extension config entry
  */
 export type ExtensionConfigItem = Prisma.ExtensionConfigGetPayload<{
   select: {
@@ -103,7 +103,7 @@ export type ExtensionConfigItem = Prisma.ExtensionConfigGetPayload<{
 }>;
 
 /**
- * Config 수정 입력
+ * Config update input
  */
 export type UpdateConfigInput = {
   configKey: string;
@@ -113,7 +113,7 @@ export type UpdateConfigInput = {
 // ==================== Build Types ====================
 
 /**
- * Extension Build 항목
+ * Extension build entry
  */
 export type ExtensionBuildItem = Prisma.ExtensionBuildGetPayload<{
   select: {
@@ -134,7 +134,7 @@ export type ExtensionBuildItem = Prisma.ExtensionBuildGetPayload<{
 }>;
 
 /**
- * Build 트리거 입력
+ * Build trigger input
  */
 export type TriggerBuildInput = {
   platform: "CHROME" | "WINDOWS_EXE" | "WINDOWS_MSI" | "MAC_PKG" | "MAC_DMG";
@@ -143,7 +143,7 @@ export type TriggerBuildInput = {
 // ==================== Pagination Types ====================
 
 /**
- * 페이지네이션 응답
+ * Paginated response
  */
 export type PaginatedResponse<T> = {
   items: T[];
@@ -154,7 +154,7 @@ export type PaginatedResponse<T> = {
 };
 
 /**
- * 페이지네이션 파라미터
+ * Pagination parameters
  */
 export type PaginationParams = {
   page?: number;
@@ -164,16 +164,16 @@ export type PaginationParams = {
 // ==================== Zod Schemas ====================
 
 /**
- * Whitelist 생성 입력 검증 스키마
+ * Whitelist create input validation schema
  */
 export const createWhitelistSchema = z.object({
-  pattern: z.string().min(1, "도메인 패턴을 입력하세요").max(255),
-  name: z.string().min(1, "이름을 입력하세요").max(100),
+  pattern: z.string().min(1, "Please enter a domain pattern").max(255),
+  name: z.string().min(1, "Please enter a name").max(100),
   source: z.enum(["MANUAL", "GOOGLE_SYNC", "ADMIN_IMPORT"]).optional(),
 });
 
 /**
- * Whitelist 수정 입력 검증 스키마
+ * Whitelist update input validation schema
  */
 export const updateWhitelistSchema = z.object({
   pattern: z.string().min(1).max(255).optional(),
@@ -182,16 +182,16 @@ export const updateWhitelistSchema = z.object({
 });
 
 /**
- * Blacklist 생성 입력 검증 스키마
+ * Blacklist create input validation schema
  */
 export const createBlacklistSchema = z.object({
-  pattern: z.string().min(1, "도메인 패턴을 입력하세요").max(255),
-  name: z.string().min(1, "이름을 입력하세요").max(100),
+  pattern: z.string().min(1, "Please enter a domain pattern").max(255),
+  name: z.string().min(1, "Please enter a name").max(100),
   reason: z.string().max(500).optional(),
 });
 
 /**
- * Blacklist 수정 입력 검증 스키마
+ * Blacklist update input validation schema
  */
 export const updateBlacklistSchema = z.object({
   pattern: z.string().min(1).max(255).optional(),
@@ -201,7 +201,7 @@ export const updateBlacklistSchema = z.object({
 });
 
 /**
- * Config 수정 입력 검증 스키마
+ * Config update input validation schema
  */
 export const updateConfigSchema = z.object({
   configKey: z.string().min(1),
@@ -209,7 +209,7 @@ export const updateConfigSchema = z.object({
 });
 
 /**
- * Build 트리거 입력 검증 스키마
+ * Build trigger input validation schema
  */
 export const triggerBuildSchema = z.object({
   platform: z.enum([
@@ -224,7 +224,7 @@ export const triggerBuildSchema = z.object({
 // ==================== Usage Types ====================
 
 /**
- * Extension Usage 항목 (시간 추적용)
+ * Extension usage entry (for time tracking)
  */
 export type ExtensionUsageItem = Prisma.ExtensionUsageGetPayload<{
   select: {
@@ -241,12 +241,12 @@ export type ExtensionUsageItem = Prisma.ExtensionUsageGetPayload<{
 }>;
 
 /**
- * Usage Analytics 기간
+ * Usage analytics period
  */
 export type UsageAnalyticsPeriod = "today" | "week" | "month";
 
 /**
- * Usage Analytics 도메인별 데이터 (로그인 기반)
+ * Usage analytics per-domain data (login-based)
  */
 export type DomainLoginItem = {
   domain: string;
@@ -256,7 +256,7 @@ export type DomainLoginItem = {
 };
 
 /**
- * Usage Analytics 데이터 (로그인 기반)
+ * Usage analytics data (login-based)
  */
 export type UsageAnalyticsData = {
   period: UsageAnalyticsPeriod;
@@ -267,7 +267,7 @@ export type UsageAnalyticsData = {
 };
 
 /**
- * 로그인 이벤트 상세 (도메인별 조회용)
+ * Login event detail (for per-domain lookup)
  */
 export type LoginEventDetail = {
   id: string;
@@ -281,7 +281,7 @@ export type LoginEventDetail = {
 };
 
 /**
- * 도메인 상세 응답
+ * Domain detail response
  */
 export type DomainDetailData = {
   domain: string;
@@ -294,7 +294,7 @@ export type DomainDetailData = {
 // ==================== Device Types ====================
 
 /**
- * Extension Device 항목
+ * Extension device entry
  */
 export type ExtensionDeviceItem = Prisma.ExtensionDeviceGetPayload<{
   select: {
@@ -313,7 +313,7 @@ export type ExtensionDeviceItem = Prisma.ExtensionDeviceGetPayload<{
 }>;
 
 /**
- * Extension Device 상세 (User 포함)
+ * Extension device detail (including User)
  */
 export type ExtensionDeviceDetail = Prisma.ExtensionDeviceGetPayload<{
   select: {
@@ -339,14 +339,14 @@ export type ExtensionDeviceDetail = Prisma.ExtensionDeviceGetPayload<{
 }>;
 
 /**
- * Device 상태 업데이트 입력
+ * Device status update input
  */
 export type UpdateDeviceStatusInput = {
   status: "APPROVED" | "REVOKED";
 };
 
 /**
- * Device 상태 업데이트 검증 스키마
+ * Device status update validation schema
  */
 export const updateDeviceStatusSchema = z.object({
   status: z.enum(["APPROVED", "REVOKED"]),
@@ -355,7 +355,7 @@ export const updateDeviceStatusSchema = z.object({
 // ==================== Dashboard Types ====================
 
 /**
- * Sync 상태
+ * Sync status
  */
 export type SyncStatusItem = {
   lastSync: Date | null;
@@ -363,7 +363,7 @@ export type SyncStatusItem = {
 };
 
 /**
- * Extension Dashboard 통계
+ * Extension dashboard statistics
  */
 export type ExtensionDashboardStats = {
   activeDevices: number;

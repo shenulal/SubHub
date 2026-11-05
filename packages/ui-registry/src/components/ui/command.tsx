@@ -14,9 +14,9 @@ import {
 import { cn } from "@/lib/utils";
 
 /**
- * 🎯 목적: Command 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: cmdk의 Command primitive 사용
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the Command component for React 18/19 compatibility
+ * 📝 Note: Uses the cmdk Command primitive
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const Command = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive>,
@@ -37,9 +37,9 @@ const Command = React.forwardRef<
 Command.displayName = "Command";
 
 /**
- * 🎯 목적: CommandDialog 컴포넌트 (Dialog wrapper)
- * 📝 주의사항: Dialog는 Root primitive이므로 ref를 지원하지 않음
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support 검토 (ref 미지원 확인)
+ * 🎯 Purpose: CommandDialog component (Dialog wrapper)
+ * 📝 Note: Dialog is a Root primitive, so it does not support ref
+ * 🔄 History: 2025-10-11 - Reviewed for React 18/19 dual support (confirmed ref is not supported)
  */
 function CommandDialog({
   title = "Command Palette",
@@ -73,9 +73,9 @@ function CommandDialog({
 }
 
 /**
- * 🎯 목적: CommandInput 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: SearchIcon을 포함한 wrapper div를 사용, ref는 wrapper div로 전달
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the CommandInput component for React 18/19 compatibility
+ * 📝 Note: Uses a wrapper div containing the SearchIcon; the ref is forwarded to the wrapper div
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const CommandInput = React.forwardRef<
   HTMLDivElement,
@@ -102,9 +102,9 @@ const CommandInput = React.forwardRef<
 CommandInput.displayName = "CommandInput";
 
 /**
- * 🎯 목적: CommandList 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: cmdk의 List primitive 사용
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the CommandList component for React 18/19 compatibility
+ * 📝 Note: Uses the cmdk List primitive
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const CommandList = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive.List>,
@@ -125,9 +125,9 @@ const CommandList = React.forwardRef<
 CommandList.displayName = "CommandList";
 
 /**
- * 🎯 목적: CommandEmpty 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: cmdk의 Empty primitive 사용
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the CommandEmpty component for React 18/19 compatibility
+ * 📝 Note: Uses the cmdk Empty primitive
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const CommandEmpty = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive.Empty>,
@@ -145,9 +145,9 @@ const CommandEmpty = React.forwardRef<
 CommandEmpty.displayName = "CommandEmpty";
 
 /**
- * 🎯 목적: CommandGroup 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: cmdk의 Group primitive 사용
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the CommandGroup component for React 18/19 compatibility
+ * 📝 Note: Uses the cmdk Group primitive
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const CommandGroup = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive.Group>,
@@ -168,9 +168,9 @@ const CommandGroup = React.forwardRef<
 CommandGroup.displayName = "CommandGroup";
 
 /**
- * 🎯 목적: CommandSeparator 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: cmdk의 Separator primitive 사용
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the CommandSeparator component for React 18/19 compatibility
+ * 📝 Note: Uses the cmdk Separator primitive
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const CommandSeparator = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive.Separator>,
@@ -188,9 +188,9 @@ const CommandSeparator = React.forwardRef<
 CommandSeparator.displayName = "CommandSeparator";
 
 /**
- * 🎯 목적: CommandItem 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: cmdk의 Item primitive 사용
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the CommandItem component for React 18/19 compatibility
+ * 📝 Note: Uses the cmdk Item primitive
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const CommandItem = React.forwardRef<
   React.ElementRef<typeof CommandPrimitive.Item>,
@@ -211,9 +211,9 @@ const CommandItem = React.forwardRef<
 CommandItem.displayName = "CommandItem";
 
 /**
- * 🎯 목적: CommandShortcut 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: HTML span 요소 사용
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the CommandShortcut component for React 18/19 compatibility
+ * 📝 Note: Uses an HTML span element
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const CommandShortcut = React.forwardRef<
   HTMLSpanElement,

@@ -7,9 +7,9 @@ import * as ResizablePrimitive from "react-resizable-panels";
 import { cn } from "@/lib/utils";
 
 /**
- * 🎯 목적: ResizablePanelGroup 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: react-resizable-panels의 PanelGroup 사용, imperative API ref 지원
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the ResizablePanelGroup component for React 18/19 compatibility
+ * 📝 Note: Uses react-resizable-panels' PanelGroup; supports the imperative API ref
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const ResizablePanelGroup = React.forwardRef<
   React.ElementRef<typeof ResizablePrimitive.PanelGroup>,
@@ -30,9 +30,9 @@ const ResizablePanelGroup = React.forwardRef<
 ResizablePanelGroup.displayName = "ResizablePanelGroup";
 
 /**
- * 🎯 목적: ResizablePanel 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: react-resizable-panels의 Panel 사용, imperative API ref 지원
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the ResizablePanel component for React 18/19 compatibility
+ * 📝 Note: Uses react-resizable-panels' Panel; supports the imperative API ref
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const ResizablePanel = React.forwardRef<
   React.ElementRef<typeof ResizablePrimitive.Panel>,
@@ -49,9 +49,9 @@ const ResizablePanel = React.forwardRef<
 ResizablePanel.displayName = "ResizablePanel";
 
 /**
- * 🎯 목적: ResizableHandle 컴포넌트
- * 📝 주의사항: react-resizable-panels의 PanelResizeHandle은 ref를 지원하지 않음
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support 검토 (ref 미지원 확인)
+ * 🎯 Purpose: ResizableHandle component
+ * 📝 Note: react-resizable-panels' PanelResizeHandle does not support ref
+ * 🔄 History: 2025-10-11 - Reviewed for React 18/19 dual support (confirmed ref is not supported)
  */
 function ResizableHandle({
   withHandle,

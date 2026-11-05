@@ -12,29 +12,31 @@ import {
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "테넌트 설정 | Super Admin",
+  title: "Tenant Settings | Super Admin",
 };
 
 export default async function TenantSettingsPage() {
   const result = await getTenantInfo();
 
-  // 테넌트가 없는 경우 → 생성 폼 표시
+  // No tenant → show the creation form
   if (!result.success || !result.data) {
     return (
       <div className="space-y-6">
         <div className="space-y-1">
-          <h1 className="text-foreground text-2xl font-medium">테넌트 설정</h1>
+          <h1 className="text-foreground text-2xl font-medium">
+            Tenant Settings
+          </h1>
           <p className="text-muted-foreground text-[0.9375rem]">
-            조직의 기본 정보를 관리합니다.
+            Manage the basic information of your organization.
           </p>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>테넌트 생성</CardTitle>
+            <CardTitle>Create Tenant</CardTitle>
             <CardDescription>
-              아직 테넌트(조직)가 없습니다. 먼저 테넌트를 생성해주세요. 생성 후
-              관리자를 초대할 수 있습니다.
+              There is no tenant (organization) yet. Please create a tenant
+              first. Once it is created, you can invite administrators.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -50,54 +52,56 @@ export default async function TenantSettingsPage() {
   return (
     <div className="space-y-6">
       <div className="space-y-1">
-        <h1 className="text-foreground text-2xl font-medium">테넌트 설정</h1>
+        <h1 className="text-foreground text-2xl font-medium">
+          Tenant Settings
+        </h1>
         <p className="text-muted-foreground text-[0.9375rem]">
-          조직의 기본 정보를 관리합니다.
+          Manage the basic information of your organization.
         </p>
       </div>
 
-      {/* 기본 정보 카드 */}
+      {/* Basic information card */}
       <Card>
         <CardHeader>
-          <CardTitle>기본 정보</CardTitle>
+          <CardTitle>Basic Information</CardTitle>
           <CardDescription className="truncate">
-            테넌트 ID: <code className="font-mono text-xs">{tenant.id}</code>
+            Tenant ID: <code className="font-mono text-xs">{tenant.id}</code>
           </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 sm:grid-cols-3">
           <div className="bg-muted min-w-0 rounded-md p-4">
             <span className="text-muted-foreground text-xs tracking-wide uppercase">
-              총 사용자
+              Total users
             </span>
             <p className="text-foreground truncate text-lg font-medium tabular-nums">
-              {tenant.userCount.toLocaleString("ko-KR")}명
+              {tenant.userCount.toLocaleString("en-US")} users
             </p>
           </div>
           <div className="bg-muted min-w-0 rounded-md p-4">
             <span className="text-muted-foreground text-xs tracking-wide uppercase">
-              총 구독
+              Total subscriptions
             </span>
             <p className="text-foreground truncate text-lg font-medium tabular-nums">
-              {tenant.subscriptionCount.toLocaleString("ko-KR")}개
+              {tenant.subscriptionCount.toLocaleString("en-US")} subscriptions
             </p>
           </div>
           <div className="bg-muted min-w-0 rounded-md p-4">
             <span className="text-muted-foreground text-xs tracking-wide uppercase">
-              생성일
+              Created
             </span>
             <p className="text-foreground truncate text-lg font-medium tabular-nums">
-              {new Date(tenant.createdAt).toLocaleDateString("ko-KR")}
+              {new Date(tenant.createdAt).toLocaleDateString("en-US")}
             </p>
           </div>
         </CardContent>
       </Card>
 
-      {/* 수정 폼 */}
+      {/* Edit form */}
       <Card>
         <CardHeader>
-          <CardTitle>정보 수정</CardTitle>
+          <CardTitle>Edit Information</CardTitle>
           <CardDescription>
-            회사명, 도메인, 로고 URL을 수정할 수 있습니다.
+            You can edit the company name, domain and logo URL.
           </CardDescription>
         </CardHeader>
         <CardContent>

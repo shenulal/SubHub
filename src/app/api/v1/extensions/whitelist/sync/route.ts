@@ -1,8 +1,8 @@
 // src/app/api/v1/extensions/whitelist/sync/route.ts
 /**
  * Extension Whitelist Sync API
- * GET: 조직의 화이트리스트 도메인 조회
- * POST: 사용자 추가 도메인 동기화
+ * GET: fetch the organization's whitelisted domains
+ * POST: sync user-added domains
  */
 
 import { withExtensionAuth } from "@/lib/api/extension-auth";
@@ -14,7 +14,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 /**
  * GET /api/v1/extensions/whitelist/sync
- * 활성화된 화이트리스트 도메인 반환
+ * Returns active whitelisted domains
  */
 export const GET = withLogging(
   "ext:whitelist-sync",
@@ -40,8 +40,8 @@ export const GET = withLogging(
 
 /**
  * POST /api/v1/extensions/whitelist/sync
- * 사용자가 Extension에서 추가한 도메인 동기화
- * source: USER_EXTENSION으로 저장 (현재 스키마에서는 MANUAL로 대체)
+ * Sync domains the user added in the extension
+ * source: saved as USER_EXTENSION (replaced by MANUAL in the current schema)
  */
 export const POST = withLogging(
   "ext:whitelist-sync-post",
@@ -63,7 +63,7 @@ export const POST = withLogging(
 
       const { whitelist } = parseResult.data;
 
-      // 사용자 추가 도메인만 처리 (source가 'user'인 것)
+      // Process user-added domains only (source === 'user')
       const userDomains = whitelist.filter((d) => d.source === "user");
       let syncedCount = 0;
 
@@ -80,7 +80,7 @@ export const POST = withLogging(
             pattern: domain.pattern,
             name: domain.name,
             enabled: domain.enabled,
-            source: "MANUAL", // 스키마에서 USER_EXTENSION 미지원으로 MANUAL 사용
+            source: "MANUAL", // MANUAL is used because the schema does not support USER_EXTENSION
           },
           update: {
             name: domain.name,

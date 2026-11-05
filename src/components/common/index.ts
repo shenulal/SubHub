@@ -1,4 +1,4 @@
-// 공통 컴포넌트 내보내기
+// Common component exports
 export {
   BentoGrid,
   BentoGridItem,

@@ -1,5 +1,5 @@
 // src/types/extension.test.ts
-// RED Phase: TypeScript 타입과 Zod schema 검증 테스트
+// RED phase: TypeScript type and Zod schema validation tests
 import { describe, expect, it } from "vitest";
 import type {
   CreateBlacklistInput,

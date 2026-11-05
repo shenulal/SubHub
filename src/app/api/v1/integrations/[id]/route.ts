@@ -11,13 +11,13 @@ import { formatValidationError, uuidParamSchema } from "@/lib/validations/api";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
-// 상태 업데이트 스키마 (IntegrationStatus enum 값과 일치)
+// Status update schema (matches IntegrationStatus enum values)
 const updateStatusSchema = z.object({
   status: z.enum(["PENDING", "ACTIVE", "ERROR", "DISCONNECTED"]),
 });
 
 /**
- * 인증 검증 헬퍼
+ * Auth verification helper
  */
 async function requireAuth() {
   const session = await auth();
@@ -29,32 +29,32 @@ async function requireAuth() {
 
 /**
  * GET /api/v1/integrations/[id]
- * - 연동 상세 조회
+ * - Get integration details
  */
 export async function GET(_request: NextRequest, { params }: RouteContext) {
   const session = await requireAuth();
   if (!session) {
-    return NextResponse.json({ error: "인증이 필요합니다" }, { status: 401 });
+    return NextResponse.json(
+      { error: "Authentication required" },
+      { status: 401 }
+    );
   }
 
   const { id } = await params;
 
-  // ID 검증
+  // Validate ID
   const idResult = uuidParamSchema.safeParse(id);
   if (!idResult.success) {
-    return NextResponse.json(
-      { error: "잘못된 ID 형식입니다" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "Invalid ID format" }, { status: 400 });
   }
 
   const result = await getIntegration(id);
 
   if (!result.success) {
     const status =
-      result.message === "연동을 찾을 수 없습니다"
+      result.message === "Integration not found"
         ? 404
-        : result.message === "접근 권한이 없습니다"
+        : result.message === "You do not have access permission"
           ? 403
           : 400;
     return NextResponse.json({ error: result.message }, { status });
@@ -65,36 +65,36 @@ export async function GET(_request: NextRequest, { params }: RouteContext) {
 
 /**
  * PUT /api/v1/integrations/[id]
- * - 연동 상태 업데이트 (ADMIN만 가능)
+ * - Update integration status (ADMIN only)
  */
 export async function PUT(request: NextRequest, { params }: RouteContext) {
   const session = await requireAuth();
   if (!session) {
-    return NextResponse.json({ error: "인증이 필요합니다" }, { status: 401 });
+    return NextResponse.json(
+      { error: "Authentication required" },
+      { status: 401 }
+    );
   }
 
-  // ADMIN 권한 체크
+  // Check ADMIN permission
   if (session.user.role !== "ADMIN") {
     return NextResponse.json(
-      { error: "관리자 권한이 필요합니다" },
+      { error: "Admin permission required" },
       { status: 403 }
     );
   }
 
   const { id } = await params;
 
-  // ID 검증
+  // Validate ID
   const idResult = uuidParamSchema.safeParse(id);
   if (!idResult.success) {
-    return NextResponse.json(
-      { error: "잘못된 ID 형식입니다" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "Invalid ID format" }, { status: 400 });
   }
 
   const body = await request.json();
 
-  // 상태 검증
+  // Validate status
   const statusResult = updateStatusSchema.safeParse(body);
   if (!statusResult.success) {
     return NextResponse.json(formatValidationError(statusResult.error), {
@@ -112,31 +112,31 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
 
 /**
  * DELETE /api/v1/integrations/[id]
- * - 연동 삭제 (ADMIN만 가능)
+ * - Delete an integration (ADMIN only)
  */
 export async function DELETE(_request: NextRequest, { params }: RouteContext) {
   const session = await requireAuth();
   if (!session) {
-    return NextResponse.json({ error: "인증이 필요합니다" }, { status: 401 });
+    return NextResponse.json(
+      { error: "Authentication required" },
+      { status: 401 }
+    );
   }
 
-  // ADMIN 권한 체크
+  // Check ADMIN permission
   if (session.user.role !== "ADMIN") {
     return NextResponse.json(
-      { error: "관리자 권한이 필요합니다" },
+      { error: "Admin permission required" },
       { status: 403 }
     );
   }
 
   const { id } = await params;
 
-  // ID 검증
+  // Validate ID
   const idResult = uuidParamSchema.safeParse(id);
   if (!idResult.success) {
-    return NextResponse.json(
-      { error: "잘못된 ID 형식입니다" },
-      { status: 400 }
-    );
+    return NextResponse.json({ error: "Invalid ID format" }, { status: 400 });
   }
 
   const result = await deleteIntegration(id);

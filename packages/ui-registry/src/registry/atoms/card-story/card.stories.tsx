@@ -84,23 +84,23 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 /**
- * 기본 Card 컴포넌트입니다. Header, Content, Footer로 구성되어 정보를 그룹화하며,
- * 로그인 폼 예제처럼 관련 콘텐츠를 하나의 시각적 단위로 묶습니다. 대시보드나 목록 UI에 적합합니다.
+ * The default Card component. It groups information with a Header, Content and Footer,
+ * bundling related content into one visual unit, as in the login form example. Suited to dashboards and list UIs.
  */
 export const Default: Story = {
   render: () => <CardDemo />,
 };
 
 /**
- * Ref 사용 예제: Card에 ref를 전달하여 DOM 요소에 직접 접근합니다.
- * 이 예제는 ref를 통한 scrollIntoView 제어를 보여줍니다.
+ * Ref example: pass a ref to Card to access the DOM element directly.
+ * This example shows controlling scrollIntoView through the ref.
  */
 export const WithRef: Story = {
   parameters: {
     layout: "padded",
   },
   render: () => {
-    // 🎯 목적: HTMLDivElement에 대한 ref를 생성하여 scrollIntoView() 메서드 접근
+    // 🎯 Purpose: Create an HTMLDivElement ref to access the scrollIntoView() method
     const card1Ref = useRef<HTMLDivElement>(null);
     const card2Ref = useRef<HTMLDivElement>(null);
     const card3Ref = useRef<HTMLDivElement>(null);
@@ -191,14 +191,14 @@ export const WithRef: Story = {
     );
   },
   play: async ({ canvasElement }) => {
-    // 🎯 목적: play function을 통해 ref 동작을 자동으로 테스트
+    // 🎯 Purpose: Automatically test ref behavior via a play function
     const canvas = within(canvasElement);
     const button2 = canvas.getByRole("button", { name: "Scroll to Card 2" });
 
-    // "Scroll to Card 2" 버튼 클릭하여 스크롤 트리거
+    // Click "Scroll to Card 2" to trigger scrolling
     await userEvent.click(button2);
 
-    // Card 2가 뷰포트에 표시되는지 확인
+    // Verify Card 2 is visible in the viewport
     const card2 = canvas.getByText("Card 2");
     await expect(card2).toBeVisible();
   },

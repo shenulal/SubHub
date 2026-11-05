@@ -1,6 +1,6 @@
 # Test Quality Roadmap
 
-> Path to a healthy test suite for saaslens public releases.
+> Path to a healthy test suite for SubHub public releases.
 
 ## Current State (2026-04-17)
 

@@ -55,7 +55,7 @@ export function IntegrationSettingsForm({
         <CardTitle>{t("integrations.settings.title")}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
-        {/* 자동 동기화 */}
+        {/* Auto sync */}
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
             <Label htmlFor="autoSync">
@@ -76,7 +76,7 @@ export function IntegrationSettingsForm({
           />
         </div>
 
-        {/* 동기화 주기 */}
+        {/* Sync interval */}
         <div className="space-y-2">
           <Label htmlFor="syncInterval">
             {t("integrations.settings.syncInterval.label")}
@@ -109,7 +109,7 @@ export function IntegrationSettingsForm({
           </Select>
         </div>
 
-        {/* 사용자 동기화 */}
+        {/* User sync */}
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
             <Label htmlFor="syncUsers">
@@ -130,7 +130,7 @@ export function IntegrationSettingsForm({
           />
         </div>
 
-        {/* 앱 동기화 */}
+        {/* App sync */}
         <div className="flex items-center justify-between">
           <div className="space-y-0.5">
             <Label htmlFor="syncApps">
@@ -151,7 +151,7 @@ export function IntegrationSettingsForm({
           />
         </div>
 
-        {/* 저장 버튼 */}
+        {/* Save button */}
         <div className="flex justify-end">
           <Button onClick={handleSave} disabled={disabled || isPending}>
             {isPending

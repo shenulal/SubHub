@@ -10,7 +10,7 @@ import {
 
 describe("crypto", () => {
   beforeEach(() => {
-    // 테스트용 32자 암호화 키 설정
+    // Set a 32-character encryption key for tests
     vi.stubEnv("ENCRYPTION_KEY", "12345678901234567890123456789012");
   });
 
@@ -38,7 +38,7 @@ describe("crypto", () => {
     });
 
     it("should handle special characters", () => {
-      const text = "한글 테스트 🔐 !@#$%^&*()";
+      const text = "مرحبا Unicode test 🔐 !@#$%^&*()";
       const encrypted = encrypt(text);
       const decrypted = decrypt(encrypted);
 
@@ -77,23 +77,23 @@ describe("crypto", () => {
       const originalText = "Sensitive data";
       const encrypted = encrypt(originalText);
 
-      // 암호문 1바이트 변경 (마지막 문자 변경)
+      // Alter one byte of the ciphertext (change the last character)
       const tamperedChar =
         encrypted.slice(-1) === "0"
           ? "1"
           : String.fromCharCode(encrypted.charCodeAt(encrypted.length - 1) + 1);
       const tampered = encrypted.slice(0, -1) + tamperedChar;
 
-      // 위변조된 데이터 복호화 시 에러 발생 확인
+      // Decrypting tampered data must throw
       expect(() => decrypt(tampered)).toThrow();
     });
 
     it("should decrypt data encrypted with default authTagLength (regression test)", () => {
-      // 이 테스트는 Node.js 기본 authTagLength=16과의 호환성을 확인
-      // 수정 전 코드로 생성된 암호문도 수정 후 정상 복호화되어야 함
+      // Verifies compatibility with Node.js's default authTagLength=16
+      // Ciphertext produced by the pre-fix code must still decrypt after the fix
       const testCases = [
         "Hello, World!",
-        "한글 테스트 데이터",
+        "مرحبا multibyte test data",
         JSON.stringify({ cardNo: "1234567890123456", userId: "test" }),
       ];
 
@@ -166,9 +166,9 @@ describe("crypto", () => {
     });
 
     it("should handle short card numbers", () => {
-      // 8자리는 마스킹할 중간 부분이 없음
+      // 8 digits leave no middle part to mask
       expect(maskCardNumber("12345678")).toBe("12345678");
-      // 7자리 이하는 모두 마스킹
+      // 7 digits or fewer are fully masked
       expect(maskCardNumber("1234")).toBe("****");
     });
 

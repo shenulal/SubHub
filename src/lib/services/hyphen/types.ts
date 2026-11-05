@@ -4,13 +4,13 @@
  */
 
 /**
- * Hyphen API 타입 정의
- * 법인카드 조회 API (seq=55) 기준
+ * Hyphen API type definitions
+ * Based on the corporate card inquiry API (seq=55)
  */
 
-// ==================== 공통 타입 ====================
+// ==================== Common types ====================
 
-/** Hyphen API 공통 응답 */
+/** Hyphen API common response */
 export interface HyphenCommonResponse {
   userTrNo?: string;
   hyphenTrNo?: string;
@@ -19,132 +19,132 @@ export interface HyphenCommonResponse {
   errMsg?: string;
 }
 
-/** Hyphen API 응답 wrapper */
+/** Hyphen API response wrapper */
 export interface HyphenApiResponse<T> {
   common: HyphenCommonResponse;
   data: T;
 }
 
-/** 로그인 방식 */
+/** Login method */
 export type LoginMethod = "ID" | "CERT";
 
-/** 카드사 코드 */
+/** Card company code */
 export type CardCompanyCode =
-  | "001" // 신한카드
-  | "002" // 현대카드
-  | "003" // 삼성카드
-  | "004" // KB국민카드
-  | "005" // 롯데카드
-  | "006" // 하나카드
-  | "007" // 우리카드
-  | "008" // 농협카드
-  | "009" // 씨티카드
-  | "010" // BC카드
-  | "011" // 수협카드
-  | "012" // 광주카드
-  | "013" // 전북카드
-  | "014"; // 제주카드
+  | "001" // Shinhan Card
+  | "002" // Hyundai Card
+  | "003" // Samsung Card
+  | "004" // KB Kookmin Card
+  | "005" // Lotte Card
+  | "006" // Hana Card
+  | "007" // Woori Card
+  | "008" // NH Nonghyup Card
+  | "009" // Citi Card
+  | "010" // BC Card
+  | "011" // Suhyup Card
+  | "012" // Kwangju Bank Card
+  | "013" // Jeonbuk Bank Card
+  | "014"; // Jeju Bank Card
 
-/** 카드사 정보 */
+/** Card company display names */
 export const CARD_COMPANIES: Record<CardCompanyCode, string> = {
-  "001": "신한카드",
-  "002": "현대카드",
-  "003": "삼성카드",
-  "004": "KB국민카드",
-  "005": "롯데카드",
-  "006": "하나카드",
-  "007": "우리카드",
-  "008": "농협카드",
-  "009": "씨티카드",
-  "010": "BC카드",
-  "011": "수협카드",
-  "012": "광주카드",
-  "013": "전북카드",
-  "014": "제주카드",
+  "001": "Shinhan Card",
+  "002": "Hyundai Card",
+  "003": "Samsung Card",
+  "004": "KB Kookmin Card",
+  "005": "Lotte Card",
+  "006": "Hana Card",
+  "007": "Woori Card",
+  "008": "NH Nonghyup Card",
+  "009": "Citi Card",
+  "010": "BC Card",
+  "011": "Suhyup Card",
+  "012": "Kwangju Bank Card",
+  "013": "Jeonbuk Bank Card",
+  "014": "Jeju Bank Card",
 };
 
-// ==================== 인증 정보 타입 ====================
+// ==================== Credential types ====================
 
-/** ID 로그인 인증 정보 */
+/** ID login credentials */
 export interface IdLoginCredentials {
   loginMethod: "ID";
-  cardNo: string; // 원본 카드번호 (암호화 저장)
+  cardNo: string; // Original card number (stored encrypted)
   userId: string;
   userPw: string;
   bizNo?: string;
-  userIdx?: string; // 롯데카드용
+  userIdx?: string; // For Lotte Card
 }
 
-/** 인증서 로그인 인증 정보 */
+/** Certificate login credentials */
 export interface CertLoginCredentials {
   loginMethod: "CERT";
-  cardNo: string; // 원본 카드번호 (암호화 저장)
+  cardNo: string; // Original card number (stored encrypted)
   signCert: string;
   signPri: string;
   signPw: string;
   bizNo?: string;
-  userIdx?: string; // 롯데카드용
+  userIdx?: string; // For Lotte Card
 }
 
-/** 카드사 인증 정보 */
+/** Card company credentials */
 export type CardCredentials = IdLoginCredentials | CertLoginCredentials;
 
-// ==================== 승인내역 조회 ====================
+// ==================== Approval history inquiry ====================
 
-/** 승인내역 조회 요청 */
+/** Approval history request */
 export interface ApprovalRequest {
   cardCd: CardCompanyCode;
   cardNo: string;
   sdate: string; // YYYYMMDD
   edate: string; // YYYYMMDD
-  useArea?: "D" | "G" | "N"; // D:국내, G:해외, N:전체
-  svcOption?: "storeDetail"; // 가맹점 상세정보
-  viewMethod?: "standard" | "define"; // BC카드용
+  useArea?: "D" | "G" | "N"; // D: domestic, G: overseas, N: all
+  svcOption?: "storeDetail"; // Merchant details
+  viewMethod?: "standard" | "define"; // For BC Card
   cardNoFilter?: "Y" | "N";
 }
 
-/** 승인내역 항목 */
+/** Approval history item */
 export interface ApprovalItem {
-  useDt: string; // 사용일자 (YYYYMMDD)
-  useTm: string; // 사용시간 (HHmmss)
-  apprNo: string; // 승인번호
-  useCard: string; // 사용카드명
-  useStore: string; // 가맹점명
-  useAmt: string; // 사용금액
-  useExAmt?: string; // 해외사용금액
-  exCurCd?: string; // 해외통화코드
-  useDiv: string; // 사용구분 (승인/취소)
-  apprSt?: string; // 승인상태
-  instMon?: string; // 할부개월
-  discAmt?: string; // 할인금액
-  savePoint?: string; // 적립포인트
-  settleDt?: string; // 결제예정일
-  storeBizNo?: string; // 가맹점 사업자번호
-  storeCeo?: string; // 가맹점 대표자
-  storeAddr?: string; // 가맹점 주소
-  storeTel?: string; // 가맹점 전화번호
-  storeType?: string; // 가맹점 업종
-  addTax?: string; // 부가세
-  tip?: string; // 봉사료
-  taxType?: string; // 세금유형
-  storeSt?: string; // 가맹점 상태
-  storeNo?: string; // 가맹점 번호
-  givenCardNo?: string; // 부여카드번호
+  useDt: string; // Transaction date (YYYYMMDD)
+  useTm: string; // Transaction time (HHmmss)
+  apprNo: string; // Approval number
+  useCard: string; // Card name used
+  useStore: string; // Merchant name
+  useAmt: string; // Amount
+  useExAmt?: string; // Overseas amount
+  exCurCd?: string; // Overseas currency code
+  useDiv: string; // Transaction type (Korean API values: approval / cancellation)
+  apprSt?: string; // Approval status
+  instMon?: string; // Instalment months
+  discAmt?: string; // Discount amount
+  savePoint?: string; // Reward points
+  settleDt?: string; // Scheduled settlement date
+  storeBizNo?: string; // Merchant business registration number
+  storeCeo?: string; // Merchant owner
+  storeAddr?: string; // Merchant address
+  storeTel?: string; // Merchant phone number
+  storeType?: string; // Merchant business type
+  addTax?: string; // VAT
+  tip?: string; // Service charge
+  taxType?: string; // Tax type
+  storeSt?: string; // Merchant status
+  storeNo?: string; // Merchant number
+  givenCardNo?: string; // Assigned card number
 }
 
-/** 승인내역 조회 응답 데이터 */
+/** Approval history response data */
 export interface ApprovalData {
   totalAmt?: string;
   totalCnt?: string;
   list: ApprovalItem[];
 }
 
-/** 승인내역 조회 응답 */
+/** Approval history response */
 export type ApprovalResponse = HyphenApiResponse<ApprovalData>;
 
-// ==================== 매입내역 조회 ====================
+// ==================== Purchase (settlement) history inquiry ====================
 
-/** 매입내역 조회 요청 */
+/** Purchase history request */
 export interface PurchaseRequest {
   cardCd: CardCompanyCode;
   cardNo: string;
@@ -156,27 +156,27 @@ export interface PurchaseRequest {
   cardNoFilter?: "Y" | "N";
 }
 
-/** 매입내역 항목 */
+/** Purchase history item */
 export interface PurchaseItem extends ApprovalItem {
-  pchDt?: string; // 매입일자
-  pchNo?: string; // 매입번호
-  virtualYn?: string; // 가상카드 여부
-  exYn?: string; // 해외사용 여부
+  pchDt?: string; // Purchase date
+  pchNo?: string; // Purchase number
+  virtualYn?: string; // Virtual card flag
+  exYn?: string; // Overseas usage flag
 }
 
-/** 매입내역 조회 응답 데이터 */
+/** Purchase history response data */
 export interface PurchaseData {
   totalAmt?: string;
   totalCnt?: string;
   list: PurchaseItem[];
 }
 
-/** 매입내역 조회 응답 */
+/** Purchase history response */
 export type PurchaseResponse = HyphenApiResponse<PurchaseData>;
 
-// ==================== OAuth 토큰 ====================
+// ==================== OAuth token ====================
 
-/** OAuth 토큰 응답 */
+/** OAuth token response */
 export interface OAuthTokenResponse {
   access_token: string;
   token_type: string;
@@ -184,9 +184,9 @@ export interface OAuthTokenResponse {
   scope: string;
 }
 
-// ==================== 에러 타입 ====================
+// ==================== Error types ====================
 
-/** Hyphen API 에러 */
+/** Hyphen API error */
 export class HyphenApiError extends Error {
   constructor(
     public code: string,

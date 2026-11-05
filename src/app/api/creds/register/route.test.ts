@@ -14,7 +14,7 @@ vi.mock("@/lib/api/extension-auth", () => ({
     handler: (req: NextRequest, ctx: MockAuthContext) => Promise<Response>
   ) => {
     return async (request: NextRequest) => {
-      // 테스트용 mock auth context
+      // Mock auth context for tests
       const mockAuth = {
         organizationId: "org-123",
         deviceId: "device-123",

@@ -194,29 +194,29 @@ export const ShouldRenderResizablePanels: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    // 🎯 목적: Resizable 컴포넌트가 패널과 핸들을 올바르게 렌더링하고 초기 크기를 표시하는지 확인
+    // 🎯 Purpose: Verify the Resizable component renders panels and handles correctly and shows the initial sizes
 
-    // Resizable Group 존재 확인
+    // Verify the Resizable Group exists
     const resizableGroup = canvas.getByTestId("resizable-group");
     await expect(resizableGroup).toBeInTheDocument();
 
-    // 왼쪽 패널 확인
+    // Check the left panel
     const leftPanel = canvas.getByTestId("left-panel");
     await expect(leftPanel).toBeInTheDocument();
     const leftContent = canvas.getByTestId("left-content");
     await expect(leftContent).toHaveTextContent("Left Panel");
 
-    // 오른쪽 패널 확인
+    // Check the right panel
     const rightPanel = canvas.getByTestId("right-panel");
     await expect(rightPanel).toBeInTheDocument();
     const rightContent = canvas.getByTestId("right-content");
     await expect(rightContent).toHaveTextContent("Right Panel");
 
-    // Resize Handle 확인
+    // Check the Resize Handle
     const resizeHandle = canvas.getByTestId("resize-handle");
     await expect(resizeHandle).toBeInTheDocument();
 
-    // 초기 크기 표시 확인 (50% / 50%)
+    // Check the initial size display (50% / 50%)
     const sizeDisplay = canvas.getByTestId("size-display");
     await expect(sizeDisplay).toHaveTextContent(/Left: 50% \| Right: 50%/);
   },

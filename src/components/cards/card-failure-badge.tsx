@@ -24,7 +24,7 @@ export function CardFailureBadge({
         className="bg-destructive-muted text-destructive-muted-foreground gap-1"
       >
         <XCircle className="h-3 w-3" />
-        연속 {consecutiveFailCount}회 실패
+        {consecutiveFailCount} consecutive failures
       </Badge>
     );
   }
@@ -36,7 +36,7 @@ export function CardFailureBadge({
         className="bg-warning-muted text-warning-muted-foreground gap-1"
       >
         <AlertCircle className="h-3 w-3" />
-        오류
+        Error
       </Badge>
     );
   }
@@ -48,7 +48,7 @@ export function CardFailureBadge({
         className="bg-success-muted text-success-muted-foreground gap-1"
       >
         <CheckCircle className="h-3 w-3" />
-        동기화됨
+        Synced
       </Badge>
     );
   }
@@ -60,7 +60,7 @@ export function CardFailureBadge({
       className="gap-1"
     >
       <Clock className="h-3 w-3" />
-      미동기화
+      Not synced
     </Badge>
   );
 }

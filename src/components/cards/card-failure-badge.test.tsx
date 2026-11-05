@@ -70,7 +70,7 @@ describe("CardFailureBadge", () => {
     });
   });
 
-  describe("when no lastSyncAt (미동기화)", () => {
+  describe("when no lastSyncAt (not synced)", () => {
     it("should render secondary badge", () => {
       render(
         <CardFailureBadge

@@ -33,44 +33,44 @@ vi.mock("next/navigation", () => ({
 }));
 
 describe("updateOrganization", () => {
-  it("인증되지 않은 경우 /login으로 리다이렉트해야 한다", async () => {
+  it("redirects to /login when unauthenticated", async () => {
     vi.mocked(auth).mockResolvedValueOnce(null as never);
 
     const formData = new FormData();
-    formData.set("name", "조직");
+    formData.set("name", "Organization");
 
     await expect(updateOrganization(formData)).rejects.toThrow(
       "NEXT_REDIRECT:/login"
     );
   });
 
-  it("조직이 없으면 /onboarding으로 리다이렉트해야 한다", async () => {
+  it("redirects to /onboarding when there is no organization", async () => {
     vi.mocked(auth).mockResolvedValueOnce({
       user: { id: "user-1", organizationId: null, role: "ADMIN" },
     } as never);
 
     const formData = new FormData();
-    formData.set("name", "조직");
+    formData.set("name", "Organization");
 
     await expect(updateOrganization(formData)).rejects.toThrow(
       "NEXT_REDIRECT:/onboarding"
     );
   });
 
-  it("관리자가 아니면 실패 메시지를 반환해야 한다", async () => {
+  it("returns a failure message for a non-admin", async () => {
     vi.mocked(auth).mockResolvedValueOnce({
       user: { id: "user-1", organizationId: "org-1", role: "MEMBER" },
     } as never);
 
     const formData = new FormData();
-    formData.set("name", "조직");
+    formData.set("name", "Organization");
 
     const result = await updateOrganization(formData);
     expect(result.success).toBe(false);
-    expect(result.message).toBe("관리자만 조직 정보를 수정할 수 있습니다");
+    expect(result.message).toBe("Only admins can update organization details");
   });
 
-  it("조직명을 업데이트해야 한다", async () => {
+  it("updates the organization name", async () => {
     vi.mocked(auth).mockResolvedValueOnce({
       user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
     } as never);
@@ -79,14 +79,14 @@ describe("updateOrganization", () => {
       settings: {},
     } as never);
 
-    // domain 중복 체크용 mock
+    // Mock for the domain duplicate check
     vi.mocked(prisma.organization.findFirst).mockResolvedValueOnce(null);
 
     const formData = new FormData();
-    formData.set("name", "새 조직명");
+    formData.set("name", "New organization name");
     formData.set("domain", "example.com");
     formData.set("logoUrl", "https://example.com/logo.png");
-    formData.set("address", "서울시 강남구");
+    formData.set("address", "Business Bay, Dubai");
 
     const result = await updateOrganization(formData);
 
@@ -94,10 +94,10 @@ describe("updateOrganization", () => {
     expect(prisma.organization.update).toHaveBeenCalledWith({
       where: { id: "org-1" },
       data: {
-        name: "새 조직명",
+        name: "New organization name",
         domain: "example.com",
         logoUrl: "https://example.com/logo.png",
-        settings: expect.objectContaining({ address: "서울시 강남구" }),
+        settings: expect.objectContaining({ address: "Business Bay, Dubai" }),
       },
     });
     expect(revalidatePath).toHaveBeenCalledWith("/settings/organization");

@@ -15,9 +15,9 @@ const ToggleGroupContext = React.createContext<
 });
 
 /**
- * 🎯 목적: ToggleGroup 컴포넌트 (Radix UI Root primitive)
- * 📝 주의사항: Root primitive는 ref를 지원하지 않음, Context Provider 포함
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support 검토 (ref 미지원 확인)
+ * 🎯 Purpose: ToggleGroup component (Radix UI Root primitive)
+ * 📝 Note: The Root primitive does not support ref; includes a Context Provider
+ * 🔄 History: 2025-10-11 - Reviewed for React 18/19 dual support (confirmed ref is not supported)
  */
 function ToggleGroup({
   className,
@@ -46,9 +46,9 @@ function ToggleGroup({
 }
 
 /**
- * 🎯 목적: ToggleGroupItem 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: Radix UI Item primitive 사용, Context에서 variant와 size 상속
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the ToggleGroupItem component for React 18/19 compatibility
+ * 📝 Note: Uses the Radix UI Item primitive; inherits variant and size from Context
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const ToggleGroupItem = React.forwardRef<
   React.ElementRef<typeof ToggleGroupPrimitive.Item>,

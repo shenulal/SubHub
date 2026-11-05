@@ -1,17 +1,17 @@
 // src/lib/utils/domain-extractor.ts
 /**
- * URL에서 메인 도메인을 추출하는 유틸리티
- * 예: https://www.google.com/a/b/c → google.com
+ * Utility that extracts the main domain from a URL
+ * e.g. https://www.google.com/a/b/c → google.com
  */
 
 /**
- * URL에서 메인 도메인 추출
- * @param url - 분석할 URL
- * @returns 메인 도메인 (예: google.com) 또는 null
+ * Extract the main domain from a URL
+ * @param url - URL to analyse
+ * @returns main domain (e.g. google.com) or null
  */
 export function extractMainDomain(url: string): string | null {
   try {
-    // URL이 프로토콜 없이 시작하면 https:// 추가
+    // Prepend https:// when the URL has no protocol
     let normalizedUrl = url.trim();
     if (
       !normalizedUrl.startsWith("http://") &&
@@ -23,20 +23,20 @@ export function extractMainDomain(url: string): string | null {
     const urlObj = new URL(normalizedUrl);
     const hostname = urlObj.hostname.toLowerCase();
 
-    // IP 주소는 그대로 반환
+    // Return IP addresses as-is
     if (isIPAddress(hostname)) {
       return null;
     }
 
-    // localhost 또는 내부 도메인 제외
+    // Exclude localhost and internal domains
     if (isInternalDomain(hostname)) {
       return null;
     }
 
-    // www. 접두사 제거
+    // Strip the www. prefix
     let domain = hostname.startsWith("www.") ? hostname.substring(4) : hostname;
 
-    // 메인 도메인 추출 (서브도메인 제거)
+    // Extract the main domain (strip subdomains)
     domain = extractRegisteredDomain(domain);
 
     return domain || null;
@@ -46,9 +46,9 @@ export function extractMainDomain(url: string): string | null {
 }
 
 /**
- * URL에서 패턴용 와일드카드 도메인 생성
- * @param url - 분석할 URL
- * @returns 와일드카드 패턴 (예: *.google.com)
+ * Build a wildcard domain pattern from a URL
+ * @param url - URL to analyse
+ * @returns wildcard pattern (e.g. *.google.com)
  */
 export function extractWildcardPattern(url: string): string | null {
   const domain = extractMainDomain(url);
@@ -57,10 +57,10 @@ export function extractWildcardPattern(url: string): string | null {
 }
 
 /**
- * 도메인이 URL과 매칭되는지 확인 (와일드카드 패턴 지원)
- * @param pattern - 와일드카드 패턴 (예: *.google.com)
- * @param url - 검사할 URL
- * @returns 매칭 여부
+ * Check whether a domain matches a URL (supports wildcard patterns)
+ * @param pattern - wildcard pattern (e.g. *.google.com)
+ * @param url - URL to check
+ * @returns whether it matches
  */
 export function matchDomainPattern(pattern: string, url: string): boolean {
   try {
@@ -68,14 +68,14 @@ export function matchDomainPattern(pattern: string, url: string): boolean {
     const urlObj = new URL(normalizedUrl);
     const hostname = urlObj.hostname.toLowerCase();
 
-    // 와일드카드 패턴 처리
+    // Handle wildcard patterns
     if (pattern.startsWith("*.")) {
       const baseDomain = pattern.substring(2).toLowerCase();
-      // 정확히 매칭되거나 서브도메인으로 끝나는 경우
+      // Exact match or ends with the domain as a subdomain
       return hostname === baseDomain || hostname.endsWith(`.${baseDomain}`);
     }
 
-    // 정확한 매칭
+    // Exact match
     return hostname === pattern.toLowerCase();
   } catch {
     return false;
@@ -83,7 +83,7 @@ export function matchDomainPattern(pattern: string, url: string): boolean {
 }
 
 /**
- * IP 주소인지 확인
+ * Check whether the value is an IP address
  */
 function isIPAddress(hostname: string): boolean {
   // IPv4
@@ -92,7 +92,7 @@ function isIPAddress(hostname: string): boolean {
     return true;
   }
 
-  // IPv6 (대괄호 없는 경우)
+  // IPv6 (without brackets)
   const ipv6Regex = /^([0-9a-fA-F]{1,4}:){7}[0-9a-fA-F]{1,4}$/;
   if (ipv6Regex.test(hostname)) {
     return true;
@@ -102,7 +102,7 @@ function isIPAddress(hostname: string): boolean {
 }
 
 /**
- * 내부/로컬 도메인인지 확인
+ * Check whether the domain is internal/local
  */
 function isInternalDomain(hostname: string): boolean {
   const internalPatterns = [
@@ -123,18 +123,18 @@ function isInternalDomain(hostname: string): boolean {
 }
 
 /**
- * 등록된 도메인 추출 (서브도메인 제거)
- * 공개 접미사 리스트(PSL) 기반 처리의 간소화 버전
+ * Extract the registered domain (strip subdomains)
+ * Simplified version of Public Suffix List (PSL) handling
  */
 function extractRegisteredDomain(hostname: string): string {
   const parts = hostname.split(".");
 
-  // 2개 이하면 그대로 반환
+  // Two parts or fewer: return as-is
   if (parts.length <= 2) {
     return hostname;
   }
 
-  // 국가 코드 TLD + gTLD 조합 처리 (co.kr, com.au 등)
+  // Handle country-code TLD + gTLD combinations (co.kr, com.au, etc.)
   const ccTldPatterns = [
     "co.kr",
     "go.kr",
@@ -180,16 +180,16 @@ function extractRegisteredDomain(hostname: string): string {
 
   const lastTwoParts = parts.slice(-2).join(".");
   if (ccTldPatterns.includes(lastTwoParts)) {
-    // 3개의 파트 반환 (예: naver.co.kr)
+    // Return three parts (e.g. naver.co.kr)
     return parts.slice(-3).join(".");
   }
 
-  // 기본: 마지막 2개 파트 반환
+  // Default: return the last two parts
   return parts.slice(-2).join(".");
 }
 
 /**
- * URL이 유효한지 확인
+ * Check whether a URL is valid
  */
 export function isValidUrl(url: string): boolean {
   try {
@@ -202,7 +202,7 @@ export function isValidUrl(url: string): boolean {
 }
 
 /**
- * 여러 URL에서 고유한 메인 도메인 목록 추출
+ * Extract the unique main domains from a list of URLs
  */
 export function extractUniqueMainDomains(urls: string[]): string[] {
   const domains = new Set<string>();
@@ -218,9 +218,9 @@ export function extractUniqueMainDomains(urls: string[]): string[] {
 }
 
 /**
- * 도메인에서 TLD를 제거한 기본 이름 추출
- * 예: atlassian.com → atlassian, atlassian.net → atlassian
- * 국가 코드 TLD도 처리: naver.co.kr → naver
+ * Extract the base name of a domain without its TLD
+ * e.g. atlassian.com → atlassian, atlassian.net → atlassian
+ * Also handles country-code TLDs: naver.co.kr → naver
  */
 export function extractDomainBase(domain: string): string {
   const cleaned = domain.toLowerCase().replace(/^\*\./, "");
@@ -274,8 +274,8 @@ export function extractDomainBase(domain: string): string {
 }
 
 /**
- * TLD 변형을 무시하고 도메인 매칭
- * 예: 패턴 *.atlassian.net과 도메인 atlassian.com을 비교 시 true 반환
+ * Match domains while ignoring TLD variations
+ * e.g. returns true when comparing pattern *.atlassian.net with domain atlassian.com
  */
 export function matchDomainWithTldVariants(
   pattern: string,

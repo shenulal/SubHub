@@ -1,15 +1,15 @@
-# Common Test Patterns (공통 테스트 패턴)
+# Common Test Patterns
 
-> **자주 사용하는 모킹 및 테스트 패턴**
+> **Frequently used mocking and test patterns**
 
 ---
 
-## 1. Prisma 클라이언트 모킹
+## 1. Mocking the Prisma Client
 
-### 1.1 기본 모킹
+### 1.1 Basic Mocking
 
 ```typescript
-// 테스트 파일 상단에 추가
+// Add at the top of the test file
 vi.mock("@/lib/db", () => ({
   prisma: {
     app: {
@@ -36,7 +36,7 @@ vi.mock("@/lib/db", () => ({
 
 import { prisma } from "@/lib/db";
 
-// 테스트에서 사용
+// Usage in a test
 it("should create app", async () => {
   vi.mocked(prisma.app.create).mockResolvedValue({
     id: "app-1",
@@ -44,11 +44,11 @@ it("should create app", async () => {
     organizationId: "org-1",
   });
 
-  // ... 테스트 로직
+  // ... test logic
 });
 ```
 
-### 1.2 전역 Prisma Mock 파일
+### 1.2 Global Prisma Mock File
 
 ```typescript
 // src/__mocks__/prisma.ts
@@ -88,7 +88,7 @@ vi.mock("@/lib/db", () => ({
 export { prismaMock as prisma };
 ```
 
-### 1.3 관계 데이터 포함 모킹
+### 1.3 Mocking with Related Data
 
 ```typescript
 it("should return app with subscriptions", async () => {
@@ -96,7 +96,7 @@ it("should return app with subscriptions", async () => {
     id: "app-1",
     name: "Slack",
     organizationId: "org-1",
-    // include 관계 데이터
+    // include related data
     subscriptions: [
       {
         id: "sub-1",
@@ -113,9 +113,9 @@ it("should return app with subscriptions", async () => {
 
 ---
 
-## 2. NextAuth 세션 모킹
+## 2. Mocking NextAuth Sessions
 
-### 2.1 인증된 사용자
+### 2.1 Authenticated User
 
 ```typescript
 vi.mock("@/lib/auth", () => ({
@@ -134,7 +134,7 @@ vi.mock("@/lib/auth", () => ({
 }));
 ```
 
-### 2.2 미인증 사용자
+### 2.2 Unauthenticated User
 
 ```typescript
 vi.mock("@/lib/auth", () => ({
@@ -142,7 +142,7 @@ vi.mock("@/lib/auth", () => ({
 }));
 ```
 
-### 2.3 동적 세션 변경
+### 2.3 Changing the Session Dynamically
 
 ```typescript
 import { auth } from "@/lib/auth";
@@ -156,34 +156,34 @@ describe("with different auth states", () => {
     vi.mocked(auth).mockResolvedValue({
       user: { id: "1", role: "ADMIN", organizationId: "org-1" },
     });
-    // ... 테스트
+    // ... test
   });
 
   it("should handle member user", async () => {
     vi.mocked(auth).mockResolvedValue({
       user: { id: "2", role: "MEMBER", organizationId: "org-1" },
     });
-    // ... 테스트
+    // ... test
   });
 
   it("should handle unauthorized", async () => {
     vi.mocked(auth).mockResolvedValue(null);
-    // ... 테스트
+    // ... test
   });
 });
 ```
 
 ---
 
-## 3. React Hook Form 테스트
+## 3. React Hook Form Tests
 
-### 3.1 Form Provider 래퍼
+### 3.1 Form Provider Wrapper
 
 ```typescript
 import { FormProvider, useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 
-// 테스트용 래퍼 컴포넌트
+// Wrapper component for tests
 function FormWrapper({
   children,
   defaultValues = {},
@@ -198,7 +198,7 @@ function FormWrapper({
   return <FormProvider {...methods}>{children}</FormProvider>;
 }
 
-// 테스트에서 사용
+// Usage in a test
 render(
   <FormWrapper defaultValues={{ name: '', email: '' }}>
     <FormField />
@@ -206,7 +206,7 @@ render(
 );
 ```
 
-### 3.2 Form Submit 테스트
+### 3.2 Form Submit Tests
 
 ```typescript
 it('should submit form with valid data', async () => {
@@ -228,23 +228,23 @@ it('should submit form with valid data', async () => {
 
 ---
 
-## 4. Server Components 테스트
+## 4. Server Components Tests
 
-### 4.1 비동기 Server Component
+### 4.1 Async Server Components
 
 ```typescript
-// src/app/(dashboard)/apps/page.tsx 테스트
+// src/app/(dashboard)/apps/page.tsx test
 import { render, screen } from "@testing-library/react";
 
 describe("AppsPage (Server Component)", () => {
   it("should render apps from database", async () => {
-    // 데이터 페칭 모킹
+    // Mock data fetching
     vi.mocked(prisma.app.findMany).mockResolvedValue([
       { id: "1", name: "Slack", status: "ACTIVE" },
       { id: "2", name: "Notion", status: "ACTIVE" },
     ]);
 
-    // Server Component 렌더링
+    // Render the Server Component
     const jsx = await AppsPage();
     render(jsx);
 
@@ -265,13 +265,13 @@ describe("AppsPage (Server Component)", () => {
 
 ---
 
-## 5. 로딩/에러 상태 테스트
+## 5. Loading/Error State Tests
 
-### 5.1 로딩 상태
+### 5.1 Loading State
 
 ```typescript
 it('should show skeleton while loading', async () => {
-  // 지연된 응답
+  // Delayed response
   vi.mocked(fetch).mockImplementation(
     () =>
       new Promise((resolve) =>
@@ -288,17 +288,17 @@ it('should show skeleton while loading', async () => {
 
   render(<AppList />);
 
-  // 로딩 상태 확인
+  // Verify the loading state
   expect(screen.getByTestId('loading-skeleton')).toBeInTheDocument();
 
-  // 로딩 완료 후
+  // After loading completes
   await waitFor(() => {
     expect(screen.queryByTestId('loading-skeleton')).not.toBeInTheDocument();
   });
 });
 ```
 
-### 5.2 에러 상태
+### 5.2 Error State
 
 ```typescript
 it('should show error message on fetch failure', async () => {
@@ -324,14 +324,14 @@ it('should show retry button on error', async () => {
 
 ---
 
-## 6. 테스트 데이터 팩토리
+## 6. Test Data Factories
 
-### 6.1 팩토리 패턴
+### 6.1 Factory Pattern
 
 ```typescript
 // src/test-utils/factories.ts
 
-// User 팩토리
+// User factory
 export const createMockUser = (overrides: Partial<User> = {}): User => ({
   id: `user-${Math.random().toString(36).substr(2, 9)}`,
   email: "test@example.com",
@@ -344,7 +344,7 @@ export const createMockUser = (overrides: Partial<User> = {}): User => ({
   ...overrides,
 });
 
-// App 팩토리
+// App factory
 export const createMockApp = (overrides: Partial<App> = {}): App => ({
   id: `app-${Math.random().toString(36).substr(2, 9)}`,
   name: "Test App",
@@ -359,7 +359,7 @@ export const createMockApp = (overrides: Partial<App> = {}): App => ({
   ...overrides,
 });
 
-// Subscription 팩토리
+// Subscription factory
 export const createMockSubscription = (
   overrides: Partial<Subscription> = {}
 ): Subscription => ({
@@ -377,14 +377,14 @@ export const createMockSubscription = (
   ...overrides,
 });
 
-// 리스트 팩토리
+// List factory
 export const createMockApps = (count: number): App[] =>
   Array.from({ length: count }, (_, i) =>
     createMockApp({ id: `app-${i}`, name: `App ${i}` })
   );
 ```
 
-### 6.2 팩토리 사용
+### 6.2 Using Factories
 
 ```typescript
 import { createMockApp, createMockApps } from "@/test-utils/factories";
@@ -405,9 +405,9 @@ describe("AppList", () => {
 
 ---
 
-## 7. Custom Render 함수
+## 7. Custom Render Function
 
-### 7.1 Provider 래퍼
+### 7.1 Provider Wrapper
 
 ```typescript
 // src/test-utils/render.tsx
@@ -450,7 +450,7 @@ export * from '@testing-library/react';
 export { renderWithProviders as render };
 ```
 
-### 7.2 사용
+### 7.2 Usage
 
 ```typescript
 import { render, screen } from '@/test-utils/render';
@@ -463,9 +463,9 @@ it('should render in dark mode', () => {
 
 ---
 
-## 8. 날짜/시간 모킹
+## 8. Mocking Dates/Times
 
-### 8.1 고정 날짜
+### 8.1 Fixed Date
 
 ```typescript
 describe("Renewal calculations", () => {
@@ -486,7 +486,7 @@ describe("Renewal calculations", () => {
 });
 ```
 
-### 8.2 시간 진행
+### 8.2 Advancing Time
 
 ```typescript
 it('should update after timeout', async () => {
@@ -494,10 +494,10 @@ it('should update after timeout', async () => {
 
   render(<AutoRefreshComponent interval={5000} />);
 
-  // 5초 진행
+  // Advance 5 seconds
   await vi.advanceTimersByTimeAsync(5000);
 
-  expect(fetchMock).toHaveBeenCalledTimes(2); // 초기 + 1회
+  expect(fetchMock).toHaveBeenCalledTimes(2); // initial + 1 more
 
   vi.useRealTimers();
 });
@@ -505,12 +505,12 @@ it('should update after timeout', async () => {
 
 ---
 
-## 9. Error Boundary 테스트
+## 9. Error Boundary Tests
 
-### 9.1 에러 발생 테스트
+### 9.1 Testing a Thrown Error
 
 ```typescript
-// console.error 억제
+// Suppress console.error
 const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
 afterEach(() => {
@@ -534,30 +534,30 @@ it('should render fallback on error', () => {
 
 ---
 
-## 10. API 응답 모킹
+## 10. Mocking API Responses
 
-### 10.1 fetch 모킹
+### 10.1 Mocking fetch
 
 ```typescript
-// 성공 응답
+// Success response
 vi.mocked(global.fetch).mockResolvedValue({
   ok: true,
   status: 200,
   json: () => Promise.resolve({ data: "success" }),
 } as Response);
 
-// 실패 응답
+// Failure response
 vi.mocked(global.fetch).mockResolvedValue({
   ok: false,
   status: 404,
   json: () => Promise.resolve({ error: "Not found" }),
 } as Response);
 
-// 네트워크 에러
+// Network error
 vi.mocked(global.fetch).mockRejectedValue(new Error("Network error"));
 ```
 
-### 10.2 순차적 응답
+### 10.2 Sequential Responses
 
 ```typescript
 vi.mocked(fetch)
@@ -573,9 +573,9 @@ vi.mocked(fetch)
 
 ---
 
-## 11. requireOrganization 모킹
+## 11. Mocking requireOrganization
 
-Multi-tenant 인증 헬퍼 모킹 패턴입니다.
+This is the mocking pattern for the multi-tenant authentication helper.
 
 ```typescript
 vi.mock("@/lib/auth/require-auth", () => ({
@@ -608,9 +608,9 @@ describe("Multi-tenant actions", () => {
 
 ---
 
-## 12. Audit 로그 테스트
+## 12. Audit Log Tests
 
-감사 로그 생성 검증 패턴입니다.
+This is the pattern for verifying audit log creation.
 
 ```typescript
 it("should create audit log on create", async () => {
@@ -637,13 +637,13 @@ it("should create audit log on create", async () => {
 });
 ```
 
-자세한 내용은 [11-audit-logging.md](./11-audit-logging.md) 참조.
+For details, see [11-audit-logging.md](./11-audit-logging.md).
 
 ---
 
-## 13. 다음 단계
+## 13. Next Steps
 
-- [06-coverage-checklist.md](./06-coverage-checklist.md) - 커버리지 체크리스트
-- [08-multi-tenant-patterns.md](./08-multi-tenant-patterns.md) - Multi-tenant 패턴
-- [09-error-handling-strategy.md](./09-error-handling-strategy.md) - 에러 처리 전략
-- [10-form-data-patterns.md](./10-form-data-patterns.md) - FormData 패턴
+- [06-coverage-checklist.md](./06-coverage-checklist.md) - Coverage checklist
+- [08-multi-tenant-patterns.md](./08-multi-tenant-patterns.md) - Multi-tenant patterns
+- [09-error-handling-strategy.md](./09-error-handling-strategy.md) - Error handling strategy
+- [10-form-data-patterns.md](./10-form-data-patterns.md) - FormData patterns

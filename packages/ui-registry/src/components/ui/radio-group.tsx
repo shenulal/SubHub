@@ -7,9 +7,9 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * 🎯 목적: RadioGroup 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: Radix UI RadioGroup primitive 사용, grid 레이아웃 유지
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the RadioGroup component for React 18/19 compatibility
+ * 📝 Note: Uses the Radix UI RadioGroup primitive; keep the grid layout
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const RadioGroup = React.forwardRef<
   React.ElementRef<typeof RadioGroupPrimitive.Root>,
@@ -27,8 +27,8 @@ const RadioGroup = React.forwardRef<
 RadioGroup.displayName = "RadioGroup";
 
 /**
- * 🎯 목적: RadioGroupItem 컴포넌트에 forwardRef 적용
- * 📝 주의사항: Radix UI RadioGroup.Item primitive, CircleIcon indicator 유지
+ * 🎯 Purpose: Apply forwardRef to the RadioGroupItem component
+ * 📝 Note: Radix UI RadioGroup.Item primitive; keep the CircleIcon indicator
  */
 const RadioGroupItem = React.forwardRef<
   React.ElementRef<typeof RadioGroupPrimitive.Item>,

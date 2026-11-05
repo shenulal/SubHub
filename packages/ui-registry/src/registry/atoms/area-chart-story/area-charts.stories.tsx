@@ -172,9 +172,9 @@ export const ShouldRenderChart: Story = {
   },
   render: () => <ChartAreaDefault />,
   play: async ({ canvasElement }) => {
-    // 🎯 목적: Area Chart가 정상적으로 렌더링되고 Chart container가 존재하는지 확인
+    // 🎯 Purpose: Verify the Area chart renders correctly and the Chart container exists
 
-    // ChartContainer가 렌더링되었는지 확인
+    // Verify ChartContainer has rendered
     const chartContainer = canvasElement.querySelector("[data-chart]");
     await expect(chartContainer).toBeInTheDocument();
   },

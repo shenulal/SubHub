@@ -18,7 +18,7 @@ const mockAuth = vi.mocked(auth);
 const mockGetApps = vi.mocked(getApps);
 const mockCreateApp = vi.mocked(createApp);
 
-// 테스트용 mock 앱 데이터
+// Mock app data for tests
 const mockAppItem: AppListItem = {
   id: "app-1",
   name: "Test",
@@ -35,7 +35,7 @@ const mockAppItem: AppListItem = {
   teams: [],
 };
 
-describe("/api/v1/apps 계약", () => {
+describe("/api/v1/apps contract", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });

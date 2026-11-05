@@ -1,5 +1,5 @@
 // src/app/(auth)/onboarding/page.test.tsx
-import messages from "@/i18n/messages/ko.json";
+import messages from "@/i18n/messages/en.json";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { NextIntlClientProvider } from "next-intl";
@@ -14,7 +14,7 @@ vi.mock("@/actions/organization", () => ({
 describe("OnboardingPage", () => {
   const renderWithIntl = (ui: React.ReactElement) =>
     render(
-      <NextIntlClientProvider locale="ko" messages={messages}>
+      <NextIntlClientProvider locale="en" messages={messages}>
         {ui}
       </NextIntlClientProvider>
     );
@@ -23,55 +23,55 @@ describe("OnboardingPage", () => {
     vi.clearAllMocks();
   });
 
-  describe("렌더링", () => {
-    it("온보딩 페이지가 렌더링되어야 한다", () => {
+  describe("rendering", () => {
+    it("renders the onboarding page", () => {
       renderWithIntl(<OnboardingPage />);
       expect(screen.getByTestId("onboarding-page")).toBeInTheDocument();
     });
 
-    it("페이지 제목이 표시되어야 한다", () => {
+    it("shows the page title", () => {
       renderWithIntl(<OnboardingPage />);
       expect(
-        screen.getByText("조직 생성 후 바로 시작하기")
+        screen.getByText("Start right after creating your organization")
       ).toBeInTheDocument();
     });
 
-    it("페이지 설명이 표시되어야 한다", () => {
+    it("shows the page description", () => {
       renderWithIntl(<OnboardingPage />);
       expect(
-        screen.getByText(/어떤 목표로 활용할지 선택하면/)
+        screen.getByText(/choose your goals to tailor the dashboard/)
       ).toBeInTheDocument();
     });
   });
 
-  describe("폼 요소", () => {
-    it("조직명 입력 필드가 있어야 한다", () => {
+  describe("form elements", () => {
+    it("has an organization name input", () => {
       renderWithIntl(<OnboardingPage />);
-      expect(screen.getByLabelText(/조직명/i)).toBeInTheDocument();
+      expect(screen.getByLabelText(/Organization name/i)).toBeInTheDocument();
     });
 
-    it("조직명 입력 필드에 placeholder가 있어야 한다", () => {
+    it("has a placeholder on the organization name input", () => {
       renderWithIntl(<OnboardingPage />);
       expect(screen.getByPlaceholderText(/AGA HQ/)).toBeInTheDocument();
     });
 
-    it("제출 버튼이 있어야 한다", () => {
+    it("has a submit button", () => {
       renderWithIntl(<OnboardingPage />);
       expect(
-        screen.getByRole("button", { name: /시작하기/i })
+        screen.getByRole("button", { name: /Get started/i })
       ).toBeInTheDocument();
     });
   });
 
-  describe("입력 동작", () => {
-    it("조직명을 입력할 수 있어야 한다", async () => {
+  describe("input behavior", () => {
+    it("allows typing an organization name", async () => {
       const user = userEvent.setup();
       renderWithIntl(<OnboardingPage />);
 
-      const input = screen.getByLabelText(/조직명/i);
-      await user.type(input, "테스트 회사");
+      const input = screen.getByLabelText(/Organization name/i);
+      await user.type(input, "Test Company");
 
-      expect(input).toHaveValue("테스트 회사");
+      expect(input).toHaveValue("Test Company");
     });
   });
 });

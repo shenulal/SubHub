@@ -3,8 +3,8 @@
 import { signOut } from "@/lib/auth";
 
 /**
- * 로그아웃 Server Action
- * 클라이언트 컴포넌트에서 form action으로 사용
+ * Sign-out Server Action
+ * Used as a form action from client components
  */
 export async function logout() {
   await signOut({ redirectTo: "/login" });

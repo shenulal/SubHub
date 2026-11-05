@@ -1,16 +1,17 @@
 /**
  * Login Button Detector
- * 로그인 버튼 클릭 → OAuth 리다이렉트 패턴 감지
+ * Detects the login-button click → OAuth redirect pattern
  *
- * Gemini, Perplexity 등 메인 페이지에 로그인 폼 없이
- * 로그인 버튼으로 OAuth 페이지로 이동하는 서비스 대응
+ * Handles services such as Gemini and Perplexity that have no login form on the
+ * main page and send users to an OAuth page via a login button
  */
 
 import { getDomain } from "../../shared/utils";
 import { sendLoginDataImmediate } from "../utils/login-sender";
 
 /**
- * 로그인 버튼 텍스트 패턴
+ * Login button text patterns.
+ * The `ko` entries match button labels on third-party Korean-language sites and must stay in Korean.
  */
 const LOGIN_BUTTON_PATTERNS = {
   en: ["sign in", "log in", "login", "get started", "try for free"],
@@ -18,7 +19,7 @@ const LOGIN_BUTTON_PATTERNS = {
 };
 
 /**
- * OAuth Provider URL 패턴
+ * OAuth provider URL patterns
  */
 const OAUTH_PROVIDER_PATTERNS = [
   "accounts.google.com",
@@ -36,7 +37,7 @@ const OAUTH_PROVIDER_PATTERNS = [
 ];
 
 /**
- * OAuth 버튼 타입 서비스 설정
+ * Settings for OAuth-button-type services
  */
 export const OAUTH_BUTTON_CONFIG: Record<
   string,
@@ -72,7 +73,7 @@ export const OAUTH_BUTTON_CONFIG: Record<
 };
 
 /**
- * 로그인 버튼 찾기
+ * Find login buttons
  */
 function findLoginButtons(): HTMLElement[] {
   const buttons: HTMLElement[] = [];
@@ -81,7 +82,7 @@ function findLoginButtons(): HTMLElement[] {
     ...LOGIN_BUTTON_PATTERNS.ko,
   ];
 
-  // 버튼과 링크 검색
+  // Search buttons and links
   const elements = document.querySelectorAll('button, a, [role="button"]');
 
   for (const el of elements) {
@@ -90,19 +91,19 @@ function findLoginButtons(): HTMLElement[] {
     const ariaLabel = (element.getAttribute("aria-label") || "").toLowerCase();
     const href = element.getAttribute("href") || "";
 
-    // 텍스트 또는 aria-label에 로그인 패턴 포함 여부
+    // Whether the text or aria-label contains a login pattern
     const hasLoginPattern = allPatterns.some(
       (pattern) => text.includes(pattern) || ariaLabel.includes(pattern)
     );
 
-    // href에 login/signin 포함 여부
+    // Whether the href contains login/signin
     const hasLoginHref =
       href.includes("login") ||
       href.includes("signin") ||
       href.includes("auth");
 
     if (hasLoginPattern || hasLoginHref) {
-      // 가시성 확인
+      // Check visibility
       if (isElementVisible(element)) {
         buttons.push(element);
       }
@@ -113,7 +114,7 @@ function findLoginButtons(): HTMLElement[] {
 }
 
 /**
- * 요소 가시성 확인
+ * Check element visibility
  */
 function isElementVisible(element: HTMLElement): boolean {
   const style = window.getComputedStyle(element);
@@ -126,7 +127,7 @@ function isElementVisible(element: HTMLElement): boolean {
 }
 
 /**
- * URL이 OAuth Provider인지 확인
+ * Check whether a URL belongs to an OAuth provider
  */
 function isOAuthProviderUrl(url: string): boolean {
   const lowerUrl = url.toLowerCase();
@@ -134,18 +135,18 @@ function isOAuthProviderUrl(url: string): boolean {
 }
 
 /**
- * OAuth 리다이렉트 감지를 위한 네비게이션 감시 설정
+ * Set up navigation monitoring to detect OAuth redirects
  */
 function setupOAuthRedirectWatcher(originDomain: string): void {
-  // 이미 설정된 경우 스킵
+  // Skip if already set up
   if ((window as any).__shadeOAuthWatcher) return;
   (window as any).__shadeOAuthWatcher = true;
 
   console.log("[Shade] OAuth redirect watcher enabled for:", originDomain);
 
-  // beforeunload 이벤트로 페이지 이탈 감지
+  // Detect page exit via the beforeunload event
   window.addEventListener("beforeunload", () => {
-    // 세션 스토리지에 원본 도메인 저장
+    // Store the originating domain in session storage
     try {
       sessionStorage.setItem(
         "__shade_oauth_origin",
@@ -155,13 +156,13 @@ function setupOAuthRedirectWatcher(originDomain: string): void {
         })
       );
     } catch {
-      // 스토리지 접근 실패 무시
+      // Ignore storage access failures
     }
   });
 }
 
 /**
- * OAuth 콜백 페이지인지 확인
+ * Check whether this is an OAuth callback page
  */
 function checkOAuthCallback(): boolean {
   try {
@@ -171,9 +172,9 @@ function checkOAuthCallback(): boolean {
     const { domain, timestamp } = JSON.parse(stored);
     const currentDomain = getDomain(window.location.href);
 
-    // 5분 이내이고 같은 도메인으로 돌아온 경우
+    // Returned to the same domain within 5 minutes
     if (Date.now() - timestamp < 5 * 60 * 1000 && currentDomain === domain) {
-      // OAuth 성공 파라미터 확인
+      // Check OAuth success parameters
       const url = new URL(window.location.href);
       const hasOAuthSuccess =
         url.searchParams.has("code") ||
@@ -189,21 +190,21 @@ function checkOAuthCallback(): boolean {
       }
     }
   } catch {
-    // 파싱 실패 무시
+    // Ignore parse failures
   }
 
   return false;
 }
 
 /**
- * 로그인 버튼 클릭 이벤트 리스너 설정
+ * Set up login-button click listeners
  */
 function setupLoginButtonListeners(
   buttons: HTMLElement[],
   originDomain: string
 ): void {
   for (const button of buttons) {
-    // 이미 리스너가 설정된 경우 스킵
+    // Skip if a listener is already attached
     if ((button as any).__shadeLoginListener) continue;
     (button as any).__shadeLoginListener = true;
 
@@ -215,10 +216,10 @@ function setupLoginButtonListeners(
           button.textContent?.trim()
         );
 
-        // OAuth 리다이렉트 감시 설정
+        // Set up OAuth redirect monitoring
         setupOAuthRedirectWatcher(originDomain);
 
-        // 클릭 후 짧은 지연 후 URL 변화 확인
+        // Check for a URL change shortly after the click
         setTimeout(() => {
           const currentUrl = window.location.href;
           if (isOAuthProviderUrl(currentUrl)) {
@@ -232,7 +233,7 @@ function setupLoginButtonListeners(
 }
 
 /**
- * 현재 페이지에 로그인 버튼이 있는지 감지하고 모니터링 설정
+ * Detect whether the current page has a login button and set up monitoring
  */
 export function detectAndMonitorLoginButtons(): {
   found: boolean;
@@ -242,14 +243,14 @@ export function detectAndMonitorLoginButtons(): {
   const hostname = window.location.hostname;
   const domain = getDomain(window.location.href);
 
-  // OAuth 콜백 체크
+  // OAuth callback check
   if (checkOAuthCallback()) {
-    // OAuth 성공 로그인 이벤트 전송
+    // Send the successful OAuth login event
     sendLoginDataImmediate(domain, "", "", false, undefined);
     return { found: true, buttonCount: 0, isOAuthButtonType: true };
   }
 
-  // OAuth 버튼 타입 서비스 설정 확인
+  // Check for OAuth-button-type service settings
   const config = OAUTH_BUTTON_CONFIG[hostname];
 
   let buttons: HTMLElement[] = [];
@@ -257,13 +258,13 @@ export function detectAndMonitorLoginButtons(): {
   if (config) {
     console.log("[Shade] OAuth button type service detected:", hostname);
 
-    // 설정된 셀렉터로 버튼 찾기
+    // Find the button using the configured selector
     if (config.buttonSelector) {
       const elements = document.querySelectorAll(config.buttonSelector);
       buttons = Array.from(elements) as HTMLElement[];
     }
 
-    // 설정된 텍스트로 버튼 찾기
+    // Find the button using the configured text
     if (config.buttonText && buttons.length === 0) {
       const allElements = document.querySelectorAll(
         'button, a, [role="button"]'
@@ -280,7 +281,7 @@ export function detectAndMonitorLoginButtons(): {
       }
     }
   } else {
-    // 일반 로그인 버튼 검색
+    // Generic login button search
     buttons = findLoginButtons();
   }
 
@@ -298,8 +299,8 @@ export function detectAndMonitorLoginButtons(): {
 }
 
 /**
- * OAuth Provider 페이지에서의 로그인 감지
- * accounts.google.com 등에서 직접 로그인 이벤트 감지
+ * Login detection on OAuth provider pages
+ * Detects login events directly on accounts.google.com and similar
  */
 export function detectOAuthProviderLogin(): void {
   const hostname = window.location.hostname;
@@ -308,13 +309,13 @@ export function detectOAuthProviderLogin(): void {
   if (hostname.includes("accounts.google.com")) {
     console.log("[Shade] On Google OAuth page");
 
-    // 이메일 입력 필드 모니터링
+    // Monitor the email input field
     const emailInput = document.querySelector(
       'input[type="email"], #identifierId'
     ) as HTMLInputElement;
     if (emailInput) {
       console.log("[Shade] Found Google email input");
-      // 이미 값이 있으면 2-step 감지
+      // If it already has a value, treat it as a 2-step login
       if (emailInput.value) {
         console.log("[Shade] Google account detected (pre-filled)");
       }

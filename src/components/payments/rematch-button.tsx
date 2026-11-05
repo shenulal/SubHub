@@ -33,11 +33,11 @@ export function RematchButton({
       if (result.success) {
         const data = result.data;
         const msg = data
-          ? `${data.matchedCount}건 매칭 완료, ${data.unmatchedCount}건 미매칭`
-          : "재매칭이 완료되었습니다";
+          ? `${data.matchedCount} matched, ${data.unmatchedCount} unmatched`
+          : "Rematching complete";
         toast.success(msg);
       } else {
-        toast.error(result.error ?? result.message ?? "재매칭에 실패했습니다");
+        toast.error(result.error ?? result.message ?? "Rematching failed");
       }
 
       onComplete?.();
@@ -58,7 +58,7 @@ export function RematchButton({
       ) : (
         <RefreshCw className="mr-2 h-4 w-4" />
       )}
-      재매칭
+      Rematch
       {selectedIds.length > 0 && (
         <span className="text-muted-foreground ml-1">
           ({selectedIds.length})

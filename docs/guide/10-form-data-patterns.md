@@ -1,21 +1,21 @@
-# 10. FormData 패턴 가이드
+# 10. FormData Patterns Guide
 
-이 문서는 Server Actions에서 FormData를 파싱하고 Zod로 유효성 검사하는 패턴을 설명합니다.
+This document describes the patterns for parsing FormData in Server Actions and validating it with Zod.
 
-## 목차
+## Table of Contents
 
-1. [Server Action 시그니처](#1-server-action-시그니처)
-2. [FormData 파싱](#2-formdata-파싱)
-3. [Zod 유효성 검사](#3-zod-유효성-검사)
-4. [API Route에서 JSON → FormData](#4-api-route에서-json--formdata)
-5. [클라이언트 통합](#5-클라이언트-통합)
-6. [테스트 패턴](#6-테스트-패턴)
+1. [Server Action Signature](#1-server-action-signature)
+2. [Parsing FormData](#2-parsing-formdata)
+3. [Zod Validation](#3-zod-validation)
+4. [JSON → FormData in API Routes](#4-json--formdata-in-api-routes)
+5. [Client Integration](#5-client-integration)
+6. [Test Patterns](#6-test-patterns)
 
 ---
 
-## 1. Server Action 시그니처
+## 1. Server Action Signature
 
-### 1.1 기본 시그니처 (useActionState용)
+### 1.1 Basic Signature (for useActionState)
 
 ```typescript
 "use server";
@@ -23,19 +23,19 @@
 import type { ActionState } from "@/types";
 
 export async function createApp(
-  _prevState: ActionState<{ id: string }>, // 이전 상태 (useActionState에서 필요)
-  formData: FormData // 폼 데이터
+  _prevState: ActionState<{ id: string }>, // Previous state (required by useActionState)
+  formData: FormData // Form data
 ): Promise<ActionState<{ id: string }>> {
-  // 반환 타입
+  // Return type
   // ...
 }
 ```
 
-### 1.2 ID 파라미터 포함 시그니처 (수정 액션)
+### 1.2 Signature with an ID Parameter (Update Actions)
 
 ```typescript
 export async function updateApp(
-  id: string, // 수정할 리소스 ID
+  id: string, // ID of the resource to update
   _prevState: ActionState<{ id: string }>,
   formData: FormData
 ): Promise<ActionState<{ id: string }>> {
@@ -43,7 +43,7 @@ export async function updateApp(
 }
 ```
 
-### 1.3 클라이언트에서 호출
+### 1.3 Calling from the Client
 
 ```tsx
 "use client";
@@ -51,19 +51,19 @@ export async function updateApp(
 import { useActionState } from "react";
 import { createApp, updateApp } from "@/actions/apps";
 
-// 생성: 기본 호출
+// Create: basic call
 const [state, formAction] = useActionState(createApp, { success: false });
 
-// 수정: bind로 ID 고정
+// Update: fix the ID with bind
 const updateAppWithId = updateApp.bind(null, appId);
 const [state, formAction] = useActionState(updateAppWithId, { success: false });
 ```
 
 ---
 
-## 2. FormData 파싱
+## 2. Parsing FormData
 
-### 2.1 기본 파싱
+### 2.1 Basic Parsing
 
 ```typescript
 const rawData = {
@@ -73,38 +73,38 @@ const rawData = {
 };
 ```
 
-### 2.2 타입별 파싱
+### 2.2 Parsing by Type
 
-#### 문자열 (필수)
+#### String (Required)
 
 ```typescript
 const name = formData.get("name") as string;
-// 빈 문자열이면 Zod에서 에러 처리
+// An empty string is handled as an error by Zod
 ```
 
-#### 문자열 (선택)
+#### String (Optional)
 
 ```typescript
 const category = formData.get("category") as string | null;
-// null 또는 빈 문자열 가능
+// May be null or an empty string
 ```
 
-#### 숫자
+#### Number
 
 ```typescript
 const amount = formData.get("amount");
 const parsedAmount = amount ? Number(amount) : null;
-// 또는 Zod에서 coerce 사용
+// Alternatively, use coerce in Zod
 ```
 
-#### 불리언 (체크박스)
+#### Boolean (Checkbox)
 
 ```typescript
 const isActive = formData.get("isActive") === "on";
-// 체크박스는 체크 시 "on", 미체크 시 null
+// A checkbox sends "on" when checked and null when unchecked
 ```
 
-#### 배열 (콤마 구분 문자열)
+#### Array (Comma-Separated String)
 
 ```typescript
 const tagsString = formData.get("tags") as string | null;
@@ -116,16 +116,16 @@ const tags = tagsString
   : [];
 ```
 
-#### 파일
+#### File
 
 ```typescript
 const file = formData.get("file") as File | null;
 if (file && file.size > 0) {
-  // 파일 처리
+  // Process the file
 }
 ```
 
-### 2.3 전체 파싱 예시
+### 2.3 Complete Parsing Example
 
 ```typescript
 export async function createApp(
@@ -134,7 +134,7 @@ export async function createApp(
 ): Promise<ActionState<{ id: string }>> {
   const { organizationId, userId } = await requireOrganization();
 
-  // FormData → 객체 변환
+  // Convert FormData → object
   const rawData = {
     name: formData.get("name") as string,
     category: formData.get("category") as string | null,
@@ -146,15 +146,15 @@ export async function createApp(
     catalogId: formData.get("catalogId") as string | null,
   };
 
-  // 이후 Zod 검증...
+  // Zod validation follows...
 }
 ```
 
 ---
 
-## 3. Zod 유효성 검사
+## 3. Zod Validation
 
-### 3.1 스키마 정의
+### 3.1 Schema Definition
 
 ```typescript
 import { z } from "zod";
@@ -162,26 +162,29 @@ import { z } from "zod";
 const createAppSchema = z.object({
   name: z
     .string()
-    .min(2, "앱 이름은 2자 이상이어야 합니다")
-    .max(100, "앱 이름은 100자 이하여야 합니다"),
+    .min(2, "App name must be at least 2 characters")
+    .max(100, "App name must be 100 characters or fewer"),
 
-  category: z.string().nullish(), // null 또는 undefined 허용
+  category: z.string().nullish(), // Allows null or undefined
 
   customLogoUrl: z
     .string()
-    .url("유효한 URL을 입력하세요")
+    .url("Please enter a valid URL")
     .nullish()
-    .or(z.literal("")), // 빈 문자열도 허용
+    .or(z.literal("")), // Also allows an empty string
 
   customWebsite: z
     .string()
-    .url("유효한 URL을 입력하세요")
+    .url("Please enter a valid URL")
     .nullish()
     .or(z.literal("")),
 
-  notes: z.string().max(1000, "메모는 1000자 이하여야 합니다").nullish(),
+  notes: z
+    .string()
+    .max(1000, "Notes must be 1000 characters or fewer")
+    .nullish(),
 
-  tags: z.string().nullish(), // 파싱은 별도로
+  tags: z.string().nullish(), // Parsed separately
 
   ownerId: z.string().nullish(),
 
@@ -189,10 +192,10 @@ const createAppSchema = z.object({
 });
 ```
 
-### 3.2 safeParse 사용 (권장)
+### 3.2 Using safeParse (Recommended)
 
 ```typescript
-// ✅ safeParse: 에러 throw 안함
+// ✅ safeParse: does not throw errors
 const result = createAppSchema.safeParse(rawData);
 
 if (!result.success) {
@@ -202,34 +205,34 @@ if (!result.success) {
   };
 }
 
-const data = result.data; // 타입 안전 데이터
+const data = result.data; // Type-safe data
 ```
 
-### 3.3 parse 사용 (비권장)
+### 3.3 Using parse (Not Recommended)
 
 ```typescript
-// ❌ parse: 에러 throw - try-catch 필요
+// ❌ parse: throws errors - requires try-catch
 try {
   const data = createAppSchema.parse(rawData);
 } catch (error) {
   if (error instanceof z.ZodError) {
-    // 에러 처리
+    // Handle the error
   }
 }
 ```
 
-### 3.4 고급 스키마 패턴
+### 3.4 Advanced Schema Patterns
 
-#### 숫자 변환 (coerce)
+#### Number Conversion (coerce)
 
 ```typescript
 const subscriptionSchema = z.object({
-  amount: z.coerce.number().positive("금액은 0보다 커야 합니다"),
-  seats: z.coerce.number().int().min(1, "최소 1석 이상"),
+  amount: z.coerce.number().positive("Amount must be greater than 0"),
+  seats: z.coerce.number().int().min(1, "At least 1 seat is required"),
 });
 ```
 
-#### 날짜 변환
+#### Date Conversion
 
 ```typescript
 const dateSchema = z.object({
@@ -241,7 +244,7 @@ const dateSchema = z.object({
 });
 ```
 
-#### 조건부 필드
+#### Conditional Fields
 
 ```typescript
 const schema = z
@@ -257,7 +260,7 @@ const schema = z
       return true;
     },
     {
-      message: "월간 구독은 청구 주기가 필요합니다",
+      message: "A billing cycle is required for monthly subscriptions",
       path: ["billingCycle"],
     }
   );
@@ -275,11 +278,11 @@ const updateAppSchema = createAppSchema.extend({
 
 ---
 
-## 4. API Route에서 JSON → FormData
+## 4. JSON → FormData in API Routes
 
-API Route에서 JSON body를 받아 Server Action을 호출할 때 FormData로 변환합니다.
+When an API Route receives a JSON body and calls a Server Action, it converts the body to FormData.
 
-### 4.1 변환 패턴
+### 4.1 Conversion Pattern
 
 ```typescript
 // src/app/api/v1/apps/route.ts
@@ -290,13 +293,16 @@ export async function POST(request: Request) {
   try {
     const session = await auth();
     if (!session?.user?.organizationId) {
-      return NextResponse.json({ error: "인증이 필요합니다" }, { status: 401 });
+      return NextResponse.json(
+        { error: "Authentication is required" },
+        { status: 401 }
+      );
     }
 
-    // JSON body 파싱
+    // Parse the JSON body
     const body = await request.json();
 
-    // FormData로 변환
+    // Convert to FormData
     const formData = new FormData();
     Object.entries(body).forEach(([key, value]) => {
       if (value !== null && value !== undefined) {
@@ -304,7 +310,7 @@ export async function POST(request: Request) {
       }
     });
 
-    // Server Action 호출
+    // Call the Server Action
     const result = await createApp({ success: false }, formData);
 
     if (!result.success) {
@@ -316,21 +322,21 @@ export async function POST(request: Request) {
 
     return NextResponse.json(result.data, { status: 201 });
   } catch (error) {
-    console.error("API 오류:", error);
+    console.error("API error:", error);
     return NextResponse.json(
-      { error: "서버 오류가 발생했습니다" },
+      { error: "A server error occurred" },
       { status: 500 }
     );
   }
 }
 ```
 
-### 4.2 배열/객체 처리
+### 4.2 Handling Arrays/Objects
 
 ```typescript
 const body = {
   name: "Test App",
-  tags: ["tag1", "tag2"], // 배열
+  tags: ["tag1", "tag2"], // Array
 };
 
 const formData = new FormData();
@@ -338,10 +344,10 @@ Object.entries(body).forEach(([key, value]) => {
   if (value === null || value === undefined) return;
 
   if (Array.isArray(value)) {
-    // 배열: 콤마 구분 문자열로 변환
+    // Array: convert to a comma-separated string
     formData.append(key, value.join(","));
   } else if (typeof value === "object") {
-    // 객체: JSON 문자열로 변환
+    // Object: convert to a JSON string
     formData.append(key, JSON.stringify(value));
   } else {
     formData.append(key, String(value));
@@ -351,9 +357,9 @@ Object.entries(body).forEach(([key, value]) => {
 
 ---
 
-## 5. 클라이언트 통합
+## 5. Client Integration
 
-### 5.1 기본 폼
+### 5.1 Basic Form
 
 ```tsx
 "use client";
@@ -372,47 +378,43 @@ export function AppForm() {
 
   return (
     <form action={formAction} className="space-y-4">
-      {/* 일반 에러 메시지 */}
+      {/* General error message */}
       {!state.success && state.message && (
         <Alert variant="destructive">
           <AlertDescription>{state.message}</AlertDescription>
         </Alert>
       )}
 
-      {/* 이름 필드 */}
+      {/* Name field */}
       <div className="space-y-2">
-        <Label htmlFor="name">앱 이름 *</Label>
+        <Label htmlFor="name">App Name *</Label>
         <Input
           id="name"
           name="name"
           required
-          placeholder="앱 이름을 입력하세요"
+          placeholder="Enter the app name"
         />
         {state.errors?.name && (
           <p className="text-destructive text-sm">{state.errors.name[0]}</p>
         )}
       </div>
 
-      {/* 카테고리 필드 (선택) */}
+      {/* Category field (optional) */}
       <div className="space-y-2">
-        <Label htmlFor="category">카테고리</Label>
-        <Input
-          id="category"
-          name="category"
-          placeholder="카테고리를 입력하세요"
-        />
+        <Label htmlFor="category">Category</Label>
+        <Input id="category" name="category" placeholder="Enter a category" />
       </div>
 
-      {/* 제출 버튼 */}
+      {/* Submit button */}
       <Button type="submit" disabled={isPending}>
-        {isPending ? "저장 중..." : "저장"}
+        {isPending ? "Saving..." : "Save"}
       </Button>
     </form>
   );
 }
 ```
 
-### 5.2 성공 후 리다이렉트
+### 5.2 Redirect After Success
 
 ```tsx
 "use client";
@@ -433,11 +435,11 @@ export function AppForm() {
     }
   }, [state, router]);
 
-  // ... 폼 렌더링
+  // ... render the form
 }
 ```
 
-### 5.3 수정 폼 (초기값)
+### 5.3 Edit Form (Initial Values)
 
 ```tsx
 "use client";
@@ -460,11 +462,11 @@ export function AppEditForm({ app }: EditFormProps) {
     <form action={formAction}>
       <Input
         name="name"
-        defaultValue={app.name} // 초기값 설정
+        defaultValue={app.name} // Set the initial value
       />
       <Input name="category" defaultValue={app.category ?? ""} />
       <Button type="submit" disabled={isPending}>
-        {isPending ? "수정 중..." : "수정"}
+        {isPending ? "Updating..." : "Update"}
       </Button>
     </form>
   );
@@ -473,49 +475,49 @@ export function AppEditForm({ app }: EditFormProps) {
 
 ---
 
-## 6. 테스트 패턴
+## 6. Test Patterns
 
-### 6.1 FormData 생성
+### 6.1 Creating FormData
 
 ```typescript
 import { describe, it, expect, vi } from "vitest";
 
 it("should create app with valid data", async () => {
-  // FormData 생성
+  // Create FormData
   const formData = new FormData();
   formData.set("name", "Test App");
   formData.set("category", "Productivity");
-  formData.set("notes", "테스트 메모");
+  formData.set("notes", "Test notes");
 
-  // Server Action 호출
+  // Call the Server Action
   const result = await createApp({ success: false }, formData);
 
   expect(result.success).toBe(true);
 });
 ```
 
-### 6.2 필수 필드 누락 테스트
+### 6.2 Missing Required Field Test
 
 ```typescript
 it("should return error when name is empty", async () => {
   const formData = new FormData();
-  formData.set("name", ""); // 빈 이름
+  formData.set("name", ""); // Empty name
 
   const result = await createApp({ success: false }, formData);
 
   expect(result.success).toBe(false);
   expect(result.errors?.name).toBeDefined();
-  expect(result.errors?.name[0]).toContain("2자 이상");
+  expect(result.errors?.name[0]).toContain("at least 2 characters");
 });
 ```
 
-### 6.3 유효성 검사 오류 테스트
+### 6.3 Validation Error Test
 
 ```typescript
 it("should return error for invalid URL", async () => {
   const formData = new FormData();
   formData.set("name", "Test App");
-  formData.set("customLogoUrl", "not-a-url"); // 잘못된 URL
+  formData.set("customLogoUrl", "not-a-url"); // Invalid URL
 
   const result = await createApp({ success: false }, formData);
 
@@ -525,13 +527,13 @@ it("should return error for invalid URL", async () => {
 });
 ```
 
-### 6.4 선택 필드 테스트
+### 6.4 Optional Field Test
 
 ```typescript
 it("should create app with only required fields", async () => {
   const formData = new FormData();
   formData.set("name", "Minimal App");
-  // category, notes 등 선택 필드 미설정
+  // Optional fields such as category and notes are not set
 
   const result = await createApp({ success: false }, formData);
 
@@ -539,11 +541,11 @@ it("should create app with only required fields", async () => {
 });
 ```
 
-### 6.5 수정 액션 테스트
+### 6.5 Update Action Test
 
 ```typescript
 it("should update app", async () => {
-  // 기존 앱 모킹
+  // Mock the existing app
   vi.mocked(prisma.app.findFirst).mockResolvedValue({
     id: "app-123",
     name: "Old Name",
@@ -565,29 +567,29 @@ it("should update app", async () => {
 
 ---
 
-## 체크리스트
+## Checklist
 
-### Server Action 구현 시
+### When Implementing a Server Action
 
-- [ ] 올바른 시그니처 사용 (`_prevState`, `formData`)
-- [ ] FormData에서 모든 필드 파싱
-- [ ] null/undefined 처리
-- [ ] Zod `safeParse()` 사용
-- [ ] 에러 시 `errors` 필드 반환
+- [ ] Use the correct signature (`_prevState`, `formData`)
+- [ ] Parse every field from FormData
+- [ ] Handle null/undefined
+- [ ] Use Zod `safeParse()`
+- [ ] Return the `errors` field on failure
 
-### 폼 구현 시
+### When Implementing a Form
 
-- [ ] `useActionState` 훅 사용
-- [ ] `name` 속성 모든 입력 필드에 설정
-- [ ] 필드별 에러 메시지 표시
-- [ ] 일반 에러 메시지 표시
-- [ ] 로딩 상태 처리 (`isPending`)
-- [ ] 성공 후 리다이렉트 처리
+- [ ] Use the `useActionState` hook
+- [ ] Set the `name` attribute on every input field
+- [ ] Display field-level error messages
+- [ ] Display general error messages
+- [ ] Handle the loading state (`isPending`)
+- [ ] Handle the redirect after success
 
 ---
 
-## 관련 문서
+## Related Documents
 
-- [09-error-handling-strategy.md](./09-error-handling-strategy.md) - 에러 처리 전략
-- [04-test-templates.md](./04-test-templates.md) - 테스트 템플릿
-- [05-common-patterns.md](./05-common-patterns.md) - 공통 패턴
+- [09-error-handling-strategy.md](./09-error-handling-strategy.md) - Error handling strategy
+- [04-test-templates.md](./04-test-templates.md) - Test templates
+- [05-common-patterns.md](./05-common-patterns.md) - Common patterns

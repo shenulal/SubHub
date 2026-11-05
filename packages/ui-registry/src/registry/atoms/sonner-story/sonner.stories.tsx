@@ -61,11 +61,11 @@ export const ShouldShowToast: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement.ownerDocument.body);
 
-    // 🎯 목적: Toast 버튼 클릭 시 Toast가 표시되고 내용이 올바른지 확인
+    // 🎯 Purpose: Verify clicking the Toast button shows a toast with the correct content
     const button = canvas.getByText("Show Toast");
     await userEvent.click(button);
 
-    // Toast가 표시될 때까지 대기
+    // Wait until the toast is shown
     await waitFor(
       () => {
         const toastTitle = canvas.getByText("Event has been created");
@@ -74,13 +74,13 @@ export const ShouldShowToast: Story = {
       { timeout: 3000 },
     );
 
-    // Toast description 확인
+    // Check the toast description
     const toastDescription = canvas.getByText(
       "Sunday, December 03, 2023 at 9:00 AM",
     );
     await expect(toastDescription).toBeVisible();
 
-    // Undo 버튼 확인
+    // Check the Undo button
     const undoButton = canvas.getByRole("button", { name: /undo/i });
     await expect(undoButton).toBeVisible();
   },

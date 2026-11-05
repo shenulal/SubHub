@@ -71,7 +71,7 @@ export function IntegrationsPageClient({
   const [currentPage, setCurrentPage] = useState(1);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
 
-  // 컬럼 가시성 상태 (외부에서 관리)
+  // Column visibility state (managed here)
   const [columnVisibility, setColumnVisibility] = useState<
     Record<string, boolean>
   >({});
@@ -141,7 +141,7 @@ export function IntegrationsPageClient({
   );
   const total = result.total ?? data?.total ?? 0;
 
-  // 통계 계산
+  // Compute stats
   const stats = useMemo(() => {
     const activeCount = integrations.filter(
       (i) => i.status === "ACTIVE"
@@ -153,7 +153,7 @@ export function IntegrationsPageClient({
     return { activeCount, pendingCount, errorCount };
   }, [integrations]);
 
-  // 필터 정의
+  // Filter definitions
   const filterDefinitions: FilterDefinition[] = useMemo(
     () => [
       {
@@ -201,7 +201,7 @@ export function IntegrationsPageClient({
     setCurrentPage(1);
   };
 
-  // 클라이언트 측 필터링 (type)
+  // Client-side filtering (type)
   const filteredIntegrations = useMemo(() => {
     let result = integrations;
 
@@ -212,7 +212,7 @@ export function IntegrationsPageClient({
     return result;
   }, [integrations, selectedFilters.type]);
 
-  // 로딩 상태 - Skeleton UI
+  // Loading state - skeleton UI
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -264,7 +264,7 @@ export function IntegrationsPageClient({
 
   return (
     <div className="space-y-6">
-      {/* 페이지 헤더 */}
+      {/* Page header */}
       <PageHeader
         title={t("integrations.page.title")}
         actions={[
@@ -277,14 +277,14 @@ export function IntegrationsPageClient({
         ]}
       />
 
-      {/* 연동 추가 다이얼로그 */}
+      {/* Add integration dialog */}
       <IntegrationCreateDialog
         open={isCreateDialogOpen}
         onOpenChange={setIsCreateDialogOpen}
         onSuccess={() => refetch()}
       />
 
-      {/* 통계 카드 */}
+      {/* Stat cards */}
       <KpiCardsGrid columns={4}>
         <KpiCard
           title={t("integrations.kpi.total")}
@@ -316,7 +316,7 @@ export function IntegrationsPageClient({
         />
       </KpiCardsGrid>
 
-      {/* 필터 툴바 */}
+      {/* Filter toolbar */}
       <AdvancedFilterBar
         searchValue={searchQuery}
         onSearchChange={(value) => {
@@ -336,7 +336,7 @@ export function IntegrationsPageClient({
         />
       </AdvancedFilterBar>
 
-      {/* 연동 목록 */}
+      {/* Integration list */}
       <IntegrationsList
         integrations={filteredIntegrations}
         canManage={canManageActions}

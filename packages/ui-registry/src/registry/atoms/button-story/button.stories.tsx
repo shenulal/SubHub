@@ -39,14 +39,14 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 /**
- * 기본 버튼 스타일입니다. 주요 액션이나 제출 버튼으로 사용하며,
- * 가장 눈에 띄는 시각적 강조를 제공합니다.
+ * The default button style. Use it for primary actions or submit buttons;
+ * it provides the strongest visual emphasis.
  */
 export const Default: Story = {};
 
 /**
- * 보조 액션에 사용하는 secondary variant입니다.
- * 주요 버튼보다 덜 강조되며, 취소나 뒤로가기 같은 부차적인 액션에 적합합니다.
+ * The secondary variant, used for supporting actions.
+ * Less prominent than the primary button; suited to secondary actions such as Cancel or Back.
  */
 export const Secondary: Story = {
   args: {
@@ -56,8 +56,8 @@ export const Secondary: Story = {
 };
 
 /**
- * 삭제나 파괴적인 액션에 사용하는 destructive variant입니다.
- * 빨간색 계열로 표시되어 사용자에게 신중한 결정을 유도합니다.
+ * The destructive variant, used for delete or other destructive actions.
+ * Shown in red to prompt users to decide carefully.
  */
 export const Destructive: Story = {
   args: {
@@ -67,8 +67,8 @@ export const Destructive: Story = {
 };
 
 /**
- * 테두리만 있는 outline variant입니다.
- * 배경이 투명하여 가벼운 느낌을 주며, 보조 액션이나 필터 버튼에 적합합니다.
+ * The outline variant, with a border only.
+ * Its transparent background feels lighter; suited to secondary actions or filter buttons.
  */
 export const Outline: Story = {
   args: {
@@ -78,8 +78,8 @@ export const Outline: Story = {
 };
 
 /**
- * 테두리와 배경이 없는 ghost variant입니다.
- * 호버 시에만 배경이 나타나며, 네비게이션이나 드롭다운 메뉴에 사용됩니다.
+ * The ghost variant, with no border or background.
+ * The background appears only on hover; used in navigation and dropdown menus.
  */
 export const Ghost: Story = {
   args: {
@@ -89,8 +89,8 @@ export const Ghost: Story = {
 };
 
 /**
- * 링크처럼 보이는 link variant입니다.
- * 밑줄이 있는 텍스트 스타일로, 인라인 텍스트 내에서 버튼 기능이 필요할 때 사용합니다.
+ * The link variant, which looks like a link.
+ * An underlined text style for when button behavior is needed within inline text.
  */
 export const LinkVariant: Story = {
   args: {
@@ -100,8 +100,8 @@ export const LinkVariant: Story = {
 };
 
 /**
- * 아이콘만 표시하는 버튼입니다. size="icon"을 사용하여 정사각형 모양으로 만들며,
- * 툴바나 액션 아이콘 버튼에 적합합니다. 접근성을 위해 aria-label 추가를 권장합니다.
+ * An icon-only button. Use size="icon" to make it square;
+ * suited to toolbars and action icons. Adding an aria-label is recommended for accessibility.
  */
 export const Icon: Story = {
   render: () => (
@@ -112,8 +112,8 @@ export const Icon: Story = {
 };
 
 /**
- * 텍스트와 아이콘을 함께 표시하는 버튼입니다.
- * 아이콘을 텍스트 앞에 배치하여 버튼의 기능을 시각적으로 강조할 수 있습니다.
+ * A button showing both text and an icon.
+ * Placing the icon before the text visually emphasizes the button's function.
  */
 export const WithIcon: Story = {
   render: () => (
@@ -124,8 +124,8 @@ export const WithIcon: Story = {
 };
 
 /**
- * 로딩 상태를 표시하는 버튼입니다. disabled 상태와 함께 spinner 아이콘을 표시하여
- * 비동기 작업이 진행 중임을 사용자에게 알립니다.
+ * A button showing a loading state. It is disabled and shows a spinner icon
+ * to tell users an asynchronous operation is in progress.
  */
 export const Loading: Story = {
   render: () => (
@@ -137,8 +137,8 @@ export const Loading: Story = {
 };
 
 /**
- * asChild prop을 사용하여 Button의 스타일을 다른 컴포넌트에 적용합니다.
- * Next.js Link나 React Router Link 등을 버튼처럼 스타일링할 때 유용합니다.
+ * Uses the asChild prop to apply the Button styles to another component.
+ * Useful for styling a Next.js Link or React Router Link as a button.
  */
 export const AsChild: Story = {
   render: () => (
@@ -149,12 +149,12 @@ export const AsChild: Story = {
 };
 
 /**
- * Ref 사용 예제: Button에 ref를 전달하여 DOM 요소에 직접 접근합니다.
- * 이 예제는 ref를 통한 focus 제어를 보여줍니다.
+ * Ref example: pass a ref to Button to access the DOM element directly.
+ * This example shows controlling focus through the ref.
  */
 export const WithRef: Story = {
   render: () => {
-    // 🎯 목적: HTMLButtonElement에 대한 ref를 생성하여 focus() 메서드 접근
+    // 🎯 Purpose: Create an HTMLButtonElement ref to access the focus() method
     const buttonRef = useRef<HTMLButtonElement>(null);
 
     return (
@@ -167,14 +167,14 @@ export const WithRef: Story = {
     );
   },
   play: async ({ canvasElement }) => {
-    // 🎯 목적: play function을 통해 ref 동작을 자동으로 테스트
+    // 🎯 Purpose: Automatically test ref behavior via a play function
     const canvas = within(canvasElement);
     const buttons = canvas.getAllByRole("button");
 
-    // "Focus Button Above" 버튼 클릭하여 첫 번째 버튼에 focus 트리거
+    // Click "Focus Button Above" to focus the first button
     await userEvent.click(buttons[1]);
 
-    // 첫 번째 버튼이 포커스를 받았는지 검증
+    // Verify the first button received focus
     await expect(buttons[0]).toHaveFocus();
   },
 };

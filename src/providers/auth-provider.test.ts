@@ -18,7 +18,7 @@ describe("authProvider", () => {
   });
 
   describe("login", () => {
-    it("signIn을 호출하고 성공을 반환한다", async () => {
+    it("calls signIn and returns success", async () => {
       mockSignIn.mockResolvedValueOnce(undefined);
 
       const result = await authProvider.login?.({
@@ -39,7 +39,7 @@ describe("authProvider", () => {
   });
 
   describe("logout", () => {
-    it("signOut을 호출하고 로그인 페이지로 리디렉션한다", async () => {
+    it("calls signOut and redirects to the login page", async () => {
       mockSignOut.mockResolvedValueOnce(undefined);
 
       const result = await authProvider.logout?.({});
@@ -53,7 +53,7 @@ describe("authProvider", () => {
   });
 
   describe("check", () => {
-    it("세션이 있으면 인증됨을 반환한다", async () => {
+    it("returns authenticated when a session exists", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({ user: { id: "user-1" } }),
@@ -69,7 +69,7 @@ describe("authProvider", () => {
       });
     });
 
-    it("세션이 없으면 인증 안됨과 리디렉션을 반환한다", async () => {
+    it("returns unauthenticated with a redirect when there is no session", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => null,
@@ -86,7 +86,7 @@ describe("authProvider", () => {
   });
 
   describe("getIdentity", () => {
-    it("세션 사용자 정보를 반환한다", async () => {
+    it("returns the session user identity", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({
@@ -113,7 +113,7 @@ describe("authProvider", () => {
   });
 
   describe("getPermissions", () => {
-    it("세션 사용자 역할을 반환한다", async () => {
+    it("returns the session user role", async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: async () => ({ user: { role: "ADMIN" } }),
@@ -126,7 +126,7 @@ describe("authProvider", () => {
   });
 
   describe("onError", () => {
-    it("로그아웃과 로그인 페이지 리디렉션을 반환한다", async () => {
+    it("returns logout with a redirect to the login page", async () => {
       const result = await authProvider.onError?.(new Error("test error"));
 
       expect(result).toEqual({

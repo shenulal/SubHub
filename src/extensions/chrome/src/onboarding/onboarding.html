@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SaaS Management Platform - Extension Setup</title>
+  <title>SubHub - Extension Setup</title>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
@@ -159,21 +159,21 @@
     <div class="card">
       <div class="logo">
         <div class="logo-icon">S</div>
-        <div class="logo-text">SaaS Management Platform</div>
+        <div class="logo-text">SubHub</div>
       </div>
 
       <div id="form-state">
-        <h1>SaaS Management Platform</h1>
+        <h1>SubHub</h1>
         <p class="subtitle">
-          SaaS Management Platform Extension이 설치되었습니다.<br>
-          서비스를 이용하려면 회사 이메일 주소를 입력해 주세요.
+          The SubHub extension has been installed.<br>
+          Please enter your company email address to get started.
         </p>
 
         <div id="error-msg" class="error"></div>
 
         <form id="onboarding-form">
           <div class="form-group">
-            <label for="email">회사 이메일</label>
+            <label for="email">Company email</label>
             <input
               type="email"
               id="email"
@@ -182,18 +182,18 @@
               required
               autocomplete="email"
             />
-            <p class="helper">관리자가 등록한 조직 도메인과 일치하는 이메일을 입력하세요.</p>
+            <p class="helper">Enter an email that matches the organisation domain registered by your administrator.</p>
           </div>
-          <button type="submit" id="submit-btn" class="btn">확인</button>
+          <button type="submit" id="submit-btn" class="btn">Verify</button>
         </form>
       </div>
 
       <div id="success-state" class="success-state">
         <div class="success-icon">&#10003;</div>
-        <h2>설정 완료!</h2>
-        <p id="welcome-msg">Extension이 활성화되었습니다.</p>
+        <h2>Setup complete!</h2>
+        <p id="welcome-msg">The extension is now active.</p>
         <p style="margin-top: 12px; color: #94a3b8; font-size: 13px;">
-          이 탭은 자동으로 닫힙니다...
+          This tab will close automatically...
         </p>
       </div>
     </div>

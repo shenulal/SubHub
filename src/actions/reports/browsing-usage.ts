@@ -69,7 +69,7 @@ export const getBrowsingUsageReport = withLogging(
       },
     };
 
-    // Add search filter: URL 또는 사용자(이름/이메일) 동시 검색
+    // Add search filter: search URL or user (name/email) at once
     if (filters.search) {
       const matchingUsers = await prisma.user.findMany({
         where: {

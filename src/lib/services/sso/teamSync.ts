@@ -1,7 +1,7 @@
 // src/lib/services/sso/teamSync.ts
 /**
- * Google Workspace OU -> Team 동기화 서비스
- * Organizational Unit을 Team 테이블에 계층 구조로 저장
+ * Google Workspace OU -> Team sync service
+ * Stores Organizational Units in the Team table as a hierarchy
  */
 
 import { prisma } from "@/lib/db";
@@ -10,32 +10,32 @@ import type { Integration, Team } from "@prisma/client";
 import type { GoogleWorkspaceService } from "./googleWorkspace";
 
 /**
- * OU를 부모-자식 순서로 정렬 (부모가 먼저 오도록)
- * 루트 OU("/")는 제외하고, 부모 경로가 짧은 것부터 정렬
+ * Sorts OUs parent-first
+ * Excludes the root OU ("/") and sorts by shortest parent path first
  */
 function sortOrgUnitsByHierarchy(orgUnits: GoogleOrgUnit[]): GoogleOrgUnit[] {
-  // 루트 OU는 제외 (경로가 "/" 또는 빈 문자열인 경우)
+  // Exclude the root OU (path "/" or empty)
   const filtered = orgUnits.filter(
     (ou) => ou.orgUnitPath && ou.orgUnitPath !== "/"
   );
 
-  // 경로 깊이(슬래시 개수)로 정렬 - 부모가 먼저
+  // Sort by path depth (number of slashes) - parents first
   return filtered.sort((a, b) => {
     const depthA = (a.orgUnitPath.match(/\//g) || []).length;
     const depthB = (b.orgUnitPath.match(/\//g) || []).length;
     if (depthA !== depthB) {
       return depthA - depthB;
     }
-    // 같은 깊이면 경로 알파벳순
+    // Same depth: alphabetical by path
     return a.orgUnitPath.localeCompare(b.orgUnitPath);
   });
 }
 
 /**
- * 부모 Team ID 찾기
- * @param parentOrgUnitPath 부모 OU 경로
- * @param organizationId 조직 ID
- * @param teamCache 이미 생성/조회된 팀 캐시
+ * Finds the parent team ID
+ * @param parentOrgUnitPath Parent OU path
+ * @param organizationId Organization ID
+ * @param teamCache Cache of teams already created/loaded
  */
 async function findParentTeamId(
   parentOrgUnitPath: string | undefined,
@@ -46,13 +46,13 @@ async function findParentTeamId(
     return null;
   }
 
-  // 캐시에서 먼저 확인
+  // Check the cache first
   const cachedId = teamCache.get(parentOrgUnitPath);
   if (cachedId) {
     return cachedId;
   }
 
-  // DB에서 조회
+  // Look up in the DB
   const parentTeam = await prisma.team.findFirst({
     where: {
       organizationId,
@@ -70,7 +70,7 @@ async function findParentTeamId(
 }
 
 /**
- * Google Workspace OU를 Team으로 동기화
+ * Syncs Google Workspace OUs to teams
  */
 export async function syncTeamsFromGoogle(
   integration: Integration,
@@ -84,17 +84,17 @@ export async function syncTeamsFromGoogle(
   let itemsUpdated = 0;
 
   try {
-    // 1. Google에서 모든 OU 조회
+    // 1. Fetch all OUs from Google
     const googleOrgUnits = await googleService.listOrgUnits();
     itemsFound = googleOrgUnits.length;
 
-    // 2. 부모-자식 순서로 정렬
+    // 2. Sort parent-first
     const sortedOrgUnits = sortOrgUnitsByHierarchy(googleOrgUnits);
 
-    // 3. 팀 캐시 (orgUnitPath -> teamId)
+    // 3. Team cache (orgUnitPath -> teamId)
     const teamCache = new Map<string, string>();
 
-    // 4. 기존 팀 조회하여 캐시에 추가
+    // 4. Load existing teams into the cache
     const existingTeams = await prisma.team.findMany({
       where: { organizationId },
       select: { id: true, googleOrgUnitPath: true },
@@ -105,7 +105,7 @@ export async function syncTeamsFromGoogle(
       }
     });
 
-    // 5. 각 OU를 Team으로 upsert
+    // 5. Upsert each OU as a team
     for (const orgUnit of sortedOrgUnits) {
       try {
         const parentId = await findParentTeamId(
@@ -123,7 +123,7 @@ export async function syncTeamsFromGoogle(
           organizationId,
         };
 
-        // upsert 실행
+        // Run the upsert
         const result = await prisma.team.upsert({
           where: {
             organizationId_googleOrgUnitPath: {
@@ -139,10 +139,10 @@ export async function syncTeamsFromGoogle(
           },
         });
 
-        // 캐시 업데이트
+        // Update the cache
         teamCache.set(orgUnit.orgUnitPath, result.id);
 
-        // 생성/업데이트 카운트
+        // Count creates/updates
         if (
           existingTeams.some((t) => t.googleOrgUnitPath === orgUnit.orgUnitPath)
         ) {
@@ -152,7 +152,7 @@ export async function syncTeamsFromGoogle(
         }
       } catch (error: unknown) {
         const errorMessage =
-          error instanceof Error ? error.message : "알 수 없는 오류";
+          error instanceof Error ? error.message : "Unknown error";
         errors.push({
           code: "TEAM_SYNC_ERROR",
           message: errorMessage,
@@ -176,7 +176,7 @@ export async function syncTeamsFromGoogle(
   } catch (error: unknown) {
     const duration = Date.now() - startTime;
     const errorMessage =
-      error instanceof Error ? error.message : "알 수 없는 오류";
+      error instanceof Error ? error.message : "Unknown error";
 
     return {
       status: "FAILED",
@@ -196,7 +196,7 @@ export async function syncTeamsFromGoogle(
 }
 
 /**
- * 조직의 모든 팀을 트리 구조로 조회
+ * Returns all of the organization's teams as a tree
  */
 export async function getTeamTree(organizationId: string): Promise<Team[]> {
   return prisma.team.findMany({
@@ -214,7 +214,7 @@ export async function getTeamTree(organizationId: string): Promise<Team[]> {
 }
 
 /**
- * orgUnitPath로 팀 ID 매핑 조회
+ * Returns the orgUnitPath → team ID mapping
  */
 export async function getTeamPathMap(
   organizationId: string

@@ -9,9 +9,9 @@ import { NextRequest, NextResponse } from "next/server";
 export const GET = withCronAuth(
   withLogging("cron:review-apps-scan", async (request: NextRequest) => {
     try {
-      logger.info("[Cron] 미스캔 도메인 스캔 시작");
+      logger.info("[Cron] Unscanned domain scan started");
 
-      // 모든 활성 조직 조회
+      // Fetch all active organizations
       const organizations = await prisma.organization.findMany({
         select: { id: true, name: true },
       });
@@ -34,7 +34,7 @@ export const GET = withCronAuth(
         let orgError: string | undefined;
 
         try {
-          // 미스캔 도메인이 없을 때까지 반복 (최대 20회)
+          // Repeat until no unscanned domains remain (max 20 iterations)
           for (let i = 0; i < MAX_ITERATIONS; i++) {
             const result = await scanUnregisteredDomains({
               batchSize: 10,
@@ -51,12 +51,12 @@ export const GET = withCronAuth(
             orgSaasFound += saasFound;
             orgMaliciousFound += maliciousFound;
 
-            // 더 이상 스캔할 도메인이 없으면 종료
+            // Stop when there are no more domains to scan
             if (scanned === 0) break;
 
             logger.info(
               { organizationId: org.id, iteration: i + 1, scanned },
-              "[Cron] 배치 반복 스캔 진행"
+              "[Cron] Batch scan iteration in progress"
             );
           }
 
@@ -71,7 +71,7 @@ export const GET = withCronAuth(
         } catch (error) {
           logger.error(
             { err: error, organizationId: org.id },
-            "[Cron] 조직별 스캔 오류"
+            "[Cron] Per-organization scan error"
           );
           results.push({
             organizationId: org.id,
@@ -98,7 +98,7 @@ export const GET = withCronAuth(
           totalSaaS,
           totalMalicious,
         },
-        "[Cron] 미스캔 도메인 스캔 완료"
+        "[Cron] Unscanned domain scan completed"
       );
 
       return NextResponse.json({
@@ -113,12 +113,12 @@ export const GET = withCronAuth(
         details: results,
       });
     } catch (error) {
-      logger.error({ err: error }, "[Cron] 미스캔 도메인 스캔 오류");
+      logger.error({ err: error }, "[Cron] Unscanned domain scan error");
 
       return NextResponse.json(
         {
           success: false,
-          error: error instanceof Error ? error.message : "알 수 없는 오류",
+          error: error instanceof Error ? error.message : "Unknown error",
         },
         { status: 500 }
       );

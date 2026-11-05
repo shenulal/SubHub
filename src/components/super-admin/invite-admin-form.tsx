@@ -21,10 +21,10 @@ export function InviteAdminForm() {
     setLoading(false);
 
     if (result.success) {
-      toast.success(result.message ?? "초대장이 발송되었습니다.");
+      toast.success(result.message ?? "Invitation sent.");
       setEmail("");
     } else {
-      toast.error(result.message ?? "오류가 발생했습니다.");
+      toast.error(result.message ?? "An error occurred.");
     }
   };
 
@@ -32,7 +32,7 @@ export function InviteAdminForm() {
     <form onSubmit={handleSubmit} className="max-w-3xl space-y-3">
       <div className="space-y-1.5">
         <Label htmlFor="invite-email" className="text-[0.9375rem]">
-          초대할 이메일
+          Email to invite
         </Label>
         <div className="flex min-w-0 flex-wrap gap-3 sm:flex-nowrap [&>button]:h-10 [&>button]:shrink-0 [&>input]:min-w-0 [&>input]:flex-1">
           <Input
@@ -44,11 +44,12 @@ export function InviteAdminForm() {
             disabled={loading}
           />
           <Button type="submit" disabled={loading || !email.trim()}>
-            {loading ? "발송 중..." : "초대 발송"}
+            {loading ? "Sending..." : "Send Invitation"}
           </Button>
         </div>
         <p className="text-muted-foreground text-[0.8125rem]">
-          ADMIN 역할로 초대됩니다. 초대 링크는 7일간 유효합니다.
+          The user will be invited with the ADMIN role. The invitation link is
+          valid for 7 days.
         </p>
       </div>
     </form>

@@ -33,24 +33,24 @@ function toNumber(value: unknown): number {
 }
 
 /**
- * 구독 미사용 비용 집계 (사용자별 구독 분석)
+ * Aggregate unused subscription cost (per-user subscription analysis)
  *
- * 사용 여부 판단: UserAppAccess OR ExtensionUsage (OR 조건)
- * - UserAppAccess: 로그인 이벤트 기반 (lastUsedAt >= 30일 전)
- * - ExtensionUsage: 브라우징 로그 기반 (date >= 30일 전, 앱 도메인 매칭)
+ * Usage is determined by UserAppAccess OR ExtensionUsage (OR condition)
+ * - UserAppAccess: based on login events (lastUsedAt within the last 30 days)
+ * - ExtensionUsage: based on browsing logs (date within the last 30 days, matched by app domain)
  *
- * 빌링 타입별 계산:
- * - FLAT_RATE (기본): 할당된 사용자 중 1명이라도 활성이면 사용 중
- * - PER_SEAT: 미활성 사용자 수 × perSeatPrice
+ * Calculation by billing type:
+ * - FLAT_RATE (default): in use if at least one assigned user is active
+ * - PER_SEAT: number of inactive users × perSeatPrice
  *
- * count: 미사용 구독 수
- * cost: 미사용 구독의 월 환산 비용 합계
+ * count: number of unused subscriptions
+ * cost: total monthly-equivalent cost of unused subscriptions
  */
 export async function getUnusedApps(): Promise<ActionState<UnusedAppsResult>> {
   try {
     const { organizationId } = await requireOrganization();
 
-    // 1) ACTIVE 구독 조회 (할당된 사용자 + 앱 도메인 정보 포함)
+    // 1) Fetch ACTIVE subscriptions (with assigned users and app domains)
     const subscriptions = await prisma.subscription.findMany({
       where: {
         organizationId,
@@ -89,10 +89,10 @@ export async function getUnusedApps(): Promise<ActionState<UnusedAppsResult>> {
     const thresholdDate = new Date();
     thresholdDate.setDate(thresholdDate.getDate() - INACTIVE_DAYS_THRESHOLD);
 
-    // 2) 고유 appId 목록
+    // 2) Unique appId list
     const appIds = [...new Set(subscriptions.map((s) => s.appId))];
 
-    // 3-1) UserAppAccess: 30일 내 로그인 이력 조회
+    // 3-1) UserAppAccess: login history within 30 days
     const recentAccesses = await prisma.userAppAccess.findMany({
       where: {
         appId: { in: appIds },
@@ -101,12 +101,12 @@ export async function getUnusedApps(): Promise<ActionState<UnusedAppsResult>> {
       select: { appId: true, userId: true },
     });
 
-    // "appId:userId" Set으로 빠른 조회
+    // Set of "appId:userId" for fast lookup
     const accessSet = new Set(
       recentAccesses.map((a) => `${a.appId}:${a.userId}`)
     );
 
-    // 3-2) appId → domain[] 역방향 맵 구축 (ExtensionUsage 매칭용)
+    // 3-2) Build the appId → domain[] reverse map (for ExtensionUsage matching)
     const domainToAppId = new Map<string, string>();
     for (const sub of subscriptions) {
       if (!sub.app) continue;
@@ -130,7 +130,7 @@ export async function getUnusedApps(): Promise<ActionState<UnusedAppsResult>> {
       }
     }
 
-    // 3-3) ExtensionUsage: 30일 내 브라우징 기록 (앱 도메인 기반)
+    // 3-3) ExtensionUsage: browsing records within 30 days (by app domain)
     const usageSet = new Set<string>();
     if (domainToAppId.size > 0) {
       const recentUsages = await prisma.extensionUsage.findMany({
@@ -151,12 +151,12 @@ export async function getUnusedApps(): Promise<ActionState<UnusedAppsResult>> {
       }
     }
 
-    // 활성 사용자 판단: UserAppAccess OR ExtensionUsage
+    // Active user check: UserAppAccess OR ExtensionUsage
     const isActiveUser = (appId: string, userId: string): boolean =>
       accessSet.has(`${appId}:${userId}`) || usageSet.has(`${appId}:${userId}`);
 
-    // 4) 구독별 미사용 비용 계산
-    const unusedAppIds = new Set<string>(); // 미사용 앱 수 (구독이 아닌 앱 단위)
+    // 4) Calculate unused cost per subscription
+    const unusedAppIds = new Set<string>(); // number of unused apps (counted per app, not per subscription)
     let totalMonthlyCost = 0;
 
     for (const sub of subscriptions) {
@@ -165,7 +165,7 @@ export async function getUnusedApps(): Promise<ActionState<UnusedAppsResult>> {
       const assignedUserIds = (sub.assignedUsers ?? []).map((u) => u.userId);
 
       if (sub.billingType === "PER_SEAT") {
-        // 미접속 사용자 수 × perSeatPrice
+        // inactive users × perSeatPrice
         const perSeatPrice =
           toNumber(sub.perSeatPrice) ||
           (sub.totalLicenses && sub.totalLicenses > 0
@@ -181,7 +181,7 @@ export async function getUnusedApps(): Promise<ActionState<UnusedAppsResult>> {
           unusedAppIds.add(sub.appId);
         }
       } else {
-        // FLAT_RATE (기본): 할당 사용자 중 활성 사용자가 없으면 미사용
+        // FLAT_RATE (default): unused if no assigned user is active
         const hasActiveUser = assignedUserIds.some((uid) =>
           isActiveUser(sub.appId, uid)
         );
@@ -200,7 +200,7 @@ export async function getUnusedApps(): Promise<ActionState<UnusedAppsResult>> {
       },
     };
   } catch (error) {
-    console.error("미사용 구독 조회 오류:", error);
-    return { success: false, error: "미사용 구독 조회에 실패했습니다" };
+    console.error("Unused subscription query error:", error);
+    return { success: false, error: "Failed to load unused subscriptions" };
   }
 }

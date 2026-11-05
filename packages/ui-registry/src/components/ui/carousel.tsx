@@ -43,9 +43,9 @@ function useCarousel() {
 }
 
 /**
- * 🎯 목적: Carousel 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: embla-carousel-react 라이브러리 사용, Context Provider 내부 구조 유지
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the Carousel component for React 18/19 compatibility
+ * 📝 Note: Uses the embla-carousel-react library; keep the internal Context Provider structure
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const Carousel = React.forwardRef<
   HTMLDivElement,
@@ -148,9 +148,9 @@ const Carousel = React.forwardRef<
 Carousel.displayName = "Carousel";
 
 /**
- * 🎯 목적: CarouselContent 컴포넌트 (embla-carousel의 carouselRef 사용)
- * 📝 주의사항: embla-carousel-react의 carouselRef를 내부적으로 사용하므로 추가 forwardRef 불필요
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support 검토 (내부 ref 사용)
+ * 🎯 Purpose: CarouselContent component (uses embla-carousel's carouselRef)
+ * 📝 Note: Uses embla-carousel-react's carouselRef internally, so no additional forwardRef is needed
+ * 🔄 History: 2025-10-11 - Reviewed for React 18/19 dual support (uses internal ref)
  */
 function CarouselContent({ className, ...props }: React.ComponentProps<"div">) {
   const { carouselRef, orientation } = useCarousel();
@@ -174,9 +174,9 @@ function CarouselContent({ className, ...props }: React.ComponentProps<"div">) {
 }
 
 /**
- * 🎯 목적: CarouselItem 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: 슬라이드 아이템 역할, orientation에 따라 스타일 변경
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the CarouselItem component for React 18/19 compatibility
+ * 📝 Note: Acts as a slide item; style changes with orientation
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const CarouselItem = React.forwardRef<
   HTMLDivElement,
@@ -202,9 +202,9 @@ const CarouselItem = React.forwardRef<
 CarouselItem.displayName = "CarouselItem";
 
 /**
- * 🎯 목적: CarouselPrevious 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: Button 컴포넌트 사용 (Button이 이미 forwardRef 지원)
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the CarouselPrevious component for React 18/19 compatibility
+ * 📝 Note: Uses the Button component (Button already supports forwardRef)
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const CarouselPrevious = React.forwardRef<
   HTMLButtonElement,
@@ -237,9 +237,9 @@ const CarouselPrevious = React.forwardRef<
 CarouselPrevious.displayName = "CarouselPrevious";
 
 /**
- * 🎯 목적: CarouselNext 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: Button 컴포넌트 사용 (Button이 이미 forwardRef 지원)
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the CarouselNext component for React 18/19 compatibility
+ * 📝 Note: Uses the Button component (Button already supports forwardRef)
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const CarouselNext = React.forwardRef<
   HTMLButtonElement,

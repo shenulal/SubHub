@@ -202,7 +202,7 @@ describe("rematchRecords", () => {
     });
 
     await expect(rematchRecords(BASE_OPTIONS)).rejects.toThrow(
-      "재매칭이 이미 진행 중입니다"
+      "Rematching is already in progress"
     );
   });
 

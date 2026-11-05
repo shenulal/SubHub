@@ -56,20 +56,20 @@ export function CsvUploadProgressDialog({
         </DialogHeader>
 
         <div className="space-y-4 py-2">
-          {/* 총 레코드 수 */}
+          {/* Total records */}
           <p className="text-muted-foreground text-sm">
             {t("totalRecords", { total })}
           </p>
 
-          {/* 진행 바 */}
+          {/* Progress bar */}
           <Progress value={percent} className="h-3" />
 
-          {/* 진행 텍스트 */}
+          {/* Progress text */}
           <p className="text-sm font-medium">
             {t("processed", { processed, total, percent })}
           </p>
 
-          {/* 오류 건수 */}
+          {/* Error count */}
           {errorCount > 0 && (
             <div className="text-destructive flex items-center gap-2 text-sm">
               <AlertCircle className="h-4 w-4" />
@@ -78,7 +78,7 @@ export function CsvUploadProgressDialog({
           )}
         </div>
 
-        {/* 닫기 버튼 - 완료 시에만 활성화 */}
+        {/* Close button - enabled only when complete */}
         <div className="flex justify-end">
           <Button onClick={onClose} disabled={!isComplete}>
             {t("close")}

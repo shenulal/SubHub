@@ -1,105 +1,105 @@
 // src/lib/services/payment/recurrence.types.ts
 
 /**
- * 최소 결제 정보 (카드사 raw 데이터 형식)
+ * Minimal payment info (card company raw data format)
  */
 export interface MinimalPurchase {
-  /** 거래일자 (YYYYMMDD) */
+  /** Transaction date (YYYYMMDD) */
   useDt: string;
-  /** 거래시간 (HHMM) */
+  /** Transaction time (HHMM) */
   useTm?: string | null;
-  /** 가맹점명 */
+  /** Merchant name */
   useStore: string;
-  /** 거래금액 */
+  /** Transaction amount */
   useAmt: string;
 }
 
 /**
- * 월별 거래 정보
+ * Monthly transaction info
  */
 export interface MonthlyTransaction {
-  /** 월 (YYYYMM) */
+  /** Month (YYYYMM) */
   month: string;
-  /** 일자 (1-31) */
+  /** Day (1-31) */
   day: number;
-  /** 금액 */
+  /** Amount */
   amount: number;
 }
 
 /**
- * 월 반복 결제 정보
+ * Monthly recurring payment info
  */
 export interface MonthlyRecurrence {
-  /** 반복 횟수 (월 수) */
+  /** Number of occurrences (months) */
   count: number;
-  /** 최소 금액 */
+  /** Minimum amount */
   minAmount: number;
-  /** 최대 금액 */
+  /** Maximum amount */
   maxAmount: number;
 }
 
 /**
- * SaaS 구독 휴리스틱 결과
+ * SaaS subscription heuristic result
  */
 export interface SaaSSubscriptionHint {
   /**
-   * SaaS 구독 가능성 점수 (0-100)
-   * - 50 이상: SaaS 가능성 높음
-   * - 30-50: 불확실
-   * - 30 미만: SaaS 가능성 낮음
+   * SaaS subscription likelihood score (0-100)
+   * - 50 or above: likely SaaS
+   * - 30-50: uncertain
+   * - Below 30: unlikely SaaS
    */
   score: number;
-  /** 탐지된 패턴 설명 */
+  /** Descriptions of detected patterns */
   reasons: string[];
-  /** 월별 거래 횟수 (서로 다른 월) */
+  /** Number of distinct months with transactions */
   monthCount: number;
-  /** 평균 금액 */
+  /** Average amount */
   avgAmount: number;
-  /** 금액 편차율 (0-1, 0에 가까울수록 일관성 높음) */
+  /** Amount variation ratio (0-1; closer to 0 is more consistent) */
   amountVariation: number;
 }
 
 /**
- * SaaS 휴리스틱 옵션
+ * SaaS heuristic options
  */
 export interface SaaSHeuristicOptions {
-  /** 금액 유사성 허용 범위 (기본값: 0.1 = ±10%) */
+  /** Amount similarity tolerance (default: 0.1 = ±10%) */
   amountTolerance?: number;
-  /** 최소 월 횟수 (기본값: 2) */
+  /** Minimum number of months (default: 2) */
   minMonthCount?: number;
-  /** 일자 유사성 허용 범위 (기본값: 3일) */
+  /** Day similarity tolerance (default: 3 days) */
   dayTolerance?: number;
 }
 
 /**
- * 결제 주기 타입
+ * Billing cycle type
  */
 export type BillingCycle = "MONTHLY" | "QUARTERLY" | "SEMI_ANNUAL" | "ANNUAL";
 
 /**
- * 반복 결제 패턴 분석 결과
+ * Recurring payment pattern analysis result
  */
 export interface RecurrencePattern {
-  /** 반복 결제로 판정되었는지 여부 */
+  /** Whether the payments were classified as recurring */
   isRecurring: boolean;
-  /** 결제 주기 */
+  /** Billing cycle */
   billingCycle: BillingCycle | null;
-  /** 평균 간격 (일) */
+  /** Average interval (days) */
   avgIntervalDays: number;
-  /** 간격 표준편차 (일) */
+  /** Interval standard deviation (days) */
   intervalStdDev: number;
-  /** 예측된 다음 결제일 */
+  /** Predicted next payment date */
   nextPaymentDate: Date | null;
-  /** 마지막 결제일 */
+  /** Last payment date */
   lastPaymentDate: Date | null;
-  /** 분석에 사용된 거래 수 */
+  /** Number of transactions analysed */
   transactionCount: number;
-  /** 평균 금액 */
+  /** Average amount */
   avgAmount: number;
 }
 
 /**
- * 날짜별 거래 정보 (내부 사용)
+ * Transaction info by date (internal use)
  */
 export interface DateTransaction {
   date: Date;

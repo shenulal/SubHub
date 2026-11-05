@@ -138,7 +138,7 @@ describe("subscription-seat-management", () => {
       const result = await getSubscriptionSeatDetails("nonexistent");
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe("구독을 찾을 수 없습니다");
+      expect(result.error).toBe("Subscription not found");
     });
 
     it("should treat all assigned users without UserAppAccess as active (fallback)", async () => {
@@ -270,7 +270,7 @@ describe("subscription-seat-management", () => {
       const result = await assignUserToSubscription("sub-1", "user-new");
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe("Seat 한도에 도달했습니다");
+      expect(result.error).toBe("Seat limit reached");
     });
 
     it("should reject duplicate assignment", async () => {
@@ -291,7 +291,7 @@ describe("subscription-seat-management", () => {
       const result = await assignUserToSubscription("sub-1", "user-1");
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe("이미 배정된 유저입니다");
+      expect(result.error).toBe("User is already assigned");
     });
 
     it("should reject user from different org", async () => {
@@ -306,7 +306,7 @@ describe("subscription-seat-management", () => {
       const result = await assignUserToSubscription("sub-1", "user-other-org");
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe("유저를 찾을 수 없습니다");
+      expect(result.error).toBe("User not found");
     });
 
     it("should allow assignment when totalLicenses is null", async () => {
@@ -375,7 +375,7 @@ describe("subscription-seat-management", () => {
       const result = await removeUserFromSubscription("sub-1", "user-1");
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe("배정되지 않은 유저입니다");
+      expect(result.error).toBe("User is not assigned");
     });
 
     it("should return error when subscription not found", async () => {
@@ -384,7 +384,7 @@ describe("subscription-seat-management", () => {
       const result = await removeUserFromSubscription("nonexistent", "user-1");
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe("구독을 찾을 수 없습니다");
+      expect(result.error).toBe("Subscription not found");
     });
   });
 });

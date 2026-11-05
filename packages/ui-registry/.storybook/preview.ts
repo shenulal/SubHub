@@ -65,8 +65,8 @@ const preview: Preview = {
 
   tags: ["autodocs"],
   decorators: [
-    // 테마 및 모드 조합 선택 (7가지 색상 × 2가지 모드 = 14가지 조합)
-    // 모든 컬러 테마는 다중 클래스 방식으로 default 테마로 폴백
+    // Theme and mode combinations (7 colors × 2 modes = 14 combinations)
+    // Every color theme falls back to the default theme via multiple classes
     withThemeByClassName({
       themes: {
         "default-light": "theme-default-light",

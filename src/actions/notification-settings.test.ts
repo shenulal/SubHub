@@ -31,7 +31,7 @@ describe("updateNotificationSettings", () => {
     vi.clearAllMocks();
   });
 
-  it("인증되지 않은 사용자는 에러를 반환해야 한다", async () => {
+  it("returns an error for an unauthenticated user", async () => {
     vi.mocked(auth).mockResolvedValue(null as never);
 
     const result = await updateNotificationSettings(
@@ -42,11 +42,11 @@ describe("updateNotificationSettings", () => {
 
     expect(result).toEqual({
       success: false,
-      message: "인증이 필요합니다",
+      message: "Authentication required",
     });
   });
 
-  it("조직 ID가 없는 사용자는 에러를 반환해야 한다", async () => {
+  it("returns an error for a user without an organization ID", async () => {
     vi.mocked(auth).mockResolvedValue({
       user: { id: "user-1", organizationId: null },
     } as never);
@@ -59,11 +59,11 @@ describe("updateNotificationSettings", () => {
 
     expect(result).toEqual({
       success: false,
-      message: "조직 정보가 필요합니다",
+      message: "Organization information is required",
     });
   });
 
-  it("존재하지 않는 구독은 에러를 반환해야 한다", async () => {
+  it("returns an error for a non-existent subscription", async () => {
     vi.mocked(auth).mockResolvedValue({
       user: { id: "user-1", organizationId: "org-1" },
     } as never);
@@ -78,11 +78,11 @@ describe("updateNotificationSettings", () => {
 
     expect(result).toEqual({
       success: false,
-      message: "구독을 찾을 수 없습니다",
+      message: "Subscription not found",
     });
   });
 
-  it("알림 설정을 업데이트해야 한다", async () => {
+  it("updates notification settings", async () => {
     vi.mocked(auth).mockResolvedValue({
       user: { id: "user-1", organizationId: "org-1" },
     } as never);
@@ -110,7 +110,7 @@ describe("updateNotificationSettings", () => {
     });
   });
 
-  it("30일 알림을 비활성화할 수 있어야 한다", async () => {
+  it("can disable the 30-day alert", async () => {
     vi.mocked(auth).mockResolvedValue({
       user: { id: "user-1", organizationId: "org-1" },
     } as never);
@@ -138,7 +138,7 @@ describe("updateNotificationSettings", () => {
     });
   });
 
-  it("60일 알림을 업데이트할 수 있어야 한다", async () => {
+  it("can update the 60-day alert", async () => {
     vi.mocked(auth).mockResolvedValue({
       user: { id: "user-1", organizationId: "org-1" },
     } as never);
@@ -166,7 +166,7 @@ describe("updateNotificationSettings", () => {
     });
   });
 
-  it("90일 알림을 업데이트할 수 있어야 한다", async () => {
+  it("can update the 90-day alert", async () => {
     vi.mocked(auth).mockResolvedValue({
       user: { id: "user-1", organizationId: "org-1" },
     } as never);
@@ -194,7 +194,7 @@ describe("updateNotificationSettings", () => {
     });
   });
 
-  it("업데이트 후 revalidatePath를 호출해야 한다", async () => {
+  it("calls revalidatePath after updating", async () => {
     vi.mocked(auth).mockResolvedValue({
       user: { id: "user-1", organizationId: "org-1" },
     } as never);

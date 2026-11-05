@@ -67,14 +67,14 @@ export const ShouldOpenAndCloseDialog: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    // 🎯 목적: Alert Dialog가 트리거 버튼 클릭으로 열리고, Cancel/Continue 버튼이 동작하는지 확인
+    // 🎯 Purpose: Verify the Alert Dialog opens from the trigger button and the Cancel/Continue buttons work
     const triggerButton = canvas.getByRole("button", { name: /show dialog/i });
     await expect(triggerButton).toBeInTheDocument();
 
-    // 트리거 버튼 클릭하여 다이얼로그 열기
+    // Click the trigger button to open the dialog
     await userEvent.click(triggerButton);
 
-    // 다이얼로그가 열렸는지 확인
+    // Verify the dialog is open
     await waitFor(async () => {
       const dialogTitle = await canvas.findByRole("heading", {
         name: /are you absolutely sure/i,
@@ -82,15 +82,15 @@ export const ShouldOpenAndCloseDialog: Story = {
       await expect(dialogTitle).toBeInTheDocument();
     });
 
-    // Cancel 버튼 확인
+    // Check the Cancel button
     const cancelButton = canvas.getByRole("button", { name: /cancel/i });
     await expect(cancelButton).toBeInTheDocument();
 
-    // Continue 버튼 확인
+    // Check the Continue button
     const continueButton = canvas.getByRole("button", { name: /continue/i });
     await expect(continueButton).toBeInTheDocument();
 
-    // Cancel 버튼 클릭 (다이얼로그 닫기)
+    // Click Cancel (closes the dialog)
     await userEvent.click(cancelButton);
   },
 };

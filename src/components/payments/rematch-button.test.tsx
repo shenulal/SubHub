@@ -105,7 +105,7 @@ describe("RematchButton", () => {
           skippedCount: 0,
           errors: [],
         },
-        message: "2건 매칭 완료",
+        message: "2 matched",
       });
 
       render(
@@ -135,7 +135,7 @@ describe("RematchButton", () => {
           skippedCount: 0,
           errors: [],
         },
-        message: "2건 매칭 완료",
+        message: "2 matched",
       });
 
       render(
@@ -156,7 +156,7 @@ describe("RematchButton", () => {
     it("should show error toast when rematch fails", async () => {
       mockRematchPaymentRecords.mockResolvedValueOnce({
         success: false,
-        message: "재매칭 오류",
+        message: "Rematch error",
       });
 
       render(<RematchButton selectedIds={["id1"]} recordType="payment" />);
@@ -184,7 +184,7 @@ describe("RematchButton", () => {
           skippedCount: 0,
           errors: [],
         },
-        message: "1건 매칭 완료",
+        message: "1 matched",
       });
 
       render(
@@ -219,7 +219,7 @@ describe("RematchButton", () => {
           skippedCount: 0,
           errors: [],
         },
-        message: "1건 매칭 완료",
+        message: "1 matched",
       });
 
       render(

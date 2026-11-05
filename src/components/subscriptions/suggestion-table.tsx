@@ -48,7 +48,7 @@ export function SuggestionTable() {
   const [suggestions, setSuggestions] = useState<UnifiedSuggestion[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Dialog 상태
+  // Dialog state
   const [selectedSuggestion, setSelectedSuggestion] =
     useState<UnifiedSuggestion | null>(null);
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -236,7 +236,7 @@ export function SuggestionTable() {
   return (
     <TooltipProvider>
       <div className="space-y-4">
-        {/* 헤더 */}
+        {/* Header */}
         <div className="flex items-center justify-between">
           <div>
             <div className="flex items-center gap-2">
@@ -383,7 +383,7 @@ export function SuggestionTable() {
         </Card>
       </div>
 
-      {/* 등록 Dialog */}
+      {/* Register dialog */}
       <SuggestionRegisterDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}

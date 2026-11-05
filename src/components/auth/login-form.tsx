@@ -19,7 +19,7 @@ type OtpState = "idle" | "sending" | "sent";
 const OTP_SLOT_CLASS =
   "h-10 w-full rounded-md border text-[0.9375rem] font-medium shadow-none data-[active=true]:border-primary data-[active=true]:ring-primary/20";
 
-/** 부모 Server Component에서 주입하는 번역 문자열 */
+/** Translation strings injected by the parent Server Component */
 export interface LoginFormTranslations {
   email: string;
   emailPlaceholder: string;
@@ -41,14 +41,14 @@ export interface LoginFormTranslations {
 }
 
 export interface LoginFormProps {
-  /** Server Action — credentials 로그인 처리 */
+  /** Server Action — handles credentials sign-in */
   action: (formData: FormData) => void;
   translations: LoginFormTranslations;
 }
 
 /**
- * Submit 버튼 — useFormStatus로 pending 상태를 감지합니다.
- * useFormStatus는 반드시 <form> 자식 컴포넌트에서 호출해야 합니다.
+ * Submit button — detects the pending state via useFormStatus.
+ * useFormStatus must be called from a child component of <form>.
  */
 function SubmitButton({
   label,
@@ -68,10 +68,10 @@ function SubmitButton({
 }
 
 /**
- * 로그인 폼 컴포넌트 (이메일/OTP)
+ * Login form component (email/OTP)
  *
- * Step 1: 이메일 입력 + 인증 코드 발송 버튼
- * Step 2: OTP 입력 + 재발송 + 로그인 버튼 (fade-in)
+ * Step 1: email input + send verification code button
+ * Step 2: OTP input + resend + log in button (fade-in)
  */
 export function LoginForm({ action, translations: t }: LoginFormProps) {
   const [otpState, setOtpState] = useState<OtpState>("idle");
@@ -140,7 +140,7 @@ export function LoginForm({ action, translations: t }: LoginFormProps) {
       className="flex flex-col gap-5"
       data-testid="login-credentials-form"
     >
-      {/* 이메일 + 발송/변경 버튼 */}
+      {/* Email + send/change buttons */}
       <div className="flex flex-col gap-1.5">
         <div className="flex min-h-5 items-center justify-between gap-2">
           <Label htmlFor="email">{t.email}</Label>
@@ -182,14 +182,14 @@ export function LoginForm({ action, translations: t }: LoginFormProps) {
         </Button>
       )}
 
-      {/* Step 1 에러 */}
+      {/* Step 1 error */}
       {!isOtpSectionVisible && error && (
         <p className="text-destructive text-[0.8125rem]" role="alert">
           {error}
         </p>
       )}
 
-      {/* Step 2: OTP 영역 + 로그인 버튼 */}
+      {/* Step 2: OTP section + log in button */}
       {isOtpSectionVisible && (
         <>
           <div

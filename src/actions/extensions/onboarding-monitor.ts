@@ -13,7 +13,7 @@ export interface OnboardingMonitorItem {
 }
 
 /**
- * 전체 활성 사용자의 온보딩 현황 조회
+ * Fetch onboarding status for all active users
  */
 export async function getOnboardingMonitorData(): Promise<{
   items: OnboardingMonitorItem[];

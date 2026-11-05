@@ -6,12 +6,12 @@ import {
 } from "./merchant-matcher.constants";
 
 /**
- * 가맹점명 정규화
+ * Normalises a merchant name
  */
 export function normalizeMerchantName(merchantName: string): string {
   let normalized = merchantName.toUpperCase().trim();
 
-  // 결제대행 프리픽스 제거
+  // Remove payment processor prefixes
   for (const prefix of PAYMENT_PREFIXES) {
     if (normalized.startsWith(prefix.toUpperCase())) {
       normalized = normalized.substring(prefix.length);
@@ -19,13 +19,13 @@ export function normalizeMerchantName(merchantName: string): string {
     }
   }
 
-  // 특수문자 제거 (*, . , - 등)
+  // Remove special characters (*, ., -, etc.)
   normalized = normalized.replace(/[*.,\-_#@!$%^&()[\]{}'"]/g, " ");
 
-  // 연속 공백을 하나로
+  // Collapse consecutive whitespace
   normalized = normalized.replace(/\s+/g, " ").trim();
 
-  // 국가 코드 제거 (단어 끝에 있는 경우)
+  // Remove country codes (at the end of a word)
   const words = normalized.split(" ");
   if (words.length > 1) {
     const lastWord = words[words.length - 1];
@@ -35,20 +35,20 @@ export function normalizeMerchantName(merchantName: string): string {
     }
   }
 
-  // 사업자 접미사 제거
+  // Remove business entity suffixes
   for (const suffix of BUSINESS_SUFFIXES) {
     const regex = new RegExp(`\\b${suffix.toUpperCase()}\\b`, "g");
     normalized = normalized.replace(regex, "");
   }
 
-  // 다시 연속 공백 정리
+  // Collapse whitespace again
   normalized = normalized.replace(/\s+/g, " ").trim();
 
   return normalized;
 }
 
 /**
- * 두 문자열 간의 유사도 계산 (Levenshtein distance 기반)
+ * Calculates the similarity of two strings (Levenshtein distance)
  */
 export function calculateSimilarity(str1: string, str2: string): number {
   const s1 = str1.toLowerCase();
@@ -61,7 +61,7 @@ export function calculateSimilarity(str1: string, str2: string): number {
 
   if (len1 === 0 || len2 === 0) return 0;
 
-  // 짧은 문자열이 긴 문자열에 포함되어 있는지 확인
+  // Check whether the shorter string is contained in the longer one
   if (s1.includes(s2) || s2.includes(s1)) {
     const shorter = Math.min(len1, len2);
     const longer = Math.max(len1, len2);
@@ -94,7 +94,7 @@ export function calculateSimilarity(str1: string, str2: string): number {
 }
 
 /**
- * 매칭 신뢰도 계산
+ * Calculates match confidence
  */
 export function calculateMatchConfidence(
   merchantName: string,
@@ -103,20 +103,20 @@ export function calculateMatchConfidence(
   const normalized1 = normalizeMerchantName(merchantName);
   const normalized2 = normalizeMerchantName(targetName);
 
-  // 정규화 후 정확히 일치
+  // Exact match after normalisation
   if (normalized1 === normalized2) {
     return 1.0;
   }
 
-  // 원본 정확히 일치
+  // Exact match on the original
   if (merchantName.toUpperCase() === targetName.toUpperCase()) {
     return 1.0;
   }
 
-  // 유사도 계산
+  // Calculate similarity
   const similarity = calculateSimilarity(normalized1, normalized2);
 
-  // 포함 관계 확인
+  // Check containment
   const n1Lower = normalized1.toLowerCase();
   const n2Lower = normalized2.toLowerCase();
 

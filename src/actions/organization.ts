@@ -1,5 +1,5 @@
 // src/actions/organization.ts
-// 조직 관련 Server Actions
+// Organization Server Actions
 
 "use server";
 
@@ -12,77 +12,83 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 /**
- * 조직 생성 스키마
+ * Organization creation schema
  */
 const createOrgSchema = z.object({
-  name: z.string().min(2, "조직명은 2자 이상이어야 합니다").max(50),
+  name: z
+    .string()
+    .min(2, "Organization name must be at least 2 characters")
+    .max(50),
   domain: z
     .string()
-    .min(1, "도메인은 필수 입력입니다")
+    .min(1, "Domain is required")
     .regex(
       /^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/,
-      "도메인 형식이 올바르지 않습니다 (예: company.com)"
+      "Invalid domain format (e.g. company.com)"
     ),
 });
 
 const updateOrgSchema = z.object({
-  name: z.string().min(2, "조직명은 2자 이상이어야 합니다").max(50),
+  name: z
+    .string()
+    .min(2, "Organization name must be at least 2 characters")
+    .max(50),
   domain: z
     .string()
-    .regex(/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, "도메인 형식이 올바르지 않습니다")
+    .regex(/^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/, "Invalid domain format")
     .optional()
     .or(z.literal("")),
   logoUrl: z
     .string()
-    .url("유효한 URL을 입력하세요")
+    .url("Please enter a valid URL")
     .optional()
     .or(z.literal("")),
   address: z
     .string()
-    .max(200, "주소는 200자 이하여야 합니다")
+    .max(200, "Address must be 200 characters or fewer")
     .optional()
     .or(z.literal("")),
 });
 
 /**
- * 새 조직을 생성하고 사용자를 ADMIN으로 설정합니다.
- * 인증되지 않은 사용자는 로그인 페이지로 redirect 합니다.
- * @param formData - name 필드를 포함한 FormData
- * @throws {Error} 이미 조직에 소속된 경우
- * @throws {ZodError} 유효성 검사 실패 시
+ * Creates a new organization and makes the user its ADMIN.
+ * Redirects unauthenticated users to the login page.
+ * @param formData - FormData containing the name field
+ * @throws {Error} if the user already belongs to an organization
+ * @throws {ZodError} on validation failure
  */
 async function _createOrganization(formData: FormData) {
-  // 인증 확인 - 인증 실패 시 로그인 페이지로 redirect
+  // Check authentication - redirect to the login page on failure
   const session = await auth();
   if (!session?.user?.id) {
     redirect("/login");
   }
 
-  // 이미 조직이 있는지 확인
+  // Check whether the user already has an organization
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
     select: { organizationId: true },
   });
 
   if (user?.organizationId) {
-    throw new Error("이미 조직에 소속되어 있습니다");
+    throw new Error("You already belong to an organization");
   }
 
-  // 입력 유효성 검사
+  // Validate input
   const validated = createOrgSchema.parse({
     name: formData.get("name"),
     domain: formData.get("domain"),
   });
 
-  // 도메인 중복 체크
+  // Domain duplicate check
   const existingOrg = await prisma.organization.findFirst({
     where: { domain: validated.domain },
   });
   if (existingOrg) {
-    throw new Error("이미 사용 중인 도메인입니다");
+    throw new Error("This domain is already in use");
   }
 
-  // 트랜잭션: Organization 생성 + User 업데이트
+  // Transaction: create Organization + update User
   await prisma.$transaction(async (tx) => {
     const org = await tx.organization.create({
       data: { name: validated.name, domain: validated.domain },
@@ -92,7 +98,7 @@ async function _createOrganization(formData: FormData) {
       where: { id: session.user.id },
       data: {
         organizationId: org.id,
-        role: "ADMIN", // 조직 생성자는 ADMIN
+        role: "ADMIN", // the organization creator is ADMIN
       },
     });
 
@@ -109,7 +115,7 @@ export const createOrganization = withLogging(
 );
 
 /**
- * 조직 정보 업데이트 (현재는 이름만)
+ * Update organization details (currently name only)
  */
 async function _updateOrganization(formData: FormData) {
   const session = await auth();
@@ -124,7 +130,7 @@ async function _updateOrganization(formData: FormData) {
   if (session.user.role !== "ADMIN") {
     return {
       success: false,
-      message: "관리자만 조직 정보를 수정할 수 있습니다",
+      message: "Only admins can update organization details",
     };
   }
 
@@ -137,7 +143,7 @@ async function _updateOrganization(formData: FormData) {
   if (!validated.success) {
     return {
       success: false,
-      message: "입력값을 확인해주세요",
+      message: "Please check your input",
       errors: validated.error.flatten().fieldErrors as Record<string, string[]>,
     };
   }
@@ -154,7 +160,7 @@ async function _updateOrganization(formData: FormData) {
       ? addressInput
       : ((currentSettings.address as string | undefined) ?? "");
 
-  // domain 중복 체크 (빈 값이 아닌 경우에만)
+  // Domain duplicate check (only when not empty)
   if (validated.data.domain) {
     const existingOrg = await prisma.organization.findFirst({
       where: {
@@ -163,7 +169,7 @@ async function _updateOrganization(formData: FormData) {
       },
     });
     if (existingOrg) {
-      return { success: false, message: "이미 사용 중인 도메인입니다" };
+      return { success: false, message: "This domain is already in use" };
     }
   }
 
@@ -171,7 +177,7 @@ async function _updateOrganization(formData: FormData) {
     where: { id: session.user.organizationId },
     data: {
       name: validated.data.name,
-      // 빈 문자열이면 업데이트하지 않음 (unique constraint 회피)
+      // Skip the update for an empty string (avoids the unique constraint)
       ...(validated.data.domain ? { domain: validated.data.domain } : {}),
       logoUrl: validated.data.logoUrl || null,
       settings: { ...currentSettings, address },
@@ -181,7 +187,7 @@ async function _updateOrganization(formData: FormData) {
   revalidatePath("/settings/organization");
   revalidatePath("/settings");
 
-  return { success: true, message: "조직 정보가 업데이트되었습니다" };
+  return { success: true, message: "Organization details updated" };
 }
 export const updateOrganization = withLogging(
   "updateOrganization",
@@ -189,8 +195,8 @@ export const updateOrganization = withLogging(
 );
 
 /**
- * 조직의 팀/부서 목록 업데이트
- * settings.teams 배열에 저장됩니다.
+ * Update the organization's team/department list
+ * Stored in the settings.teams array.
  */
 async function _updateOrganizationTeams(teams: string[]) {
   const session = await auth();
@@ -203,15 +209,18 @@ async function _updateOrganizationTeams(teams: string[]) {
   }
 
   if (session.user.role !== "ADMIN") {
-    return { success: false, message: "관리자만 팀/부서를 관리할 수 있습니다" };
+    return {
+      success: false,
+      message: "Only admins can manage teams/departments",
+    };
   }
 
-  // 팀 이름 유효성 검사
+  // Validate team names
   const validTeams = teams
     .map((t) => t.trim())
     .filter((t) => t.length > 0 && t.length <= 50);
 
-  // 중복 제거
+  // Remove duplicates
   const uniqueTeams = [...new Set(validTeams)];
 
   const current = await prisma.organization.findUnique({
@@ -230,7 +239,7 @@ async function _updateOrganizationTeams(teams: string[]) {
 
   revalidatePath("/settings/organization");
 
-  return { success: true, message: "팀/부서가 업데이트되었습니다" };
+  return { success: true, message: "Teams/departments updated" };
 }
 export const updateOrganizationTeams = withLogging(
   "updateOrganizationTeams",
@@ -238,9 +247,9 @@ export const updateOrganizationTeams = withLogging(
 );
 
 /**
- * 조직의 추가 도메인 목록 업데이트
- * settings.domains 배열에 저장됩니다.
- * 기본 도메인(organization.domain)과 동일한 항목은 자동 필터링됩니다.
+ * Update the organization's additional domain list
+ * Stored in the settings.domains array.
+ * Entries identical to the primary domain (organization.domain) are filtered out automatically.
  */
 const domainRegex = /^[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
 
@@ -257,7 +266,7 @@ async function _updateOrganizationDomains(domains: string[]) {
   if (session.user.role !== "ADMIN") {
     return {
       success: false,
-      message: "관리자만 도메인을 관리할 수 있습니다",
+      message: "Only admins can manage domains",
     };
   }
 
@@ -270,13 +279,13 @@ async function _updateOrganizationDomains(domains: string[]) {
   const currentSettings =
     (current?.settings as Record<string, unknown> | null) ?? {};
 
-  // 도메인 유효성 검사 + 정규화
+  // Validate and normalize domains
   const validDomains = domains
     .map((d) => d.trim().toLowerCase())
     .filter((d) => d.length > 0 && domainRegex.test(d))
-    .filter((d) => d !== primaryDomain); // 기본 도메인과 동일한 항목 제거
+    .filter((d) => d !== primaryDomain); // remove entries identical to the primary domain
 
-  // 중복 제거
+  // Remove duplicates
   const uniqueDomains = [...new Set(validDomains)];
 
   await prisma.organization.update({
@@ -288,7 +297,7 @@ async function _updateOrganizationDomains(domains: string[]) {
 
   revalidatePath("/settings/organization");
 
-  return { success: true, message: "도메인이 업데이트되었습니다" };
+  return { success: true, message: "Domains updated" };
 }
 export const updateOrganizationDomains = withLogging(
   "updateOrganizationDomains",

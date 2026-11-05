@@ -5,25 +5,25 @@ import { animate } from "framer-motion";
 import { useCallback, useEffect, useRef, useState } from "react";
 
 interface UseCountUpOptions {
-  /** 최종 값 */
+  /** Final value */
   to: number;
-  /** 애니메이션 시작 값 (기본: 0) */
+  /** Animation start value (default: 0) */
   from?: number;
-  /** 애니메이션 지속 시간 (초, 기본: 1) */
+  /** Animation duration (seconds, default: 1) */
   duration?: number;
-  /** 소수점 자리수 (기본: 0) */
+  /** Decimal places (default: 0) */
   decimals?: number;
-  /** 천 단위 구분기호 사용 여부 (기본: true) */
+  /** Use a thousands separator (default: true) */
   separator?: boolean;
-  /** 접두사 (예: "$", "₩") */
+  /** Prefix (e.g. "$", "AED ") */
   prefix?: string;
-  /** 접미사 (예: "%") */
+  /** Suffix (e.g. "%") */
   suffix?: string;
 }
 
 /**
- * 숫자 카운트업 애니메이션 훅
- * viewport에 진입할 때 자동으로 시작 (IntersectionObserver 사용)
+ * Number count-up animation hook
+ * Starts automatically when the element enters the viewport (uses IntersectionObserver)
  */
 export function useCountUp({
   to,

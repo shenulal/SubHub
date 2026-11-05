@@ -37,7 +37,7 @@ export default async function UsageReportPage({ searchParams }: PageProps) {
   const params = await searchParams;
   const isRestricted = session.user.role !== "ADMIN";
 
-  // 기본값 설정 (최근 30일)
+  // Defaults (last 30 days)
   const today = new Date();
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -62,7 +62,7 @@ export default async function UsageReportPage({ searchParams }: PageProps) {
     userId: effectiveUserId ?? undefined,
   };
 
-  // 초기 데이터 로드
+  // Load initial data
   const [reportData, teamsResult, usersResult, presets] = await Promise.all([
     getUsageReport(filters),
     getTeams(),

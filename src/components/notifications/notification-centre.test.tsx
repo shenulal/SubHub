@@ -72,7 +72,7 @@ describe("NotificationCentre", () => {
     await screen.findByText("Slack renews in 7 days");
 
     // group filter → types query param
-    fireEvent.click(screen.getByRole("button", { name: /승인|Approvals/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Approvals/ }));
     await waitFor(() =>
       expect(fetchMock).toHaveBeenCalledWith(
         expect.stringContaining("types=APPROVAL_REQUESTED"),
@@ -83,7 +83,7 @@ describe("NotificationCentre", () => {
     // back to all, load more
     fireEvent.click(screen.getAllByRole("button", { pressed: false })[0]);
     const loadMore = await screen.findByRole("button", {
-      name: /이전 알림 더 보기|Load older/,
+      name: /Load older/,
     });
     fireEvent.click(loadMore);
     await screen.findByText("Older item");
@@ -94,7 +94,7 @@ describe("NotificationCentre", () => {
     await screen.findByText("Slack renews in 7 days");
     fireEvent.click(
       screen.getByRole("button", {
-        name: /모두 읽음으로 표시|Mark all as read/,
+        name: /Mark all as read/,
       })
     );
     await waitFor(() =>

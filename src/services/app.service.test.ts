@@ -1,5 +1,5 @@
 // src/services/app.service.test.ts
-// TDD RED: 서비스 레이어 테스트 — 구현 전 작성
+// TDD RED: service layer tests — written before the implementation
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/db", () => ({
@@ -53,7 +53,7 @@ describe("AppService", () => {
 
   // ==================== createApp ====================
   describe("createApp", () => {
-    it("정상적으로 앱을 생성해야 한다", async () => {
+    it("creates an app successfully", async () => {
       vi.mocked(prisma.app.findFirst).mockResolvedValue(null); // no duplicate
       vi.mocked(prisma.app.create).mockResolvedValue({
         id: "app-new",
@@ -71,7 +71,7 @@ describe("AppService", () => {
       expect(prisma.auditLog.create).toHaveBeenCalledOnce();
     });
 
-    it("중복 앱 이름이면 실패해야 한다", async () => {
+    it("fails when the app name is a duplicate", async () => {
       vi.mocked(prisma.app.findFirst).mockResolvedValue({
         id: "existing",
         name: "Slack",
@@ -82,11 +82,11 @@ describe("AppService", () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.message).toContain("이미 등록된");
+      expect(result.message).toContain("already exists");
       expect(prisma.app.create).not.toHaveBeenCalled();
     });
 
-    it("VIEWER 권한이면 실패해야 한다", async () => {
+    it("fails for a VIEWER role", async () => {
       const viewerCtx = { ...mockCtx, role: "VIEWER" };
 
       const result = await createApp(viewerCtx, {
@@ -94,10 +94,10 @@ describe("AppService", () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.message).toContain("권한");
+      expect(result.message).toContain("permission");
     });
 
-    it("카테고리, 웹사이트, 메모, 태그를 포함해야 한다", async () => {
+    it("includes category, website, notes and tags", async () => {
       vi.mocked(prisma.app.findFirst).mockResolvedValue(null);
       vi.mocked(prisma.app.create).mockResolvedValue({
         id: "app-new",
@@ -107,9 +107,9 @@ describe("AppService", () => {
 
       const result = await createApp(mockCtx, {
         name: "Figma",
-        category: "디자인",
+        category: "Design",
         customWebsite: "https://figma.com",
-        notes: "디자인 도구",
+        notes: "Design tool",
         tags: "design,ui",
       });
 
@@ -118,16 +118,16 @@ describe("AppService", () => {
         expect.objectContaining({
           data: expect.objectContaining({
             name: "Figma",
-            category: "디자인",
+            category: "Design",
             customWebsite: "https://figma.com",
-            notes: "디자인 도구",
+            notes: "Design tool",
             tags: ["design", "ui"],
           }),
         })
       );
     });
 
-    it("teamIds가 있으면 AppTeam 레코드를 생성해야 한다", async () => {
+    it("creates AppTeam records when teamIds are given", async () => {
       vi.mocked(prisma.app.findFirst).mockResolvedValue(null);
       vi.mocked(prisma.team.findMany).mockResolvedValue([
         { id: "team-1" },
@@ -153,7 +153,7 @@ describe("AppService", () => {
       });
     });
 
-    it("잘못된 teamIds가 있으면 실패해야 한다", async () => {
+    it("fails when teamIds are invalid", async () => {
       vi.mocked(prisma.app.findFirst).mockResolvedValue(null);
       vi.mocked(prisma.team.findMany).mockResolvedValue([
         { id: "team-1" },
@@ -165,10 +165,10 @@ describe("AppService", () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.message).toContain("유효하지 않은 팀");
+      expect(result.message).toContain("teams are invalid");
     });
 
-    it("ownerId 검증 — 조직에 속하지 않으면 실패해야 한다", async () => {
+    it("validates ownerId — fails when the owner is not in the organization", async () => {
       vi.mocked(prisma.app.findFirst).mockResolvedValue(null);
       vi.mocked(prisma.user.findFirst).mockResolvedValue(null); // owner not found
 
@@ -178,13 +178,13 @@ describe("AppService", () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.message).toContain("소유자");
+      expect(result.message).toContain("owner");
     });
   });
 
   // ==================== updateApp ====================
   describe("updateApp", () => {
-    it("정상적으로 앱을 수정해야 한다", async () => {
+    it("updates an app successfully", async () => {
       vi.mocked(prisma.app.findFirst)
         .mockResolvedValueOnce({
           id: "app-1",
@@ -206,7 +206,7 @@ describe("AppService", () => {
       expect(prisma.app.update).toHaveBeenCalledOnce();
     });
 
-    it("존재하지 않는 앱이면 실패해야 한다", async () => {
+    it("fails when the app does not exist", async () => {
       vi.mocked(prisma.app.findFirst).mockResolvedValue(null);
 
       const result = await updateApp(mockCtx, "nonexistent", {
@@ -214,10 +214,10 @@ describe("AppService", () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.message).toContain("찾을 수 없습니다");
+      expect(result.message).toContain("not found");
     });
 
-    it("ADMIN이 아니면 실패해야 한다", async () => {
+    it("fails when the user is not an ADMIN", async () => {
       const memberCtx = { ...mockCtx, role: "MEMBER" };
 
       const result = await updateApp(memberCtx, "app-1", {
@@ -225,10 +225,10 @@ describe("AppService", () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.message).toContain("권한");
+      expect(result.message).toContain("permission");
     });
 
-    it("중복 앱 이름으로 변경하면 실패해야 한다", async () => {
+    it("fails when renaming to a duplicate app name", async () => {
       vi.mocked(prisma.app.findFirst)
         .mockResolvedValueOnce({
           id: "app-1",
@@ -246,13 +246,13 @@ describe("AppService", () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.message).toContain("이미 등록된");
+      expect(result.message).toContain("already exists");
     });
   });
 
   // ==================== deleteApp ====================
   describe("deleteApp", () => {
-    it("정상적으로 앱을 삭제해야 한다", async () => {
+    it("deletes an app successfully", async () => {
       vi.mocked(prisma.app.findFirst).mockResolvedValue({
         id: "app-1",
         name: "Slack",
@@ -268,22 +268,22 @@ describe("AppService", () => {
       expect(prisma.auditLog.create).toHaveBeenCalledOnce();
     });
 
-    it("존재하지 않는 앱이면 실패해야 한다", async () => {
+    it("fails when the app does not exist", async () => {
       vi.mocked(prisma.app.findFirst).mockResolvedValue(null);
 
       const result = await deleteApp(mockCtx, "nonexistent");
 
       expect(result.success).toBe(false);
-      expect(result.message).toContain("찾을 수 없습니다");
+      expect(result.message).toContain("not found");
     });
 
-    it("ADMIN이 아니면 실패해야 한다", async () => {
+    it("fails when the user is not an ADMIN", async () => {
       const memberCtx = { ...mockCtx, role: "MEMBER" };
 
       const result = await deleteApp(memberCtx, "app-1");
 
       expect(result.success).toBe(false);
-      expect(result.message).toContain("권한");
+      expect(result.message).toContain("permission");
     });
   });
 });

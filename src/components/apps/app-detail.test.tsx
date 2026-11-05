@@ -33,11 +33,11 @@ const mockApp: AppDetailType = {
   customLogoUrl: "https://example.com/slack.png",
   catalogLogoUrl: null,
   customWebsite: "https://slack.com",
-  notes: "팀 커뮤니케이션 도구",
+  notes: "Team communication tool",
   tags: ["chat", "team"],
   riskScore: null,
   discoveredAt: null,
-  ownerName: "홍길동",
+  ownerName: "John Smith",
   ownerEmail: "hong@test.com",
   subscriptionCount: 2,
   userAccessCount: 10,
@@ -47,31 +47,31 @@ const mockApp: AppDetailType = {
 };
 
 describe("AppDetail", () => {
-  it("앱 정보를 표시해야 한다", () => {
+  it("shows the app information", () => {
     render(<AppDetail app={mockApp} />);
 
     expect(screen.getAllByText("Slack").length).toBeGreaterThanOrEqual(1);
-    expect(screen.getAllByText("활성").length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText("In Use").length).toBeGreaterThanOrEqual(1);
     expect(screen.getAllByText("Collaboration").length).toBeGreaterThanOrEqual(
       1
     );
   });
 
-  it("수정 버튼을 표시해야 한다", () => {
+  it("shows the edit button", () => {
     render(<AppDetail app={mockApp} />);
 
-    const editButton = screen.getByRole("link", { name: /수정/ });
+    const editButton = screen.getByRole("link", { name: /Edit/ });
     expect(editButton).toHaveAttribute("href", "/apps/app-1/edit");
   });
 
-  it("로고 이미지를 표시해야 한다", () => {
+  it("shows the logo image", () => {
     render(<AppDetail app={mockApp} />);
 
     const logo = screen.getByAltText("Slack");
     expect(logo).toHaveAttribute("src", "https://example.com/slack.png");
   });
 
-  it("로고가 없으면 첫 글자를 표시해야 한다", () => {
+  it("shows the first letter when there is no logo", () => {
     const appWithoutLogo: AppDetailType = {
       ...mockApp,
       customLogoUrl: null,
@@ -80,17 +80,17 @@ describe("AppDetail", () => {
 
     render(<AppDetail app={appWithoutLogo} />);
 
-    expect(screen.getByText("S")).toBeInTheDocument(); // Slack의 첫 글자
+    expect(screen.getByText("S")).toBeInTheDocument(); // first letter of Slack
   });
 
-  it("담당자 정보를 표시해야 한다", () => {
+  it("shows the owner information", () => {
     render(<AppDetail app={mockApp} />);
 
-    expect(screen.getByText("홍길동")).toBeInTheDocument();
+    expect(screen.getByText("John Smith")).toBeInTheDocument();
     expect(screen.getByText("hong@test.com")).toBeInTheDocument();
   });
 
-  it("담당자가 없으면 미지정으로 표시해야 한다", () => {
+  it("shows unassigned when there is no owner", () => {
     const appWithoutOwner: AppDetailType = {
       ...mockApp,
       ownerName: null,
@@ -99,32 +99,30 @@ describe("AppDetail", () => {
 
     render(<AppDetail app={appWithoutOwner} />);
 
-    expect(
-      screen.getByText("담당자가 지정되지 않았습니다")
-    ).toBeInTheDocument();
+    expect(screen.getByText("No owner assigned")).toBeInTheDocument();
   });
 
-  it("구독 수와 사용자 수를 표시해야 한다", () => {
+  it("shows the subscription and user counts", () => {
     render(<AppDetail app={mockApp} />);
 
     expect(screen.getByText("2")).toBeInTheDocument(); // subscriptionCount
     expect(screen.getByText("10")).toBeInTheDocument(); // userAccessCount
   });
 
-  it("메모가 있으면 표시해야 한다", () => {
+  it("shows the notes when present", () => {
     render(<AppDetail app={mockApp} />);
 
-    expect(screen.getByText("팀 커뮤니케이션 도구")).toBeInTheDocument();
+    expect(screen.getByText("Team communication tool")).toBeInTheDocument();
   });
 
-  it("태그를 표시해야 한다", () => {
+  it("shows the tags", () => {
     render(<AppDetail app={mockApp} />);
 
     expect(screen.getByText("chat")).toBeInTheDocument();
     expect(screen.getByText("team")).toBeInTheDocument();
   });
 
-  it("웹사이트 링크를 표시해야 한다", () => {
+  it("shows the website link", () => {
     render(<AppDetail app={mockApp} />);
 
     const websiteLink = screen.getByRole("link", { name: /slack\.com/i });

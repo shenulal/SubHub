@@ -10,8 +10,8 @@ export interface AutoRenewResult {
 }
 
 /**
- * autoRenewal=true인 구독 중 renewalDate가 과거인 건을
- * billingCycle에 따라 다음 갱신일로 자동 업데이트합니다.
+ * For subscriptions with autoRenewal=true whose renewalDate is in the past,
+ * automatically moves renewalDate to the next date based on billingCycle.
  */
 export async function processAutoRenewals(): Promise<AutoRenewResult> {
   const now = new Date();
@@ -61,14 +61,14 @@ export async function processAutoRenewals(): Promise<AutoRenewResult> {
           newDate: nextRenewalDate.toISOString(),
           billingCycle: sub.billingCycle,
         },
-        "[AutoRenew] 갱신일 업데이트"
+        "[AutoRenew] Renewal date updated"
       );
 
       result.updated++;
     } catch (error) {
       result.failed++;
-      const msg = `구독 ${sub.id} (${sub.app.name}) 업데이트 실패: ${
-        error instanceof Error ? error.message : "알 수 없는 오류"
+      const msg = `Failed to update subscription ${sub.id} (${sub.app.name}): ${
+        error instanceof Error ? error.message : "Unknown error"
       }`;
       result.errors.push(msg);
       logger.error({ err: error, subscriptionId: sub.id }, msg);

@@ -96,7 +96,7 @@ describe("SyncHistoryPanel", () => {
             makeSyncHistory({
               id: "sh2",
               status: "FAILED",
-              errorMessage: "인증 오류 발생",
+              errorMessage: "Authentication error occurred",
             }),
           ],
           total: 1,
@@ -106,13 +106,15 @@ describe("SyncHistoryPanel", () => {
       render(<SyncHistoryPanel corporateCardId="card1" />);
 
       await waitFor(() => {
-        expect(screen.getByText("인증 오류 발생")).toBeInTheDocument();
+        expect(
+          screen.getByText("Authentication error occurred")
+        ).toBeInTheDocument();
       });
     });
   });
 
-  describe("더보기 button", () => {
-    it("should load next page when 더보기 button clicked", async () => {
+  describe("Load more button", () => {
+    it("should load next page when the Load more button is clicked", async () => {
       const user = userEvent.setup();
 
       // First load: 10 items with 15 total (has more)

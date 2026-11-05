@@ -67,14 +67,14 @@ export function CardRegisterForm({
   const [cardCd, setCardCd] = useState("");
   const [cardNo, setCardNo] = useState("");
   const [cardNm, setCardNm] = useState("");
-  const [userId, setUserId] = useState(""); // 카드사 로그인 ID
+  const [userId, setUserId] = useState(""); // Card issuer login ID
   const [userPw, setUserPw] = useState("");
   const [signCert, setSignCert] = useState("");
   const [signPri, setSignPri] = useState("");
   const [signPw, setSignPw] = useState("");
   const [bizNo, setBizNo] = useState("");
 
-  // 배정 관련 상태
+  // Assignment state
   const [assignmentType, setAssignmentType] = useState<AssignmentType>("none");
   const [teamId, setTeamId] = useState("");
   const [assignedUserId, setAssignedUserId] = useState("");
@@ -107,7 +107,7 @@ export function CardRegisterForm({
     formData.append("loginMethod", loginMethod);
     formData.append("bizNo", bizNo);
 
-    // 배정 정보 (상호 배타: 팀 또는 유저 중 하나만)
+    // Assignment (mutually exclusive: either a team or a user)
     if (assignmentType === "team" && teamId) {
       formData.append("teamId", teamId);
     } else if (assignmentType === "user" && assignedUserId) {
@@ -175,7 +175,7 @@ export function CardRegisterForm({
               </Alert>
             )}
 
-            {/* 카드사 선택 */}
+            {/* Card issuer selection */}
             <div className="grid gap-2">
               <Label htmlFor="cardCd">{t("cardCompany")} *</Label>
               <Select value={cardCd} onValueChange={setCardCd} required>
@@ -192,7 +192,7 @@ export function CardRegisterForm({
               </Select>
             </div>
 
-            {/* 카드번호 */}
+            {/* Card number */}
             <div className="grid gap-2">
               <Label htmlFor="cardNo">{t("cardNumber")} *</Label>
               <Input
@@ -205,7 +205,7 @@ export function CardRegisterForm({
               />
             </div>
 
-            {/* 카드 별명 */}
+            {/* Card nickname */}
             <div className="grid gap-2">
               <Label htmlFor="cardNm">{t("cardNickname")}</Label>
               <Input
@@ -216,7 +216,7 @@ export function CardRegisterForm({
               />
             </div>
 
-            {/* 사업자번호 */}
+            {/* Business registration number */}
             <div className="grid gap-2">
               <Label htmlFor="bizNo">{t("businessNumber")}</Label>
               <Input
@@ -229,14 +229,14 @@ export function CardRegisterForm({
               />
             </div>
 
-            {/* 카드 배정 유형 */}
+            {/* Card assignment type */}
             <div className="grid gap-2">
               <Label>{t("assignment")}</Label>
               <RadioGroup
                 value={assignmentType}
                 onValueChange={(v) => {
                   setAssignmentType(v as AssignmentType);
-                  // 배정 유형 변경 시 선택 초기화
+                  // Reset selection when the assignment type changes
                   if (v !== "team") setTeamId("");
                   if (v !== "user") setAssignedUserId("");
                 }}
@@ -267,7 +267,7 @@ export function CardRegisterForm({
               </RadioGroup>
             </div>
 
-            {/* 팀 선택 (팀 공용 선택 시) */}
+            {/* Team selection (when shared by a team) */}
             {assignmentType === "team" && teams.length > 0 && (
               <div className="grid gap-2">
                 <Label htmlFor="teamId">{t("assignTeam")} *</Label>
@@ -286,7 +286,7 @@ export function CardRegisterForm({
               </div>
             )}
 
-            {/* 유저 선택 (개인 전용 선택 시) */}
+            {/* User selection (when assigned to an individual) */}
             {assignmentType === "user" && users.length > 0 && (
               <div className="grid gap-2">
                 <Label htmlFor="assignedUserId">{t("assignUser")} *</Label>
@@ -315,7 +315,7 @@ export function CardRegisterForm({
               </div>
             )}
 
-            {/* 로그인 방식 선택 */}
+            {/* Login method selection */}
             <div className="grid gap-2">
               <Label>{t("authMethod")} *</Label>
               <RadioGroup
@@ -338,7 +338,7 @@ export function CardRegisterForm({
               </RadioGroup>
             </div>
 
-            {/* ID 로그인 필드 */}
+            {/* ID login fields */}
             {loginMethod === "ID" && (
               <>
                 <div className="grid gap-2">
@@ -365,7 +365,7 @@ export function CardRegisterForm({
               </>
             )}
 
-            {/* 인증서 로그인 필드 */}
+            {/* Certificate login fields */}
             {loginMethod === "CERT" && (
               <>
                 <div className="grid gap-2">

@@ -3,9 +3,9 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * 🎯 목적: Table 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: HTML table 요소 사용, overflow wrapper div 포함
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the Table component for React 18/19 compatibility
+ * 📝 Note: Uses an HTML table element; includes an overflow wrapper div
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const Table = React.forwardRef<HTMLTableElement, React.ComponentProps<"table">>(
   ({ className, ...props }, ref) => {
@@ -27,9 +27,9 @@ const Table = React.forwardRef<HTMLTableElement, React.ComponentProps<"table">>(
 Table.displayName = "Table";
 
 /**
- * 🎯 목적: TableHeader 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: HTML thead 요소 사용
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the TableHeader component for React 18/19 compatibility
+ * 📝 Note: Uses an HTML thead element
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const TableHeader = React.forwardRef<
   HTMLTableSectionElement,
@@ -47,9 +47,9 @@ const TableHeader = React.forwardRef<
 TableHeader.displayName = "TableHeader";
 
 /**
- * 🎯 목적: TableBody 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: HTML tbody 요소 사용
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the TableBody component for React 18/19 compatibility
+ * 📝 Note: Uses an HTML tbody element
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const TableBody = React.forwardRef<
   HTMLTableSectionElement,
@@ -67,9 +67,9 @@ const TableBody = React.forwardRef<
 TableBody.displayName = "TableBody";
 
 /**
- * 🎯 목적: TableFooter 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: HTML tfoot 요소 사용
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the TableFooter component for React 18/19 compatibility
+ * 📝 Note: Uses an HTML tfoot element
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const TableFooter = React.forwardRef<
   HTMLTableSectionElement,
@@ -90,9 +90,9 @@ const TableFooter = React.forwardRef<
 TableFooter.displayName = "TableFooter";
 
 /**
- * 🎯 목적: TableRow 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: HTML tr 요소 사용
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the TableRow component for React 18/19 compatibility
+ * 📝 Note: Uses an HTML tr element
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const TableRow = React.forwardRef<
   HTMLTableRowElement,
@@ -113,9 +113,9 @@ const TableRow = React.forwardRef<
 TableRow.displayName = "TableRow";
 
 /**
- * 🎯 목적: TableHead 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: HTML th 요소 사용
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the TableHead component for React 18/19 compatibility
+ * 📝 Note: Uses an HTML th element
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const TableHead = React.forwardRef<
   HTMLTableCellElement,
@@ -136,9 +136,9 @@ const TableHead = React.forwardRef<
 TableHead.displayName = "TableHead";
 
 /**
- * 🎯 목적: TableCell 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: HTML td 요소 사용
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the TableCell component for React 18/19 compatibility
+ * 📝 Note: Uses an HTML td element
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const TableCell = React.forwardRef<
   HTMLTableCellElement,
@@ -159,9 +159,9 @@ const TableCell = React.forwardRef<
 TableCell.displayName = "TableCell";
 
 /**
- * 🎯 목적: TableCaption 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: HTML caption 요소 사용
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the TableCaption component for React 18/19 compatibility
+ * 📝 Note: Uses an HTML caption element
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const TableCaption = React.forwardRef<
   HTMLTableCaptionElement,

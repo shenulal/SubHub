@@ -1,5 +1,5 @@
 /**
- * AI 사이드 패널 전역 상태 (Zustand)
+ * Global state for the AI side panel (Zustand)
  * SMP-197
  */
 

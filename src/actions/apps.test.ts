@@ -68,14 +68,14 @@ describe("Apps Server Actions", () => {
   });
 
   describe("getApps", () => {
-    it("인증되지 않은 경우 /login으로 리다이렉트해야 한다", async () => {
+    it("redirects to /login when unauthenticated", async () => {
       mockedAuth.mockResolvedValue(null);
 
       await expect(getApps()).rejects.toThrow("NEXT_REDIRECT");
       expect(mockRedirect).toHaveBeenCalledWith("/login");
     });
 
-    it("조직이 없는 경우 /onboarding으로 리다이렉트해야 한다", async () => {
+    it("redirects to /onboarding when there is no organization", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: null },
         expires: "",
@@ -85,7 +85,7 @@ describe("Apps Server Actions", () => {
       expect(mockRedirect).toHaveBeenCalledWith("/onboarding");
     });
 
-    it("앱 목록을 반환해야 한다", async () => {
+    it("returns the app list", async () => {
       mockedAuth.mockResolvedValue({
         user: {
           id: "user-1",
@@ -105,7 +105,7 @@ describe("Apps Server Actions", () => {
           category: "Collaboration",
           customLogoUrl: null,
           catalog: { logoUrl: "https://example.com/slack.png" },
-          owner: { name: "홍길동", email: "hong@test.com" },
+          owner: { name: "Ahmed Hassan", email: "hong@test.com" },
           teams: [],
           _count: { subscriptions: 2, userAccesses: 10 },
           createdAt: new Date("2024-01-01"),
@@ -137,14 +137,14 @@ describe("Apps Server Actions", () => {
       expect(result.items[0].catalogLogoUrl).toBe(
         "https://example.com/slack.png"
       );
-      expect(result.items[0].ownerName).toBe("홍길동");
+      expect(result.items[0].ownerName).toBe("Ahmed Hassan");
       expect(result.items[1].customLogoUrl).toBe(
         "https://custom.com/notion.png"
       );
       expect(result.total).toBe(2);
     });
 
-    it("필터를 적용하여 앱 목록을 조회해야 한다", async () => {
+    it("lists apps with filters applied", async () => {
       mockedAuth.mockResolvedValue({
         user: {
           id: "user-1",
@@ -177,7 +177,7 @@ describe("Apps Server Actions", () => {
       );
     });
 
-    it("검색어로 앱 목록을 검색해야 한다", async () => {
+    it("searches apps by keyword", async () => {
       mockedAuth.mockResolvedValue({
         user: {
           id: "user-1",
@@ -202,7 +202,7 @@ describe("Apps Server Actions", () => {
       );
     });
 
-    it("ADMIN은 전체 앱을 조회할 수 있어야 한다", async () => {
+    it("lets ADMIN see all apps", async () => {
       mockedAuth.mockResolvedValue({
         user: {
           id: "user-1",
@@ -236,7 +236,7 @@ describe("Apps Server Actions", () => {
       const result = await getApps();
 
       expect(result.items).toHaveLength(1);
-      // ADMIN은 teams 필터 없이 호출
+      // ADMIN is called without a teams filter
       expect(prisma.app.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
@@ -246,7 +246,7 @@ describe("Apps Server Actions", () => {
       );
     });
 
-    it("MEMBER는 본인 팀 앱만 조회해야 한다", async () => {
+    it("limits MEMBER to their own teams' apps", async () => {
       mockedAuth.mockResolvedValue({
         user: {
           id: "user-1",
@@ -272,7 +272,7 @@ describe("Apps Server Actions", () => {
       );
     });
 
-    it("팀 미소속 MEMBER는 빈 목록을 반환해야 한다", async () => {
+    it("returns an empty list for a MEMBER without a team", async () => {
       mockedAuth.mockResolvedValue({
         user: {
           id: "user-1",
@@ -287,11 +287,11 @@ describe("Apps Server Actions", () => {
 
       expect(result.items).toHaveLength(0);
       expect(result.total).toBe(0);
-      // DB 조회 자체가 호출되지 않아야 함
+      // The DB query itself must not be called
       expect(prisma.app.findMany).not.toHaveBeenCalled();
     });
 
-    it("VIEWER도 MEMBER와 동일한 제한이 적용되어야 한다", async () => {
+    it("applies the same restriction to VIEWER as to MEMBER", async () => {
       mockedAuth.mockResolvedValue({
         user: {
           id: "user-1",
@@ -318,14 +318,14 @@ describe("Apps Server Actions", () => {
   });
 
   describe("getApp", () => {
-    it("인증되지 않은 경우 /login으로 리다이렉트해야 한다", async () => {
+    it("redirects to /login when unauthenticated", async () => {
       mockedAuth.mockResolvedValue(null);
 
       await expect(getApp("app-1")).rejects.toThrow("NEXT_REDIRECT");
       expect(mockRedirect).toHaveBeenCalledWith("/login");
     });
 
-    it("앱 상세 정보를 반환해야 한다", async () => {
+    it("returns app details", async () => {
       mockedAuth.mockResolvedValue({
         user: {
           id: "user-1",
@@ -345,12 +345,12 @@ describe("Apps Server Actions", () => {
         catalogId: "catalog-1",
         customLogoUrl: null,
         customWebsite: "https://slack.com",
-        notes: "팀 커뮤니케이션 도구",
+        notes: "Team communication tool",
         tags: ["communication", "team"],
         riskScore: 10,
         discoveredAt: null,
         catalog: { logoUrl: "https://example.com/slack.png" },
-        owner: { name: "홍길동", email: "hong@test.com" },
+        owner: { name: "Ahmed Hassan", email: "hong@test.com" },
         teams: [],
         _count: { subscriptions: 2, userAccesses: 10 },
         createdAt: new Date("2024-01-01"),
@@ -363,11 +363,11 @@ describe("Apps Server Actions", () => {
 
       expect(result).not.toBeNull();
       expect(result?.name).toBe("Slack");
-      expect(result?.notes).toBe("팀 커뮤니케이션 도구");
+      expect(result?.notes).toBe("Team communication tool");
       expect(result?.tags).toEqual(["communication", "team"]);
     });
 
-    it("앱이 존재하지 않으면 null을 반환해야 한다", async () => {
+    it("returns null when the app does not exist", async () => {
       mockedAuth.mockResolvedValue({
         user: {
           id: "user-1",
@@ -385,7 +385,7 @@ describe("Apps Server Actions", () => {
       expect(result).toBeNull();
     });
 
-    it("다른 조직의 앱은 조회할 수 없어야 한다", async () => {
+    it("cannot view another organization's app", async () => {
       mockedAuth.mockResolvedValue({
         user: {
           id: "user-1",
@@ -408,7 +408,7 @@ describe("Apps Server Actions", () => {
       expect(result).toBeNull();
     });
 
-    it("ADMIN은 모든 앱 상세를 조회할 수 있어야 한다", async () => {
+    it("lets ADMIN view any app's details", async () => {
       mockedAuth.mockResolvedValue({
         user: {
           id: "user-1",
@@ -453,7 +453,7 @@ describe("Apps Server Actions", () => {
       expect(result?.name).toBe("Slack");
     });
 
-    it("MEMBER는 본인 팀에 배정된 앱만 조회할 수 있어야 한다", async () => {
+    it("lets MEMBER view only apps assigned to their teams", async () => {
       mockedAuth.mockResolvedValue({
         user: {
           id: "user-1",
@@ -493,7 +493,7 @@ describe("Apps Server Actions", () => {
       expect(result?.name).toBe("Slack");
     });
 
-    it("MEMBER는 다른 팀의 앱을 조회할 수 없어야 한다", async () => {
+    it("prevents MEMBER from viewing another team's app", async () => {
       mockedAuth.mockResolvedValue({
         user: {
           id: "user-1",
@@ -534,11 +534,11 @@ describe("Apps Server Actions", () => {
 
       const result = await getApp("app-1");
 
-      // 다른 팀 앱이므로 null 반환
+      // Another team's app, so null is returned
       expect(result).toBeNull();
     });
 
-    it("팀 미소속 MEMBER는 앱 상세를 조회할 수 없어야 한다", async () => {
+    it("prevents a MEMBER without a team from viewing app details", async () => {
       mockedAuth.mockResolvedValue({
         user: {
           id: "user-1",
@@ -576,13 +576,13 @@ describe("Apps Server Actions", () => {
 
       const result = await getApp("app-1");
 
-      // 팀 미소속이므로 null 반환
+      // No team membership, so null is returned
       expect(result).toBeNull();
     });
   });
 
   describe("createApp", () => {
-    it("인증되지 않은 경우 /login으로 리다이렉트해야 한다", async () => {
+    it("redirects to /login when unauthenticated", async () => {
       mockedAuth.mockResolvedValue(null);
 
       const formData = new FormData();
@@ -593,7 +593,7 @@ describe("Apps Server Actions", () => {
       );
     });
 
-    it("앱 이름이 비어있으면 에러를 반환해야 한다", async () => {
+    it("returns an error when the app name is empty", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1" },
         expires: "",
@@ -608,7 +608,7 @@ describe("Apps Server Actions", () => {
       expect(result.errors?.name).toBeDefined();
     });
 
-    it("앱 이름이 너무 짧으면 에러를 반환해야 한다", async () => {
+    it("returns an error when the app name is too short", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1" },
         expires: "",
@@ -623,7 +623,7 @@ describe("Apps Server Actions", () => {
       expect(result.errors?.name).toBeDefined();
     });
 
-    it("중복된 앱 이름이면 에러를 반환해야 한다", async () => {
+    it("returns an error for a duplicate app name", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1" },
         expires: "",
@@ -641,10 +641,10 @@ describe("Apps Server Actions", () => {
       const result = await createApp({ success: false }, formData);
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("이미 등록된 앱 이름입니다");
+      expect(result.message).toBe("An app with this name already exists");
     });
 
-    it("앱을 성공적으로 생성해야 한다", async () => {
+    it("creates the app successfully", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1" },
         expires: "",
@@ -666,7 +666,7 @@ describe("Apps Server Actions", () => {
       formData.append("name", "New App");
       formData.append("category", "Productivity");
       formData.append("customWebsite", "https://newapp.com");
-      formData.append("notes", "새로운 앱입니다");
+      formData.append("notes", "A new app");
 
       const result = await createApp({ success: false }, formData);
 
@@ -678,7 +678,7 @@ describe("Apps Server Actions", () => {
             name: "New App",
             category: "Productivity",
             customWebsite: "https://newapp.com",
-            notes: "새로운 앱입니다",
+            notes: "A new app",
             organizationId: "org-1",
           }),
         })
@@ -686,7 +686,7 @@ describe("Apps Server Actions", () => {
       expect(prisma.auditLog.create).toHaveBeenCalled();
     });
 
-    it("태그를 포함하여 앱을 생성할 수 있어야 한다", async () => {
+    it("creates an app with tags", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1" },
         expires: "",
@@ -716,7 +716,7 @@ describe("Apps Server Actions", () => {
     });
 
     describe("payment matching integration", () => {
-      it("앱 생성 후 matchPaymentsToNewApp를 호출해야 한다", async () => {
+      it("calls matchPaymentsToNewApp after creating the app", async () => {
         mockedAuth.mockResolvedValue({
           user: { id: "user-1", organizationId: "org-1" },
           expires: "",
@@ -750,7 +750,7 @@ describe("Apps Server Actions", () => {
         );
       });
 
-      it("앱 생성 응답에 matchedPaymentCount가 포함되어야 한다", async () => {
+      it("includes matchedPaymentCount in the create response", async () => {
         mockedAuth.mockResolvedValue({
           user: { id: "user-1", organizationId: "org-1" },
           expires: "",
@@ -781,7 +781,7 @@ describe("Apps Server Actions", () => {
         expect(result.data?.matchedPaymentCount).toBe(5);
       });
 
-      it("매칭 실패 시에도 앱 생성은 성공해야 한다 (graceful degradation)", async () => {
+      it("still creates the app when matching fails (graceful degradation)", async () => {
         mockedAuth.mockResolvedValue({
           user: { id: "user-1", organizationId: "org-1" },
           expires: "",
@@ -817,7 +817,7 @@ describe("Apps Server Actions", () => {
   });
 
   describe("updateApp", () => {
-    it("인증되지 않은 경우 /login으로 리다이렉트해야 한다", async () => {
+    it("redirects to /login when unauthenticated", async () => {
       mockedAuth.mockResolvedValue(null);
 
       const formData = new FormData();
@@ -828,7 +828,7 @@ describe("Apps Server Actions", () => {
       ).rejects.toThrow("NEXT_REDIRECT:/login");
     });
 
-    it("앱이 존재하지 않으면 에러를 반환해야 한다", async () => {
+    it("returns an error when the app does not exist", async () => {
       mockedAuth.mockResolvedValue({
         user: {
           id: "user-1",
@@ -851,10 +851,10 @@ describe("Apps Server Actions", () => {
       );
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("앱을 찾을 수 없습니다");
+      expect(result.message).toBe("App not found");
     });
 
-    it("앱 정보를 성공적으로 수정해야 한다", async () => {
+    it("updates the app successfully", async () => {
       mockedAuth.mockResolvedValue({
         user: {
           id: "user-1",
@@ -898,7 +898,7 @@ describe("Apps Server Actions", () => {
       expect(prisma.auditLog.create).toHaveBeenCalled();
     });
 
-    it("다른 앱과 이름이 중복되면 에러를 반환해야 한다", async () => {
+    it("returns an error when the name duplicates another app", async () => {
       mockedAuth.mockResolvedValue({
         user: {
           id: "user-1",
@@ -928,10 +928,10 @@ describe("Apps Server Actions", () => {
       const result = await updateApp("app-1", { success: false }, formData);
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("이미 등록된 앱 이름입니다");
+      expect(result.message).toBe("An app with this name already exists");
     });
 
-    it("앱 상태를 변경할 수 있어야 한다", async () => {
+    it("can change the app status", async () => {
       mockedAuth.mockResolvedValue({
         user: {
           id: "user-1",
@@ -974,13 +974,13 @@ describe("Apps Server Actions", () => {
   });
 
   describe("deleteApp", () => {
-    it("인증되지 않은 경우 /login으로 리다이렉트해야 한다", async () => {
+    it("redirects to /login when unauthenticated", async () => {
       mockedAuth.mockResolvedValue(null);
 
       await expect(deleteApp("app-1")).rejects.toThrow("NEXT_REDIRECT:/login");
     });
 
-    it("앱이 존재하지 않으면 에러를 반환해야 한다", async () => {
+    it("returns an error when the app does not exist", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
         expires: "",
@@ -991,10 +991,10 @@ describe("Apps Server Actions", () => {
       const result = await deleteApp("non-existent");
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("앱을 찾을 수 없습니다");
+      expect(result.message).toBe("App not found");
     });
 
-    it("앱을 성공적으로 삭제해야 한다", async () => {
+    it("deletes the app successfully", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
         expires: "",

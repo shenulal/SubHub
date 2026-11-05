@@ -1,7 +1,7 @@
 // FleetDM API Types
 // Reference: https://fleetdm.com/docs/rest-api
 
-// FleetDM Host (디바이스)
+// FleetDM Host (device)
 // Note: platform can be any string from osquery (darwin, windows, linux, ubuntu, debian, centos, rhel, freebsd, etc.)
 export interface FleetDMHost {
   id: number;
@@ -74,7 +74,7 @@ export interface FleetDMHostMDM {
   name: string | null;
 }
 
-// FleetDM Software (소프트웨어)
+// FleetDM Software
 export interface FleetDMSoftware {
   id: number;
   name: string;
@@ -127,7 +127,7 @@ export interface FleetDMHostsResponse {
   mobile_device_management_solution: unknown | null;
 }
 
-// FleetDM Activity (활동 로그)
+// FleetDM Activity (activity log)
 export interface FleetDMActivity {
   id: number;
   actor_full_name: string;

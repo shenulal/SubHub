@@ -1,10 +1,10 @@
 /**
- * SMP-206: AI 응답 마크다운 렌더링 컴포넌트
+ * SMP-206: Markdown rendering component for AI responses
  *
- * react-markdown + remark-gfm으로 AI 응답의 마크다운 문법을
- * 포맷된 HTML로 렌더링한다.
+ * Uses react-markdown + remark-gfm to render the Markdown syntax of AI
+ * responses as formatted HTML.
  *
- * 보안: react-markdown은 기본적으로 raw HTML 렌더링을 차단 (XSS 안전)
+ * Security: react-markdown blocks raw HTML rendering by default (XSS-safe)
  */
 
 import ReactMarkdown from "react-markdown";

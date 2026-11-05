@@ -115,7 +115,7 @@ export const loadConfig = async (): Promise<ExtensionConfig> => {
       // Start with defaults
       let config: ExtensionConfig = { ...DEFAULT_CONFIG };
 
-      // Apply local config (빈 값은 DEFAULT_CONFIG 유지)
+      // Apply local config (empty values keep DEFAULT_CONFIG)
       if (result.config) {
         const filtered = Object.fromEntries(
           Object.entries(result.config).filter(

@@ -1,7 +1,7 @@
 // src/lib/services/payment/recurrence.utils.ts
 
 /**
- * 결제일(day of month) 파싱
+ * Parses the payment day (day of month)
  */
 export function parseDayOfMonth(useDt: string): number | null {
   if (!useDt || useDt.length < 8) return null;
@@ -10,7 +10,7 @@ export function parseDayOfMonth(useDt: string): number | null {
 }
 
 /**
- * 월 키(YYYYMM) 파싱
+ * Parses the month key (YYYYMM)
  */
 export function parseMonthKey(useDt: string): string | null {
   if (!useDt || useDt.length < 6) return null;
@@ -18,7 +18,7 @@ export function parseMonthKey(useDt: string): string | null {
 }
 
 /**
- * 거래 시간을 분 단위로 파싱
+ * Parses the transaction time into minutes
  */
 export function parseMinutes(useTm?: string | null): number | null {
   if (!useTm || useTm.length < 4) return null;
@@ -31,7 +31,7 @@ export function parseMinutes(useTm?: string | null): number | null {
 }
 
 /**
- * 날짜 문자열 파싱 (YYYYMMDD → Date)
+ * Parses a date string (YYYYMMDD → Date)
  */
 export function parseDateString(useDt: string): Date | null {
   if (!useDt || useDt.length < 8) return null;
@@ -44,7 +44,7 @@ export function parseDateString(useDt: string): Date | null {
 }
 
 /**
- * 금액 편차율 계산 (평균 대비 표준편차 비율)
+ * Calculates the amount variation ratio (standard deviation relative to the mean)
  */
 export function calculateVariation(values: number[], avg: number): number {
   if (values.length <= 1 || avg === 0) return 0;
@@ -57,12 +57,12 @@ export function calculateVariation(values: number[], avg: number): number {
 }
 
 /**
- * 일자 편차 계산 (평균 대비 평균 절대 편차)
+ * Calculates day variation (mean absolute deviation from the mean)
  */
 export function calculateDayVariation(days: number[]): number {
   if (days.length <= 1) return 0;
 
-  // 월말 처리: 28일 이후는 월말로 취급
+  // End of month: days after the 28th are treated as month-end
   const normalizedDays = days.map((d) => (d >= 28 ? 28 : d));
   const normalizedAvg =
     normalizedDays.reduce((a, b) => a + b, 0) / normalizedDays.length;

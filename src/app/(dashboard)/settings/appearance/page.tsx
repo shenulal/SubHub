@@ -3,8 +3,8 @@ import { AppearanceSettingsClient } from "@/components/settings/appearance-setti
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "외관 설정 | SaaS 관리 플랫폼",
-  description: "테마 및 표시 설정을 관리합니다",
+  title: "Appearance",
+  description: "Manage theme and display settings",
 };
 
 export default function AppearanceSettingsPage() {

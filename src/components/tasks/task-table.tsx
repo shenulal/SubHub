@@ -29,7 +29,6 @@ import {
 import { cn } from "@/lib/utils";
 import type { Task, TaskPriority, TaskStatus } from "@/types/task";
 import { format } from "date-fns";
-import { ko } from "date-fns/locale";
 import {
   ArrowUpDown,
   Calendar,
@@ -75,7 +74,7 @@ export function TaskTable({
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(10);
 
-  // 페이지네이션 계산
+  // Pagination calculation
   const totalPages = Math.ceil(tasks.length / pageSize);
   const paginatedTasks = useMemo(() => {
     const start = pageIndex * pageSize;
@@ -115,7 +114,7 @@ export function TaskTable({
     const d = new Date(date);
     const now = new Date();
     const isOverdue = d < now;
-    const formatted = format(d, "MM/dd", { locale: ko });
+    const formatted = format(d, "MM/dd");
 
     return (
       <span
@@ -317,7 +316,7 @@ export function TaskTable({
         </TableBody>
       </Table>
 
-      {/* 페이지네이션 */}
+      {/* Pagination */}
       <div className="border-border flex flex-wrap items-center justify-between gap-4 border-t px-5 py-4">
         <div className="text-muted-foreground text-[0.8125rem]">
           {selectedIds.size > 0 ? (

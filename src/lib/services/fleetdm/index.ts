@@ -1,6 +1,6 @@
 // src/lib/services/fleetdm/index.ts
 
-// Device Service (로컬 DB 조회)
+// Device Service (local DB queries)
 export {
   getDeviceApps,
   getDeviceById,

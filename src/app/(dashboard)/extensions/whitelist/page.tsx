@@ -4,8 +4,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Suspense } from "react";
 
 export const metadata = {
-  title: "화이트리스트 | SaaS Management Platform",
-  description: "허용 도메인 관리",
+  title: "Whitelist",
+  description: "Manage allowed domains",
 };
 
 function PageSkeleton() {
@@ -23,7 +23,7 @@ function PageSkeleton() {
 export default function WhitelistPage() {
   return (
     <div className="space-y-6">
-      <h1 className="text-foreground text-xl font-medium">화이트리스트</h1>
+      <h1 className="text-foreground text-xl font-medium">Whitelist</h1>
       <Suspense fallback={<PageSkeleton />}>
         <WhitelistPageClient />
       </Suspense>

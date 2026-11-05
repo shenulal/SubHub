@@ -255,7 +255,7 @@ describe("os-default-apps actions", () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain("권한");
+      expect(result.error).toContain("permission");
     });
 
     it("should return error when not authenticated", async () => {
@@ -267,7 +267,7 @@ describe("os-default-apps actions", () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain("인증");
+      expect(result.error).toContain("Authentication");
     });
 
     it("should handle duplicate error", async () => {
@@ -285,7 +285,7 @@ describe("os-default-apps actions", () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain("이미 등록된");
+      expect(result.error).toContain("already registered");
     });
   });
 
@@ -327,7 +327,7 @@ describe("os-default-apps actions", () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain("권한");
+      expect(result.error).toContain("permission");
     });
   });
 
@@ -357,7 +357,7 @@ describe("os-default-apps actions", () => {
       const result = await deleteOsDefaultApp("app-1");
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain("권한");
+      expect(result.error).toContain("permission");
     });
 
     it("should handle not found error", async () => {
@@ -372,7 +372,7 @@ describe("os-default-apps actions", () => {
       const result = await deleteOsDefaultApp("non-existent");
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain("찾을 수 없");
+      expect(result.error).toContain("not found");
     });
   });
 });

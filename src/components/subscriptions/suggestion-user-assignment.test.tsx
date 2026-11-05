@@ -10,12 +10,12 @@ vi.mock("next-intl", () => ({
   useTranslations:
     () => (key: string, values?: Record<string, string | number>) => {
       const msgs: Record<string, string> = {
-        selectTeam: "팀 전체 선택",
-        unassigned: "미배정",
-        selectUsers: "사용자를 선택하세요",
-        selectedCount: `{count}명 선택됨`,
-        searchUsers: "사용자 검색...",
-        noUsersFound: "사용자를 찾을 수 없습니다",
+        selectTeam: "Select team",
+        unassigned: "Unassigned",
+        selectUsers: "Select users",
+        selectedCount: `{count} selected`,
+        searchUsers: "Search users...",
+        noUsersFound: "User not found",
       };
       let result = msgs[key] ?? key;
       if (values) {
@@ -25,7 +25,7 @@ vi.mock("next-intl", () => ({
       }
       return result;
     },
-  useLocale: () => "ko",
+  useLocale: () => "en",
 }));
 
 // Mock shadcn/ui Popover (always open for test convenience)
@@ -213,8 +213,8 @@ describe("SuggestionUserAssignment", () => {
     vi.clearAllMocks();
   });
 
-  describe("팀별 CommandGroup 헤더 렌더링", () => {
-    it("각 팀 CommandGroup 헤더에 팀명과 멤버수가 표시되어야 한다", () => {
+  describe("per-team CommandGroup heading rendering", () => {
+    it("shows the team name and member count in each team CommandGroup heading", () => {
       render(
         <SuggestionUserAssignment
           availableUsers={allUsers}
@@ -234,7 +234,7 @@ describe("SuggestionUserAssignment", () => {
       ).toBe(true);
     });
 
-    it("미배정 그룹 헤더에 미배정과 멤버수가 표시되어야 한다", () => {
+    it("shows Unassigned and the member count in the unassigned group heading", () => {
       render(
         <SuggestionUserAssignment
           availableUsers={allUsers}
@@ -247,13 +247,13 @@ describe("SuggestionUserAssignment", () => {
       const headingTexts = headings.map((h) => h.textContent);
 
       expect(
-        headingTexts.some((t) => t?.includes("미배정") && t?.includes("1"))
+        headingTexts.some((t) => t?.includes("Unassigned") && t?.includes("1"))
       ).toBe(true);
     });
   });
 
-  describe("팀 선택 Popover 표시 여부", () => {
-    it("팀이 2개 이상일 때 팀 선택 버튼이 표시되어야 한다", () => {
+  describe("team selection Popover visibility", () => {
+    it("shows the team select button when there are 2+ teams", () => {
       render(
         <SuggestionUserAssignment
           availableUsers={allUsers}
@@ -265,7 +265,7 @@ describe("SuggestionUserAssignment", () => {
       expect(screen.getByTestId("team-select")).toBeInTheDocument();
     });
 
-    it("팀이 1개 이하일 때 팀 선택 버튼이 미표시되어야 한다", () => {
+    it("hides the team select button when there is at most 1 team", () => {
       render(
         <SuggestionUserAssignment
           availableUsers={singleTeamUsers}
@@ -277,7 +277,7 @@ describe("SuggestionUserAssignment", () => {
       expect(screen.queryByTestId("team-select")).not.toBeInTheDocument();
     });
 
-    it("팀이 없는 사용자만 있을 때 팀 선택 버튼이 미표시되어야 한다", () => {
+    it("hides the team select button when only users without a team exist", () => {
       render(
         <SuggestionUserAssignment
           availableUsers={usersUnassigned}
@@ -290,8 +290,8 @@ describe("SuggestionUserAssignment", () => {
     });
   });
 
-  describe("팀 선택 시 팀 멤버 전체 추가", () => {
-    it("팀을 선택하면 해당 팀의 모든 멤버가 selectedUserIds에 추가되어야 한다", () => {
+  describe("selecting a team adds all its members", () => {
+    it("adds every member of the selected team to selectedUserIds", () => {
       const onSelectedUserIdsChange = vi.fn();
       render(
         <SuggestionUserAssignment
@@ -314,7 +314,7 @@ describe("SuggestionUserAssignment", () => {
       );
     });
 
-    it("이미 선택된 사용자가 있을 때 팀 선택이 additive로 동작해야 한다", () => {
+    it("adds to existing selections when a team is selected", () => {
       const onSelectedUserIdsChange = vi.fn();
       render(
         <SuggestionUserAssignment
@@ -338,7 +338,7 @@ describe("SuggestionUserAssignment", () => {
       expect(called).toContain("u2");
     });
 
-    it("팀 전체 선택 상태에서 다시 선택하면 팀 멤버 전원이 제거되어야 한다", () => {
+    it("removes every team member when a fully selected team is selected again", () => {
       const onSelectedUserIdsChange = vi.fn();
       render(
         <SuggestionUserAssignment
@@ -363,8 +363,8 @@ describe("SuggestionUserAssignment", () => {
     });
   });
 
-  describe("미배정 그룹 별도 표시", () => {
-    it("teamId가 null인 사용자가 미배정 그룹에 표시되어야 한다", () => {
+  describe("unassigned group shown separately", () => {
+    it("shows users with a null teamId in the unassigned group", () => {
       render(
         <SuggestionUserAssignment
           availableUsers={allUsers}
@@ -375,17 +375,17 @@ describe("SuggestionUserAssignment", () => {
 
       const headings = screen.getAllByTestId("command-group-heading");
       const unassignedHeading = headings.find((h) =>
-        h.textContent?.includes("미배정")
+        h.textContent?.includes("Unassigned")
       );
       expect(unassignedHeading).toBeInTheDocument();
 
-      // Dave는 미배정 그룹의 CommandItem에 있어야 함
+      // Dave should be in a CommandItem of the unassigned group
       expect(screen.getByText("Dave")).toBeInTheDocument();
     });
   });
 
-  describe("개별 사용자 토글", () => {
-    it("사용자 CommandItem 클릭 시 onSelectedUserIdsChange가 추가 상태로 호출되어야 한다", () => {
+  describe("individual user toggle", () => {
+    it("calls onSelectedUserIdsChange with the user added when a user CommandItem is clicked", () => {
       const onSelectedUserIdsChange = vi.fn();
       render(
         <SuggestionUserAssignment
@@ -395,7 +395,7 @@ describe("SuggestionUserAssignment", () => {
         />
       );
 
-      // Alice의 CommandItem 클릭
+      // Click Alice's CommandItem
       const items = screen.getAllByTestId("command-item");
       const aliceItem = items.find((item) =>
         item.textContent?.includes("Alice")
@@ -406,7 +406,7 @@ describe("SuggestionUserAssignment", () => {
       expect(onSelectedUserIdsChange).toHaveBeenCalledWith(["u1"]);
     });
 
-    it("이미 선택된 사용자 CommandItem 클릭 시 선택이 해제되어야 한다", () => {
+    it("deselects an already selected user when its CommandItem is clicked", () => {
       const onSelectedUserIdsChange = vi.fn();
       render(
         <SuggestionUserAssignment
@@ -427,8 +427,8 @@ describe("SuggestionUserAssignment", () => {
     });
   });
 
-  describe("Badge에서 X로 사용자 제거", () => {
-    it("Badge의 X 버튼 클릭 시 해당 사용자가 selectedUserIds에서 제거되어야 한다", () => {
+  describe("removing a user via the badge X", () => {
+    it("removes the user from selectedUserIds when the badge X button is clicked", () => {
       const onSelectedUserIdsChange = vi.fn();
       render(
         <SuggestionUserAssignment
@@ -438,12 +438,12 @@ describe("SuggestionUserAssignment", () => {
         />
       );
 
-      // Badge 목록에서 Alice badge 찾기
+      // Find Alice's badge in the badge list
       const badges = screen.getAllByTestId("badge");
       const aliceBadge = badges.find((b) => b.textContent?.includes("Alice"));
       expect(aliceBadge).toBeTruthy();
 
-      // X 버튼 클릭
+      // Click the X button
       const removeButton = within(aliceBadge!).getByRole("button");
       fireEvent.click(removeButton);
 
@@ -451,8 +451,8 @@ describe("SuggestionUserAssignment", () => {
     });
   });
 
-  describe("팀 일괄 선택 시 maxUsers 제한", () => {
-    it("팀 전체 선택 시 잔여 seat만큼만 추가되어야 한다", () => {
+  describe("maxUsers limit when selecting a whole team", () => {
+    it("adds only as many users as there are remaining seats when selecting a whole team", () => {
       const onSelectedUserIdsChange = vi.fn();
       const onSeatLimitReached = vi.fn();
       render(
@@ -465,7 +465,7 @@ describe("SuggestionUserAssignment", () => {
         />
       );
 
-      // Team A (u1, u2) 선택 시도 → 잔여 seat = 2 - 1 = 1이므로 1명만 추가
+      // Try selecting Team A (u1, u2) -> remaining seats = 2 - 1 = 1, so only 1 user is added
       const teamCommandList = screen.getByTestId("team-command-list");
       const teamItems = within(teamCommandList).getAllByTestId("command-item");
       const teamAItem = teamItems.find(
@@ -474,11 +474,11 @@ describe("SuggestionUserAssignment", () => {
       fireEvent.click(teamAItem!);
 
       const called = onSelectedUserIdsChange.mock.calls[0][0] as string[];
-      expect(called).toHaveLength(2); // 기존 1 + 신규 1
-      expect(called).toContain("u3"); // 기존 유지
+      expect(called).toHaveLength(2); // 1 existing + 1 new
+      expect(called).toContain("u3"); // existing user kept
     });
 
-    it("잔여 seat가 0일 때 팀 선택 시 onSeatLimitReached가 호출되어야 한다", () => {
+    it("calls onSeatLimitReached when selecting a team with 0 remaining seats", () => {
       const onSelectedUserIdsChange = vi.fn();
       const onSeatLimitReached = vi.fn();
       render(
@@ -502,7 +502,7 @@ describe("SuggestionUserAssignment", () => {
       expect(onSelectedUserIdsChange).not.toHaveBeenCalled();
     });
 
-    it("maxUsers가 undefined일 때 팀 전체가 제한 없이 추가되어야 한다", () => {
+    it("adds the whole team without limit when maxUsers is undefined", () => {
       const onSelectedUserIdsChange = vi.fn();
       render(
         <SuggestionUserAssignment
@@ -525,8 +525,8 @@ describe("SuggestionUserAssignment", () => {
     });
   });
 
-  describe("팀 체크박스 indeterminate 상태", () => {
-    it("팀 일부만 선택 시 체크박스가 indeterminate 상태여야 한다", () => {
+  describe("team checkbox indeterminate state", () => {
+    it("shows an indeterminate checkbox when the team is partially selected", () => {
       render(
         <SuggestionUserAssignment
           availableUsers={allUsers}
@@ -544,7 +544,7 @@ describe("SuggestionUserAssignment", () => {
       expect(checkbox).toHaveAttribute("data-state", "indeterminate");
     });
 
-    it("팀 전체 선택 시 체크박스가 checked 상태여야 한다", () => {
+    it("shows a checked checkbox when the whole team is selected", () => {
       render(
         <SuggestionUserAssignment
           availableUsers={allUsers}
@@ -562,7 +562,7 @@ describe("SuggestionUserAssignment", () => {
       expect(checkbox).toHaveAttribute("data-state", "checked");
     });
 
-    it("팀 미선택 시 체크박스가 unchecked 상태여야 한다", () => {
+    it("shows an unchecked checkbox when the team is not selected", () => {
       render(
         <SuggestionUserAssignment
           availableUsers={allUsers}
@@ -581,8 +581,8 @@ describe("SuggestionUserAssignment", () => {
     });
   });
 
-  describe("maxUsers 제한", () => {
-    it("maxUsers에 도달했을 때 새 사용자 추가 시 onSeatLimitReached가 호출되어야 한다", () => {
+  describe("maxUsers limit", () => {
+    it("calls onSeatLimitReached when adding a user after reaching maxUsers", () => {
       const onSeatLimitReached = vi.fn();
       const onSelectedUserIdsChange = vi.fn();
       render(
@@ -595,7 +595,7 @@ describe("SuggestionUserAssignment", () => {
         />
       );
 
-      // Bob을 추가하려고 시도
+      // Try to add Bob
       const items = screen.getAllByTestId("command-item");
       const bobItem = items.find((item) => item.textContent?.includes("Bob"));
       expect(bobItem).toBeTruthy();
@@ -605,7 +605,7 @@ describe("SuggestionUserAssignment", () => {
       expect(onSelectedUserIdsChange).not.toHaveBeenCalled();
     });
 
-    it("maxUsers에 도달하지 않았을 때 사용자를 정상 추가해야 한다", () => {
+    it("adds the user normally when maxUsers has not been reached", () => {
       const onSeatLimitReached = vi.fn();
       const onSelectedUserIdsChange = vi.fn();
       render(

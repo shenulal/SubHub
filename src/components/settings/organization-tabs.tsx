@@ -24,12 +24,12 @@ interface OrganizationTabsProps {
 
 export function OrganizationTabs({ organization }: OrganizationTabsProps) {
   const t = useTranslations();
-  // settings에서 teams 배열 추출
+  // Extract the teams array from settings
   const teams = (organization.settings?.teams as string[]) || [];
-  // settings에서 domains 배열 추출
+  // Extract the domains array from settings
   const additionalDomains = (organization.settings?.domains as string[]) || [];
 
-  // 활성 탭 수 계산 (정보 탭은 항상 표시)
+  // Count active tabs (the info tab is always shown)
   const tabCount =
     1 +
     (FEATURES.ORGANIZATION_TEAMS ? 1 : 0) +

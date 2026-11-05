@@ -1,21 +1,21 @@
 /**
- * 테스트용 법인카드 DB 등록 스크립트
- * 실행: npx tsx src/lib/services/hyphen/seed-test-card.ts
+ * Registers a test corporate card in the DB
+ * Run: npx tsx src/lib/services/hyphen/seed-test-card.ts
  *
- * 사전 준비: .env.local에 다음 환경 변수 설정
- * - TEST_CARD_CD: 카드사 코드 (예: 010)
- * - TEST_CARD_NO: 카드번호
- * - TEST_CARD_NM: 카드명 (선택)
- * - TEST_CARD_USER_ID: 카드사 로그인 ID
- * - TEST_CARD_USER_PW: 카드사 로그인 비밀번호
- * - TEST_CARD_BIZ_NO: 사업자번호
- * - ENCRYPTION_KEY: 암호화 키 (32자)
+ * Prerequisites: set the following environment variables in .env.local
+ * - TEST_CARD_CD: card company code (e.g. 010)
+ * - TEST_CARD_NO: card number
+ * - TEST_CARD_NM: card name (optional)
+ * - TEST_CARD_USER_ID: card company login ID
+ * - TEST_CARD_USER_PW: card company login password
+ * - TEST_CARD_BIZ_NO: business registration number
+ * - ENCRYPTION_KEY: encryption key (32 characters)
  */
 
 import * as dotenv from "dotenv";
 import * as path from "path";
 
-// .env.local 로드
+// Load .env.local
 dotenv.config({ path: path.resolve(process.cwd(), ".env.local") });
 
 import { encryptJson, getCardLast4, maskCardNumber } from "@/lib/crypto";
@@ -27,12 +27,12 @@ const prisma = new PrismaClient();
 function getTestCardConfig() {
   const cardCd = process.env.TEST_CARD_CD;
   const cardNo = process.env.TEST_CARD_NO;
-  const cardNm = process.env.TEST_CARD_NM || "테스트 카드";
+  const cardNm = process.env.TEST_CARD_NM || "Test Card";
   const userId = process.env.TEST_CARD_USER_ID;
   const userPw = process.env.TEST_CARD_USER_PW;
   const bizNo = process.env.TEST_CARD_BIZ_NO;
 
-  // 필수 환경 변수 확인
+  // Check required environment variables
   const missing: string[] = [];
   if (!cardCd) missing.push("TEST_CARD_CD");
   if (!cardNo) missing.push("TEST_CARD_NO");
@@ -42,13 +42,13 @@ function getTestCardConfig() {
 
   if (missing.length > 0) {
     throw new Error(
-      `필수 환경 변수가 설정되지 않았습니다: ${missing.join(", ")}\n` +
-        `.env.local 파일에 다음 환경 변수를 추가하세요:\n` +
+      `Required environment variables are not set: ${missing.join(", ")}\n` +
+        `Add the following environment variables to .env.local:\n` +
         `TEST_CARD_CD=010\n` +
-        `TEST_CARD_NO=카드번호\n` +
-        `TEST_CARD_USER_ID=카드사ID\n` +
-        `TEST_CARD_USER_PW=카드사비밀번호\n` +
-        `TEST_CARD_BIZ_NO=사업자번호`
+        `TEST_CARD_NO=<card number>\n` +
+        `TEST_CARD_USER_ID=<card company ID>\n` +
+        `TEST_CARD_USER_PW=<card company password>\n` +
+        `TEST_CARD_BIZ_NO=<business registration number>`
     );
   }
 
@@ -60,55 +60,57 @@ function getTestCardConfig() {
       loginMethod: "ID" as const,
       userId: userId!,
       userPw: userPw!,
-      signPw: userPw!, // signPw는 userPw와 동일하게 설정
+      signPw: userPw!, // signPw is set to the same value as userPw
       bizNo: bizNo!,
-      cardNo: cardNo!, // 원본 카드번호도 암호화하여 저장
+      cardNo: cardNo!, // The original card number is also stored encrypted
     },
   };
 }
 
 async function seedTestCard() {
   console.log("========================================");
-  console.log("  테스트용 법인카드 DB 등록");
+  console.log("  Register test corporate card in DB");
   console.log("========================================\n");
 
   try {
-    // 환경 변수 확인
+    // Check environment variables
     if (!process.env.ENCRYPTION_KEY) {
-      throw new Error("ENCRYPTION_KEY 환경변수가 설정되지 않았습니다.");
+      throw new Error("ENCRYPTION_KEY environment variable is not set.");
     }
 
     if (!process.env.DATABASE_URL) {
-      throw new Error("DATABASE_URL 환경변수가 설정되지 않았습니다.");
+      throw new Error("DATABASE_URL environment variable is not set.");
     }
 
-    // 환경 변수에서 카드 정보 로드
+    // Load card details from environment variables
     const testCard = getTestCardConfig();
 
-    console.log(`카드사 코드: ${testCard.cardCd}`);
-    console.log(`카드번호: ${maskCardNumber(testCard.cardNo)}`);
-    console.log(`카드명: ${testCard.cardNm}`);
-    console.log(`사용자 ID: ${testCard.credentials.userId}`);
-    console.log(`사업자번호: ${testCard.credentials.bizNo}\n`);
+    console.log(`Card company code: ${testCard.cardCd}`);
+    console.log(`Card number: ${maskCardNumber(testCard.cardNo)}`);
+    console.log(`Card name: ${testCard.cardNm}`);
+    console.log(`User ID: ${testCard.credentials.userId}`);
+    console.log(
+      `Business registration number: ${testCard.credentials.bizNo}\n`
+    );
 
-    // 테스트용 조직 조회 (없으면 생성)
+    // Find the test organization (create it if missing)
     let organization = await prisma.organization.findFirst({
-      where: { name: "테스트 조직" },
+      where: { name: "Test Organization" },
     });
 
     if (!organization) {
-      console.log("테스트 조직 생성 중...");
+      console.log("Creating test organization...");
       organization = await prisma.organization.create({
         data: {
-          name: "테스트 조직",
+          name: "Test Organization",
         },
       });
-      console.log(`✅ 테스트 조직 생성 완료: ${organization.id}\n`);
+      console.log(`✅ Test organization created: ${organization.id}\n`);
     } else {
-      console.log(`ℹ️ 기존 테스트 조직 사용: ${organization.id}\n`);
+      console.log(`ℹ️ Using existing test organization: ${organization.id}\n`);
     }
 
-    // 중복 확인
+    // Check for duplicates
     const maskedCardNo = maskCardNumber(testCard.cardNo);
     const existingCard = await prisma.corporateCard.findFirst({
       where: {
@@ -118,14 +120,14 @@ async function seedTestCard() {
     });
 
     if (existingCard) {
-      console.log("ℹ️ 이미 등록된 카드입니다. 업데이트합니다...\n");
+      console.log("ℹ️ Card already registered. Updating...\n");
 
-      // 인증 정보 암호화
+      // Encrypt credentials
       const encryptedCredentials = encryptJson<CardCredentials>(
         testCard.credentials
       );
 
-      // 업데이트
+      // Update
       await prisma.corporateCard.update({
         where: { id: existingCard.id },
         data: {
@@ -135,21 +137,23 @@ async function seedTestCard() {
         },
       });
 
-      console.log("✅ 카드 정보 업데이트 완료");
-      console.log(`   카드 ID: ${existingCard.id}`);
-      console.log(`   카드번호: ${maskedCardNo}`);
+      console.log("✅ Card details updated");
+      console.log(`   Card ID: ${existingCard.id}`);
+      console.log(`   Card number: ${maskedCardNo}`);
       return existingCard.id;
     }
 
-    // 인증 정보 암호화
-    console.log("인증 정보 암호화 중...");
+    // Encrypt credentials
+    console.log("Encrypting credentials...");
     const encryptedCredentials = encryptJson<CardCredentials>(
       testCard.credentials
     );
-    console.log(`✅ 암호화 완료 (길이: ${encryptedCredentials.length}자)\n`);
+    console.log(
+      `✅ Encryption complete (length: ${encryptedCredentials.length} characters)\n`
+    );
 
-    // 카드 등록
-    console.log("DB에 카드 등록 중...");
+    // Register the card
+    console.log("Registering card in DB...");
     const card = await prisma.corporateCard.create({
       data: {
         organizationId: organization.id,
@@ -165,28 +169,28 @@ async function seedTestCard() {
     });
 
     console.log("\n========================================");
-    console.log("  ✅ 카드 등록 완료");
+    console.log("  ✅ Card registered");
     console.log("========================================");
-    console.log(`카드 ID: ${card.id}`);
-    console.log(`조직 ID: ${organization.id}`);
-    console.log(`카드번호: ${card.cardNo}`);
-    console.log(`카드명: ${card.cardNm}`);
-    console.log(`마지막 4자리: ${card.cardLast4}`);
+    console.log(`Card ID: ${card.id}`);
+    console.log(`Organization ID: ${organization.id}`);
+    console.log(`Card number: ${card.cardNo}`);
+    console.log(`Card name: ${card.cardNm}`);
+    console.log(`Last 4 digits: ${card.cardLast4}`);
     console.log("========================================\n");
 
     return card.id;
   } catch (error) {
-    console.error("\n❌ 카드 등록 실패:", error);
+    console.error("\n❌ Card registration failed:", error);
     throw error;
   } finally {
     await prisma.$disconnect();
   }
 }
 
-// 실행
+// Run
 seedTestCard()
   .then(() => {
-    console.log(`\n다음 명령으로 테스트를 실행하세요:`);
+    console.log(`\nRun the test with the following command:`);
     console.log(`npx tsx src/lib/services/hyphen/test-api.ts\n`);
     process.exit(0);
   })

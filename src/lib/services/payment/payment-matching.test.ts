@@ -315,7 +315,7 @@ describe("matchPaymentsToNewApp", () => {
     });
   });
 
-  // SMP-123: CardTransaction 매칭 테스트
+  // SMP-123: CardTransaction matching tests
   describe("CardTransaction matching", () => {
     it("should match CardTransactions with exact store name match", async () => {
       // Arrange

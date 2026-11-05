@@ -2,16 +2,16 @@ import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 
 /**
- * Tailwind CSS 클래스 병합 유틸리티
- * clsx와 tailwind-merge를 조합하여 조건부 클래스와 중복 클래스를 처리
+ * Tailwind CSS class merge utility
+ * Combines clsx and tailwind-merge to handle conditional and conflicting classes
  */
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
 /**
- * 환경에 따른 기본 URL 반환
- * Vercel 배포 환경을 자동 감지
+ * Return the base URL for the current environment
+ * Detects Vercel deployments automatically
  */
 export const getBaseUrl = () => {
   if (process.env.VERCEL_ENV === "production") {

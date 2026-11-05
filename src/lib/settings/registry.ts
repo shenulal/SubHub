@@ -166,14 +166,11 @@ export const SETTING_DEFINITIONS = {
     key: "general.locale",
     group: "general",
     scope: "organization",
-    schema: z.enum(["en", "ko"]),
+    schema: z.enum(["en"]),
     defaultValue: "en",
     label: "Default language",
     input: "select",
-    options: [
-      { value: "en", label: "English" },
-      { value: "ko", label: "Korean" },
-    ],
+    options: [{ value: "en", label: "English" }],
   }),
   "general.countryCode": define({
     key: "general.countryCode",

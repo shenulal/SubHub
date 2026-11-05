@@ -1,18 +1,20 @@
 /**
  * Korean localization preset — SaaS/vendor matching patterns for Korea market.
- * Contains Korean company names (e.g., 현대카드) used for Korean financial/SaaS integrations.
+ * Contains Korean merchant names used to classify Korean card statements.
+ * The Korean keyword values are functional matching data (compared against merchant
+ * names returned by Korean card/bank feeds) and must stay in Korean.
  * For other markets, replace with region-specific constants or extend with a preset layer.
  */
 
 // src/lib/services/saas-matcher.constants.ts
 
 /**
- * Non-SaaS 키워드 목록
- * - 카드 결제에서 자주 발생하지만 SaaS가 아닌 가맹점명/키워드
- * - 카테고리별로 분류하여 관리
+ * Non-SaaS keyword list
+ * - Merchant names/keywords that appear frequently in card payments but are not SaaS
+ * - Grouped by category
  */
 export const NON_SAAS_KEYWORDS = [
-  // ===== 교통/모빌리티 =====
+  // ===== Transport / mobility =====
   "카카오T",
   "카카오모빌리티",
   "아이엠택시",
@@ -33,7 +35,7 @@ export const NON_SAAS_KEYWORDS = [
   "주차",
   "PARKING",
 
-  // ===== 배달/음식 =====
+  // ===== Food delivery =====
   "우아한형제들",
   "배달의민족",
   "배민",
@@ -46,7 +48,7 @@ export const NON_SAAS_KEYWORDS = [
   "배달통",
   "푸드플라이",
 
-  // ===== 식음료 (커피/카페/레스토랑) =====
+  // ===== Food & beverage (coffee / cafés / restaurants) =====
   "스타벅스",
   "STARBUCKS",
   "이디야",
@@ -77,7 +79,7 @@ export const NON_SAAS_KEYWORDS = [
   "파파존스",
   "PAPA JOHNS",
 
-  // ===== 유통/마트/편의점 =====
+  // ===== Retail / supermarkets / convenience stores =====
   "이마트",
   "EMART",
   "홈플러스",
@@ -113,7 +115,7 @@ export const NON_SAAS_KEYWORDS = [
   "롯데온",
   "LOTTE ON",
 
-  // ===== 엔터테인먼트/여가 =====
+  // ===== Entertainment / leisure =====
   "CGV",
   "메가박스",
   "MEGABOX",
@@ -136,7 +138,7 @@ export const NON_SAAS_KEYWORDS = [
   "디즈니플러스",
   "DISNEY+",
 
-  // ===== 숙박/여행 =====
+  // ===== Accommodation / travel =====
   "야놀자",
   "YANOLJA",
   "여기어때",
@@ -156,7 +158,7 @@ export const NON_SAAS_KEYWORDS = [
   "클룩",
   "KLOOK",
 
-  // ===== 의료/건강 =====
+  // ===== Medical / health =====
   "병원",
   "의원",
   "약국",
@@ -167,13 +169,13 @@ export const NON_SAAS_KEYWORDS = [
   "피부과",
   "정형외과",
 
-  // ===== 교육/학원 =====
+  // ===== Education / tutoring =====
   "학원",
   "ACADEMY",
   "어학원",
   "학습지",
 
-  // ===== 금융/보험 =====
+  // ===== Finance / insurance =====
   "은행",
   "BANK",
   "보험",
@@ -182,7 +184,7 @@ export const NON_SAAS_KEYWORDS = [
   "SECURITIES",
   "ATM",
 
-  // ===== 주유/자동차 =====
+  // ===== Fuel / automotive =====
   "주유소",
   "GAS STATION",
   "SK에너지",
@@ -198,7 +200,7 @@ export const NON_SAAS_KEYWORDS = [
   "자동차정비",
   "카센터",
 
-  // ===== 기타 =====
+  // ===== Other =====
   "꽃배달",
   "FLOWER",
   "세탁소",
@@ -218,7 +220,7 @@ export const NON_SAAS_KEYWORDS = [
 ];
 
 /**
- * 가맹점명/메모에 Non-SaaS 키워드가 포함되는지 검사
+ * Checks whether the merchant name or memo contains a non-SaaS keyword
  */
 export function findNonSaaSKeywordHit(
   merchantName: string,

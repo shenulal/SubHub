@@ -38,7 +38,7 @@ const mockUsageFindMany = prisma.extensionUsage.findMany as ReturnType<
   typeof vi.fn
 >;
 
-// 테스트용 구독 데이터 생성 헬퍼
+// Helper that builds test subscription data
 function makeSub(
   overrides: {
     id?: string;
@@ -76,12 +76,12 @@ function makeSub(
 
 beforeEach(() => {
   vi.clearAllMocks();
-  // ExtensionUsage는 기본적으로 빈 배열 반환
+  // ExtensionUsage returns an empty array by default
   mockUsageFindMany.mockResolvedValue([]);
 });
 
 describe("getUnusedApps", () => {
-  // ─── 기본 케이스 ───────────────────────────────────────────────
+  // ─── Basic cases ───────────────────────────────────────────────
 
   it("should return count=0, cost=0 when there are no active subscriptions", async () => {
     mockSubFindMany.mockResolvedValue([]);
@@ -153,7 +153,7 @@ describe("getUnusedApps", () => {
         assignedUsers: [{ userId: "user-3" }],
       }),
     ]);
-    // app-1만 최근 접속
+    // only app-1 accessed recently
     mockAccessFindMany.mockResolvedValue([
       { appId: "app-1", userId: "user-1", lastUsedAt: recentDate },
     ]);
@@ -161,11 +161,11 @@ describe("getUnusedApps", () => {
     const result = await getUnusedApps();
 
     expect(result.success).toBe(true);
-    expect(result.data?.count).toBe(2); // app-2, app-3 미사용
+    expect(result.data?.count).toBe(2); // app-2 and app-3 unused
     expect(result.data?.cost).toBe(50000); // 30000 + 20000
   });
 
-  // ─── 빌링 사이클 변환 ─────────────────────────────────────────
+  // ─── Billing cycle conversion ─────────────────────────────────────────
 
   it("should convert YEARLY amount to monthly (amount / 12)", async () => {
     mockSubFindMany.mockResolvedValue([
@@ -191,7 +191,7 @@ describe("getUnusedApps", () => {
     expect(result.data?.cost).toBe(30000); // 90000 / 3
   });
 
-  // ─── 중복 구독 처리 ──────────────────────────────────────────
+  // ─── Duplicate subscription handling ──────────────────────────────────────────
 
   it("should aggregate multiple subscriptions for the same app", async () => {
     mockSubFindMany.mockResolvedValue([
@@ -213,11 +213,11 @@ describe("getUnusedApps", () => {
     const result = await getUnusedApps();
 
     expect(result.success).toBe(true);
-    expect(result.data?.count).toBe(1); // 앱은 1개
+    expect(result.data?.count).toBe(1); // one app
     expect(result.data?.cost).toBe(40000); // 30000 + 120000/12
   });
 
-  // ─── PER_SEAT 케이스 ─────────────────────────────────────────
+  // ─── PER_SEAT cases ─────────────────────────────────────────
 
   it("should calculate per-seat waste for PER_SEAT subscription", async () => {
     mockSubFindMany.mockResolvedValue([
@@ -232,7 +232,7 @@ describe("getUnusedApps", () => {
         ],
       }),
     ]);
-    // user-1만 최근 접속, user-2/user-3은 미접속
+    // only user-1 accessed recently; user-2/user-3 did not
     mockAccessFindMany.mockResolvedValue([
       { appId: "app-1", userId: "user-1" },
     ]);
@@ -240,7 +240,7 @@ describe("getUnusedApps", () => {
     const result = await getUnusedApps();
 
     expect(result.success).toBe(true);
-    expect(result.data?.cost).toBe(20000); // 2명 × 10000
+    expect(result.data?.cost).toBe(20000); // 2 users × 10000
     expect(result.data?.count).toBe(1);
   });
 
@@ -263,12 +263,12 @@ describe("getUnusedApps", () => {
     expect(result.data).toEqual({ count: 0, cost: 0 });
   });
 
-  // ─── ExtensionUsage 보완 케이스 ──────────────────────────────
+  // ─── ExtensionUsage fallback cases ──────────────────────────────
 
   it("should NOT count subscription as unused when user has recent ExtensionUsage but no UserAppAccess", async () => {
-    // UserAppAccess 없음 (로그인 이벤트 없음)
+    // No UserAppAccess (no login events)
     mockAccessFindMany.mockResolvedValue([]);
-    // 하지만 ExtensionUsage에는 브라우징 기록 있음 (이미 로그인된 상태로 사용)
+    // But ExtensionUsage has browsing records (used while already logged in)
     mockUsageFindMany.mockResolvedValue([
       { domain: "slack.com", userId: "user-1" },
     ]);
@@ -292,12 +292,12 @@ describe("getUnusedApps", () => {
         ],
       }),
     ]);
-    // user-1: UserAppAccess 있음
+    // user-1: has UserAppAccess
     mockAccessFindMany.mockResolvedValue([
       { appId: "app-1", userId: "user-1" },
     ]);
-    // user-2: UserAppAccess 없지만 ExtensionUsage 있음
-    // user-3: 둘 다 없음 → 미사용
+    // user-2: no UserAppAccess but has ExtensionUsage
+    // user-3: neither → unused
     mockUsageFindMany.mockResolvedValue([
       { domain: "slack.com", userId: "user-2" },
     ]);
@@ -305,14 +305,14 @@ describe("getUnusedApps", () => {
     const result = await getUnusedApps();
 
     expect(result.success).toBe(true);
-    expect(result.data?.cost).toBe(10000); // user-3만 미사용 × 10000
+    expect(result.data?.cost).toBe(10000); // only user-3 unused × 10000
     expect(result.data?.count).toBe(1);
   });
 
   it("should count subscription as unused when neither UserAppAccess nor ExtensionUsage has recent data", async () => {
     mockSubFindMany.mockResolvedValue([makeSub({ amount: 50000 })]);
     mockAccessFindMany.mockResolvedValue([]);
-    mockUsageFindMany.mockResolvedValue([]); // 브라우징 기록도 없음
+    mockUsageFindMany.mockResolvedValue([]); // no browsing records either
 
     const result = await getUnusedApps();
 
@@ -326,11 +326,11 @@ describe("getUnusedApps", () => {
 
     await getUnusedApps();
 
-    // domainToAppId가 비어있어 ExtensionUsage 쿼리 스킵
+    // domainToAppId is empty, so the ExtensionUsage query is skipped
     expect(mockUsageFindMany).not.toHaveBeenCalled();
   });
 
-  // ─── 에러 처리 ──────────────────────────────────────────────
+  // ─── Error handling ──────────────────────────────────────────────
 
   it("should return error state on failure", async () => {
     mockSubFindMany.mockRejectedValue(new Error("DB error"));

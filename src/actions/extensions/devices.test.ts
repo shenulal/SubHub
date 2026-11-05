@@ -83,7 +83,7 @@ describe("Extension Device Actions", () => {
       const result = await getExtensionDevices();
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe("인증이 필요합니다");
+      expect(result.error).toBe("Authentication required");
     });
   });
 
@@ -121,7 +121,7 @@ describe("Extension Device Actions", () => {
       const result = await getExtensionDevice("non-existent");
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe("디바이스를 찾을 수 없습니다");
+      expect(result.error).toBe("Device not found");
     });
   });
 
@@ -163,7 +163,7 @@ describe("Extension Device Actions", () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.error).toContain("찾을 수 없습니다");
+      expect(result.error).toContain("not found");
     });
   });
 

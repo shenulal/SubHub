@@ -74,7 +74,7 @@ export function CostBarChart({
 
   return (
     <Card className="h-[400px] gap-4 overflow-hidden px-5">
-      {/* 헤더: 타이틀 + 기간 탭 */}
+      {/* Header: title + period tabs */}
       <div className="flex min-w-0 items-center justify-between gap-3">
         <p
           className="text-foreground min-w-0 truncate text-lg font-medium"
@@ -101,7 +101,7 @@ export function CostBarChart({
           </ToggleGroup>
         )}
       </div>
-      {/* 차트 영역 */}
+      {/* Chart area */}
       <div className="flex-1 overflow-hidden">
         <ChartContainer
           config={chartConfig}

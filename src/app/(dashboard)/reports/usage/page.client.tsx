@@ -80,7 +80,7 @@ export function UsageReportPageClient({
   const [reportData, setReportData] = useState<UsageReportData>(initialData);
   const [filters, setFilters] = useState<UsageReportFilters>(initialFilters);
 
-  // 기간 변경 핸들러
+  // Period change handler
   const updateUrlParams = useCallback(
     (nextFilters: UsageReportFilters) => {
       const params = new URLSearchParams(searchParams.toString());
@@ -409,9 +409,9 @@ export function UsageReportPageClient({
       const buffer = await generatePDFReport({
         title: t("export.pdf.title"),
         subtitle: t("export.pdf.subtitle", {
-          date: new Date().toLocaleDateString("ko-KR"),
+          date: new Date().toLocaleDateString("en-US"),
         }),
-        organizationName: "SaaS Management Platform",
+        organizationName: "SubHub",
         generatedAt: new Date(),
         sections,
       });
@@ -427,7 +427,7 @@ export function UsageReportPageClient({
 
   return (
     <div className="space-y-6">
-      {/* 헤더: 타이틀 + 기간 선택 + Export */}
+      {/* Header: title + period selector + export */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h1 className="min-w-0 truncate text-2xl font-medium">
           {t("page.title")}
@@ -480,7 +480,7 @@ export function UsageReportPageClient({
         </div>
       </div>
 
-      {/* 통계 카드 */}
+      {/* Stat cards */}
       <UsageStatsCards summary={reportData.summary} />
 
       <TeamUserFilter
@@ -494,13 +494,13 @@ export function UsageReportPageClient({
         teamLocked={!includeAllOption}
       />
 
-      {/* 차트 영역 */}
+      {/* Chart area */}
       <div className="grid gap-6 xl:grid-cols-2">
         <ActiveUsersChart data={reportData.activeUsersTrend} />
         <AppUsageChart data={reportData.appUsageRanking} />
       </div>
 
-      {/* 미사용 앱 테이블 */}
+      {/* Unused apps table */}
       <UnusedAppsTable apps={reportData.unusedApps} />
     </div>
   );

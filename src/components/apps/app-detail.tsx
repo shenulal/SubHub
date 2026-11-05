@@ -37,7 +37,7 @@ export function AppDetail({ app, canEdit = true }: AppDetailProps) {
 
   return (
     <div className="space-y-6">
-      {/* 상단 KPI 카드 */}
+      {/* Top KPI cards */}
       <KpiCardsGrid columns={4}>
         <KpiCard
           title={t("apps.detail.kpi.subscriptionCount")}
@@ -61,15 +61,15 @@ export function AppDetail({ app, canEdit = true }: AppDetailProps) {
         />
       </KpiCardsGrid>
 
-      {/* 2컬럼 레이아웃 - 레퍼런스: pages-products-1.png */}
+      {/* Two-column layout - reference: pages-products-1.png */}
       <div className="grid min-w-0 gap-6 lg:grid-cols-3">
-        {/* 좌측 (span-2): 메인 콘텐츠 */}
+        {/* Left (span-2): main content */}
         <div className="min-w-0 space-y-6 lg:col-span-2">
-          {/* 앱 로고 및 기본 정보 카드 */}
+          {/* App logo and basic info card */}
           <Card>
             <CardContent>
               <div className="flex min-w-0 flex-col gap-6 sm:flex-row">
-                {/* 로고 */}
+                {/* Logo */}
                 <div className="shrink-0">
                   {logoUrl ? (
                     <Image
@@ -85,7 +85,7 @@ export function AppDetail({ app, canEdit = true }: AppDetailProps) {
                     </div>
                   )}
                 </div>
-                {/* 정보 */}
+                {/* Info */}
                 <div className="min-w-0 flex-1 space-y-3">
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge
@@ -138,7 +138,7 @@ export function AppDetail({ app, canEdit = true }: AppDetailProps) {
             </CardContent>
           </Card>
 
-          {/* 메모 카드 */}
+          {/* Notes card */}
           <Card>
             <CardHeader>
               <CardTitle>{t("apps.detail.notes.title")}</CardTitle>
@@ -157,7 +157,7 @@ export function AppDetail({ app, canEdit = true }: AppDetailProps) {
             </CardContent>
           </Card>
 
-          {/* 리스크 정보 카드 (있을 경우) */}
+          {/* Risk info card (when present) */}
           {app.riskScore !== null && (
             <Card>
               <CardHeader>
@@ -197,9 +197,9 @@ export function AppDetail({ app, canEdit = true }: AppDetailProps) {
           )}
         </div>
 
-        {/* 우측 (span-1): 메타데이터 카드 */}
+        {/* Right (span-1): metadata cards */}
         <div className="min-w-0 space-y-6">
-          {/* 담당자 카드 */}
+          {/* Owner card */}
           <Card>
             <CardHeader>
               <CardTitle>{t("apps.detail.owner.title")}</CardTitle>
@@ -229,7 +229,7 @@ export function AppDetail({ app, canEdit = true }: AppDetailProps) {
             </CardContent>
           </Card>
 
-          {/* 배정 팀 카드 */}
+          {/* Assigned teams card */}
           <Card>
             <CardHeader>
               <CardTitle>{t("apps.detail.assignedTeam.title")}</CardTitle>
@@ -251,7 +251,7 @@ export function AppDetail({ app, canEdit = true }: AppDetailProps) {
             </CardContent>
           </Card>
 
-          {/* 카테고리 카드 */}
+          {/* Category card */}
           <Card>
             <CardHeader>
               <CardTitle>{t("apps.detail.category.title")}</CardTitle>
@@ -266,7 +266,7 @@ export function AppDetail({ app, canEdit = true }: AppDetailProps) {
             </CardContent>
           </Card>
 
-          {/* 날짜 정보 카드 */}
+          {/* Dates card */}
           <Card>
             <CardHeader>
               <CardTitle>{t("apps.detail.dates.title")}</CardTitle>
@@ -305,7 +305,7 @@ export function AppDetail({ app, canEdit = true }: AppDetailProps) {
             </CardContent>
           </Card>
 
-          {/* 태그 카드 */}
+          {/* Tags card */}
           {app.tags && app.tags.length > 0 && (
             <Card>
               <CardHeader>

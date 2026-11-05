@@ -18,13 +18,13 @@ export class FleetDMClient {
   private teamId?: number;
 
   constructor(config: FleetDMClientConfig) {
-    this.baseUrl = config.baseUrl.replace(/\/$/, ""); // trailing slash 제거
+    this.baseUrl = config.baseUrl.replace(/\/$/, ""); // Remove trailing slash
     this.apiToken = config.apiToken;
     this.teamId = config.teamId;
   }
 
   /**
-   * API 요청 헬퍼
+   * API request helper
    */
   private async request<T>(
     endpoint: string,
@@ -47,7 +47,7 @@ export class FleetDMClient {
         const error = (await response.json()) as FleetDMError;
         errorMessage = error.message || errorMessage;
       } catch {
-        // JSON 파싱 실패 시 기본 에러 메시지 사용
+        // Use the default error message if JSON parsing fails
       }
       throw new Error(errorMessage);
     }
@@ -56,7 +56,7 @@ export class FleetDMClient {
   }
 
   /**
-   * 호스트 목록 조회
+   * Lists hosts
    */
   async getHosts(params?: {
     page?: number;
@@ -88,7 +88,7 @@ export class FleetDMClient {
   }
 
   /**
-   * 호스트 상세 조회
+   * Gets host details
    */
   async getHost(hostId: number): Promise<FleetDMHost> {
     const response = await this.request<{ host: FleetDMHost }>(
@@ -98,7 +98,7 @@ export class FleetDMClient {
   }
 
   /**
-   * 호스트별 설치된 소프트웨어 조회
+   * Lists software installed on a host
    */
   async getHostSoftware(
     hostId: number,
@@ -122,7 +122,7 @@ export class FleetDMClient {
   }
 
   /**
-   * 전체 소프트웨어 목록 조회
+   * Lists all software
    */
   async getSoftware(params?: {
     page?: number;
@@ -157,7 +157,7 @@ export class FleetDMClient {
   }
 
   /**
-   * 활동 로그 조회
+   * Lists activity logs
    */
   async getActivities(params?: {
     page?: number;
@@ -175,7 +175,7 @@ export class FleetDMClient {
   }
 
   /**
-   * 팀 목록 조회
+   * Lists teams
    */
   async getTeams(): Promise<FleetDMTeam[]> {
     const response = await this.request<{ teams: FleetDMTeam[] }>("/teams");
@@ -183,7 +183,7 @@ export class FleetDMClient {
   }
 
   /**
-   * 팀 상세 조회
+   * Gets team details
    */
   async getTeam(teamId: number): Promise<FleetDMTeam> {
     const response = await this.request<{ team: FleetDMTeam }>(
@@ -193,7 +193,7 @@ export class FleetDMClient {
   }
 
   /**
-   * 연결 테스트
+   * Tests the connection
    */
   async testConnection(): Promise<boolean> {
     try {
@@ -205,14 +205,14 @@ export class FleetDMClient {
   }
 
   /**
-   * 호스트 수 카운트 (통계용)
+   * Counts hosts (for statistics)
    */
   async getHostsCount(params?: {
     status?: "new" | "online" | "offline" | "missing";
     teamId?: number;
   }): Promise<number> {
     const searchParams = new URLSearchParams();
-    searchParams.set("per_page", "1"); // 최소한만 가져오기
+    searchParams.set("per_page", "1"); // Fetch the minimum
 
     if (params?.status) searchParams.set("status", params.status);
 
@@ -227,7 +227,7 @@ export class FleetDMClient {
   }
 
   /**
-   * 소프트웨어 수 카운트 (통계용)
+   * Counts software (for statistics)
    */
   async getSoftwareCount(params?: {
     teamId?: number;
@@ -251,7 +251,7 @@ export class FleetDMClient {
 }
 
 /**
- * FleetDM 클라이언트 인스턴스 생성 헬퍼
+ * Helper to create a FleetDM client instance
  */
 export function createFleetDMClient(
   config: FleetDMClientConfig

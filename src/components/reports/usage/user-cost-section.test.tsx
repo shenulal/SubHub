@@ -106,7 +106,7 @@ describe("UserCostSection", () => {
         users: [
           {
             userId: "u1",
-            userName: "홍길동",
+            userName: "John Smith",
             userEmail: "hong@test.com",
             teamId: "t1",
             teamName: "Engineering",
@@ -136,7 +136,7 @@ describe("UserCostSection", () => {
 
     await waitFor(() => {
       expect(screen.getByText("title")).toBeInTheDocument();
-      expect(screen.getByText("홍길동")).toBeInTheDocument();
+      expect(screen.getByText("John Smith")).toBeInTheDocument();
     });
   });
 

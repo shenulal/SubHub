@@ -49,9 +49,9 @@ export function createSubscriptionFormSchema(t: (key: string) => string) {
         .max(MAX_NOTES, t("subscriptions.form.validation.notesTooLong"))
         .nullish(),
       status: z.enum(SubscriptionStatus).optional(),
-      // Team/User 배정 (Phase 2)
+      // Team/User assignment (Phase 2)
       teamId: z.string().nullish(),
-      // Team 배정 (다중, Phase 3)
+      // Team assignment (multiple, Phase 3)
       teamIds: z.array(z.string()).default([]),
       assignedUserIds: z.array(z.string()).default([]),
       // Classification

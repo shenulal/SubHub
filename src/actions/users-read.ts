@@ -2,7 +2,7 @@
 "use server";
 
 /**
- * User 조회 관련 Server Actions
+ * User read Server Actions
  */
 
 import { requireOrganization } from "@/lib/auth/require-auth";
@@ -19,7 +19,7 @@ import { cache } from "react";
 import type { GetUsersParams } from "./users.types";
 
 /**
- * 사용자 목록 조회
+ * List users
  */
 export async function getUsers(params: GetUsersParams = {}): Promise<{
   items: UserListItem[];
@@ -124,7 +124,7 @@ export async function getUsers(params: GetUsersParams = {}): Promise<{
 }
 
 /**
- * 사용자 상세 조회
+ * Get user details
  */
 export async function getUser(id: string): Promise<UserDetail | null> {
   const { organizationId } = await requireOrganization();
@@ -158,7 +158,7 @@ export async function getUser(id: string): Promise<UserDetail | null> {
         },
       },
     }),
-    // 사용자에게 할당된 구독 요약 (subscriptionAssignments 기준)
+    // Summary of subscriptions assigned to the user (based on subscriptionAssignments)
     prisma.subscription.findMany({
       where: {
         organizationId,
@@ -249,11 +249,11 @@ export async function getUser(id: string): Promise<UserDetail | null> {
   };
 }
 
-// 메타데이터와 페이지 렌더링 간 동일 사용자 상세 조회를 캐시해 중복 DB 호출을 방지
+// Cache the same user-detail lookup across metadata and page rendering to avoid duplicate DB calls
 export const getUserCached = cache(getUser);
 
 /**
- * 퇴사자 중 미회수 접근권한이 있는 사용자 목록 조회
+ * List terminated users who still have unrecovered access
  */
 export async function getTerminatedUsersWithAccess(): Promise<
   TerminatedUserWithAccess[]

@@ -87,12 +87,12 @@ describe("unified-payment", () => {
         source: "card",
       });
 
-      // PENDING이 포함되어 있으면 CardTransaction도 조회해야 함
+      // When PENDING is included, CardTransaction must also be queried
       expect(prisma.cardTransaction.findMany).toHaveBeenCalled();
     });
 
-    // SMP-123: CardTransaction도 matchStatus 필드를 지원하므로
-    // source: "card"이면 모든 matchStatus 필터로 조회 가능
+    // SMP-123: CardTransaction also supports the matchStatus field, so
+    // with source: "card" every matchStatus filter can be queried
     it("should query card transactions with matchStatus filter (SMP-123)", async () => {
       const { prisma } = await import("@/lib/db");
 
@@ -104,7 +104,7 @@ describe("unified-payment", () => {
         source: "card",
       });
 
-      // CardTransaction도 matchStatus 지원하므로 조회해야 함
+      // CardTransaction supports matchStatus as well, so it must be queried
       expect(prisma.cardTransaction.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
@@ -171,7 +171,7 @@ describe("unified-payment", () => {
 
       const result = await getUnifiedUnmatchedCount("org-1");
 
-      // CardTransaction: PENDING만 카운트 (UNMATCHED는 Non-SaaS 판정 완료)
+      // CardTransaction: count PENDING only (UNMATCHED means already classified non-SaaS)
       expect(prisma.cardTransaction.count).toHaveBeenCalledWith({
         where: {
           organizationId: "org-1",
@@ -180,7 +180,7 @@ describe("unified-payment", () => {
         },
       });
 
-      // PaymentRecord: PENDING만 카운트
+      // PaymentRecord: count PENDING only
       expect(prisma.paymentRecord.count).toHaveBeenCalledWith({
         where: {
           organizationId: "org-1",

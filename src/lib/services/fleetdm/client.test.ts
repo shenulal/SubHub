@@ -32,7 +32,7 @@ describe("FleetDMClient", () => {
         baseUrl: "https://fleet.example.com/",
         apiToken,
       });
-      // 생성 후 내부 URL 검증은 request를 통해 확인
+      // The internal URL is verified through request after construction
       expect(clientWithSlash).toBeDefined();
     });
 

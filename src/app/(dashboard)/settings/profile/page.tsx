@@ -6,8 +6,8 @@ import { prisma } from "@/lib/db";
 import { redirect } from "next/navigation";
 
 export const metadata = {
-  title: "프로필 수정 | SaaS 관리 플랫폼",
-  description: "개인 프로필 정보를 수정합니다",
+  title: "Edit Profile",
+  description: "Edit your personal profile information",
 };
 
 export default async function ProfilePage() {
@@ -21,9 +21,9 @@ export default async function ProfilePage() {
     where: { id: session.user.id },
     select: {
       name: true,
-      // jobTitle: true, // 주석 처리
+      // jobTitle: true, // commented out
       department: true,
-      // avatarUrl: true, // 주석 처리
+      // avatarUrl: true, // commented out
     },
   });
 

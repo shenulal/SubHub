@@ -1,15 +1,15 @@
 /**
- * SMP AI Agent Write Tool
- * SMP-198: 실제 SMP Server Actions + Prisma 스키마 기반 설계
- * SMP-205: 사용자 배정/제거 Write Tool 추가
+ * SubHub AI Agent Write Tool
+ * SMP-198: designed on the actual SMP Server Actions + Prisma schema
+ * SMP-205: added user assign/remove Write Tools
  *
  * App: createAppSchema (name, category, customWebsite, notes, tags, ownerId, catalogId, teamIds)
  * Subscription: createSubscriptionSchema (appId, billingCycle, billingType, amount, currency,
  *   totalLicenses, usedLicenses, startDate, endDate, renewalDate, autoRenewal, notes, teamIds, assignedUserIds)
- * Suggestion: createSubscriptionFromSuggestion (appId 기반, 추천 정보로 자동 생성)
+ * Suggestion: createSubscriptionFromSuggestion (by appId, auto-created from suggestion data)
  *
- * [Fix] AI SDK v6: tool({ inputSchema }) 키 사용 필수 (parameters 불가)
- * [Fix] jsonSchema() 헬퍼로 Anthropic input_schema.type: "object" 보장
+ * [Fix] AI SDK v6: the tool({ inputSchema }) key is required (parameters is not supported)
+ * [Fix] the jsonSchema() helper guarantees Anthropic input_schema.type: "object"
  */
 
 import { DEFAULT_BASE_CURRENCY } from "@/lib/fx/convert";
@@ -22,7 +22,7 @@ import type {
   WriteToolResult,
 } from "./write-tool.types";
 
-// ==================== 승인 대기 액션 생성 ====================
+// ==================== Create pending-approval actions ====================
 
 export function createPendingAction(
   params: WriteToolParams,
@@ -44,7 +44,7 @@ export function createPendingAction(
 export const writeTools = {
   create_app: tool({
     description:
-      "새 SaaS 앱을 등록합니다. 앱 이름은 필수이고, 카테고리/웹사이트/메모 등은 선택입니다. ADMIN 또는 MEMBER 권한 필요. 실행 전 사용자 승인이 필요합니다.",
+      "Registers a new SaaS app. The app name is required; category, website, notes, etc. are optional. Requires ADMIN or MEMBER role. User approval is required before execution.",
     inputSchema: jsonSchema<{
       name: string;
       category?: string;
@@ -56,23 +56,24 @@ export const writeTools = {
       properties: {
         name: {
           type: "string",
-          description: "앱 이름 (2~100자, 필수)",
+          description: "App name (2-100 characters, required)",
         },
         category: {
           type: "string",
-          description: "카테고리 (예: 개발도구, 디자인, 마케팅, 커뮤니케이션)",
+          description:
+            "Category (e.g. Development Tools, Design, Marketing, Communication)",
         },
         customWebsite: {
           type: "string",
-          description: "앱 웹사이트 URL",
+          description: "App website URL",
         },
         notes: {
           type: "string",
-          description: "메모 (최대 1000자)",
+          description: "Notes (max 1000 characters)",
         },
         tags: {
           type: "string",
-          description: "태그 (쉼표 구분)",
+          description: "Tags (comma-separated)",
         },
       },
       required: ["name"],
@@ -80,10 +81,10 @@ export const writeTools = {
     execute: async (params) => {
       const pending = createPendingAction(
         { action: "create_app", ...params },
-        `"${params.name}" 앱을 새로 등록합니다.`,
+        `Register the new app "${params.name}".`,
         [
-          params.category && `카테고리: ${params.category}`,
-          params.customWebsite && `웹사이트: ${params.customWebsite}`,
+          params.category && `Category: ${params.category}`,
+          params.customWebsite && `Website: ${params.customWebsite}`,
         ]
           .filter(Boolean)
           .join(", ") || undefined
@@ -94,7 +95,7 @@ export const writeTools = {
 
   update_app: tool({
     description:
-      "기존 SaaS 앱 정보를 수정합니다. 앱 ID가 필수입니다. ADMIN 권한 필요. 실행 전 사용자 승인이 필요합니다.",
+      "Updates an existing SaaS app. The app ID is required. Requires ADMIN role. User approval is required before execution.",
     inputSchema: jsonSchema<{
       id: string;
       name?: string;
@@ -106,16 +107,16 @@ export const writeTools = {
     }>({
       type: "object",
       properties: {
-        id: { type: "string", description: "수정할 앱 ID" },
-        name: { type: "string", description: "새 앱 이름" },
-        category: { type: "string", description: "새 카테고리" },
-        customWebsite: { type: "string", description: "새 웹사이트 URL" },
-        notes: { type: "string", description: "새 메모" },
-        tags: { type: "string", description: "새 태그" },
+        id: { type: "string", description: "ID of the app to update" },
+        name: { type: "string", description: "New app name" },
+        category: { type: "string", description: "New category" },
+        customWebsite: { type: "string", description: "New website URL" },
+        notes: { type: "string", description: "New notes" },
+        tags: { type: "string", description: "New tags" },
         status: {
           type: "string",
           enum: ["ACTIVE", "INACTIVE", "PENDING_REVIEW", "BLOCKED"],
-          description: "앱 상태",
+          description: "App status",
         },
       },
       required: ["id"],
@@ -127,7 +128,7 @@ export const writeTools = {
         .join(", ");
       const pending = createPendingAction(
         { action: "update_app", ...params },
-        `앱(ID: ${params.id})을 수정합니다.`,
+        `Update app (ID: ${params.id}).`,
         changes || undefined
       );
       return { type: "pending_approval" as const, pendingAction: pending };
@@ -136,20 +137,23 @@ export const writeTools = {
 
   delete_app: tool({
     description:
-      "SaaS 앱을 삭제합니다. 연결된 구독, 사용자 접근도 함께 삭제됩니다. ADMIN 권한 필요. 실행 전 사용자 승인이 필요합니다.",
+      "Deletes a SaaS app. Linked subscriptions and user access are deleted as well. Requires ADMIN role. User approval is required before execution.",
     inputSchema: jsonSchema<{ id: string; name: string }>({
       type: "object",
       properties: {
-        id: { type: "string", description: "삭제할 앱 ID" },
-        name: { type: "string", description: "삭제할 앱 이름 (확인용)" },
+        id: { type: "string", description: "ID of the app to delete" },
+        name: {
+          type: "string",
+          description: "Name of the app to delete (for confirmation)",
+        },
       },
       required: ["id", "name"],
     }),
     execute: async (params) => {
       const pending = createPendingAction(
         { action: "delete_app", ...params },
-        `"${params.name}" 앱을 삭제합니다.`,
-        "연결된 구독 및 사용자 접근이 함께 삭제됩니다. 이 작업은 되돌릴 수 없습니다."
+        `Delete the app "${params.name}".`,
+        "Linked subscriptions and user access will also be deleted. This action cannot be undone."
       );
       return { type: "pending_approval" as const, pendingAction: pending };
     },
@@ -157,7 +161,7 @@ export const writeTools = {
 
   create_subscription: tool({
     description:
-      "앱에 새 구독을 등록합니다. 앱 ID, 결제 주기(MONTHLY/QUARTERLY/YEARLY/ONE_TIME), 금액, 시작일이 필수입니다. ADMIN 또는 MEMBER 권한 필요. 실행 전 사용자 승인이 필요합니다.",
+      "Registers a new subscription for an app. App ID, billing cycle (MONTHLY/QUARTERLY/YEARLY/ONE_TIME), amount and start date are required. Requires ADMIN or MEMBER role. User approval is required before execution.",
     inputSchema: jsonSchema<{
       appId: string;
       appName: string;
@@ -173,60 +177,60 @@ export const writeTools = {
     }>({
       type: "object",
       properties: {
-        appId: { type: "string", description: "구독할 앱 ID" },
-        appName: { type: "string", description: "앱 이름 (확인용)" },
+        appId: { type: "string", description: "ID of the app to subscribe to" },
+        appName: { type: "string", description: "App name (for confirmation)" },
         billingCycle: {
           type: "string",
           enum: ["MONTHLY", "QUARTERLY", "YEARLY", "ONE_TIME"],
-          description: "결제 주기",
+          description: "Billing cycle",
         },
         billingType: {
           type: "string",
           enum: ["FLAT_RATE", "PER_SEAT"],
-          description: "과금 유형 (기본: FLAT_RATE)",
+          description: "Billing type (default: FLAT_RATE)",
         },
         amount: {
           type: "string",
-          description: "금액 (숫자 문자열, 예: '20000')",
+          description: "Amount (numeric string, e.g. '20000')",
         },
         currency: {
           type: "string",
-          description: "통화 (기본: KRW)",
+          description: `Currency (default: ${DEFAULT_BASE_CURRENCY})`,
         },
         startDate: {
           type: "string",
-          description: "시작일 (YYYY-MM-DD)",
+          description: "Start date (YYYY-MM-DD)",
         },
         endDate: {
           type: "string",
-          description: "종료일 (YYYY-MM-DD, 선택)",
+          description: "End date (YYYY-MM-DD, optional)",
         },
         totalLicenses: {
           type: "number",
-          description: "총 라이선스 수 (PER_SEAT일 때)",
+          description: "Total licences (for PER_SEAT)",
         },
         autoRenewal: {
           type: "boolean",
-          description: "자동 갱신 여부 (기본: true)",
+          description: "Auto-renewal (default: true)",
         },
         notes: {
           type: "string",
-          description: "메모",
+          description: "Notes",
         },
       },
       required: ["appId", "appName", "billingCycle", "amount", "startDate"],
     }),
     execute: async (params) => {
       const cycleLabel: Record<string, string> = {
-        MONTHLY: "월간",
-        QUARTERLY: "분기",
-        YEARLY: "연간",
-        ONE_TIME: "일회성",
+        MONTHLY: "Monthly",
+        QUARTERLY: "Quarterly",
+        YEARLY: "Yearly",
+        ONE_TIME: "One-time",
       };
       const pending = createPendingAction(
         { action: "create_subscription", ...params },
-        `"${params.appName}" 구독을 등록합니다.`,
-        `${cycleLabel[params.billingCycle] ?? params.billingCycle} / ${Number(params.amount).toLocaleString()} ${params.currency ?? DEFAULT_BASE_CURRENCY} / 시작: ${params.startDate}`
+        `Register a subscription for "${params.appName}".`,
+        `${cycleLabel[params.billingCycle] ?? params.billingCycle} / ${Number(params.amount).toLocaleString()} ${params.currency ?? DEFAULT_BASE_CURRENCY} / Start: ${params.startDate}`
       );
       return { type: "pending_approval" as const, pendingAction: pending };
     },
@@ -234,7 +238,7 @@ export const writeTools = {
 
   update_subscription: tool({
     description:
-      "기존 구독 정보를 수정합니다. 구독 ID가 필수입니다. ADMIN 또는 MEMBER 권한 필요. 실행 전 사용자 승인이 필요합니다.",
+      "Updates an existing subscription. The subscription ID is required. Requires ADMIN or MEMBER role. User approval is required before execution.",
     inputSchema: jsonSchema<{
       id: string;
       billingCycle?: "MONTHLY" | "QUARTERLY" | "YEARLY" | "ONE_TIME";
@@ -248,27 +252,27 @@ export const writeTools = {
     }>({
       type: "object",
       properties: {
-        id: { type: "string", description: "수정할 구독 ID" },
+        id: { type: "string", description: "ID of the subscription to update" },
         billingCycle: {
           type: "string",
           enum: ["MONTHLY", "QUARTERLY", "YEARLY", "ONE_TIME"],
-          description: "새 결제 주기",
+          description: "New billing cycle",
         },
         billingType: {
           type: "string",
           enum: ["FLAT_RATE", "PER_SEAT"],
-          description: "새 과금 유형",
+          description: "New billing type",
         },
-        amount: { type: "string", description: "새 금액" },
-        currency: { type: "string", description: "새 통화" },
-        totalLicenses: { type: "number", description: "새 총 라이선스 수" },
+        amount: { type: "string", description: "New amount" },
+        currency: { type: "string", description: "New currency" },
+        totalLicenses: { type: "number", description: "New total licences" },
         status: {
           type: "string",
           enum: ["ACTIVE", "EXPIRED", "CANCELLED", "PENDING"],
-          description: "구독 상태",
+          description: "Subscription status",
         },
-        autoRenewal: { type: "boolean", description: "자동 갱신 여부" },
-        notes: { type: "string", description: "메모" },
+        autoRenewal: { type: "boolean", description: "Auto-renewal" },
+        notes: { type: "string", description: "Notes" },
       },
       required: ["id"],
     }),
@@ -279,7 +283,7 @@ export const writeTools = {
         .join(", ");
       const pending = createPendingAction(
         { action: "update_subscription", ...params },
-        `구독(ID: ${params.id})을 수정합니다.`,
+        `Update subscription (ID: ${params.id}).`,
         changes || undefined
       );
       return { type: "pending_approval" as const, pendingAction: pending };
@@ -288,20 +292,20 @@ export const writeTools = {
 
   delete_subscription: tool({
     description:
-      "구독을 삭제합니다. ADMIN 권한 필요. 실행 전 사용자 승인이 필요합니다.",
+      "Deletes a subscription. Requires ADMIN role. User approval is required before execution.",
     inputSchema: jsonSchema<{ id: string; appName: string }>({
       type: "object",
       properties: {
-        id: { type: "string", description: "삭제할 구독 ID" },
-        appName: { type: "string", description: "앱 이름 (확인용)" },
+        id: { type: "string", description: "ID of the subscription to delete" },
+        appName: { type: "string", description: "App name (for confirmation)" },
       },
       required: ["id", "appName"],
     }),
     execute: async (params) => {
       const pending = createPendingAction(
         { action: "delete_subscription", ...params },
-        `"${params.appName}" 구독을 삭제합니다.`,
-        "이 작업은 되돌릴 수 없습니다."
+        `Delete the subscription for "${params.appName}".`,
+        "This action cannot be undone."
       );
       return { type: "pending_approval" as const, pendingAction: pending };
     },
@@ -309,7 +313,7 @@ export const writeTools = {
 
   confirm_subscription_suggestion: tool({
     description:
-      "구독 추천(suggestions)을 확인하여 구독으로 등록합니다. 먼저 get_subscription_suggestions로 추천 정보를 조회한 뒤, 사용자에게 Seat 수와 배정 유저를 확인받고 이 Tool을 호출하세요. suggestionSource로 결제 기반(payment_record)인지 카드 기반(card_transaction)인지 구분합니다. 실행 전 사용자 승인이 필요합니다.",
+      "Confirms a subscription suggestion and registers it as a subscription. First fetch suggestions with get_subscription_suggestions, confirm the seat count and assigned users with the user, then call this tool. suggestionSource distinguishes payment-based (payment_record) from card-based (card_transaction) suggestions. User approval is required before execution.",
     inputSchema: jsonSchema<{
       appId: string;
       appName: string;
@@ -322,50 +326,52 @@ export const writeTools = {
       properties: {
         appId: {
           type: "string",
-          description: "추천된 앱 ID",
+          description: "Suggested app ID",
         },
         appName: {
           type: "string",
-          description: "앱 이름 (확인용)",
+          description: "App name (for confirmation)",
         },
         suggestionSource: {
           type: "string",
           enum: ["payment_record", "card_transaction"],
           description:
-            "추천 소스. get_subscription_suggestions 결과의 source 값 사용",
+            "Suggestion source. Use the source value from the get_subscription_suggestions result",
         },
         selectedUserIds: {
           type: "array",
           items: { type: "string" },
           description:
-            "배정할 유저 ID 목록. get_subscription_suggestions의 availableUsers에서 선택",
+            "IDs of users to assign. Choose from availableUsers in get_subscription_suggestions",
         },
         billingType: {
           type: "string",
           enum: ["FLAT_RATE", "PER_SEAT"],
-          description: "과금 유형 오버라이드. 추천값과 다르게 설정할 때만 사용",
+          description:
+            "Billing type override. Use only when it differs from the suggested value",
         },
         totalLicenses: {
           type: "number",
-          description: "총 Seat 수 (PER_SEAT일 때). 사용자가 지정한 값 사용",
+          description:
+            "Total seats (for PER_SEAT). Use the value specified by the user",
         },
       },
       required: ["appId", "appName", "suggestionSource"],
     }),
     execute: async (params) => {
       const details = [
-        params.billingType && `과금유형: ${params.billingType}`,
-        params.totalLicenses && `Seat 수: ${params.totalLicenses}`,
+        params.billingType && `Billing type: ${params.billingType}`,
+        params.totalLicenses && `Seats: ${params.totalLicenses}`,
         params.selectedUserIds?.length &&
-          `배정 유저: ${params.selectedUserIds.length}명`,
+          `Assigned users: ${params.selectedUserIds.length}`,
       ]
         .filter(Boolean)
         .join(", ");
       const pending = createPendingAction(
         { action: "confirm_suggestion", ...params },
-        `"${params.appName}" 구독 추천을 확인하여 구독으로 등록합니다.`,
+        `Confirm the suggestion for "${params.appName}" and register it as a subscription.`,
         details ||
-          "추천 정보(금액, 결제 주기, Seat 판단 등)가 자동으로 적용됩니다."
+          "Suggestion details (amount, billing cycle, seat assessment, etc.) will be applied automatically."
       );
       return { type: "pending_approval" as const, pendingAction: pending };
     },
@@ -373,7 +379,7 @@ export const writeTools = {
 
   assign_user_to_subscription: tool({
     description:
-      "구독에 사용자를 배정합니다. 모든 구독 유형(FLAT_RATE, PER_SEAT)에서 사용자 배정이 가능합니다. billingType과 관계없이 사용자를 배정할 수 있습니다. PER_SEAT 구독은 Seat 한도가 있을 수 있고, FLAT_RATE 구독은 무제한 배정 가능합니다. 먼저 search_subscriptions로 구독 ID를, get_users로 사용자 ID를 조회하세요. 실행 전 사용자 승인이 필요합니다.",
+      "Assigns a user to a subscription. Users can be assigned to every subscription type (FLAT_RATE, PER_SEAT), regardless of billingType. PER_SEAT subscriptions may have a seat limit; FLAT_RATE subscriptions allow unlimited assignments. First look up the subscription ID with search_subscriptions and the user ID with get_users. User approval is required before execution.",
     inputSchema: jsonSchema<{
       subscriptionId: string;
       subscriptionName: string;
@@ -384,19 +390,19 @@ export const writeTools = {
       properties: {
         subscriptionId: {
           type: "string",
-          description: "배정할 구독 ID",
+          description: "ID of the subscription to assign to",
         },
         subscriptionName: {
           type: "string",
-          description: "구독 이름 (확인용, 앱 이름)",
+          description: "Subscription name (for confirmation; the app name)",
         },
         userId: {
           type: "string",
-          description: "배정할 사용자 ID",
+          description: "ID of the user to assign",
         },
         userName: {
           type: "string",
-          description: "사용자 이름 (확인용)",
+          description: "User name (for confirmation)",
         },
       },
       required: ["subscriptionId", "subscriptionName", "userId", "userName"],
@@ -404,7 +410,7 @@ export const writeTools = {
     execute: async (params) => {
       const pending = createPendingAction(
         { action: "assign_user", ...params },
-        `"${params.subscriptionName}" 구독에 ${params.userName}님을 배정합니다.`,
+        `Assign ${params.userName} to the "${params.subscriptionName}" subscription.`,
         undefined
       );
       return { type: "pending_approval" as const, pendingAction: pending };
@@ -413,7 +419,7 @@ export const writeTools = {
 
   remove_user_from_subscription: tool({
     description:
-      "구독에서 사용자를 제거합니다. 배정된 사용자만 제거 가능합니다. 먼저 구독 상세에서 배정된 사용자 목록을 확인하세요. 실행 전 사용자 승인이 필요합니다.",
+      "Removes a user from a subscription. Only assigned users can be removed. Check the assigned user list in the subscription details first. User approval is required before execution.",
     inputSchema: jsonSchema<{
       subscriptionId: string;
       subscriptionName: string;
@@ -424,19 +430,19 @@ export const writeTools = {
       properties: {
         subscriptionId: {
           type: "string",
-          description: "구독 ID",
+          description: "Subscription ID",
         },
         subscriptionName: {
           type: "string",
-          description: "구독 이름 (확인용, 앱 이름)",
+          description: "Subscription name (for confirmation; the app name)",
         },
         userId: {
           type: "string",
-          description: "제거할 사용자 ID",
+          description: "ID of the user to remove",
         },
         userName: {
           type: "string",
-          description: "사용자 이름 (확인용)",
+          description: "User name (for confirmation)",
         },
       },
       required: ["subscriptionId", "subscriptionName", "userId", "userName"],
@@ -444,23 +450,23 @@ export const writeTools = {
     execute: async (params) => {
       const pending = createPendingAction(
         { action: "remove_user", ...params },
-        `"${params.subscriptionName}" 구독에서 ${params.userName}님을 제거합니다.`,
-        "배정 해제 후 해당 사용자의 구독 접근이 제거됩니다."
+        `Remove ${params.userName} from the "${params.subscriptionName}" subscription.`,
+        "Once unassigned, the user's access to the subscription is removed."
       );
       return { type: "pending_approval" as const, pendingAction: pending };
     },
   }),
 };
 
-// ==================== 승인 후 실행 ====================
+// ==================== Execute after approval ====================
 
 /**
- * SMP-203: 서비스 레이어를 통한 실행
- * - Server Action 직접 호출 + FormData 우회 패턴 제거
- * - 서비스 함수를 직접 호출하여 깔끔한 파라미터 전달
+ * SMP-203: execution through the service layer
+ * - Removed the direct Server Action call + FormData workaround pattern
+ * - Calls service functions directly for clean parameter passing
  *
- * 주의: requireOrganization()은 API route에서 이미 호출됨.
- * executeWriteTool은 PUT /api/ai/write에서 호출되므로 ctx를 인자로 받는다.
+ * Note: requireOrganization() is already called in the API route.
+ * executeWriteTool is called from PUT /api/ai/write, so it receives ctx as an argument.
  */
 export async function executeWriteTool(
   pending: WriteToolPendingAction,
@@ -468,7 +474,7 @@ export async function executeWriteTool(
 ): Promise<WriteToolResult> {
   const { params } = pending;
 
-  // ctx가 없으면 requireOrganization에서 가져옴 (하위 호환)
+  // Without ctx, fall back to requireOrganization (backward compatibility)
   let serviceCtx = ctx;
   if (!serviceCtx) {
     const { requireOrganization } = await import("@/lib/auth/require-auth");
@@ -492,10 +498,10 @@ export async function executeWriteTool(
           tags: params.tags,
         });
         if (!result.success)
-          throw new Error(result.message ?? "앱 생성에 실패했습니다.");
+          throw new Error(result.message ?? "Failed to create the app.");
         return {
           success: true,
-          message: `"${params.name}" 앱이 등록되었습니다.`,
+          message: `The app "${params.name}" has been registered.`,
           data: result.data,
         };
       }
@@ -511,10 +517,10 @@ export async function executeWriteTool(
           status: params.status,
         });
         if (!result.success)
-          throw new Error(result.message ?? "앱 수정에 실패했습니다.");
+          throw new Error(result.message ?? "Failed to update the app.");
         return {
           success: true,
-          message: `앱이 수정되었습니다.`,
+          message: `The app has been updated.`,
           data: result.data,
         };
       }
@@ -523,10 +529,10 @@ export async function executeWriteTool(
         const { deleteApp } = await import("@/services/app.service");
         const result = await deleteApp(serviceCtx, params.id);
         if (!result.success)
-          throw new Error(result.message ?? "앱 삭제에 실패했습니다.");
+          throw new Error(result.message ?? "Failed to delete the app.");
         return {
           success: true,
-          message: `"${params.name}" 앱이 삭제되었습니다.`,
+          message: `The app "${params.name}" has been deleted.`,
         };
       }
 
@@ -546,10 +552,12 @@ export async function executeWriteTool(
           notes: params.notes,
         });
         if (!result.success)
-          throw new Error(result.message ?? "구독 생성에 실패했습니다.");
+          throw new Error(
+            result.message ?? "Failed to create the subscription."
+          );
         return {
           success: true,
-          message: `"${params.appName}" 구독이 등록되었습니다.`,
+          message: `The subscription for "${params.appName}" has been registered.`,
           data: result.data,
         };
       }
@@ -568,10 +576,12 @@ export async function executeWriteTool(
           notes: params.notes,
         });
         if (!result.success)
-          throw new Error(result.message ?? "구독 수정에 실패했습니다.");
+          throw new Error(
+            result.message ?? "Failed to update the subscription."
+          );
         return {
           success: true,
-          message: `구독이 수정되었습니다.`,
+          message: `The subscription has been updated.`,
           data: result.data,
         };
       }
@@ -581,15 +591,17 @@ export async function executeWriteTool(
           await import("@/services/subscription.service");
         const result = await deleteSubscription(serviceCtx, params.id);
         if (!result.success)
-          throw new Error(result.message ?? "구독 삭제에 실패했습니다.");
+          throw new Error(
+            result.message ?? "Failed to delete the subscription."
+          );
         return {
           success: true,
-          message: `"${params.appName}" 구독이 삭제되었습니다.`,
+          message: `The subscription for "${params.appName}" has been deleted.`,
         };
       }
 
       case "confirm_suggestion": {
-        // confirm_suggestion은 Server Action 호출 유지 (suggestions 전용 로직)
+        // confirm_suggestion still calls the Server Action (suggestion-specific logic)
         const {
           suggestSubscriptionsFromPayments,
           suggestFromCardTransactions,
@@ -600,13 +612,13 @@ export async function executeWriteTool(
         if (params.suggestionSource === "payment_record") {
           const suggestResult = await suggestSubscriptionsFromPayments();
           if (!suggestResult.success || !suggestResult.data)
-            throw new Error("구독 추천 조회에 실패했습니다.");
+            throw new Error("Failed to load subscription suggestions.");
           const suggestion = suggestResult.data.find(
             (s) => s.appId === params.appId
           );
           if (!suggestion)
             throw new Error(
-              `"${params.appName}" 앱의 결제 기반 추천을 찾을 수 없습니다.`
+              `No payment-based suggestion found for "${params.appName}".`
             );
 
           const result = await createSubscriptionFromPaymentSuggestion({
@@ -616,22 +628,24 @@ export async function executeWriteTool(
             totalLicenses: params.totalLicenses ?? null,
           });
           if (!result.success)
-            throw new Error(result.message ?? "구독 생성에 실패했습니다.");
+            throw new Error(
+              result.message ?? "Failed to create the subscription."
+            );
           return {
             success: true,
-            message: `"${params.appName}" 구독이 결제 내역 기반으로 등록되었습니다.`,
+            message: `The subscription for "${params.appName}" has been registered from payment history.`,
             data: result.data,
           };
         } else {
           const suggestResult = await suggestFromCardTransactions();
           if (!suggestResult.success || !suggestResult.data)
-            throw new Error("카드 거래 추천 조회에 실패했습니다.");
+            throw new Error("Failed to load card transaction suggestions.");
           const suggestion = suggestResult.data.find(
             (s) => s.appId === params.appId
           );
           if (!suggestion)
             throw new Error(
-              `"${params.appName}" 앱의 카드 기반 추천을 찾을 수 없습니다.`
+              `No card-based suggestion found for "${params.appName}".`
             );
 
           const result = await createSubscriptionFromCardSuggestion({
@@ -641,10 +655,12 @@ export async function executeWriteTool(
             totalLicenses: params.totalLicenses ?? null,
           });
           if (!result.success)
-            throw new Error(result.message ?? "구독 생성에 실패했습니다.");
+            throw new Error(
+              result.message ?? "Failed to create the subscription."
+            );
           return {
             success: true,
-            message: `"${params.appName}" 구독이 카드 거래 기반으로 등록되었습니다.`,
+            message: `The subscription for "${params.appName}" has been registered from card transactions.`,
             data: result.data,
           };
         }
@@ -658,10 +674,10 @@ export async function executeWriteTool(
           params.userId
         );
         if (!result.success)
-          throw new Error(result.error ?? "사용자 배정에 실패했습니다.");
+          throw new Error(result.error ?? "Failed to assign the user.");
         return {
           success: true,
-          message: `"${params.subscriptionName}" 구독에 ${params.userName}님이 배정되었습니다.`,
+          message: `${params.userName} has been assigned to the "${params.subscriptionName}" subscription.`,
           data: result.data,
         };
       }
@@ -674,21 +690,23 @@ export async function executeWriteTool(
           params.userId
         );
         if (!result.success)
-          throw new Error(result.error ?? "사용자 제거에 실패했습니다.");
+          throw new Error(result.error ?? "Failed to remove the user.");
         return {
           success: true,
-          message: `"${params.subscriptionName}" 구독에서 ${params.userName}님이 제거되었습니다.`,
+          message: `${params.userName} has been removed from the "${params.subscriptionName}" subscription.`,
         };
       }
 
       default:
-        return { success: false, message: "알 수 없는 작업입니다." };
+        return { success: false, message: "Unknown action." };
     }
   } catch (error) {
     return {
       success: false,
       message:
-        error instanceof Error ? error.message : "작업 중 오류가 발생했습니다.",
+        error instanceof Error
+          ? error.message
+          : "An error occurred while performing the action.",
     };
   }
 }

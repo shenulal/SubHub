@@ -1,7 +1,7 @@
 // src/app/api/v1/extensions/heartbeat/route.ts
 /**
  * Extension Heartbeat API
- * 디바이스 lastSeenAt 업데이트 및 메타데이터 갱신
+ * Updates device lastSeenAt and refreshes metadata
  */
 
 import { withExtensionAuth } from "@/lib/api/extension-auth";
@@ -11,7 +11,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 /**
  * POST /api/v1/extensions/heartbeat
- * Heartbeat 수신 → lastSeenAt 업데이트
+ * Receive heartbeat → update lastSeenAt
  */
 export const POST = withExtensionAuth(
   async (request: NextRequest, { auth }) => {
@@ -33,7 +33,7 @@ export const POST = withExtensionAuth(
       const { device_id, extension_version, browser_info, os_info } =
         parseResult.data;
 
-      // ExtensionDevice 업데이트 (없으면 생성)
+      // Update ExtensionDevice (create if missing)
       await prisma.extensionDevice.upsert({
         where: { deviceKey: device_id },
         create: {

@@ -47,7 +47,7 @@ import {
   SidebarSeparator,
 } from "@/components/ui/sidebar";
 
-// 메뉴 아이템 타입 정의
+// Menu item type
 interface MenuItem {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
@@ -76,7 +76,7 @@ interface MenuSectionConfig {
   items: MenuItemConfig[];
 }
 
-// 메뉴 구조 정의 (서브메뉴 포함) - 레퍼런스 UI 순서 참고
+// Menu structure (including submenus), ordered after the reference UI
 const menuConfig: MenuSectionConfig[] = [
   {
     groupKey: "sidebar.group.main",
@@ -153,7 +153,7 @@ const menuConfig: MenuSectionConfig[] = [
   },
 ];
 
-// AppSidebar props 타입 정의
+// AppSidebar props
 interface AppSidebarProps {
   variant?: "sidebar" | "floating" | "inset";
   role?: "ADMIN" | "APPROVER" | "MEMBER" | "VIEWER" | null;
@@ -184,7 +184,7 @@ export function AppSidebar({
     [t]
   );
 
-  // 현재 경로가 메뉴 항목과 일치하는지 확인
+  // Check whether the current path matches a menu item
   const isActive = (href: string) => {
     if (href === "/dashboard") {
       return (
@@ -193,13 +193,13 @@ export function AppSidebar({
         pathname === "/"
       );
     }
-    // 구독 메뉴: /apps 경로도 구독 하위로 활성화
+    // Subscriptions menu: /apps paths also activate it
     if (href === "/subscriptions") {
       return (
         pathname.startsWith("/subscriptions") || pathname.startsWith("/apps")
       );
     }
-    // 조직관리 메뉴: /teams, /users, /org 경로 모두 활성화
+    // Organization menu: active for /teams, /users and /org paths
     if (href === "/teams") {
       return (
         pathname.startsWith("/teams") ||
@@ -210,18 +210,18 @@ export function AppSidebar({
     return pathname.startsWith(href);
   };
 
-  // role에 따라 메뉴 필터링
-  // MEMBER: 대시보드 + 구독만 표시
-  // VIEWER: 결제 숨김
+  // Filter menus by role
+  // MEMBER: dashboard and subscriptions only
+  // VIEWER: payments hidden
   const filteredMenuItems = menuItems
     .map((section) => ({
       ...section,
       items: section.items.filter((item) => {
-        // MEMBER: 대시보드와 구독만 허용
+        // MEMBER: only dashboard and subscriptions allowed
         if (role === "MEMBER") {
           return item.href === "/dashboard" || item.href === "/subscriptions";
         }
-        // VIEWER: 결제 메뉴 숨김
+        // VIEWER: hide the payments menu
         if (item.href === "/payments" && role === "VIEWER") {
           return false;
         }
@@ -232,7 +232,7 @@ export function AppSidebar({
 
   return (
     <Sidebar data-testid="app-sidebar" variant={variant}>
-      {/* 로고 + 브랜드명 헤더 - AppHeader(55px) + SidebarInset 상단 마진(8px)과 정렬 */}
+      {/* Logo + brand header - aligned with AppHeader (55px) + SidebarInset top margin (8px) */}
       <SidebarHeader className="h-16 justify-center px-5 py-0">
         <SidebarMenu>
           <SidebarMenuItem>
@@ -248,7 +248,7 @@ export function AppSidebar({
         </SidebarMenu>
       </SidebarHeader>
 
-      {/* 메뉴 콘텐츠 - 좌우 padding 제거 (스크롤바 위치 정렬을 위해) */}
+      {/* Menu content - no horizontal padding (keeps the scrollbar aligned) */}
       <SidebarContent className="px-0">
         <ScrollArea className="h-full">
           {filteredMenuItems.map((section, sectionIndex) => (
@@ -314,7 +314,7 @@ export function AppSidebar({
 
       <SidebarSeparator className="mx-5 w-auto" />
 
-      {/* 하단 프로필 영역 */}
+      {/* Bottom profile area */}
       <SidebarFooter>
         <SidebarMenu>
           <SidebarMenuItem>

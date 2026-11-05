@@ -6,28 +6,25 @@ describe("SettingsSidebar", () => {
   it("shows the platform entries only to members who can manage settings", () => {
     const { rerender } = render(<SettingsSidebar isAdmin />);
     expect(
-      screen.getByRole("link", { name: /워크스페이스 설정/ })
+      screen.getByRole("link", { name: /Workspace settings/ })
     ).toHaveAttribute("href", "/settings/workspace");
-    expect(screen.getByRole("link", { name: /마스터 데이터/ })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: /Master data/ })).toHaveAttribute(
       "href",
       "/settings/masters"
     );
-    expect(screen.getByRole("link", { name: /역할 및 권한/ })).toHaveAttribute(
-      "href",
-      "/settings/roles"
-    );
-    expect(screen.getByRole("link", { name: /알림 템플릿/ })).toHaveAttribute(
-      "href",
-      "/settings/notification-templates"
-    );
+    expect(
+      screen.getByRole("link", { name: /Roles & permissions/ })
+    ).toHaveAttribute("href", "/settings/roles");
+    expect(
+      screen.getByRole("link", { name: /Notification templates/ })
+    ).toHaveAttribute("href", "/settings/notification-templates");
 
     rerender(<SettingsSidebar isAdmin={false} />);
     expect(
-      screen.queryByRole("link", { name: /워크스페이스 설정/ })
+      screen.queryByRole("link", { name: /Workspace settings/ })
     ).toBeNull();
-    expect(screen.getByRole("link", { name: /개인정보/ })).toHaveAttribute(
-      "href",
-      "/settings/privacy"
-    );
+    expect(
+      screen.getByRole("link", { name: /Privacy & data/ })
+    ).toHaveAttribute("href", "/settings/privacy");
   });
 });

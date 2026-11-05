@@ -38,9 +38,9 @@ interface SyncDialogProps {
 }
 
 /**
- * 기본 동기화 날짜 범위 계산
- * - 첫 동기화: 6개월 전 ~ 오늘
- * - 재동기화: 1개월 전 ~ 오늘
+ * Compute the default sync date range
+ * - First sync: 6 months ago to today
+ * - Re-sync: 1 month ago to today
  */
 function getDefaultSyncRange(lastSyncAt: Date | null): {
   startDate: Date;
@@ -74,7 +74,7 @@ export function SyncDialog({
   const [endDate, setEndDate] = useState<Date | undefined>();
   const [isFirstSync, setIsFirstSync] = useState(true);
 
-  // Dialog 열릴 때 기본 날짜 설정
+  // Set default dates when the dialog opens
   useEffect(() => {
     if (open) {
       const {
@@ -127,7 +127,7 @@ export function SyncDialog({
           <div className="space-y-2">
             <label className="text-sm font-medium">{t("period")}</label>
             <div className="flex items-center gap-2">
-              {/* 시작일 */}
+              {/* Start date */}
               <Popover>
                 <PopoverTrigger asChild>
                   <Button
@@ -159,7 +159,7 @@ export function SyncDialog({
 
               <span className="text-muted-foreground">~</span>
 
-              {/* 종료일 */}
+              {/* End date */}
               <Popover>
                 <PopoverTrigger asChild>
                   <Button

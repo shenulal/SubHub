@@ -636,13 +636,13 @@ export const ShouldToggleSidebar: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
 
-    // 🎯 목적: Sidebar Trigger 버튼이 존재하고 클릭 가능한지, 메뉴 아이템들이 올바르게 렌더링되는지 확인
+    // 🎯 Purpose: Verify the Sidebar Trigger button exists and is clickable and the menu items render correctly
     const triggerButton = canvas.getByRole("button", {
       name: /toggle sidebar/i,
     });
     await expect(triggerButton).toBeInTheDocument();
 
-    // 메뉴 아이템들이 존재하는지 확인
+    // Verify the menu items exist
     const homeLink = canvas.getByRole("link", { name: /home/i });
     const inboxLink = canvas.getByRole("link", { name: /inbox/i });
     const calendarLink = canvas.getByRole("link", { name: /calendar/i });
@@ -651,10 +651,10 @@ export const ShouldToggleSidebar: Story = {
     await expect(inboxLink).toBeInTheDocument();
     await expect(calendarLink).toBeInTheDocument();
 
-    // Trigger 버튼 클릭
+    // Click the Trigger button
     await userEvent.click(triggerButton);
 
-    // 메뉴 아이템 클릭 가능 확인
+    // Verify the menu items are clickable
     await userEvent.click(homeLink);
   },
 };

@@ -34,7 +34,7 @@ describe("team-members actions", () => {
   });
 
   describe("updateMemberRole", () => {
-    it("인증되지 않은 사용자는 에러를 반환해야 한다", async () => {
+    it("returns an error for an unauthenticated user", async () => {
       vi.mocked(auth).mockResolvedValue(null as never);
 
       const result = await updateMemberRole({
@@ -44,11 +44,11 @@ describe("team-members actions", () => {
 
       expect(result).toEqual({
         success: false,
-        message: "인증이 필요합니다",
+        message: "Authentication required",
       });
     });
 
-    it("조직 ID가 없는 사용자는 에러를 반환해야 한다", async () => {
+    it("returns an error for a user without an organization ID", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: null, role: "ADMIN" },
       } as never);
@@ -60,11 +60,11 @@ describe("team-members actions", () => {
 
       expect(result).toEqual({
         success: false,
-        message: "조직 정보가 필요합니다",
+        message: "Organization information is required",
       });
     });
 
-    it("ADMIN이 아닌 사용자는 역할을 변경할 수 없어야 한다", async () => {
+    it("prevents a non-ADMIN user from changing roles", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "MEMBER" },
       } as never);
@@ -76,11 +76,11 @@ describe("team-members actions", () => {
 
       expect(result).toEqual({
         success: false,
-        message: "관리자만 역할을 변경할 수 있습니다",
+        message: "Only admins can change roles",
       });
     });
 
-    it("자기 자신의 역할은 변경할 수 없어야 한다", async () => {
+    it("prevents users from changing their own role", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
@@ -92,11 +92,11 @@ describe("team-members actions", () => {
 
       expect(result).toEqual({
         success: false,
-        message: "자신의 역할은 변경할 수 없습니다",
+        message: "You cannot change your own role",
       });
     });
 
-    it("존재하지 않는 사용자는 에러를 반환해야 한다", async () => {
+    it("returns an error for a non-existent user", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
@@ -110,11 +110,11 @@ describe("team-members actions", () => {
 
       expect(result).toEqual({
         success: false,
-        message: "팀원을 찾을 수 없습니다",
+        message: "Team member not found",
       });
     });
 
-    it("팀원의 역할을 성공적으로 변경해야 한다", async () => {
+    it("changes a team member's role successfully", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
@@ -145,18 +145,18 @@ describe("team-members actions", () => {
   });
 
   describe("removeMember", () => {
-    it("인증되지 않은 사용자는 에러를 반환해야 한다", async () => {
+    it("returns an error for an unauthenticated user", async () => {
       vi.mocked(auth).mockResolvedValue(null as never);
 
       const result = await removeMember("user-2");
 
       expect(result).toEqual({
         success: false,
-        message: "인증이 필요합니다",
+        message: "Authentication required",
       });
     });
 
-    it("ADMIN이 아닌 사용자는 팀원을 제거할 수 없어야 한다", async () => {
+    it("prevents a non-ADMIN user from removing team members", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "MEMBER" },
       } as never);
@@ -165,11 +165,11 @@ describe("team-members actions", () => {
 
       expect(result).toEqual({
         success: false,
-        message: "관리자만 팀원을 제거할 수 있습니다",
+        message: "Only admins can remove team members",
       });
     });
 
-    it("자기 자신은 제거할 수 없어야 한다", async () => {
+    it("prevents users from removing themselves", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
@@ -178,11 +178,11 @@ describe("team-members actions", () => {
 
       expect(result).toEqual({
         success: false,
-        message: "자신은 제거할 수 없습니다",
+        message: "You cannot remove yourself",
       });
     });
 
-    it("조직의 마지막 관리자는 제거할 수 없어야 한다", async () => {
+    it("prevents removing the organization's last admin", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
@@ -199,11 +199,11 @@ describe("team-members actions", () => {
 
       expect(result).toEqual({
         success: false,
-        message: "조직의 마지막 관리자는 제거할 수 없습니다",
+        message: "The organization's last admin cannot be removed",
       });
     });
 
-    it("팀원을 성공적으로 제거해야 한다", async () => {
+    it("removes a team member successfully", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
@@ -234,18 +234,18 @@ describe("team-members actions", () => {
   });
 
   describe("getTeamMembers", () => {
-    it("인증되지 않은 사용자는 에러를 반환해야 한다", async () => {
+    it("returns an error for an unauthenticated user", async () => {
       vi.mocked(auth).mockResolvedValue(null as never);
 
       const result = await getTeamMembers();
 
       expect(result).toEqual({
         success: false,
-        message: "인증이 필요합니다",
+        message: "Authentication required",
       });
     });
 
-    it("조직의 모든 팀원을 반환해야 한다", async () => {
+    it("returns all team members of the organization", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);

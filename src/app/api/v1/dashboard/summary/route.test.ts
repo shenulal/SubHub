@@ -10,7 +10,7 @@ import * as unifiedPayment from "@/lib/services/payment/unified-payment";
 import type { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-// NextRequest mock 생성 헬퍼
+// Helper for creating NextRequest mocks
 function createMockRequest(searchParams?: Record<string, string>): NextRequest {
   const url = new URL("http://localhost/api/v1/dashboard/summary");
   if (searchParams) {
@@ -83,7 +83,7 @@ const mockGetUnifiedUnmatchedCount = vi.mocked(
   unifiedPayment.getUnifiedUnmatchedCount
 );
 
-describe("/api/v1/dashboard/summary 계약", () => {
+describe("/api/v1/dashboard/summary contract", () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });

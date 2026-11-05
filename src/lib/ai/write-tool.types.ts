@@ -1,10 +1,10 @@
 /**
- * SMP AI Agent Write Tool 타입 정의
- * SMP-198: 실제 SMP Prisma 스키마 + Server Actions 기반 설계
- * SMP-205: assign_user / remove_user 액션 추가
+ * SubHub AI Agent Write Tool type definitions
+ * SMP-198: designed on the actual SMP Prisma schema + Server Actions
+ * SMP-205: added assign_user / remove_user actions
  */
 
-// ==================== Write Tool 액션 타입 ====================
+// ==================== Write Tool action types ====================
 
 export type WriteToolAction =
   | "create_app"
@@ -17,7 +17,7 @@ export type WriteToolAction =
   | "assign_user"
   | "remove_user";
 
-// ==================== Write Tool 파라미터 (실제 SMP 스키마 기반) ====================
+// ==================== Write Tool parameters (based on the actual SMP schema) ====================
 
 export interface CreateAppParams {
   name: string;
@@ -107,7 +107,7 @@ export type WriteToolParams =
   | ({ action: "assign_user" } & AssignUserParams)
   | ({ action: "remove_user" } & RemoveUserParams);
 
-// ==================== 승인 플로우 ====================
+// ==================== Approval flow ====================
 
 export interface WriteToolPendingAction {
   id: string;
@@ -124,7 +124,7 @@ export interface WriteToolResult {
   data?: unknown;
 }
 
-// ==================== AI Agent 메시지 타입 ====================
+// ==================== AI Agent message types ====================
 
 export type AIMessageRole = "user" | "assistant" | "system";
 

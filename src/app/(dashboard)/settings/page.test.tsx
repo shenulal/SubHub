@@ -22,7 +22,7 @@ describe("SettingsPage", () => {
       data: {
         id: "user-1",
         email: "test@example.com",
-        name: "테스트 관리자",
+        name: "Test Admin",
         organizationId: "org-1",
         role: "ADMIN",
       },
@@ -33,7 +33,7 @@ describe("SettingsPage", () => {
         user: {
           id: "user-1",
           email: "test@example.com",
-          name: "테스트 관리자",
+          name: "Test Admin",
           organizationId: "org-1",
           role: "ADMIN",
         },
@@ -44,52 +44,52 @@ describe("SettingsPage", () => {
     });
   });
 
-  it("설정 개요 카드를 표시해야 한다", async () => {
+  it("shows the settings overview card", async () => {
     const page = await SettingsPage();
     render(page);
 
-    expect(screen.getByText("설정 개요")).toBeInTheDocument();
+    expect(screen.getByText("Settings overview")).toBeInTheDocument();
     expect(
-      screen.getByText("좌측 메뉴에서 원하는 설정 항목을 선택하세요")
+      screen.getByText("Choose a setting from the left menu")
     ).toBeInTheDocument();
   });
 
-  it("사용자 이름을 표시해야 한다", async () => {
+  it("shows the user name", async () => {
     const page = await SettingsPage();
     render(page);
 
-    expect(screen.getByText("테스트 관리자")).toBeInTheDocument();
+    expect(screen.getByText("Test Admin")).toBeInTheDocument();
   });
 
-  it("사용자 이메일을 표시해야 한다", async () => {
+  it("shows the user email", async () => {
     const page = await SettingsPage();
     render(page);
 
     expect(screen.getByText("test@example.com")).toBeInTheDocument();
   });
 
-  it("사용자 역할을 표시해야 한다", async () => {
+  it("shows the user role", async () => {
     const page = await SettingsPage();
     render(page);
 
-    expect(screen.getByText("관리자")).toBeInTheDocument();
+    expect(screen.getByText("Admin")).toBeInTheDocument();
   });
 
-  it("조직 ID 일부를 표시해야 한다", async () => {
+  it("shows part of the organization ID", async () => {
     const page = await SettingsPage();
     render(page);
 
-    // org-1의 첫 8자 + "..."
+    // First 8 characters of org-1 + "..."
     expect(screen.getByText(/org-1.../)).toBeInTheDocument();
   });
 
-  it("비관리자도 기본 설정 정보를 볼 수 있다", async () => {
+  it("lets non-admins see basic settings information", async () => {
     mockRequireOrganization.mockResolvedValueOnce({
       session: {
         user: {
           id: "user-2",
           email: "member@example.com",
-          name: "테스트 멤버",
+          name: "Test Member",
           organizationId: "org-1",
           role: "MEMBER",
         },
@@ -102,7 +102,7 @@ describe("SettingsPage", () => {
       data: {
         id: "user-2",
         email: "member@example.com",
-        name: "테스트 멤버",
+        name: "Test Member",
         organizationId: "org-1",
         role: "MEMBER",
       },
@@ -112,9 +112,9 @@ describe("SettingsPage", () => {
     const page = await SettingsPage();
     render(page);
 
-    // 멤버도 기본 설정 정보를 볼 수 있어야 함
-    expect(screen.getByText("테스트 멤버")).toBeInTheDocument();
+    // Members must also be able to see basic settings information
+    expect(screen.getByText("Test Member")).toBeInTheDocument();
     expect(screen.getByText("member@example.com")).toBeInTheDocument();
-    expect(screen.getByText("멤버")).toBeInTheDocument();
+    expect(screen.getByText("Member")).toBeInTheDocument();
   });
 });

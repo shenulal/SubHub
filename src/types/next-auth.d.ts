@@ -1,14 +1,14 @@
 // src/types/next-auth.d.ts
-// NextAuth.js v5 세션 타입 확장
+// NextAuth.js v5 session type augmentation
 
 import { UserRole } from "@prisma/client";
 import { DefaultSession } from "next-auth";
 
 declare module "next-auth" {
   /**
-   * 세션에 포함될 사용자 정보
-   * organizationId: 소속 조직 (없으면 온보딩 필요)
-   * role: 사용자 역할 (ADMIN/MEMBER/VIEWER)
+   * User information included in the session
+   * organizationId: the user's organization (onboarding required if missing)
+   * role: user role (ADMIN/MEMBER/VIEWER)
    */
   interface Session {
     user: {
@@ -26,7 +26,7 @@ declare module "next-auth" {
 
 declare module "@auth/core/adapters" {
   /**
-   * Prisma Adapter에서 사용하는 User 타입 확장
+   * User type augmentation used by the Prisma Adapter
    */
   interface AdapterUser {
     organizationId?: string | null;
@@ -36,8 +36,8 @@ declare module "@auth/core/adapters" {
 
 declare module "@auth/core/jwt" {
   /**
-   * JWT 토큰에 저장되는 정보
-   * (Edge Runtime 미들웨어에서 사용)
+   * Data stored in the JWT
+   * (used by the Edge Runtime middleware)
    */
   interface JWT {
     id: string;

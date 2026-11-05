@@ -6,8 +6,8 @@ import type { Metadata } from "next";
 import { SaasReviewDashboard } from "./saas-review-dashboard";
 
 export const metadata: Metadata = {
-  title: "SaaS 검토/승인 | SaaS 관리 플랫폼",
-  description: "LLM이 발견한 SaaS를 검토하고 승인합니다",
+  title: "SaaS Review & Approval",
+  description: "Review and approve SaaS discovered by the LLM",
 };
 
 export default async function SaasReviewPage() {

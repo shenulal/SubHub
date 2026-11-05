@@ -9,9 +9,9 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 
 /**
- * 🎯 목적: Pagination 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: HTML nav 요소 사용
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the Pagination component for React 18/19 compatibility
+ * 📝 Note: Uses an HTML nav element
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const Pagination = React.forwardRef<HTMLElement, React.ComponentProps<"nav">>(
   ({ className, ...props }, ref) => {
@@ -30,9 +30,9 @@ const Pagination = React.forwardRef<HTMLElement, React.ComponentProps<"nav">>(
 Pagination.displayName = "Pagination";
 
 /**
- * 🎯 목적: PaginationContent 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: HTML ul 요소 사용
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the PaginationContent component for React 18/19 compatibility
+ * 📝 Note: Uses an HTML ul element
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const PaginationContent = React.forwardRef<
   HTMLUListElement,
@@ -50,9 +50,9 @@ const PaginationContent = React.forwardRef<
 PaginationContent.displayName = "PaginationContent";
 
 /**
- * 🎯 목적: PaginationItem 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: HTML li 요소 사용
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the PaginationItem component for React 18/19 compatibility
+ * 📝 Note: Uses an HTML li element
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const PaginationItem = React.forwardRef<
   HTMLLIElement,
@@ -68,9 +68,9 @@ type PaginationLinkProps = {
   React.ComponentProps<"a">;
 
 /**
- * 🎯 목적: PaginationLink 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: HTML a 요소 사용, isActive 상태에 따라 variant 변경
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the PaginationLink component for React 18/19 compatibility
+ * 📝 Note: Uses an HTML a element; variant changes with the isActive state
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const PaginationLink = React.forwardRef<HTMLAnchorElement, PaginationLinkProps>(
   ({ className, isActive, size = "icon", ...props }, ref) => {
@@ -95,9 +95,9 @@ const PaginationLink = React.forwardRef<HTMLAnchorElement, PaginationLinkProps>(
 PaginationLink.displayName = "PaginationLink";
 
 /**
- * 🎯 목적: PaginationPrevious 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: PaginationLink 컴포넌트 사용 (이미 forwardRef 지원)
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the PaginationPrevious component for React 18/19 compatibility
+ * 📝 Note: Uses the PaginationLink component (already supports forwardRef)
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const PaginationPrevious = React.forwardRef<
   HTMLAnchorElement,
@@ -119,9 +119,9 @@ const PaginationPrevious = React.forwardRef<
 PaginationPrevious.displayName = "PaginationPrevious";
 
 /**
- * 🎯 목적: PaginationNext 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: PaginationLink 컴포넌트 사용 (이미 forwardRef 지원)
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the PaginationNext component for React 18/19 compatibility
+ * 📝 Note: Uses the PaginationLink component (already supports forwardRef)
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const PaginationNext = React.forwardRef<
   HTMLAnchorElement,
@@ -143,9 +143,9 @@ const PaginationNext = React.forwardRef<
 PaginationNext.displayName = "PaginationNext";
 
 /**
- * 🎯 목적: PaginationEllipsis 컴포넌트에 forwardRef 적용하여 React 18/19 호환성 제공
- * 📝 주의사항: HTML span 요소 사용, 더 많은 페이지가 있음을 표시
- * 🔄 변경이력: 2025-10-11 - React 18/19 dual support를 위한 forwardRef 추가
+ * 🎯 Purpose: Apply forwardRef to the PaginationEllipsis component for React 18/19 compatibility
+ * 📝 Note: Uses an HTML span element; indicates there are more pages
+ * 🔄 History: 2025-10-11 - Added forwardRef for React 18/19 dual support
  */
 const PaginationEllipsis = React.forwardRef<
   HTMLSpanElement,

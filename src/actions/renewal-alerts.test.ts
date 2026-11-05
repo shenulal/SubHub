@@ -60,14 +60,14 @@ describe("RenewalAlert Server Actions", () => {
   });
 
   describe("getRenewalAlerts", () => {
-    it("인증되지 않은 경우 /login으로 리다이렉트해야 한다", async () => {
+    it("redirects to /login when unauthenticated", async () => {
       mockedAuth.mockResolvedValue(null);
 
       await expect(getRenewalAlerts()).rejects.toThrow("NEXT_REDIRECT");
       expect(mockRedirect).toHaveBeenCalledWith("/login");
     });
 
-    it("갱신 알림 목록을 반환해야 한다", async () => {
+    it("returns the renewal alert list", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1" },
         expires: "",
@@ -102,7 +102,7 @@ describe("RenewalAlert Server Actions", () => {
       expect(result[0].subscription.app.name).toBe("Slack");
     });
 
-    it("미발송 알림만 필터링할 수 있어야 한다", async () => {
+    it("can filter to unsent alerts only", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1" },
         expires: "",
@@ -123,7 +123,7 @@ describe("RenewalAlert Server Actions", () => {
   });
 
   describe("createRenewalAlert", () => {
-    it("인증되지 않은 경우 에러를 반환해야 한다", async () => {
+    it("returns an error when unauthenticated", async () => {
       mockedAuth.mockResolvedValue(null);
 
       const result = await createRenewalAlert({
@@ -135,7 +135,7 @@ describe("RenewalAlert Server Actions", () => {
       await expect(result.success).toBe(false);
     });
 
-    it("존재하지 않는 구독이면 에러를 반환해야 한다", async () => {
+    it("returns an error for a non-existent subscription", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1" },
         expires: "",
@@ -150,10 +150,10 @@ describe("RenewalAlert Server Actions", () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("구독을 찾을 수 없습니다");
+      expect(result.message).toBe("Subscription not found");
     });
 
-    it("갱신 알림을 성공적으로 생성해야 한다", async () => {
+    it("creates a renewal alert successfully", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1" },
         expires: "",
@@ -185,7 +185,7 @@ describe("RenewalAlert Server Actions", () => {
   });
 
   describe("markAlertAsSent", () => {
-    it("알림을 발송 완료로 표시해야 한다", async () => {
+    it("marks an alert as sent", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
         expires: "",
@@ -215,7 +215,7 @@ describe("RenewalAlert Server Actions", () => {
       );
     });
 
-    it("존재하지 않는 알림이면 에러를 반환해야 한다", async () => {
+    it("returns an error for a non-existent alert", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
         expires: "",
@@ -226,12 +226,12 @@ describe("RenewalAlert Server Actions", () => {
       const result = await markAlertAsSent("non-existent");
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("알림을 찾을 수 없습니다");
+      expect(result.message).toBe("Alert not found");
     });
   });
 
   describe("deleteRenewalAlert", () => {
-    it("관리자가 아니면 에러를 반환해야 한다", async () => {
+    it("returns an error for a non-admin", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "MEMBER" },
         expires: "",
@@ -240,10 +240,10 @@ describe("RenewalAlert Server Actions", () => {
       const result = await deleteRenewalAlert("alert-1");
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("관리자 권한이 필요합니다");
+      expect(result.message).toBe("Admin permission required");
     });
 
-    it("갱신 알림을 삭제해야 한다", async () => {
+    it("deletes a renewal alert", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
         expires: "",
@@ -266,7 +266,7 @@ describe("RenewalAlert Server Actions", () => {
   });
 
   describe("generateRenewalAlerts", () => {
-    it("관리자가 아니면 에러를 반환해야 한다", async () => {
+    it("returns an error for a non-admin", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "MEMBER" },
         expires: "",
@@ -275,17 +275,17 @@ describe("RenewalAlert Server Actions", () => {
       const result = await generateRenewalAlerts();
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("관리자 권한이 필요합니다");
+      expect(result.message).toBe("Admin permission required");
     });
 
-    it("갱신 예정 구독에 대해 알림을 생성해야 한다", async () => {
+    it("creates alerts for subscriptions due for renewal", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
         expires: "",
       });
 
       const renewalDate = new Date();
-      renewalDate.setDate(renewalDate.getDate() + 25); // 25일 후 갱신
+      renewalDate.setDate(renewalDate.getDate() + 25); // renews in 25 days
 
       vi.mocked(prisma.subscription.findMany).mockResolvedValue([
         {

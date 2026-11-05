@@ -88,7 +88,7 @@ describe("Users Server Actions", () => {
   });
 
   describe("getUsers", () => {
-    it("인증되지 않은 경우 login으로 리다이렉트해야 한다", async () => {
+    it("redirects to login when unauthenticated", async () => {
       mockedAuth.mockResolvedValue(null);
 
       await expect(getUsers()).rejects.toThrow("NEXT_REDIRECT");
@@ -96,7 +96,7 @@ describe("Users Server Actions", () => {
       expect(mockRedirect).toHaveBeenCalledWith("/login");
     });
 
-    it("organizationId가 없는 경우 onboarding으로 리다이렉트해야 한다", async () => {
+    it("redirects to onboarding when there is no organizationId", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: null },
         expires: "",
@@ -107,7 +107,7 @@ describe("Users Server Actions", () => {
       expect(mockRedirect).toHaveBeenCalledWith("/onboarding");
     });
 
-    it("사용자 목록을 반환해야 한다", async () => {
+    it("returns the user list", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1" },
         expires: "",
@@ -121,8 +121,8 @@ describe("Users Server Actions", () => {
           avatarUrl: null,
           role: "MEMBER",
           status: "ACTIVE",
-          department: "개발팀",
-          jobTitle: "개발자",
+          department: "Engineering",
+          jobTitle: "Developer",
           lastLoginAt: new Date("2024-01-15"),
           terminatedAt: null,
           createdAt: new Date("2024-01-01"),
@@ -148,7 +148,7 @@ describe("Users Server Actions", () => {
       expect(result.total).toBe(1);
     });
 
-    it("필터 조건으로 사용자를 조회해야 한다", async () => {
+    it("queries users with filter conditions", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1" },
         expires: "",
@@ -170,7 +170,7 @@ describe("Users Server Actions", () => {
       );
     });
 
-    it("검색어로 사용자를 조회해야 한다", async () => {
+    it("queries users by search keyword", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1" },
         expires: "",
@@ -195,7 +195,7 @@ describe("Users Server Actions", () => {
   });
 
   describe("getUser", () => {
-    it("사용자 상세 정보를 반환해야 한다", async () => {
+    it("returns user details", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1" },
         expires: "",
@@ -208,8 +208,8 @@ describe("Users Server Actions", () => {
         avatarUrl: null,
         role: "MEMBER",
         status: "ACTIVE",
-        department: "개발팀",
-        jobTitle: "개발자",
+        department: "Engineering",
+        jobTitle: "Developer",
         employeeId: "EMP001",
         lastLoginAt: new Date("2024-01-15"),
         terminatedAt: null,
@@ -250,7 +250,7 @@ describe("Users Server Actions", () => {
       expect(result?.appAccesses[0].appName).toBe("Slack");
     });
 
-    it("존재하지 않는 사용자는 null을 반환해야 한다", async () => {
+    it("returns null for a non-existent user", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1" },
         expires: "",
@@ -267,7 +267,7 @@ describe("Users Server Actions", () => {
   });
 
   describe("updateUser", () => {
-    it("인증되지 않은 경우 /login으로 리다이렉트해야 한다", async () => {
+    it("redirects to /login when unauthenticated", async () => {
       mockedAuth.mockResolvedValue(null);
 
       const formData = new FormData();
@@ -278,7 +278,7 @@ describe("Users Server Actions", () => {
       ).rejects.toThrow("NEXT_REDIRECT:/login");
     });
 
-    it("사용자가 존재하지 않으면 에러를 반환해야 한다", async () => {
+    it("returns an error when the user does not exist", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1" },
         expires: "",
@@ -296,10 +296,10 @@ describe("Users Server Actions", () => {
       );
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("사용자를 찾을 수 없습니다");
+      expect(result.message).toBe("User not found");
     });
 
-    it("사용자 정보를 성공적으로 수정해야 한다", async () => {
+    it("updates user details successfully", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "current-user", organizationId: "org-1" },
         expires: "",
@@ -318,7 +318,7 @@ describe("Users Server Actions", () => {
 
       const formData = new FormData();
       formData.append("name", "Updated Name");
-      formData.append("department", "마케팅팀");
+      formData.append("department", "Marketing");
 
       const result = await updateUser("user-1", { success: false }, formData);
 
@@ -330,7 +330,7 @@ describe("Users Server Actions", () => {
   });
 
   describe("getTerminatedUsersWithAccess", () => {
-    it("퇴사자 중 미회수 접근 권한이 있는 사용자를 반환해야 한다", async () => {
+    it("returns terminated users who still have unrecovered access", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1" },
         expires: "",
@@ -340,10 +340,10 @@ describe("Users Server Actions", () => {
         {
           id: "terminated-1",
           email: "terminated@example.com",
-          name: "퇴사자",
+          name: "Terminated User",
           avatarUrl: null,
-          department: "개발팀",
-          jobTitle: "개발자",
+          department: "Engineering",
+          jobTitle: "Developer",
           terminatedAt: new Date("2024-01-01"),
           _count: { appAccesses: 2, subscriptionAssignments: 1 },
           appAccesses: [
@@ -397,7 +397,7 @@ describe("Users Server Actions", () => {
   });
 
   describe("revokeUserAppAccess", () => {
-    it("인증되지 않은 경우 /login으로 리다이렉트해야 한다", async () => {
+    it("redirects to /login when unauthenticated", async () => {
       mockedAuth.mockResolvedValue(null);
 
       await expect(revokeUserAppAccess("user-1", "app-1")).rejects.toThrow(
@@ -405,7 +405,7 @@ describe("Users Server Actions", () => {
       );
     });
 
-    it("사용자 앱 접근 권한을 성공적으로 회수해야 한다", async () => {
+    it("revokes a user's app access successfully", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "current-user", organizationId: "org-1" },
         expires: "",
@@ -444,7 +444,7 @@ describe("Users Server Actions", () => {
       expect(revalidatePath).toHaveBeenCalledWith("/subscriptions");
     });
 
-    it("개별 회수 시 해당 앱의 SubscriptionUser를 삭제하고 usedLicenses를 재계산해야 한다", async () => {
+    it("deletes the app's SubscriptionUser rows and recalculates usedLicenses on single revoke", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "current-user", organizationId: "org-1" },
         expires: "",
@@ -463,7 +463,7 @@ describe("Users Server Actions", () => {
         ],
       } as never);
 
-      // 해당 앱의 구독에 배정된 SubscriptionUser 존재
+      // SubscriptionUser rows exist for that app's subscriptions
       vi.mocked(prisma.subscriptionUser.findMany).mockResolvedValue([
         { id: "su-1", subscriptionId: "sub-1" },
       ] as never);
@@ -486,24 +486,24 @@ describe("Users Server Actions", () => {
       const result = await revokeUserAppAccess("user-1", "app-1");
 
       expect(result.success).toBe(true);
-      // SubscriptionUser 삭제 확인
+      // Verify SubscriptionUser deletion
       expect(prisma.subscriptionUser.deleteMany).toHaveBeenCalledWith({
         where: {
           userId: "user-1",
           subscription: { appId: "app-1" },
         },
       });
-      // usedLicenses 재계산 확인
+      // Verify usedLicenses recalculation
       expect(prisma.subscription.update).toHaveBeenCalledWith({
         where: { id: "sub-1" },
         data: { usedLicenses: 4 },
       });
-      // 구독 페이지 revalidation 확인
+      // Verify subscription page revalidation
       expect(revalidatePath).toHaveBeenCalledWith("/subscriptions");
       expect(revalidatePath).toHaveBeenCalledWith("/subscriptions/sub-1");
     });
 
-    it("접근 권한이 없으면 에러를 반환해야 한다", async () => {
+    it("returns an error when there is no access grant", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "current-user", organizationId: "org-1" },
         expires: "",
@@ -519,12 +519,12 @@ describe("Users Server Actions", () => {
       const result = await revokeUserAppAccess("user-1", "app-1");
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("접근 권한을 찾을 수 없습니다");
+      expect(result.message).toBe("Access grant not found");
     });
   });
 
   describe("revokeAllUserAppAccess", () => {
-    it("인증되지 않은 경우 /login으로 리다이렉트해야 한다", async () => {
+    it("redirects to /login when unauthenticated", async () => {
       mockedAuth.mockResolvedValue(null);
 
       await expect(revokeAllUserAppAccess("user-1")).rejects.toThrow(
@@ -532,7 +532,7 @@ describe("Users Server Actions", () => {
       );
     });
 
-    it("사용자의 모든 앱 접근 권한을 성공적으로 회수해야 한다", async () => {
+    it("revokes all of a user's app access successfully", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "current-user", organizationId: "org-1" },
         expires: "",
@@ -568,7 +568,7 @@ describe("Users Server Actions", () => {
       const result = await revokeAllUserAppAccess("user-1");
 
       expect(result.success).toBe(true);
-      expect(result.message).toBe("3개의 접근 권한이 회수되었습니다");
+      expect(result.message).toBe("Revoked 3 access grant(s)");
       expect(prisma.$transaction).toHaveBeenCalled();
       expect(prisma.auditLog.create).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -587,7 +587,7 @@ describe("Users Server Actions", () => {
       expect(revalidatePath).toHaveBeenCalledWith("/subscriptions/sub-1");
     });
 
-    it("subscriptionAssignments만 있는 경우에도 회수에 성공해야 한다 (버그 재현)", async () => {
+    it("succeeds even when only subscriptionAssignments exist (bug reproduction)", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "current-user", organizationId: "org-1" },
         expires: "",
@@ -623,11 +623,11 @@ describe("Users Server Actions", () => {
       const result = await revokeAllUserAppAccess("user-1");
 
       expect(result.success).toBe(true);
-      expect(result.message).toBe("2개의 접근 권한이 회수되었습니다");
+      expect(result.message).toBe("Revoked 2 access grant(s)");
       expect(prisma.$transaction).toHaveBeenCalled();
     });
 
-    it("구독 회수 시 영향받는 구독의 usedLicenses가 재계산되어야 한다", async () => {
+    it("recalculates usedLicenses of affected subscriptions on revoke", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "current-user", organizationId: "org-1" },
         expires: "",
@@ -656,7 +656,7 @@ describe("Users Server Actions", () => {
       vi.mocked(prisma.subscriptionUser.deleteMany).mockResolvedValue({
         count: 2,
       });
-      // sub-1: 2명 남음, sub-2: 0명 남음
+      // sub-1: 2 users left, sub-2: 0 users left
       vi.mocked(prisma.subscriptionUser.count)
         .mockResolvedValueOnce(2)
         .mockResolvedValueOnce(0);
@@ -677,7 +677,7 @@ describe("Users Server Actions", () => {
       });
     });
 
-    it("사용자를 찾을 수 없으면 에러를 반환해야 한다", async () => {
+    it("returns an error when the user cannot be found", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "current-user", organizationId: "org-1" },
         expires: "",
@@ -688,10 +688,10 @@ describe("Users Server Actions", () => {
       const result = await revokeAllUserAppAccess("non-existent");
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("사용자를 찾을 수 없습니다");
+      expect(result.message).toBe("User not found");
     });
 
-    it("appAccesses와 subscriptionAssignments 모두 없으면 에러를 반환해야 한다", async () => {
+    it("returns an error when there are neither appAccesses nor subscriptionAssignments", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "current-user", organizationId: "org-1" },
         expires: "",
@@ -708,12 +708,12 @@ describe("Users Server Actions", () => {
       const result = await revokeAllUserAppAccess("user-1");
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("회수할 접근 권한이 없습니다");
+      expect(result.message).toBe("There is no access to revoke");
     });
   });
 
   describe("permanentlyDeleteUser", () => {
-    it("cascade 삭제 시 영향받는 구독의 usedLicenses가 재계산되어야 한다", async () => {
+    it("recalculates usedLicenses of affected subscriptions on cascade delete", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "admin-user", organizationId: "org-1", role: "ADMIN" },
         expires: "",
@@ -725,11 +725,11 @@ describe("Users Server Actions", () => {
         name: "Terminated User",
         role: "MEMBER",
         status: "TERMINATED",
-        department: "개발팀",
+        department: "Engineering",
         organizationId: "org-1",
       } as never);
 
-      // 삭제 전 영향받는 구독 조회
+      // Fetch affected subscriptions before deletion
       vi.mocked(prisma.subscriptionUser.findMany).mockResolvedValue([
         { subscriptionId: "sub-1" },
         { subscriptionId: "sub-2" },
@@ -752,14 +752,14 @@ describe("Users Server Actions", () => {
       vi.mocked(prisma.invitation.deleteMany).mockResolvedValue({ count: 0 });
       vi.mocked(prisma.user.delete).mockResolvedValue({} as never);
       vi.mocked(prisma.subscriptionUser.count)
-        .mockResolvedValueOnce(5) // sub-1: 5명 남음
-        .mockResolvedValueOnce(0); // sub-2: 0명 남음
+        .mockResolvedValueOnce(5) // sub-1: 5 users left
+        .mockResolvedValueOnce(0); // sub-2: 0 users left
       vi.mocked(prisma.subscription.update).mockResolvedValue({} as never);
 
       const result = await permanentlyDeleteUser("target-user");
 
       expect(result.success).toBe(true);
-      // 영향받는 구독의 usedLicenses 재계산 확인
+      // Verify usedLicenses recalculation of affected subscriptions
       expect(prisma.subscription.update).toHaveBeenCalledWith({
         where: { id: "sub-1" },
         data: { usedLicenses: 5 },
@@ -768,13 +768,13 @@ describe("Users Server Actions", () => {
         where: { id: "sub-2" },
         data: { usedLicenses: 0 },
       });
-      // 구독 페이지 revalidation 확인
+      // Verify subscription page revalidation
       expect(revalidatePath).toHaveBeenCalledWith("/subscriptions");
       expect(revalidatePath).toHaveBeenCalledWith("/subscriptions/sub-1");
       expect(revalidatePath).toHaveBeenCalledWith("/subscriptions/sub-2");
     });
 
-    it("구독 배정 없는 사용자 삭제 시 usedLicenses 재계산 없이 성공해야 한다", async () => {
+    it("succeeds without recalculating usedLicenses when deleting a user with no assignments", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "admin-user", organizationId: "org-1", role: "ADMIN" },
         expires: "",
@@ -786,11 +786,11 @@ describe("Users Server Actions", () => {
         name: "Terminated User",
         role: "MEMBER",
         status: "TERMINATED",
-        department: "개발팀",
+        department: "Engineering",
         organizationId: "org-1",
       } as never);
 
-      // 구독 배정 없음
+      // No subscription assignments
       vi.mocked(prisma.subscriptionUser.findMany).mockResolvedValue([]);
 
       vi.mocked(prisma.$transaction).mockImplementation(async (cb) => {
@@ -813,11 +813,11 @@ describe("Users Server Actions", () => {
       const result = await permanentlyDeleteUser("target-user");
 
       expect(result.success).toBe(true);
-      // subscription.update는 호출되지 않아야 함
+      // subscription.update must not be called
       expect(prisma.subscription.update).not.toHaveBeenCalled();
     });
 
-    it("TERMINATED 상태가 아닌 사용자는 삭제할 수 없어야 한다", async () => {
+    it("prevents deleting a user who is not TERMINATED", async () => {
       mockedAuth.mockResolvedValue({
         user: { id: "admin-user", organizationId: "org-1", role: "ADMIN" },
         expires: "",
@@ -829,14 +829,14 @@ describe("Users Server Actions", () => {
         name: "Active User",
         role: "MEMBER",
         status: "ACTIVE",
-        department: "개발팀",
+        department: "Engineering",
         organizationId: "org-1",
       } as never);
 
       const result = await permanentlyDeleteUser("target-user");
 
       expect(result.success).toBe(false);
-      expect(result.message).toContain("퇴사 처리된 사용자만");
+      expect(result.message).toContain("Only offboarded users");
     });
   });
 });

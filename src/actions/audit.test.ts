@@ -59,7 +59,7 @@ describe("audit actions", () => {
           entityType: "App",
           entityId: "app-1",
           userId: "user-1",
-          user: { name: "테스터", email: "test@example.com" },
+          user: { name: "Tester", email: "test@example.com" },
           changes: { name: "New App" },
           metadata: null,
           ipAddress: "127.0.0.1",
@@ -80,7 +80,7 @@ describe("audit actions", () => {
       expect(result.logs).toHaveLength(1);
       expect(result.logs[0].action).toBe("CREATE");
       expect(result.pagination.total).toBe(1);
-      // Date가 ISO 문자열로 직렬화됨
+      // Dates are serialized as ISO strings
       expect(typeof result.logs[0].createdAt).toBe("string");
     });
 
@@ -134,14 +134,14 @@ describe("audit actions", () => {
       (prisma.auditLog.count as ReturnType<typeof vi.fn>).mockResolvedValue(0);
 
       const { getAuditLogs } = await import("./audit");
-      await getAuditLogs({ search: "테스트" });
+      await getAuditLogs({ search: "Test" });
 
       expect(prisma.auditLog.findMany).toHaveBeenCalledWith(
         expect.objectContaining({
           where: expect.objectContaining({
             OR: expect.arrayContaining([
               expect.objectContaining({
-                user: { name: { contains: "테스트", mode: "insensitive" } },
+                user: { name: { contains: "Test", mode: "insensitive" } },
               }),
             ]),
           }),
@@ -213,12 +213,12 @@ describe("audit actions", () => {
         prisma.auditLog.findUnique as ReturnType<typeof vi.fn>
       ).mockResolvedValue({
         id: "log-1",
-        organizationId: "org-2", // 다른 조직
+        organizationId: "org-2", // different organization
       });
 
       const { getAuditLogById } = await import("./audit");
       await expect(getAuditLogById("log-1")).rejects.toThrow(
-        "접근 권한이 없습니다"
+        "You do not have access permission"
       );
     });
 
@@ -235,9 +235,9 @@ describe("audit actions", () => {
         entityType: "Subscription",
         entityId: "sub-1",
         userId: "user-1",
-        user: { name: "관리자", email: "admin@example.com" },
+        user: { name: "Administrator", email: "admin@example.com" },
         changes: { status: { from: "ACTIVE", to: "CANCELLED" } },
-        metadata: { reason: "사용자 요청" },
+        metadata: { reason: "User request" },
         ipAddress: "192.168.1.1",
         userAgent: "Chrome/120",
         createdAt: new Date("2024-11-30T15:00:00Z"),
@@ -281,21 +281,21 @@ describe("audit actions", () => {
       (prisma.user.findMany as ReturnType<typeof vi.fn>).mockResolvedValue([
         {
           id: "user-1",
-          name: "사용자1",
+          name: "User 1",
           email: "user1@example.com",
           teamId: "team-1",
-          team: { id: "team-1", name: "마케팅" },
+          team: { id: "team-1", name: "Marketing" },
         },
         {
           id: "user-2",
-          name: "사용자2",
+          name: "User 2",
           email: "user2@example.com",
           teamId: null,
           team: null,
         },
       ]);
       (prisma.team.findMany as ReturnType<typeof vi.fn>).mockResolvedValue([
-        { id: "team-1", name: "마케팅" },
+        { id: "team-1", name: "Marketing" },
       ]);
 
       const { getAuditLogFilterOptions } = await import("./audit");
@@ -327,9 +327,9 @@ describe("audit actions", () => {
           entityId: null,
           userId: "user-1",
           user: {
-            name: "관리자",
+            name: "Administrator",
             email: "admin@example.com",
-            team: { name: "마케팅" },
+            team: { name: "Marketing" },
           },
           changes: null,
           metadata: null,
@@ -343,7 +343,7 @@ describe("audit actions", () => {
       const result = await getAuditLogExportData({});
 
       expect(result).toHaveLength(1);
-      expect(result[0].teamName).toBe("마케팅");
+      expect(result[0].teamName).toBe("Marketing");
       expect(result[0].action).toBe("EXPORT");
     });
   });

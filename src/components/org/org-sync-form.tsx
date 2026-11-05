@@ -40,7 +40,7 @@ import {
 } from "lucide-react";
 import { useCallback, useState, useTransition } from "react";
 
-// ==================== 타입 ====================
+// ==================== Types ====================
 
 interface SyncResult {
   success: boolean;
@@ -50,7 +50,7 @@ interface SyncResult {
   errors?: Array<{ row: number; field: string; message: string }>;
 }
 
-// ==================== CSV 업로드 패널 ====================
+// ==================== CSV upload panel ====================
 
 function CsvUploadPanel({
   label,
@@ -119,7 +119,7 @@ function CsvUploadPanel({
 
   return (
     <div className="space-y-5">
-      {/* 템플릿 다운로드 */}
+      {/* Template download */}
       <div className="flex flex-wrap items-center gap-3">
         <Button
           variant="outline"
@@ -128,14 +128,14 @@ function CsvUploadPanel({
           onClick={downloadTemplate}
         >
           <Download className="mr-2 h-4 w-4" />
-          템플릿 다운로드
+          Download template
         </Button>
         <span className="text-muted-foreground text-sm">
-          CSV 형식 가이드를 참고하세요
+          Follow the CSV format guide
         </span>
       </div>
 
-      {/* 드래그 앤 드롭 업로드 영역 */}
+      {/* Drag-and-drop upload area */}
       <div
         className={`relative rounded-md border-2 border-dashed p-8 text-center transition-colors ${
           dragActive
@@ -157,12 +157,14 @@ function CsvUploadPanel({
           <Icon className="size-6" />
         </div>
         <p className="mb-1 font-medium">
-          {label} CSV 파일을 드래그하거나 클릭하여 선택
+          Drag and drop the {label} CSV file, or click to select
         </p>
-        <p className="text-muted-foreground text-sm">CSV 파일만 지원합니다</p>
+        <p className="text-muted-foreground text-sm">
+          Only CSV files are supported
+        </p>
       </div>
 
-      {/* 선택된 파일 */}
+      {/* Selected file */}
       {file && (
         <div className="bg-muted flex min-w-0 items-center justify-between gap-3 rounded-md px-4 py-3">
           <div className="min-w-0">
@@ -182,12 +184,12 @@ function CsvUploadPanel({
               setResult(null);
             }}
           >
-            제거
+            Remove
           </Button>
         </div>
       )}
 
-      {/* 업로드 버튼 */}
+      {/* Upload button */}
       <Button
         onClick={handleUpload}
         disabled={!file || isPending}
@@ -196,17 +198,17 @@ function CsvUploadPanel({
         {isPending ? (
           <>
             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-            동기화 중...
+            Syncing...
           </>
         ) : (
           <>
             <Upload className="mr-2 h-4 w-4" />
-            동기화 시작
+            Start sync
           </>
         )}
       </Button>
 
-      {/* 결과 표시 */}
+      {/* Result */}
       {result && (
         <Alert variant={result.success ? "default" : "destructive"}>
           {result.success ? (
@@ -214,15 +216,14 @@ function CsvUploadPanel({
           ) : (
             <AlertCircle className="h-4 w-4" />
           )}
-          <AlertTitle>{result.success ? "완료" : "오류"}</AlertTitle>
+          <AlertTitle>{result.success ? "Completed" : "Error"}</AlertTitle>
           <AlertDescription className="space-y-2">
             <p>{result.message}</p>
             {result.success &&
               (result.created !== undefined ||
                 result.updated !== undefined) && (
                 <p className="text-sm">
-                  생성 {result.created ?? 0}개 · 업데이트 {result.updated ?? 0}
-                  개
+                  Created {result.created ?? 0} · Updated {result.updated ?? 0}
                 </p>
               )}
             {result.errors && result.errors.length > 0 && (
@@ -234,7 +235,7 @@ function CsvUploadPanel({
                 ))}
                 {result.errors.length > 5 && (
                   <li className="text-muted-foreground">
-                    외 {result.errors.length - 5}건의 오류...
+                    and {result.errors.length - 5} more errors...
                   </li>
                 )}
               </ul>
@@ -246,7 +247,7 @@ function CsvUploadPanel({
   );
 }
 
-// ==================== 메인 컴포넌트 ====================
+// ==================== Main component ====================
 
 export function OrgSyncForm() {
   const handleOrgSync = async (csvContent: string): Promise<SyncResult> => {
@@ -273,51 +274,53 @@ export function OrgSyncForm() {
 
   return (
     <Tabs defaultValue="csv" className="w-full">
-      {/* 연동 방식 선택 탭 */}
+      {/* Integration method tabs */}
       <TabsList className="mb-6">
-        <TabsTrigger value="csv">CSV 파일</TabsTrigger>
+        <TabsTrigger value="csv">CSV file</TabsTrigger>
         <TabsTrigger value="ad" disabled>
           Active Directory
           <Badge variant="secondary" className="ml-2">
-            준비 중
+            Coming soon
           </Badge>
         </TabsTrigger>
         <TabsTrigger value="hr" disabled>
-          HR 시스템
+          HR system
           <Badge variant="secondary" className="ml-2">
-            준비 중
+            Coming soon
           </Badge>
         </TabsTrigger>
       </TabsList>
 
-      {/* ── Tab 1: CSV 파일 업로드 ── */}
+      {/* ── Tab 1: CSV file upload ── */}
       <TabsContent value="csv" className="space-y-6">
-        {/* 권장 순서 안내 배너 */}
+        {/* Recommended order banner */}
         <Alert>
           <Info className="h-4 w-4" />
-          <AlertTitle>권장 업로드 순서</AlertTitle>
+          <AlertTitle>Recommended upload order</AlertTitle>
           <AlertDescription>
             <div className="mt-2 flex flex-wrap items-center gap-3">
               <span className="tonal-primary rounded-md px-3 py-1.5 text-sm font-medium whitespace-nowrap">
-                Step 1. 조직 구조 CSV 업로드
+                Step 1. Upload the organization structure CSV
               </span>
               <ArrowRight className="text-muted-foreground h-4 w-4 shrink-0" />
               <span className="tonal-primary rounded-md px-3 py-1.5 text-sm font-medium whitespace-nowrap">
-                Step 2. 사용자 CSV 업로드
+                Step 2. Upload the user CSV
               </span>
             </div>
             <p className="text-muted-foreground mt-2 text-sm">
-              조직 구조를 먼저 등록하면 사용자가 정확한 조직명으로 배정됩니다.
-              순서가 다르더라도 기능은 정상 동작합니다.
+              Registering the organization structure first assigns users to the
+              correct organization names. Uploads still work in any order.
             </p>
           </AlertDescription>
         </Alert>
 
-        {/* 내부 탭: ① 조직 구조 / ② 사용자 연동 */}
+        {/* Inner tabs: ① Organization structure / ② User sync */}
         <Tabs defaultValue="org-struct">
           <TabsList className="mb-4">
-            <TabsTrigger value="org-struct">① 조직 구조</TabsTrigger>
-            <TabsTrigger value="user-sync">② 사용자 연동</TabsTrigger>
+            <TabsTrigger value="org-struct">
+              ① Organization structure
+            </TabsTrigger>
+            <TabsTrigger value="user-sync">② User sync</TabsTrigger>
           </TabsList>
 
           <TabsContent value="org-struct">
@@ -327,17 +330,17 @@ export function OrgSyncForm() {
                   <span className="tonal-primary flex size-10 shrink-0 items-center justify-center rounded-md">
                     <Building2 className="size-5" />
                   </span>
-                  조직 구조 CSV 업로드
+                  Upload organization structure CSV
                 </CardTitle>
                 <CardDescription>
-                  org_code, parent_code, org_name 컬럼을 포함한 CSV를
-                  업로드하세요. 계층 구조는 parent_code로 지정하며, 없으면
-                  최상위 조직으로 등록됩니다.
+                  Upload a CSV with org_code, parent_code and org_name columns.
+                  The hierarchy is set by parent_code; rows without one are
+                  registered as top-level organizations.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <CsvUploadPanel
-                  label="조직 구조"
+                  label="Organization structure"
                   icon={Building2}
                   template={generateOrgCSVTemplate()}
                   templateFilename="org_structure_template.csv"
@@ -354,17 +357,17 @@ export function OrgSyncForm() {
                   <span className="tonal-primary flex size-10 shrink-0 items-center justify-center rounded-md">
                     <Users className="size-5" />
                   </span>
-                  사용자 연동 CSV 업로드
+                  Upload user sync CSV
                 </CardTitle>
                 <CardDescription>
-                  employee_id, name, email, org_code 컬럼을 포함한 CSV를
-                  업로드하세요. email 기준으로 upsert되며, org_code로 조직에
-                  자동 배정됩니다.
+                  Upload a CSV with employee_id, name, email and org_code
+                  columns. Users are upserted by email and assigned to an
+                  organization automatically by org_code.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <CsvUploadPanel
-                  label="사용자 연동"
+                  label="User sync"
                   icon={FileUp}
                   template={generateUserSyncCSVTemplate()}
                   templateFilename="user_sync_template.csv"
@@ -376,23 +379,23 @@ export function OrgSyncForm() {
         </Tabs>
       </TabsContent>
 
-      {/* ── Tab 2: Active Directory (비활성) ── */}
+      {/* ── Tab 2: Active Directory (disabled) ── */}
       <TabsContent value="ad">
         <Card>
           <CardHeader>
             <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
               <CardTitle className="min-w-0">
-                Active Directory / LDAP 연동
+                Active Directory / LDAP integration
               </CardTitle>
-              <Badge variant="warning">준비 중</Badge>
+              <Badge variant="warning">Coming soon</Badge>
             </div>
             <CardDescription>
-              AD 연동은 추후 업데이트에서 지원 예정입니다
+              AD integration will be supported in a future update
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label className="text-muted-foreground">LDAP 서버 URL</Label>
+              <Label className="text-muted-foreground">LDAP server URL</Label>
               <Input disabled placeholder="ldap://your-dc.company.com" />
             </div>
             <div className="space-y-2">
@@ -400,7 +403,7 @@ export function OrgSyncForm() {
               <Input disabled placeholder="CN=admin,DC=company,DC=com" />
             </div>
             <div className="space-y-2">
-              <Label className="text-muted-foreground">Bind 비밀번호</Label>
+              <Label className="text-muted-foreground">Bind password</Label>
               <Input type="password" disabled placeholder="••••••••••••" />
             </div>
             <div className="space-y-2">
@@ -408,58 +411,58 @@ export function OrgSyncForm() {
               <Input disabled placeholder="DC=company,DC=com" />
             </div>
             <div className="space-y-2">
-              <Label className="text-muted-foreground">동기화 주기</Label>
+              <Label className="text-muted-foreground">Sync frequency</Label>
               <Select disabled>
                 <SelectTrigger>
-                  <SelectValue placeholder="매일 자동 동기화" />
+                  <SelectValue placeholder="Automatic daily sync" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="MANUAL">수동</SelectItem>
-                  <SelectItem value="DAILY">매일 자동 동기화</SelectItem>
-                  <SelectItem value="WEEKLY">매주 자동 동기화</SelectItem>
+                  <SelectItem value="MANUAL">Manual</SelectItem>
+                  <SelectItem value="DAILY">Automatic daily sync</SelectItem>
+                  <SelectItem value="WEEKLY">Automatic weekly sync</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="flex gap-3">
               <Button disabled variant="outline">
-                연결 테스트
+                Test connection
               </Button>
-              <Button disabled>동기화 시작</Button>
+              <Button disabled>Start sync</Button>
             </div>
             <Alert>
               <Info className="h-4 w-4" />
               <AlertDescription>
-                AD 연동은 추후 업데이트에서 지원 예정입니다
+                AD integration will be supported in a future update
               </AlertDescription>
             </Alert>
           </CardContent>
         </Card>
       </TabsContent>
 
-      {/* ── Tab 3: HR 시스템 (비활성) ── */}
+      {/* ── Tab 3: HR system (disabled) ── */}
       <TabsContent value="hr">
         <Card>
           <CardHeader>
             <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
-              <CardTitle className="min-w-0">HR 시스템 연동</CardTitle>
-              <Badge variant="warning">준비 중</Badge>
+              <CardTitle className="min-w-0">HR system integration</CardTitle>
+              <Badge variant="warning">Coming soon</Badge>
             </div>
             <CardDescription>
-              HR 시스템 연동은 추후 업데이트에서 지원 예정입니다
+              HR system integration will be supported in a future update
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
-              <Label className="text-muted-foreground">시스템 유형</Label>
+              <Label className="text-muted-foreground">System type</Label>
               <Select disabled>
                 <SelectTrigger>
-                  <SelectValue placeholder="HR 시스템 선택" />
+                  <SelectValue placeholder="Select HR system" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="SAP">SAP</SelectItem>
-                  <SelectItem value="DOUZONE">더존</SelectItem>
-                  <SelectItem value="GROUPWARE">그룹웨어</SelectItem>
-                  <SelectItem value="CUSTOM_API">커스텀 API</SelectItem>
+                  <SelectItem value="DOUZONE">Douzone</SelectItem>
+                  <SelectItem value="GROUPWARE">Groupware</SelectItem>
+                  <SelectItem value="CUSTOM_API">Custom API</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -472,28 +475,28 @@ export function OrgSyncForm() {
               <Input type="password" disabled placeholder="••••••••••••" />
             </div>
             <div className="space-y-2">
-              <Label className="text-muted-foreground">동기화 주기</Label>
+              <Label className="text-muted-foreground">Sync frequency</Label>
               <Select disabled>
                 <SelectTrigger>
-                  <SelectValue placeholder="매일 자동 동기화" />
+                  <SelectValue placeholder="Automatic daily sync" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="MANUAL">수동</SelectItem>
-                  <SelectItem value="DAILY">매일 자동 동기화</SelectItem>
-                  <SelectItem value="WEEKLY">매주 자동 동기화</SelectItem>
+                  <SelectItem value="MANUAL">Manual</SelectItem>
+                  <SelectItem value="DAILY">Automatic daily sync</SelectItem>
+                  <SelectItem value="WEEKLY">Automatic weekly sync</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="flex gap-3">
               <Button disabled variant="outline">
-                연결 테스트
+                Test connection
               </Button>
-              <Button disabled>동기화 시작</Button>
+              <Button disabled>Start sync</Button>
             </div>
             <Alert>
               <Info className="h-4 w-4" />
               <AlertDescription>
-                HR 시스템 연동은 추후 업데이트에서 지원 예정입니다
+                HR system integration will be supported in a future update
               </AlertDescription>
             </Alert>
           </CardContent>

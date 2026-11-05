@@ -61,10 +61,10 @@ export function EditTeamDialog({
   const [isLoadingData, setIsLoadingData] = useState(false);
   const [isPending, startTransition] = useTransition();
 
-  // 연동 팀 여부 (Google Workspace)
+  // Whether the team is synced (Google Workspace)
   const isLinkedTeam = !!team.googleOrgUnitId;
 
-  // 다이얼로그 열릴 때 데이터 로드
+  // Load data when the dialog opens
   useEffect(() => {
     if (open) {
       setIsLoadingData(true);
@@ -90,7 +90,7 @@ export function EditTeamDialog({
         })
         .finally(() => setIsLoadingData(false));
     } else {
-      // 다이얼로그 닫힐 때 초기화
+      // Reset when the dialog closes
       setMemberSearch("");
     }
   }, [open, team]);
@@ -127,7 +127,7 @@ export function EditTeamDialog({
     );
   };
 
-  // 사용자가 다른 팀에 속해 있는지 확인 (현재 편집 중인 팀 제외)
+  // Check whether the user belongs to another team (excluding the team being edited)
   const getUserCurrentTeam = (user: UserListItem) => {
     if (user.team && user.team.id !== team.id) {
       return user.team.name;
@@ -135,11 +135,11 @@ export function EditTeamDialog({
     return null;
   };
 
-  // 부모 팀 후보에서 자기 자신과 하위 팀들을 제외
+  // Exclude the team itself and its descendants from parent-team candidates
   const getAvailableParentTeams = () => {
     const descendantIds = new Set<string>();
 
-    // 하위 팀 ID 수집 (재귀적으로)
+    // Collect descendant team IDs (recursively)
     const collectDescendants = (parentId: string) => {
       teams.forEach((t) => {
         if (t.parentId === parentId) {
@@ -155,7 +155,7 @@ export function EditTeamDialog({
     return teams.filter((t) => !descendantIds.has(t.id));
   };
 
-  // 멤버 필터링 (검색어)
+  // Member filtering (search term)
   const filteredUsers = users.filter((user) => {
     const matchesSearch =
       !memberSearch ||
@@ -187,7 +187,7 @@ export function EditTeamDialog({
           </div>
         ) : (
           <div className="space-y-4">
-            {/* 팀 이름 */}
+            {/* Team name */}
             <div className="space-y-2">
               <Label htmlFor="edit-team-name">
                 {t("teams.edit.teamName")}{" "}
@@ -207,7 +207,7 @@ export function EditTeamDialog({
               )}
             </div>
 
-            {/* 설명 */}
+            {/* Description */}
             <div className="space-y-2">
               <Label htmlFor="edit-team-description">
                 {t("teams.edit.description")}
@@ -221,7 +221,7 @@ export function EditTeamDialog({
               />
             </div>
 
-            {/* 부모 팀 */}
+            {/* Parent team */}
             <div className="space-y-2">
               <Label>{t("teams.edit.parentTeam")}</Label>
               <Select value={parentId} onValueChange={setParentId}>
@@ -243,7 +243,7 @@ export function EditTeamDialog({
               </Select>
             </div>
 
-            {/* 멤버 배정 */}
+            {/* Member assignment */}
             <div className="space-y-2">
               <Label className="flex items-center gap-2">
                 <Users className="h-4 w-4" />
@@ -256,7 +256,7 @@ export function EditTeamDialog({
                 )}
               </Label>
 
-              {/* 멤버 검색 */}
+              {/* Member search */}
               <div className="relative">
                 <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
                 <Input
@@ -267,7 +267,7 @@ export function EditTeamDialog({
                 />
               </div>
 
-              {/* 멤버 목록 */}
+              {/* Member list */}
               <ScrollArea className="h-[200px] rounded-md border">
                 <div className="p-2">
                   {filteredUsers.length === 0 ? (

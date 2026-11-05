@@ -118,7 +118,7 @@ export function SubscriptionFormPricing({
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">
-        {/* 결제 주기 + 요금 유형 */}
+        {/* Billing cycle + pricing type */}
         <div className="grid gap-4 md:grid-cols-2">
           <div className="space-y-2">
             <Label htmlFor="billingCycle">
@@ -190,7 +190,7 @@ export function SubscriptionFormPricing({
           </div>
         </div>
 
-        {/* PER_SEAT: Seat 관리 */}
+        {/* PER_SEAT: seat management */}
         {watchedBillingType === "PER_SEAT" && (
           <div className="space-y-4 rounded-lg border p-4">
             <div className="space-y-2">
@@ -313,7 +313,7 @@ export function SubscriptionFormPricing({
           </div>
         )}
 
-        {/* 통화 + 금액 가로 배치 */}
+        {/* Currency + amount side by side */}
         <div className="grid grid-cols-[140px_1fr] gap-4">
           <div className="space-y-2">
             <Label htmlFor="currency">

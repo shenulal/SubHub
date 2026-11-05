@@ -40,7 +40,7 @@ vi.mock("@/components/integrations/sync-logs-table", () => ({
 }));
 
 describe("IntegrationDetailClient", () => {
-  it("로딩 상태를 표시한다", async () => {
+  it("shows the loading state", async () => {
     fetchSpy.mockResolvedValue({ ok: true, json: async () => ({ logs: [] }) });
     mockUseShow.mockReturnValue({
       query: { data: undefined, isLoading: true },
@@ -50,10 +50,10 @@ describe("IntegrationDetailClient", () => {
       render(<IntegrationDetailClient id="int-1" canManage />);
     });
 
-    expect(screen.getByText(/연동을 불러오는 중/)).toBeInTheDocument();
+    expect(screen.getByText(/Loading integration/)).toBeInTheDocument();
   });
 
-  it("데이터가 없으면 안내 메시지를 표시한다", async () => {
+  it("shows a notice when there is no data", async () => {
     fetchSpy.mockResolvedValue({ ok: true, json: async () => ({ logs: [] }) });
     mockUseShow.mockReturnValue({
       query: { data: undefined, isLoading: false },
@@ -63,10 +63,10 @@ describe("IntegrationDetailClient", () => {
       render(<IntegrationDetailClient id="int-1" canManage />);
     });
 
-    expect(screen.getByText(/연동을 찾을 수 없습니다/)).toBeInTheDocument();
+    expect(screen.getByText(/Integration not found/)).toBeInTheDocument();
   });
 
-  it("상세/설정/로그 컴포넌트를 렌더링한다", async () => {
+  it("renders the detail, settings and log components", async () => {
     fetchSpy.mockResolvedValue({ ok: true, json: async () => ({ logs: [] }) });
     mockUseShow.mockReturnValue({
       query: {

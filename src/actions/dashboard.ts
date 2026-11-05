@@ -15,7 +15,7 @@ import type {
 } from "@/types/dashboard";
 
 /**
- * 대시보드 통계 데이터 조회
+ * Get dashboard statistics
  */
 export async function getDashboardStats(): Promise<DashboardStats> {
   const { organizationId } = await requireOrganization();
@@ -33,7 +33,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
       }),
     ]);
 
-  // 월간 비용 계산 (YEARLY는 /12, QUARTERLY는 /3)
+  // Monthly cost (YEARLY /12, QUARTERLY /3)
   const totalMonthlyCost = costData.reduce((sum, sub) => {
     const amount = Number(sub.amount);
     if (sub.billingCycle === "YEARLY") return sum + amount / 12;
@@ -53,7 +53,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
 }
 
 /**
- * ACTIVE 앱 중 구독이 연결되지 않은 앱 수 조회
+ * Count ACTIVE apps that have no linked subscription
  */
 export async function getAppsWithoutSubscriptions(): Promise<{
   count: number;
@@ -78,7 +78,7 @@ export async function getAppsWithoutSubscriptions(): Promise<{
 }
 
 /**
- * 퇴사자 미회수 계정 수 조회
+ * Count unrecovered accounts of terminated users
  */
 export async function getTerminatedUsersCount(): Promise<number> {
   const { organizationId } = await requireOrganization();
@@ -93,7 +93,7 @@ export async function getTerminatedUsersCount(): Promise<number> {
 }
 
 /**
- * 퇴사자 중 구독 배정(SubscriptionUser)이 남아있는 사용자 수 조회
+ * Count terminated users who still have subscription assignments (SubscriptionUser)
  */
 export async function getTerminatedUsersWithSubCount(): Promise<number> {
   const { organizationId } = await requireOrganization();
@@ -108,7 +108,7 @@ export async function getTerminatedUsersWithSubCount(): Promise<number> {
 }
 
 /**
- * 퇴사자의 미회수 구독 배정(SubscriptionUser) 건수 조회
+ * Count unrecovered subscription assignments (SubscriptionUser) of terminated users
  */
 export async function getTerminatedUsersSubAssignmentCount(): Promise<number> {
   const { organizationId } = await requireOrganization();
@@ -124,8 +124,8 @@ export async function getTerminatedUsersSubAssignmentCount(): Promise<number> {
 }
 
 /**
- * 30일 이내 갱신 예정 구독 조회 (최대 5개)
- * @param options.teamId - 팀 ID (MEMBER role 시 해당 팀의 구독만 조회)
+ * Get subscriptions renewing within 30 days (max 5)
+ * @param options.teamId - Team ID (for the MEMBER role, only that team's subscriptions)
  */
 export async function getUpcomingRenewals(
   options: { teamId?: string | null } = {}
@@ -173,7 +173,7 @@ export async function getUpcomingRenewals(
 }
 
 /**
- * 카테고리별 앱 분포 조회
+ * Get app distribution by category
  */
 export async function getAppsByCategory(): Promise<CategoryDistribution[]> {
   const { organizationId } = await requireOrganization();
@@ -194,8 +194,8 @@ export async function getAppsByCategory(): Promise<CategoryDistribution[]> {
 }
 
 /**
- * 최근 활동 조회 (최대 10개)
- * @param options.userId - 사용자 ID (MEMBER role 시 본인 활동만 조회)
+ * Get recent activity (max 10)
+ * @param options.userId - User ID (for the MEMBER role, only the user's own activity)
  */
 export async function getRecentActivity(
   options: { userId?: string } = {}
@@ -213,15 +213,15 @@ export async function getRecentActivity(
   });
 
   const actionDescriptions: Record<string, string> = {
-    CREATE_APP: "앱을 추가했습니다",
-    UPDATE_APP: "앱을 수정했습니다",
-    DELETE_APP: "앱을 삭제했습니다",
-    CREATE_SUBSCRIPTION: "구독을 등록했습니다",
-    UPDATE_SUBSCRIPTION: "구독을 수정했습니다",
-    DELETE_SUBSCRIPTION: "구독을 삭제했습니다",
-    USER_TERMINATED: "사용자를 퇴사 처리했습니다",
-    REVOKE_APP_ACCESS: "앱 접근 권한을 회수했습니다",
-    GRANT_APP_ACCESS: "앱 접근 권한을 부여했습니다",
+    CREATE_APP: "Added an app",
+    UPDATE_APP: "Updated an app",
+    DELETE_APP: "Deleted an app",
+    CREATE_SUBSCRIPTION: "Registered a subscription",
+    UPDATE_SUBSCRIPTION: "Updated a subscription",
+    DELETE_SUBSCRIPTION: "Deleted a subscription",
+    USER_TERMINATED: "Offboarded a user",
+    REVOKE_APP_ACCESS: "Revoked app access",
+    GRANT_APP_ACCESS: "Granted app access",
   };
 
   return logs.map((log) => ({
@@ -237,10 +237,10 @@ export async function getRecentActivity(
 }
 
 /**
- * 구독 이상(Anomaly) 감지
- * - FLAT_RATE: 배정된 사용자가 0명인 활성 구독
- * - PER_SEAT: usedLicenses < totalLicenses인 활성 구독
- * 최대 5개까지 반환
+ * Detect subscription anomalies
+ * - FLAT_RATE: active subscriptions with zero assigned users
+ * - PER_SEAT: active subscriptions where usedLicenses < totalLicenses
+ * Returns at most 5
  */
 export async function getSubscriptionAnomalies(): Promise<
   SubscriptionAnomalyItem[]
@@ -248,7 +248,7 @@ export async function getSubscriptionAnomalies(): Promise<
   const { organizationId } = await requireOrganization();
 
   const [flatRateAnomalies, perSeatAnomalies] = await Promise.all([
-    // FLAT_RATE: 배정 사용자 0명인 활성 구독
+    // FLAT_RATE: active subscriptions with zero assigned users
     prisma.subscription.findMany({
       where: {
         organizationId,
@@ -259,7 +259,7 @@ export async function getSubscriptionAnomalies(): Promise<
       include: { app: { select: { name: true } } },
       take: 5,
     }),
-    // PER_SEAT: 여유 시트가 있는 활성 구독
+    // PER_SEAT: active subscriptions with spare seats
     prisma.subscription.findMany({
       where: {
         organizationId,
@@ -304,8 +304,8 @@ export async function getSubscriptionAnomalies(): Promise<
 }
 
 /**
- * Extension 온보딩 미완료 활성 사용자 수 조회
- * - Extension 디바이스가 설치되어 있지만 온보딩을 완료하지 않은 사용자
+ * Count active users who have not completed extension onboarding
+ * - Users with an extension device installed but onboarding not completed
  */
 export async function getPendingOnboardingCount(): Promise<number> {
   const { organizationId } = await requireOrganization();
@@ -322,7 +322,7 @@ export async function getPendingOnboardingCount(): Promise<number> {
 }
 
 /**
- * 리포트용 갱신 목록 조회 (전체 기간, 기간별 분류)
+ * Get renewals for reports (all periods, grouped by period)
  */
 export async function getRenewalReportData(
   filters: {
@@ -391,8 +391,8 @@ export async function getRenewalReportData(
     orderBy: { renewalDate: "asc" },
   });
 
-  // 안전장치: autoRenewal=true이지만 renewalDate가 과거인 구독 조회
-  // 크론잡 미실행 시에도 리포트가 정상 동작하도록 함
+  // Safeguard: fetch subscriptions with autoRenewal=true but a past renewalDate
+  // so the report still works when the cron job has not run
   const overdueWhere: Record<string, unknown> = {
     organizationId,
     status: "ACTIVE",
@@ -431,10 +431,10 @@ export async function getRenewalReportData(
     orderBy: { renewalDate: "asc" },
   });
 
-  // 이미 기존 쿼리에 포함된 구독 ID 집합
+  // Subscription IDs already included in the existing query
   const existingIds = new Set(subscriptions.map((s) => s.id));
 
-  // 과거 갱신일을 미래로 계산하여 90일 이내인 구독만 추가
+  // Roll past renewal dates forward and add only those within 90 days
   const overdueWithCalculatedDates = overdueSubscriptions
     .filter((sub) => !existingIds.has(sub.id) && sub.renewalDate)
     .map((sub) => {
@@ -443,7 +443,7 @@ export async function getRenewalReportData(
     })
     .filter((sub) => sub.renewalDate <= ninetyDaysFromNow);
 
-  // 기존 결과와 병합
+  // Merge with existing results
   const allSubscriptions = [...subscriptions, ...overdueWithCalculatedDates];
 
   const mapToRenewal = (sub: (typeof allSubscriptions)[0]): UpcomingRenewal => {

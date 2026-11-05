@@ -5,8 +5,8 @@ const isDev = process.env.NODE_ENV === "development";
 /**
  * Pino Logger
  * - JSON output (production) / pretty print (development via pipe)
- * - 환경별 로그 레벨 (debug for dev, info for prod)
- * - 민감 정보 자동 마스킹
+ * - per-environment log level (debug for dev, info for prod)
+ * - automatic masking of sensitive data
  */
 export const logger = pino({
   level: isDev ? "debug" : "info",
@@ -29,7 +29,7 @@ export const logger = pino({
       "*.cookie",
       "req.headers.authorization",
       "req.headers.cookie",
-      // payload 내 민감 정보 (Server Action withLogging)
+      // sensitive data in payload (Server Action withLogging)
       "payload.password",
       "payload.token",
       "payload.secret",
@@ -43,7 +43,7 @@ export const logger = pino({
       "payload.*.privateKey",
       "payload.credentials.privateKey",
       "payload.credentials.secret",
-      // request body 내 민감 정보 (API Route withLogging)
+      // sensitive data in request body (API Route withLogging)
       "body.password",
       "body.token",
       "body.secret",
@@ -57,7 +57,7 @@ export const logger = pino({
       "body.*.privateKey",
       "body.credentials.privateKey",
       "body.credentials.secret",
-      // response body 내 민감 정보 (API Route withLogging)
+      // sensitive data in response body (API Route withLogging)
       "responseBody.password",
       "responseBody.token",
       "responseBody.secret",

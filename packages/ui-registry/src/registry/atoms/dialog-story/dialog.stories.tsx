@@ -118,28 +118,28 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 /**
- * 기본 Dialog 모달입니다. 프로필 수정 폼 예제로 제목, 설명, 입력 필드, 버튼을 포함하며,
- * 중요한 작업이나 추가 정보 입력이 필요할 때 사용합니다. 모달 오버레이로 집중도를 높입니다.
+ * The default Dialog modal. The edit-profile form example includes a title, description, input fields and buttons;
+ * use it for important tasks or when extra input is needed. The modal overlay keeps the user focused.
  */
 export const Default: Story = {
   render: () => <DialogDemo />,
 };
 
 /**
- * 커스텀 닫기 버튼이 있는 Dialog입니다. 링크 공유 UI 예제로 읽기 전용 input과 복사 버튼을 제공하며,
- * DialogClose를 사용해 취소 액션을 구현합니다. 공유, 알림 등 정보 표시용 모달에 적합합니다.
+ * A Dialog with a custom close button. The share-link example provides a read-only input and a copy button,
+ * and uses DialogClose for the cancel action. Suited to informational modals such as sharing or notices.
  */
 export const CustomCloseButton: Story = {
   render: () => <CustomCloseButtonDemo />,
 };
 
 /**
- * Ref 사용 예제: DialogContent에 ref를 전달하여 Radix UI primitive에 접근합니다.
- * 이 예제는 프로그래매틱하게 Dialog를 열고 닫는 방법을 보여줍니다.
+ * Ref example: pass a ref to DialogContent to access the Radix UI primitive.
+ * This example shows how to open and close the Dialog programmatically.
  */
 export const WithRef: Story = {
   render: () => {
-    // 🎯 목적: Radix UI Dialog primitive의 ElementRef 타입을 사용하여 ref 생성
+    // 🎯 Purpose: Create the ref using the Radix UI Dialog primitive's ElementRef type
     const contentRef =
       useRef<React.ElementRef<typeof DialogPrimitive.Content>>(null);
     const [open, setOpen] = useState(false);
@@ -148,7 +148,7 @@ export const WithRef: Story = {
     const handleSubmit = (e: React.FormEvent) => {
       e.preventDefault();
       setMessage("Form submitted successfully!");
-      // 3초 후 Dialog 닫기
+      // Close the Dialog after 3 seconds
       setTimeout(() => {
         setOpen(false);
         setMessage("");
@@ -214,18 +214,18 @@ export const WithRef: Story = {
     );
   },
   play: async ({ canvasElement }) => {
-    // 🎯 목적: play function을 통해 Dialog ref와 상태 제어를 테스트
+    // 🎯 Purpose: Test the Dialog ref and state control via a play function
     const canvas = within(canvasElement);
 
-    // "Open via State" 버튼으로 Dialog 열기
+    // Open the Dialog with the "Open via State" button
     const openButton = canvas.getByRole("button", { name: "Open via State" });
     await userEvent.click(openButton);
 
-    // Dialog가 열렸는지 확인
+    // Verify the Dialog is open
     const dialogTitle = await canvas.findByText("Controlled Dialog Example");
     await expect(dialogTitle).toBeVisible();
 
-    // Dialog 상태 텍스트 확인
+    // Check the Dialog state text
     const stateText = canvas.getByText(/Dialog state:/);
     await expect(stateText).toHaveTextContent("Dialog state: Open");
   },

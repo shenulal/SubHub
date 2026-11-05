@@ -2,7 +2,7 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
-/* Tailwind dark mode variant: .dark 클래스를 가진 요소와 그 자식 모두에 적용 */
+/* Tailwind dark mode variant: applies to elements with the .dark class and all their descendants */
 @custom-variant dark (&:where(.dark, .dark *));
 
 /* ─── Materio design system (themeselection/materio-mui-nextjs-admin-template-free, MIT) ───
@@ -189,13 +189,13 @@
   --color-chart-4: var(--chart-4);
   --color-chart-5: var(--chart-5);
 
-  /* Purple 색상 계열 */
+  /* Purple color family */
   --color-purple-primary: var(--purple-primary);
   --color-purple-secondary: var(--purple-secondary);
   --color-purple-tertiary: var(--purple-tertiary);
   --color-purple-gray: var(--purple-gray);
 
-  /* Magenta 색상 계열 */
+  /* Magenta color family */
   --color-magenta-primary: var(--magenta-primary);
   --color-magenta-secondary: var(--magenta-secondary);
   --color-magenta-tertiary: var(--magenta-tertiary);
@@ -227,7 +227,7 @@
   --shadow-xl: var(--shadow-xl);
   --shadow-2xl: var(--shadow-2xl);
 
-  /* 애니메이션 */
+  /* Animations */
   --animate-tada: tada 1s ease-in-out;
 }
 
@@ -279,7 +279,7 @@
   }
 }
 
-/* Tada 애니메이션 키프레임 */
+/* Tada animation keyframes */
 @keyframes tada {
   0% {
     transform: scale(1);
@@ -308,13 +308,13 @@
   animation: var(--animate-tada);
 }
 
-/* Optimization Hero 그라데이션 배경 */
+/* Optimization hero gradient background */
 .optimization-hero-gradient {
   background-image: linear-gradient(135deg, #8c57ff 0%, #a379ff 55%, #c6abff 100%);
   background-size: cover;
 }
 
-/* 다크모드: Figma 디자인 기반 그라데이션 */
+/* Dark mode: gradient based on the Figma design */
 .dark .optimization-hero-gradient {
   background-image: linear-gradient(135deg, #7e4ee6 0%, #8c57ff 60%, #a379ff 100%);
   background-size: cover;

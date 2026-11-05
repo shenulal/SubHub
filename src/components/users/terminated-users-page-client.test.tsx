@@ -28,7 +28,7 @@ vi.mock("next/image", () => ({
   ),
 }));
 
-// Mock next/navigation (next-auth 내부 의존 차단)
+// Mock next/navigation (blocks the internal next-auth dependency)
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ push: vi.fn(), replace: vi.fn() }),
 }));
@@ -44,11 +44,11 @@ const mockTerminatedUsers = [
   {
     id: "user-1",
     email: "terminated@example.com",
-    name: "퇴사자",
+    name: "Terminated User",
     avatarUrl: null,
     role: "MEMBER",
     status: "TERMINATED",
-    department: "개발팀",
+    department: "Engineering",
     terminatedAt: new Date("2024-01-05"),
     appAccesses: [
       {
@@ -73,37 +73,35 @@ describe("TerminatedUsersPageClient", () => {
     });
   });
 
-  it("퇴사자 목록을 렌더링한다", () => {
+  it("renders the terminated users list", () => {
     render(<TerminatedUsersPageClient />);
 
-    expect(screen.getByText("퇴사자")).toBeInTheDocument();
+    expect(screen.getByText("Terminated User")).toBeInTheDocument();
     expect(screen.getByText("terminated@example.com")).toBeInTheDocument();
   });
 
-  it("로딩 중이면 로딩 상태를 표시한다", () => {
+  it("shows the loading state while loading", () => {
     mockUseList.mockReturnValueOnce({
       query: { data: undefined, isLoading: true },
     });
 
     render(<TerminatedUsersPageClient />);
 
-    expect(screen.getByText(/퇴사자 목록을 불러오는 중/)).toBeInTheDocument();
+    expect(screen.getByText(/Loading terminated users/)).toBeInTheDocument();
   });
 
-  it("데이터가 없으면 빈 배열을 전달한다", () => {
+  it("passes an empty array when there is no data", () => {
     mockUseList.mockReturnValueOnce({
       query: { data: { data: [], total: 0 }, isLoading: false },
     });
 
     render(<TerminatedUsersPageClient />);
 
-    // TerminatedUsersList에서 빈 목록 처리
-    expect(
-      screen.getByText("미회수 접근 권한이 있는 퇴사자가 없습니다")
-    ).toBeInTheDocument();
+    // TerminatedUsersList handles the empty list
+    expect(screen.getByText("No terminated users")).toBeInTheDocument();
   });
 
-  it("useList를 올바른 파라미터로 호출한다", () => {
+  it("calls useList with the correct parameters", () => {
     render(<TerminatedUsersPageClient />);
 
     expect(mockUseList).toHaveBeenCalledWith({

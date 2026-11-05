@@ -5,15 +5,15 @@ import { auth } from "@/lib/auth";
 
 /**
  * GET /api/v1/subscriptions/calendar
- * - 캘린더 데이터 조회 (year, month 파라미터)
- * - 특정 날짜 갱신 조회 (date 파라미터)
+ * - Get calendar data (year, month parameters)
+ * - Get renewals for a specific date (date parameter)
  */
 import { withLogging } from "@/lib/logging";
 
 /**
  * GET /api/v1/subscriptions/calendar
- * - 캘린더 데이터 조회 (year, month 파라미터)
- * - 특정 날짜 갱신 조회 (date 파라미터)
+ * - Get calendar data (year, month parameters)
+ * - Get renewals for a specific date (date parameter)
  */
 export const GET = withLogging(
   "GET /api/v1/subscriptions/calendar",
@@ -25,14 +25,14 @@ export const GET = withLogging(
 
     const { searchParams } = new URL(request.url);
 
-    // 특정 날짜 조회
+    // Specific date
     const dateParam = searchParams.get("date");
     if (dateParam) {
       const result = await getRenewalsByDate(dateParam);
       return NextResponse.json(result);
     }
 
-    // 캘린더 월별 데이터 조회
+    // Monthly calendar data
     const today = new Date();
     const yearParam = searchParams.get("year");
     const monthParam = searchParams.get("month");
@@ -40,7 +40,7 @@ export const GET = withLogging(
     const year = yearParam ? parseInt(yearParam, 10) : today.getFullYear();
     const month = monthParam ? parseInt(monthParam, 10) : today.getMonth() + 1;
 
-    // 유효성 검증
+    // Validation
     const validYear = year >= 2020 && year <= 2100 ? year : today.getFullYear();
     const validMonth = month >= 1 && month <= 12 ? month : today.getMonth() + 1;
 

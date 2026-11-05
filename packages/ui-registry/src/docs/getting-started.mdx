@@ -6,11 +6,11 @@ import { Meta } from '@storybook/addon-docs/blocks';
 
 Welcome to the **shadcn-storybook-registry**!
 
-이 프로젝트는 shadcn/ui 컴포넌트의 Storybook 스토리를 제공하는 레지스트리입니다.
+This project is a registry that provides Storybook stories for shadcn/ui components.
 
 ## Installation
 
-shadcn CLI를 사용하여 원하는 컴포넌트 스토리를 설치할 수 있습니다:
+Use the shadcn CLI to install the component stories you need:
 
 ```bash
 npx shadcn@latest add http://localhost:3000/v2/r/button-story.json
@@ -18,7 +18,7 @@ npx shadcn@latest add http://localhost:3000/v2/r/button-story.json
 
 ## Usage
 
-설치한 스토리 파일을 Storybook에서 바로 사용할 수 있습니다:
+Installed story files can be used in Storybook straight away:
 
 ```tsx
 import { Button } from "@/components/ui/button";
@@ -30,9 +30,9 @@ export default function App() {
 
 ## Available Components
 
-현재 46개 컴포넌트 스토리가 제공됩니다:
+46 component stories are currently available:
 
-### UI Components (46개)
+### UI Components (46)
 - **Form**: Button, Input, Checkbox, Radio, Select, Switch, Textarea, Label
 - **Layout**: Card, Separator, Aspect Ratio, Resizable, Scroll Area
 - **Navigation**: Accordion, Tabs, Breadcrumb, Navigation Menu, Menubar, Sidebar
@@ -41,33 +41,33 @@ export default function App() {
 - **Data Display**: Badge, Avatar, Table, Calendar, Date Picker, Chart
 - **Interactive**: Slider, Toggle, Toggle Group, Command, Combobox, Context Menu, Dropdown Menu
 
-### Design Tokens (5개)
+### Design Tokens (5)
 - Color, Typography, Spacing, Shadow, Radius
 
-### Templates (1개)
+### Templates (1)
 - Dashboard Template
 
 ## Features
 
-✅ **CSF 3.0 Format**: 최신 Storybook 스토리 형식
-✅ **TypeScript**: 완전한 타입 안전성
-✅ **Light/Dark Mode**: 테마 전환 지원
-✅ **Play Functions**: 자동화된 인터랙션 테스트
-✅ **Args Controls**: 동적 props 조작
-✅ **Accessibility**: WCAG 2.1 AA 준수
+✅ **CSF 3.0 Format**: the latest Storybook story format
+✅ **TypeScript**: full type safety
+✅ **Light/Dark Mode**: theme switching support
+✅ **Play Functions**: automated interaction tests
+✅ **Args Controls**: dynamic props manipulation
+✅ **Accessibility**: WCAG 2.1 AA compliant
 
 ## Development
 
-로컬 개발을 위해 다음 명령어를 사용하세요:
+Use the following commands for local development:
 
 ```bash
-# Storybook 개발 서버 실행
+# Run the Storybook development server
 npm run storybook
 
-# Registry 빌드
+# Build the registry
 npm run registry:build
 
-# 테스트 실행
+# Run the tests
 npm run test
 ```
 

@@ -8,13 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface FleetDMInstallGuideProps {
-  /** Sheet 닫기 콜백 */
+  /** Callback when the sheet is closed */
   onClose?: () => void;
 }
 
 /**
- * FleetDM 에이전트 설치 가이드 컴포넌트
- * OS별 설치 방법을 탭으로 제공합니다.
+ * FleetDM agent installation guide component
+ * Shows installation steps per OS in tabs.
  */
 export function FleetDMInstallGuide({ onClose }: FleetDMInstallGuideProps) {
   const t = useTranslations("devices.installGuide");

@@ -42,7 +42,7 @@ module.exports = (env, argv) => {
       minimize: isProduction,
     },
     plugins: [
-      // 빌드 시 환경 변수 주입 (토큰/URL 자동 포함)
+      // Inject environment variables at build time (token/URL embedded automatically)
       new webpack.DefinePlugin({
         'process.env.BUILD_API_URL': JSON.stringify(process.env.BUILD_API_URL || 'http://localhost:3000'),
         'process.env.BUILD_API_CREDENTIAL': JSON.stringify(process.env.BUILD_API_CREDENTIAL || ''),

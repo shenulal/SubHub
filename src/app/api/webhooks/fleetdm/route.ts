@@ -24,10 +24,10 @@ export const POST = withLogging(
     const startTime = Date.now();
 
     try {
-      // 1. 원본 페이로드 읽기
+      // 1. Read the raw payload
       const rawBody = await request.text();
 
-      // 2. 서명 검증 (설정된 경우)
+      // 2. Verify the signature (if configured)
       if (WEBHOOK_SECRET) {
         const signature = request.headers.get("x-fleet-signature");
         const isValid = verifyWebhookSignature(
@@ -49,7 +49,7 @@ export const POST = withLogging(
         }
       }
 
-      // 3. 페이로드 파싱
+      // 3. Parse the payload
       let payload: {
         timestamp?: string;
         type?: string;
@@ -67,7 +67,7 @@ export const POST = withLogging(
         );
       }
 
-      // 4. 이벤트 타입 검증
+      // 4. Validate the event type
       const eventType = parseWebhookEventType(payload.type || "");
 
       if (!eventType) {
@@ -82,7 +82,7 @@ export const POST = withLogging(
         );
       }
 
-      // 5. 조직 ID 확인
+      // 5. Check the organization ID
       const organizationId = await getOrganizationIdFromWebhook(
         payload.team_id
       );
@@ -95,7 +95,7 @@ export const POST = withLogging(
         );
       }
 
-      // 6. 이벤트 처리
+      // 6. Process the event
       switch (eventType) {
         case "host.created":
         case "host.updated":
@@ -120,7 +120,7 @@ export const POST = withLogging(
 
         case "vulnerability.detected":
         case "policy.failed":
-          // TODO: 취약점/정책 이벤트 처리 (Phase 2)
+          // TODO: handle vulnerability/policy events (Phase 2)
           logger.info(
             `[FleetDM Webhook] ${eventType} event received (not implemented)`
           );
@@ -130,7 +130,7 @@ export const POST = withLogging(
           logger.info(`[FleetDM Webhook] Unhandled event type: ${eventType}`);
       }
 
-      // 7. 성공 응답
+      // 7. Success response
       const duration = Date.now() - startTime;
       await logWebhookEvent(eventType, true);
 

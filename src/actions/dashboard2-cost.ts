@@ -1,5 +1,5 @@
 // src/actions/dashboard2-cost.ts
-// @deprecated Dashboard2 전용 비용 액션. 리포트용은 @/actions/reports/cost-analytics 사용.
+// @deprecated Dashboard2-only cost actions. For reports use @/actions/reports/cost-analytics.
 "use server";
 
 import { requireOrganization } from "@/lib/auth/require-auth";
@@ -13,8 +13,8 @@ import {
 } from "./dashboard2-cost.constants";
 
 /**
- * 카테고리별 지출 조회 (전월 대비 증감률 포함)
- * 증감률은 전월에 시작된 구독 vs 이번 달 시작된 구독 기준으로 추정
+ * Get spend by category (including month-over-month change)
+ * The change rate is estimated from subscriptions started last month vs this month
  */
 export async function getSpendByCategory(): Promise<SpendByCategory[]> {
   const { organizationId } = await requireOrganization();
@@ -22,7 +22,7 @@ export async function getSpendByCategory(): Promise<SpendByCategory[]> {
   const now = new Date();
   const currentMonthStart = new Date(now.getFullYear(), now.getMonth(), 1);
 
-  // 현재 활성 구독 조회
+  // Fetch currently active subscriptions
   const subscriptions = await prisma.subscription.findMany({
     where: {
       organizationId,
@@ -31,7 +31,7 @@ export async function getSpendByCategory(): Promise<SpendByCategory[]> {
     include: { app: { select: { category: true } } },
   });
 
-  // 현재 월 카테고리별 합계 및 구독 건수
+  // Current-month totals and subscription counts per category
   const categoryTotals = new Map<string, number>();
   const categoryCounts = new Map<string, number>();
   for (const sub of subscriptions) {
@@ -41,12 +41,12 @@ export async function getSpendByCategory(): Promise<SpendByCategory[]> {
     categoryCounts.set(category, (categoryCounts.get(category) || 0) + 1);
   }
 
-  // 전월 기준 카테고리별 합계 추정
-  // 전월 이전에 시작된 구독만 포함 (이번 달에 새로 시작된 구독 제외)
+  // Estimate last month's totals per category
+  // Include only subscriptions started before last month (exclude ones started this month)
   const previousCategoryTotals = new Map<string, number>();
   for (const sub of subscriptions) {
     const startDate = sub.startDate ? new Date(sub.startDate) : null;
-    // 전월 이전에 시작된 구독만 포함
+    // Include only subscriptions started before last month
     if (startDate && startDate < currentMonthStart) {
       const category = sub.app.category || "Other";
       const current = previousCategoryTotals.get(category) || 0;
@@ -62,14 +62,14 @@ export async function getSpendByCategory(): Promise<SpendByCategory[]> {
   const result: SpendByCategory[] = Array.from(categoryTotals.entries())
     .map(([category, amount]) => {
       const previousAmount = previousCategoryTotals.get(category) || 0;
-      // 증감률 계산: ((현재 - 이전) / 이전) * 100
+      // Change rate: ((current - previous) / previous) * 100
       let changeRate: number | undefined;
       if (previousAmount > 0) {
         changeRate = Math.round(
           ((amount - previousAmount) / previousAmount) * 100
         );
       } else if (amount > 0) {
-        // 전월에 없던 카테고리면 신규 (100% 증가로 표시)
+        // A category absent last month is new (shown as a 100% increase)
         changeRate = 100;
       }
 
@@ -83,13 +83,13 @@ export async function getSpendByCategory(): Promise<SpendByCategory[]> {
       };
     })
     .sort((a, b) => b.percentage - a.percentage)
-    .slice(0, 5); // Top 5 카테고리
+    .slice(0, 5); // Top 5 categories
 
   return result;
 }
 
 /**
- * Top Spending Apps 조회 (사용자 수 + 미사용률 포함)
+ * Get top spending apps (including user count and unused rate)
  */
 export async function getTopSpendingApps(
   limit: number = 10
@@ -120,7 +120,7 @@ export async function getTopSpendingApps(
   return subscriptions.map((sub) => {
     const totalLicenses = sub.totalLicenses || 0;
     const usedLicenses = sub.app._count.userAccesses;
-    // 미사용률 계산: (총 라이선스 - 사용 중) / 총 라이선스 * 100
+    // Unused rate: (total licenses - in use) / total licenses * 100
     const unusedRate =
       totalLicenses > 0
         ? Math.round(((totalLicenses - usedLicenses) / totalLicenses) * 100)
@@ -138,10 +138,10 @@ export async function getTopSpendingApps(
   });
 }
 
-// ==================== 예산 관련 헬퍼 함수 ====================
+// ==================== Budget helpers ====================
 
 /**
- * 대시보드용 예산 설정 조회
+ * Get budget settings for the dashboard
  */
 export async function getBudgetSettingsForDashboard(
   organizationId: string
@@ -174,21 +174,21 @@ export async function getBudgetSettingsForDashboard(
 }
 
 /**
- * 대시보드 차트용 월별 예산 조회
- * - monthlyBudget이 설정되어 있으면 해당 값 반환
- * - 설정되지 않았으면 (null) 전월 카드 매입 승인 내역 총액 반환
+ * Get the monthly budget for the dashboard chart
+ * - If monthlyBudget is set, return that value
+ * - If not set (null), return last month's total approved card purchases
  */
 export async function getMonthlyBudgetForDashboard(
   organizationId: string,
   month: Date,
   budgetSettings: BudgetSettings
 ): Promise<number> {
-  // 예산이 설정되어 있으면 해당 값 반환
+  // Return the budget if it is set
   if (budgetSettings.monthlyBudget !== null) {
     return budgetSettings.monthlyBudget;
   }
 
-  // Fallback: 전월 카드 매입 승인 내역 총액
+  // Fallback: last month's total approved card purchases
   const prevMonth = new Date(month);
   prevMonth.setMonth(prevMonth.getMonth() - 1);
 
@@ -209,14 +209,14 @@ export async function getMonthlyBudgetForDashboard(
     _sum: { useAmt: true },
   });
 
-  // Decimal 타입 처리
+  // Handle the Decimal type
   const sum = cardTransactions._sum.useAmt;
   if (sum === null) {
-    // 전월 카드 매입 내역도 없으면 0 반환
+    // Return 0 when there were no card purchases last month either
     return 0;
   }
 
-  // Prisma Decimal은 toNumber() 메서드를 가짐
+  // Prisma Decimal has a toNumber() method
   if (typeof sum === "object" && "toNumber" in sum) {
     return (sum as { toNumber: () => number }).toNumber();
   }

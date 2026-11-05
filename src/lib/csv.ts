@@ -1,6 +1,6 @@
 // src/lib/csv.ts
 
-// 유효한 앱 카테고리
+// Valid app categories
 const VALID_CATEGORIES = [
   "COLLABORATION",
   "PRODUCTIVITY",
@@ -17,7 +17,7 @@ const VALID_CATEGORIES = [
   "OTHER",
 ] as const;
 
-// 유효한 결제 주기
+// Valid billing cycles
 const VALID_BILLING_CYCLES = ["MONTHLY", "QUARTERLY", "YEARLY"] as const;
 
 export interface AppCSVRow {
@@ -46,7 +46,7 @@ export interface UserCSVRow {
   employeeId?: string;
 }
 
-// 유효한 사용자 역할
+// Valid user roles
 const VALID_USER_ROLES = ["ADMIN", "APPROVER", "MEMBER", "VIEWER"] as const;
 
 export interface ValidationError {
@@ -61,7 +61,7 @@ export interface ValidationResult<T> {
 }
 
 /**
- * 구분자 자동 감지 (탭 vs 쉼표)
+ * Auto-detect the delimiter (tab vs comma)
  */
 function detectDelimiter(line: string): string {
   const commaCount = (line.match(/,/g) || []).length;
@@ -70,13 +70,13 @@ function detectDelimiter(line: string): string {
 }
 
 /**
- * CSV 문자열을 객체 배열로 파싱
+ * Parse a CSV string into an array of objects
  */
 export function parseCSV(csvText: string): Record<string, string>[] {
   const lines = csvText.split(/\r?\n/);
   if (lines.length < 2) return [];
 
-  // 첫 줄에서 구분자 감지
+  // Detect the delimiter from the first line
   const delimiter = detectDelimiter(lines[0]);
   const headers = parseCSVLine(lines[0], delimiter);
   const results: Record<string, string>[] = [];
@@ -99,7 +99,7 @@ export function parseCSV(csvText: string): Record<string, string>[] {
 }
 
 /**
- * CSV 라인 파싱 (인용 부호 처리)
+ * Parse a CSV line (handles quotes)
  */
 function parseCSVLine(line: string, delimiter: string = ","): string[] {
   const result: string[] = [];
@@ -129,7 +129,7 @@ function parseCSVLine(line: string, delimiter: string = ","): string[] {
 }
 
 /**
- * 앱 CSV 데이터 유효성 검증
+ * Validate app CSV data
  */
 export function validateAppCSV(
   rows: Record<string, string>[]
@@ -140,12 +140,12 @@ export function validateAppCSV(
   rows.forEach((row, index) => {
     const rowNum = index + 1;
 
-    // 필수 필드 검증
+    // Validate required fields
     if (!row.name?.trim()) {
       errors.push({
         row: rowNum,
         field: "name",
-        message: `${rowNum}행: 앱 이름이 필요합니다`,
+        message: `Row ${rowNum}: App name is required`,
       });
       return;
     }
@@ -154,12 +154,12 @@ export function validateAppCSV(
       errors.push({
         row: rowNum,
         field: "category",
-        message: `${rowNum}행: 카테고리가 필요합니다`,
+        message: `Row ${rowNum}: Category is required`,
       });
       return;
     }
 
-    // 카테고리 유효성 검증
+    // Validate category
     const category = row.category.trim().toUpperCase();
     if (
       !VALID_CATEGORIES.includes(category as (typeof VALID_CATEGORIES)[number])
@@ -167,7 +167,7 @@ export function validateAppCSV(
       errors.push({
         row: rowNum,
         field: "category",
-        message: `${rowNum}행: 유효하지 않은 카테고리입니다 (${category}). 허용된 값: ${VALID_CATEGORIES.join(", ")}`,
+        message: `Row ${rowNum}: Invalid category (${category}). Allowed values: ${VALID_CATEGORIES.join(", ")}`,
       });
       return;
     }
@@ -185,7 +185,7 @@ export function validateAppCSV(
 }
 
 /**
- * 구독 CSV 데이터 유효성 검증
+ * Validate subscription CSV data
  */
 export function validateSubscriptionCSV(
   rows: Record<string, string>[]
@@ -196,12 +196,12 @@ export function validateSubscriptionCSV(
   rows.forEach((row, index) => {
     const rowNum = index + 1;
 
-    // 필수 필드 검증
+    // Validate required fields
     if (!row.appName?.trim()) {
       errors.push({
         row: rowNum,
         field: "appName",
-        message: `${rowNum}행: 앱 이름이 필요합니다`,
+        message: `Row ${rowNum}: App name is required`,
       });
       return;
     }
@@ -210,7 +210,7 @@ export function validateSubscriptionCSV(
       errors.push({
         row: rowNum,
         field: "planName",
-        message: `${rowNum}행: 플랜 이름이 필요합니다`,
+        message: `Row ${rowNum}: Plan name is required`,
       });
       return;
     }
@@ -219,12 +219,12 @@ export function validateSubscriptionCSV(
       errors.push({
         row: rowNum,
         field: "billingCycle",
-        message: `${rowNum}행: 결제 주기가 필요합니다`,
+        message: `Row ${rowNum}: Billing cycle is required`,
       });
       return;
     }
 
-    // 결제 주기 유효성 검증
+    // Validate billing cycle
     const billingCycle = row.billingCycle.trim().toUpperCase();
     if (
       !VALID_BILLING_CYCLES.includes(
@@ -234,32 +234,32 @@ export function validateSubscriptionCSV(
       errors.push({
         row: rowNum,
         field: "billingCycle",
-        message: `${rowNum}행: 유효하지 않은 결제 주기입니다 (${billingCycle}). 허용된 값: ${VALID_BILLING_CYCLES.join(", ")}`,
+        message: `Row ${rowNum}: Invalid billing cycle (${billingCycle}). Allowed values: ${VALID_BILLING_CYCLES.join(", ")}`,
       });
       return;
     }
 
-    // 가격 유효성 검증 (선택사항)
+    // Validate price (optional)
     if (row.price?.trim()) {
       const price = parseFloat(row.price.trim());
       if (isNaN(price) || price < 0) {
         errors.push({
           row: rowNum,
           field: "price",
-          message: `${rowNum}행: 가격은 유효한 숫자여야 합니다`,
+          message: `Row ${rowNum}: Price must be a valid number`,
         });
         return;
       }
     }
 
-    // 갱신일 유효성 검증 (선택사항)
+    // Validate renewal date (optional)
     if (row.renewalDate?.trim()) {
       const date = new Date(row.renewalDate.trim());
       if (isNaN(date.getTime())) {
         errors.push({
           row: rowNum,
           field: "renewalDate",
-          message: `${rowNum}행: 날짜 형식이 유효하지 않습니다 (YYYY-MM-DD)`,
+          message: `Row ${rowNum}: Invalid date format (YYYY-MM-DD)`,
         });
         return;
       }
@@ -279,7 +279,7 @@ export function validateSubscriptionCSV(
 }
 
 /**
- * 이메일 유효성 검증
+ * Validate an email address
  */
 function isValidEmail(email: string): boolean {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -287,7 +287,7 @@ function isValidEmail(email: string): boolean {
 }
 
 /**
- * 사용자 CSV 데이터 유효성 검증
+ * Validate user CSV data
  */
 export function validateUserCSV(
   rows: Record<string, string>[]
@@ -299,59 +299,59 @@ export function validateUserCSV(
   rows.forEach((row, index) => {
     const rowNum = index + 1;
 
-    // 이메일 필수 검증
+    // Email is required
     const email = row.email?.trim().toLowerCase();
     if (!email) {
       errors.push({
         row: rowNum,
         field: "email",
-        message: `${rowNum}행: 이메일이 필요합니다`,
+        message: `Row ${rowNum}: Email is required`,
       });
       return;
     }
 
-    // 이메일 형식 검증
+    // Validate email format
     if (!isValidEmail(email)) {
       errors.push({
         row: rowNum,
         field: "email",
-        message: `${rowNum}행: 유효한 이메일 형식이 아닙니다`,
+        message: `Row ${rowNum}: Invalid email format`,
       });
       return;
     }
 
-    // 이메일 중복 검증
+    // Check for duplicate emails
     if (seenEmails.has(email)) {
       errors.push({
         row: rowNum,
         field: "email",
-        message: `${rowNum}행: 중복된 이메일입니다 (${email})`,
+        message: `Row ${rowNum}: Duplicate email (${email})`,
       });
       return;
     }
 
-    // 역할 필수 검증
+    // Role is required
     if (!row.role?.trim()) {
       errors.push({
         row: rowNum,
         field: "role",
-        message: `${rowNum}행: 역할이 필요합니다`,
+        message: `Row ${rowNum}: Role is required`,
       });
       return;
     }
 
-    // 역할 유효성 검증
+    // Validate role
     const role = row.role.trim().toUpperCase();
     if (!VALID_USER_ROLES.includes(role as (typeof VALID_USER_ROLES)[number])) {
       errors.push({
         row: rowNum,
         field: "role",
-        message: `${rowNum}행: 유효하지 않은 역할입니다 (${role}). 허용된 값: ${VALID_USER_ROLES.join(", ")}`,
+        message: `Row ${rowNum}: Invalid role (${role}). Allowed values: ${VALID_USER_ROLES.join(", ")}`,
       });
       return;
     }
 
-    // 중복 체크용 이메일 추가
+    // Track email for duplicate checks
     seenEmails.add(email);
 
     valid.push({

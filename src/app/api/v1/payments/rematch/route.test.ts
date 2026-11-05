@@ -145,7 +145,7 @@ describe("POST /api/v1/payments/rematch", () => {
       user: { id: "user-1", organizationId: "org-1" },
     } as never);
     mockRematchRecords.mockRejectedValue(
-      new Error("재매칭이 이미 진행 중입니다")
+      new Error("Rematching is already in progress")
     );
 
     const req = new NextRequest("http://localhost/api/v1/payments/rematch", {

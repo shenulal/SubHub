@@ -1,16 +1,16 @@
 // src/lib/services/payment/subscription-auto-link.ts
 /**
- * 결제내역 → 구독 자동 연결 유틸리티
- * matchedAppId가 설정된 결제내역에 대해 해당 앱의 ACTIVE 구독을 자동으로 찾아 연결한다.
+ * Payment record → subscription auto-link utility
+ * For payment records with matchedAppId set, finds and links the app's ACTIVE subscription.
  */
 
 import { prisma } from "@/lib/db";
 
 /**
- * 주어진 앱의 활성(ACTIVE) 구독 ID를 반환한다.
- * - appId가 null이면 DB 호출 없이 null 반환
- * - Subscription 모델의 @@unique([appId, organizationId]) 제약으로 앱당 최대 1개 구독
- * - ACTIVE 상태인 경우에만 subscription.id 반환
+ * Returns the ACTIVE subscription ID for the given app.
+ * - Returns null without a DB call when appId is null
+ * - The Subscription model's @@unique([appId, organizationId]) allows at most one subscription per app
+ * - Returns subscription.id only when the status is ACTIVE
  */
 export async function findActiveSubscriptionForApp(
   appId: string | null,

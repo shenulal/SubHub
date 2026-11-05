@@ -4,10 +4,10 @@ import { cn } from "@/lib/utils";
 import { useTranslations } from "next-intl";
 
 /**
- * StatusBalloon 변형 타입
- * - excellent: 👍 최고에요! / Excellent!
- * - perfect: 😍 완벽해요! / Perfect!
- * - outstanding: 🏆 훌륭해요! / Outstanding!
+ * StatusBalloon variant type
+ * - excellent: 👍 Excellent!
+ * - perfect: 😍 Perfect!
+ * - outstanding: 🏆 Outstanding!
  */
 export type StatusBalloonVariant = "excellent" | "perfect" | "outstanding";
 
@@ -24,10 +24,10 @@ const BALLOON_EMOJI: Record<StatusBalloonVariant, string> = {
 
 /**
  * StatusBalloon
- * Figma 디자인 기반 상태 말풍선 컴포넌트
- * - 왼쪽 삼각형 화살표
- * - 흰색 배경 + 그림자
- * - 이모지 + 텍스트 (i18n)
+ * Status speech-bubble component based on the Figma design
+ * - Triangular arrow on the left
+ * - White background + shadow
+ * - Emoji + text (i18n)
  */
 export function StatusBalloon({ variant, className }: StatusBalloonProps) {
   const t = useTranslations("common.statusBalloon");
@@ -37,9 +37,9 @@ export function StatusBalloon({ variant, className }: StatusBalloonProps) {
 
   return (
     <div className={cn("flex items-center", className)}>
-      {/* 왼쪽 삼각형 화살표 */}
+      {/* Left triangular arrow */}
       <div className="border-r-card border-y-[5px] border-r-[6px] border-y-transparent" />
-      {/* 말풍선 박스 */}
+      {/* Speech-bubble box */}
       <div className="bg-card flex h-[22px] items-center rounded px-2 shadow-sm">
         <span className="text-muted-foreground text-[12px] leading-none whitespace-nowrap">
           {emoji} {text}

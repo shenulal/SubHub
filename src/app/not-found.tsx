@@ -87,10 +87,10 @@ export default function NotFound() {
           404
         </h1>
         <p className="text-muted-foreground mt-4 text-lg">
-          요청하신 페이지를 찾을 수 없습니다
+          The page you requested could not be found
         </p>
         <Button asChild className="mt-8 rounded-full" size="default">
-          <Link href="/">홈으로 돌아가기</Link>
+          <Link href="/">Back to home</Link>
         </Button>
       </div>
     </main>

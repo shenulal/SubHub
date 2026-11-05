@@ -3,20 +3,20 @@ import { z } from "zod";
 
 export const integrationCreateSchema = z.object({
   type: z.enum(IntegrationType, {
-    error: "연동 유형을 선택하세요",
+    error: "Select an integration type",
   }),
   domain: z.string().optional(),
-  adminEmail: z.string().email("올바른 이메일을 입력하세요").optional(),
+  adminEmail: z.string().email("Enter a valid email address").optional(),
   serviceAccountEmail: z
     .string()
-    .email("올바른 이메일을 입력하세요")
+    .email("Enter a valid email address")
     .optional(),
   privateKey: z.string().optional(),
 });
 
 export const integrationStatusSchema = z.object({
   status: z.enum(IntegrationStatus, {
-    error: "상태를 선택하세요",
+    error: "Select a status",
   }),
 });
 

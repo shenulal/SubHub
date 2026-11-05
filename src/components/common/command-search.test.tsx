@@ -72,21 +72,21 @@ describe("CommandSearch", () => {
       fireEvent.keyDown(document, { key: "k", metaKey: true });
     });
     const input = await screen.findByPlaceholderText(
-      "구독, 공급사, 구성원, 페이지 검색…"
+      "Search subscriptions, vendors, people, pages…"
     );
     fireEvent.change(input, { target: { value: "sl" } });
     await waitFor(() => expect(search).toHaveBeenCalledWith("sl"));
     expect(await screen.findByText("Slack")).toBeInTheDocument();
-    expect(screen.getByText("구독")).toBeInTheDocument();
-    expect(screen.getByText("갱신 파이프라인")).toBeInTheDocument();
+    expect(screen.getByText("Subscriptions")).toBeInTheDocument();
+    expect(screen.getByText("Renewal pipeline")).toBeInTheDocument();
   });
 
   it("navigates on select and stores the query as a recent search", async () => {
     const search = vi.fn().mockResolvedValue({ success: true, data: result });
     render(<CommandSearch search={search} />);
-    fireEvent.click(screen.getByRole("button", { name: "검색 열기" }));
+    fireEvent.click(screen.getByRole("button", { name: "Open search" }));
     const input = await screen.findByPlaceholderText(
-      "구독, 공급사, 구성원, 페이지 검색…"
+      "Search subscriptions, vendors, people, pages…"
     );
     fireEvent.change(input, { target: { value: "sl" } });
     const item = await screen.findByText("Slack");
@@ -101,9 +101,9 @@ describe("CommandSearch", () => {
       .fn()
       .mockResolvedValue({ success: true, data: { ...result, groups: [] } });
     render(<CommandSearch search={search} />);
-    fireEvent.click(screen.getByRole("button", { name: "검색 열기" }));
+    fireEvent.click(screen.getByRole("button", { name: "Open search" }));
     expect(await screen.findByText("notion")).toBeInTheDocument();
-    expect(screen.getByText("최근 검색")).toBeInTheDocument();
+    expect(screen.getByText("Recent searches")).toBeInTheDocument();
   });
 });
 

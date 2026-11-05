@@ -5,8 +5,8 @@ import { auth } from "@/lib/auth";
 
 /**
  * POST /api/v1/integrations/[id]/sync
- * - 연동 수동 동기화 트리거
- * - 권한: ADMIN만
+ * - Trigger a manual integration sync
+ * - Permission: ADMIN only
  */
 export async function POST(
   _request: NextRequest,
@@ -17,10 +17,10 @@ export async function POST(
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
-  // ADMIN만 동기화 가능
+  // Only ADMIN can sync
   if (session.user.role !== "ADMIN") {
     return NextResponse.json(
-      { message: "연동 동기화 권한이 없습니다" },
+      { message: "You do not have permission to sync this integration" },
       { status: 403 }
     );
   }

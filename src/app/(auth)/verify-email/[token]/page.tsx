@@ -1,5 +1,5 @@
 // src/app/(auth)/verify-email/[token]/page.tsx
-// 이메일 인증 페이지
+// Email verification page
 
 import { verifyEmail } from "@/actions/auth-credentials";
 import { Button } from "@/components/ui/button";

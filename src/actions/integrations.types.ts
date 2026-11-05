@@ -1,12 +1,12 @@
 // src/actions/integrations.types.ts
 /**
- * Integration 관련 타입 정의 및 유틸리티
+ * Integration types and utilities
  */
 
 import type { IntegrationStatus } from "@prisma/client";
 
 /**
- * Integration 목록 조회 파라미터
+ * Integration list query parameters
  */
 export interface GetIntegrationsParams {
   filter?: {
@@ -23,7 +23,7 @@ export interface GetIntegrationsParams {
 }
 
 /**
- * 동기화 로그 엔트리
+ * Sync log entry
  */
 export interface SyncLogEntry {
   id: string;
@@ -32,12 +32,12 @@ export interface SyncLogEntry {
   itemsCreated: number;
   itemsUpdated: number;
   errors: Array<{ code: string; message: string }> | null;
-  startedAt: string; // ISO 8601 문자열
-  completedAt: string | null; // ISO 8601 문자열
+  startedAt: string; // ISO 8601 string
+  completedAt: string | null; // ISO 8601 string
 }
 
 /**
- * Integration 설정 입력
+ * Integration settings input
  */
 export interface IntegrationSettingsInput {
   autoSync?: boolean;
@@ -47,7 +47,7 @@ export interface IntegrationSettingsInput {
 }
 
 /**
- * Next.js redirect 에러 체크 유틸리티
+ * Next.js redirect error check utility
  */
 export function isRedirectError(error: unknown): boolean {
   return (

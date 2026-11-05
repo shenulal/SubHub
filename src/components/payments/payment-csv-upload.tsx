@@ -37,7 +37,7 @@ import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
 import { CsvUploadResultModal } from "./csv-upload-result-modal";
 
-// SMP-78: 배정 타입 정의
+// SMP-78: assignment type definition
 type AssignmentType = "none" | "team" | "user";
 
 interface Team {
@@ -65,7 +65,7 @@ interface ImportResult {
   }>;
 }
 
-// 업로드 진행 상태
+// Upload progress state
 interface UploadProgress {
   index: number;
   total: number;
@@ -73,16 +73,19 @@ interface UploadProgress {
   amount: number;
 }
 
-// CSV 템플릿 (헤더는 번역되지 않음 - CSV 파일 형식이므로)
-const CARD_TEMPLATE = `결제일,가맹점명,결제금액,카드번호,승인번호
+// CSV templates (headers are not translated because they define the CSV file format).
+// The card template uses the English card-statement headers recognised by the parser.
+const CARD_TEMPLATE = `Transaction Date,Merchant,Amount,Card Number,Approval Code
 2024-01-15,SLACK TECHNOLOGIES,100000,1234-****-****-5678,12345678
 2024-01-16,NOTION LABS INC,50000,1234-****-****-5678,12345679
 2024-01-17,FIGMA INC,80000,1234-****-****-5678,12345680`;
 
+// The ERP header row must stay Korean: the generic ERP parser (ERP_HEADERS in
+// src/lib/payment-csv.ts) only recognises these Korean ERP export column names.
 const ERP_TEMPLATE = `거래일자,거래처명,출금액,계정과목,비고
-2024-01-15,슬랙,100000,소프트웨어비,1월분 결제
-2024-01-16,노션,50000,소프트웨어비,1월분 결제
-2024-01-17,피그마,80000,소프트웨어비,1월분 결제`;
+2024-01-15,Slack,100000,Software,January payment
+2024-01-16,Notion,50000,Software,January payment
+2024-01-17,Figma,80000,Software,January payment`;
 
 export function PaymentCsvUpload() {
   const t = useTranslations();
@@ -92,14 +95,14 @@ export function PaymentCsvUpload() {
   const [isUploading, setIsUploading] = useState(false);
   const [dragActive, setDragActive] = useState(false);
 
-  // 결과 모달 상태
+  // Result modal state
   const [showResultModal, setShowResultModal] = useState(false);
 
-  // 프로그레스 상태
+  // Progress state
   const [progress, setProgress] = useState<UploadProgress | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
-  // DA-84: 커스텀 매핑 상태
+  // DA-84: custom mapping state
   const [showMappingDialog, setShowMappingDialog] = useState(false);
   const [csvHeaders, setCsvHeaders] = useState<string[]>([]);
   const [csvSampleRows, setCsvSampleRows] = useState<Record<string, string>[]>(
@@ -110,7 +113,7 @@ export function PaymentCsvUpload() {
   );
   const [detectedFormat, setDetectedFormat] = useState<string | null>(null);
 
-  // SMP-78: Team/User 배정 상태
+  // SMP-78: Team/User assignment state
   const [assignmentType, setAssignmentType] = useState<AssignmentType>("none");
   const [selectedTeamId, setSelectedTeamId] = useState<string>("");
   const [selectedUserId, setSelectedUserId] = useState<string>("");
@@ -118,7 +121,7 @@ export function PaymentCsvUpload() {
   const [users, setUsers] = useState<UserOption[]>([]);
   const [isLoadingOptions, setIsLoadingOptions] = useState(false);
 
-  // 팀/유저 목록 로드
+  // Load teams and users
   useEffect(() => {
     const loadOptions = async () => {
       setIsLoadingOptions(true);
@@ -147,18 +150,18 @@ export function PaymentCsvUpload() {
     loadOptions();
   }, []);
 
-  // 배정 타입 변경 시 선택값 초기화
+  // Reset the selection when the assignment type changes
   const handleAssignmentTypeChange = (value: AssignmentType) => {
     setAssignmentType(value);
     setSelectedTeamId("");
     setSelectedUserId("");
   };
 
-  // DA-84: 파일 선택 시 CSV 포맷 감지 + 매핑 다이얼로그 트리거
+  // DA-84: detect the CSV format on file selection and open the mapping dialog
   const analyzeCSVFile = useCallback(async (csvFile: File) => {
     try {
       const content = await csvFile.text();
-      // BOM 제거
+      // Strip BOM
       const cleaned =
         content.charCodeAt(0) === 0xfeff ? content.substring(1) : content;
       const rows = parseCSV(cleaned);
@@ -172,12 +175,12 @@ export function PaymentCsvUpload() {
       setDetectedFormat(format);
       setCustomMapping(null);
 
-      // UNKNOWN 포맷이면 매핑 다이얼로그 자동 표시
+      // Open the mapping dialog automatically for an UNKNOWN format
       if (format === "UNKNOWN") {
         setShowMappingDialog(true);
       }
     } catch {
-      // 분석 실패 시 무시 (업로드 시 서버에서 처리)
+      // Ignore analysis failures (the server handles them on upload)
     }
   }, []);
 
@@ -224,7 +227,7 @@ export function PaymentCsvUpload() {
   const handleUpload = async () => {
     if (!file) return;
 
-    // SMP-78: 팀 또는 유저가 선택되어야 하는데 선택 안된 경우 차단
+    // SMP-78: block when a team or user is required but not selected
     if (assignmentType === "team" && !selectedTeamId) {
       setResult({
         success: false,
@@ -269,10 +272,10 @@ export function PaymentCsvUpload() {
       if (!response.ok || !response.body) {
         const errorData = await response
           .json()
-          .catch(() => ({ error: "알 수 없는 오류가 발생했습니다" }));
+          .catch(() => ({ error: "An unknown error occurred" }));
         setResult({
           success: false,
-          message: errorData.error || "업로드에 실패했습니다",
+          message: errorData.error || "Upload failed",
         });
         return;
       }
@@ -318,7 +321,7 @@ export function PaymentCsvUpload() {
               const importResult: PaymentImportResult = event.result;
               setResult({
                 success: true,
-                message: `${importResult.imported}개의 결제 내역을 가져왔습니다`,
+                message: `Imported ${importResult.imported} payment records`,
                 ...importResult,
               });
               setShowResultModal(true);
@@ -326,14 +329,14 @@ export function PaymentCsvUpload() {
               setResult({ success: false, message: event.message });
             }
           } catch {
-            // JSON 파싱 실패 무시
+            // Ignore JSON parse failures
           }
         }
       }
     } catch {
       setResult({
         success: false,
-        message: "네트워크 오류가 발생했습니다",
+        message: "A network error occurred",
       });
     } finally {
       setIsUploading(false);
@@ -356,7 +359,7 @@ export function PaymentCsvUpload() {
     URL.revokeObjectURL(url);
   };
 
-  // 프로그레스 퍼센트 계산 (processing: index+1 / total, saving: 100%)
+  // Progress percentage (processing: index+1 / total, saving: 100%)
   const progressPercent = isSaving
     ? 100
     : progress && progress.total > 0
@@ -365,7 +368,7 @@ export function PaymentCsvUpload() {
 
   return (
     <div className="space-y-6">
-      {/* 템플릿 다운로드 */}
+      {/* Template download */}
       <div className="flex flex-wrap gap-2">
         <Button
           variant="outline"
@@ -385,7 +388,7 @@ export function PaymentCsvUpload() {
         </Button>
       </div>
 
-      {/* 지원 형식 안내 */}
+      {/* Supported formats */}
       <div className="text-muted-foreground space-y-1 text-sm">
         <p className="text-foreground font-medium">
           {t("payments.upload.supportedFormats")}
@@ -402,7 +405,7 @@ export function PaymentCsvUpload() {
         </ul>
       </div>
 
-      {/* 파일 업로드 영역 */}
+      {/* File upload area */}
       <div
         className={`relative rounded-md border-2 border-dashed p-8 text-center transition-colors ${
           dragActive
@@ -431,7 +434,7 @@ export function PaymentCsvUpload() {
         </p>
       </div>
 
-      {/* 선택된 파일 표시 */}
+      {/* Selected file */}
       {file && (
         <div className="bg-muted rounded-md p-4">
           <p className="text-foreground truncate font-medium" title={file.name}>
@@ -443,23 +446,23 @@ export function PaymentCsvUpload() {
         </div>
       )}
 
-      {/* DA-84: 포맷 감지 결과 + 커스텀 매핑 버튼 */}
+      {/* DA-84: detected format + custom mapping button */}
       {file && detectedFormat && (
         <div className="flex flex-wrap items-center gap-3 rounded-md border p-3">
           <div className="min-w-0 flex-1">
             <p className="text-sm font-medium">
               {detectedFormat === "UNKNOWN"
-                ? "포맷을 자동으로 인식할 수 없습니다"
-                : `감지된 포맷: ${detectedFormat}`}
+                ? "The format could not be detected automatically"
+                : `Detected format: ${detectedFormat}`}
             </p>
             {customMapping && (
               <p className="text-muted-foreground text-xs">
-                커스텀 매핑 적용됨 (
+                Custom mapping applied (
                 {
                   Object.values(customMapping.fieldMappings).filter(Boolean)
                     .length
-                }
-                개 필드)
+                }{" "}
+                fields)
               </p>
             )}
           </div>
@@ -469,12 +472,12 @@ export function PaymentCsvUpload() {
             onClick={() => setShowMappingDialog(true)}
           >
             <Settings2 className="mr-2 h-4 w-4" />
-            {customMapping ? "매핑 수정" : "필드 매핑"}
+            {customMapping ? "Edit mapping" : "Map fields"}
           </Button>
         </div>
       )}
 
-      {/* SMP-78: Team/User 배정 선택 */}
+      {/* SMP-78: Team/User assignment */}
       {file && (
         <div className="space-y-4 rounded-md border p-4">
           <div>
@@ -521,7 +524,7 @@ export function PaymentCsvUpload() {
             </div>
           </RadioGroup>
 
-          {/* 팀 선택 */}
+          {/* Team selection */}
           {assignmentType === "team" && (
             <div className="space-y-2">
               <Label htmlFor="team-select">
@@ -551,7 +554,7 @@ export function PaymentCsvUpload() {
             </div>
           )}
 
-          {/* 유저 선택 */}
+          {/* User selection */}
           {assignmentType === "user" && (
             <div className="space-y-2">
               <Label htmlFor="user-select">
@@ -588,7 +591,7 @@ export function PaymentCsvUpload() {
         </div>
       )}
 
-      {/* 업로드 버튼 */}
+      {/* Upload button */}
       <Button onClick={handleUpload} disabled={!file || isUploading}>
         {isUploading ? (
           <>
@@ -603,30 +606,32 @@ export function PaymentCsvUpload() {
         )}
       </Button>
 
-      {/* 실시간 프로그레스 표시 */}
+      {/* Live progress */}
       {isUploading && (progress || isSaving) && (
         <div className="bg-muted space-y-3 rounded-md p-4">
           <div className="flex items-center justify-between text-sm">
             <span className="max-w-[60%] truncate font-medium">
-              {isSaving ? "저장 중..." : progress?.merchantName || "분석 중..."}
+              {isSaving
+                ? "Saving..."
+                : progress?.merchantName || "Analysing..."}
             </span>
             {progress && progress.total > 0 && (
               <span className="text-muted-foreground shrink-0">
                 {isSaving ? progress.total : progress.index + 1} /{" "}
-                {progress.total}건
+                {progress.total}
               </span>
             )}
           </div>
           <Progress value={progressPercent} className="h-2" />
           <p className="text-muted-foreground text-xs">
             {isSaving
-              ? "결제 내역을 저장하고 있습니다..."
-              : "결제 내역 분석 중... (가맹점 검증 및 앱 매칭)"}
+              ? "Saving payment records..."
+              : "Analysing payment records... (merchant validation and app matching)"}
           </p>
         </div>
       )}
 
-      {/* 실패 결과 표시 (성공 시에는 모달로 표시) */}
+      {/* Failure result (success is shown in a modal) */}
       {result && !result.success && (
         <Alert variant="destructive">
           <AlertCircle className="h-4 w-4" />
@@ -656,7 +661,7 @@ export function PaymentCsvUpload() {
         </Alert>
       )}
 
-      {/* 업로드 성공 결과 모달 */}
+      {/* Upload success modal */}
       {result?.success && (
         <CsvUploadResultModal
           open={showResultModal}
@@ -673,7 +678,7 @@ export function PaymentCsvUpload() {
         />
       )}
 
-      {/* DA-84: 필드 매핑 다이얼로그 */}
+      {/* DA-84: field mapping dialog */}
       <FieldMappingDialog
         open={showMappingDialog}
         onOpenChange={setShowMappingDialog}

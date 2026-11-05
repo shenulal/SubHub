@@ -97,7 +97,7 @@ export async function getSecurityInsights(): Promise<SecurityInsights> {
     prisma.extensionBlacklist.count({
       where: { organizationId, enabled: true },
     }),
-    // 검토 대기 도메인 스캔 전체 조회 (카운트 + riskyApps 겸용)
+    // Load all pending-review domain scans (used for both the count and riskyApps)
     prisma.saaSDomainScanHistory.findMany({
       where: {
         organizationId,
@@ -114,7 +114,7 @@ export async function getSecurityInsights(): Promise<SecurityInsights> {
       },
       orderBy: { scannedAt: "desc" },
     }),
-    // 등록된 앱 패턴 (화이트리스트)
+    // Registered app patterns (whitelist)
     prisma.extensionWhitelist.findMany({
       where: { organizationId },
       select: { pattern: true },
@@ -196,7 +196,7 @@ export async function getSecurityInsights(): Promise<SecurityInsights> {
     }),
   ]);
 
-  // 등록된 패턴으로 필터링 (이미 앱으로 등록된 도메인 제외)
+  // Filter by registered patterns (exclude domains already registered as apps)
   const registeredPatterns = whitelistPatterns.map((w) => w.pattern);
   const filteredScans = pendingDomainScans.filter(
     (scan) =>
@@ -213,11 +213,11 @@ export async function getSecurityInsights(): Promise<SecurityInsights> {
 
   const aiPayments = shadowAiPayments.filter((p) => isAiPayment(p));
 
-  // riskyApps: 필터링된 스캔 데이터에서 생성 (review-apps 페이지와 동일 로직)
+  // riskyApps: built from the filtered scan data (same logic as the review-apps page)
   const riskyApps = await (async () => {
     if (filteredScans.length === 0) return [];
 
-    // 악성 우선 → 최신 스캔 순 정렬 (review-apps 페이지와 동일)
+    // Sort malicious first, then most recent scan (same as the review-apps page)
     const sorted = [...filteredScans].sort((a, b) => {
       if (a.isMalicious !== b.isMalicious) return a.isMalicious ? -1 : 1;
       return b.scannedAt.getTime() - a.scannedAt.getTime();
@@ -225,7 +225,7 @@ export async function getSecurityInsights(): Promise<SecurityInsights> {
     const top5 = sorted.slice(0, 5);
     const domains = top5.map((s) => s.domain);
 
-    // 최근 30일 방문 통계 (review-apps 페이지와 동일)
+    // Visit stats for the last 30 days (same as the review-apps page)
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 

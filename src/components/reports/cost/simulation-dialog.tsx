@@ -60,16 +60,16 @@ export function SimulationDialog({
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>{item.appName} - Seat 축소 시뮬레이션</DialogTitle>
+          <DialogTitle>{item.appName} - Seat Reduction Simulation</DialogTitle>
           <DialogDescription>
-            슬라이더를 조절하여 다양한 Seat 수의 절감 효과를 확인하세요.
+            Adjust the slider to see the savings at different seat counts.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6 py-4">
           <div className="space-y-3">
             <div className="flex justify-between text-sm">
-              <span>목표 Seat 수</span>
+              <span>Target seats</span>
               <span className="font-medium tabular-nums">{targetSeats}</span>
             </div>
             <Slider
@@ -81,7 +81,7 @@ export function SimulationDialog({
             />
             <div className="text-muted-foreground flex justify-between text-xs">
               <span>1</span>
-              <span>현재: {item.currentSeats}</span>
+              <span>Current: {item.currentSeats}</span>
             </div>
           </div>
 
@@ -94,22 +94,24 @@ export function SimulationDialog({
               <div className="grid gap-3 sm:grid-cols-2">
                 <div className="bg-muted min-w-0 rounded-md p-4">
                   <div>
-                    <p className="text-muted-foreground text-xs">현재 비용</p>
+                    <p className="text-muted-foreground text-xs">
+                      Current cost
+                    </p>
                     <p className="truncate text-xl font-medium tabular-nums">
                       {formatCurrency(simulation.currentMonthlyCost)}
                       <span className="text-muted-foreground text-xs font-normal">
-                        /월
+                        /mo
                       </span>
                     </p>
                   </div>
                 </div>
                 <div className="bg-muted min-w-0 rounded-md p-4">
                   <div>
-                    <p className="text-muted-foreground text-xs">목표 비용</p>
+                    <p className="text-muted-foreground text-xs">Target cost</p>
                     <p className="truncate text-xl font-medium tabular-nums">
                       {formatCurrency(simulation.targetMonthlyCost)}
                       <span className="text-muted-foreground text-xs font-normal">
-                        /월
+                        /mo
                       </span>
                     </p>
                   </div>
@@ -118,10 +120,10 @@ export function SimulationDialog({
 
               <div className="tonal-success min-w-0 rounded-md p-4">
                 <div>
-                  <p className="text-sm font-medium">절감 가능 금액</p>
+                  <p className="text-sm font-medium">Potential savings</p>
                   <p className="text-xl font-medium tabular-nums">
-                    {formatCurrency(simulation.monthlySavings)}/월 (
-                    {formatCurrency(simulation.annualSavings)}/년)
+                    {formatCurrency(simulation.monthlySavings)}/mo (
+                    {formatCurrency(simulation.annualSavings)}/yr)
                   </p>
                 </div>
               </div>
@@ -129,7 +131,7 @@ export function SimulationDialog({
               {simulation.affectedUsers.length > 0 && (
                 <div>
                   <p className="mb-2 text-sm font-medium">
-                    영향받는 비활성 유저 ({simulation.affectedUsers.length}명)
+                    Affected inactive users ({simulation.affectedUsers.length})
                   </p>
                   <div className="max-h-32 overflow-y-auto rounded-md border">
                     <Table>

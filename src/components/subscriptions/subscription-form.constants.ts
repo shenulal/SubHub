@@ -35,7 +35,7 @@ export function getCurrencyOptions(t: (key: string) => string) {
 }
 
 /**
- * Date 객체를 input[type="date"]용 문자열로 변환
+ * Convert a Date object to a string for input[type="date"]
  */
 export function formatDateForInput(date: Date | null | undefined): string {
   if (!date) return "";

@@ -13,9 +13,9 @@ import type {
 const INACTIVE_DAYS_THRESHOLD = 30;
 
 /**
- * 앱별 Seat 낭비 상세 분석
- * totalLicenses가 있는 모든 활성 구독에 대해 미할당/미사용 Seat 분석
- * (FLAT_RATE도 totalLicenses가 있으면 분석 대상)
+ * Detailed seat waste analysis per app
+ * Analyzes unassigned/unused seats for every active subscription with totalLicenses
+ * (FLAT_RATE subscriptions are included when they have totalLicenses)
  */
 export async function getSeatWasteAnalysis(): Promise<
   ActionState<SeatWasteAnalysis>
@@ -23,7 +23,7 @@ export async function getSeatWasteAnalysis(): Promise<
   try {
     const { organizationId } = await requireOrganization();
 
-    // totalLicenses > 0인 모든 활성 구독 조회 (billingType 무관)
+    // Fetch all active subscriptions with totalLicenses > 0 (any billingType)
     const subscriptions = await prisma.subscription.findMany({
       where: {
         organizationId,
@@ -60,7 +60,7 @@ export async function getSeatWasteAnalysis(): Promise<
     const thresholdDate = new Date(now);
     thresholdDate.setDate(thresholdDate.getDate() - INACTIVE_DAYS_THRESHOLD);
 
-    // 모든 관련 appId에 대한 UserAppAccess 조회 (배치)
+    // Fetch UserAppAccess for all related appIds (batched)
     const appIds = subscriptions.map((s) => s.app.id);
     const allUserIds = subscriptions.flatMap((s) =>
       s.assignedUsers.map((u) => u.userId)
@@ -78,7 +78,7 @@ export async function getSeatWasteAnalysis(): Promise<
       },
     });
 
-    // appId+userId → lastUsedAt 맵
+    // appId+userId → lastUsedAt map
     const accessMap = new Map<string, Date | null>();
     for (const a of appAccesses) {
       accessMap.set(`${a.appId}:${a.userId}`, a.lastUsedAt);
@@ -94,9 +94,9 @@ export async function getSeatWasteAnalysis(): Promise<
       const assignedSeats = assignedUserIds.length;
       const unassignedSeats = Math.max(0, totalSeats - assignedSeats);
 
-      // 활성 유저: 30일 이내 사용 기록이 있는 경우만 활성
-      // 과다 배정(inactive): lastUsedAt이 존재하면서 30일 초과인 경우만 (증거 기반)
-      // UserAppAccess 레코드 없음/null lastUsedAt → untracked (과다 배정 아님)
+      // Active users: only those with usage within 30 days
+      // Over-assigned (inactive): only when lastUsedAt exists and is older than 30 days (evidence-based)
+      // No UserAppAccess record / null lastUsedAt → untracked (not over-assigned)
       let activeSeats = 0;
       let inactiveSeats = 0;
       for (const uid of assignedUserIds) {
@@ -105,9 +105,9 @@ export async function getSeatWasteAnalysis(): Promise<
         if (lastUsed && lastUsed >= thresholdDate) {
           activeSeats++;
         } else if (lastUsed && lastUsed < thresholdDate) {
-          inactiveSeats++; // 증거 기반 비활성
+          inactiveSeats++; // evidence-based inactive
         }
-        // else: 레코드 없음 or null lastUsedAt → untracked (과다 배정 아님)
+        // else: no record or null lastUsedAt → untracked (not over-assigned)
       }
       const wastedSeats = unassignedSeats + inactiveSeats;
       const rawPrice = sub.perSeatPrice;
@@ -116,7 +116,7 @@ export async function getSeatWasteAnalysis(): Promise<
           ? (rawPrice as { toNumber: () => number }).toNumber()
           : Number(rawPrice ?? 0);
 
-      // FLAT_RATE 등 perSeatPrice가 없는 경우: amount / totalLicenses로 추정
+      // When there is no perSeatPrice (e.g. FLAT_RATE): estimate as amount / totalLicenses
       if (perSeatPrice === 0 && totalSeats > 0) {
         const rawAmount = sub.amount;
         const amount =
@@ -150,7 +150,7 @@ export async function getSeatWasteAnalysis(): Promise<
       };
     });
 
-    // 낭비액 내림차순 정렬
+    // Sort by waste amount, descending
     apps.sort((a, b) => b.monthlyWaste - a.monthlyWaste);
 
     const totalMonthlyWaste = apps.reduce((s, a) => s + a.monthlyWaste, 0);
@@ -173,13 +173,13 @@ export async function getSeatWasteAnalysis(): Promise<
       },
     };
   } catch (error) {
-    console.error("Seat 낭비 분석 오류:", error);
-    return { success: false, error: "Seat 낭비 분석에 실패했습니다" };
+    console.error("Seat waste analysis error:", error);
+    return { success: false, error: "Seat waste analysis failed" };
   }
 }
 
 /**
- * 대시보드 위젯용 Seat 낭비 요약
+ * Seat waste summary for the dashboard widget
  */
 export async function getSeatWasteSummary(): Promise<
   ActionState<SeatWasteSummary>

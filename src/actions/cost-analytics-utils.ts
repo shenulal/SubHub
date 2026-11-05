@@ -1,7 +1,7 @@
 // src/actions/cost-analytics-utils.ts
 
 /**
- * Prisma Decimal 또는 객체에서 숫자 추출
+ * Extract a number from a Prisma Decimal or an object
  */
 export function extractAmount(value: unknown): number {
   if (value === null || value === undefined) return 0;
@@ -13,7 +13,7 @@ export function extractAmount(value: unknown): number {
 }
 
 /**
- * 날짜를 YYYY-MM 형식으로 변환
+ * Convert a date to YYYY-MM format
  */
 export function formatMonthKey(date: Date): string {
   const year = date.getFullYear();
@@ -22,15 +22,19 @@ export function formatMonthKey(date: Date): string {
 }
 
 /**
- * YYYY-MM을 표시용 라벨로 변환
+ * Convert YYYY-MM to a display label ("MMM yyyy", e.g. "Jun 2024")
  */
 export function formatDisplayLabel(monthKey: string): string {
   const [year, month] = monthKey.split("-").map(Number);
-  return `${year}년 ${month}월`;
+  return new Date(Date.UTC(year, month - 1, 1)).toLocaleString("en-US", {
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  });
 }
 
 /**
- * 증감률에 따른 심각도 결정
+ * Determine severity from the change rate
  */
 export function getSeverity(changeRate: number): "low" | "medium" | "high" {
   if (changeRate >= 200) return "high";
@@ -39,7 +43,7 @@ export function getSeverity(changeRate: number): "low" | "medium" | "high" {
 }
 
 /**
- * 구독의 월별 비용 계산
+ * Calculate a subscription's monthly cost
  */
 export function calculateMonthlyCost(sub: {
   amount: unknown;
@@ -59,15 +63,15 @@ export function calculateMonthlyCost(sub: {
 }
 
 /**
- * 날짜를 YYYYMMDD 형식 문자열로 변환
+ * Convert a date to a YYYYMMDD string
  */
 export function formatDateStr(date: Date): string {
   return date.toISOString().slice(0, 10).replace(/-/g, "");
 }
 
 /**
- * SMP-134: PER_SEAT 구독의 Seat 단가 계산
- * amount ÷ totalLicenses (PER_SEAT 전용)
+ * SMP-134: Calculate the per-seat price of a PER_SEAT subscription
+ * amount ÷ totalLicenses (PER_SEAT only)
  */
 export function calculatePerSeatPrice(sub: {
   amount: unknown;
@@ -80,7 +84,7 @@ export function calculatePerSeatPrice(sub: {
 }
 
 /**
- * SMP-134: 월간 Seat 단가 정규화 (연간/분기 → 월간)
+ * SMP-134: Normalize the per-seat price to monthly (yearly/quarterly → monthly)
  */
 export function calculateMonthlyPerSeatPrice(sub: {
   amount: unknown;
@@ -94,7 +98,7 @@ export function calculateMonthlyPerSeatPrice(sub: {
 }
 
 /**
- * SMP-134: Seat 단가 표시용 포맷
+ * SMP-134: Format the per-seat price for display
  */
 export function formatPerSeatPrice(
   price: number | null,

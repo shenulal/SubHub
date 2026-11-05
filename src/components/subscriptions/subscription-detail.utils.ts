@@ -3,14 +3,14 @@
 import { formatMoney } from "@/lib/fx/convert";
 
 /**
- * 금액을 통화 형식으로 포맷팅
+ * Format an amount as currency
  */
 export function formatCurrency(amount: number, currency: string): string {
   return formatMoney(amount, currency);
 }
 
 /**
- * 날짜를 YYYY.MM.DD 형식으로 포맷팅
+ * Format a date as YYYY.MM.DD
  */
 export function formatDate(date: Date | null): string {
   if (!date) return "-";
@@ -22,7 +22,7 @@ export function formatDate(date: Date | null): string {
 }
 
 /**
- * 갱신일까지 남은 일수 계산
+ * Calculate the days remaining until renewal
  */
 export function getDaysUntilRenewal(renewalDate: Date | null): number | null {
   if (!renewalDate) return null;

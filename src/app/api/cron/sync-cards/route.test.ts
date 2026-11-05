@@ -1,13 +1,13 @@
 /**
- * 법인카드 거래내역 동기화 Cron Job 테스트
- * - 승인건(APPROVAL) 전용 동기화
- * - 4-Layer 매칭 + LLM 폴백 로직 검증
- * - 취소 거래 필터링 검증
+ * Tests for the corporate card transaction sync cron job
+ * - Sync of approved (APPROVAL) transactions only
+ * - Verifies 4-layer matching + LLM fallback logic
+ * - Verifies cancelled-transaction filtering
  */
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-// Mock 설정 (실제 모듈 import 전에 설정 필요)
+// Mock setup (must be configured before importing the real modules)
 vi.mock("@/lib/db", () => ({
   prisma: {
     corporateCard: {
@@ -75,8 +75,8 @@ describe("sync-cards Cron Job", () => {
     vi.restoreAllMocks();
   });
 
-  describe("승인건 매칭 (APPROVAL 전용)", () => {
-    it("승인건에서 4-Layer 매칭을 실행해야 함", async () => {
+  describe("approved transaction matching (APPROVAL only)", () => {
+    it("runs 4-layer matching on approved transactions", async () => {
       vi.mocked(matchMerchant4LayerSync).mockReturnValue({
         appId: "app-slack",
         appName: "Slack",
@@ -88,7 +88,7 @@ describe("sync-cards Cron Job", () => {
       });
 
       const fourLayerResult = matchMerchant4LayerSync(
-        { merchantName: "SLACK", memo: "온라인" },
+        { merchantName: "SLACK", memo: "Online" },
         [],
         [],
         0.8
@@ -100,8 +100,8 @@ describe("sync-cards Cron Job", () => {
     });
   });
 
-  describe("LLM 폴백 조건", () => {
-    it("Layer 1~3 매칭 성공 + appId 없을 때 LLM 폴백 호출해야 함", async () => {
+  describe("LLM fallback conditions", () => {
+    it("calls the LLM fallback when layers 1-3 match but there is no appId", async () => {
       vi.mocked(matchMerchant4LayerSync).mockReturnValue({
         appId: null,
         appName: "Slack",
@@ -121,7 +121,7 @@ describe("sync-cards Cron Job", () => {
       });
 
       const fourLayerResult = matchMerchant4LayerSync(
-        { merchantName: "SLACK", memo: "온라인" },
+        { merchantName: "SLACK", memo: "Online" },
         [],
         [],
         0.8
@@ -134,7 +134,7 @@ describe("sync-cards Cron Job", () => {
         const llmMatch = await matchMerchantWithLLM({
           organizationId: "org-1",
           merchantName: "SLACK",
-          memo: "온라인",
+          memo: "Online",
           storeBizNo: null,
           amount: 10000,
           currency: "KRW",
@@ -148,7 +148,7 @@ describe("sync-cards Cron Job", () => {
       expect(matchSource).toBe("LLM");
     });
 
-    it("Layer 1~3 매칭 성공 + appId 있으면 LLM 호출하지 않음", async () => {
+    it("does not call the LLM when layers 1-3 match and an appId exists", async () => {
       vi.mocked(matchMerchant4LayerSync).mockReturnValue({
         appId: "existing-app-id",
         appName: "Slack",
@@ -160,7 +160,7 @@ describe("sync-cards Cron Job", () => {
       });
 
       const fourLayerResult = matchMerchant4LayerSync(
-        { merchantName: "SLACK", memo: "온라인" },
+        { merchantName: "SLACK", memo: "Online" },
         [],
         [],
         0.8
@@ -183,7 +183,7 @@ describe("sync-cards Cron Job", () => {
       expect(matchedAppId).toBe("existing-app-id");
     });
 
-    it("Layer 1~3 매칭 실패 시 LLM 호출해야 함", async () => {
+    it("calls the LLM when layers 1-3 fail to match", async () => {
       vi.mocked(matchMerchant4LayerSync).mockReturnValue({
         appId: null,
         appName: null,
@@ -191,7 +191,7 @@ describe("sync-cards Cron Job", () => {
         matchLayer: null,
         matchSource: null,
         catalogId: undefined,
-        normalized: "알수없는가맹점",
+        normalized: "UnknownMerchant",
       });
 
       vi.mocked(matchMerchantWithLLM).mockResolvedValue({
@@ -203,7 +203,7 @@ describe("sync-cards Cron Job", () => {
       });
 
       const fourLayerResult = matchMerchant4LayerSync(
-        { merchantName: "알수없는가맹점", memo: null },
+        { merchantName: "UnknownMerchant", memo: null },
         [],
         [],
         0.8
@@ -214,7 +214,7 @@ describe("sync-cards Cron Job", () => {
       if (!matchedAppId) {
         const llmMatch = await matchMerchantWithLLM({
           organizationId: "org-1",
-          merchantName: "알수없는가맹점",
+          merchantName: "UnknownMerchant",
           memo: null,
           storeBizNo: null,
           amount: null,
@@ -228,11 +228,11 @@ describe("sync-cards Cron Job", () => {
     });
   });
 
-  describe("Non-SaaS 키워드 필터", () => {
-    it("Non-SaaS 키워드 매칭 시 LLM 호출하지 않음", async () => {
-      vi.mocked(findNonSaaSKeywordHit).mockReturnValue("카카오T");
+  describe("Non-SaaS keyword filter", () => {
+    it("does not call the LLM when a Non-SaaS keyword matches", async () => {
+      vi.mocked(findNonSaaSKeywordHit).mockReturnValue("Careem");
 
-      const merchantName = "카카오T택시";
+      const merchantName = "Careem Ride";
       const nonSaaSHit = findNonSaaSKeywordHit(merchantName, null);
 
       if (nonSaaSHit) {
@@ -241,20 +241,20 @@ describe("sync-cards Cron Job", () => {
       }
     });
 
-    it("Non-SaaS 키워드 히트 시 matchStatus는 UNMATCHED", () => {
-      vi.mocked(findNonSaaSKeywordHit).mockReturnValue("카카오T");
+    it("sets matchStatus to UNMATCHED on a Non-SaaS keyword hit", () => {
+      vi.mocked(findNonSaaSKeywordHit).mockReturnValue("Careem");
 
-      const merchantName = "카카오T택시";
+      const merchantName = "Careem Ride";
       const nonSaaSHit = findNonSaaSKeywordHit(merchantName, null);
 
-      // Non-SaaS로 확정된 항목은 UNMATCHED로 표시되어야 함
+      // Items confirmed as Non-SaaS must be marked UNMATCHED
       if (nonSaaSHit) {
         const matchStatus = "UNMATCHED";
         expect(matchStatus).toBe("UNMATCHED");
       }
     });
 
-    it("LLM 폴백 후 appId=null이면 matchStatus는 UNMATCHED", async () => {
+    it("sets matchStatus to UNMATCHED when appId is null after the LLM fallback", async () => {
       vi.mocked(matchMerchant4LayerSync).mockReturnValue({
         appId: null,
         appName: null,
@@ -262,7 +262,7 @@ describe("sync-cards Cron Job", () => {
         matchLayer: null,
         matchSource: null,
         catalogId: undefined,
-        normalized: "알수없는가맹점",
+        normalized: "UnknownMerchant",
       });
 
       vi.mocked(matchMerchantWithLLM).mockResolvedValue({
@@ -274,7 +274,7 @@ describe("sync-cards Cron Job", () => {
       });
 
       const fourLayerResult = matchMerchant4LayerSync(
-        { merchantName: "알수없는가맹점", memo: null },
+        { merchantName: "UnknownMerchant", memo: null },
         [],
         [],
         0.8
@@ -285,7 +285,7 @@ describe("sync-cards Cron Job", () => {
       if (!matchedAppId) {
         const llmMatch = await matchMerchantWithLLM({
           organizationId: "org-1",
-          merchantName: "알수없는가맹점",
+          merchantName: "UnknownMerchant",
           memo: null,
           storeBizNo: null,
           amount: null,
@@ -294,16 +294,17 @@ describe("sync-cards Cron Job", () => {
         matchedAppId = llmMatch.appId;
       }
 
-      // 파이프라인 완료 후 appId가 없으면 UNMATCHED
+      // UNMATCHED when there is no appId after the pipeline completes
       const finalMatchStatus = matchedAppId ? "AUTO_MATCHED" : "UNMATCHED";
       expect(finalMatchStatus).toBe("UNMATCHED");
     });
   });
 
-  describe("취소 거래 필터링", () => {
-    it("useDiv에 '취소'가 포함된 거래는 매칭을 스킵해야 함", () => {
+  describe("cancelled transaction filtering", () => {
+    it("skips matching for transactions whose useDiv contains the Hyphen cancel value", () => {
       const cancelledItem = {
         useStore: "SLACK",
+        // Hyphen card API value meaning "cancelled" — must stay Korean (matched against API data)
         useDiv: "취소",
         useDt: "20240115",
         useTm: "120000",
@@ -317,24 +318,25 @@ describe("sync-cards Cron Job", () => {
         addTax: "",
       };
 
-      // 취소 거래는 매칭 파이프라인을 실행하지 않아야 함
+      // Cancelled transactions must not run the matching pipeline
       const isCancelled =
         cancelledItem.useDiv && cancelledItem.useDiv.includes("취소");
       expect(isCancelled).toBe(true);
 
-      // 취소가 아닌 경우는 매칭 실행
+      // Non-cancelled transactions run matching (Hyphen value for a lump-sum payment)
       const normalItem = { ...cancelledItem, useDiv: "일시불" };
       const isNormalCancelled =
         normalItem.useDiv && normalItem.useDiv.includes("취소");
       expect(isNormalCancelled).toBe(false);
     });
 
-    it("useDiv가 '부분취소'인 거래도 매칭 스킵", () => {
+    it("also skips matching for partially cancelled transactions", () => {
+      // Hyphen card API value for a partial cancellation — must stay Korean
       const partialCancelItem = { useDiv: "부분취소" };
       expect(partialCancelItem.useDiv.includes("취소")).toBe(true);
     });
 
-    it("useDiv가 null/undefined인 거래는 정상 매칭 대상", () => {
+    it("treats transactions with null/undefined useDiv as normal matching targets", () => {
       const noUseDivItem = { useDiv: null as string | null };
       const isCancelled =
         noUseDivItem.useDiv && noUseDivItem.useDiv.includes("취소");
@@ -342,15 +344,15 @@ describe("sync-cards Cron Job", () => {
     });
   });
 
-  describe("SyncHistory 기록 (단위 검증)", () => {
-    it("createSyncHistory에 CRON triggeredBy가 전달되어야 함", async () => {
-      // syncCardTransactions 함수 내부에서 createSyncHistory("CRON")을 호출하는지
-      // 직접 검증하기 위해 createSyncHistory mock 동작을 확인
+  describe("SyncHistory recording (unit checks)", () => {
+    it("passes CRON as triggeredBy to createSyncHistory", async () => {
+      // To verify directly that syncCardTransactions calls createSyncHistory("CRON"),
+      // check the behavior of the createSyncHistory mock
       vi.mocked(createSyncHistory).mockResolvedValue({
         id: "sync-history-cron-1",
       } as never);
 
-      // 함수 호출 시뮬레이션
+      // Simulate the function call
       await createSyncHistory({
         organizationId: "org-1",
         type: "CARD_SYNC",
@@ -366,7 +368,7 @@ describe("sync-cards Cron Job", () => {
       );
     });
 
-    it("성공 시 completeSyncHistory가 SUCCESS로 호출되어야 함", async () => {
+    it("calls completeSyncHistory with SUCCESS on success", async () => {
       vi.mocked(completeSyncHistory).mockResolvedValue({} as never);
 
       await completeSyncHistory("sync-history-cron-1", {
@@ -384,7 +386,7 @@ describe("sync-cards Cron Job", () => {
       );
     });
 
-    it("실패 시 completeSyncHistory가 FAILED로 호출되어야 함", async () => {
+    it("calls completeSyncHistory with FAILED on failure", async () => {
       vi.mocked(completeSyncHistory).mockResolvedValue({} as never);
 
       await completeSyncHistory("sync-history-cron-1", {
@@ -394,19 +396,19 @@ describe("sync-cards Cron Job", () => {
         failedCount: 0,
         matchedCount: 0,
         unmatchedCount: 0,
-        errorMessage: "카드 인증 실패",
+        errorMessage: "Card authentication failed",
       });
 
       expect(completeSyncHistory).toHaveBeenCalledWith(
         "sync-history-cron-1",
         expect.objectContaining({
           status: "FAILED",
-          errorMessage: "카드 인증 실패",
+          errorMessage: "Card authentication failed",
         })
       );
     });
 
-    it("성공 시 updateCardFailCount가 true로 호출되어야 함", async () => {
+    it("calls updateCardFailCount with true on success", async () => {
       vi.mocked(updateCardFailCount).mockResolvedValue({
         consecutiveFailCount: 0,
       } as never);
@@ -416,7 +418,7 @@ describe("sync-cards Cron Job", () => {
       expect(updateCardFailCount).toHaveBeenCalledWith("card-1", true);
     });
 
-    it("실패 시 updateCardFailCount가 false로 호출되어야 함", async () => {
+    it("calls updateCardFailCount with false on failure", async () => {
       vi.mocked(updateCardFailCount).mockResolvedValue({
         consecutiveFailCount: 1,
       } as never);

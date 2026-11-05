@@ -13,7 +13,7 @@ import type { ActionState } from "@/types";
 import type { CardTransactionType } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
-// ==================== 거래내역 조회 ====================
+// ==================== Transaction queries ====================
 
 export type TransactionFilter = "saas" | "unmatched" | "non-saas" | "all";
 
@@ -45,7 +45,7 @@ export interface TransactionListResult {
 }
 
 /**
- * 거래내역 조회
+ * Fetch transactions
  * filter: saas | non-saas | unmatched | all
  */
 export async function getCardTransactions(
@@ -61,7 +61,7 @@ export async function getCardTransactions(
   const pageSize = query.pageSize || 20;
   const filter = query.filter || "all";
 
-  // 기본 where 조건
+  // Base where clause
   const baseWhere: {
     organizationId: string;
     corporateCardId?: string;
@@ -83,14 +83,14 @@ export async function getCardTransactions(
     baseWhere.useDt = { ...baseWhere.useDt, lte: query.endDate };
   }
 
-  // 레거시 matchStatus 지원 (deprecated)
+  // Legacy matchStatus support (deprecated)
   if (query.matchStatus === "matched") {
     baseWhere.matchedAppId = { not: null };
   } else if (query.matchStatus === "unmatched") {
     baseWhere.matchedAppId = null;
   }
 
-  // Non-SaaS 또는 Unmatched 필터인 경우 특별 처리 필요
+  // Non-SaaS and Unmatched filters need special handling
   if (filter === "non-saas" || filter === "unmatched") {
     baseWhere.matchedAppId = null;
 
@@ -138,7 +138,7 @@ export async function getCardTransactions(
     };
   }
 
-  // SaaS 필터
+  // SaaS filter
   if (filter === "saas") {
     baseWhere.matchedAppId = { not: null };
   }
@@ -179,10 +179,10 @@ export async function getCardTransactions(
   };
 }
 
-// ==================== 거래-앱 수동 매칭 ====================
+// ==================== Manual transaction-app matching ====================
 
 /**
- * 거래내역을 앱에 수동 매칭
+ * Manually match a transaction to an app
  */
 async function _matchTransactionToAppManually(
   transactionId: string,
@@ -191,7 +191,7 @@ async function _matchTransactionToAppManually(
   try {
     const session = await getCachedSession();
     if (!session?.user?.organizationId) {
-      return { success: false, message: "인증이 필요합니다" };
+      return { success: false, message: "Authentication required" };
     }
 
     const organizationId = session.user.organizationId;
@@ -204,7 +204,7 @@ async function _matchTransactionToAppManually(
     });
 
     if (!transaction) {
-      return { success: false, message: "거래내역을 찾을 수 없습니다" };
+      return { success: false, message: "Transaction not found" };
     }
 
     if (appId) {
@@ -216,10 +216,10 @@ async function _matchTransactionToAppManually(
       });
 
       if (!app) {
-        return { success: false, message: "앱을 찾을 수 없습니다" };
+        return { success: false, message: "App not found" };
       }
 
-      // 사용자가 수동으로 SaaS로 매칭 시 Non-SaaS 캐시에서 제거
+      // When a user manually matches it as SaaS, remove it from the Non-SaaS cache
       const normalized = normalizeMerchantName(transaction.useStore);
       await removeFromNonSaaSCache(organizationId, normalized);
     }
@@ -237,8 +237,8 @@ async function _matchTransactionToAppManually(
 
     return { success: true };
   } catch (error) {
-    logger.error({ err: error }, "거래 매칭 실패");
-    return { success: false, message: "거래 매칭에 실패했습니다" };
+    logger.error({ err: error }, "Transaction matching failed");
+    return { success: false, message: "Failed to match the transaction" };
   }
 }
 export const matchTransactionToAppManually = withLogging(

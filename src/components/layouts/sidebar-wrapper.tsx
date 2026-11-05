@@ -22,12 +22,12 @@ interface SidebarWrapperProps {
 }
 
 /**
- * 사이드바 로딩 스켈레톤 (inset 레이아웃)
+ * Sidebar loading skeleton (inset layout)
  */
 function SidebarSkeleton() {
   return (
     <div className="bg-background flex h-screen w-full">
-      {/* 사이드바 스켈레톤 */}
+      {/* Sidebar skeleton */}
       <div className="hidden w-[260px] p-5 md:block">
         <div className="space-y-4">
           <Skeleton className="h-8 w-32" />
@@ -38,7 +38,7 @@ function SidebarSkeleton() {
           </div>
         </div>
       </div>
-      {/* 메인 콘텐츠 스켈레톤 (inset 스타일) */}
+      {/* Main content skeleton (inset style) */}
       <div className="mx-auto flex w-full max-w-[1440px] flex-1 flex-col px-6">
         <div className="h-16">
           <Skeleton className="mt-4 h-8 w-48" />
@@ -52,8 +52,8 @@ function SidebarSkeleton() {
 }
 
 /**
- * 사이드바 래퍼 컴포넌트
- * 클라이언트 사이드 hydration 완료 후 렌더링하여 Radix UI ID mismatch 방지
+ * Sidebar wrapper component
+ * Renders after client-side hydration completes to avoid Radix UI ID mismatches
  */
 export function SidebarWrapper({
   children,
@@ -67,7 +67,7 @@ export function SidebarWrapper({
     setIsMounted(true);
   }, []);
 
-  // 서버 렌더링 및 hydration 중에는 스켈레톤 표시
+  // Show the skeleton during server rendering and hydration
   if (!isMounted) {
     return <SidebarSkeleton />;
   }
@@ -82,7 +82,7 @@ export function SidebarWrapper({
         <MainContent>{children}</MainContent>
         <AppFooter />
       </SidebarInset>
-      {/* AI Agent — Read Tool + Write Tool + 승인 플로우 */}
+      {/* AI Agent — Read Tool + Write Tool + approval flow */}
       <AiAgentProvider />
     </SidebarProvider>
   );
@@ -98,7 +98,7 @@ function ScopeBar() {
 }
 
 /**
- * main 영역 — AI 패널 열릴 때 paddingRight 조정
+ * Main area — adjusts paddingRight when the AI panel is open
  */
 function MainContent({ children }: { children: React.ReactNode }) {
   const { isOpen } = useAiPanelStore();

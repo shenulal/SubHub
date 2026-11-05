@@ -2,7 +2,7 @@
 "use server";
 
 /**
- * Subscription 생성/수정/삭제 관련 Server Actions
+ * Subscription create/update/delete Server Actions
  */
 
 import { prisma } from "@/lib/db";
@@ -39,14 +39,14 @@ import {
 type IdResult = ActionState<{ id: string }>;
 
 const MESSAGES = {
-  forbidden: "이 작업에 대한 권한이 없습니다",
-  appNotFound: "앱을 찾을 수 없습니다",
-  notFound: "구독을 찾을 수 없습니다",
-  duplicateApp: "이 서비스에 대한 구독이 이미 존재합니다",
-  assignAdminOnly: "사용자 배정은 관리자만 가능합니다",
-  createError: "구독 생성 중 오류가 발생했습니다",
-  updateError: "구독 수정 중 오류가 발생했습니다",
-  deleteError: "구독 삭제 중 오류가 발생했습니다",
+  forbidden: "You do not have permission to perform this action",
+  appNotFound: "App not found",
+  notFound: "Subscription not found",
+  duplicateApp: "A subscription for this service already exists",
+  assignAdminOnly: "Only admins can assign users",
+  createError: "An error occurred while creating the subscription",
+  updateError: "An error occurred while updating the subscription",
+  deleteError: "An error occurred while deleting the subscription",
 } as const;
 
 const UNIQUE_VIOLATION = "P2002";
@@ -144,7 +144,7 @@ function columnData(
 }
 
 /**
- * 구독 생성
+ * Create a subscription
  */
 async function _createSubscription(
   _prevState: IdResult,
@@ -219,7 +219,7 @@ async function _createSubscription(
     if (isUniqueViolation(error)) {
       return { success: false, message: MESSAGES.duplicateApp };
     }
-    logger.error({ err: error }, "구독 생성 오류");
+    logger.error({ err: error }, "Subscription create error");
     return { success: false, message: MESSAGES.createError };
   }
 }
@@ -229,7 +229,7 @@ export const createSubscription = withLogging(
 );
 
 /**
- * 구독 수정
+ * Update a subscription
  */
 async function _updateSubscription(
   id: string,
@@ -320,7 +320,7 @@ async function _updateSubscription(
     if (isForbiddenError(error)) {
       return { success: false, message: MESSAGES.forbidden };
     }
-    logger.error({ err: error }, "구독 수정 오류");
+    logger.error({ err: error }, "Subscription update error");
     return { success: false, message: MESSAGES.updateError };
   }
 }
@@ -330,7 +330,7 @@ export const updateSubscription = withLogging(
 );
 
 /**
- * 구독 삭제
+ * Delete a subscription
  */
 async function _deleteSubscription(id: string): Promise<ActionState> {
   try {
@@ -362,7 +362,7 @@ async function _deleteSubscription(id: string): Promise<ActionState> {
     if (isForbiddenError(error)) {
       return { success: false, message: MESSAGES.forbidden };
     }
-    logger.error({ err: error }, "구독 삭제 오류");
+    logger.error({ err: error }, "Subscription delete error");
     return { success: false, message: MESSAGES.deleteError };
   }
 }

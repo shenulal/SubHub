@@ -130,7 +130,7 @@ export function PaymentRecordsTable({
   const handleColumnVisibilityChange =
     externalOnColumnVisibilityChange ?? internalHandleColumnVisibilityChange;
 
-  // 상태별 건수 로드
+  // Load counts by status
   const loadStatusCounts = useCallback(async () => {
     const result = await getPaymentStatusCounts();
     if (result.success && result.data) {
@@ -138,7 +138,7 @@ export function PaymentRecordsTable({
     }
   }, []);
 
-  // 데이터 로드
+  // Load data
   const loadRecords = useCallback(async () => {
     setIsLoading(true);
     const result = await getPaymentRecords({
@@ -158,7 +158,7 @@ export function PaymentRecordsTable({
     setIsLoading(false);
   }, [serverPage, statusFilter]);
 
-  // 데이터 + 건수 리프레시
+  // Refresh data and counts
   const refreshAll = useCallback(async () => {
     await Promise.all([loadRecords(), loadStatusCounts()]);
   }, [loadRecords, loadStatusCounts]);
@@ -171,7 +171,7 @@ export function PaymentRecordsTable({
     setServerPage(1);
   }, [statusFilter]);
 
-  // TabFilter 아이템
+  // TabFilter items
   const filterItems = useMemo<TabFilterItem<StatusFilterValue>[]>(
     () => [
       {
@@ -207,7 +207,7 @@ export function PaymentRecordsTable({
     [t, statusCounts]
   );
 
-  // 핸들러들
+  // Handlers
   const handleMatchUpdate = useCallback(
     (paymentId: string, appId: string | null) => {
       startTransition(async () => {
@@ -250,7 +250,7 @@ export function PaymentRecordsTable({
     [refreshAll, t]
   );
 
-  // 필터링된 레코드
+  // Filtered records
   const filteredRecords = useMemo(() => {
     return records.filter((r) =>
       searchTerm
@@ -259,7 +259,7 @@ export function PaymentRecordsTable({
     );
   }, [records, searchTerm]);
 
-  // 컬럼 정의 (커스텀 훅 사용)
+  // Column definitions (via custom hook)
   const columns = usePaymentTableColumns({
     apps,
     subscriptions,
@@ -271,7 +271,7 @@ export function PaymentRecordsTable({
     t,
   });
 
-  // 정렬된 데이터
+  // Sorted data
   const sortedData = useMemo(() => {
     if (!sortState) return filteredRecords;
 
@@ -335,7 +335,7 @@ export function PaymentRecordsTable({
 
   return (
     <div className="space-y-4">
-      {/* 검색 + 액션 버튼 */}
+      {/* Search + action buttons */}
       <div className="relative w-full max-w-xs">
         <Search className="text-muted-foreground pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2" />
         <Input
@@ -346,7 +346,7 @@ export function PaymentRecordsTable({
         />
       </div>
 
-      {/* DataTable (TabFilter를 toolbarLeft로 전달하여 Columns 버튼과 동일 행 배치) */}
+      {/* DataTable (TabFilter is passed as toolbarLeft so it sits on the same row as the Columns button) */}
       <DataTable
         data={sortedData}
         columns={columns}
@@ -384,7 +384,7 @@ export function PaymentRecordsTable({
         }
       />
 
-      {/* 서버 측 페이지네이션 */}
+      {/* Server-side pagination */}
       {totalPages > 1 && (
         <div className="flex flex-wrap items-center justify-between gap-2">
           <div className="text-muted-foreground text-sm tabular-nums">
@@ -421,7 +421,7 @@ export function PaymentRecordsTable({
         </div>
       )}
 
-      {/* 앱 등록 Dialog */}
+      {/* App registration dialog */}
       <RegisterAppDialog
         open={appDialogOpen}
         onOpenChange={setAppDialogOpen}
@@ -429,7 +429,7 @@ export function PaymentRecordsTable({
         onSuccess={refreshAll}
       />
 
-      {/* 구독 등록 Dialog */}
+      {/* Subscription registration dialog */}
       <RegisterSubscriptionDialog
         open={subscriptionDialogOpen}
         onOpenChange={setSubscriptionDialogOpen}

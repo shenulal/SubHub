@@ -1,5 +1,5 @@
 // src/app/(auth)/forgot-password/page.tsx
-// 비밀번호 재설정 요청 페이지
+// Password reset request page
 
 import { requestPasswordReset } from "@/actions/password";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -24,13 +24,13 @@ export default async function ForgotPasswordPage({
   const t = await getTranslations();
   const { success } = await searchParams;
 
-  // 이미 로그인된 사용자 체크
+  // Check for an already signed-in user
   const session = await auth();
   if (session?.user) {
     redirect("/dashboard");
   }
 
-  // 이메일 발송 성공 시
+  // When the email was sent successfully
   if (success === "true") {
     return (
       <div className="flex w-full flex-col gap-5">
@@ -75,8 +75,8 @@ export default async function ForgotPasswordPage({
           if (result.success) {
             redirect("/forgot-password?success=true");
           }
-          // 에러 처리는 클라이언트 컴포넌트로 분리 필요
-          // 일단 같은 페이지로 리다이렉트
+          // Error handling should move to a client component
+          // For now, redirect to the same page
           redirect("/forgot-password?success=true");
         }}
         className="flex flex-col gap-5"

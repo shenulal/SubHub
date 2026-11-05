@@ -63,8 +63,8 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 /**
- * 기본 사용법입니다.
- * 두 개의 버튼을 그룹화합니다.
+ * Basic usage.
+ * Groups two buttons.
  */
 export const BasicUsage: Story = {
   render: () => (
@@ -76,8 +76,8 @@ export const BasicUsage: Story = {
 };
 
 /**
- * 수직 방향의 버튼 그룹입니다.
- * 증가/감소 컨트롤에 적합합니다.
+ * A vertical button group.
+ * Suited to increment/decrement controls.
  */
 export const Orientation: Story = {
   render: () => (
@@ -97,8 +97,8 @@ export const Orientation: Story = {
 };
 
 /**
- * 다양한 크기의 버튼 그룹입니다.
- * 작은 크기와 아이콘 버튼을 함께 사용합니다.
+ * Button groups in various sizes.
+ * Combines small buttons with icon buttons.
  */
 export const Size: Story = {
   render: () => (
@@ -144,8 +144,8 @@ export const Size: Story = {
 };
 
 /**
- * 중첩된 버튼 그룹입니다.
- * 페이지네이션 컨트롤에 유용합니다.
+ * Nested button groups.
+ * Useful for pagination controls.
  */
 export const Nested: Story = {
   render: () => (
@@ -180,8 +180,8 @@ export const Nested: Story = {
 };
 
 /**
- * 구분자를 포함한 버튼 그룹입니다.
- * Copy와 Paste 버튼 사이에 구분선을 표시합니다.
+ * A button group with a separator.
+ * Shows a divider between the Copy and Paste buttons.
  */
 export const Separator: Story = {
   render: () => (
@@ -198,8 +198,8 @@ export const Separator: Story = {
 };
 
 /**
- * 분할 버튼 예제입니다.
- * 메인 버튼과 아이콘 버튼을 구분합니다.
+ * A split button example.
+ * Separates the main button from the icon button.
  */
 export const Split: Story = {
   render: () => (
@@ -214,8 +214,8 @@ export const Split: Story = {
 };
 
 /**
- * Input과 함께 사용하는 버튼 그룹입니다.
- * 검색 UI에 적합합니다.
+ * A button group used with an Input.
+ * Suited to search UIs.
  */
 export const WithInput: Story = {
   render: () => (
@@ -229,8 +229,8 @@ export const WithInput: Story = {
 };
 
 /**
- * Input Group 예제입니다.
- * 복잡한 입력 필드와 버튼을 그룹화합니다.
+ * An Input Group example.
+ * Groups a complex input field with buttons.
  */
 export const InputGroupExample: Story = {
   render: () => {
@@ -280,8 +280,8 @@ export const InputGroupExample: Story = {
 };
 
 /**
- * Dropdown Menu와 함께 사용하는 버튼 그룹입니다.
- * 분할 버튼 패턴에 드롭다운을 추가합니다.
+ * A button group used with a Dropdown Menu.
+ * Adds a dropdown to the split button pattern.
  */
 export const WithDropdownMenu: Story = {
   render: () => (
@@ -319,8 +319,8 @@ export const WithDropdownMenu: Story = {
 };
 
 /**
- * Select와 함께 사용하는 버튼 그룹입니다.
- * 페이지 크기 선택에 유용합니다.
+ * A button group used with a Select.
+ * Useful for choosing a page size.
  */
 export const WithSelect: Story = {
   render: () => (
@@ -342,8 +342,8 @@ export const WithSelect: Story = {
 };
 
 /**
- * Popover와 함께 사용하는 버튼 그룹입니다.
- * 추가 설정이나 정보를 표시할 때 유용합니다.
+ * A button group used with a Popover.
+ * Useful for showing additional settings or information.
  */
 export const WithPopover: Story = {
   render: () => (
