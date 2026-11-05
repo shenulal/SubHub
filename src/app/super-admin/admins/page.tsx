@@ -6,6 +6,10 @@ import {
 import { AdminsTable } from "@/components/super-admin/admins-table";
 import { InvitationsHistoryTable } from "@/components/super-admin/invitations-history-table";
 import { InviteAdminForm } from "@/components/super-admin/invite-admin-form";
+import {
+  SelectTenantCard,
+  TenantScope,
+} from "@/components/super-admin/tenant-scope";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -14,6 +18,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { isSaas } from "@/lib/deployment/mode";
 import type { Metadata } from "next";
 import Link from "next/link";
 
@@ -21,10 +26,31 @@ export const metadata: Metadata = {
   title: "Admin Management | Super Admin",
 };
 
-export default async function AdminsPage() {
+interface PageProps {
+  searchParams: Promise<{ org?: string }>;
+}
+
+export default async function AdminsPage({ searchParams }: PageProps) {
+  const { org } = await searchParams;
+  if (isSaas() && !org) {
+    return (
+      <div className="space-y-6">
+        <div className="space-y-1">
+          <h1 className="text-foreground text-2xl font-medium">
+            Admin Management
+          </h1>
+          <p className="text-muted-foreground text-[0.9375rem]">
+            Invite tenant administrators and manage their roles.
+          </p>
+        </div>
+        <TenantScope />
+        <SelectTenantCard purpose="invite and manage its administrators" />
+      </div>
+    );
+  }
   const [result, invitationsResult] = await Promise.all([
-    listTenantAdmins(),
-    listTenantInvitations(),
+    listTenantAdmins(org),
+    listTenantInvitations(org),
   ]);
 
   const noTenant =
@@ -67,6 +93,8 @@ export default async function AdminsPage() {
         </p>
       </div>
 
+      <TenantScope selected={org} />
+
       {/* Invite admin */}
       <Card>
         <CardHeader>
@@ -76,7 +104,7 @@ export default async function AdminsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <InviteAdminForm />
+          <InviteAdminForm organizationId={org} />
         </CardContent>
       </Card>
 

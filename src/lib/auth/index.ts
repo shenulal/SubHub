@@ -37,9 +37,50 @@ function optionalProviders(): NextAuthConfig["providers"] {
 const loadTokenUser = cache(async (email: string) =>
   prisma.user.findUnique({
     where: { email },
-    select: { id: true, organizationId: true, role: true, teamId: true },
+    select: {
+      id: true,
+      organizationId: true,
+      role: true,
+      teamId: true,
+      organization: { select: { deactivatedAt: true } },
+    },
   })
 );
+
+/**
+ * A deactivated tenant (SaaS) keeps its data, but its members' sessions carry no
+ * organisation until it is reactivated — every org-scoped page and action then
+ * redirects to onboarding, which explains the situation.
+ */
+function activeOrganizationId(user: {
+  organizationId: string | null;
+  organization?: { deactivatedAt: Date | null } | null;
+}): string | null {
+  if (!user.organizationId) return null;
+  return user.organization?.deactivatedAt ? null : user.organizationId;
+}
+
+/**
+ * JWT signing secret. Production requires AUTH_SECRET (or NEXTAUTH_SECRET) and
+ * never falls back to a built-in value; development keeps the local fallback.
+ */
+function resolveAuthSecret(): string {
+  // `next build` evaluates modules without runtime secrets; the server re-reads
+  // the environment when it starts.
+  if (process.env.NEXT_PHASE === "phase-production-build") {
+    return "build-phase-placeholder";
+  }
+  if (process.env.NODE_ENV === "production") {
+    const secret = process.env.AUTH_SECRET || process.env.NEXTAUTH_SECRET;
+    if (!secret) {
+      throw new Error(
+        "AUTH_SECRET (or NEXTAUTH_SECRET) must be set in production. Generate one with: openssl rand -base64 32"
+      );
+    }
+    return secret;
+  }
+  return process.env.AUTH_SECRET || "dev-secret-123";
+}
 
 /**
  * NextAuth.js v5 configuration
@@ -160,15 +201,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               role: true,
               email: true,
               teamId: true,
+              organization: { select: { deactivatedAt: true } },
             },
           });
 
-          let organizationId = dbUser?.organizationId ?? null;
+          let organizationId = dbUser ? activeOrganizationId(dbUser) : null;
           let role = dbUser?.role ?? "MEMBER";
           const teamId = dbUser?.teamId ?? null;
 
           // If there is no organization, check for a pending invitation and auto-accept it
-          if (!organizationId && dbUser?.email) {
+          if (!dbUser?.organizationId && dbUser?.email) {
             const pendingInvitation = await prisma.invitation.findFirst({
               where: {
                 email: dbUser.email,
@@ -236,12 +278,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           if (dbUser) {
             token.id = dbUser.id; // Sync to the actual DB user.id
 
-            let organizationId = dbUser.organizationId;
+            let organizationId = activeOrganizationId(dbUser);
             let role = dbUser.role;
             const teamId = dbUser.teamId;
 
             // If there is no organization, check for a pending invitation and auto-accept it
-            if (!organizationId) {
+            if (!dbUser.organizationId) {
               const pendingInvitation = await prisma.invitation.findFirst({
                 where: {
                   email: token.email as string,
@@ -373,5 +415,5 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
     signIn: "/login",
     error: "/login", // Errors also go to the login page
   },
-  secret: process.env.AUTH_SECRET || "dev-secret-123",
+  secret: resolveAuthSecret(),
 });

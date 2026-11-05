@@ -6,7 +6,7 @@ const mockSignIn = vi.fn();
 const mockSignOut = vi.fn();
 const mockFetch = vi.fn();
 
-vi.mock("@/lib/auth", () => ({
+vi.mock("next-auth/react", () => ({
   signIn: (...args: unknown[]) => mockSignIn(...args),
   signOut: () => mockSignOut(),
 }));

@@ -158,6 +158,21 @@
 }
 
 @theme inline {
+  /* ─── Lato type system ───────────────────────────────────────────────
+   * Lato is loaded in its normal (upright) style at 300 / 400 / 700.
+   * Weights map to real Lato faces so the browser never substitutes one:
+   *   regular  400 → body, labels, buttons, tables, navigation (font-normal / font-medium)
+   *   bold     700 → titles, KPI values, deliberate emphasis   (font-semibold / font-bold)
+   * Sizes: 12px minimum (text-xs), 13px captions, 15px body, 18px card titles,
+   * 24px page titles. */
+  --font-weight-light: 300;
+  --font-weight-normal: 400;
+  --font-weight-medium: 400;
+  --font-weight-semibold: 700;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 700;
+  --font-weight-black: 700;
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -243,9 +258,9 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
-  /* Materio heading scale (h1 2.875rem … h6 0.9375rem, weight 500) */
+  /* Headings: Lato Bold, normal letter spacing */
   h1, h2, h3, h4, h5, h6 {
-    font-weight: 500;
+    font-weight: 700;
     letter-spacing: normal;
   }
   /* Numbers line up in tables and KPI cards */
@@ -266,7 +281,7 @@
 @utility tonal-error { background-color: rgb(255 76 81 / 0.16); color: var(--error); }
 @utility tonal-neutral { background-color: rgb(138 141 147 / 0.16); color: var(--neutral); }
 @utility nav-active { background-image: var(--nav-active-gradient); color: #fff; box-shadow: var(--shadow-xs); }
-@utility kpi-value { font-size: clamp(1.25rem, 0.9rem + 1vw, 1.75rem); line-height: 1.25; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+@utility kpi-value { font-size: clamp(1.25rem, 0.9rem + 1vw, 1.75rem); line-height: 1.25; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
 
 
 @keyframes auth-fade-up {
@@ -321,11 +336,8 @@
   background-size: cover;
 }
 
-/* Lato ships 300/400/700/900 only (no 500/600). Headings and titles that ask for a
-   medium/semibold weight use Lato Bold so the heading hierarchy stays clear; other
-   medium-weight text (buttons, labels, chips) renders in Lato Regular. Unlayered on
-   purpose so it wins over the font-medium / font-semibold utilities. */
-:where(h1, h2, h3, h4, h5, h6, [data-slot="card-title"], [data-slot="dialog-title"], [data-slot="alert-dialog-title"], [data-slot="sheet-title"]):is(.font-medium, .font-semibold),
-:where([data-slot="card-title"], [data-slot="dialog-title"], [data-slot="alert-dialog-title"], [data-slot="sheet-title"]) {
+/* Titles always use Lato Bold, whatever weight utility the markup carries.
+   Unlayered on purpose so it wins over the font-* utilities. */
+:where(h1, h2, h3, h4, h5, h6, [data-slot="card-title"], [data-slot="dialog-title"], [data-slot="alert-dialog-title"], [data-slot="sheet-title"]) {
   font-weight: 700;
 }

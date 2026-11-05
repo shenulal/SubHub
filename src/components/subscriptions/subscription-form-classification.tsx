@@ -5,6 +5,7 @@
  * tags and custom fields. Option lists come from master data via props.
  */
 import type { SubscriptionFormOptions } from "@/actions/subscriptions/subscription-form-options";
+import { ManageMasterLink } from "@/components/common/quick-create/manage-master-link";
 import { CostCenterDialog } from "@/components/platform/masters/cost-center-dialog";
 import { PaymentMethodDialog } from "@/components/platform/masters/payment-method-dialog";
 import { CategoryPicker } from "@/components/taxonomy/category-picker";
@@ -52,6 +53,8 @@ interface MasterSelectProps {
   items: Array<{ id: string; label: string }>;
   /** Inline "+ Create …" row (only passed when the user may manage masters). */
   onCreate?: (query: string) => void;
+  /** "Manage …" footer link to the Master data tab (masters:manage only). */
+  manage?: { href: string; label: string };
 }
 
 type MasterItem = { id: string; label: string };
@@ -66,6 +69,7 @@ function MasterSelect({
   noneLabel,
   items,
   onCreate,
+  manage,
 }: MasterSelectProps) {
   const ti = useTranslations("platform.masters.inline");
   return (
@@ -98,6 +102,13 @@ function MasterSelect({
               {item.label}
             </SelectItem>
           ))}
+          {manage && (
+            <ManageMasterLink
+              href={manage.href}
+              label={manage.label}
+              permission="masters:manage"
+            />
+          )}
         </SelectContent>
       </Select>
     </div>
@@ -110,6 +121,7 @@ export function SubscriptionFormClassification({
   options,
 }: SubscriptionFormClassificationProps) {
   const t = useTranslations("lifecycle.form.classification");
+  const tl = useTranslations("shell.inline.labels");
   const canManageMasters = usePermissionFlag("masters:manage");
   const [createdMethods, setCreatedMethods] = useState<MasterItem[]>([]);
   const [createdCenters, setCreatedCenters] = useState<MasterItem[]>([]);
@@ -167,6 +179,10 @@ export function SubscriptionFormClassification({
                   noneLabel={t("none")}
                   items={paymentMethodItems}
                   onCreate={startCreate("paymentMethod")}
+                  manage={{
+                    href: "/settings/masters?tab=payment-methods",
+                    label: tl("paymentMethods"),
+                  }}
                 />
                 {creating?.kind === "paymentMethod" && (
                   <PaymentMethodDialog
@@ -199,6 +215,10 @@ export function SubscriptionFormClassification({
                   noneLabel={t("none")}
                   items={costCenterItems}
                   onCreate={startCreate("costCenter")}
+                  manage={{
+                    href: "/settings/masters?tab=cost-centers",
+                    label: tl("costCentres"),
+                  }}
                 />
                 {creating?.kind === "costCenter" && (
                   <CostCenterDialog
@@ -232,6 +252,10 @@ export function SubscriptionFormClassification({
                   id: r.id,
                   label: `${r.name} (${r.ratePercent}%)`,
                 }))}
+                manage={{
+                  href: "/settings/masters?tab=tax-rates",
+                  label: tl("taxRates"),
+                }}
               />
             )}
           />

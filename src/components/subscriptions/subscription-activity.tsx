@@ -15,6 +15,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { describeAuditAction } from "@/lib/audit/describe-action";
 import { cn } from "@/lib/utils";
 import {
   Archive,
@@ -90,7 +91,9 @@ export function SubscriptionActivity({
   }, [subscriptionId, refreshToken]);
 
   const label = (action: string) =>
-    t.has(`actions.${action}`) ? t(`actions.${action}`) : action;
+    t.has(`actions.${action}`)
+      ? t(`actions.${action}`)
+      : describeAuditAction(action);
   const statusLabel = (value: string) =>
     tStatus.has(value) ? tStatus(value) : value;
 

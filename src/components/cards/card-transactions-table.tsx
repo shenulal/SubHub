@@ -9,6 +9,7 @@ import {
   type TransactionListResult,
   type TransactionQuery,
 } from "@/actions/corporate-cards";
+import { CreateAppDialog } from "@/components/common/quick-create/create-app-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -31,6 +32,7 @@ import {
 } from "@/components/ui/table";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useBaseCurrency } from "@/hooks/use-base-currency";
+import { usePermissionFlag } from "@/hooks/use-permission-flag";
 import { formatMoney } from "@/lib/fx/convert";
 import {
   ArrowUpDown,
@@ -63,6 +65,15 @@ export function CardTransactionsTable({
   summary,
 }: CardTransactionsTableProps) {
   const t = useTranslations("cards.transactions");
+  const tInline = useTranslations("shell.inline");
+  const canCreateApp = usePermissionFlag("apps:manage");
+  // Apps created inline from a row's picker (appended to the server list)
+  const [createdApps, setCreatedApps] = useState<App[]>([]);
+  const [appDraft, setAppDraft] = useState<{
+    txId: string;
+    name: string;
+  } | null>(null);
+  const appOptions = [...apps, ...createdApps];
   const [transactions, setTransactions] = useState(
     initialData?.transactions || []
   );
@@ -339,11 +350,27 @@ export function CardTransactionsTable({
                       <SelectTrigger className="w-40">
                         <SelectValue placeholder={t("appSelect.placeholder")} />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent
+                        createOption={
+                          canCreateApp
+                            ? {
+                                label: (q) =>
+                                  q
+                                    ? tInline("createApp", { name: q })
+                                    : tInline("createAppEmpty"),
+                                onCreate: (q) =>
+                                  setAppDraft({
+                                    txId: tx.id,
+                                    name: q || tx.useStore,
+                                  }),
+                              }
+                            : undefined
+                        }
+                      >
                         <SelectItem value="none">
                           {t("appSelect.none")}
                         </SelectItem>
-                        {apps.map((app) => (
+                        {appOptions.map((app) => (
                           <SelectItem key={app.id} value={app.id}>
                             {app.name}
                           </SelectItem>
@@ -412,6 +439,15 @@ export function CardTransactionsTable({
           </div>
         </div>
       )}
+      <CreateAppDialog
+        open={appDraft !== null}
+        onOpenChange={(open) => !open && setAppDraft(null)}
+        defaultName={appDraft?.name ?? ""}
+        onCreated={(app) => {
+          setCreatedApps((list) => [...list, { id: app.id, name: app.name }]);
+          if (appDraft) void handleMatchUpdate(appDraft.txId, app.id);
+        }}
+      />
     </div>
   );
 }

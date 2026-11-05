@@ -23,7 +23,16 @@ vi.mock("@/lib/rbac/service", async () => {
     await vi.importActual<typeof import("@/lib/rbac/service")>(
       "@/lib/rbac/service"
     );
-  return { ...actual, requirePermission: vi.fn() };
+  const requirePermission = vi.fn();
+  return {
+    ...actual,
+    requirePermission,
+    // Tenant users reach platform-wide writes through requirePermission.
+    requirePlatformActor: async (...args: unknown[]) => ({
+      isSuperAdmin: false,
+      ...(await requirePermission(...args)),
+    }),
+  };
 });
 vi.mock("@/lib/settings/service", async () => {
   const actual = await vi.importActual<typeof import("@/lib/settings/service")>(

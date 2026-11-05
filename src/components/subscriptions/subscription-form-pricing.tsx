@@ -1,6 +1,8 @@
 // src/components/subscriptions/subscription-form-pricing.tsx
 "use client";
 
+import { InviteMemberDialog } from "@/components/common/quick-create/invite-member-dialog";
+import { ManageMasterLink } from "@/components/common/quick-create/manage-master-link";
 import { CurrencyDialog } from "@/components/platform/masters/currency-dialog";
 import {
   Card,
@@ -71,6 +73,9 @@ export function SubscriptionFormPricing({
   const cycleOptions = billingCycleOptions ?? getBillingCycleOptions(t);
   const ti = useTranslations("platform.masters.inline");
   const canCreateCurrency = usePermissionFlag("masters:manage_global");
+  const canInvite = usePermissionFlag("members:invite");
+  const tInline = useTranslations("shell.inline");
+  const [inviteDraft, setInviteDraft] = useState<string | null>(null);
   const [createdCurrencies, setCreatedCurrencies] = useState<string[]>([]);
   const [newCurrency, setNewCurrency] = useState<string | null>(null);
   const watchedCurrency = useWatch({ control, name: "currency" });
@@ -213,6 +218,22 @@ export function SubscriptionFormPricing({
                   moreLabel={(count) => `+${count}`}
                   maxChips={3}
                   disabled={isPending}
+                  createOption={
+                    canInvite
+                      ? {
+                          label: (q) =>
+                            q
+                              ? tInline("inviteUser", { email: q })
+                              : tInline("inviteUserEmpty"),
+                          onCreate: (q) => setInviteDraft(q),
+                        }
+                      : undefined
+                  }
+                />
+                <InviteMemberDialog
+                  open={inviteDraft !== null}
+                  onOpenChange={(o) => !o && setInviteDraft(null)}
+                  defaultEmail={inviteDraft ?? ""}
                 />
 
                 <p className="text-muted-foreground text-sm">
@@ -261,6 +282,11 @@ export function SubscriptionFormPricing({
                     {option.label}
                   </SelectItem>
                 ))}
+                <ManageMasterLink
+                  href="/settings/masters?tab=currencies"
+                  label={tInline("labels.currencies")}
+                  permission="masters:manage_global"
+                />
               </SelectContent>
             </Select>
             {newCurrency !== null && (

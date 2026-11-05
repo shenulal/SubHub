@@ -1,11 +1,12 @@
 // src/lib/rbac/service.test.ts
 import { getCachedSession } from "@/lib/auth/require-auth";
 import { prisma } from "@/lib/db";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import {
   isPermissionKey,
   PERMISSION_KEYS,
   PERMISSIONS,
+  PLATFORM_PERMISSION_KEYS,
   SYSTEM_ROLE_TEMPLATES,
 } from "./permissions";
 import {
@@ -17,6 +18,7 @@ import {
   hasAll,
   hasAny,
   requirePermission,
+  requirePlatformActor,
 } from "./service";
 
 vi.mock("@/lib/db", () => ({
@@ -236,5 +238,145 @@ describe("applyPermissionRollouts", () => {
     db.role.findMany.mockResolvedValue([{ id: "r-admin", key: "ADMIN" }]);
     expect(await applyPermissionRollouts("org")).toBe(0);
     expect(db.rolePermission.createMany).not.toHaveBeenCalled();
+  });
+});
+
+describe("deployment mode scoping", () => {
+  const PLATFORM = [...PLATFORM_PERMISSION_KEYS];
+  const adminRow = () => ({
+    permissions: [...PERMISSION_KEYS].map((key) => ({ permission: { key } })),
+  });
+
+  beforeEach(() => vi.clearAllMocks());
+  afterEach(() => vi.unstubAllEnvs());
+
+  it("lists the platform-only keys", () => {
+    expect(PLATFORM).toEqual(["masters:manage_global", "catalog:manage"]);
+    for (const key of PLATFORM) expect(isPermissionKey(key)).toBe(true);
+  });
+
+  it("single-tenant: the tenant ADMIN keeps platform permissions", async () => {
+    vi.stubEnv("SUBHUB_DEPLOYMENT_MODE", "single-tenant");
+    db.user.findUnique.mockResolvedValue({
+      role: "ADMIN",
+      roleId: null,
+      organizationId: "org",
+      customRole: null,
+    });
+    db.role.findFirst.mockResolvedValue(adminRow());
+    const set = await getUserPermissionSet("u1", "org");
+    for (const key of PLATFORM) expect(set.has(key)).toBe(true);
+  });
+
+  it("saas: strips platform permissions from system roles, rows and templates", async () => {
+    vi.stubEnv("SUBHUB_DEPLOYMENT_MODE", "saas");
+    db.user.findUnique.mockResolvedValue({
+      role: "ADMIN",
+      roleId: null,
+      organizationId: "org",
+      customRole: null,
+    });
+    db.role.findFirst.mockResolvedValueOnce(adminRow());
+    const fromRow = await getUserPermissionSet("u1", "org");
+    db.role.findFirst.mockResolvedValueOnce(null);
+    const fromTemplate = await getUserPermissionSet("u1", "org");
+    for (const set of [fromRow, fromTemplate]) {
+      for (const key of PLATFORM) expect(set.has(key)).toBe(false);
+      expect(set.has("masters:manage")).toBe(true);
+      expect(set.size).toBe(PERMISSION_KEYS.length - PLATFORM.length);
+    }
+  });
+
+  it("saas: a custom role cannot grant platform permissions", async () => {
+    vi.stubEnv("SUBHUB_DEPLOYMENT_MODE", "saas");
+    db.user.findUnique.mockResolvedValue({
+      role: "MEMBER",
+      roleId: "r1",
+      organizationId: "org",
+      customRole: {
+        organizationId: "org",
+        permissions: [
+          { permission: { key: "catalog:manage" } },
+          { permission: { key: "masters:manage_global" } },
+          { permission: { key: "catalog:read" } },
+        ],
+      },
+    });
+    const set = await getUserPermissionSet("u1", "org");
+    expect([...set]).toEqual(["catalog:read"]);
+  });
+
+  it("saas: SUPER_ADMIN still holds every permission", async () => {
+    vi.stubEnv("SUBHUB_DEPLOYMENT_MODE", "saas");
+    db.user.findUnique.mockResolvedValue({
+      role: "SUPER_ADMIN",
+      roleId: null,
+      organizationId: null,
+      customRole: null,
+    });
+    const set = await getUserPermissionSet("u1", null);
+    for (const key of PLATFORM) expect(set.has(key)).toBe(true);
+  });
+
+  it("a deactivated organisation resolves to no permissions", async () => {
+    db.user.findUnique.mockResolvedValue({
+      role: "ADMIN",
+      roleId: null,
+      organizationId: "org",
+      organization: { deactivatedAt: new Date() },
+      customRole: null,
+    });
+    expect((await getUserPermissionSet("u1", "org")).size).toBe(0);
+    expect(db.role.findFirst).not.toHaveBeenCalled();
+  });
+});
+
+describe("requirePlatformActor", () => {
+  beforeEach(() => vi.clearAllMocks());
+  afterEach(() => vi.unstubAllEnvs());
+
+  it("lets SUPER_ADMIN act without an organisation", async () => {
+    session.mockResolvedValue({
+      user: { id: "sa", role: "SUPER_ADMIN", organizationId: null },
+    });
+    const actor = await requirePlatformActor("masters:manage_global");
+    expect(actor).toMatchObject({
+      userId: "sa",
+      organizationId: null,
+      isSuperAdmin: true,
+    });
+    expect(actor.permissions.has("catalog:manage")).toBe(true);
+  });
+
+  it("saas: a tenant ADMIN is refused platform-wide writes", async () => {
+    vi.stubEnv("SUBHUB_DEPLOYMENT_MODE", "saas");
+    session.mockResolvedValue({
+      user: { id: "u1", role: "ADMIN", organizationId: "org" },
+    });
+    db.user.findUnique.mockResolvedValue({
+      role: "ADMIN",
+      roleId: null,
+      organizationId: "org",
+      customRole: null,
+    });
+    db.role.findFirst.mockResolvedValue(null);
+    await expect(
+      requirePlatformActor("masters:manage_global")
+    ).rejects.toBeInstanceOf(ForbiddenError);
+  });
+
+  it("single-tenant: a tenant ADMIN acts within the organisation", async () => {
+    session.mockResolvedValue({
+      user: { id: "u1", role: "ADMIN", organizationId: "org" },
+    });
+    db.user.findUnique.mockResolvedValue({
+      role: "ADMIN",
+      roleId: null,
+      organizationId: "org",
+      customRole: null,
+    });
+    db.role.findFirst.mockResolvedValue(null);
+    const actor = await requirePlatformActor("catalog:manage");
+    expect(actor).toMatchObject({ organizationId: "org", isSuperAdmin: false });
   });
 });

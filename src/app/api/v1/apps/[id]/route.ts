@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { deleteApp, getApp, updateApp } from "@/actions/apps";
 import { auth } from "@/lib/auth";
+import { can } from "@/lib/rbac/service";
 
 /**
  * GET /api/v1/apps/[id]
@@ -56,8 +57,8 @@ export const PUT = withLogging(
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    // Only ADMIN can update
-    if (session.user.role !== "ADMIN") {
+    // Needs apps:manage (the action re-checks it)
+    if (!(await can("apps:manage"))) {
       return NextResponse.json(
         { message: "You do not have permission to edit this app" },
         { status: 403 }
@@ -108,8 +109,8 @@ export const DELETE = withLogging(
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    // Only ADMIN can delete
-    if (session.user.role !== "ADMIN") {
+    // Needs apps:manage (the action re-checks it)
+    if (!(await can("apps:manage"))) {
       return NextResponse.json(
         { message: "You do not have permission to delete this app" },
         { status: 403 }

@@ -1,6 +1,8 @@
 import { AuthProvider } from "@refinedev/core";
 
-import { signIn, signOut } from "@/lib/auth";
+// Browser-side NextAuth helpers. Importing from "@/lib/auth" here would pull the
+// whole server auth configuration (Prisma, secrets) into the client bundle.
+import { signIn, signOut } from "next-auth/react";
 
 interface SessionUser {
   id: string;

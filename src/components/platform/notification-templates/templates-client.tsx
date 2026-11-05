@@ -254,7 +254,7 @@ export function TemplatesClient({ rows }: TemplatesClientProps) {
                         variant={
                           row.source === "custom" ? "primary" : "secondary"
                         }
-                        className="shrink-0 text-[10px]"
+                        className="shrink-0 text-xs"
                       >
                         {row.source === "custom" ? t("custom") : t("default")}
                       </Badge>

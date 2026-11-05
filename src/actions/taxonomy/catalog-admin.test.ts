@@ -18,13 +18,20 @@ vi.mock("@/lib/db", () => ({
     auditLog: { create: vi.fn() },
   },
 }));
-vi.mock("@/lib/rbac/service", () => ({
-  ForbiddenError: MockForbiddenError,
-  isForbiddenError: (e: unknown) => e instanceof MockForbiddenError,
-  requirePermission: vi.fn(),
-}));
+vi.mock("@/lib/rbac/service", () => {
+  const requirePermission = vi.fn();
+  return {
+    ForbiddenError: MockForbiddenError,
+    isForbiddenError: (e: unknown) => e instanceof MockForbiddenError,
+    requirePermission,
+    // Platform-wide catalog writes go through requirePlatformActor, which defers
+    // to requirePermission for tenant users.
+    requirePlatformActor: (...args: unknown[]) => requirePermission(...args),
+  };
+});
 vi.mock("@/lib/settings/service", () => ({
   getSetting: vi.fn().mockResolvedValue(20),
+  getSystemSetting: vi.fn().mockResolvedValue(20),
 }));
 vi.mock("@/lib/logger", () => ({
   logger: { error: vi.fn(), info: vi.fn(), debug: vi.fn(), warn: vi.fn() },

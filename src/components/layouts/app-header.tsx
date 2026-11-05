@@ -6,6 +6,7 @@ import Link from "next/link";
 
 import { logout } from "@/actions/auth";
 import { CommandSearch } from "@/components/common/command-search";
+import { QuickCreateMenu } from "@/components/common/quick-create/quick-create-menu";
 import { ThemeToggle } from "@/components/common/theme-toggle";
 import { NotificationBell } from "@/components/layouts/notification-bell";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -61,6 +62,11 @@ export function AppHeader() {
 
         {/* Right-side actions */}
         <div className="flex shrink-0 items-center gap-0.5 sm:gap-1">
+          {/* Global quick-create ("+ New", shortcut N) */}
+          <div className="mr-1 sm:mr-2">
+            <QuickCreateMenu />
+          </div>
+
           {/* Notification bell */}
           <NotificationBell />
 

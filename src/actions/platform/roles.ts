@@ -2,9 +2,11 @@
 "use server";
 
 import { prisma } from "@/lib/db";
+import { isSaas } from "@/lib/deployment/mode";
 import { withLogging } from "@/lib/logging";
 import {
   isPermissionKey,
+  isPlatformPermission,
   SYSTEM_ROLE_TEMPLATES,
   type SystemRoleKey,
 } from "@/lib/rbac/permissions";
@@ -48,12 +50,19 @@ function slugifyKey(name: string): string {
   return `${CUSTOM_KEY_PREFIX}${slug}`.slice(0, MAX_KEY_LENGTH);
 }
 
+/**
+ * Permission ids for a role's grants. In SaaS mode platform-only keys are never
+ * granted to a tenant role (they are dropped, matching the resolver).
+ */
 async function permissionIdsFor(keys: string[]): Promise<string[]> {
   const unknown = keys.filter((k) => !isPermissionKey(k));
   if (unknown.length)
     throw new ActionError(`Unknown permissions: ${unknown.join(", ")}`);
+  const grantable = isSaas()
+    ? keys.filter((k) => !isPlatformPermission(k))
+    : keys;
   const rows = await prisma.permission.findMany({
-    where: { key: { in: keys } },
+    where: { key: { in: grantable } },
     select: { id: true },
   });
   return rows.map((r) => r.id);

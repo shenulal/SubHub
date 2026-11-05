@@ -3,6 +3,7 @@
 
 import { hashPassword } from "@/lib/auth/password";
 import { prisma } from "@/lib/db";
+import { isSignupOpen } from "@/lib/deployment/tenancy";
 import { logger } from "@/lib/logger";
 import { withLogging } from "@/lib/logging";
 import { sendVerificationEmail } from "@/lib/services/notification/email-auth";
@@ -61,6 +62,16 @@ async function _registerUser(
     }
 
     const { email, password, name } = parsed.data;
+
+    // Server-side gate for the public form: system.allowSelfSignup, or the
+    // first-run setup of a single-tenant installation.
+    if (!(await isSignupOpen())) {
+      return {
+        success: false,
+        message:
+          "Self-service sign-up is disabled. Ask your administrator for an invitation.",
+      };
+    }
 
     // Check for a duplicate email (including the Account table to detect OAuth users)
     const existingUser = await prisma.user.findUnique({

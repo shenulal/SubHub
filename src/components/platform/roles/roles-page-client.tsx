@@ -71,7 +71,7 @@ function RoleCard({
         </button>
         <Badge
           variant={role.isSystem ? "secondary" : "primary"}
-          className="shrink-0 text-[10px]"
+          className="shrink-0 text-xs"
         >
           {role.isSystem ? t("system") : t("custom")}
         </Badge>

@@ -1,10 +1,10 @@
 // src/app/(dashboard)/settings/team/page.tsx
-import { createInvitation, getInvitations } from "@/actions/invitations";
-import { getTeams, type TeamWithStats } from "@/actions/teams";
+import { getInvitations } from "@/actions/invitations";
+import { getTeams } from "@/actions/teams";
 import { PageHeader } from "@/components/common/page-header";
 import { InvitationsTable } from "@/components/settings/invitations-table";
+import { InviteMemberInlineForm } from "@/components/team/invite-member-inline-form";
 import { MemberList } from "@/components/team/member-list";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -12,16 +12,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { requireOrganization, type UserRole } from "@/lib/auth/require-auth";
+import { requireOrganization } from "@/lib/auth/require-auth";
 import { prisma } from "@/lib/db";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
@@ -35,68 +26,6 @@ export async function generateMetadata(): Promise<Metadata> {
     title: `${t("title")}`,
     description: t("description"),
   };
-}
-
-interface InviteFormProps {
-  teams: TeamWithStats[];
-}
-
-async function InviteForm({ teams }: InviteFormProps) {
-  const t = await getTranslations("teamMembers.inviteForm");
-  const roles: UserRole[] = ["ADMIN", "APPROVER", "MEMBER", "VIEWER"];
-
-  const handleSubmit = async (formData: FormData) => {
-    "use server";
-    await createInvitation(formData);
-  };
-
-  return (
-    <form action={handleSubmit} className="grid gap-5 sm:grid-cols-2">
-      <div className="min-w-0 space-y-1.5 sm:col-span-2">
-        <Label htmlFor="email">{t("email")}</Label>
-        <Input
-          id="email"
-          name="email"
-          type="email"
-          required
-          placeholder={t("emailPlaceholder")}
-        />
-      </div>
-      <div className="min-w-0 space-y-1.5">
-        <Label htmlFor="role">{t("role")}</Label>
-        <Select name="role" defaultValue="MEMBER">
-          <SelectTrigger id="role" className="w-full">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            {roles.map((role) => (
-              <SelectItem key={role} value={role}>
-                {t(`roles.${role.toLowerCase()}`)}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="min-w-0 space-y-1.5">
-        <Label htmlFor="teamId">{t("teamAssignment")}</Label>
-        <Select name="teamId">
-          <SelectTrigger id="teamId" className="w-full">
-            <SelectValue placeholder={t("teamPlaceholder")} />
-          </SelectTrigger>
-          <SelectContent>
-            {teams.map((team) => (
-              <SelectItem key={team.id} value={team.id}>
-                {team.name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-      <div className="flex flex-wrap justify-end gap-3 sm:col-span-2">
-        <Button type="submit">{t("submit")}</Button>
-      </div>
-    </form>
-  );
 }
 
 export default async function TeamPage() {
@@ -168,7 +97,9 @@ export default async function TeamPage() {
           <CardDescription>{tForm("description")}</CardDescription>
         </CardHeader>
         <CardContent>
-          <InviteForm teams={teams} />
+          <InviteMemberInlineForm
+            teams={teams.map((team) => ({ id: team.id, name: team.name }))}
+          />
         </CardContent>
       </Card>
 

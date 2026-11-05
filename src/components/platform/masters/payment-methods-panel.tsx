@@ -154,7 +154,7 @@ export function PaymentMethodsPanel({
                   </span>
                 </TableCell>
                 <TableCell>
-                  <span className="tonal-neutral rounded px-1.5 py-0.5 text-[11px] font-medium tracking-wide">
+                  <span className="tonal-neutral rounded px-1.5 py-0.5 text-xs font-medium tracking-wide">
                     {row.kind}
                   </span>
                 </TableCell>

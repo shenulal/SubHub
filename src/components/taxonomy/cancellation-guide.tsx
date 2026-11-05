@@ -136,7 +136,7 @@ export function CancellationGuide({
           <ol className="space-y-2">
             {steps.map((step, i) => (
               <li key={i} className="flex gap-3 text-sm">
-                <span className="bg-muted text-muted-foreground mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold tabular-nums">
+                <span className="bg-muted text-muted-foreground mt-0.5 flex size-5 shrink-0 items-center justify-center rounded-full text-xs font-semibold tabular-nums">
                   {i + 1}
                 </span>
                 <span className="leading-5">{step}</span>

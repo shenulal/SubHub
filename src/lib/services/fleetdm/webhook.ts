@@ -1,5 +1,7 @@
 // FleetDM webhook processing service
 import { prisma } from "@/lib/db";
+import { isSaas } from "@/lib/deployment/mode";
+import { logger } from "@/lib/logger";
 import type { DevicePlatform, DeviceStatus } from "@prisma/client";
 import crypto from "crypto";
 import type {
@@ -236,13 +238,23 @@ async function removeSoftwareFromWebhook(
 
 /**
  * Extracts the organization ID from the webhook payload
- * Maps the organization using the FleetDM Team ID
+ * Maps the organization using the FleetDM Team ID.
+ *
+ * Without a team id, single-tenant installations fall back to their only active
+ * FleetDM integration. SaaS never guesses a tenant: the integration must store
+ * the FleetDM `teamId`; otherwise the event is logged and skipped (null).
  */
 export async function getOrganizationIdFromWebhook(
   teamId?: number
 ): Promise<string | null> {
   if (!teamId) {
-    // Use the default organization (single-tenant mode)
+    if (isSaas()) {
+      logger.warn(
+        "[FleetDM Webhook] Payload has no team_id; SaaS mode requires a team-to-tenant mapping (integration credentials.teamId). Event skipped."
+      );
+      return null;
+    }
+    // Single-tenant: the installation's only active FleetDM integration
     const integration = await prisma.integration.findFirst({
       where: {
         type: "FLEETDM",

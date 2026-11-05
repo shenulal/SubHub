@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { createApp, getApps } from "@/actions/apps";
 import { auth } from "@/lib/auth";
+import { can } from "@/lib/rbac/service";
 import type { AppFilterOptions, AppSortOptions } from "@/types/app";
 import { AppSource, AppStatus } from "@prisma/client";
 
@@ -57,7 +58,7 @@ export const GET = withLogging(
 /**
  * POST /api/v1/apps
  * - Create an app (wraps the FormData-based Server Action)
- * - Permission: ADMIN, MEMBER (VIEWER blocked)
+ * - Permission: apps:manage
  */
 export const POST = withLogging(
   "POST /api/v1/apps",
@@ -67,10 +68,10 @@ export const POST = withLogging(
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    // VIEWER cannot create apps
-    if (session.user.role === "VIEWER") {
+    // Creating apps needs `apps:manage` (the action re-checks it).
+    if (!(await can("apps:manage"))) {
       return NextResponse.json(
-        { message: "Read-only users cannot create apps" },
+        { message: "You do not have permission to create apps" },
         { status: 403 }
       );
     }

@@ -1,6 +1,7 @@
 // src/components/layouts/app-sidebar.test.tsx
 import { SidebarProvider } from "@/components/ui/sidebar";
 import messages from "@/i18n/messages/en.json";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -164,6 +165,42 @@ describe("AppSidebar", () => {
 
       const orgLink = screen.getByRole("link", { name: /Organization/ });
       expect(orgLink).toHaveAttribute("data-active", "true");
+    });
+  });
+
+  describe("master data entry", () => {
+    const renderWithPermissions = (permissions: string[]) => {
+      const client = new QueryClient();
+      client.setQueryData(["me", "permissions"], new Set(permissions));
+      return render(
+        <QueryClientProvider client={client}>
+          <NextIntlClientProvider
+            locale="en"
+            messages={{
+              ...messages,
+              platform: { sidebar: { masters: { title: "Master data" } } },
+            }}
+          >
+            <SidebarProvider>
+              <AppSidebar role="MEMBER" />
+            </SidebarProvider>
+          </NextIntlClientProvider>
+        </QueryClientProvider>
+      );
+    };
+
+    it("links to the master data hub for users with a masters read permission", () => {
+      renderWithPermissions(["tags:read"]);
+      expect(
+        screen.getByRole("link", { name: /master data/i })
+      ).toHaveAttribute("href", "/settings/masters");
+    });
+
+    it("is hidden without any masters or taxonomy read permission", () => {
+      renderWithPermissions(["subscriptions:read"]);
+      expect(
+        screen.queryByRole("link", { name: /master data/i })
+      ).not.toBeInTheDocument();
     });
   });
 });

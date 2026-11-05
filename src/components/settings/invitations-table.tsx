@@ -6,6 +6,7 @@ import {
   resendInvitation,
   type InvitationWithInviter,
 } from "@/actions/invitations";
+import { ConfirmAction } from "@/components/common/confirm-action";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -126,13 +127,14 @@ export function InvitationsTable({ invitations }: InvitationsTableProps) {
               >
                 <div className="min-w-0">
                   <p className="text-foreground truncate font-medium">
-                    {invite.email} · {invite.role}
+                    {invite.email} · {t(`shell.invite.roles.${invite.role}`)}
                   </p>
                   <p className="text-muted-foreground text-[0.8125rem]">
                     {t("settings.invitations.item.expiresAt", {
                       date: formatKoreanDateTime(invite.expiresAt),
                     })}{" "}
-                    · {t("settings.invitations.item.status")}: {invite.status}
+                    · {t("settings.invitations.item.status")}:{" "}
+                    {t(`shell.invite.status.${invite.status}`)}
                   </p>
                 </div>
                 {invite.status === "PENDING" ? (
@@ -151,20 +153,30 @@ export function InvitationsTable({ invitations }: InvitationsTableProps) {
                         ? t("settings.invitations.actions.resending")
                         : t("settings.invitations.actions.resend")}
                     </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      disabled={
-                        isTransitioning &&
-                        pendingAction === `cancel-${invite.id}`
-                      }
-                      onClick={() => handleCancel(invite.id)}
+                    <ConfirmAction
+                      title={t("shell.confirm.cancelInvitation.title", {
+                        email: invite.email,
+                      })}
+                      description={t(
+                        "shell.confirm.cancelInvitation.description"
+                      )}
+                      confirmLabel={t("shell.confirm.cancelInvitation.confirm")}
+                      onConfirm={() => handleCancel(invite.id)}
                     >
-                      {isTransitioning &&
-                      pendingAction === `cancel-${invite.id}`
-                        ? t("settings.invitations.actions.canceling")
-                        : t("settings.invitations.actions.cancel")}
-                    </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        disabled={
+                          isTransitioning &&
+                          pendingAction === `cancel-${invite.id}`
+                        }
+                      >
+                        {isTransitioning &&
+                        pendingAction === `cancel-${invite.id}`
+                          ? t("settings.invitations.actions.canceling")
+                          : t("settings.invitations.actions.cancel")}
+                      </Button>
+                    </ConfirmAction>
                   </div>
                 ) : (
                   <span className="tonal-success shrink-0 rounded px-2 py-0.5 text-[0.8125rem] font-medium">

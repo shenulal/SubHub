@@ -2,6 +2,10 @@
 "use client";
 
 import { registerCorporateCard } from "@/actions/corporate-cards";
+import {
+  useInlineInvite,
+  useInlineTeamCreate,
+} from "@/components/common/quick-create/use-inline-create";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -78,6 +82,13 @@ export function CardRegisterForm({
   const [assignmentType, setAssignmentType] = useState<AssignmentType>("none");
   const [teamId, setTeamId] = useState("");
   const [assignedUserId, setAssignedUserId] = useState("");
+  const teamCreate = useInlineTeamCreate((team) => setTeamId(team.id));
+  const invite = useInlineInvite();
+  const allTeams = [
+    ...teams,
+    ...teamCreate.created.map((team) => ({ id: team.id, name: team.name })),
+  ];
+  const showTeams = allTeams.length > 0 || teamCreate.allowed;
 
   const resetForm = () => {
     setCardCd("");
@@ -248,7 +259,7 @@ export function CardRegisterForm({
                     {t("assignmentNone")}
                   </Label>
                 </div>
-                {teams.length > 0 && (
+                {showTeams && (
                   <div className="flex items-center space-x-2">
                     <RadioGroupItem value="team" id="assign-team" />
                     <Label htmlFor="assign-team" className="cursor-pointer">
@@ -268,15 +279,15 @@ export function CardRegisterForm({
             </div>
 
             {/* Team selection (when shared by a team) */}
-            {assignmentType === "team" && teams.length > 0 && (
+            {assignmentType === "team" && showTeams && (
               <div className="grid gap-2">
                 <Label htmlFor="teamId">{t("assignTeam")} *</Label>
                 <Select value={teamId} onValueChange={setTeamId}>
                   <SelectTrigger>
                     <SelectValue placeholder={t("assignTeamPlaceholder")} />
                   </SelectTrigger>
-                  <SelectContent>
-                    {teams.map((team) => (
+                  <SelectContent createOption={teamCreate.createOption}>
+                    {allTeams.map((team) => (
                       <SelectItem key={team.id} value={team.id}>
                         {team.name}
                       </SelectItem>
@@ -297,7 +308,7 @@ export function CardRegisterForm({
                   <SelectTrigger>
                     <SelectValue placeholder={t("assignUserPlaceholder")} />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent createOption={invite.createOption}>
                     {users.map((user) => (
                       <SelectItem key={user.id} value={user.id}>
                         <div className="flex flex-col">
@@ -427,6 +438,8 @@ export function CardRegisterForm({
           </DialogFooter>
         </form>
       </DialogContent>
+      {teamCreate.dialog}
+      {invite.dialog}
     </Dialog>
   );
 }

@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { withLogging } from "@/lib/logging";
+import { can } from "@/lib/rbac/service";
 import { sendInvitationEmail } from "@/lib/services/notification/email";
 import type { ActionState } from "@/types";
 import type { Invitation, UserRole } from "@prisma/client";
@@ -50,11 +51,11 @@ async function _createInvitation(
       };
     }
 
-    // Check admin permission
-    if (session.user.role !== "ADMIN") {
+    // Inviting needs `members:invite` (granted to administrators by default)
+    if (!(await can("members:invite"))) {
       return {
         success: false,
-        message: "Only admins can invite team members",
+        message: "You do not have permission to invite members",
       };
     }
 

@@ -1,11 +1,12 @@
 // src/components/super-admin/super-admin-sidebar.tsx
 "use client";
 
+import type { DeploymentInfo } from "@/lib/deployment/mode";
 import { cn } from "@/lib/utils";
 import {
-  BarChart3,
   Box,
   Building2,
+  Database,
   LayoutDashboard,
   LogOut,
   Settings,
@@ -14,9 +15,18 @@ import {
 } from "lucide-react";
 import { signOut } from "next-auth/react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
+import { DeploymentModeBadge } from "./deployment-mode-badge";
 
-const navItems = [
+/** Screens that work on one tenant keep the selected `?org=` (SaaS). */
+const TENANT_SCOPED = new Set([
+  "/super-admin",
+  "/super-admin/tenant",
+  "/super-admin/admins",
+  "/super-admin/extension-builds",
+]);
+
+const baseNavItems = [
   {
     href: "/super-admin",
     label: "Usage Overview",
@@ -38,14 +48,36 @@ const navItems = [
     icon: Box,
   },
   {
+    href: "/super-admin/masters",
+    label: "Platform masters",
+    icon: Database,
+  },
+  {
     href: "/super-admin/settings",
     label: "Platform settings",
     icon: Settings,
   },
 ];
 
-export function SuperAdminSidebar() {
+export function SuperAdminSidebar({
+  deployment,
+}: {
+  deployment: DeploymentInfo;
+}) {
   const pathname = usePathname();
+  const org = useSearchParams().get("org");
+  const navItems = baseNavItems.map((item) => ({
+    ...item,
+    label:
+      item.href === "/super-admin/tenant" && deployment.multiTenant
+        ? "Tenants"
+        : item.label,
+    href:
+      org && deployment.multiTenant && TENANT_SCOPED.has(item.href)
+        ? `${item.href}?org=${encodeURIComponent(org)}`
+        : item.href,
+    path: item.href,
+  }));
 
   return (
     <aside className="bg-background flex w-full shrink-0 flex-col max-lg:border-b lg:h-screen lg:w-[260px]">
@@ -68,13 +100,13 @@ export function SuperAdminSidebar() {
       <nav className="flex gap-1 overflow-x-auto px-4 pb-3 lg:flex-1 lg:flex-col lg:overflow-visible lg:py-2 lg:pr-4 lg:pl-0">
         {navItems.map((item) => {
           const isActive =
-            item.href === "/super-admin"
+            item.path === "/super-admin"
               ? pathname === "/super-admin"
-              : pathname.startsWith(item.href);
+              : pathname.startsWith(item.path);
 
           return (
             <Link
-              key={item.href}
+              key={item.path}
               href={item.href}
               className={cn(
                 "flex h-[42px] shrink-0 items-center gap-2.5 rounded-full px-4 text-[0.9375rem] whitespace-nowrap transition-colors lg:rounded-l-none lg:pl-6",
@@ -90,14 +122,9 @@ export function SuperAdminSidebar() {
         })}
       </nav>
 
-      {/* Stats badge */}
+      {/* Deployment mode (SUBHUB_DEPLOYMENT_MODE, read-only) */}
       <div className="hidden px-4 pb-3 lg:block">
-        <div className="tonal-neutral flex items-center gap-2 rounded-md px-3 py-2">
-          <BarChart3 className="size-4 shrink-0" />
-          <span className="truncate text-xs font-medium">
-            PHASE 1 (single tenant)
-          </span>
-        </div>
+        <DeploymentModeBadge deployment={deployment} />
       </div>
 
       {/* Sign out */}

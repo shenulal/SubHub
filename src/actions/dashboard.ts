@@ -1,6 +1,7 @@
 // src/actions/dashboard.ts
 "use server";
 
+import { describeAuditAction } from "@/lib/audit/describe-action";
 import { requireOrganization } from "@/lib/auth/require-auth";
 import { prisma } from "@/lib/db";
 import { inFilter } from "@/lib/filters/multi-value";
@@ -214,18 +215,6 @@ export async function getRecentActivity(
     take: 10,
   });
 
-  const actionDescriptions: Record<string, string> = {
-    CREATE_APP: "Added an app",
-    UPDATE_APP: "Updated an app",
-    DELETE_APP: "Deleted an app",
-    CREATE_SUBSCRIPTION: "Registered a subscription",
-    UPDATE_SUBSCRIPTION: "Updated a subscription",
-    DELETE_SUBSCRIPTION: "Deleted a subscription",
-    USER_TERMINATED: "Offboarded a user",
-    REVOKE_APP_ACCESS: "Revoked app access",
-    GRANT_APP_ACCESS: "Granted app access",
-  };
-
   return logs.map((log) => ({
     id: log.id,
     action: log.action,
@@ -234,7 +223,7 @@ export async function getRecentActivity(
     userName: log.user?.name ?? undefined,
     userEmail: log.user?.email ?? undefined,
     createdAt: log.createdAt,
-    description: actionDescriptions[log.action] ?? log.action,
+    description: describeAuditAction(log.action),
   }));
 }
 

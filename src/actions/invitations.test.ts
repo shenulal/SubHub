@@ -2,6 +2,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock auth
+vi.mock("@/lib/rbac/service", async () =>
+  (await import("@/test/rbac-session-mock")).sessionRbacMock()
+);
+
 vi.mock("@/lib/auth", () => ({
   auth: vi.fn(),
 }));
@@ -94,7 +98,7 @@ describe("invitations actions", () => {
 
       expect(result).toEqual({
         success: false,
-        message: "Only admins can invite team members",
+        message: "You do not have permission to invite members",
       });
     });
 

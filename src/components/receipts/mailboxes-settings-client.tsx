@@ -167,7 +167,7 @@ export function MailboxesSettingsClient({
               <div key={id} className="space-y-1">
                 {button}
                 {!enabled && (
-                  <p className="text-muted-foreground max-w-[240px] text-[11px] leading-snug">
+                  <p className="text-muted-foreground max-w-[240px] text-xs leading-snug">
                     {t("mailboxes.connect.notConfigured", {
                       provider: t(`common.providers.${id}`),
                     })}

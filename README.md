@@ -78,6 +78,18 @@ Docker alternative: `docker compose up -d` (Postgres + app).
 
 See `.env.example` for the full list.
 
+## Deployment modes
+
+One environment variable decides how SubHub is tenanted (default `single-tenant`):
+
+| `SUBHUB_DEPLOYMENT_MODE`                              | Use                                                                                             |
+| ----------------------------------------------------- | ----------------------------------------------------------------------------------------------- |
+| `single-tenant` (aliases `on-premise`, `self-hosted`) | Customer self-hosting: one organisation per installation, first user completes first-run setup. |
+| `saas`                                                | HelloPixels cloud: many isolated organisations, tenant management in the super-admin console.   |
+
+On-premise installs use `docker compose up -d --build` (Postgres, migrations, app, scheduler).
+Full guide — install, first-run setup, backups, upgrades and SaaS operations: [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md).
+
 ## Configuration model
 
 SubHub has **no hard-coded business values**. Every threshold, default, lead time, limit and provider lives in the settings registry (`src/lib/settings/registry.ts`) and is editable under **Settings → Workspace settings** (organisation scope) or **Super admin → Platform settings** (system scope). Resolution order: organisation override → system override → registry default.
@@ -106,6 +118,8 @@ Roles are organisation-scoped. The four system roles (Administrator, Approver, M
 | `/api/cron/exchange-rates`                                     | daily 02:00      | Refresh FX rates                                       |
 | `/api/cron/weekly-digest`                                      | Monday 07:00     | Weekly digest email                                    |
 | `/api/cron/renewal-alerts`, `auto-renewal`, `review-apps-scan` | daily            | Inherited jobs                                         |
+
+Self-hosted (Docker) installs run these through the `scheduler` service in `docker-compose.yml` (`deploy/scheduler/crontab.template`, UTC).
 
 ## Development
 

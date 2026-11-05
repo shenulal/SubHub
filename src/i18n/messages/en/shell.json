@@ -1,0 +1,134 @@
+{
+  "shell": {
+    "nav": {
+      "masterData": "Master data"
+    },
+    "quickCreate": {
+      "button": "New",
+      "buttonLabel": "Create something new",
+      "menuLabel": "Create new",
+      "shortcut": "N",
+      "items": {
+        "subscription": "Subscription",
+        "app": "App",
+        "approval": "Approval request",
+        "team": "Team",
+        "category": "Category",
+        "tag": "Tag",
+        "invite": "Invite member",
+        "costCenter": "Cost centre",
+        "paymentMethod": "Payment method"
+      }
+    },
+    "inline": {
+      "createApp": "Create app “{name}”",
+      "createAppEmpty": "Create a new app…",
+      "createTeam": "Create team “{name}”",
+      "createTeamEmpty": "Create a new team…",
+      "inviteUser": "Invite “{email}”",
+      "inviteUserEmpty": "Invite a new member…",
+      "manage": "Manage {name}",
+      "yourApps": "Your apps",
+      "vendorCatalog": "Vendor catalog",
+      "teamCreated": "Team “{name}” created and selected",
+      "appCreated": "App “{name}” created and selected",
+      "labels": {
+        "currencies": "currencies",
+        "categories": "categories",
+        "costCentres": "cost centres",
+        "paymentMethods": "payment methods",
+        "taxRates": "tax rates",
+        "teams": "teams",
+        "apps": "apps"
+      }
+    },
+    "createApp": {
+      "title": "Create app",
+      "description": "Add an app your organisation uses or pays for. You can complete its details later on the app page.",
+      "name": "App name",
+      "namePlaceholder": "e.g. Figma",
+      "category": "Category",
+      "website": "Website",
+      "websitePlaceholder": "https://",
+      "catalog": "Vendor catalog entry",
+      "catalogPlaceholder": "Link to a catalog entry (optional)",
+      "catalogSearch": "Search the vendor catalog…",
+      "catalogEmpty": "No catalog entries match",
+      "catalogClear": "Remove catalog link",
+      "catalogLinked": "Linked to {name}",
+      "nameTooShort": "Enter at least 2 characters",
+      "invalidUrl": "Enter a full address starting with https://",
+      "submit": "Create app",
+      "creating": "Creating…",
+      "cancel": "Cancel",
+      "success": "App “{name}” created",
+      "error": "The app could not be created. Please try again."
+    },
+    "createTag": {
+      "title": "Create tag",
+      "description": "Tags group subscriptions across categories, for example by project or client.",
+      "name": "Tag name",
+      "namePlaceholder": "e.g. Marketing launch",
+      "submit": "Create tag",
+      "creating": "Creating…",
+      "cancel": "Cancel",
+      "success": "Tag “{name}” created",
+      "error": "The tag could not be created. Please try again."
+    },
+    "invite": {
+      "title": "Invite member",
+      "description": "We will email an invitation link. The person appears in member and assignment lists once they accept.",
+      "email": "Email address",
+      "emailPlaceholder": "name@company.com",
+      "invalidEmail": "Enter a valid email address",
+      "role": "Role",
+      "team": "Team",
+      "teamPlaceholder": "No team",
+      "noTeam": "No team",
+      "submit": "Send invitation",
+      "sending": "Sending…",
+      "cancel": "Cancel",
+      "sent": "Invitation sent to {email}. They will appear in member lists once they accept.",
+      "error": "The invitation could not be sent. Please try again.",
+      "roles": {
+        "ADMIN": "Administrator",
+        "APPROVER": "Approver",
+        "MEMBER": "Member",
+        "VIEWER": "Viewer"
+      },
+      "status": {
+        "PENDING": "Pending",
+        "ACCEPTED": "Accepted",
+        "EXPIRED": "Expired",
+        "CANCELLED": "Cancelled",
+        "CANCELED": "Cancelled"
+      }
+    },
+    "form": {
+      "required": "Required",
+      "requiredHint": "Fields marked * are required",
+      "fixErrors": "Please fix the highlighted fields. Nothing you entered has been lost."
+    },
+    "audit": {
+      "other": "Activity"
+    },
+    "actions": {
+      "addApp": "Add app",
+      "addSubscription": "Add subscription"
+    },
+    "confirm": {
+      "cancel": "Keep it",
+      "confirm": "Yes, continue",
+      "cancelInvitation": {
+        "title": "Cancel the invitation to {email}?",
+        "description": "The invitation link stops working immediately. You can invite this person again later.",
+        "confirm": "Cancel invitation"
+      },
+      "removeSeat": {
+        "title": "Remove {name} from this subscription?",
+        "description": "The seat becomes free for someone else. Their access in the vendor's system is not changed.",
+        "confirm": "Remove"
+      }
+    }
+  }
+}

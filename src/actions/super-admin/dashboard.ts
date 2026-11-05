@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db";
 import { getBaseCurrency } from "@/lib/fx/base-currency";
 import { withLogging } from "@/lib/logging";
 import type { ActionState } from "@/types";
+import { resolveConsoleTenant } from "./_tenant";
 
 export interface SuperAdminStats {
   totalUsers: number;
@@ -29,17 +30,14 @@ export interface AppSubscriptionSummary {
 /**
  * Super Admin overview statistics
  */
-async function _getSuperAdminStats(): Promise<ActionState<SuperAdminStats>> {
+async function _getSuperAdminStats(
+  organizationId?: string
+): Promise<ActionState<SuperAdminStats>> {
   await requireSuperAdmin();
 
-  const org = await prisma.organization.findFirst({
-    orderBy: { createdAt: "asc" },
-    select: { id: true },
-  });
-
-  if (!org) {
-    return { success: false, message: "Tenant information not found." };
-  }
+  const resolved = await resolveConsoleTenant(organizationId);
+  if (!resolved.ok) return { success: false, message: resolved.message };
+  const org = resolved.tenant;
 
   const [totalUsers, activeUsers, subscriptions, latestBuild] =
     await Promise.all([
@@ -102,19 +100,14 @@ export const getSuperAdminStats = withLogging(
 /**
  * Subscription summary per app
  */
-async function _getResourceUsage(): Promise<
-  ActionState<AppSubscriptionSummary[]>
-> {
+async function _getResourceUsage(
+  organizationId?: string
+): Promise<ActionState<AppSubscriptionSummary[]>> {
   await requireSuperAdmin();
 
-  const org = await prisma.organization.findFirst({
-    orderBy: { createdAt: "asc" },
-    select: { id: true },
-  });
-
-  if (!org) {
-    return { success: false, message: "Tenant information not found." };
-  }
+  const resolved = await resolveConsoleTenant(organizationId);
+  if (!resolved.ok) return { success: false, message: resolved.message };
+  const org = resolved.tenant;
 
   const subscriptions = await prisma.subscription.findMany({
     where: { organizationId: org.id, status: "ACTIVE" },
@@ -174,4 +167,34 @@ async function _getResourceUsage(): Promise<
 export const getResourceUsage = withLogging(
   "getResourceUsage",
   _getResourceUsage
+);
+
+export interface PlatformOverview {
+  tenantCount: number;
+  activeTenantCount: number;
+  totalUsers: number;
+  activeSubscriptions: number;
+}
+
+/**
+ * Platform-wide totals across every tenant (SaaS console overview).
+ */
+async function _getPlatformOverview(): Promise<ActionState<PlatformOverview>> {
+  await requireSuperAdmin();
+  const [tenantCount, activeTenantCount, totalUsers, activeSubscriptions] =
+    await Promise.all([
+      prisma.organization.count(),
+      prisma.organization.count({ where: { deactivatedAt: null } }),
+      prisma.user.count({ where: { organizationId: { not: null } } }),
+      prisma.subscription.count({ where: { status: "ACTIVE" } }),
+    ]);
+  return {
+    success: true,
+    data: { tenantCount, activeTenantCount, totalUsers, activeSubscriptions },
+  };
+}
+
+export const getPlatformOverview = withLogging(
+  "getPlatformOverview",
+  _getPlatformOverview
 );

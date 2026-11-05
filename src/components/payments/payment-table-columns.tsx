@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { usePermissionFlag } from "@/hooks/use-permission-flag";
 import { Link2, Plus, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useMemo } from "react";
@@ -39,7 +40,8 @@ interface UsePaymentTableColumnsProps {
   isPending: boolean;
   onMatchUpdate: (paymentId: string, appId: string | null) => void;
   onLinkSubscription: (paymentId: string, subscriptionId: string) => void;
-  onRegisterApp?: (record: PaymentRecordWithApp) => void;
+  /** Opens inline app creation (name = text typed in the picker). */
+  onRegisterApp?: (record: PaymentRecordWithApp, name?: string) => void;
   onRegisterSubscription?: (record: PaymentRecordWithApp) => void;
   t: ReturnType<typeof useTranslations>;
 }
@@ -55,6 +57,8 @@ export function usePaymentTableColumns({
   t,
 }: UsePaymentTableColumnsProps): DataTableColumn<PaymentRecordWithApp>[] {
   const statusLabels = getStatusLabels(t);
+  const canCreateApp =
+    usePermissionFlag("apps:manage") && Boolean(onRegisterApp);
 
   return useMemo(
     () => [
@@ -135,26 +139,28 @@ export function usePaymentTableColumns({
           <div className="flex items-center gap-1">
             <Select
               value={record.matchedApp?.id || "none"}
-              onValueChange={(value) => {
-                if (value === "__register_app__") {
-                  onRegisterApp?.(record);
-                  return;
-                }
-                onMatchUpdate(record.id, value === "none" ? null : value);
-              }}
+              onValueChange={(value) =>
+                onMatchUpdate(record.id, value === "none" ? null : value)
+              }
               disabled={isPending}
             >
               <SelectTrigger className="w-40">
                 <SelectValue placeholder={t("payments.table.appSelect")} />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="__register_app__">
-                  <span className="flex items-center gap-2">
-                    <Plus className="h-4 w-4" />
-                    {t("payments.table.registerNewApp")}
-                  </span>
-                </SelectItem>
-                <SelectSeparator />
+              <SelectContent
+                className="min-w-64"
+                createOption={
+                  canCreateApp
+                    ? {
+                        label: (q) =>
+                          q
+                            ? t("shell.inline.createApp", { name: q })
+                            : t("payments.table.registerNewApp"),
+                        onCreate: (q) => onRegisterApp?.(record, q),
+                      }
+                    : undefined
+                }
+              >
                 <SelectItem value="none">
                   {t("payments.table.unmatched")}
                 </SelectItem>
@@ -242,6 +248,7 @@ export function usePaymentTableColumns({
       onRegisterSubscription,
       t,
       statusLabels,
+      canCreateApp,
     ]
   );
 }

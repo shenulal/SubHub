@@ -302,6 +302,26 @@
       "continueWithApple": "Continue with Apple",
       "ssoOnly": "This workspace requires single sign-on. Use one of the providers above.",
       "selfSignupDisabled": "Self-service sign-up is disabled. Ask your administrator for an invitation."
+    },
+    "onboarding": {
+      "firstRunTitle": "First-run setup",
+      "firstRunBody": "No organisation exists on this installation yet. The organisation you create here is its only one, and you become its administrator.",
+      "joinTitle": "Join {name}",
+      "joinBody": "Your email domain belongs to {name}. Join as a member now; an administrator can change your role later.",
+      "joinAction": "Join {name}",
+      "joining": "Joining…",
+      "installationReadyTitle": "This installation is already set up",
+      "installationReadyBody": "SubHub here runs for a single organisation, and it already exists. Ask its administrator to invite you, then open the link in the invitation email.",
+      "signupClosedTitle": "Ask for an invitation",
+      "signupClosedBody": "Creating new organisations is turned off. Ask your organisation's administrator to invite you.",
+      "deactivatedTitle": "Organisation deactivated",
+      "deactivatedBody": "{name} has been deactivated by the platform operator. Contact your administrator or support to restore access.",
+      "signOut": "Sign out"
+    },
+    "deployment": {
+      "label": "Deployment mode",
+      "singleTenant": "On-premise / self-hosted (single tenant)",
+      "saas": "SaaS (multi-tenant)"
     }
   }
 }

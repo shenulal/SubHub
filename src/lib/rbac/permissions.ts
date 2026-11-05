@@ -34,6 +34,13 @@ export const PERMISSIONS = [
     "Edit, pause, archive subscriptions"
   ),
   p("subscriptions", "delete", "Subscriptions", "Delete subscriptions"),
+  p("apps", "read", "Subscriptions", "View the organisation's apps"),
+  p(
+    "apps",
+    "manage",
+    "Subscriptions",
+    "Create, edit and delete apps (vendors)"
+  ),
   p("subscriptions", "bulk", "Subscriptions", "Bulk edit subscriptions"),
   p("subscriptions", "export", "Subscriptions", "Export subscription data"),
   p(
@@ -164,6 +171,7 @@ export type SystemRoleKey = "ADMIN" | "APPROVER" | "MEMBER" | "VIEWER";
 
 const VIEWER_GRANTS: PermissionKey[] = [
   "subscriptions:read",
+  "apps:read",
   "approvals:read",
   "approval_policies:read",
   "categories:read",
@@ -245,7 +253,33 @@ export const SYSTEM_ROLE_TEMPLATES: Record<
 export const PERMISSION_ROLLOUTS: readonly PermissionKey[] = [
   "masters:manage_global",
   "catalog:read",
+  "apps:read",
+  "apps:manage",
 ];
+
+/**
+ * Permissions that change PLATFORM-WIDE data shared by every organisation
+ * (tables without an organizationId):
+ *   masters:manage_global → currencies, countries; in SaaS also the shared
+ *                           exchange-rate table (manual rates, provider refresh)
+ *   catalog:manage        → vendor catalog (SaaSCatalog), cancellation guides,
+ *                           catalog verification, OS default apps
+ * In single-tenant (on-premise) mode the installation belongs to one customer, so
+ * its ADMIN keeps them. In SaaS mode they are platform-only: the resolver strips
+ * them from every tenant role (system or custom) and only SUPER_ADMIN holds them.
+ */
+export const PLATFORM_PERMISSION_KEYS = [
+  "masters:manage_global",
+  "catalog:manage",
+] as const satisfies readonly PermissionKey[];
+
+export type PlatformPermissionKey = (typeof PLATFORM_PERMISSION_KEYS)[number];
+
+export function isPlatformPermission(
+  key: string
+): key is PlatformPermissionKey {
+  return (PLATFORM_PERMISSION_KEYS as readonly string[]).includes(key);
+}
 
 export const SYSTEM_ROLE_KEYS = Object.keys(
   SYSTEM_ROLE_TEMPLATES

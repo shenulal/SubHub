@@ -17,6 +17,10 @@ vi.mock("@/lib/db", () => ({
 }));
 
 // Mock email service
+vi.mock("@/lib/deployment/tenancy", () => ({
+  isSignupOpen: vi.fn().mockResolvedValue(true),
+}));
+
 vi.mock("@/lib/services/notification/email-auth", () => ({
   sendVerificationEmail: vi.fn().mockResolvedValue({ success: true }),
 }));

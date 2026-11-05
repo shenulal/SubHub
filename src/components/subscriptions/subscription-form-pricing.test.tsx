@@ -39,6 +39,12 @@ vi.mock("next-intl", () => ({
 }));
 
 // Inline currency creation pulls in server actions; not under test here.
+vi.mock("@/components/common/quick-create/invite-member-dialog", () => ({
+  InviteMemberDialog: () => null,
+}));
+vi.mock("@/components/common/quick-create/manage-master-link", () => ({
+  ManageMasterLink: () => null,
+}));
 vi.mock("@/components/platform/masters/currency-dialog", () => ({
   CurrencyDialog: () => null,
 }));

@@ -6,6 +6,7 @@ import { requireOrganization } from "@/lib/auth/require-auth";
 import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { withLogging } from "@/lib/logging";
+import { isForbiddenError, requirePermission } from "@/lib/rbac/service";
 import { matchPaymentsToNewApp } from "@/lib/services/payment/payment-matching";
 import type { ActionState, PaginatedResponse } from "@/types";
 import type {
@@ -30,6 +31,23 @@ function isRedirectError(error: unknown): boolean {
   const hasRedirectMessage = error.message?.includes("NEXT_REDIRECT") ?? false;
 
   return hasRedirectDigest || hasRedirectMessage;
+}
+
+/**
+ * Server-side guard for app writes (`apps:manage`). Returns the caller's scope,
+ * or null when the permission is missing; redirects when signed out.
+ */
+async function requireAppsManage(): Promise<{
+  organizationId: string;
+  userId: string;
+} | null> {
+  try {
+    const { organizationId, userId } = await requirePermission("apps:manage");
+    return { organizationId, userId };
+  } catch (error) {
+    if (isForbiddenError(error)) return null;
+    throw error;
+  }
 }
 
 // Validate a URL or a relative path (starting with /)
@@ -252,15 +270,14 @@ async function _createApp(
   formData: FormData
 ): Promise<ActionState<{ id: string; matchedPaymentCount?: number }>> {
   try {
-    const { organizationId, userId, role } = await requireOrganization();
-
-    // Permission check: VIEWER cannot create apps
-    if (role === "VIEWER") {
+    const scope = await requireAppsManage();
+    if (!scope) {
       return {
         success: false,
         message: "You do not have permission to create apps",
       };
     }
+    const { organizationId, userId } = scope;
 
     // Parse form data
     const teamIdsRaw = formData.getAll("teamIds") as string[];
@@ -381,7 +398,7 @@ async function _createApp(
       matchedPaymentCount = matchResult.matchedCount;
     } catch (error) {
       // Log but don't fail app creation (graceful degradation)
-      console.error("Payment matching error:", error);
+      logger.warn({ err: error }, "Payment matching error");
     }
 
     // Create audit log
@@ -419,15 +436,14 @@ async function _updateApp(
   formData: FormData
 ): Promise<ActionState<{ id: string }>> {
   try {
-    const { organizationId, userId, role } = await requireOrganization();
-
-    // Permission check: only ADMIN can update apps
-    if (role !== "ADMIN") {
+    const scope = await requireAppsManage();
+    if (!scope) {
       return {
         success: false,
         message: "You do not have permission to edit this app",
       };
     }
+    const { organizationId, userId } = scope;
 
     // Check if app exists
     const existingApp = await prisma.app.findFirst({
@@ -593,11 +609,14 @@ export const updateApp = withLogging("updateApp", _updateApp);
  */
 async function _deleteApp(id: string): Promise<ActionState> {
   try {
-    const { organizationId, userId, role } = await requireOrganization();
-
-    if (role !== "ADMIN") {
-      return { success: false, message: "Admin permission required" };
+    const scope = await requireAppsManage();
+    if (!scope) {
+      return {
+        success: false,
+        message: "You do not have permission to delete apps",
+      };
     }
+    const { organizationId, userId } = scope;
 
     // Check if app exists
     const existingApp = await prisma.app.findFirst({

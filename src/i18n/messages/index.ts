@@ -13,6 +13,7 @@ import enLifecycle from "./en/lifecycle.json";
 import enNotifications from "./en/notifications.json";
 import enPlatform from "./en/platform.json";
 import enReceipts from "./en/receipts.json";
+import enShell from "./en/shell.json";
 import enTaxonomy from "./en/taxonomy.json";
 
 type Messages = Record<string, unknown>;
@@ -44,6 +45,7 @@ const FEATURE_MESSAGES: Record<Locale, Messages[]> = {
     enNotifications,
     enReceipts,
     enDiscovery,
+    enShell,
   ],
 };
 

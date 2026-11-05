@@ -2,6 +2,10 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock modules
+vi.mock("@/lib/rbac/service", async () =>
+  (await import("@/test/rbac-session-mock")).sessionRbacMock()
+);
+
 vi.mock("@/lib/auth", () => ({
   auth: vi.fn(),
 }));
@@ -160,7 +164,7 @@ describe("Teams Server Actions", () => {
       const result = await createTeam({ name: "New team" });
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("Admin permission required");
+      expect(result.message).toBe("You do not have permission to create teams");
     });
 
     it("fails to create a team with an empty name", async () => {

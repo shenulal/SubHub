@@ -13,7 +13,7 @@ import {
   QueryClientContext,
   useQuery,
 } from "@tanstack/react-query";
-import { useContext } from "react";
+import { useCallback, useContext } from "react";
 
 const PERMISSIONS_STALE_MS = 60_000;
 const DETACHED_CLIENT = new QueryClient();
@@ -37,4 +37,26 @@ export function usePermissionFlag(permission: PermissionKey): boolean {
     client ?? DETACHED_CLIENT
   );
   return query.data?.has(permission) ?? false;
+}
+
+const EMPTY_SET = new Set<string>();
+
+/**
+ * Multi-key variant of `usePermissionFlag` (same cache, same detached-client
+ * fallback): returns a stable `can(key)` for gating lists of actions.
+ */
+export function useSafePermissions() {
+  const client = useContext(QueryClientContext);
+  const query = useQuery(
+    {
+      queryKey: ["me", "permissions"],
+      queryFn: fetchPermissionSet,
+      staleTime: PERMISSIONS_STALE_MS,
+      enabled: Boolean(client),
+    },
+    client ?? DETACHED_CLIENT
+  );
+  const set = query.data ?? EMPTY_SET;
+  const can = useCallback((key: PermissionKey) => set.has(key), [set]);
+  return { can, isLoading: Boolean(client) && query.isLoading };
 }

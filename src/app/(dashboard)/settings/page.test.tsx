@@ -75,6 +75,15 @@ describe("SettingsPage", () => {
     expect(screen.getByText("Admin")).toBeInTheDocument();
   });
 
+  it("shows the deployment mode read-only", async () => {
+    const page = await SettingsPage();
+    render(page);
+
+    expect(screen.getByTestId("settings-deployment-mode")).toHaveTextContent(
+      "On-premise / self-hosted (single tenant)"
+    );
+  });
+
   it("shows part of the organization ID", async () => {
     const page = await SettingsPage();
     render(page);

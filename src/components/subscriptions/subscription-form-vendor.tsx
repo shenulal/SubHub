@@ -7,6 +7,10 @@
 import { checkDuplicate } from "@/actions/subscriptions/subscription-lifecycle";
 import { suggestCategory } from "@/actions/taxonomy/auto-categorize";
 import { searchCatalog } from "@/actions/taxonomy/catalog";
+import {
+  CreateAppDialog,
+  type CreatedApp,
+} from "@/components/common/quick-create/create-app-dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -16,14 +20,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
+import { Command, CommandInput } from "@/components/ui/command";
 import { Label } from "@/components/ui/label";
 import {
   Popover,
@@ -37,13 +34,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { usePermissionFlag } from "@/hooks/use-permission-flag";
 import type { SimilarSubscription } from "@/lib/services/subscription/duplicates";
 import { cn } from "@/lib/utils";
 import type { CatalogItemDto } from "@/types/taxonomy";
-import { AlertTriangle, Check, ChevronsUpDown, Loader2, X } from "lucide-react";
+import { AlertTriangle, ChevronsUpDown, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   Controller,
   useWatch,
@@ -52,6 +50,10 @@ import {
   type UseFormSetValue,
 } from "react-hook-form";
 import type { SubscriptionFormValues } from "./subscription-form-schema";
+import {
+  VendorList,
+  type VendorAppOption,
+} from "./subscription-form-vendor-list";
 import { getStatusOptions } from "./subscription-form.constants";
 
 interface SubscriptionFormVendorProps {
@@ -62,6 +64,10 @@ interface SubscriptionFormVendorProps {
   isEditing: boolean;
   /** Existing subscription id to exclude from duplicate matches. */
   excludeId?: string;
+  /** The organisation's apps, offered before catalog matches. */
+  apps?: VendorAppOption[];
+  /** Called after an app is created inline (the form adds it to its list). */
+  onAppCreated?: (app: CreatedApp) => void;
 }
 
 const SEARCH_DEBOUNCE_MS = 250;
@@ -74,12 +80,18 @@ export function SubscriptionFormVendor({
   isPending,
   isEditing,
   excludeId,
+  apps = [],
+  onAppCreated,
 }: SubscriptionFormVendorProps) {
   const t = useTranslations();
   const tv = useTranslations("lifecycle.form.vendor");
   const appName = useWatch({ control, name: "appName" }) ?? "";
   const catalogId = useWatch({ control, name: "catalogId" }) ?? "";
   const appWebsite = useWatch({ control, name: "appWebsite" }) ?? "";
+  const appId = useWatch({ control, name: "appId" }) ?? "";
+  const canCreateApp = usePermissionFlag("apps:manage");
+  const [createName, setCreateName] = useState<string | null>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<CatalogItemDto[]>([]);
@@ -142,6 +154,31 @@ export function SubscriptionFormVendor({
     void runDuplicateCheck(name, item?.website ?? null);
   };
 
+  const pickApp = (app: VendorAppOption) => {
+    setValue("appName", app.name, { shouldDirty: true });
+    setValue("appId", app.id, { shouldDirty: true, shouldValidate: true });
+    setValue("catalogId", "", { shouldDirty: true });
+    setValue("appWebsite", "", { shouldDirty: true });
+    setValue("appLogoUrl", "", { shouldDirty: true });
+    setOpen(false);
+    setQuery("");
+    void runDuplicateCheck(app.name, null);
+  };
+
+  const startCreate = (name: string) => {
+    setOpen(false);
+    setCreateName(name);
+  };
+
+  const handleCreated = (app: CreatedApp) => {
+    onAppCreated?.(app);
+    pickApp({ id: app.id, name: app.name });
+    setValue("appWebsite", app.website ?? "", { shouldDirty: true });
+    if (app.categoryId) {
+      setValue("categoryId", app.categoryId, { shouldDirty: true });
+    }
+  };
+
   const clear = () => {
     select(null, "");
     setDuplicates([]);
@@ -162,11 +199,13 @@ export function SubscriptionFormVendor({
             <Popover open={open} onOpenChange={setOpen}>
               <PopoverTrigger asChild>
                 <button
+                  ref={triggerRef}
                   type="button"
                   id="appName"
                   role="combobox"
                   aria-expanded={open}
                   aria-controls="appName-catalog-list"
+                  aria-invalid={Boolean(errors.appName || errors.appId)}
                   disabled={isPending || isEditing}
                   className={cn(
                     "border-input bg-background flex min-h-10 w-full items-center justify-between rounded-md border px-3 py-2 text-sm",
@@ -182,7 +221,7 @@ export function SubscriptionFormVendor({
                 </button>
               </PopoverTrigger>
               <PopoverContent
-                className="w-[--radix-popover-trigger-width] p-0"
+                className="w-(--radix-popover-trigger-width) p-0"
                 align="start"
               >
                 <Command shouldFilter={false}>
@@ -191,55 +230,20 @@ export function SubscriptionFormVendor({
                     value={query}
                     onValueChange={setQuery}
                   />
-                  <CommandList id="appName-catalog-list">
-                    {isSearching && (
-                      <div className="text-muted-foreground flex items-center gap-2 px-3 py-2 text-sm">
-                        <Loader2 className="h-3 w-3 animate-spin" />
-                        {tv("searching")}
-                      </div>
-                    )}
-                    <CommandEmpty>{tv("noResults")}</CommandEmpty>
-                    {query.trim().length > 0 && (
-                      <CommandGroup>
-                        <CommandItem
-                          value={`__free__${query}`}
-                          onSelect={() => select(null, query.trim())}
-                        >
-                          {tv("useName", { name: query.trim() })}
-                        </CommandItem>
-                      </CommandGroup>
-                    )}
-                    {results.length > 0 && (
-                      <CommandGroup>
-                        {results.map((item) => (
-                          <CommandItem
-                            key={item.id}
-                            value={item.id}
-                            onSelect={() => select(item, item.name)}
-                            className="flex items-center gap-2"
-                          >
-                            {item.logoUrl ? (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img
-                                src={item.logoUrl}
-                                alt=""
-                                className="h-5 w-5 rounded-sm object-contain"
-                              />
-                            ) : (
-                              <span className="bg-muted h-5 w-5 rounded-sm" />
-                            )}
-                            <span className="flex-1 truncate">{item.name}</span>
-                            <span className="text-muted-foreground text-xs">
-                              {item.category}
-                            </span>
-                            {catalogId === item.id && (
-                              <Check className="h-4 w-4" />
-                            )}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    )}
-                  </CommandList>
+                  <VendorList
+                    listId="appName-catalog-list"
+                    query={query}
+                    apps={apps}
+                    results={results}
+                    isSearching={isSearching}
+                    selectedAppId={appId}
+                    selectedCatalogId={catalogId}
+                    canCreateApp={canCreateApp}
+                    onPickApp={pickApp}
+                    onPickCatalog={(item) => select(item, item.name)}
+                    onUseName={(name) => select(null, name)}
+                    onCreateApp={startCreate}
+                  />
                 </Command>
               </PopoverContent>
             </Popover>
@@ -332,6 +336,13 @@ export function SubscriptionFormVendor({
           />
         </div>
       </CardContent>
+      <CreateAppDialog
+        open={createName !== null}
+        onOpenChange={(isOpen) => !isOpen && setCreateName(null)}
+        returnFocusRef={triggerRef}
+        defaultName={createName ?? ""}
+        onCreated={handleCreated}
+      />
     </Card>
   );
 }

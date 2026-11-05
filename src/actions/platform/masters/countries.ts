@@ -4,18 +4,20 @@
 /**
  * Country master — a platform-wide table (no organisationId). Everyone with
  * `masters:read` may list it; create / edit / (de)activate needs
- * `masters:manage_global`. Changes are audited against the caller's organisation.
+ * `masters:manage_global` (platform-only in SaaS mode — the super-admin console).
+ * Changes are audited against the caller's organisation, or in the platform audit
+ * log when a SUPER_ADMIN acts from the console.
  */
 import {
   ActionError,
   diffRecords,
   toActionError,
-  writeAudit,
 } from "@/actions/platform/_shared";
 import { prisma } from "@/lib/db";
 import { withLogging } from "@/lib/logging";
-import { requirePermission } from "@/lib/rbac/service";
-import { getSettings } from "@/lib/settings/service";
+import { auditPlatformChange } from "@/lib/platform-audit";
+import { requirePlatformActor } from "@/lib/rbac/service";
+import { getSettings, getSystemSetting } from "@/lib/settings/service";
 import {
   countryInputSchema,
   masterActiveSchema,
@@ -28,6 +30,12 @@ import { revalidatePath } from "next/cache";
 import { queryCountries } from "./queries";
 
 const MASTERS_PATH = "/settings/masters";
+const PLATFORM_MASTERS_PATH = "/super-admin/masters";
+
+function revalidateMasters() {
+  revalidatePath(MASTERS_PATH);
+  revalidatePath(PLATFORM_MASTERS_PATH);
+}
 
 function countryData(input: CountryInput) {
   return {
@@ -48,13 +56,22 @@ async function assertCurrencyExists(code: string | null): Promise<void> {
   }
 }
 
+/** The caller's organisation country (or the platform default) stays active. */
 async function assertNotOrganizationCountry(
-  organizationId: string,
+  organizationId: string | null,
   code: string
 ): Promise<void> {
-  const s = await getSettings(organizationId, ["general.countryCode"]);
-  if (s["general.countryCode"] === code) {
-    throw new ActionError("Your organisation's country cannot be deactivated");
+  const current = organizationId
+    ? (await getSettings(organizationId, ["general.countryCode"]))[
+        "general.countryCode"
+      ]
+    : await getSystemSetting("general.countryCode");
+  if (current === code) {
+    throw new ActionError(
+      organizationId
+        ? "Your organisation's country cannot be deactivated"
+        : "The platform default country cannot be deactivated"
+    );
   }
 }
 
@@ -62,7 +79,7 @@ async function _listCountries(
   options: { includeInactive?: boolean } = {}
 ): Promise<ActionState<CountryRow[]>> {
   try {
-    await requirePermission("masters:read");
+    await requirePlatformActor("masters:read");
     return {
       success: true,
       data: await queryCountries({
@@ -79,9 +96,7 @@ async function _createCountry(
   raw: unknown
 ): Promise<ActionState<{ code: string }>> {
   try {
-    const { organizationId, userId } = await requirePermission(
-      "masters:manage_global"
-    );
+    const actor = await requirePlatformActor("masters:manage_global");
     const input = countryInputSchema.parse(raw);
     const existing = await prisma.country.findUnique({
       where: { code: input.code },
@@ -90,15 +105,13 @@ async function _createCountry(
     await assertCurrencyExists(input.currencyCode ?? null);
     const data = countryData(input);
     await prisma.country.create({ data: { code: input.code, ...data } });
-    await writeAudit({
-      organizationId,
-      userId,
+    await auditPlatformChange(actor, {
       action: "CREATE_COUNTRY",
       entityType: "Country",
       entityId: input.code,
       changes: { to: data },
     });
-    revalidatePath(MASTERS_PATH);
+    revalidateMasters();
     return { success: true, data: { code: input.code } };
   } catch (error) {
     return toActionError(error, "createCountry");
@@ -111,9 +124,8 @@ async function _updateCountry(
   raw: unknown
 ): Promise<ActionState> {
   try {
-    const { organizationId, userId } = await requirePermission(
-      "masters:manage_global"
-    );
+    const actor = await requirePlatformActor("masters:manage_global");
+    const { organizationId } = actor;
     const input = countryInputSchema.parse({
       ...(raw as Record<string, unknown>),
       code,
@@ -127,9 +139,7 @@ async function _updateCountry(
       await assertNotOrganizationCountry(organizationId, code);
     const data = countryData(input);
     await prisma.country.update({ where: { code: input.code }, data });
-    await writeAudit({
-      organizationId,
-      userId,
+    await auditPlatformChange(actor, {
       action: "UPDATE_COUNTRY",
       entityType: "Country",
       entityId: input.code,
@@ -148,7 +158,7 @@ async function _updateCountry(
         data
       ) as Prisma.InputJsonValue,
     });
-    revalidatePath(MASTERS_PATH);
+    revalidateMasters();
     return { success: true };
   } catch (error) {
     return toActionError(error, "updateCountry");
@@ -158,23 +168,20 @@ export const updateCountry = withLogging("updateCountry", _updateCountry);
 
 async function _setCountryActive(raw: unknown): Promise<ActionState> {
   try {
-    const { organizationId, userId } = await requirePermission(
-      "masters:manage_global"
-    );
+    const actor = await requirePlatformActor("masters:manage_global");
+    const { organizationId } = actor;
     const { code, isActive } = masterActiveSchema.parse(raw);
     const existing = await prisma.country.findUnique({ where: { code } });
     if (!existing) throw new ActionError("Country not found");
     if (!isActive) await assertNotOrganizationCountry(organizationId, code);
     await prisma.country.update({ where: { code }, data: { isActive } });
-    await writeAudit({
-      organizationId,
-      userId,
+    await auditPlatformChange(actor, {
       action: isActive ? "ACTIVATE_COUNTRY" : "DEACTIVATE_COUNTRY",
       entityType: "Country",
       entityId: code,
       changes: { isActive: { from: existing.isActive, to: isActive } },
     });
-    revalidatePath(MASTERS_PATH);
+    revalidateMasters();
     return { success: true };
   } catch (error) {
     return toActionError(error, "setCountryActive");

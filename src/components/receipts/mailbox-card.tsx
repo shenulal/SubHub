@@ -64,12 +64,12 @@ export function MailboxCard({
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="truncate font-medium">{m.email}</h3>
-            <Badge variant="outline" className="h-5 px-1.5 text-[10px]">
+            <Badge variant="outline" className="h-5 px-1.5 text-xs">
               {t(`common.providers.${m.provider}`)}
             </Badge>
             <Badge
               className={cn(
-                "h-5 gap-1 px-1.5 text-[10px] hover:bg-inherit",
+                "h-5 gap-1 px-1.5 text-xs hover:bg-inherit",
                 STATUS_STYLES[m.status]
               )}
             >

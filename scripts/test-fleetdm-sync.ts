@@ -5,15 +5,30 @@ import { prisma } from "../src/lib/db";
 import { FleetDMClient } from "../src/lib/services/fleetdm/client";
 import { syncAllFromFleetDM } from "../src/lib/services/fleetdm/sync";
 
-const FLEETDM_URL = "http://localhost:8080";
-const FLEETDM_TOKEN =
-  "hlAa5scixK4933FVSmXJlkZUv8T/JrDeDqM5d4GLOoLiDhjIxsRevuV1yaWXjKG3hzBvfXzFWMeEI+SBBuJA4Q==";
+// Credentials come from the environment — never commit a FleetDM API token.
+const FLEETDM_URL = process.env.FLEETDM_API_URL ?? "http://localhost:8080";
+const FLEETDM_TOKEN = process.env.FLEETDM_API_TOKEN ?? "";
 
 async function main() {
   console.log("=== FleetDM Integration Setup ===\n");
 
-  // 1. Find or create the organisation
-  let org = await prisma.organization.findFirst();
+  if (!FLEETDM_TOKEN) {
+    console.error("Set FLEETDM_API_TOKEN (and FLEETDM_API_URL) first.");
+    process.exit(1);
+  }
+
+  // 1. Find or create the organisation (ORG_ID selects one explicitly; required in SaaS mode)
+  if (!process.env.ORG_ID && process.env.SUBHUB_DEPLOYMENT_MODE === "saas") {
+    console.error(
+      "SUBHUB_DEPLOYMENT_MODE=saas: set ORG_ID to choose the tenant."
+    );
+    process.exit(1);
+  }
+  let org = process.env.ORG_ID
+    ? await prisma.organization.findUnique({
+        where: { id: process.env.ORG_ID },
+      })
+    : await prisma.organization.findFirst({ orderBy: { createdAt: "asc" } });
 
   if (!org) {
     console.log("Creating test organization...");

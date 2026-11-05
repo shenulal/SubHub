@@ -66,7 +66,7 @@ export function PermissionMatrix({
               </span>
               <span
                 className={cn(
-                  "shrink-0 rounded px-1.5 py-0.5 text-[11px] font-medium tabular-nums",
+                  "shrink-0 rounded px-1.5 py-0.5 text-xs font-medium tabular-nums",
                   count > 0 ? "tonal-primary" : "tonal-neutral"
                 )}
               >
@@ -88,7 +88,7 @@ export function PermissionMatrix({
                         {p.description}
                       </span>
                       <code
-                        className="text-muted-foreground block truncate text-[11px]"
+                        className="text-muted-foreground block truncate text-xs"
                         title={p.key}
                       >
                         {p.key}

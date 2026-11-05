@@ -254,7 +254,8 @@
         "vendors": "Vendors",
         "people": "People",
         "pages": "Pages",
-        "actions": "Actions"
+        "actions": "Actions",
+        "create": "Create new"
       },
       "catalog": {
         "dashboard": "Dashboard",
@@ -268,12 +269,38 @@
         "reports": "Reports",
         "members": "Members",
         "settings": "Settings",
-        "taxonomy": "Categories & tags",
         "newSubscription": "Add subscription",
         "newApproval": "Request approval",
         "exportSubscriptions": "Export subscriptions",
-        "inviteMember": "Invite member"
-      }
+        "inviteMember": "Invite member",
+        "pages": {
+          "masters": "Master data",
+          "settings-profile": "Profile",
+          "settings-organization": "Organisation profile",
+          "settings-team": "Members & invitations",
+          "settings-budget": "Budgets",
+          "settings-workspace": "Workspace settings",
+          "settings-roles": "Roles & permissions",
+          "settings-templates": "Notification templates",
+          "settings-appearance": "Appearance",
+          "settings-notifications": "Notification preferences",
+          "settings-approvals": "Approval policies",
+          "settings-mailboxes": "Mailboxes",
+          "settings-privacy": "Privacy & data",
+          "teams": "Teams",
+          "masters-currencies": "Currencies",
+          "masters-countries": "Countries",
+          "masters-tax-rates": "Tax rates",
+          "masters-cost-centers": "Cost centres",
+          "masters-payment-methods": "Payment methods",
+          "masters-billing-cycles": "Billing cycles",
+          "masters-categories": "Categories",
+          "masters-tags": "Tags",
+          "masters-custom-fields": "Custom fields",
+          "masters-vendor-catalog": "Vendor catalog"
+        }
+      },
+      "createHint": "Opens a form"
     },
     "multiSelect": {
       "search": "Search…",

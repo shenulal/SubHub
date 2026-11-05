@@ -6,6 +6,7 @@ import {
   Building2,
   CheckSquare,
   CreditCard,
+  Database,
   KanbanSquare,
   LayoutDashboard,
   Link as LinkIcon,
@@ -46,12 +47,15 @@ import {
   SidebarMenuItem,
   SidebarSeparator,
 } from "@/components/ui/sidebar";
+import { useSafePermissions } from "@/hooks/use-permission-flag";
+import type { PermissionKey } from "@/lib/rbac/permissions";
 
 // Menu item type
 interface MenuItem {
   icon: React.ComponentType<{ className?: string }>;
   label: string;
   href: string;
+  permissionAny?: PermissionKey[];
   badge?: string;
   badgeVariant?: "default" | "secondary" | "destructive" | "outline";
 }
@@ -66,6 +70,8 @@ interface MenuItemConfig {
   icon: React.ComponentType<{ className?: string }>;
   labelKey: string;
   href: string;
+  /** Shown when the viewer holds any of these (overrides the role filter). */
+  permissionAny?: PermissionKey[];
   badge?: string;
   badgeVariant?: "default" | "secondary" | "destructive" | "outline";
 }
@@ -75,6 +81,15 @@ interface MenuSectionConfig {
   color: string;
   items: MenuItemConfig[];
 }
+
+/** Any of these opens the Master data hub (the page re-checks the same list). */
+const MASTER_DATA_READ: PermissionKey[] = [
+  "masters:read",
+  "catalog:read",
+  "categories:read",
+  "tags:read",
+  "custom_fields:read",
+];
 
 // Menu structure (including submenus), ordered after the reference UI
 const menuConfig: MenuSectionConfig[] = [
@@ -140,6 +155,12 @@ const menuConfig: MenuSectionConfig[] = [
         href: "/notifications",
       },
       {
+        icon: Database,
+        labelKey: "platform.sidebar.masters.title",
+        href: "/settings/masters",
+        permissionAny: MASTER_DATA_READ,
+      },
+      {
         icon: LinkIcon,
         labelKey: "sidebar.menu.integrations",
         href: "/integrations",
@@ -170,6 +191,7 @@ export function AppSidebar({
 }: AppSidebarProps) {
   const pathname = usePathname();
   const t = useTranslations();
+  const { can } = useSafePermissions();
 
   const menuItems: MenuSection[] = useMemo(
     () =>
@@ -199,6 +221,13 @@ export function AppSidebar({
         pathname.startsWith("/subscriptions") || pathname.startsWith("/apps")
       );
     }
+    // Settings stays inactive on the Master data hub, which has its own entry
+    if (href === "/settings") {
+      return (
+        pathname.startsWith("/settings") &&
+        !pathname.startsWith("/settings/masters")
+      );
+    }
     // Organization menu: active for /teams, /users and /org paths
     if (href === "/teams") {
       return (
@@ -217,6 +246,9 @@ export function AppSidebar({
     .map((section) => ({
       ...section,
       items: section.items.filter((item) => {
+        if (item.permissionAny) {
+          return item.permissionAny.some((key) => can(key));
+        }
         // MEMBER: only dashboard and subscriptions allowed
         if (role === "MEMBER") {
           return item.href === "/dashboard" || item.href === "/subscriptions";

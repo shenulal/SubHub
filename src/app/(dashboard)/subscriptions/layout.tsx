@@ -20,9 +20,9 @@ export default async function SubscriptionsLayout({
       </div>
 
       {/* Sidebar and content area */}
-      <div className="flex min-w-0 flex-col gap-6 xl:flex-row xl:items-start">
+      <div className="flex min-w-0 flex-col gap-6 2xl:flex-row 2xl:items-start">
         {/* Left sidebar menu - Card */}
-        <aside className="min-w-0 xl:sticky xl:top-20 xl:w-[260px] xl:shrink-0">
+        <aside className="min-w-0 2xl:sticky 2xl:top-20 2xl:w-[260px] 2xl:shrink-0">
           <Card className="gap-0 p-2">
             <SubscriptionsSidebar />
           </Card>

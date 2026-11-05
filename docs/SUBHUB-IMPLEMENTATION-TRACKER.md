@@ -163,3 +163,18 @@ Totals: **57 of 60 matrix capabilities ✅, 1 🟡 (6.5 cross-device sync: web +
 | Secret scan                                                  | Tracked tree clean; pre-commit guard active                                                                                                                                                                                                                   |
 
 How to reproduce: `npm run build && npm run seed:smoke && E2E_PORT=3100 npm run test:e2e` (the suite starts `next start` itself), `npm run test`, `npm run type-check`, `npm run audit:prod`.
+
+## 5. Additions on 5 November 2026
+
+| Area            | Delivered                                                                                                                                                                                                                      | Status             |
+| --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------ |
+| Design          | Materio design system (tokens, primitives, shell, auth screens); Lato typography (400 regular / 700 titles, 12px minimum)                                                                                                      | ✅                 |
+| Language        | English-only; Korean locale and texts removed (functional Korean third-party literals kept and listed)                                                                                                                         | ✅                 |
+| Branding        | SaasLens / "SaaS Management Platform" renamed to SubHub                                                                                                                                                                        | ✅                 |
+| Master data     | `/settings/masters` hub: currencies, countries, tax rates, cost centres, payment methods, billing cycles, categories, tags, custom fields, vendor catalog — create / edit / archive behind RBAC                                | ✅                 |
+| Inline creation | "+ Create" in app, category, team, user (invite), tag, cost centre, payment method, tax rate and currency pickers; "+ New" quick-create menu (key `N`) and ⌘K "Create new" group                                               | ✅                 |
+| Dropdowns       | Every dropdown searchable; filters and multi-value fields use multi-select end to end (URL, API, saved views)                                                                                                                  | ✅                 |
+| Deployment      | `SUBHUB_DEPLOYMENT_MODE`: single-tenant (on-premise / self-hosted, default) and SaaS (multi-tenant, platform-only permissions for cross-tenant data); Docker compose with migrate job and scheduler — see `docs/DEPLOYMENT.md` | ✅                 |
+| Billing cycles  | Creatable billing cycles need the cycle enum converted to a master (≈114 files)                                                                                                                                                | ⏭ separate change |
+
+Verification for this release: `tsc` 0 errors; Vitest 3,655 pass / 78 fail (all pre-existing, none worse); `next build` 188 routes; Playwright smoke 50 / 50 in **both** single-tenant and SaaS mode.

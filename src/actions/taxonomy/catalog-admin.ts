@@ -2,8 +2,9 @@
 /**
  * Vendor catalog administration (Master data → Vendor catalog). The catalog is
  * platform-wide (no organisationId): `catalog:read` may browse it, and
- * `catalog:manage` may create, edit, activate and deactivate entries.
- * Audit rows are written against the caller's organisation.
+ * `catalog:manage` may create, edit, activate and deactivate entries
+ * (platform-only in SaaS mode — the super-admin console). Audit rows are written
+ * against the caller's organisation, or the platform audit log for a SUPER_ADMIN.
  */
 "use server";
 
@@ -11,9 +12,10 @@ import { revalidatePath } from "next/cache";
 
 import { prisma } from "@/lib/db";
 import { withLogging } from "@/lib/logging";
-import { requirePermission } from "@/lib/rbac/service";
+import { auditPlatformChange } from "@/lib/platform-audit";
+import { requirePlatformActor } from "@/lib/rbac/service";
 import { nextUniqueSlug, slugify } from "@/lib/services/taxonomy/category-tree";
-import { getSetting } from "@/lib/settings/service";
+import { getSetting, getSystemSetting } from "@/lib/settings/service";
 import {
   catalogEntryInputSchema,
   catalogListQuerySchema,
@@ -24,10 +26,16 @@ import type { CatalogItemDto } from "@/types/taxonomy";
 import type { Prisma } from "@prisma/client";
 import type { z } from "zod";
 
-import { toActionError, validationFailure, writeAudit } from "./_shared";
+import { toActionError, validationFailure } from "./_shared";
 import { catalogToDto } from "./catalog-dto";
 
 const MASTERS_PATH = "/settings/masters";
+const PLATFORM_MASTERS_PATH = "/super-admin/masters";
+
+function revalidateMasters() {
+  revalidatePath(MASTERS_PATH);
+  revalidatePath(PLATFORM_MASTERS_PATH);
+}
 const ENTITY = "SaaSCatalog";
 
 export interface CatalogPage {
@@ -112,11 +120,13 @@ async function _listCatalogEntries(
   raw: unknown = {}
 ): Promise<ActionState<CatalogPage>> {
   try {
-    const { organizationId } = await requirePermission("catalog:read");
+    const { organizationId } = await requirePlatformActor("catalog:read");
     const parsed = catalogListQuerySchema.safeParse(raw ?? {});
     if (!parsed.success) return validationFailure(parsed.error);
     const { query, page, status } = parsed.data;
-    const pageSize = await getSetting(organizationId, "discovery.listPageSize");
+    const pageSize = organizationId
+      ? await getSetting(organizationId, "discovery.listPageSize")
+      : await getSystemSetting("discovery.listPageSize");
     const where = searchWhere(query, status);
     const [rows, total, categories] = await Promise.all([
       prisma.saaSCatalog.findMany({
@@ -155,8 +165,7 @@ async function _createCatalogEntry(
   input: CatalogEntryInput
 ): Promise<ActionState<CatalogItemDto>> {
   try {
-    const { organizationId, userId } =
-      await requirePermission("catalog:manage");
+    const actor = await requirePlatformActor("catalog:manage");
     const parsed = catalogEntryInputSchema.safeParse(input);
     if (!parsed.success) return validationFailure(parsed.error);
     const problem = await assertReferences(parsed.data, null);
@@ -176,15 +185,13 @@ async function _createCatalogEntry(
         ),
       },
     });
-    await writeAudit({
-      organizationId,
-      userId,
+    await auditPlatformChange(actor, {
       action: "CREATE_CATALOG_ITEM",
       entityType: ENTITY,
       entityId: created.id,
       changes: { to: { ...data } },
     });
-    revalidatePath(MASTERS_PATH);
+    revalidateMasters();
     return {
       success: true,
       data: catalogToDto(created),
@@ -204,8 +211,7 @@ async function _editCatalogEntry(
   input: CatalogEntryInput
 ): Promise<ActionState<CatalogItemDto>> {
   try {
-    const { organizationId, userId } =
-      await requirePermission("catalog:manage");
+    const actor = await requirePlatformActor("catalog:manage");
     const parsed = catalogEntryInputSchema.safeParse(input);
     if (!parsed.success) return validationFailure(parsed.error);
     const existing = await prisma.saaSCatalog.findUnique({ where: { id } });
@@ -214,9 +220,7 @@ async function _editCatalogEntry(
     if (problem) return { success: false, error: problem };
     const data = entryData(parsed.data);
     const updated = await prisma.saaSCatalog.update({ where: { id }, data });
-    await writeAudit({
-      organizationId,
-      userId,
+    await auditPlatformChange(actor, {
       action: "UPDATE_CATALOG_ITEM",
       entityType: ENTITY,
       entityId: id,
@@ -225,7 +229,7 @@ async function _editCatalogEntry(
         to: { ...data },
       },
     });
-    revalidatePath(MASTERS_PATH);
+    revalidateMasters();
     return {
       success: true,
       data: catalogToDto(updated),
@@ -245,23 +249,20 @@ async function _setCatalogEntryActive(
   isActive: boolean
 ): Promise<ActionState> {
   try {
-    const { organizationId, userId } =
-      await requirePermission("catalog:manage");
+    const actor = await requirePlatformActor("catalog:manage");
     const existing = await prisma.saaSCatalog.findUnique({ where: { id } });
     if (!existing) return { success: false, error: "Catalog entry not found" };
     await prisma.saaSCatalog.update({
       where: { id },
       data: { isActive: Boolean(isActive) },
     });
-    await writeAudit({
-      organizationId,
-      userId,
+    await auditPlatformChange(actor, {
       action: isActive ? "ACTIVATE_CATALOG_ITEM" : "DEACTIVATE_CATALOG_ITEM",
       entityType: ENTITY,
       entityId: id,
       changes: { isActive: { from: existing.isActive, to: Boolean(isActive) } },
     });
-    revalidatePath(MASTERS_PATH);
+    revalidateMasters();
     return { success: true };
   } catch (error) {
     return toActionError(error, "setCatalogEntryActive");

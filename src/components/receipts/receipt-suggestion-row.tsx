@@ -91,7 +91,7 @@ export function ReceiptSuggestionRow({
                 {s.matchedCatalog && (
                   <Badge
                     variant="outline"
-                    className="h-5 gap-1 px-1.5 text-[10px] font-medium"
+                    className="h-5 gap-1 px-1.5 text-xs font-medium"
                   >
                     <Sparkles className="h-3 w-3" aria-hidden />
                     {t("queue.badges.catalog")}
@@ -104,7 +104,7 @@ export function ReceiptSuggestionRow({
               >
                 {s.subject}
               </p>
-              <p className="text-muted-foreground/80 truncate text-[11px]">
+              <p className="text-muted-foreground/80 truncate text-xs">
                 {s.senderEmail} ·{" "}
                 {t("queue.snippet.via", { mailbox: s.mailboxEmail })}
               </p>
@@ -129,7 +129,7 @@ export function ReceiptSuggestionRow({
             <span className="text-muted-foreground">—</span>
           )}
           {s.nextRenewalAt && (
-            <p className="text-muted-foreground text-[11px]">
+            <p className="text-muted-foreground text-xs">
               → {formatDate(s.nextRenewalAt)}
             </p>
           )}

@@ -4,6 +4,7 @@
 import { useEffect, useState } from "react";
 
 import { AiAgentProvider } from "@/components/ai-agent";
+import { QuickCreateProvider } from "@/components/common/quick-create/quick-create-provider";
 import { AppHeader } from "@/components/layouts/app-header";
 import { AppSidebar } from "@/components/layouts/app-sidebar";
 import { WorkspaceScopeSwitch } from "@/components/layouts/workspace-scope-switch";
@@ -74,16 +75,19 @@ export function SidebarWrapper({
 
   return (
     <SidebarProvider defaultOpen={defaultOpen}>
-      <AppSidebar variant="sidebar" role={role} user={user} />
-      <SidebarInset className="bg-background min-w-0">
-        <AppHeader />
-        {/* Workspace | Personal scope switch (6.4) — hidden when personal mode is off */}
-        <ScopeBar />
-        <MainContent>{children}</MainContent>
-        <AppFooter />
-      </SidebarInset>
-      {/* AI Agent — Read Tool + Write Tool + approval flow */}
-      <AiAgentProvider />
+      {/* Quick-create dialogs ("+ New", ⌘K, page "Add" buttons) */}
+      <QuickCreateProvider>
+        <AppSidebar variant="sidebar" role={role} user={user} />
+        <SidebarInset className="bg-background min-w-0">
+          <AppHeader />
+          {/* Workspace | Personal scope switch (6.4) — hidden when personal mode is off */}
+          <ScopeBar />
+          <MainContent>{children}</MainContent>
+          <AppFooter />
+        </SidebarInset>
+        {/* AI Agent — Read Tool + Write Tool + approval flow */}
+        <AiAgentProvider />
+      </QuickCreateProvider>
     </SidebarProvider>
   );
 }

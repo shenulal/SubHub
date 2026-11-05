@@ -33,6 +33,9 @@ export function CreateTenantForm() {
 
     if (result.success) {
       toast.success("Tenant created.");
+      setName("");
+      setDomain("");
+      setLogoUrl("");
       router.refresh();
     } else {
       toast.error(result.message ?? "Failed to create the tenant.");

@@ -9,11 +9,14 @@ import {
 } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { renderWithPermissions } from "@/test/permission-wrapper";
+
 import {
   CommandSearch,
   pushRecentSearch,
   readRecentSearches,
 } from "./command-search";
+import { QuickCreateContext } from "./quick-create/quick-create-context";
 
 const { push } = vi.hoisted(() => ({ push: vi.fn() }));
 vi.mock("next/navigation", () => ({
@@ -104,6 +107,50 @@ describe("CommandSearch", () => {
     fireEvent.click(screen.getByRole("button", { name: "Open search" }));
     expect(await screen.findByText("notion")).toBeInTheDocument();
     expect(screen.getByText("Recent searches")).toBeInTheDocument();
+  });
+});
+
+describe("CommandSearch create actions", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+    Element.prototype.scrollIntoView = vi.fn();
+    globalThis.ResizeObserver = class {
+      observe() {}
+      unobserve() {}
+      disconnect() {}
+    } as unknown as typeof ResizeObserver;
+  });
+
+  const empty = { success: true, data: { ...result, groups: [] } };
+
+  it("offers permitted create actions and opens the dialog in place", async () => {
+    const open = vi.fn();
+    renderWithPermissions(
+      <QuickCreateContext.Provider value={{ open }}>
+        <CommandSearch search={vi.fn().mockResolvedValue(empty)} />
+      </QuickCreateContext.Provider>,
+      ["apps:manage", "teams:manage"]
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Open search" }));
+    const input = await screen.findByPlaceholderText(
+      "Search subscriptions, vendors, people, pages…"
+    );
+    fireEvent.change(input, { target: { value: "team" } });
+    const team = await screen.findByText("Team");
+    expect(screen.getByText("Create new")).toBeInTheDocument();
+    expect(screen.queryByText("Invite member")).not.toBeInTheDocument();
+    fireEvent.click(team);
+    expect(open).toHaveBeenCalledWith("team");
+  });
+
+  it("navigates to the full page when no dialog host is mounted", async () => {
+    renderWithPermissions(
+      <CommandSearch search={vi.fn().mockResolvedValue(empty)} />,
+      ["subscriptions:create"]
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Open search" }));
+    fireEvent.click(await screen.findByText("Subscription"));
+    expect(push).toHaveBeenCalledWith("/subscriptions/new");
   });
 });
 

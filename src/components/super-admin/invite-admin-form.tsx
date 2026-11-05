@@ -8,7 +8,12 @@ import { Label } from "@/components/ui/label";
 import { useState } from "react";
 import { toast } from "sonner";
 
-export function InviteAdminForm() {
+export function InviteAdminForm({
+  organizationId,
+}: {
+  /** Target tenant (required in SaaS mode). */
+  organizationId?: string;
+} = {}) {
   const [email, setEmail] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -17,7 +22,7 @@ export function InviteAdminForm() {
     if (!email.trim()) return;
 
     setLoading(true);
-    const result = await inviteTenantAdmin(email.trim());
+    const result = await inviteTenantAdmin(email.trim(), organizationId);
     setLoading(false);
 
     if (result.success) {

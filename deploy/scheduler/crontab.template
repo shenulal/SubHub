@@ -1,0 +1,14 @@
+# SubHub scheduled jobs for self-hosted installs (mirrors vercel.json "crons").
+# Times are UTC. __APP_URL__ and __CRON_SECRET__ are substituted when the
+# scheduler container starts (see docker-compose.yml).
+0 3 * * *    curl -fsS -m 300 -H "Authorization: Bearer __CRON_SECRET__" __APP_URL__/api/cron/review-apps-scan >/dev/null
+0 1 * * *    curl -fsS -m 300 -H "Authorization: Bearer __CRON_SECRET__" __APP_URL__/api/cron/auto-renewal >/dev/null
+0 6 * * *    curl -fsS -m 300 -H "Authorization: Bearer __CRON_SECRET__" __APP_URL__/api/cron/renewal-alerts >/dev/null
+15 6 * * *   curl -fsS -m 300 -H "Authorization: Bearer __CRON_SECRET__" __APP_URL__/api/cron/subscription-reminders >/dev/null
+30 6 * * *   curl -fsS -m 300 -H "Authorization: Bearer __CRON_SECRET__" __APP_URL__/api/cron/trial-alerts >/dev/null
+45 6 * * *   curl -fsS -m 300 -H "Authorization: Bearer __CRON_SECRET__" __APP_URL__/api/cron/notice-period-alerts >/dev/null
+0 7 * * *    curl -fsS -m 300 -H "Authorization: Bearer __CRON_SECRET__" __APP_URL__/api/cron/price-change-scan >/dev/null
+0 8 * * *    curl -fsS -m 300 -H "Authorization: Bearer __CRON_SECRET__" __APP_URL__/api/cron/approval-reminders >/dev/null
+0 */6 * * *  curl -fsS -m 300 -H "Authorization: Bearer __CRON_SECRET__" __APP_URL__/api/cron/receipt-scan >/dev/null
+0 2 * * *    curl -fsS -m 300 -H "Authorization: Bearer __CRON_SECRET__" __APP_URL__/api/cron/exchange-rates >/dev/null
+0 7 * * *    curl -fsS -m 300 -H "Authorization: Bearer __CRON_SECRET__" __APP_URL__/api/cron/weekly-digest >/dev/null

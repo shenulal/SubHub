@@ -1,11 +1,18 @@
 // src/lib/auth/sign-in-options.ts
 /**
  * Pre-authentication sign-in options for the login/signup pages.
- * `security.enforceSso` is organisation-scoped but no organisation is known
- * before sign-in; Phase 1 is single-tenant so the first organisation's value
- * is used, falling back to the system/default value when none exists.
+ *
+ * `security.enforceSso` is organisation-scoped but no organisation is known before
+ * sign-in:
+ *   - single-tenant: the installation's only organisation decides;
+ *   - SaaS: the organisation of the invitation / claimed domain when the caller
+ *     knows it (`context.organizationId`), otherwise the platform (system) value.
+ *     Never "the first organisation" — that would leak one tenant's policy to all.
  */
-import { prisma } from "@/lib/db";
+import {
+  getSingleTenantOrganization,
+  isSignupOpen,
+} from "@/lib/deployment/tenancy";
 import { getSetting, getSystemSetting } from "@/lib/settings/service";
 import { isAppleSignInEnabled } from "./index";
 
@@ -15,16 +22,28 @@ export interface SignInOptions {
   allowSelfSignup: boolean;
 }
 
-export async function getSignInOptions(): Promise<SignInOptions> {
-  const org = await prisma.organization.findFirst({
-    orderBy: { createdAt: "asc" },
-    select: { id: true },
-  });
+export interface SignInContext {
+  /** Organisation known before sign-in (invitation, claimed email domain). */
+  organizationId?: string | null;
+}
+
+async function resolveOrganizationId(
+  context: SignInContext
+): Promise<string | null> {
+  if (context.organizationId) return context.organizationId;
+  const sole = await getSingleTenantOrganization();
+  return sole?.id ?? null;
+}
+
+export async function getSignInOptions(
+  context: SignInContext = {}
+): Promise<SignInOptions> {
+  const organizationId = await resolveOrganizationId(context);
   const [enforceSso, allowSelfSignup] = await Promise.all([
-    org
-      ? getSetting(org.id, "security.enforceSso")
+    organizationId
+      ? getSetting(organizationId, "security.enforceSso")
       : getSystemSetting("security.enforceSso"),
-    getSystemSetting("system.allowSelfSignup"),
+    isSignupOpen(),
   ]);
   return { appleEnabled: isAppleSignInEnabled(), enforceSso, allowSelfSignup };
 }

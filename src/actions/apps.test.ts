@@ -31,6 +31,11 @@ vi.mock("@/lib/db", () => ({
   },
 }));
 
+// RBAC: permissions follow the mocked session's system role.
+vi.mock("@/lib/rbac/service", async () =>
+  (await import("@/test/rbac-session-mock")).sessionRbacMock()
+);
+
 // Mock payment matching service
 vi.mock("@/lib/services/payment/payment-matching", () => ({
   matchPaymentsToNewApp: vi.fn(),
@@ -1018,6 +1023,55 @@ describe("Apps Server Actions", () => {
         where: { id: "app-1" },
       });
       expect(prisma.auditLog.create).toHaveBeenCalled();
+    });
+  });
+
+  describe("apps:manage enforcement", () => {
+    const asRole = (role: string) =>
+      mockedAuth.mockResolvedValue({
+        user: { id: "user-1", organizationId: "org-1", role, teamId: null },
+        expires: "",
+      });
+    const form = () => {
+      const fd = new FormData();
+      fd.append("name", "Figma");
+      return fd;
+    };
+
+    it.each(["MEMBER", "APPROVER", "VIEWER"])(
+      "denies %s creating, editing or deleting apps",
+      async (role) => {
+        asRole(role);
+
+        const created = await createApp({ success: false }, form());
+        const updated = await updateApp("app-1", { success: false }, form());
+        const deleted = await deleteApp("app-1");
+
+        expect(created).toEqual({
+          success: false,
+          message: "You do not have permission to create apps",
+        });
+        expect(updated.success).toBe(false);
+        expect(deleted.success).toBe(false);
+        expect(prisma.app.create).not.toHaveBeenCalled();
+        expect(prisma.app.update).not.toHaveBeenCalled();
+        expect(prisma.app.delete).not.toHaveBeenCalled();
+      }
+    );
+
+    it("allows ADMIN to create an app", async () => {
+      asRole("ADMIN");
+      vi.mocked(prisma.app.findFirst).mockResolvedValueOnce(null);
+      vi.mocked(prisma.app.create).mockResolvedValueOnce({
+        id: "app-new",
+        name: "Figma",
+      } as never);
+      mockedMatchPayments.mockResolvedValueOnce({ matchedCount: 0 });
+
+      const result = await createApp({ success: false }, form());
+
+      expect(result.success).toBe(true);
+      expect(result.data?.id).toBe("app-new");
     });
   });
 });

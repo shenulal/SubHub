@@ -16,6 +16,7 @@ import type { ActionState } from "@/types";
 import type { Team, User } from "@prisma/client";
 
 import { requireOrganization } from "@/lib/auth/require-auth";
+import { can } from "@/lib/rbac/service";
 
 // ==================== Types ====================
 
@@ -213,10 +214,13 @@ async function _createTeam(input: {
   memberIds?: string[];
 }): Promise<ActionState<Team>> {
   try {
-    const { organizationId, role } = await requireOrganization();
+    const { organizationId } = await requireOrganization();
 
-    if (role !== "ADMIN") {
-      return { success: false, message: "Admin permission required" };
+    if (!(await can("teams:manage"))) {
+      return {
+        success: false,
+        message: "You do not have permission to create teams",
+      };
     }
 
     const { name, description, parentId, memberIds } = input;

@@ -5,7 +5,7 @@ import { searchCatalog } from "@/actions/approvals/form-options";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import type { CatalogSuggestion } from "@/types/approval";
-import { Globe } from "lucide-react";
+import { Globe, Plus } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 /** Debounce for catalogue lookups (UI constant). */
@@ -19,6 +19,11 @@ interface Props {
   onChange: (value: string) => void;
   onSelect: (item: CatalogSuggestion) => void;
   "aria-invalid"?: boolean;
+  /** Optional last row ("+ Create app …") receiving the typed text. */
+  createOption?: {
+    label: (query: string) => React.ReactNode;
+    onCreate: (query: string) => void;
+  };
 }
 
 export function ServiceNameAutocomplete({
@@ -27,6 +32,7 @@ export function ServiceNameAutocomplete({
   placeholder,
   onChange,
   onSelect,
+  createOption,
   ...rest
 }: Props) {
   const [items, setItems] = useState<CatalogSuggestion[]>([]);
@@ -50,12 +56,14 @@ export function ServiceNameAutocomplete({
       const res = await searchCatalog(value.trim());
       const next = res.success && res.data ? res.data : [];
       setItems(next);
-      setOpen(next.length > 0);
+      setOpen(next.length > 0 || Boolean(createOption));
       setActive(0);
     }, SEARCH_DEBOUNCE_MS);
     return () => {
       if (timer.current) clearTimeout(timer.current);
     };
+    // createOption only toggles the extra row; re-searching on it is unnecessary.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [value]);
 
   const choose = (item: CatalogSuggestion) => {
@@ -64,17 +72,26 @@ export function ServiceNameAutocomplete({
     setOpen(false);
   };
 
+  const rowCount = items.length + (createOption ? 1 : 0);
+  const create = () => {
+    setOpen(false);
+    createOption?.onCreate(value.trim());
+  };
+
   const onKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (!open) return;
     if (e.key === "ArrowDown") {
       e.preventDefault();
-      setActive((a) => Math.min(a + 1, items.length - 1));
+      setActive((a) => Math.min(a + 1, rowCount - 1));
     } else if (e.key === "ArrowUp") {
       e.preventDefault();
       setActive((a) => Math.max(a - 1, 0));
     } else if (e.key === "Enter" && items[active]) {
       e.preventDefault();
       choose(items[active]);
+    } else if (e.key === "Enter" && createOption && active === items.length) {
+      e.preventDefault();
+      create();
     } else if (e.key === "Escape") {
       setOpen(false);
     }
@@ -93,7 +110,11 @@ export function ServiceNameAutocomplete({
         onChange={(e) => onChange(e.target.value)}
         onKeyDown={onKeyDown}
         onBlur={() => setTimeout(() => setOpen(false), 120)}
-        onFocus={() => items.length && setOpen(true)}
+        onFocus={() =>
+          (items.length > 0 ||
+            (createOption && value.trim().length >= MIN_QUERY_LENGTH)) &&
+          setOpen(true)
+        }
         {...rest}
       />
       {open && (
@@ -131,6 +152,24 @@ export function ServiceNameAutocomplete({
               </span>
             </li>
           ))}
+          {createOption && (
+            <li
+              role="option"
+              aria-selected={active === items.length}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                create();
+              }}
+              onMouseEnter={() => setActive(items.length)}
+              className={cn(
+                "text-primary flex cursor-pointer items-center gap-2 rounded-sm px-2 py-2 text-sm font-medium",
+                active === items.length ? "bg-primary/10" : ""
+              )}
+            >
+              <Plus className="size-4" />
+              {createOption.label(value.trim())}
+            </li>
+          )}
         </ul>
       )}
     </div>

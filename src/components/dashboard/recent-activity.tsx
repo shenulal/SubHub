@@ -104,15 +104,20 @@ export function RecentActivity({ activities, isLoading }: RecentActivityProps) {
 
               {/* Content */}
               <div className="flex min-w-0 flex-1 flex-col gap-0.5 py-1">
-                <p className="text-foreground truncate text-sm font-medium">
-                  {displayName}
-                </p>
-                <div className="text-muted-foreground flex items-center gap-2 text-xs">
-                  <span className="min-w-0 flex-1 truncate">
-                    {activity.description}
+                <div className="flex min-w-0 items-baseline gap-2">
+                  <p className="text-foreground min-w-0 flex-1 truncate text-sm font-medium">
+                    {displayName}
+                  </p>
+                  <span className="text-muted-foreground shrink-0 text-xs whitespace-nowrap">
+                    {timeAgo}
                   </span>
-                  <span className="shrink-0 whitespace-nowrap">{timeAgo}</span>
                 </div>
+                <p
+                  className="text-muted-foreground truncate text-xs"
+                  title={activity.description}
+                >
+                  {activity.description}
+                </p>
               </div>
             </div>
           );

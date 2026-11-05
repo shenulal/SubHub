@@ -7,6 +7,7 @@ import { logger } from "@/lib/logger";
 import { withLogging } from "@/lib/logging";
 import type { ActionState } from "@/types";
 import { revalidatePath } from "next/cache";
+import { resolveConsoleTenant } from "./_tenant";
 
 export interface ExtensionBuildSummary {
   id: string;
@@ -22,27 +23,16 @@ export interface ExtensionBuildSummary {
 
 /**
  * Fetch the current tenant's extension builds
- * @param input.organizationId - Tenant ID to query (defaults to the first org; Phase 2 extensibility)
+ * @param input.organizationId - Tenant ID to query (required in SaaS mode; single-tenant defaults to the only organisation)
  */
 async function _listExtensionBuilds(input?: {
   organizationId?: string;
 }): Promise<ActionState<ExtensionBuildSummary[]>> {
   await requireSuperAdmin();
 
-  const targetOrgId = input?.organizationId;
-  const org = targetOrgId
-    ? await prisma.organization.findUnique({
-        where: { id: targetOrgId },
-        select: { id: true },
-      })
-    : await prisma.organization.findFirst({
-        orderBy: { createdAt: "asc" },
-        select: { id: true },
-      });
-
-  if (!org) {
-    return { success: false, message: "Tenant information not found." };
-  }
+  const resolved = await resolveConsoleTenant(input?.organizationId);
+  if (!resolved.ok) return { success: false, message: resolved.message };
+  const org = resolved.tenant;
 
   const builds = await prisma.extensionBuild.findMany({
     where: { organizationId: org.id },
@@ -76,27 +66,16 @@ export const listExtensionBuilds = withLogging(
 
 /**
  * Trigger an extension build
- * @param input.organizationId - Tenant ID to build for (defaults to the first org; Phase 2 extensibility)
+ * @param input.organizationId - Tenant ID to build for (required in SaaS mode; single-tenant defaults to the only organisation)
  */
 async function _triggerExtensionBuild(input?: {
   organizationId?: string;
 }): Promise<ActionState<{ buildId: string; version: string }>> {
   await requireSuperAdmin();
 
-  const targetOrgId = input?.organizationId;
-  const org = targetOrgId
-    ? await prisma.organization.findUnique({
-        where: { id: targetOrgId },
-        select: { id: true },
-      })
-    : await prisma.organization.findFirst({
-        orderBy: { createdAt: "asc" },
-        select: { id: true },
-      });
-
-  if (!org) {
-    return { success: false, message: "Tenant information not found." };
-  }
+  const resolved = await resolveConsoleTenant(input?.organizationId);
+  if (!resolved.ok) return { success: false, message: resolved.message };
+  const org = resolved.tenant;
 
   // Compute the version (latest build version + 1)
   const latestBuild = await prisma.extensionBuild.findFirst({

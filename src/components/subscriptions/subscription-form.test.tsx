@@ -164,6 +164,11 @@ vi.mock("@/components/ui/checkbox", () => ({
   ),
 }));
 
+// Inline app creation pulls server actions; the dialog is covered separately.
+vi.mock("@/components/common/quick-create/create-app-dialog", () => ({
+  CreateAppDialog: () => null,
+}));
+
 // Server actions used by the vendor card
 vi.mock("@/actions/taxonomy/catalog", () => ({
   searchCatalog: vi.fn().mockResolvedValue([]),

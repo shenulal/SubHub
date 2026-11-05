@@ -42,10 +42,13 @@ const formatFileSize = (bytes: number | null) => {
 
 interface ExtensionBuildsTableProps {
   initialBuilds: ExtensionBuildSummary[];
+  /** Target tenant (required in SaaS mode). */
+  organizationId?: string;
 }
 
 export function ExtensionBuildsTable({
   initialBuilds,
+  organizationId,
 }: ExtensionBuildsTableProps) {
   const [builds, setBuilds] = useState(initialBuilds);
   const [triggering, setTriggering] = useState(false);
@@ -53,7 +56,7 @@ export function ExtensionBuildsTable({
 
   const handleTriggerBuild = async () => {
     setTriggering(true);
-    const result = await triggerExtensionBuild();
+    const result = await triggerExtensionBuild({ organizationId });
     setTriggering(false);
 
     if (result.success) {
@@ -67,7 +70,7 @@ export function ExtensionBuildsTable({
 
   const handleRefresh = async () => {
     setRefreshing(true);
-    const result = await listExtensionBuilds();
+    const result = await listExtensionBuilds({ organizationId });
     setRefreshing(false);
 
     if (result.success && result.data) {

@@ -3,8 +3,12 @@
  * Role read helpers shared by the roles server actions and `/api/v1/roles`.
  */
 import { prisma } from "@/lib/db";
-import { permissionsByGroup } from "@/lib/rbac/permissions";
-import { ensureOrganizationRoles } from "@/lib/rbac/service";
+import { isSaas } from "@/lib/deployment/mode";
+import {
+  isPlatformPermission,
+  permissionsByGroup,
+} from "@/lib/rbac/permissions";
+import { ensureOrganizationRoles, scopeToDeployment } from "@/lib/rbac/service";
 import type {
   MemberRoleRow,
   PermissionGroupRow,
@@ -44,7 +48,9 @@ export async function queryRoles(organizationId: string): Promise<RoleRow[]> {
       r.isSystem && r.legacyRole
         ? (legacy.get(r.legacyRole) ?? 0)
         : r._count.users,
-    permissionKeys: r.permissions.map((p) => p.permission.key).sort(),
+    permissionKeys: Array.from(
+      scopeToDeployment(r.permissions.map((p) => p.permission.key))
+    ).sort(),
   }));
 }
 
@@ -73,9 +79,18 @@ export async function queryMembersWithRoles(
   }));
 }
 
+/**
+ * Grantable permissions for the role editor. In SaaS mode the platform-only keys
+ * (cross-tenant data) are not offered — only SUPER_ADMIN holds them.
+ */
 export function permissionGroups(): PermissionGroupRow[] {
-  return Object.entries(permissionsByGroup()).map(([group, defs]) => ({
-    group,
-    permissions: defs.map((d) => ({ key: d.key, description: d.description })),
-  }));
+  const saas = isSaas();
+  return Object.entries(permissionsByGroup())
+    .map(([group, defs]) => ({
+      group,
+      permissions: defs
+        .filter((d) => !(saas && isPlatformPermission(d.key)))
+        .map((d) => ({ key: d.key, description: d.description })),
+    }))
+    .filter((g) => g.permissions.length > 0);
 }

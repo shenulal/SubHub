@@ -292,7 +292,7 @@ function UserRow({
                               className="rounded"
                             />
                           ) : (
-                            <div className="bg-muted flex h-5 w-5 items-center justify-center rounded text-[10px]">
+                            <div className="bg-muted flex h-5 w-5 items-center justify-center rounded text-xs">
                               {sub.appName.charAt(0)}
                             </div>
                           )}

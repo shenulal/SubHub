@@ -1,7 +1,6 @@
 "use client";
 
 import type { SubscriptionFormOptions } from "@/actions/subscriptions/subscription-form-options";
-import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { DEFAULT_BASE_CURRENCY } from "@/lib/fx/convert";
@@ -13,12 +12,12 @@ import type { SubscriptionDetail } from "@/types/subscription";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type HttpError } from "@refinedev/core";
 import { useForm } from "@refinedev/react-hook-form";
-import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useWatch, type Resolver } from "react-hook-form";
 import { toast } from "sonner";
+import { FormActionBar, focusFirstInvalid } from "./form-action-bar";
 import {
   SubscriptionFormAssignment,
   type AppWithTeams,
@@ -141,6 +140,7 @@ export function SubscriptionForm({
 }: SubscriptionFormProps) {
   const t = useTranslations();
   const tl = useTranslations("lifecycle.form");
+  const tShell = useTranslations("shell.form");
   const router = useRouter();
   const isEditing = !!subscription;
 
@@ -175,6 +175,18 @@ export function SubscriptionForm({
   });
 
   const isPending = formLoading || isSubmitting;
+
+  // Apps and teams created inline join the option lists without a reload.
+  const [createdApps, setCreatedApps] = useState<AppWithTeams[]>([]);
+  const allApps = useMemo(() => [...apps, ...createdApps], [apps, createdApps]);
+  const addCreatedApp = useCallback(
+    (app: { id: string; name: string }) =>
+      setCreatedApps((prev) => [
+        ...prev,
+        { id: app.id, name: app.name, teams: [] },
+      ]),
+    []
+  );
   useEffect(() => {
     onPendingChange?.(isPending);
   }, [isPending, onPendingChange]);
@@ -252,33 +264,19 @@ export function SubscriptionForm({
       }
     },
     (validationErrors) => {
-      const firstKey = Object.keys(validationErrors)[0];
+      const firstKey = focusFirstInvalid(Object.keys(validationErrors));
       const firstError =
         validationErrors[firstKey as keyof typeof validationErrors];
       const message =
         firstError && "message" in firstError
           ? String(firstError.message)
           : t("subscriptions.actions.saveError");
-      toast.error(message);
+      toast.error(message, { description: tShell("fixErrors") });
     }
   );
 
   return (
     <form onSubmit={onSubmit} id={formId}>
-      {!hideActions && (
-        <div className="mb-6 flex flex-wrap items-center justify-end gap-3 [&>button]:whitespace-nowrap">
-          <Button type="button" variant="outline" onClick={handleCancel}>
-            {t("subscriptions.actions.cancel")}
-          </Button>
-          <Button type="submit" disabled={isPending}>
-            {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {isEditing
-              ? t("subscriptions.actions.save")
-              : t("subscriptions.actions.register")}
-          </Button>
-        </div>
-      )}
-
       <div className="space-y-6">
         <SubscriptionFormVendor
           control={control}
@@ -287,6 +285,8 @@ export function SubscriptionForm({
           isPending={isPending}
           isEditing={isEditing}
           excludeId={subscription?.id}
+          apps={allApps}
+          onAppCreated={addCreatedApp}
         />
 
         <SubscriptionFormPricing
@@ -324,7 +324,7 @@ export function SubscriptionForm({
 
         <SubscriptionFormAssignment
           control={control}
-          apps={apps}
+          apps={allApps}
           users={users}
           isAdmin={isAdmin}
           isPending={isPending}
@@ -368,6 +368,20 @@ export function SubscriptionForm({
           </CardContent>
         </Card>
       </div>
+
+      {!hideActions && (
+        <FormActionBar
+          hint={tShell("requiredHint")}
+          cancelLabel={t("subscriptions.actions.cancel")}
+          submitLabel={
+            isEditing
+              ? t("subscriptions.actions.save")
+              : t("subscriptions.actions.register")
+          }
+          isPending={isPending}
+          onCancel={handleCancel}
+        />
+      )}
     </form>
   );
 }

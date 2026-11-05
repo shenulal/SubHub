@@ -5,8 +5,17 @@
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { getDeploymentMode } from "@/lib/deployment/mode";
+import {
+  assertOrganizationCreationAllowed,
+  emailDomain,
+  findDomainJoinOrganization,
+  resolveDomainJoinRole,
+  TenancyError,
+} from "@/lib/deployment/tenancy";
 import { withLogging } from "@/lib/logging";
 import { ensureOrganizationDefaults } from "@/lib/masters/organization-defaults";
+import type { ActionState } from "@/types";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -51,60 +60,77 @@ const updateOrgSchema = z.object({
 });
 
 /**
- * Creates a new organization and makes the user its ADMIN.
- * Redirects unauthenticated users to the login page.
- * @param formData - FormData containing the name field
- * @throws {Error} if the user already belongs to an organization
- * @throws {ZodError} on validation failure
+ * Creates a new organization and makes the user its ADMIN (onboarding).
+ * Deployment mode decides whether this is allowed: single-tenant → only the
+ * first-run setup (no organisation yet); SaaS → when `system.allowSelfSignup`.
+ * Returns an ActionState on failure; redirects to the dashboard on success.
  */
-async function _createOrganization(formData: FormData) {
-  // Check authentication - redirect to the login page on failure
+async function _createOrganization(formData: FormData): Promise<ActionState> {
   const session = await auth();
   if (!session?.user?.id) {
     redirect("/login");
   }
+  const userId = session.user.id;
 
-  // Check whether the user already has an organization
   const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
+    where: { id: userId },
     select: { organizationId: true },
   });
-
   if (user?.organizationId) {
-    throw new Error("You already belong to an organization");
+    return { success: false, error: "You already belong to an organization" };
   }
 
-  // Validate input
-  const validated = createOrgSchema.parse({
+  const parsed = createOrgSchema.safeParse({
     name: formData.get("name"),
     domain: formData.get("domain"),
   });
+  if (!parsed.success) {
+    return {
+      success: false,
+      error: parsed.error.issues[0]?.message ?? "Please check your input",
+      errors: parsed.error.flatten().fieldErrors as Record<string, string[]>,
+    };
+  }
+  const validated = parsed.data;
 
-  // Domain duplicate check
   const existingOrg = await prisma.organization.findFirst({
     where: { domain: validated.domain },
   });
   if (existingOrg) {
-    throw new Error("This domain is already in use");
+    return { success: false, error: "This domain is already in use" };
   }
 
-  // Transaction: create Organization + update User
-  await prisma.$transaction(async (tx) => {
-    const org = await tx.organization.create({
-      data: { name: validated.name, domain: validated.domain },
+  try {
+    await prisma.$transaction(async (tx) => {
+      // Single-tenant: lock + re-check so only the first-run setup succeeds.
+      await assertOrganizationCreationAllowed(tx, { viaSelfSignup: true });
+      const org = await tx.organization.create({
+        data: { name: validated.name, domain: validated.domain },
+      });
+      await tx.user.update({
+        where: { id: userId },
+        data: { organizationId: org.id, role: "ADMIN" },
+      });
+      // SubHub: seed roles, categories, payment methods, billing cycles, tax rate
+      await ensureOrganizationDefaults(org.id, { db: tx });
+      await tx.auditLog.create({
+        data: {
+          organizationId: org.id,
+          userId,
+          action: "CREATE_ORGANIZATION",
+          entityType: "Organization",
+          entityId: org.id,
+          changes: { name: validated.name, domain: validated.domain },
+          metadata: { deploymentMode: getDeploymentMode() },
+        },
+      });
     });
-
-    await tx.user.update({
-      where: { id: session.user.id },
-      data: {
-        organizationId: org.id,
-        role: "ADMIN", // the organization creator is ADMIN
-      },
-    });
-
-    // SubHub: seed roles, categories, payment methods, billing cycles, tax rate
-    await ensureOrganizationDefaults(org.id, { db: tx });
-  });
+  } catch (error) {
+    if (error instanceof TenancyError) {
+      return { success: false, error: error.message };
+    }
+    throw error;
+  }
 
   revalidatePath("/");
   redirect("/dashboard");
@@ -112,6 +138,61 @@ async function _createOrganization(formData: FormData) {
 export const createOrganization = withLogging(
   "createOrganization",
   _createOrganization
+);
+
+/**
+ * Joins the organisation that accepts the user's email domain (domain auto-join).
+ * Requires `system.allowSelfSignup`; SaaS only matches an organisation's claimed
+ * primary domain. The user gets the organisation's default role
+ * (`security.defaultRoleKey`, never ADMIN).
+ */
+async function _joinOrganizationByDomain(): Promise<ActionState> {
+  const session = await auth();
+  if (!session?.user?.id) {
+    redirect("/login");
+  }
+  const userId = session.user.id;
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { organizationId: true, email: true },
+  });
+  if (!user) redirect("/login");
+  if (user.organizationId) {
+    return { success: false, error: "You already belong to an organization" };
+  }
+  const org = await findDomainJoinOrganization(user.email);
+  if (!org) {
+    return {
+      success: false,
+      error: "No organisation accepts sign-ups from your email domain.",
+    };
+  }
+
+  const { role, roleId } = await resolveDomainJoinRole(org.id);
+  await prisma.$transaction(async (tx) => {
+    const joined = await tx.user.updateMany({
+      where: { id: userId, organizationId: null },
+      data: { organizationId: org.id, role, roleId },
+    });
+    if (joined.count === 0) return;
+    await tx.auditLog.create({
+      data: {
+        organizationId: org.id,
+        userId,
+        action: "JOIN_ORGANIZATION_BY_DOMAIN",
+        entityType: "User",
+        entityId: userId,
+        metadata: { domain: emailDomain(user.email), role, roleId },
+      },
+    });
+  });
+
+  revalidatePath("/");
+  redirect("/dashboard");
+}
+export const joinOrganizationByDomain = withLogging(
+  "joinOrganizationByDomain",
+  _joinOrganizationByDomain
 );
 
 /**

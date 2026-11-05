@@ -5,6 +5,7 @@ import { useTranslations } from "next-intl";
 import { useEffect, useMemo, useState } from "react";
 
 import { getCategoryTree } from "@/actions/taxonomy/categories";
+import { ManageMasterLink } from "@/components/common/quick-create/manage-master-link";
 import {
   Select,
   SelectContent,
@@ -68,6 +69,7 @@ export function CategoryPicker({
 }: CategoryPickerProps) {
   const t = useTranslations("taxonomy.picker");
   const ti = useTranslations("platform.masters.inline");
+  const tl = useTranslations("shell.inline.labels");
   const mayManage = usePermissionFlag("categories:manage");
   const allowCreate = canCreate ?? mayManage;
   const [loaded, setLoaded] = useState<CategoryNode[] | null>(tree ?? null);
@@ -162,6 +164,11 @@ export function CategoryPicker({
               {t("clear")}
             </SelectItem>
           )}
+          <ManageMasterLink
+            href="/settings/masters?tab=categories"
+            label={tl("categories")}
+            permission="categories:manage"
+          />
         </SelectContent>
       </Select>
 

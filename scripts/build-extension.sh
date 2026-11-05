@@ -5,6 +5,7 @@
 # Usage:
 #   ./scripts/build-extension.sh --env dev    # Build targeting the dev server
 #   ./scripts/build-extension.sh --env local  # Build targeting the local server
+#   ORG_ID=<id> ./scripts/build-extension.sh --env dev  # Required in SaaS mode
 #
 # Prerequisites:
 #   - A .env.local file must exist at the project root (DATABASE_URL, etc.)
@@ -96,11 +97,20 @@ function hashToken(token) {
 }
 
 async function main() {
-  // 1. Look up the current organisation
-  const org = await prisma.organization.findFirst({
-    select: { id: true, name: true },
-    orderBy: { createdAt: "asc" },
-  });
+  // 1. Look up the target organisation. ORG_ID selects it explicitly; without it
+  //    only a single-tenant installation may fall back to its only organisation.
+  const orgId = process.env.ORG_ID;
+  const mode = (process.env.SUBHUB_DEPLOYMENT_MODE || "single-tenant").trim().toLowerCase();
+  if (!orgId && mode === "saas") {
+    console.error("❌ SUBHUB_DEPLOYMENT_MODE=saas: set ORG_ID=<organisation id> to choose the tenant.");
+    process.exit(1);
+  }
+  const org = orgId
+    ? await prisma.organization.findUnique({ where: { id: orgId }, select: { id: true, name: true } })
+    : await prisma.organization.findFirst({
+        select: { id: true, name: true },
+        orderBy: { createdAt: "asc" },
+      });
 
   if (!org) {
     console.error("❌ Organisation not found. Check the database connection.");

@@ -8,9 +8,11 @@ import {
 import { ColumnsDropdown } from "@/components/common/columns-dropdown";
 import { KpiCard, KpiCardsGrid } from "@/components/common/kpi-card";
 import { PageHeader } from "@/components/common/page-header";
+import { useQuickCreate } from "@/components/common/quick-create/quick-create-context";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { getUserListColumns, UserList } from "@/components/users/user-list";
+import { useSafePermissions } from "@/hooks/use-permission-flag";
 import type { UserListItem } from "@/types/user";
 import { useList } from "@refinedev/core";
 import { UserCheck, UserMinus, UserPlus, Users, UserX } from "lucide-react";
@@ -138,8 +140,10 @@ export function UserPageClient({ role }: UserPageClientProps) {
     return result;
   }, [users, searchQuery, selectedFilters]);
 
-  // Only ADMIN can invite users
-  const canInvite = role === "ADMIN";
+  // Inviting needs members:invite (re-checked by createInvitation)
+  const { can } = useSafePermissions();
+  const quickCreate = useQuickCreate();
+  const canInvite = can("members:invite");
 
   // Loading state - skeleton UI
   if (isLoading) {
@@ -214,14 +218,19 @@ export function UserPageClient({ role }: UserPageClientProps) {
       {/* Page header */}
       <PageHeader
         title={t("users.page.title")}
-        actions={[
-          {
-            label: t("users.page.inviteUser"),
-            icon: UserPlus,
-            href: "/settings/team",
-            disabled: !canInvite || isLoading,
-          },
-        ]}
+        actions={
+          canInvite
+            ? [
+                {
+                  label: t("users.page.inviteUser"),
+                  icon: UserPlus,
+                  ...(quickCreate
+                    ? { onClick: () => quickCreate.open("invite") }
+                    : { href: "/settings/team" }),
+                },
+              ]
+            : undefined
+        }
       />
 
       {/* Stat cards */}

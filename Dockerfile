@@ -1,8 +1,14 @@
+# SubHub container image. Default target: `runner` (the web app).
+# Other target: `migrator` (Prisma CLI + sources for migrate/seed/backfill jobs).
+# See docs/DEPLOYMENT.md and docker-compose.yml.
+
 # Stage 1: Dependencies
 FROM node:20-alpine AS deps
 RUN apk add --no-cache libc6-compat openssl
 
 WORKDIR /app
+# No git hooks inside the image (package.json "prepare" runs husky)
+ENV HUSKY=0
 
 # Copy package files
 COPY package.json package-lock.json ./
@@ -24,6 +30,12 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
+# Public values are inlined at build time (pass with --build-arg)
+ARG NEXT_PUBLIC_APP_URL=""
+ARG NEXT_PUBLIC_ENABLE_REFINE="false"
+ENV NEXT_PUBLIC_APP_URL=$NEXT_PUBLIC_APP_URL
+ENV NEXT_PUBLIC_ENABLE_REFINE=$NEXT_PUBLIC_ENABLE_REFINE
+
 # Set environment variables for build
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV NODE_ENV=production
@@ -35,7 +47,18 @@ RUN npx prisma generate
 # Build the application
 RUN npm run build
 
-# Stage 3: Runner
+# Stage 3: Migrator - release jobs (prisma migrate deploy, seed, backfill).
+# Has the Prisma CLI, tsx and the sources; the slim runner image does not.
+FROM node:20-alpine AS migrator
+RUN apk add --no-cache libc6-compat openssl
+WORKDIR /app
+ENV NEXT_TELEMETRY_DISABLED=1
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+RUN npx prisma generate
+CMD ["sh", "scripts/docker-migrate.sh"]
+
+# Stage 4: Runner (default target)
 FROM node:20-alpine AS runner
 RUN apk add --no-cache libc6-compat openssl curl
 
@@ -63,8 +86,9 @@ WORKDIR /app/src/extensions
 RUN npm install --omit=dev
 WORKDIR /app
 
-# Ensure release directory exists for extension builds
-RUN mkdir -p src/extensions/chrome/release
+# Ensure release directory exists for extension builds, and the local object
+# store (STORAGE_PROVIDER=local) has a writable home - mount a volume there.
+RUN mkdir -p src/extensions/chrome/release .data/storage
 
 # Set correct permissions
 RUN chown -R nextjs:nodejs /app
@@ -75,5 +99,11 @@ EXPOSE 3000
 
 ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
+# Single-tenant (on-premise) unless the deployment sets SUBHUB_DEPLOYMENT_MODE=saas
+ENV SUBHUB_DEPLOYMENT_MODE=single-tenant
+ENV STORAGE_LOCAL_ROOT=/app/.data/storage
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
+  CMD curl -fsS http://127.0.0.1:3000/api/v1/system/info >/dev/null || exit 1
 
 CMD ["node", "server.js"]

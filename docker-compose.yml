@@ -1,18 +1,98 @@
-version: '3.8'
+# SubHub — on-premise / self-hosted stack (single tenant by default).
+# Full guide: docs/DEPLOYMENT.md. Quick start:
+#   cp .env.example .env      # set POSTGRES_PASSWORD, AUTH_SECRET, NEXTAUTH_URL,
+#                             # CRON_SECRET, ENCRYPTION_KEY, email settings ...
+#   docker compose up -d --build
+# `migrate` runs first on every `up` (migrations, first-install seed, defaults
+# backfill); `app` starts only after it succeeds; `scheduler` calls the cron jobs.
+name: subhub
+
+x-database-url: &database-url "postgresql://${POSTGRES_USER:-subhub}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@postgres:5432/${POSTGRES_DB:-subhub}"
+
+x-app-environment: &app-environment
+  DATABASE_URL: *database-url
+  DIRECT_URL: *database-url
+  SUBHUB_DEPLOYMENT_MODE: ${SUBHUB_DEPLOYMENT_MODE:-single-tenant}
 
 services:
   postgres:
     image: postgres:15-alpine
-    container_name: smp-postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: smp
-    ports:
-      - "127.0.0.1:5432:5432"
+      POSTGRES_USER: ${POSTGRES_USER:-subhub}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-subhub}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        ["CMD-SHELL", 'pg_isready -U "$${POSTGRES_USER}" -d "$${POSTGRES_DB}"']
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    # Not published on the host. For local admin tools only:
+    # ports:
+    #   - "127.0.0.1:5432:5432"
+
+  migrate:
+    build:
+      context: .
+      target: migrator
+    image: subhub-migrator:latest
+    env_file: .env
+    environment: *app-environment
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  app:
+    build:
+      context: .
+      target: runner
+      args:
+        NEXT_PUBLIC_APP_URL: ${NEXT_PUBLIC_APP_URL:-}
+    image: subhub-app:latest
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      <<: *app-environment
+      NODE_ENV: production
+      STORAGE_LOCAL_ROOT: /app/.data/storage
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+    ports:
+      # Put a TLS-terminating reverse proxy in front; bound to localhost by default.
+      - "${SUBHUB_BIND:-127.0.0.1}:${SUBHUB_PORT:-3000}:3000"
+    volumes:
+      - app_storage:/app/.data/storage
+      - extension_releases:/app/src/extensions/chrome/release
+
+  scheduler:
+    # Reuses the app image (it ships curl and busybox crond).
+    image: subhub-app:latest
+    restart: unless-stopped
+    user: root
+    environment:
+      CRON_SECRET: ${CRON_SECRET:?Set CRON_SECRET in .env}
+      APP_INTERNAL_URL: http://app:3000
+    volumes:
+      - ./deploy/scheduler/crontab.template:/etc/subhub/crontab.template:ro
+    entrypoint:
+      - sh
+      - -c
+      - >-
+        sed -e "s|__CRON_SECRET__|$${CRON_SECRET}|g" -e "s|__APP_URL__|$${APP_INTERNAL_URL}|g"
+        /etc/subhub/crontab.template > /etc/crontabs/root &&
+        chmod 600 /etc/crontabs/root && exec crond -f -l 8
+    healthcheck:
+      disable: true
+    depends_on:
+      app:
+        condition: service_healthy
 
 volumes:
   postgres_data:
+  app_storage:
+  extension_releases:

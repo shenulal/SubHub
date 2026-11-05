@@ -244,6 +244,23 @@ describe("os-default-apps actions", () => {
       expect(result.data?.name).toBe("New App");
     });
 
+    it("saas: refuses tenant writes to the shared list, even for ADMIN", async () => {
+      vi.stubEnv("SUBHUB_DEPLOYMENT_MODE", "saas");
+      vi.mocked(auth).mockResolvedValue({
+        user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
+      } as never);
+
+      const result = await createOsDefaultApp({
+        name: "New App",
+        platform: "MACOS",
+      });
+
+      vi.unstubAllEnvs();
+      expect(result.success).toBe(false);
+      expect(result.error).toContain("platform operator");
+      expect(prisma.osDefaultApp.create).not.toHaveBeenCalled();
+    });
+
     it("should return error when not admin", async () => {
       vi.mocked(auth).mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "MEMBER" },

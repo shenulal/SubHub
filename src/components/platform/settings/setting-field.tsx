@@ -379,17 +379,11 @@ export function SettingField({
             {definition.key}
           </code>
           {definition.isOverridden ? (
-            <Badge
-              variant="primary"
-              className="h-5 shrink-0 px-1.5 text-[10px]"
-            >
+            <Badge variant="primary" className="h-5 shrink-0 px-1.5 text-xs">
               {t("overridden")}
             </Badge>
           ) : (
-            <Badge
-              variant="secondary"
-              className="h-5 shrink-0 px-1.5 text-[10px]"
-            >
+            <Badge variant="secondary" className="h-5 shrink-0 px-1.5 text-xs">
               {t("default")}
             </Badge>
           )}

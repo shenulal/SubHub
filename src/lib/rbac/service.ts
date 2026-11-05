@@ -9,13 +9,20 @@
  *   user.roleId (custom)   → that role's grants
  *   user.role (legacy enum)→ the organisation's system role with legacyRole = role,
  *                            or the in-code template if the row does not exist yet
+ *
+ * Deployment mode (`SUBHUB_DEPLOYMENT_MODE`): in SaaS mode the platform-only keys
+ * (`PLATFORM_PERMISSION_KEYS`) are stripped from every tenant role, so neither
+ * system nor custom roles can grant cross-tenant writes. A deactivated
+ * organisation resolves to an empty set.
  */
 import { getCachedSession } from "@/lib/auth/require-auth";
 import { prisma } from "@/lib/db";
+import { isSaas } from "@/lib/deployment/mode";
 import type { Prisma, UserRole } from "@prisma/client";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 import {
+  isPlatformPermission,
   PERMISSION_KEYS,
   PERMISSION_ROLLOUTS,
   PERMISSIONS,
@@ -41,6 +48,14 @@ export function isForbiddenError(error: unknown): error is ForbiddenError {
 
 type Db = Prisma.TransactionClient | typeof prisma;
 
+/** SaaS: drop platform-only keys from a tenant permission set (returns a new set). */
+export function scopeToDeployment(keys: Iterable<string>): Set<string> {
+  const list = Array.from(keys);
+  return new Set(
+    isSaas() ? list.filter((k) => !isPlatformPermission(k)) : list
+  );
+}
+
 /**
  * Effective permission keys for a user inside an organisation.
  */
@@ -55,6 +70,7 @@ export const getUserPermissionSet = cache(
         role: true,
         roleId: true,
         organizationId: true,
+        organization: { select: { deactivatedAt: true } },
         customRole: {
           select: {
             organizationId: true,
@@ -68,9 +84,10 @@ export const getUserPermissionSet = cache(
       return new Set(PERMISSION_KEYS);
     if (!organizationId || user.organizationId !== organizationId)
       return new Set();
+    if (user.organization?.deactivatedAt) return new Set();
 
     if (user.customRole && user.customRole.organizationId === organizationId) {
-      return new Set(
+      return scopeToDeployment(
         user.customRole.permissions.map((rp) => rp.permission.key)
       );
     }
@@ -83,9 +100,11 @@ export const getUserPermissionSet = cache(
       },
     });
     if (systemRole) {
-      return new Set(systemRole.permissions.map((rp) => rp.permission.key));
+      return scopeToDeployment(
+        systemRole.permissions.map((rp) => rp.permission.key)
+      );
     }
-    return new Set(SYSTEM_ROLE_TEMPLATES[legacy]?.grants ?? []);
+    return scopeToDeployment(SYSTEM_ROLE_TEMPLATES[legacy]?.grants ?? []);
   }
 );
 
@@ -153,6 +172,43 @@ export async function requirePermission(
     organizationId: session.user.organizationId,
     role: session.user.role,
     permissions,
+  };
+}
+
+export interface PlatformActor {
+  userId: string;
+  /** Null for a SUPER_ADMIN acting from the platform console. */
+  organizationId: string | null;
+  isSuperAdmin: boolean;
+  permissions: Set<string>;
+}
+
+/**
+ * Guard for actions on platform-wide data (currencies, countries, vendor catalog)
+ * that the super-admin console also calls. SUPER_ADMIN passes without an
+ * organisation; everyone else goes through `requirePermission` (which, in SaaS
+ * mode, never grants platform-only keys to tenant users).
+ */
+export async function requirePlatformActor(
+  permission: PermissionKey | PermissionKey[],
+  options: { mode?: "all" | "any" } = {}
+): Promise<PlatformActor> {
+  const session = await getCachedSession();
+  if (!session?.user) redirect("/login");
+  if ((session.user.role as string) === "SUPER_ADMIN") {
+    return {
+      userId: session.user.id,
+      organizationId: session.user.organizationId ?? null,
+      isSuperAdmin: true,
+      permissions: new Set(PERMISSION_KEYS),
+    };
+  }
+  const result = await requirePermission(permission, options);
+  return {
+    userId: result.userId,
+    organizationId: result.organizationId,
+    isSuperAdmin: false,
+    permissions: result.permissions,
   };
 }
 

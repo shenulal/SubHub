@@ -18,6 +18,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { describeAuditAction } from "@/lib/audit/describe-action";
 import {
   mergeLegacyValue,
   serializeMultiValue,
@@ -72,17 +73,6 @@ export function AuditLogPageClient({
   const searchParams = useSearchParams();
   const [selectedLog, setSelectedLog] = useState<AuditLogEntry | null>(null);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
-
-  const actionLabels: Record<string, string> = {
-    CREATE: t("reports.audit.actions.create"),
-    UPDATE: t("reports.audit.actions.update"),
-    DELETE: t("reports.audit.actions.delete"),
-    LOGIN: t("reports.audit.actions.login"),
-    LOGOUT: t("reports.audit.actions.logout"),
-    SYNC: t("reports.audit.actions.sync"),
-    EXPORT: t("reports.audit.actions.export"),
-    IMPORT: t("reports.audit.actions.import"),
-  };
 
   const entityTypeLabels: Record<string, string> = {
     App: t("reports.audit.entityTypes.app"),
@@ -198,7 +188,7 @@ export function AuditLogPageClient({
         id: "action",
         title: t("reports.audit.columns.action"),
         options: filterOptions.actions.map((action) => ({
-          label: actionLabels[action] || action,
+          label: describeAuditAction(action),
           value: action,
         })),
       },
@@ -232,7 +222,7 @@ export function AuditLogPageClient({
           ]
         : []),
     ],
-    [filterOptions, actionLabels, entityTypeLabels, t]
+    [filterOptions, entityTypeLabels, t]
   );
 
   return (

@@ -8,6 +8,7 @@ import {
 } from "@/components/common/data-table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { describeAuditAction } from "@/lib/audit/describe-action";
 import { formatKoreanDateTime } from "@/lib/date";
 import type { AuditLogEntry } from "@/types/audit";
 import { Eye, FileText } from "lucide-react";
@@ -64,11 +65,18 @@ function getActionBadge(action: string, t: (key: string) => string) {
     EXPORT: { label: t("reports.audit.actions.export"), variant: "secondary" },
     IMPORT: { label: t("reports.audit.actions.import"), variant: "secondary" },
   };
-  const config = actionConfig[category] || {
-    label: action,
-    variant: "secondary" as const,
-  };
-  return <Badge variant={config.variant}>{config.label}</Badge>;
+  const config = actionConfig[category];
+  const sentence = describeAuditAction(action);
+  return (
+    <span className="flex min-w-0 items-center gap-2" title={sentence}>
+      <Badge variant={config?.variant ?? "secondary"} className="shrink-0">
+        {config?.label ?? t("shell.audit.other")}
+      </Badge>
+      <span className="text-muted-foreground min-w-0 truncate text-[0.8125rem]">
+        {sentence}
+      </span>
+    </span>
+  );
 }
 
 function getEntityTypeName(

@@ -1,7 +1,7 @@
 // FleetDM Webhook Tests
 import crypto from "crypto";
 
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type {
   FleetDMHost,
@@ -441,6 +441,35 @@ describe("FleetDM Webhook", () => {
       const result = await getOrganizationIdFromWebhook();
 
       expect(result).toBeNull();
+    });
+
+    describe("deployment mode", () => {
+      afterEach(() => vi.unstubAllEnvs());
+
+      it("single-tenant: falls back to the only active integration without a team id", async () => {
+        vi.stubEnv("SUBHUB_DEPLOYMENT_MODE", "on-premise");
+        vi.mocked(prisma.integration.findFirst).mockResolvedValue({
+          organizationId: "org-only",
+        } as never);
+
+        expect(await getOrganizationIdFromWebhook()).toBe("org-only");
+      });
+
+      it("saas: never guesses a tenant without a team id (skips the event)", async () => {
+        vi.stubEnv("SUBHUB_DEPLOYMENT_MODE", "saas");
+
+        expect(await getOrganizationIdFromWebhook()).toBeNull();
+        expect(prisma.integration.findFirst).not.toHaveBeenCalled();
+      });
+
+      it("saas: still maps an explicit team id to its tenant", async () => {
+        vi.stubEnv("SUBHUB_DEPLOYMENT_MODE", "saas");
+        vi.mocked(prisma.integration.findFirst).mockResolvedValue({
+          organizationId: "org-team-7",
+        } as never);
+
+        expect(await getOrganizationIdFromWebhook(7)).toBe("org-team-7");
+      });
     });
   });
 

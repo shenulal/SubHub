@@ -73,7 +73,7 @@ export function SubscriptionsSidebar() {
 
   return (
     <nav
-      className="flex min-w-0 gap-1 overflow-x-auto pb-1 xl:flex-col xl:overflow-visible xl:pb-0"
+      className="flex min-w-0 gap-1 overflow-x-auto pb-1 2xl:flex-col 2xl:overflow-visible 2xl:pb-0"
       aria-label={t("label")}
     >
       {NAV_ITEMS.map((item) => {
@@ -85,7 +85,7 @@ export function SubscriptionsSidebar() {
             href={item.href}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "group flex shrink-0 items-start gap-3 rounded-md px-3 py-2.5 text-[0.9375rem] leading-snug font-medium transition-colors xl:min-w-0 xl:shrink",
+              "group flex shrink-0 items-start gap-3 rounded-md px-3 py-2.5 text-[0.9375rem] leading-snug font-medium transition-colors 2xl:min-w-0 2xl:shrink",
               active
                 ? "bg-accent bg-primary/16! text-primary"
                 : "text-foreground hover:bg-accent"
@@ -94,7 +94,7 @@ export function SubscriptionsSidebar() {
             <Icon className="mt-px size-[18px] shrink-0" />
             <span className="flex min-w-0 flex-col gap-0.5">
               <span>{t(`${item.key}.label`)}</span>
-              <span className="text-muted-foreground group-aria-[current=page]:text-primary/75 hidden truncate text-[0.8125rem] font-normal xl:block">
+              <span className="text-muted-foreground group-aria-[current=page]:text-primary/75 hidden truncate text-[0.8125rem] font-normal 2xl:block">
                 {t(`${item.key}.description`)}
               </span>
             </span>

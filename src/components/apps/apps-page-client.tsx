@@ -8,11 +8,13 @@ import {
 import { ColumnsDropdown } from "@/components/common/columns-dropdown";
 import { KpiCard, KpiCardsGrid } from "@/components/common/kpi-card";
 import { PageHeader } from "@/components/common/page-header";
+import { CreateAppDialog } from "@/components/common/quick-create/create-app-dialog";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useSafePermissions } from "@/hooks/use-permission-flag";
 import type { AppListItem } from "@/types/app";
-import { useCan, useList } from "@refinedev/core";
-import { AppWindow, CheckCircle } from "lucide-react";
+import { useList } from "@refinedev/core";
+import { AppWindow, CheckCircle, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useCallback, useMemo, useState } from "react";
 
@@ -22,7 +24,9 @@ interface AppsPageClientProps {
   role?: Role;
 }
 
-export function AppsPageClient({ role }: AppsPageClientProps) {
+// `role` is kept for callers; gating now uses permissions.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function AppsPageClient(_props: AppsPageClientProps) {
   const t = useTranslations();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFilters, setSelectedFilters] = useState<
@@ -145,33 +149,34 @@ export function AppsPageClient({ role }: AppsPageClientProps) {
     return result;
   }, [apps, searchQuery, selectedFilters]);
 
-  const { data: createAccess } = useCan({
-    resource: "apps",
-    action: "create",
-    params: { user: { role } },
-    queryOptions: {
-      enabled: !!role,
-    },
-  });
-
-  const { data: deleteAccess } = useCan({
-    resource: "apps",
-    action: "delete",
-    params: { user: { role } },
-    queryOptions: {
-      enabled: !!role,
-    },
-  });
-
-  const canCreate =
-    createAccess?.can ?? (role === "ADMIN" || role === "MEMBER");
-  const canDelete = deleteAccess?.can ?? role === "ADMIN";
-  const canManage = canCreate;
+  // apps:manage covers create, edit and delete (enforced again server-side)
+  const { can, isLoading: isLoadingPermissions } = useSafePermissions();
+  const canManage = can("apps:manage");
+  const canDelete = canManage;
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
 
   return (
     <div className="min-w-0 space-y-6">
       {/* Page header */}
-      <PageHeader title={t("apps.page.title")} />
+      <PageHeader
+        title={t("apps.page.title")}
+        actions={
+          canManage && !isLoadingPermissions
+            ? [
+                {
+                  label: t("shell.actions.addApp"),
+                  icon: Plus,
+                  onClick: () => setIsCreateOpen(true),
+                },
+              ]
+            : undefined
+        }
+      />
+      <CreateAppDialog
+        open={isCreateOpen}
+        onOpenChange={setIsCreateOpen}
+        onCreated={() => void refetch()}
+      />
 
       {/* Stats cards */}
       <KpiCardsGrid columns={2}>

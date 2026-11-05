@@ -6,6 +6,10 @@
  */
 import { submitApprovalRequest } from "@/actions/approvals/submit";
 import { PageHeader } from "@/components/common/page-header";
+import {
+  CreateAppDialog,
+  type CreatedApp,
+} from "@/components/common/quick-create/create-app-dialog";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -24,6 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { usePermissionFlag } from "@/hooks/use-permission-flag";
 import type { ApprovalFormOptions, CatalogSuggestion } from "@/types/approval";
 import { Loader2, Send } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -85,6 +90,9 @@ export function ApprovalRequestForm({
   const tc = useTranslations("approvals.common");
   const tRoot = useTranslations("approvals");
   const router = useRouter();
+  const tInline = useTranslations("shell.inline");
+  const canCreateApp = usePermissionFlag("apps:manage");
+  const [appDraft, setAppDraft] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
   const [errors, setErrors] = useState<FieldErrors>({});
   const [form, setForm] = useState<FormState>({
@@ -119,6 +127,15 @@ export function ApprovalRequestForm({
       vendorWebsite: prev.vendorWebsite || item.website || "",
     }));
   };
+
+  const onAppCreated = (app: CreatedApp) =>
+    setForm((prev) => ({
+      ...prev,
+      serviceName: app.name,
+      catalogId: null,
+      vendorWebsite: app.website ?? prev.vendorWebsite,
+      categoryId: app.categoryId ?? prev.categoryId,
+    }));
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -173,6 +190,20 @@ export function ApprovalRequestForm({
                     }
                     onSelect={onCatalogSelect}
                     aria-invalid={Boolean(errors.serviceName)}
+                    createOption={
+                      canCreateApp
+                        ? {
+                            label: (q) => tInline("createApp", { name: q }),
+                            onCreate: (q) => setAppDraft(q),
+                          }
+                        : undefined
+                    }
+                  />
+                  <CreateAppDialog
+                    open={appDraft !== null}
+                    onOpenChange={(open) => !open && setAppDraft(null)}
+                    defaultName={appDraft ?? ""}
+                    onCreated={onAppCreated}
                   />
                 </Field>
               </div>

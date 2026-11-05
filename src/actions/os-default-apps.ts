@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { isSaas } from "@/lib/deployment/mode";
 import { withLogging } from "@/lib/logging";
 import type { ActionState } from "@/types";
 import type {
@@ -102,6 +103,19 @@ export function checkIsOsDefault(
 }
 
 /**
+ * OS default apps are a platform-wide list (no organisationId). Single-tenant:
+ * the installation's ADMIN maintains it. SaaS: tenants must not change a list
+ * every tenant shares, so tenant writes are refused (seeded/maintained by the
+ * platform operator).
+ */
+function osDefaultAppsWriteDenied(role: string): string | null {
+  if (isSaas()) {
+    return "OS default apps are shared by every tenant and are maintained by the platform operator.";
+  }
+  return role === "ADMIN" ? null : "Admin permission required.";
+}
+
+/**
  * Create an OsDefaultApp (Admin only)
  */
 async function _createOsDefaultApp(
@@ -113,9 +127,8 @@ async function _createOsDefaultApp(
     return { success: false, error: "Authentication required." };
   }
 
-  if (session.user.role !== "ADMIN") {
-    return { success: false, error: "Admin permission required." };
-  }
+  const denied = osDefaultAppsWriteDenied(session.user.role);
+  if (denied) return { success: false, error: denied };
 
   try {
     const app = await prisma.osDefaultApp.create({
@@ -175,9 +188,8 @@ async function _updateOsDefaultApp(
     return { success: false, error: "Authentication required." };
   }
 
-  if (session.user.role !== "ADMIN") {
-    return { success: false, error: "Admin permission required." };
-  }
+  const denied = osDefaultAppsWriteDenied(session.user.role);
+  if (denied) return { success: false, error: denied };
 
   try {
     const app = await prisma.osDefaultApp.update({
@@ -240,9 +252,8 @@ async function _deleteOsDefaultApp(id: string): Promise<ActionState<void>> {
     return { success: false, error: "Authentication required." };
   }
 
-  if (session.user.role !== "ADMIN") {
-    return { success: false, error: "Admin permission required." };
-  }
+  const denied = osDefaultAppsWriteDenied(session.user.role);
+  if (denied) return { success: false, error: denied };
 
   try {
     await prisma.osDefaultApp.delete({

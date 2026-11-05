@@ -54,7 +54,7 @@ export function countdownTone(days: number): string {
 
 export function AppCell({ item }: { item: DiscoverySubscriptionItem }) {
   return (
-    <div className="flex max-w-[15rem] min-w-[12rem] items-center gap-3">
+    <div className="flex max-w-[13rem] min-w-[11rem] items-center gap-3 2xl:max-w-[15rem]">
       {item.appLogoUrl ? (
         <Image
           src={item.appLogoUrl}
@@ -81,6 +81,7 @@ export function AppCell({ item }: { item: DiscoverySubscriptionItem }) {
             <CategoryBadge
               category={item.category}
               parentName={item.category.parentName}
+              compact
               className="h-6 max-w-full min-w-0 px-2 text-xs"
             />
           ) : null}
@@ -95,13 +96,20 @@ export function AppCell({ item }: { item: DiscoverySubscriptionItem }) {
   );
 }
 
+/** Tag chips shown in the list before collapsing into "+N". */
+const TAGS_SHOWN = 1;
+
 export function TagsCell({ item }: { item: DiscoverySubscriptionItem }) {
   if (!item.tags.length)
     return <span className="text-muted-foreground">—</span>;
-  const shown = item.tags.slice(0, 3);
+  // One chip + "+N" keeps the column narrow; every name is in the tooltip.
+  const shown = item.tags.slice(0, TAGS_SHOWN);
   const extra = item.tags.length - shown.length;
   return (
-    <div className="flex min-w-max items-center gap-1">
+    <div
+      className="flex min-w-max items-center gap-1"
+      title={item.tags.map((tag) => tag.name).join(", ")}
+    >
       {shown.map((tag) => (
         <span
           key={tag.id}
@@ -128,7 +136,7 @@ export function OwnerCell({ item }: { item: DiscoverySubscriptionItem }) {
   const label = item.owner?.name ?? item.owner?.email ?? item.teamName;
   if (!label) return <span className="text-muted-foreground">—</span>;
   return (
-    <div className="flex max-w-[14rem] min-w-0 flex-col">
+    <div className="flex max-w-[11rem] min-w-0 flex-col 2xl:max-w-[14rem]">
       <span className="text-foreground truncate text-[0.9375rem]" title={label}>
         {label}
       </span>
@@ -146,6 +154,8 @@ interface CostCellProps {
   baseCurrency: string;
   locale: string;
   monthlyLabel: string;
+  /** Shown next to the amount when the Cycle column is hidden (< 1536px). */
+  cycleLabel?: string;
 }
 
 export function CostCell({
@@ -153,6 +163,7 @@ export function CostCell({
   baseCurrency,
   locale,
   monthlyLabel,
+  cycleLabel,
 }: CostCellProps) {
   const showBase =
     typeof item.monthlyAmountBase === "number" &&
@@ -161,6 +172,12 @@ export function CostCell({
     <div className="flex flex-col items-end whitespace-nowrap tabular-nums">
       <span className="text-foreground text-[0.9375rem] font-medium">
         {formatMoney(item.amount, item.currency, locale)}
+        {cycleLabel && (
+          // The Cycle column is folded in here below 1536px to save width.
+          <span className="text-muted-foreground ml-1 text-[0.8125rem] font-normal 2xl:hidden">
+            · {cycleLabel}
+          </span>
+        )}
       </span>
       {showBase && (
         <span className="text-muted-foreground text-[0.8125rem]">
@@ -293,12 +310,15 @@ export function buildSubscriptionColumns({
           baseCurrency={baseCurrency}
           locale={locale}
           monthlyLabel={labels.monthly}
+          cycleLabel={labels.cycleLabel(item.billingCycle)}
         />
       ),
     },
     {
       id: "cycle",
       header: labels.cycle,
+      className: "hidden 2xl:table-cell",
+      headerClassName: "hidden 2xl:table-cell",
       cell: (item) => (
         <span className="text-muted-foreground text-[0.9375rem] whitespace-nowrap">
           {labels.cycleLabel(item.billingCycle)}

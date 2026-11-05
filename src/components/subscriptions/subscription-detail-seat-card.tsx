@@ -7,6 +7,7 @@ import {
   removeUserFromSubscription,
 } from "@/actions/subscriptions/subscription-seat-management";
 import { getUsers } from "@/actions/users-read";
+import { ConfirmAction } from "@/components/common/confirm-action";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -296,6 +297,7 @@ function SeatUserRow({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   t: any;
 }) {
+  const tc = useTranslations("shell.confirm");
   return (
     <TableRow>
       <TableCell>
@@ -317,22 +319,29 @@ function SeatUserRow({
         <div className="flex items-center gap-1">
           <span className="text-sm">{formatDate(user.lastUsedAt)}</span>
           {user.isInactive && (
-            <Badge variant="destructive" className="text-[10px]">
+            <Badge variant="destructive" className="text-xs">
               {t("table.inactive")}
             </Badge>
           )}
         </div>
       </TableCell>
       <TableCell>
-        <Button
-          variant="ghost"
-          size="icon"
-          className="text-destructive hover:text-destructive/80 h-7 w-7"
-          onClick={() => onRemove(user.id)}
-          disabled={isPending}
+        <ConfirmAction
+          title={tc("removeSeat.title", { name: user.name ?? user.email })}
+          description={tc("removeSeat.description")}
+          confirmLabel={tc("removeSeat.confirm")}
+          onConfirm={() => onRemove(user.id)}
         >
-          <Trash2 className="h-3.5 w-3.5" />
-        </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="text-destructive hover:text-destructive/80 h-7 w-7"
+            disabled={isPending}
+            aria-label={tc("removeSeat.confirm")}
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </Button>
+        </ConfirmAction>
       </TableCell>
     </TableRow>
   );

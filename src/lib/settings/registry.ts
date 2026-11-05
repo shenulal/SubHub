@@ -1010,7 +1010,9 @@ export const SETTING_DEFINITIONS = {
     scope: "system",
     schema: z.boolean(),
     defaultValue: true,
-    label: "Allow public sign-up (create new organisations)",
+    label: "Allow public sign-up",
+    description:
+      "SaaS: new customers sign up and create their own organisation; users join an organisation by invitation or by its claimed email domain. Single-tenant: after first-run setup, users whose email domain belongs to the organisation join it automatically; everyone else needs an invitation.",
     input: "boolean",
   }),
   "system.supportEmail": define({

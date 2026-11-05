@@ -33,13 +33,17 @@ import { useTranslations } from "next-intl";
 interface CreateTeamDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSuccess?: () => void;
+  /** Receives the created team so inline pickers can select it. */
+  onSuccess?: (team?: { id: string; name: string }) => void;
+  /** Prefills the team name (text typed in a picker). */
+  defaultName?: string;
 }
 
 export function CreateTeamDialog({
   open,
   onOpenChange,
   onSuccess,
+  defaultName,
 }: CreateTeamDialogProps) {
   const t = useTranslations();
   const [name, setName] = useState("");
@@ -56,6 +60,7 @@ export function CreateTeamDialog({
   // Load data when the dialog opens
   useEffect(() => {
     if (open) {
+      setName(defaultName ?? "");
       setIsLoadingData(true);
       Promise.all([getTeams(), getUsers({ limit: 100 })])
         .then(([teamsRes, usersRes]) => {
@@ -75,7 +80,7 @@ export function CreateTeamDialog({
       setSelectedMembers([]);
       setMemberSearch("");
     }
-  }, [open]);
+  }, [open, defaultName]);
 
   const handleSubmit = () => {
     if (!name.trim()) {
@@ -94,7 +99,11 @@ export function CreateTeamDialog({
       if (result.success) {
         toast.success(result.message || t("teams.create.success"));
         onOpenChange(false);
-        onSuccess?.();
+        onSuccess?.(
+          result.data
+            ? { id: result.data.id, name: result.data.name }
+            : undefined
+        );
       } else {
         toast.error(result.message || t("teams.create.error"));
       }

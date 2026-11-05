@@ -8,6 +8,7 @@ import { sendInvitationEmail } from "@/lib/services/notification/email";
 import type { ActionState } from "@/types";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
+import { resolveConsoleTenant } from "./_tenant";
 
 export interface AdminUserInfo {
   id: string;
@@ -22,17 +23,14 @@ export interface AdminUserInfo {
 /**
  * Fetch tenant admins (ADMIN role)
  */
-async function _listTenantAdmins(): Promise<ActionState<AdminUserInfo[]>> {
+async function _listTenantAdmins(
+  organizationId?: string
+): Promise<ActionState<AdminUserInfo[]>> {
   await requireSuperAdmin();
 
-  const org = await prisma.organization.findFirst({
-    orderBy: { createdAt: "asc" },
-    select: { id: true },
-  });
-
-  if (!org) {
-    return { success: false, message: "Tenant information not found." };
-  }
+  const resolved = await resolveConsoleTenant(organizationId);
+  if (!resolved.ok) return { success: false, message: resolved.message };
+  const org = resolved.tenant;
 
   const admins = await prisma.user.findMany({
     where: {
@@ -66,7 +64,10 @@ const inviteSchema = z.object({
 /**
  * Invite a tenant admin (invited with the ADMIN role)
  */
-async function _inviteTenantAdmin(email: string): Promise<ActionState> {
+async function _inviteTenantAdmin(
+  email: string,
+  organizationId?: string
+): Promise<ActionState> {
   await requireSuperAdmin();
 
   const parsed = inviteSchema.safeParse({ email });
@@ -74,14 +75,9 @@ async function _inviteTenantAdmin(email: string): Promise<ActionState> {
     return { success: false, message: parsed.error.issues[0].message };
   }
 
-  const org = await prisma.organization.findFirst({
-    orderBy: { createdAt: "asc" },
-    select: { id: true, name: true },
-  });
-
-  if (!org) {
-    return { success: false, message: "Tenant information not found." };
-  }
+  const resolved = await resolveConsoleTenant(organizationId);
+  if (!resolved.ok) return { success: false, message: resolved.message };
+  const org = resolved.tenant;
 
   // Check whether the user already belongs to the organization
   const existingUser = await prisma.user.findFirst({
@@ -179,19 +175,14 @@ export interface TenantInvitationInfo {
 /**
  * Fetch tenant invitation history
  */
-async function _listTenantInvitations(): Promise<
-  ActionState<TenantInvitationInfo[]>
-> {
+async function _listTenantInvitations(
+  organizationId?: string
+): Promise<ActionState<TenantInvitationInfo[]>> {
   await requireSuperAdmin();
 
-  const org = await prisma.organization.findFirst({
-    orderBy: { createdAt: "asc" },
-    select: { id: true },
-  });
-
-  if (!org) {
-    return { success: false, message: "Tenant information not found." };
-  }
+  const resolved = await resolveConsoleTenant(organizationId);
+  if (!resolved.ok) return { success: false, message: resolved.message };
+  const org = resolved.tenant;
 
   const invitations = await prisma.invitation.findMany({
     where: { organizationId: org.id },

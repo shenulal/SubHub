@@ -311,7 +311,7 @@ export function CurrenciesPanel({
                 <TableCell className="font-mono font-medium whitespace-nowrap">
                   {row.code}
                   {row.isBase && (
-                    <span className="tonal-primary ml-2 rounded px-1.5 py-0.5 font-sans text-[10px] font-medium uppercase">
+                    <span className="tonal-primary ml-2 rounded px-1.5 py-0.5 font-sans text-xs font-medium uppercase">
                       {t("base")}
                     </span>
                   )}

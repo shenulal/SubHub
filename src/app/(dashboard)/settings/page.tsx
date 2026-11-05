@@ -1,6 +1,7 @@
 // src/app/(dashboard)/settings/page.tsx
 import { SettingsPageClient } from "@/components/settings/settings-page-client";
 import { requireOrganization } from "@/lib/auth/require-auth";
+import { getDeploymentInfo } from "@/lib/deployment/mode";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -20,6 +21,7 @@ export default async function SettingsPage() {
         organizationId,
         role,
       }}
+      deployment={getDeploymentInfo()}
     />
   );
 }

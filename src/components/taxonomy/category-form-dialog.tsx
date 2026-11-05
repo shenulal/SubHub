@@ -103,6 +103,8 @@ export function CategoryFormDialog({
           className="grid gap-4"
           onSubmit={(e) => {
             e.preventDefault();
+            // Rendered inside other forms (subscription, app); don't submit them too.
+            e.stopPropagation();
             void submit();
           }}
         >

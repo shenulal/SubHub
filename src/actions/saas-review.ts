@@ -3,6 +3,7 @@
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { isSaas } from "@/lib/deployment/mode";
 import { logger } from "@/lib/logger";
 import { withLogging } from "@/lib/logging";
 import type { ActionState } from "@/types";
@@ -133,7 +134,9 @@ async function _approvePendingApp(appId: string): Promise<ActionState> {
         data: { status: AppStatus.ACTIVE },
       });
 
-      if (app.catalogId) {
+      // The catalog is platform-wide: in SaaS mode one tenant's approval must
+      // not mark an entry verified for every tenant.
+      if (app.catalogId && !isSaas()) {
         await tx.saaSCatalog.update({
           where: { id: app.catalogId },
           data: { isVerified: true },

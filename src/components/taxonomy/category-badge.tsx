@@ -7,6 +7,8 @@ import { cn } from "@/lib/utils";
 export interface CategoryBadgeProps {
   category: { name: string; color: string | null } | null;
   parentName?: string | null;
+  /** Show only the leaf name; the full "Parent › Leaf" path stays in the tooltip. */
+  compact?: boolean;
   className?: string;
 }
 
@@ -14,6 +16,7 @@ export interface CategoryBadgeProps {
 export function CategoryBadge({
   category,
   parentName,
+  compact = false,
   className,
 }: CategoryBadgeProps) {
   const t = useTranslations("taxonomy.common");
@@ -49,12 +52,17 @@ export function CategoryBadge({
           boxShadow: `0 0 0 2px color-mix(in oklab, ${color} 25%, transparent)`,
         }}
       />
-      {parentName && (
+      {parentName && !compact && (
         <span className="text-muted-foreground min-w-0 truncate font-normal">
           {parentName} ›
         </span>
       )}
-      <span className="max-w-full min-w-0 shrink-0 truncate">
+      <span
+        className={cn(
+          "max-w-full min-w-0 truncate",
+          compact ? "shrink" : "shrink-0"
+        )}
+      >
         {category.name}
       </span>
     </Badge>

@@ -94,6 +94,9 @@ model Organization {
   googlePrimaryDomain      String?                 @map("google_primary_domain")
   inactiveThresholdMinutes Int                     @default(30) @map("inactive_threshold_minutes")
   extensionAutoDeployed    Boolean                 @default(false) @map("extension_auto_deployed")
+  /// SaaS only: set when the platform operator deactivates the tenant. Members lose
+  /// access (sessions drop the organisation) until it is reactivated.
+  deactivatedAt            DateTime?               @map("deactivated_at")
   apps                     App[]
   auditLogs                AuditLog[]
   cardTransactions         CardTransaction[]
@@ -2055,6 +2058,24 @@ model OrganizationSetting {
   @@unique([organizationId, key])
   @@index([organizationId])
   @@map("organization_settings")
+}
+
+/// Audit trail for platform-level changes made outside any organisation: tenant
+/// lifecycle and platform-wide masters (currencies, countries, vendor catalog)
+/// edited from the super-admin console.
+model PlatformAuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?  @map("actor_id")
+  action     String
+  entityType String   @map("entity_type")
+  entityId   String?  @map("entity_id")
+  changes    Json?
+  metadata   Json?
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@index([createdAt])
+  @@index([entityType, entityId])
+  @@map("platform_audit_logs")
 }
 
 /// Platform-wide settings managed by SUPER_ADMIN (fallbacks for organisation settings).

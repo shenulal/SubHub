@@ -240,7 +240,7 @@ export function AcceptSuggestionDialog({
                     <span className="flex items-center gap-2">
                       {c.parentName ? `${c.parentName} › ${c.name}` : c.name}
                       {c.id === suggestedCategoryId && (
-                        <span className="text-primary inline-flex items-center gap-0.5 text-[10px] font-medium">
+                        <span className="text-primary inline-flex items-center gap-0.5 text-xs font-medium">
                           <Sparkles className="h-3 w-3" aria-hidden />
                           {t("queue.accept.suggestedCategory")}
                         </span>

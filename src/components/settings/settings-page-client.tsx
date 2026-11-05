@@ -1,7 +1,8 @@
 "use client";
 
+import type { DeploymentInfo } from "@/lib/deployment/mode";
 import { useGetIdentity } from "@refinedev/core";
-import { Building2, Mail, Shield, User } from "lucide-react";
+import { Building2, Cloud, Mail, Server, Shield, User } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 interface SettingsPageClientProps {
@@ -12,9 +13,14 @@ interface SettingsPageClientProps {
     organizationId?: string | null;
     role?: string | null;
   };
+  /** Read-only: SUBHUB_DEPLOYMENT_MODE of this installation. */
+  deployment?: DeploymentInfo;
 }
 
-export function SettingsPageClient({ fallbackUser }: SettingsPageClientProps) {
+export function SettingsPageClient({
+  fallbackUser,
+  deployment,
+}: SettingsPageClientProps) {
   const t = useTranslations();
   const { data: identity, isLoading } = useGetIdentity<typeof fallbackUser>({
     queryOptions: {
@@ -110,6 +116,34 @@ export function SettingsPageClient({ fallbackUser }: SettingsPageClientProps) {
             </p>
           </div>
         </div>
+
+        {deployment && (
+          <div
+            data-testid="settings-deployment-mode"
+            className="flex min-w-0 items-center gap-4 rounded-md border p-4"
+          >
+            <div className="tonal-info flex size-10 shrink-0 items-center justify-center rounded-md">
+              {deployment.multiTenant ? (
+                <Cloud className="size-5" />
+              ) : (
+                <Server className="size-5" />
+              )}
+            </div>
+            <div className="min-w-0 space-y-1">
+              <p className="text-muted-foreground truncate text-xs tracking-wide uppercase">
+                {t("platform.deployment.label")}
+              </p>
+              <p
+                className="text-foreground truncate text-[0.9375rem] font-medium"
+                title={deployment.label}
+              >
+                {deployment.multiTenant
+                  ? t("platform.deployment.saas")
+                  : t("platform.deployment.singleTenant")}
+              </p>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

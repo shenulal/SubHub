@@ -9,6 +9,7 @@ import {
   type PaymentRecordWithApp,
 } from "@/actions/payment-import";
 import { DataTable, useDataTable } from "@/components/common/data-table";
+import { CreateAppDialog } from "@/components/common/quick-create/create-app-dialog";
 import { TabFilter, type TabFilterItem } from "@/components/common/tab-filter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -17,6 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import type { PaymentMatchStatus } from "@prisma/client";
 import { Search } from "lucide-react";
 import { useTranslations } from "next-intl";
+import { useRouter } from "next/navigation";
 import {
   useCallback,
   useEffect,
@@ -25,10 +27,7 @@ import {
   useTransition,
 } from "react";
 import { toast } from "sonner";
-import {
-  RegisterAppDialog,
-  RegisterSubscriptionDialog,
-} from "./payment-register-dialogs";
+import { RegisterSubscriptionDialog } from "./payment-register-dialogs";
 import { usePaymentTableColumns } from "./payment-table-columns";
 import { getPaymentRecordColumns } from "./payment-table.constants";
 import { RematchButton } from "./rematch-button";
@@ -97,10 +96,16 @@ export function PaymentRecordsTable({
   const [selectedPaymentRecord, setSelectedPaymentRecord] =
     useState<PaymentRecordWithApp | null>(null);
 
-  const handleRegisterApp = useCallback((record: PaymentRecordWithApp) => {
-    setSelectedPaymentRecord(record);
-    setAppDialogOpen(true);
-  }, []);
+  const router = useRouter();
+  const [appDraftName, setAppDraftName] = useState("");
+  const handleRegisterApp = useCallback(
+    (record: PaymentRecordWithApp, name?: string) => {
+      setSelectedPaymentRecord(record);
+      setAppDraftName(name || record.merchantName);
+      setAppDialogOpen(true);
+    },
+    []
+  );
 
   const handleRegisterSubscription = useCallback(
     (record: PaymentRecordWithApp) => {
@@ -421,12 +426,19 @@ export function PaymentRecordsTable({
         </div>
       )}
 
-      {/* App registration dialog */}
-      <RegisterAppDialog
+      {/* Inline app creation from the match picker; the new app is matched */}
+      <CreateAppDialog
         open={appDialogOpen}
         onOpenChange={setAppDialogOpen}
-        paymentRecord={selectedPaymentRecord}
-        onSuccess={refreshAll}
+        defaultName={appDraftName}
+        onCreated={async (app) => {
+          if (selectedPaymentRecord) {
+            await updatePaymentMatch(selectedPaymentRecord.id, app.id);
+          }
+          // Server props carry the app list; refresh so the new app is listed.
+          router.refresh();
+          await refreshAll();
+        }}
       />
 
       {/* Subscription registration dialog */}

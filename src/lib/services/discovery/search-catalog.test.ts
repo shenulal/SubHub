@@ -24,9 +24,12 @@ describe("search-catalog", () => {
   it("gates entries by permission and respects the limit", () => {
     const viewer = new Set(["subscriptions:read"]);
     const results = searchCatalog("", viewer, 50);
-    expect(results.every((r) => r.permission === "subscriptions:read")).toBe(
-      true
-    );
+    // Ungated pages (profile, appearance, privacy) are open to every member.
+    expect(
+      results.every(
+        (r) => !r.permission || r.permission === "subscriptions:read"
+      )
+    ).toBe(true);
     expect(results.some((r) => r.id === "action-new-subscription")).toBe(false);
 
     const admin = new Set(
@@ -36,5 +39,17 @@ describe("search-catalog", () => {
     expect(searchCatalog("invite", admin, 10).map((r) => r.id)).toEqual([
       "action-invite",
     ]);
+  });
+
+  it("offers every master data tab with its read permission", () => {
+    const tabs = SEARCH_CATALOG.filter((e) => e.id.startsWith("page-masters-"));
+    expect(tabs.map((e) => e.href)).toContain(
+      "/settings/masters?tab=payment-methods"
+    );
+    expect(tabs).toHaveLength(10);
+    const tagsOnly = new Set(["tags:read"]);
+    expect(searchCatalog("master data", tagsOnly, 20).map((r) => r.id)).toEqual(
+      ["page-masters-tags"]
+    );
   });
 });

@@ -7,6 +7,8 @@
 import type { PermissionKey } from "@/lib/rbac/permissions";
 import type { SearchGroupKey, SearchResultItem } from "@/types/discovery";
 
+import { MASTER_DATA_PAGES, SETTINGS_PAGES } from "./search-catalog-admin";
+
 export interface CatalogEntry {
   id: string;
   group: Extract<SearchGroupKey, "pages" | "actions">;
@@ -118,23 +120,8 @@ export const SEARCH_CATALOG: readonly CatalogEntry[] = [
     keywords: ["preferences", "organisation", "organization"],
     permission: "settings:read",
   },
-  {
-    id: "page-taxonomy",
-    group: "pages",
-    title: "Categories & tags",
-    labelKey: "taxonomy",
-    href: "/settings/masters?tab=categories",
-    keywords: [
-      "categories",
-      "tags",
-      "custom fields",
-      "master data",
-      "currencies",
-      "countries",
-      "vendor catalog",
-    ],
-    permission: "categories:read",
-  },
+  ...MASTER_DATA_PAGES,
+  ...SETTINGS_PAGES,
   // Actions
   {
     id: "action-new-subscription",

@@ -1,6 +1,7 @@
 // src/components/approvals/policy-steps-editor.tsx
 "use client";
 
+import { useInlineInvite } from "@/components/common/quick-create/use-inline-create";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -55,6 +56,8 @@ export function newStep(label = ""): EditableStep {
 }
 
 export function PolicyStepsEditor({ steps, options, errors, onChange }: Props) {
+  // "+ Invite …" in the approver picker; invitees become selectable once they accept.
+  const invite = useInlineInvite();
   const t = useTranslations("approvals.policies.form");
   const tc = useTranslations("approvals.common");
 
@@ -174,7 +177,7 @@ export function PolicyStepsEditor({ steps, options, errors, onChange }: Props) {
                       <SelectTrigger>
                         <SelectValue placeholder={t("selectUser")} />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent createOption={invite.createOption}>
                         {options.users.map((u) => (
                           <SelectItem key={u.id} value={u.id}>
                             {userLabel(u, tc("unknownUser"))}
@@ -249,6 +252,7 @@ export function PolicyStepsEditor({ steps, options, errors, onChange }: Props) {
           );
         })}
       </ol>
+      {invite.dialog}
     </div>
   );
 }

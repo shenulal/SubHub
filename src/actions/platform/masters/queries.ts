@@ -7,7 +7,7 @@ import { decimalToNumber, toIso } from "@/actions/platform/_shared";
 import { prisma } from "@/lib/db";
 import { getRate } from "@/lib/fx/rates";
 import { ensureBillingCycleConfigs } from "@/lib/masters/organization-defaults";
-import { getSettings } from "@/lib/settings/service";
+import { getSettings, getSystemSetting } from "@/lib/settings/service";
 import type {
   BillingCycleRow,
   CostCenterRow,
@@ -17,8 +17,31 @@ import type {
   TaxRateRow,
 } from "@/types/platform";
 
+const CURRENCY_SETTING_KEYS = [
+  "finance.baseCurrency",
+  "finance.enabledCurrencies",
+  "finance.fxStaleAfterDays",
+] as const;
+
+/** Organisation values, or the platform (system) defaults when there is none. */
+async function currencySettings(organizationId: string | null) {
+  if (organizationId) return getSettings(organizationId, CURRENCY_SETTING_KEYS);
+  const [base, enabled, stale] = await Promise.all(
+    CURRENCY_SETTING_KEYS.map((k) => getSystemSetting(k))
+  );
+  return {
+    "finance.baseCurrency": base as string,
+    "finance.enabledCurrencies": enabled as string[],
+    "finance.fxStaleAfterDays": stale as number,
+  };
+}
+
+/**
+ * @param organizationId null = platform view (super-admin console): base and
+ *   enabled currencies come from the system defaults.
+ */
 export async function queryCurrencies(
-  organizationId: string,
+  organizationId: string | null,
   options: { includeInactive?: boolean } = {}
 ): Promise<CurrencyRow[]> {
   const [currencies, settings] = await Promise.all([
@@ -26,11 +49,7 @@ export async function queryCurrencies(
       where: options.includeInactive ? {} : { isActive: true },
       orderBy: [{ sortOrder: "asc" }, { code: "asc" }],
     }),
-    getSettings(organizationId, [
-      "finance.baseCurrency",
-      "finance.enabledCurrencies",
-      "finance.fxStaleAfterDays",
-    ]),
+    currencySettings(organizationId),
   ]);
   const base = settings["finance.baseCurrency"];
   const enabled = new Set(settings["finance.enabledCurrencies"]);

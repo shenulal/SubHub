@@ -59,7 +59,7 @@ export function NotificationBell() {
           {count > 0 && (
             <span
               data-testid="unread-badge"
-              className="bg-destructive text-destructive-foreground absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-bold tabular-nums"
+              className="bg-destructive text-destructive-foreground absolute -top-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-xs font-bold tabular-nums"
             >
               {count > BADGE_MAX ? `${BADGE_MAX}+` : count}
             </span>

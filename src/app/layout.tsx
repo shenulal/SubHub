@@ -6,11 +6,13 @@ import { Geist_Mono, Inter, Lato } from "next/font/google";
 import { Toaster } from "sonner";
 import "./globals.css";
 
-// Primary typeface: Lato (Google Fonts publishes 300 / 400 / 700 / 900).
+// Primary typeface: Lato, normal (upright) style. 400 = regular text,
+// 700 = titles and emphasis, 300 = light display figures.
 const lato = Lato({
   variable: "--font-lato",
   subsets: ["latin", "latin-ext"],
-  weight: ["300", "400", "700", "900"],
+  weight: ["300", "400", "700"],
+  style: ["normal"],
   display: "swap",
 });
 

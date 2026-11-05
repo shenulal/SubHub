@@ -6,6 +6,13 @@
  * keyboard navigation (cmdk) and recent searches in localStorage.
  */
 import { globalSearch } from "@/actions/discovery/search";
+import { useQuickCreate } from "@/components/common/quick-create/quick-create-context";
+import {
+  allowedQuickCreateEntries,
+  matchesQuickCreate,
+  type QuickCreateEntry,
+  type QuickCreateKind,
+} from "@/components/common/quick-create/quick-create-registry";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -23,6 +30,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useSafePermissions } from "@/hooks/use-permission-flag";
 import type {
   GlobalSearchResult,
   SearchGroupKey,
@@ -56,6 +64,13 @@ const GROUP_ICONS: Record<SearchGroupKey, typeof Search> = {
   people: Users,
   pages: AppWindow,
   actions: Zap,
+};
+
+/** Server "action" entries that the client-side Create group replaces. */
+const ACTION_DUPLICATES: Record<string, QuickCreateKind> = {
+  "action-new-subscription": "subscription",
+  "action-new-approval": "approval",
+  "action-invite": "invite",
 };
 
 export function readRecentSearches(): string[] {
@@ -94,7 +109,10 @@ export function CommandSearch({
   search = (q) => globalSearch(q),
 }: CommandSearchProps) {
   const t = useTranslations("discovery.search");
+  const tq = useTranslations("shell.quickCreate");
   const router = useRouter();
+  const quickCreate = useQuickCreate();
+  const { can } = useSafePermissions();
   const [open, setOpen] = React.useState(false);
   const [query, setQuery] = React.useState("");
   const [result, setResult] = React.useState<GlobalSearchResult | null>(null);
@@ -161,8 +179,27 @@ export function CommandSearch({
     router.push(item.href);
   };
 
-  const groups = result?.groups ?? [];
+  const createEntries = allowedQuickCreateEntries(can).filter((entry) =>
+    matchesQuickCreate(entry, tq(`items.${entry.kind}`), query)
+  );
+  const createKinds = new Set(createEntries.map((e) => e.kind));
+  const groups = (result?.groups ?? [])
+    .map((group) => ({
+      ...group,
+      items: group.items.filter((item) => {
+        const kind = ACTION_DUPLICATES[item.id];
+        return !kind || !createKinds.has(kind);
+      }),
+    }))
+    .filter((group) => group.items.length > 0);
   const showRecent = !query && recent.length > 0;
+
+  const handleCreate = (entry: QuickCreateEntry) => {
+    setOpen(false);
+    setQuery("");
+    if (quickCreate) quickCreate.open(entry.kind);
+    else router.push(entry.href ?? entry.manageHref);
+  };
   const tooShort = query.length > 0 && query.length < metaRef.current.minChars;
 
   return (
@@ -175,7 +212,7 @@ export function CommandSearch({
       >
         <Search className="size-5" />
         <span className="truncate">{t("placeholder")}</span>
-        <kbd className="tonal-neutral pointer-events-none absolute top-1/2 right-2 hidden h-6 -translate-y-1/2 items-center gap-0.5 rounded px-1.5 font-sans text-[11px] font-medium select-none sm:flex">
+        <kbd className="tonal-neutral pointer-events-none absolute top-1/2 right-2 hidden h-6 -translate-y-1/2 items-center gap-0.5 rounded px-1.5 font-sans text-xs font-medium select-none sm:flex">
           <span className="text-xs">⌘</span>K
         </kbd>
       </Button>
@@ -209,13 +246,16 @@ export function CommandSearch({
                   {t("searching")}
                 </div>
               )}
-              {!isPending && groups.length === 0 && !showRecent && (
-                <CommandEmpty>
-                  {tooShort
-                    ? t("typeMore", { count: metaRef.current.minChars })
-                    : t("empty")}
-                </CommandEmpty>
-              )}
+              {!isPending &&
+                groups.length === 0 &&
+                createEntries.length === 0 &&
+                !showRecent && (
+                  <CommandEmpty>
+                    {tooShort
+                      ? t("typeMore", { count: metaRef.current.minChars })
+                      : t("empty")}
+                  </CommandEmpty>
+                )}
               {showRecent && (
                 <CommandGroup heading={t("recent")}>
                   {recent.map((term) => (
@@ -231,11 +271,40 @@ export function CommandSearch({
                   ))}
                 </CommandGroup>
               )}
+              {createEntries.length > 0 && (
+                <CommandGroup heading={t("groups.create")}>
+                  {createEntries.map((entry) => {
+                    const Icon = entry.icon;
+                    return (
+                      <CommandItem
+                        key={`create-${entry.kind}`}
+                        value={`create-${entry.kind}`}
+                        onSelect={() => handleCreate(entry)}
+                        className="group/item min-w-0 cursor-pointer gap-3"
+                      >
+                        <span className="tonal-primary flex size-8 shrink-0 items-center justify-center rounded-md">
+                          <Icon className="size-4" />
+                        </span>
+                        <span className="min-w-0 truncate">
+                          {tq(`items.${entry.kind}`)}
+                        </span>
+                        {!entry.href && (
+                          <span className="text-muted-foreground ml-auto shrink-0 text-[0.8125rem]">
+                            {t("createHint")}
+                          </span>
+                        )}
+                      </CommandItem>
+                    );
+                  })}
+                </CommandGroup>
+              )}
               {groups.map((group, index) => {
                 const Icon = GROUP_ICONS[group.key];
                 return (
                   <React.Fragment key={group.key}>
-                    {(index > 0 || showRecent) && <CommandSeparator />}
+                    {(index > 0 || showRecent || createEntries.length > 0) && (
+                      <CommandSeparator />
+                    )}
                     <CommandGroup heading={t(`groups.${group.key}`)}>
                       {group.items.map((item) => (
                         <CommandItem

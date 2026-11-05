@@ -1,6 +1,9 @@
 // src/components/subscriptions/subscription-form-assignment.tsx
 "use client";
 
+import { InviteMemberDialog } from "@/components/common/quick-create/invite-member-dialog";
+import { CreateTeamDialog } from "@/components/teams/create-team-dialog";
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -10,8 +13,10 @@ import {
 } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { MultiSelect } from "@/components/ui/multi-select";
+import { usePermissionFlag } from "@/hooks/use-permission-flag";
+import { Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { type Control, Controller, useWatch } from "react-hook-form";
 import type { SubscriptionFormValues } from "./subscription-form-schema";
 
@@ -57,6 +62,13 @@ export function SubscriptionFormAssignment({
 }: SubscriptionFormAssignmentProps) {
   const isPerSeat = billingType === "PER_SEAT";
   const t = useTranslations("subscriptions.form.assignment");
+  const ti = useTranslations("shell.inline");
+  const canCreateTeam = usePermissionFlag("teams:manage");
+  const canInvite = usePermissionFlag("members:invite");
+  // Teams created inline; the server links the app to them on save.
+  const [createdTeams, setCreatedTeams] = useState<TeamOption[]>([]);
+  const [teamDraft, setTeamDraft] = useState<string | null>(null);
+  const [inviteDraft, setInviteDraft] = useState<string | null>(null);
 
   // Watch the selected app ID
   const selectedAppId = useWatch({ control, name: "appId" });
@@ -67,10 +79,32 @@ export function SubscriptionFormAssignment({
 
   // Teams assigned to the selected app
   const availableTeams = useMemo(() => {
-    if (!selectedAppId) return [];
-    const selectedApp = apps.find((app) => app.id === selectedAppId);
-    return selectedApp?.teams ?? [];
-  }, [selectedAppId, apps]);
+    const appTeams = selectedAppId
+      ? (apps.find((app) => app.id === selectedAppId)?.teams ?? [])
+      : [];
+    const known = new Set(appTeams.map((team) => team.id));
+    return [...appTeams, ...createdTeams.filter((team) => !known.has(team.id))];
+  }, [selectedAppId, apps, createdTeams]);
+
+  const handleTeamCreated = (team?: { id: string; name: string }) => {
+    if (!team) return;
+    setCreatedTeams((prev) => [...prev, team]);
+    setValue("teamIds", [...selectedTeamIds, team.id]);
+  };
+  const teamCreateOption = canCreateTeam
+    ? {
+        label: (q: string) =>
+          q ? ti("createTeam", { name: q }) : ti("createTeamEmpty"),
+        onCreate: (q: string) => setTeamDraft(q),
+      }
+    : undefined;
+  const inviteOption = canInvite
+    ? {
+        label: (q: string) =>
+          q ? ti("inviteUser", { email: q }) : ti("inviteUserEmpty"),
+        onCreate: (q: string) => setInviteDraft(q),
+      }
+    : undefined;
 
   // Reset the previous team selection when the app changes
   useEffect(() => {
@@ -138,9 +172,23 @@ export function SubscriptionFormAssignment({
         <div className="space-y-2">
           <Label htmlFor="assignment-teams">{t("teamLabel")}</Label>
           {availableTeams.length === 0 ? (
-            <p className="text-muted-foreground text-sm">
-              {selectedAppId ? t("noTeamsForApp") : t("selectAppFirst")}
-            </p>
+            <div className="flex min-w-0 flex-wrap items-center gap-3">
+              <p className="text-muted-foreground min-w-0 text-sm">
+                {selectedAppId ? t("noTeamsForApp") : t("selectAppFirst")}
+              </p>
+              {canCreateTeam && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setTeamDraft("")}
+                  disabled={isPending}
+                >
+                  <Plus className="size-4" />
+                  {ti("createTeamEmpty")}
+                </Button>
+              )}
+            </div>
           ) : (
             <Controller
               control={control}
@@ -158,6 +206,7 @@ export function SubscriptionFormAssignment({
                   emptyText={t("noTeamsForApp")}
                   moreLabel={(count) => `+${count}`}
                   maxChips={3}
+                  createOption={teamCreateOption}
                 />
               )}
             />
@@ -173,9 +222,23 @@ export function SubscriptionFormAssignment({
                 {t("selectTeamFirst")}
               </p>
             ) : availableUsers.length === 0 ? (
-              <p className="text-muted-foreground text-sm">
-                {t("noUsersForTeam")}
-              </p>
+              <div className="flex min-w-0 flex-wrap items-center gap-3">
+                <p className="text-muted-foreground min-w-0 text-sm">
+                  {t("noUsersForTeam")}
+                </p>
+                {canInvite && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setInviteDraft("")}
+                    disabled={isPending}
+                  >
+                    <Plus className="size-4" />
+                    {ti("inviteUserEmpty")}
+                  </Button>
+                )}
+              </div>
             ) : (
               <MultiSelect
                 id="assignment-users"
@@ -189,11 +252,24 @@ export function SubscriptionFormAssignment({
                 emptyText={t("noUsersFound")}
                 moreLabel={(count) => `+${count}`}
                 maxChips={3}
+                createOption={inviteOption}
               />
             )}
           </div>
         )}
       </CardContent>
+      <CreateTeamDialog
+        open={teamDraft !== null}
+        onOpenChange={(open) => !open && setTeamDraft(null)}
+        defaultName={teamDraft ?? ""}
+        onSuccess={handleTeamCreated}
+      />
+      <InviteMemberDialog
+        open={inviteDraft !== null}
+        onOpenChange={(open) => !open && setInviteDraft(null)}
+        defaultEmail={inviteDraft ?? ""}
+        defaultTeamId={selectedTeamIds[0] ?? null}
+      />
     </Card>
   );
 }

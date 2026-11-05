@@ -21,4 +21,17 @@ describe("CategoryBadge", () => {
       backgroundColor: "#ff0000",
     });
   });
+  it("shows only the leaf in compact mode and keeps the path in the title", () => {
+    render(
+      <CategoryBadge
+        category={{ name: "Project Management", color: null }}
+        parentName="Software"
+        compact
+      />
+    );
+    expect(screen.queryByText("Software ›")).not.toBeInTheDocument();
+    expect(
+      screen.getByText("Project Management").closest("[title]")
+    ).toHaveAttribute("title", "Software › Project Management");
+  });
 });
