@@ -9,6 +9,11 @@ vi.mock("@/lib/auth", () => ({
   auth: vi.fn(),
 }));
 
+// RBAC: permissions follow the mocked session's system role.
+vi.mock("@/lib/rbac/service", async () =>
+  (await import("@/test/rbac-session-mock")).sessionRbacMock()
+);
+
 vi.mock("@/lib/db", () => ({
   prisma: {
     organization: {
@@ -71,7 +76,7 @@ describe("updateOrganization", () => {
   });
 
   it("updates the organization name", async () => {
-    vi.mocked(auth).mockResolvedValueOnce({
+    vi.mocked(auth).mockResolvedValue({
       user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
     } as never);
 

@@ -13,6 +13,7 @@ import type { IntegrationMetadata, IntegrationWithStats } from "@/types/sso";
 import type { Integration } from "@prisma/client";
 import { redirect } from "next/navigation";
 
+import { can } from "@/lib/rbac/service";
 import type { GetIntegrationsParams, SyncLogEntry } from "./integrations.types";
 
 /**
@@ -31,6 +32,9 @@ export async function getIntegrations(
   const session = await getCachedSession();
   if (!session?.user?.organizationId) {
     redirect("/login");
+  }
+  if (!(await can("integrations:read"))) {
+    throw new Error("You do not have permission to perform this action");
   }
 
   const {
@@ -91,6 +95,12 @@ export async function getIntegration(
   if (!session?.user?.organizationId) {
     return { success: false, message: "Authentication required" };
   }
+  if (!(await can("integrations:read"))) {
+    return {
+      success: false,
+      message: "You do not have permission to perform this action",
+    };
+  }
 
   const integration = await prisma.integration.findUnique({
     where: { id: integrationId },
@@ -147,6 +157,12 @@ export async function getSyncLogs(
   const session = await getCachedSession();
   if (!session?.user?.organizationId) {
     return { success: false, message: "Authentication required" };
+  }
+  if (!(await can("integrations:read"))) {
+    return {
+      success: false,
+      message: "You do not have permission to perform this action",
+    };
   }
 
   const integration = await prisma.integration.findUnique({

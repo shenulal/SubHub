@@ -5,6 +5,7 @@ import { requireOrganization } from "@/lib/auth/require-auth";
 import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { withLogging } from "@/lib/logging";
+import { can } from "@/lib/rbac/service";
 import type { ActionState } from "@/types";
 import type { MerchantMatchType, MerchantPattern } from "@prisma/client";
 import { revalidatePath } from "next/cache";
@@ -77,9 +78,9 @@ async function _createMerchantPattern(
   input: CreateMerchantPatternInput
 ): Promise<ActionState<{ id: string }>> {
   try {
-    const { organizationId, role } = await requireOrganization();
+    const { organizationId } = await requireOrganization();
 
-    if (role !== "ADMIN") {
+    if (!(await can("payments:manage"))) {
       return { success: false, message: "Admin permission required" };
     }
 
@@ -136,9 +137,9 @@ async function _updateMerchantPattern(
   input: UpdateMerchantPatternInput
 ): Promise<ActionState> {
   try {
-    const { organizationId, role } = await requireOrganization();
+    const { organizationId } = await requireOrganization();
 
-    if (role !== "ADMIN") {
+    if (!(await can("payments:manage"))) {
       return { success: false, message: "Admin permission required" };
     }
 
@@ -193,9 +194,9 @@ export const updateMerchantPattern = withLogging(
  */
 async function _deleteMerchantPattern(id: string): Promise<ActionState> {
   try {
-    const { organizationId, role } = await requireOrganization();
+    const { organizationId } = await requireOrganization();
 
-    if (role !== "ADMIN") {
+    if (!(await can("payments:manage"))) {
       return { success: false, message: "Admin permission required" };
     }
 

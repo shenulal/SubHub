@@ -3,6 +3,7 @@ import { getSubscriptionCached } from "@/actions/subscriptions";
 import { getCatalogItem } from "@/actions/taxonomy/catalog";
 import { SubscriptionDetailClient } from "@/components/subscriptions/subscription-detail-client";
 import { getCachedSession } from "@/lib/auth/require-auth";
+import { requirePermissionOrRedirect } from "@/lib/rbac/service";
 import { getSettings } from "@/lib/settings/service";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -30,6 +31,7 @@ export async function generateMetadata({
 export default async function SubscriptionDetailPage({
   params,
 }: SubscriptionDetailPageProps) {
+  await requirePermissionOrRedirect("subscriptions:read", "/dashboard");
   const { id } = await params;
   const subscription = await getSubscriptionCached(id);
   if (!subscription) {

@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { withLogging } from "@/lib/logging";
+import { can } from "@/lib/rbac/service";
 import type { ActionState } from "@/types";
 import type { UserRole } from "@prisma/client";
 import { revalidatePath } from "next/cache";
@@ -47,7 +48,7 @@ async function _updateMemberRole(
     }
 
     // Check admin permission
-    if (session.user.role !== "ADMIN") {
+    if (!(await can("members:manage"))) {
       return {
         success: false,
         message: "Only admins can change roles",
@@ -122,7 +123,7 @@ async function _removeMember(userId: string): Promise<ActionState> {
     }
 
     // Check admin permission
-    if (session.user.role !== "ADMIN") {
+    if (!(await can("members:manage"))) {
       return {
         success: false,
         message: "Only admins can remove team members",
@@ -203,6 +204,12 @@ export async function getTeamMembers(): Promise<ActionState<TeamMember[]>> {
       return {
         success: false,
         message: "Authentication required",
+      };
+    }
+    if (!(await can("members:read"))) {
+      return {
+        success: false,
+        message: "You do not have permission to perform this action",
       };
     }
 

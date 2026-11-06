@@ -15,18 +15,16 @@ import type { ShadowITAppSummary } from "@/lib/services/fleetdm";
 import { AlertTriangle, CheckCircle } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-type Role = "ADMIN" | "APPROVER" | "MEMBER" | "VIEWER" | null | undefined;
-
 interface ShadowITTableProps {
   shadowITApps: ShadowITAppSummary[];
-  role?: Role;
+  canManage?: boolean;
   isPending: boolean;
   onApprove: (appName: string, approve: boolean) => void;
 }
 
 export function ShadowITTable({
   shadowITApps,
-  role,
+  canManage = false,
   isPending,
   onApprove,
 }: ShadowITTableProps) {
@@ -70,7 +68,7 @@ export function ShadowITTable({
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    {role === "ADMIN" && (
+                    {canManage && (
                       <div className="flex justify-end gap-2 whitespace-nowrap">
                         <Button
                           size="sm"

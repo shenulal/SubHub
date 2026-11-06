@@ -14,6 +14,9 @@ vi.mock("@/lib/utils/renewal-date", () => ({
   calculateNextRenewalDate: vi.fn().mockReturnValue(new Date("2025-04-01")),
 }));
 
+vi.mock("@/lib/rbac/service", async () =>
+  (await import("@/test/rbac-session-mock")).sessionRbacMock()
+);
 vi.mock("@/lib/db", () => ({
   prisma: {
     taxRate: {
@@ -475,7 +478,9 @@ describe("subscription-suggestions (Phase 3)", () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.message).toBe("Only admins can assign users");
+      expect(result.message).toBe(
+        "You do not have permission to assign users to subscriptions"
+      );
     });
 
     it("allows non-ADMIN users when no users are selected", async () => {

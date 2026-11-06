@@ -26,6 +26,7 @@ import type {
 import type { Integration, IntegrationStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
+import { can } from "@/lib/rbac/service";
 import type { IntegrationSettingsInput } from "./integrations.types";
 import { isRedirectError } from "./integrations.types";
 
@@ -42,6 +43,12 @@ async function _createIntegration(
     }
     if (!session.user.organizationId) {
       return { success: false, message: "You must belong to an organization" };
+    }
+    if (!(await can("integrations:manage"))) {
+      return {
+        success: false,
+        message: "You do not have permission to perform this action",
+      };
     }
 
     const organizationId = session.user.organizationId;
@@ -201,6 +208,12 @@ async function _updateIntegrationStatus(
     if (!session?.user?.organizationId) {
       return { success: false, message: "Authentication required" };
     }
+    if (!(await can("integrations:manage"))) {
+      return {
+        success: false,
+        message: "You do not have permission to perform this action",
+      };
+    }
 
     const integration = await prisma.integration.findUnique({
       where: { id: integrationId },
@@ -241,9 +254,9 @@ export const updateIntegrationStatus = withLogging(
  */
 async function _deleteIntegration(integrationId: string): Promise<ActionState> {
   try {
-    const { organizationId, role } = await requireOrganization();
+    const { organizationId } = await requireOrganization();
 
-    if (role !== "ADMIN") {
+    if (!(await can("integrations:manage"))) {
       return { success: false, message: "Admin permission required" };
     }
 
@@ -287,9 +300,9 @@ async function _syncIntegrationNow(
   integrationId: string
 ): Promise<ActionState<{ result: FullSyncResult }>> {
   try {
-    const { organizationId, role } = await requireOrganization();
+    const { organizationId } = await requireOrganization();
 
-    if (role !== "ADMIN") {
+    if (!(await can("integrations:manage"))) {
       return { success: false, message: "Admin permission required" };
     }
 
@@ -415,6 +428,12 @@ async function _updateIntegrationSettings(
     const session = await getCachedSession();
     if (!session?.user?.organizationId) {
       return { success: false, message: "Authentication required" };
+    }
+    if (!(await can("integrations:manage"))) {
+      return {
+        success: false,
+        message: "You do not have permission to perform this action",
+      };
     }
 
     const integration = await prisma.integration.findUnique({

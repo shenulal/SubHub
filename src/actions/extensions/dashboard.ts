@@ -3,6 +3,7 @@
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { can } from "@/lib/rbac/service";
 import type { ActionState } from "@/types";
 import type { ExtensionDashboardStats } from "@/types/extension";
 
@@ -16,6 +17,12 @@ export async function getExtensionDashboard(): Promise<
     const session = await auth();
     if (!session?.user?.organizationId) {
       return { success: false, error: "Authentication required" };
+    }
+    if (!(await can("extensions:read"))) {
+      return {
+        success: false,
+        error: "You do not have permission to perform this action",
+      };
     }
 
     const organizationId = session.user.organizationId;

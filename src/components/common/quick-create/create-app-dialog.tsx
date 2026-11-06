@@ -7,6 +7,7 @@
  * `apps:manage`), shows field errors under their inputs and blocks double submit.
  */
 import { createApp } from "@/actions/apps";
+import { useAppFormOptions } from "@/components/apps/use-app-form-options";
 import { CategoryPicker } from "@/components/taxonomy/category-picker";
 import { Button } from "@/components/ui/button";
 import {
@@ -20,7 +21,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import type { CatalogItemDto } from "@/types/taxonomy";
-import { Loader2 } from "lucide-react";
+import { ChevronDown, Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
   useEffect,
@@ -31,7 +32,13 @@ import {
 } from "react";
 import { toast } from "sonner";
 
+import { AppIconField } from "./app-icon-field";
 import { CatalogLinkField } from "./catalog-link-field";
+import {
+  CreateAppDetails,
+  EMPTY_DETAILS,
+  type AppDetailsDraft,
+} from "./create-app-details";
 import { FieldError, RequiredMark } from "./form-bits";
 
 export interface CreatedApp {
@@ -39,6 +46,8 @@ export interface CreatedApp {
   name: string;
   categoryId: string | null;
   website: string | null;
+  /** Stored icon (uploaded file path or URL) or the catalog logo. */
+  logoUrl: string | null;
 }
 
 export interface CreateAppDialogProps {
@@ -51,14 +60,16 @@ export interface CreateAppDialogProps {
   returnFocusRef?: RefObject<HTMLElement | null>;
 }
 
-interface Draft {
+interface Draft extends AppDetailsDraft {
   name: string;
   categoryId: string | null;
   website: string;
   catalog: CatalogItemDto | null;
+  /** Uploaded data URL or typed image URL ("" = use the catalog logo). */
+  icon: string;
 }
 
-type Errors = Partial<Record<"name" | "website" | "form", string>>;
+type Errors = Partial<Record<"name" | "website" | "icon" | "form", string>>;
 
 const MIN_NAME_LENGTH = 2;
 
@@ -77,19 +88,23 @@ function toFormData(draft: Draft): FormData {
   fd.append("name", draft.name.trim());
   if (draft.categoryId) fd.append("categoryId", draft.categoryId);
   if (draft.website.trim()) fd.append("customWebsite", draft.website.trim());
-  if (draft.catalog) {
-    fd.append("catalogId", draft.catalog.id);
-    if (draft.catalog.logoUrl)
-      fd.append("customLogoUrl", draft.catalog.logoUrl);
-  }
+  if (draft.catalog) fd.append("catalogId", draft.catalog.id);
+  const icon = draft.icon.trim() || draft.catalog?.logoUrl || "";
+  if (icon) fd.append("customLogoUrl", icon);
+  if (draft.ownerId) fd.append("ownerId", draft.ownerId);
+  draft.teamIds.forEach((id) => fd.append("teamIds", id));
+  if (draft.tags.trim()) fd.append("tags", draft.tags.trim());
+  if (draft.notes.trim()) fd.append("notes", draft.notes.trim());
   return fd;
 }
 
 const emptyDraft = (name = ""): Draft => ({
+  ...EMPTY_DETAILS,
   name,
   categoryId: null,
   website: "",
   catalog: null,
+  icon: "",
 });
 
 export function CreateAppDialog({
@@ -103,12 +118,15 @@ export function CreateAppDialog({
   const [draft, setDraft] = useState<Draft>(() => emptyDraft(defaultName));
   const [errors, setErrors] = useState<Errors>({});
   const [isSaving, setIsSaving] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
   const savingRef = useRef(false);
+  const options = useAppFormOptions(open);
 
   useEffect(() => {
     if (open) {
       setDraft(emptyDraft(defaultName));
       setErrors({});
+      setShowDetails(false);
     }
   }, [open, defaultName]);
 
@@ -117,6 +135,9 @@ export function CreateAppDialog({
     if (draft.name.trim().length < MIN_NAME_LENGTH)
       next.name = t("nameTooShort");
     if (!isValidUrl(draft.website.trim())) next.website = t("invalidUrl");
+    const icon = draft.icon.trim();
+    if (icon && !icon.startsWith("data:") && !isValidUrl(icon))
+      next.icon = t("invalidUrl");
     return next;
   };
 
@@ -136,6 +157,7 @@ export function CreateAppDialog({
         setErrors({
           name: result.errors?.name?.[0],
           website: result.errors?.customWebsite?.[0],
+          icon: result.errors?.customLogoUrl?.[0],
           form: result.message ?? (result.errors ? undefined : t("error")),
         });
         if (result.message) toast.error(result.message);
@@ -146,6 +168,7 @@ export function CreateAppDialog({
         name: draft.name.trim(),
         categoryId: draft.categoryId,
         website: draft.website.trim() || draft.catalog?.website || null,
+        logoUrl: result.data.customLogoUrl ?? null,
       };
       toast.success(t("success", { name: created.name }));
       onCreated?.(created);
@@ -169,7 +192,7 @@ export function CreateAppDialog({
   return (
     <Dialog open={open} onOpenChange={(o) => !isSaving && onOpenChange(o)}>
       <DialogContent
-        className="sm:max-w-lg"
+        className="max-h-[90vh] overflow-y-auto sm:max-w-xl"
         onCloseAutoFocus={(event) => {
           const target = returnFocusRef?.current;
           if (!target) return;
@@ -247,6 +270,46 @@ export function CreateAppDialog({
               initialQuery={defaultName}
               disabled={isSaving}
             />
+          </div>
+
+          <div className="grid gap-1.5">
+            <Label htmlFor="create-app-icon">{t("icon")}</Label>
+            <AppIconField
+              id="create-app-icon"
+              name={draft.name}
+              value={draft.icon}
+              onChange={(icon) => setDraft((d) => ({ ...d, icon }))}
+              catalog={draft.catalog}
+              maxSizeKb={options.data?.logoMaxSizeKb}
+              disabled={isSaving}
+              onError={(icon) => setErrors((e) => ({ ...e, icon }))}
+            />
+            <FieldError message={errors.icon} />
+          </div>
+
+          <div className="grid gap-3">
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="text-primary w-fit px-2"
+              aria-expanded={showDetails}
+              onClick={() => setShowDetails((v) => !v)}
+            >
+              <ChevronDown
+                className={`mr-1 size-4 transition-transform ${showDetails ? "rotate-180" : ""}`}
+              />
+              {showDetails ? t("lessDetails") : t("moreDetails")}
+            </Button>
+            {showDetails && (
+              <CreateAppDetails
+                value={draft}
+                onChange={(patch) => setDraft((d) => ({ ...d, ...patch }))}
+                options={options.data}
+                appName={draft.name}
+                disabled={isSaving}
+              />
+            )}
           </div>
 
           <FieldError message={errors.form} />

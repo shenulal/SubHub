@@ -4,6 +4,7 @@
 /**
  * Column definitions and cell renderers for the subscription list.
  */
+import { AppLogo } from "@/components/apps/app-logo";
 import type { DataTableColumn } from "@/components/common/data-table";
 import { CategoryBadge } from "@/components/taxonomy/category-badge";
 import { Badge } from "@/components/ui/badge";
@@ -14,7 +15,6 @@ import type { DiscoverySubscriptionItem } from "@/types/discovery";
 import type { BillingCycle, SubscriptionStatus } from "@prisma/client";
 import { format } from "date-fns";
 import { FlaskConical, ShieldAlert, User } from "lucide-react";
-import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -55,19 +55,7 @@ export function countdownTone(days: number): string {
 export function AppCell({ item }: { item: DiscoverySubscriptionItem }) {
   return (
     <div className="flex max-w-[13rem] min-w-[11rem] items-center gap-3 2xl:max-w-[15rem]">
-      {item.appLogoUrl ? (
-        <Image
-          src={item.appLogoUrl}
-          alt={item.appName}
-          width={32}
-          height={32}
-          className="bg-background size-9 shrink-0 rounded-md border object-contain p-0.5"
-        />
-      ) : (
-        <div className="tonal-primary flex size-9 shrink-0 items-center justify-center rounded-md text-[0.9375rem] font-medium">
-          {item.appName.charAt(0).toUpperCase()}
-        </div>
-      )}
+      <AppLogo src={item.appLogoUrl} name={item.appName} />
       <div className="min-w-0">
         <Link
           href={`/subscriptions/${item.id}`}

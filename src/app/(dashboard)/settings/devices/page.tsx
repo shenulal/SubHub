@@ -1,6 +1,6 @@
 // src/app/(dashboard)/settings/devices/page.tsx
 import { DevicesPageClient } from "@/components/devices";
-import { requireOrganization } from "@/lib/auth/require-auth";
+import { requirePermissionOrRedirect } from "@/lib/rbac/service";
 
 export const metadata = {
   title: "Device Management",
@@ -8,7 +8,10 @@ export const metadata = {
 };
 
 export default async function DevicesPage() {
-  const { role } = await requireOrganization();
+  const { permissions } = await requirePermissionOrRedirect(
+    "extensions:read",
+    "/settings"
+  );
 
-  return <DevicesPageClient role={role} />;
+  return <DevicesPageClient canManage={permissions.has("extensions:manage")} />;
 }

@@ -31,10 +31,10 @@ import type { AppListItem } from "@/types/app";
 import { useDelete } from "@refinedev/core";
 import { MoreHorizontal, Pencil, Trash2 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import Image from "next/image";
 import Link from "next/link";
 import { useCallback, useMemo, useTransition } from "react";
 import { toast } from "sonner";
+import { AppLogo } from "./app-logo";
 
 import { APP_STATUS_TONE } from "./app-status-tone";
 
@@ -141,20 +141,7 @@ export function AppList({
         id: "logo",
         header: "",
         cell: (app) => {
-          const logo = getAppLogo(app);
-          return logo ? (
-            <Image
-              src={logo}
-              alt={app.name}
-              width={32}
-              height={32}
-              className="size-9 shrink-0 rounded-md border object-contain p-0.5"
-            />
-          ) : (
-            <div className="tonal-primary flex size-9 shrink-0 items-center justify-center rounded-md text-[0.9375rem] font-medium">
-              {app.name.charAt(0).toUpperCase()}
-            </div>
-          );
+          return <AppLogo src={getAppLogo(app)} name={app.name} />;
         },
         headerClassName: "w-12",
       },

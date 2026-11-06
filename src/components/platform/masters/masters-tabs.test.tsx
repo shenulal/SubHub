@@ -19,6 +19,9 @@ vi.mock("./cost-centers-panel", () => ({ CostCentersPanel: () => null }));
 vi.mock("./payment-methods-panel", () => ({ PaymentMethodsPanel: () => null }));
 vi.mock("./billing-cycles-panel", () => ({ BillingCyclesPanel: () => null }));
 vi.mock("./vendor-catalog-panel", () => ({ VendorCatalogPanel: () => null }));
+vi.mock("./rejection-reasons-panel", () => ({
+  RejectionReasonsPanel: () => null,
+}));
 vi.mock("@/components/taxonomy/category-tree-editor", () => ({
   CategoryTreeEditor: ({ canManage }: { canManage: boolean }) => (
     <div>category editor {canManage ? "manage" : "read"}</div>
@@ -73,6 +76,7 @@ describe("visibleMasterTabs", () => {
       "categories",
       "tags",
       "custom-fields",
+      "rejection-reasons",
       "vendor-catalog",
     ]);
   });

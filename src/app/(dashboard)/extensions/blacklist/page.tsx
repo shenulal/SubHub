@@ -1,6 +1,7 @@
 // src/app/(dashboard)/extensions/blacklist/page.tsx
 import { BlacklistPageClient } from "@/components/extensions/blacklist-page-client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { requirePermissionOrRedirect } from "@/lib/rbac/service";
 import { Suspense } from "react";
 
 export const metadata = {
@@ -20,7 +21,8 @@ function PageSkeleton() {
   );
 }
 
-export default function BlacklistPage() {
+export default async function BlacklistPage() {
+  await requirePermissionOrRedirect("extensions:read", "/dashboard");
   return (
     <div className="space-y-6">
       <h1 className="text-foreground text-xl font-medium">Blacklist</h1>

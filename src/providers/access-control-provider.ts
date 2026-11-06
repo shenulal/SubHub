@@ -1,6 +1,13 @@
+// src/providers/access-control-provider.ts
+/**
+ * Refine AccessControlProvider backed by SubHub RBAC. `useCan({ resource, action })`
+ * is answered from the signed-in user's effective permission keys
+ * (`/api/v1/me/permissions`, the same set the server enforces), so custom roles
+ * are honoured. The legacy `params.user.role` hint is ignored.
+ */
+import type { PermissionKey } from "@/lib/rbac/permissions";
 import { AccessControlProvider } from "@refinedev/core";
 
-type Role = "ADMIN" | "APPROVER" | "MEMBER" | "VIEWER";
 type Action =
   | "list"
   | "show"
@@ -27,258 +34,180 @@ type Resource =
   | "notifications"
   | "attachments";
 
-/**
- * Per-resource permission matrix
- * Based on the CLAUDE.md permission matrix
- *
- * | Resource | ADMIN | MEMBER | VIEWER |
- * |--------|-------|--------|--------|
- * | apps | CRUD | Read+Create | Read only |
- * | subscriptions | CRUD | Read+Create | Read only |
- * | users | CRUD+Invite | Read only | Read only |
- * | integrations | CRUD+Sync | Read only | Read only |
- * | payments | CRUD | Read only | None |
- * | audit-logs | Full | Limited | None |
- */
-const PERMISSION_MATRIX: Record<Role, Record<Resource, Action[]>> = {
-  ADMIN: {
-    apps: ["list", "show", "create", "edit", "delete"],
-    subscriptions: ["list", "show", "create", "edit", "delete", "export"],
-    users: ["list", "show", "create", "edit", "delete", "invite"],
-    integrations: ["list", "show", "create", "edit", "delete", "sync"],
-    payments: ["list", "show", "create", "edit", "delete"],
-    "audit-logs": ["list", "show", "export"],
-    approvals: [
-      "list",
-      "show",
-      "create",
-      "edit",
-      "delete",
-      "approve",
-      "export",
-    ],
-    "approval-policies": ["list", "show", "create", "edit", "delete"],
-    categories: ["list", "show", "create", "edit", "delete"],
-    tags: ["list", "show", "create", "edit", "delete"],
-    "custom-fields": ["list", "show", "create", "edit", "delete"],
-    "saved-views": ["list", "show", "create", "edit", "delete"],
-    notifications: ["list", "show", "edit", "delete"],
-    attachments: ["list", "show", "create", "delete"],
+type ActionMap = Partial<Record<Action, PermissionKey>>;
+
+function crud(read: PermissionKey, write: PermissionKey): ActionMap {
+  return {
+    list: read,
+    show: read,
+    create: write,
+    edit: write,
+    delete: write,
+  };
+}
+
+/** Permission key required for each (resource, action) pair. */
+const RESOURCE_PERMISSIONS: Record<Resource, ActionMap> = {
+  apps: crud("apps:read", "apps:manage"),
+  subscriptions: {
+    list: "subscriptions:read",
+    show: "subscriptions:read",
+    create: "subscriptions:create",
+    edit: "subscriptions:update",
+    delete: "subscriptions:delete",
+    export: "subscriptions:export",
   },
-  APPROVER: {
-    apps: ["list", "show", "create"],
-    subscriptions: ["list", "show", "create", "edit", "export"],
-    users: ["list", "show"],
-    integrations: ["list", "show"],
-    payments: ["list", "show"],
-    "audit-logs": ["list", "show"],
-    approvals: ["list", "show", "create", "approve", "export"],
-    "approval-policies": ["list", "show"],
-    categories: ["list", "show"],
-    tags: ["list", "show", "create"],
-    "custom-fields": ["list", "show"],
-    "saved-views": ["list", "show", "create", "edit", "delete"],
-    notifications: ["list", "show", "edit", "delete"],
-    attachments: ["list", "show", "create"],
+  users: {
+    ...crud("members:read", "members:manage"),
+    create: "members:invite",
+    invite: "members:invite",
   },
-  MEMBER: {
-    apps: ["list", "show", "create"],
-    subscriptions: ["list", "show", "create", "edit"],
-    users: ["list", "show"],
-    integrations: ["list", "show"],
-    payments: ["list", "show"],
-    "audit-logs": ["list", "show"], // own activity only (filtered server-side)
-    approvals: ["list", "show", "create"], // own requests only
-    "approval-policies": ["list", "show"],
-    categories: ["list", "show"],
-    tags: ["list", "show", "create"],
-    "custom-fields": ["list", "show"],
-    "saved-views": ["list", "show", "create", "edit", "delete"],
-    notifications: ["list", "show", "edit", "delete"],
-    attachments: ["list", "show", "create"],
+  integrations: {
+    ...crud("integrations:read", "integrations:manage"),
+    sync: "integrations:manage",
   },
-  VIEWER: {
-    apps: ["list", "show"],
-    subscriptions: ["list", "show"],
-    users: ["list", "show"],
-    integrations: ["list", "show"],
-    payments: [],
-    "audit-logs": [],
-    approvals: ["list", "show"],
-    "approval-policies": ["list", "show"],
-    categories: ["list", "show"],
-    tags: ["list", "show"],
-    "custom-fields": ["list", "show"],
-    "saved-views": ["list", "show", "create", "edit", "delete"],
-    notifications: ["list", "show", "edit"],
-    attachments: ["list", "show"],
+  payments: crud("payments:read", "payments:manage"),
+  "audit-logs": {
+    list: "audit:read",
+    show: "audit:read",
+    export: "audit:export",
+  },
+  approvals: {
+    list: "approvals:read",
+    show: "approvals:read",
+    create: "approvals:create",
+    edit: "approvals:create",
+    delete: "approvals:cancel_any",
+    approve: "approvals:decide",
+    export: "approvals:export",
+  },
+  "approval-policies": crud(
+    "approval_policies:read",
+    "approval_policies:manage"
+  ),
+  categories: crud("categories:read", "categories:manage"),
+  tags: { ...crud("tags:read", "tags:manage"), create: "tags:create" },
+  "custom-fields": crud("custom_fields:read", "custom_fields:manage"),
+  "saved-views": crud("subscriptions:read", "subscriptions:read"),
+  notifications: {
+    list: "notifications:read",
+    show: "notifications:read",
+    edit: "notifications:read",
+    delete: "notifications:read",
+  },
+  attachments: {
+    list: "attachments:read",
+    show: "attachments:read",
+    create: "attachments:upload",
+    delete: "attachments:delete",
   },
 };
 
-/**
- * Maps API resource names to permission-matrix resource names
- */
+const RESOURCE_ALIASES: Record<string, Resource> = {
+  app: "apps",
+  subscription: "subscriptions",
+  user: "users",
+  integration: "integrations",
+  payment: "payments",
+  "audit-log": "audit-logs",
+  auditLogs: "audit-logs",
+  auditLog: "audit-logs",
+  approval: "approvals",
+  "approval-request": "approvals",
+  approvalRequests: "approvals",
+  "approval-policy": "approval-policies",
+  approvalPolicies: "approval-policies",
+  category: "categories",
+  tag: "tags",
+  "custom-field": "custom-fields",
+  customFields: "custom-fields",
+  "saved-view": "saved-views",
+  savedViews: "saved-views",
+  notification: "notifications",
+  attachment: "attachments",
+};
+
+/** Maps API resource names to the permission map's resource names. */
 function normalizeResource(resource: string | undefined): Resource | null {
   if (!resource) return null;
-
-  // Exact match
-  if (resource in PERMISSION_MATRIX.ADMIN) {
-    return resource as Resource;
-  }
-
-  // Try singular/plural conversion
-  const resourceMap: Record<string, Resource> = {
-    app: "apps",
-    subscription: "subscriptions",
-    user: "users",
-    integration: "integrations",
-    payment: "payments",
-    "audit-log": "audit-logs",
-    auditLogs: "audit-logs",
-    auditLog: "audit-logs",
-    approval: "approvals",
-    "approval-request": "approvals",
-    approvalRequests: "approvals",
-    "approval-policy": "approval-policies",
-    approvalPolicies: "approval-policies",
-    category: "categories",
-    tag: "tags",
-    "custom-field": "custom-fields",
-    customFields: "custom-fields",
-    "saved-view": "saved-views",
-    savedViews: "saved-views",
-    notification: "notifications",
-    attachment: "attachments",
-  };
-
-  return resourceMap[resource] ?? null;
+  if (resource in RESOURCE_PERMISSIONS) return resource as Resource;
+  return RESOURCE_ALIASES[resource] ?? null;
 }
 
-// Session cache (avoids repeated session calls)
-let cachedRole: Role | null = null;
+/** Permission key needed for an action, or null when none is mapped. */
+function requiredPermission(
+  resource: string | undefined,
+  action: string
+): PermissionKey | null {
+  const normalized = normalizeResource(resource);
+  if (!normalized) return null;
+  return RESOURCE_PERMISSIONS[normalized][action as Action] ?? null;
+}
+
+const CACHE_TTL_MS = 30_000;
+let cachedPermissions: Set<string> | null = null;
 let cacheTimestamp = 0;
-const CACHE_TTL = 30_000; // 30 seconds
 
-/**
- * Resolve the role, trying params → cache → /api/auth/session in that order
- */
-async function resolveRole(
+/** Permission keys from `params.permissions` (tests) or `/api/v1/me/permissions`. */
+async function resolvePermissions(
   params: Record<string, unknown> | undefined
-): Promise<Role | null> {
-  // 1. Try params first (backward compatible)
-  const paramRole = (params as { user?: { role?: string } })?.user?.role;
-  if (paramRole) return paramRole as Role;
-
-  // 2. Use the cache
-  if (cachedRole && Date.now() - cacheTimestamp < CACHE_TTL) {
-    return cachedRole;
+): Promise<Set<string> | null> {
+  const explicit = (params as { permissions?: unknown })?.permissions;
+  if (Array.isArray(explicit)) return new Set(explicit.map(String));
+  if (cachedPermissions && Date.now() - cacheTimestamp < CACHE_TTL_MS) {
+    return cachedPermissions;
   }
-
-  // 3. Look up the session
   try {
-    const res = await fetch("/api/auth/session", { credentials: "include" });
+    const res = await fetch("/api/v1/me/permissions", {
+      credentials: "include",
+    });
     if (!res.ok) return null;
-    const session = await res.json();
-    cachedRole = (session?.user?.role as Role) ?? null;
+    const json = (await res.json()) as { data?: { permissions?: string[] } };
+    cachedPermissions = new Set(json.data?.permissions ?? []);
     cacheTimestamp = Date.now();
-    return cachedRole;
+    return cachedPermissions;
   } catch {
     return null;
   }
 }
 
-/** Reset the cache (for tests) */
-function resetRoleCache() {
-  cachedRole = null;
+/** Reset the cache (tests, sign-out). */
+function resetPermissionCache() {
+  cachedPermissions = null;
   cacheTimestamp = 0;
 }
 
-/**
- * Refine AccessControlProvider
- * - Per-resource permission checks based on PERMISSION_MATRIX
- * - ADMIN: full access to all resources
- * - MEMBER: limited per-resource access (can create apps/subscriptions)
- * - VIEWER: read-only (no access to payments or audit-logs)
- */
+const READ_ACTIONS = new Set(["list", "show"]);
+
 export const accessControlProvider: AccessControlProvider = {
   can: async ({ action, resource, params }) => {
-    const role = await resolveRole(params);
-
-    // Deny when there is no role
-    if (!role) {
+    const permissions = await resolvePermissions(params);
+    if (!permissions || permissions.size === 0) {
       return { can: false, reason: "Permission denied." };
     }
-
-    // Without a resource, apply the default rules (backward compatibility)
-    const normalizedResource = normalizeResource(resource);
-    if (!normalizedResource) {
-      // Keep the legacy behaviour when called without a resource
-      if (role === "ADMIN") {
-        return { can: true };
-      }
-      if (role === "VIEWER") {
-        const isReadOnly = action === "list" || action === "show";
-        return isReadOnly
-          ? { can: true }
-          : { can: false, reason: "VIEWER has read-only access." };
-      }
-      if (role === "MEMBER" || role === "APPROVER") {
-        if (action === "delete") {
-          return {
+    const needed = requiredPermission(resource, action);
+    if (needed) {
+      return permissions.has(needed)
+        ? { can: true }
+        : {
             can: false,
-            reason: "MEMBER does not have delete permission.",
+            reason: `You need the "${needed}" permission for this action.`,
           };
-        }
-        return { can: true };
-      }
-      return { can: false, reason: "Permission denied." };
     }
-
-    // Check against PERMISSION_MATRIX
-    const allowedActions = PERMISSION_MATRIX[role]?.[normalizedResource] ?? [];
-    const isAllowed = allowedActions.includes(action as Action);
-
-    if (isAllowed) {
+    // Unmapped resource/action: reads for any member, writes for settings managers.
+    if (READ_ACTIONS.has(action) || permissions.has("settings:manage")) {
       return { can: true };
     }
-
-    // Build the denial reason
-    const resourceLabel = {
-      apps: "apps",
-      subscriptions: "subscriptions",
-      users: "users",
-      integrations: "integrations",
-      payments: "payments",
-      "audit-logs": "audit logs",
-      approvals: "approval requests",
-      "approval-policies": "approval policies",
-      categories: "categories",
-      tags: "tags",
-      "custom-fields": "custom fields",
-      "saved-views": "saved views",
-      notifications: "notifications",
-      attachments: "attachments",
-    }[normalizedResource];
-
-    const actionLabel = {
-      list: "list",
-      show: "view",
-      create: "create",
-      edit: "edit",
-      delete: "delete",
-      invite: "invite",
-      sync: "sync",
-      approve: "approve",
-      export: "export",
-    }[action as Action];
-
-    return {
-      can: false,
-      reason: `You do not have ${actionLabel ?? action} permission for ${resourceLabel}.`,
-    };
+    return { can: false, reason: "Permission denied." };
   },
 };
 
 // Exported for tests
-export { normalizeResource, PERMISSION_MATRIX, resetRoleCache, resolveRole };
-export type { Action, Resource, Role };
+export {
+  normalizeResource,
+  requiredPermission,
+  resetPermissionCache,
+  resolvePermissions,
+  RESOURCE_PERMISSIONS,
+};
+export type { Action, Resource };

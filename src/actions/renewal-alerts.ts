@@ -5,6 +5,7 @@ import { getCachedSession, requireOrganization } from "@/lib/auth/require-auth";
 import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { withLogging } from "@/lib/logging";
+import { can } from "@/lib/rbac/service";
 import type { ActionState } from "@/types";
 import type { AlertType } from "@prisma/client";
 import { revalidatePath } from "next/cache";
@@ -101,6 +102,12 @@ async function _createRenewalAlert(
     if (!session?.user?.organizationId) {
       return { success: false, message: "Authentication required" };
     }
+    if (!(await can("subscriptions:update"))) {
+      return {
+        success: false,
+        message: "You do not have permission to perform this action",
+      };
+    }
 
     const organizationId = session.user.organizationId;
 
@@ -145,6 +152,12 @@ export const createRenewalAlert = withLogging(
 async function _markAlertAsSent(alertId: string): Promise<ActionState> {
   try {
     const { organizationId } = await requireOrganization();
+    if (!(await can("subscriptions:update"))) {
+      return {
+        success: false,
+        message: "You do not have permission to perform this action",
+      };
+    }
 
     const alert = await prisma.renewalAlert.findFirst({
       where: { id: alertId },
@@ -179,9 +192,9 @@ export const markAlertAsSent = withLogging("markAlertAsSent", _markAlertAsSent);
  */
 async function _deleteRenewalAlert(alertId: string): Promise<ActionState> {
   try {
-    const { organizationId, role } = await requireOrganization();
+    const { organizationId } = await requireOrganization();
 
-    if (role !== "ADMIN") {
+    if (!(await can("settings:manage"))) {
       return { success: false, message: "Admin permission required" };
     }
 
@@ -221,9 +234,9 @@ async function _generateRenewalAlerts(): Promise<
   ActionState<{ created: number }>
 > {
   try {
-    const { organizationId, role } = await requireOrganization();
+    const { organizationId } = await requireOrganization();
 
-    if (role !== "ADMIN") {
+    if (!(await can("settings:manage"))) {
       return { success: false, message: "Admin permission required" };
     }
 

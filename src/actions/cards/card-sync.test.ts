@@ -2,6 +2,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock setup (declared before imports)
+vi.mock("@/lib/rbac/service", async () =>
+  (await import("@/test/rbac-org-mock")).orgRbacMock()
+);
 vi.mock("@/lib/fx/base-currency", () => ({
   getBaseCurrency: vi.fn().mockResolvedValue("KRW"),
 }));

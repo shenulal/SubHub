@@ -55,6 +55,15 @@ adding a feature. Read it fully before touching code.
   return `ActionState<T>` (`{ success, message?, error?, data?, errors? }`).
 - Auth helpers: `requireOrganization()`, `requireAuth()`, `getCachedSession()` in
   `@/lib/auth/require-auth`; RBAC in `@/lib/rbac/service`.
+- Authentication: user name or email + password via the NextAuth credentials provider
+  `password` (`src/lib/auth/authorize.ts`; client form `@/components/auth/password-login-form`,
+  `signIn("password", { identifier, password, otp?, redirect: false })`). The optional emailed
+  code step, lockout and policy are settings (`security.*`); `credentials` is the setting-gated
+  passwordless email code. No Google sign-in (Google Workspace _integration_ is separate).
+  `session.user.mustChangePassword` sends users to `/change-password` (enforced in
+  `requireOrganization`, `requirePermission`, `requireSuperAdmin`, `withApiAuth`). Audit auth
+  events with `recordAuthEvent` (`@/lib/auth/auth-audit`). Tests and scripts sign in with
+  `SEED_QA_PASSWORD` (`tests/e2e/helpers.ts` `login()`, `.visual/login.mjs`) — never hard-code it.
 - REST: `src/app/api/v1/<resource>/route.ts`, `withApiAuth` + `withLogging`,
   envelope `{ success, data, error?, meta? }`. Mobile clients consume these.
 - Cron: `src/app/api/cron/<job>/route.ts` with `withCronAuth(withLogging(...))`,

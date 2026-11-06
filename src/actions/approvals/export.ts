@@ -13,7 +13,7 @@ import { generateCSV, type CSVColumn } from "@/lib/services/export/csv";
 import { approvalListFiltersSchema } from "@/lib/validations/approvals";
 import type { ActionState } from "@/types";
 import type { Prisma } from "@prisma/client";
-import { USER_REF_SELECT, runAction } from "./shared";
+import { runAction, toDecisionSummary, USER_REF_SELECT } from "./shared";
 
 /** Hard cap so an export never streams the whole table into memory. */
 const EXPORT_ROW_LIMIT = 5000;
@@ -49,10 +49,16 @@ interface ExportRecord {
   approvers: string;
   submittedAt: string;
   decidedAt: string;
+  decidedBy: string;
+  rejectionReason: string;
+  decisionComment: string;
+  conditions: string;
+  effectiveStartDate: string;
   justification: string;
 }
 
 function toRecord(row: ExportRow): ExportRecord {
+  const decision = toDecisionSummary(row);
   return {
     id: row.id,
     serviceName: row.serviceName,
@@ -77,6 +83,13 @@ function toRecord(row: ExportRow): ExportRecord {
       .join("; "),
     submittedAt: row.submittedAt.toISOString(),
     decidedAt: row.decidedAt?.toISOString() ?? "",
+    decidedBy: decision?.decidedBy
+      ? (decision.decidedBy.name ?? decision.decidedBy.email)
+      : "",
+    rejectionReason: decision?.reason?.name ?? "",
+    decisionComment: decision?.comment ?? "",
+    conditions: decision?.conditions ?? "",
+    effectiveStartDate: decision?.effectiveStartDate ?? "",
     justification: row.justification,
   };
 }
@@ -97,6 +110,11 @@ const COLUMNS: CSVColumn<ExportRecord>[] = [
   { key: "approvers", header: "Approvers" },
   { key: "submittedAt", header: "Submitted at" },
   { key: "decidedAt", header: "Decided at" },
+  { key: "decidedBy", header: "Decided by" },
+  { key: "rejectionReason", header: "Rejection reason" },
+  { key: "decisionComment", header: "Decision comment" },
+  { key: "conditions", header: "Approval conditions" },
+  { key: "effectiveStartDate", header: "Effective start date" },
   { key: "justification", header: "Justification" },
 ];
 

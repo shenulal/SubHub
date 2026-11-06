@@ -23,6 +23,8 @@ export interface SubscriptionSource {
   currency: string;
   billingCycle: BillingCycle;
   seats: number | null;
+  /** Effective start date agreed at approval; defaults to the approval time. */
+  startDate?: Date | null;
 }
 
 export interface CreateSubscriptionOptions {
@@ -76,6 +78,7 @@ export async function createSubscriptionFromRequest(
 ): Promise<string> {
   const now = options.now ?? new Date();
   const months = options.cycleMonths[source.billingCycle] ?? 0;
+  const start = source.startDate ?? now;
   const appId = await findOrCreateApp(db, source);
   const subscription = await db.subscription.create({
     data: {
@@ -87,8 +90,8 @@ export async function createSubscriptionFromRequest(
       amount: source.amount,
       currency: source.currency,
       totalLicenses: source.seats,
-      startDate: now,
-      renewalDate: months > 0 ? addMonths(now, months) : null,
+      startDate: start,
+      renewalDate: months > 0 ? addMonths(start, months) : null,
       autoRenewal: months > 0,
       categoryId: source.categoryId,
       costCenterId: source.costCenterId,

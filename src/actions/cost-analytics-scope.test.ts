@@ -11,7 +11,7 @@ describe("cost-analytics-scope", () => {
     it("should return filter values for ADMIN users", () => {
       const result = resolveReportScope(
         { teamId: "team-1", userId: "user-1" },
-        { id: "admin-1", role: "ADMIN", teamId: "admin-team" }
+        { id: "admin-1", role: "ADMIN", teamId: "admin-team", canReadAll: true }
       );
       expect(result).toEqual({ teamIds: ["team-1"], userIds: ["user-1"] });
     });
@@ -19,7 +19,7 @@ describe("cost-analytics-scope", () => {
     it("should merge legacy single values with multi-value lists for ADMIN", () => {
       const result = resolveReportScope(
         { teamId: "team-1", teamIds: ["team-2", "team-1"], userIds: [] },
-        { id: "admin-1", role: "ADMIN", teamId: null }
+        { id: "admin-1", role: "ADMIN", teamId: null, canReadAll: true }
       );
       expect(result).toEqual({
         teamIds: ["team-2", "team-1"],

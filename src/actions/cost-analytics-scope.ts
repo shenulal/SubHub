@@ -31,8 +31,9 @@ export function requestedUserIds(
 }
 
 /**
- * Admins get the requested teams / users. Restricted roles are pinned to
- * their own team (users inside it may still be narrowed), or to themselves
+ * Viewers holding `subscriptions:read_all` (`canReadAll`, see
+ * `withReportAccess`) get the requested teams / users. Everyone else is pinned
+ * to their own team (users inside it may still be narrowed), or to themselves
  * when they have no team.
  */
 export function resolveReportScope(
@@ -41,9 +42,10 @@ export function resolveReportScope(
     id: string;
     role?: string | null;
     teamId?: string | null;
+    canReadAll?: boolean;
   }
 ): ReportScope {
-  const isRestricted = sessionUser.role !== "ADMIN";
+  const isRestricted = sessionUser.canReadAll !== true;
   const memberTeamId = sessionUser.teamId ?? undefined;
   const userIds = requestedUserIds(filters);
 

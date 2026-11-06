@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db";
 import { isSaas } from "@/lib/deployment/mode";
 import { logger } from "@/lib/logger";
 import { withLogging } from "@/lib/logging";
+import { can } from "@/lib/rbac/service";
 import type { ActionState } from "@/types";
 import { AppStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
@@ -46,8 +47,8 @@ async function requireAdminSession() {
   if (!session?.user?.organizationId) {
     throw new Error("Authentication required");
   }
-  if (session.user.role !== "ADMIN") {
-    throw new Error("Only admins can access this");
+  if (!(await can("apps:manage"))) {
+    throw new Error("You do not have permission to review apps");
   }
   return session.user;
 }

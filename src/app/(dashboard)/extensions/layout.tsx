@@ -1,5 +1,6 @@
 import { ExtensionsSidebar } from "@/components/extensions/extensions-sidebar";
 import { Card } from "@/components/ui/card";
+import { requirePermissionOrRedirect } from "@/lib/rbac/service";
 import { getTranslations } from "next-intl/server";
 
 interface ExtensionsLayoutProps {
@@ -9,6 +10,7 @@ interface ExtensionsLayoutProps {
 export default async function ExtensionsLayout({
   children,
 }: ExtensionsLayoutProps) {
+  await requirePermissionOrRedirect("extensions:read", "/dashboard");
   const t = await getTranslations("sidebar.menu.extensions");
 
   return (

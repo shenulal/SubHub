@@ -1,5 +1,6 @@
 import { PaymentsSidebar } from "@/components/payments/payments-sidebar";
 import { Card } from "@/components/ui/card";
+import { requirePermissionOrRedirect } from "@/lib/rbac/service";
 import { getTranslations } from "next-intl/server";
 
 interface PaymentsLayoutProps {
@@ -9,6 +10,7 @@ interface PaymentsLayoutProps {
 export default async function PaymentsLayout({
   children,
 }: PaymentsLayoutProps) {
+  await requirePermissionOrRedirect("payments:read", "/dashboard");
   const t = await getTranslations("sidebar.menu.payments");
 
   return (

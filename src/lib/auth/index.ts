@@ -8,8 +8,9 @@ import { UserRole } from "@prisma/client";
 import NextAuth, { type NextAuthConfig } from "next-auth";
 import Apple from "next-auth/providers/apple";
 import Credentials from "next-auth/providers/credentials";
-import Google from "next-auth/providers/google";
 import { cache } from "react";
+import { authorizeEmailCode, authorizePassword } from "./authorize";
+import { EMAIL_CODE_PROVIDER_ID, PASSWORD_PROVIDER_ID } from "./sign-in-codes";
 
 /** Apple sign-in is enabled only when both env vars are present (6.1). */
 export function isAppleSignInEnabled(): boolean {
@@ -42,6 +43,7 @@ const loadTokenUser = cache(async (email: string) =>
       organizationId: true,
       role: true,
       teamId: true,
+      mustChangePassword: true,
       organization: { select: { deactivatedAt: true } },
     },
   })
@@ -84,8 +86,10 @@ function resolveAuthSecret(): string {
 
 /**
  * NextAuth.js v5 configuration
- * - Google OAuth provider
- * - Credentials provider (email/OTP)
+ * - Credentials provider `password` (user name or email + password, optional
+ *   emailed code as a second step)
+ * - Credentials provider `credentials` (passwordless email code, setting-gated)
+ * - Apple OAuth when APPLE_CLIENT_ID / APPLE_CLIENT_SECRET are set
  * - Prisma adapter (DB integration)
  * - JWT session strategy (Edge Runtime support)
  * - Adds organizationId and role to the session
@@ -95,81 +99,30 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   adapter: PrismaAdapter(prisma),
   trustHost: true, // Required when running behind a proxy such as Vercel
   providers: [
-    Google({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-      allowDangerousEmailAccountLinking: true, // Allow linking accounts of invited users
-      authorization: {
-        params: {
-          prompt: "consent",
-          access_type: "offline",
-          response_type: "code",
-        },
-      },
-    }),
     Credentials({
-      name: "credentials",
+      id: PASSWORD_PROVIDER_ID,
+      name: "Password",
+      credentials: {
+        identifier: { label: "Email or user name", type: "text" },
+        password: { label: "Password", type: "password" },
+        otp: { label: "Verification code", type: "text" },
+        audience: { label: "Audience", type: "text" },
+      },
+      authorize: (credentials) =>
+        authorizePassword(credentials, {
+          ssoAvailable: isAppleSignInEnabled(),
+        }),
+    }),
+    // Passwordless "email me a code" sign-in; refused unless the
+    // organisation enables security.allowEmailCodeSignIn.
+    Credentials({
+      id: EMAIL_CODE_PROVIDER_ID,
+      name: "Email code",
       credentials: {
         email: { label: "Email", type: "email" },
         otp: { label: "Verification code", type: "text" },
       },
-      async authorize(credentials) {
-        if (!credentials?.email || !credentials?.otp) {
-          return null;
-        }
-
-        const email = credentials.email as string;
-        const otp = credentials.otp as string;
-
-        // Look up the user (invite-only: must already exist in the DB)
-        const user = await prisma.user.findUnique({
-          where: { email },
-          select: {
-            id: true,
-            email: true,
-            name: true,
-            image: true,
-          },
-        });
-
-        if (!user) return null;
-
-        // Look up an active (unexpired) OTP token
-        const otpToken = await prisma.otpToken.findFirst({
-          where: {
-            email,
-            expires: { gt: new Date() },
-          },
-          orderBy: { createdAt: "desc" },
-        });
-
-        if (!otpToken) return null;
-
-        // Delete the token once the maximum attempts are exceeded
-        if (otpToken.attempts >= 5) {
-          await prisma.otpToken.delete({ where: { id: otpToken.id } });
-          return null;
-        }
-
-        // Compare the OTP code
-        if (otpToken.code !== otp) {
-          await prisma.otpToken.update({
-            where: { id: otpToken.id },
-            data: { attempts: { increment: 1 } },
-          });
-          return null;
-        }
-
-        // Success: delete the token (single-use)
-        await prisma.otpToken.delete({ where: { id: otpToken.id } });
-
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          image: user.image,
-        };
-      },
+      authorize: (credentials) => authorizeEmailCode(credentials),
     }),
     ...optionalProviders(),
   ],
@@ -201,6 +154,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
               role: true,
               email: true,
               teamId: true,
+              mustChangePassword: true,
               organization: { select: { deactivatedAt: true } },
             },
           });
@@ -210,7 +164,12 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           const teamId = dbUser?.teamId ?? null;
 
           // If there is no organization, check for a pending invitation and auto-accept it
-          if (!dbUser?.organizationId && dbUser?.email) {
+          // (never for platform administrators, who have no organisation by design)
+          if (
+            !dbUser?.organizationId &&
+            dbUser?.email &&
+            dbUser.role !== "SUPER_ADMIN"
+          ) {
             const pendingInvitation = await prisma.invitation.findFirst({
               where: {
                 email: dbUser.email,
@@ -247,6 +206,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           token.organizationId = organizationId;
           token.role = role;
           token.teamId = teamId;
+          token.mustChangePassword = dbUser?.mustChangePassword ?? false;
 
           // On admin sign-in, auto-create build 1.0.0 if none exists
           if (organizationId && role === "ADMIN") {
@@ -266,6 +226,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           token.organizationId = null;
           token.role = "MEMBER";
           token.teamId = null;
+          token.mustChangePassword = false;
         }
       }
 
@@ -283,7 +244,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             const teamId = dbUser.teamId;
 
             // If there is no organization, check for a pending invitation and auto-accept it
-            if (!dbUser.organizationId) {
+            if (!dbUser.organizationId && dbUser.role !== "SUPER_ADMIN") {
               const pendingInvitation = await prisma.invitation.findFirst({
                 where: {
                   email: token.email as string,
@@ -319,6 +280,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             token.organizationId = organizationId;
             token.role = role;
             token.teamId = teamId;
+            token.mustChangePassword = dbUser.mustChangePassword;
           }
         } catch {
           // Ignore on the Edge Runtime (keep existing token values)
@@ -335,13 +297,20 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       session.user.organizationId = token.organizationId as string | null;
       session.user.role = (token.role || "MEMBER") as UserRole;
       session.user.teamId = (token.teamId as string | null) ?? null;
+      session.user.mustChangePassword = Boolean(token.mustChangePassword);
       return session;
     },
     /**
      * authorized callback: checks authentication in the middleware
      */
     authorized({ auth, request }) {
-      const publicRoutes = ["/login", "/api/auth"];
+      const publicRoutes = [
+        "/login",
+        "/signup",
+        "/forgot-password",
+        "/reset-password",
+        "/api/auth",
+      ];
       const { pathname } = request.nextUrl;
 
       // Auth Authorized log removed

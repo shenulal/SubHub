@@ -3,6 +3,9 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getExtensionDashboard } from "./dashboard";
 
 // Mock auth
+vi.mock("@/lib/rbac/service", async () =>
+  (await import("@/test/rbac-session-mock")).sessionRbacMock()
+);
 vi.mock("@/lib/auth", () => ({
   auth: vi.fn(),
 }));

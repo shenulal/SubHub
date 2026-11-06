@@ -8,7 +8,6 @@
 
 import { revalidatePath } from "next/cache";
 
-import { requireAdmin } from "@/lib/auth/require-auth";
 import {
   parseCSV,
   validateOrgCSV,
@@ -19,7 +18,15 @@ import {
 import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { withLogging } from "@/lib/logging";
+import type { PermissionKey } from "@/lib/rbac/permissions";
+import { requirePermissionOrRedirect } from "@/lib/rbac/service";
 import type { ActionState } from "@/types";
+
+/** Org sync rewrites the team tree and member assignments. */
+const ORG_SYNC_PERMISSIONS: PermissionKey[] = [
+  "teams:manage",
+  "members:manage",
+];
 
 // ==================== Types ====================
 
@@ -39,7 +46,10 @@ async function _syncOrgsFromCSV(
   csvContent: string
 ): Promise<ActionState<OrgSyncResult>> {
   try {
-    const { organizationId } = await requireAdmin("/dashboard");
+    const { organizationId } = await requirePermissionOrRedirect(
+      ORG_SYNC_PERMISSIONS,
+      "/dashboard"
+    );
 
     const rows = parseCSV(csvContent);
 
@@ -155,7 +165,10 @@ async function _syncUsersFromCSV(
   csvContent: string
 ): Promise<ActionState<OrgSyncResult>> {
   try {
-    const { organizationId } = await requireAdmin("/dashboard");
+    const { organizationId } = await requirePermissionOrRedirect(
+      ORG_SYNC_PERMISSIONS,
+      "/dashboard"
+    );
 
     const rows = parseCSV(csvContent);
 

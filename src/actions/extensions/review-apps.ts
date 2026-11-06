@@ -3,6 +3,7 @@
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { can } from "@/lib/rbac/service";
 import {
   checkDomainSafety,
   getThreatTypeLabel,
@@ -73,6 +74,12 @@ export async function getReviewApps(params: {
     const session = await auth();
     if (!session?.user?.organizationId) {
       return { success: false, error: "Authentication required" };
+    }
+    if (!(await can("extensions:read"))) {
+      return {
+        success: false,
+        error: "You do not have permission to perform this action",
+      };
     }
 
     const { page = 1, limit = 20, search, filter = "all" } = params;
@@ -233,6 +240,12 @@ export async function scanUnregisteredDomains(params: {
       if (!session?.user?.organizationId) {
         return { success: false, error: "Authentication required" };
       }
+      if (!(await can("extensions:manage"))) {
+        return {
+          success: false,
+          error: "You do not have permission to perform this action",
+        };
+      }
       orgId = session.user.organizationId;
     }
 
@@ -341,6 +354,12 @@ export async function registerReviewApp(
     if (!session?.user?.organizationId) {
       return { success: false, error: "Authentication required" };
     }
+    if (!(await can("extensions:manage"))) {
+      return {
+        success: false,
+        error: "You do not have permission to perform this action",
+      };
+    }
 
     // Fetch scan history
     const scanHistory = await prisma.saaSDomainScanHistory.findUnique({
@@ -423,6 +442,12 @@ export async function blockReviewApp(
     if (!session?.user?.organizationId) {
       return { success: false, error: "Authentication required" };
     }
+    if (!(await can("extensions:manage"))) {
+      return {
+        success: false,
+        error: "You do not have permission to perform this action",
+      };
+    }
 
     // Fetch scan history
     const scanHistory = await prisma.saaSDomainScanHistory.findUnique({
@@ -492,6 +517,12 @@ export async function dismissReviewApp(
     if (!session?.user?.organizationId) {
       return { success: false, error: "Authentication required" };
     }
+    if (!(await can("extensions:manage"))) {
+      return {
+        success: false,
+        error: "You do not have permission to perform this action",
+      };
+    }
 
     // Mark as reviewed in scan history
     await prisma.saaSDomainScanHistory.update({
@@ -526,6 +557,12 @@ export async function bulkRegisterReviewApps(
     const session = await auth();
     if (!session?.user?.organizationId) {
       return { success: false, error: "Authentication required" };
+    }
+    if (!(await can("extensions:manage"))) {
+      return {
+        success: false,
+        error: "You do not have permission to perform this action",
+      };
     }
 
     let registered = 0;
@@ -563,6 +600,12 @@ export async function bulkBlockReviewApps(
     const session = await auth();
     if (!session?.user?.organizationId) {
       return { success: false, error: "Authentication required" };
+    }
+    if (!(await can("extensions:manage"))) {
+      return {
+        success: false,
+        error: "You do not have permission to perform this action",
+      };
     }
 
     let blocked = 0;
@@ -603,6 +646,12 @@ export async function getScanScheduleStatus(): Promise<
     const session = await auth();
     if (!session?.user?.organizationId) {
       return { success: false, error: "Authentication required" };
+    }
+    if (!(await can("extensions:read"))) {
+      return {
+        success: false,
+        error: "You do not have permission to perform this action",
+      };
     }
 
     const orgId = session.user.organizationId;

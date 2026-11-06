@@ -113,7 +113,7 @@ export async function sendShadowITAlertEmail(
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
     </head>
-    <body style="font-family: Lato, Inter, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <body style="font-family: Inter, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
       <div style="background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%); padding: 30px; border-radius: 10px 10px 0 0;">
         <h1 style="color: white; margin: 0; font-size: 24px;">🚨 Shadow IT Warning</h1>
       </div>
@@ -228,7 +228,7 @@ export async function sendCostAnomalyAlertEmail(
       <meta charset="UTF-8">
       <meta name="viewport" content="width=device-width, initial-scale=1.0">
     </head>
-    <body style="font-family: Lato, Inter, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <body style="font-family: Inter, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px;">
       <div style="background: linear-gradient(135deg, ${isCritical ? "#e74c3c 0%, #c0392b" : "#f39c12 0%, #d68910"} 100%); padding: 30px; border-radius: 10px 10px 0 0;">
         <h1 style="color: white; margin: 0; font-size: 24px;">${urgencyEmoji} Cost Anomaly Detected</h1>
       </div>

@@ -26,6 +26,30 @@ export interface PasswordResetEmailParams {
   to: string;
   token: string;
   userName?: string;
+  /** Link validity shown in the email (Settings > Security). */
+  expiryMinutes?: number;
+}
+
+/** Escape a value interpolated into email HTML. */
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function formatValidity(minutes: number): string {
+  if (minutes % 60 === 0) {
+    const hours = minutes / 60;
+    return hours === 1 ? "1 hour" : `${hours} hours`;
+  }
+  return `${minutes} minutes`;
+}
+
+export function passwordResetUrl(token: string): string {
+  return `${BASE_URL}/reset-password/${token}`;
 }
 
 export interface EmailResult {
@@ -48,7 +72,7 @@ export async function sendVerificationEmail(
       to,
       subject: "[SubHub] Please verify your email address",
       html: `
-        <div style="font-family: Lato, Inter, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="font-family: Inter, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2>Email verification</h2>
           <p>${userName ? `Hello ${userName},` : "Hello,"}</p>
           <p>Thank you for signing up for SubHub.</p>
@@ -96,8 +120,9 @@ export async function sendVerificationEmail(
 export async function sendPasswordResetEmail(
   params: PasswordResetEmailParams
 ): Promise<EmailResult> {
-  const { to, token, userName } = params;
-  const resetUrl = `${BASE_URL}/reset-password/${token}`;
+  const { to, token, userName, expiryMinutes = 60 } = params;
+  const resetUrl = passwordResetUrl(token);
+  const greeting = userName ? `Hello ${escapeHtml(userName)},` : "Hello,";
 
   try {
     const { error } = await getResend().emails.send({
@@ -105,9 +130,9 @@ export async function sendPasswordResetEmail(
       to,
       subject: "[SubHub] Password reset",
       html: `
-        <div style="font-family: Lato, Inter, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="font-family: Inter, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2>Password reset</h2>
-          <p>${userName ? `Hello ${userName},` : "Hello,"}</p>
+          <p>${greeting}</p>
           <p>We received a request to reset your password.</p>
           <p>Please click the button below to set a new password.</p>
           <div style="margin: 30px 0;">
@@ -118,7 +143,7 @@ export async function sendPasswordResetEmail(
             </a>
           </div>
           <p style="color: #666; font-size: 14px;">
-            This link is valid for 1 hour.
+            This link is valid for ${formatValidity(expiryMinutes)} and can be used once.
           </p>
           <p style="color: #666; font-size: 14px;">
             If you did not make this request, please ignore this email. Your password will not be changed.
@@ -151,12 +176,14 @@ export interface OtpEmailParams {
   to: string;
   code: string;
   userName?: string;
+  /** Code validity shown in the email (security.otpExpiryMinutes). */
+  expiryMinutes?: number;
 }
 
 export async function sendOtpEmail(
   params: OtpEmailParams
 ): Promise<EmailResult> {
-  const { to, code, userName } = params;
+  const { to, code, userName, expiryMinutes = 10 } = params;
 
   try {
     const { error } = await getResend().emails.send({
@@ -164,9 +191,9 @@ export async function sendOtpEmail(
       to,
       subject: "[SubHub] Sign-in verification code",
       html: `
-        <div style="font-family: Lato, Inter, sans-serif; max-width: 600px; margin: 0 auto;">
+        <div style="font-family: Inter, sans-serif; max-width: 600px; margin: 0 auto;">
           <h2>Sign-in verification code</h2>
-          <p>${userName ? `Hello ${userName},` : "Hello,"}</p>
+          <p>${userName ? `Hello ${escapeHtml(userName)},` : "Hello,"}</p>
           <p>Here is your verification code for signing in to SubHub.</p>
           <div style="margin: 30px 0; text-align: center;">
             <div style="display: inline-block; background-color: #f4f4f5;
@@ -177,7 +204,7 @@ export async function sendOtpEmail(
             </div>
           </div>
           <p style="color: #666; font-size: 14px;">
-            This code is valid for <strong>10 minutes</strong>.
+            This code is valid for <strong>${formatValidity(expiryMinutes)}</strong>.
           </p>
           <p style="color: #666; font-size: 14px;">
             If you did not make this request, please ignore this email.

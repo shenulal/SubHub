@@ -4,6 +4,7 @@ import { requireOrganization } from "@/lib/auth/require-auth";
 import { prisma } from "@/lib/db";
 import { getBaseCurrency } from "@/lib/fx/base-currency";
 import { withLogging } from "@/lib/logging";
+import { can } from "@/lib/rbac/service";
 import { detectBillingType } from "@/lib/services/subscription/seat-detector";
 import { calculateNextRenewalDate } from "@/lib/utils/renewal-date";
 import type { ActionState } from "@/types";
@@ -11,6 +12,10 @@ import type { BillingType } from "@prisma/client";
 import { BillingCycle } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { isRedirectError } from "./subscription-crud.types";
+
+const NO_CREATE_PERMISSION = "You do not have permission to add subscriptions";
+const NO_ASSIGN_PERMISSION =
+  "You do not have permission to assign users to subscriptions";
 
 // ==================== SMP-107: App-Team assignment helper ====================
 
@@ -630,6 +635,9 @@ async function _createSubscriptionFromSuggestion(
   suggestion: SubscriptionSuggestion
 ): Promise<ActionState<{ id: string }>> {
   const { organizationId, userId } = await requireOrganization();
+  if (!(await can("subscriptions:create"))) {
+    return { success: false, message: NO_CREATE_PERMISSION };
+  }
 
   const app = await prisma.app.findFirst({
     where: { id: suggestion.appId, organizationId },
@@ -723,11 +731,14 @@ async function _createSubscriptionFromPaymentSuggestion(
     billingType: overrideBillingType,
     totalLicenses: overrideTotalLicenses,
   } = input;
-  const { organizationId, userId, role } = await requireOrganization();
+  const { organizationId, userId } = await requireOrganization();
 
-  // Only ADMINs can assign users
-  if (selectedUserIds.length > 0 && role !== "ADMIN") {
-    return { success: false, message: "Only admins can assign users" };
+  if (!(await can("subscriptions:create"))) {
+    return { success: false, message: NO_CREATE_PERMISSION };
+  }
+  // Assigning seats to other members needs subscriptions:assign
+  if (selectedUserIds.length > 0 && !(await can("subscriptions:assign"))) {
+    return { success: false, message: NO_ASSIGN_PERMISSION };
   }
 
   const app = await prisma.app.findFirst({
@@ -1588,11 +1599,14 @@ async function _createSubscriptionFromCardSuggestion(
     billingType: overrideBillingType,
     totalLicenses: overrideTotalLicenses,
   } = input;
-  const { organizationId, userId, role } = await requireOrganization();
+  const { organizationId, userId } = await requireOrganization();
 
-  // Only ADMINs can assign users
-  if (selectedUserIds.length > 0 && role !== "ADMIN") {
-    return { success: false, message: "Only admins can assign users" };
+  if (!(await can("subscriptions:create"))) {
+    return { success: false, message: NO_CREATE_PERMISSION };
+  }
+  // Assigning seats to other members needs subscriptions:assign
+  if (selectedUserIds.length > 0 && !(await can("subscriptions:assign"))) {
+    return { success: false, message: NO_ASSIGN_PERMISSION };
   }
 
   const app = await prisma.app.findFirst({

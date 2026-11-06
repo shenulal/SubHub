@@ -17,7 +17,7 @@ export function TenantsTable({ tenants }: { tenants: TenantInfo[] }) {
   if (tenants.length === 0) {
     return (
       <div className="text-muted-foreground flex h-32 items-center justify-center text-sm">
-        No tenants yet. Create the first one above.
+        No tenants yet.
       </div>
     );
   }
@@ -39,7 +39,7 @@ export function TenantsTable({ tenants }: { tenants: TenantInfo[] }) {
           <TableRow key={t.id}>
             <TableCell className="max-w-[240px]">
               <Link
-                href={`/super-admin/tenant?org=${t.id}`}
+                href={`/super-admin/tenants/${t.id}`}
                 className="text-primary block truncate font-medium hover:underline"
                 title={t.name}
               >

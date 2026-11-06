@@ -183,8 +183,10 @@ async function _getPlatformOverview(): Promise<ActionState<PlatformOverview>> {
   await requireSuperAdmin();
   const [tenantCount, activeTenantCount, totalUsers, activeSubscriptions] =
     await Promise.all([
-      prisma.organization.count(),
-      prisma.organization.count({ where: { deactivatedAt: null } }),
+      prisma.organization.count({ where: { deletedAt: null } }),
+      prisma.organization.count({
+        where: { deletedAt: null, deactivatedAt: null },
+      }),
       prisma.user.count({ where: { organizationId: { not: null } } }),
       prisma.subscription.count({ where: { status: "ACTIVE" } }),
     ]);

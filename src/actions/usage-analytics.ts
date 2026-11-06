@@ -4,6 +4,7 @@
 import { requireOrganization } from "@/lib/auth/require-auth";
 import { prisma } from "@/lib/db";
 import { inFilter } from "@/lib/filters/multi-value";
+import { withReportAccess } from "@/lib/rbac/report-access";
 import type { Prisma } from "@prisma/client";
 import { resolveReportScope } from "./cost-analytics-scope";
 
@@ -95,7 +96,12 @@ function buildUsageUserScope(
     UsageReportFilters,
     "teamId" | "userId" | "teamIds" | "userIds"
   >,
-  sessionUser: { id: string; role?: string | null; teamId?: string | null }
+  sessionUser: {
+    id: string;
+    role?: string | null;
+    teamId?: string | null;
+    canReadAll?: boolean;
+  }
 ): { userScope: Prisma.UserWhereInput; hasUserFilter: boolean } {
   const scope = resolveReportScope(filters, sessionUser);
   const teams = inFilter(scope.teamIds);
@@ -129,7 +135,7 @@ export async function getUsageReport(
   const { userScope, hasUserFilter } = buildUsageUserScope(
     organizationId,
     filters,
-    { id: userId, role, teamId: memberTeamId }
+    await withReportAccess({ id: userId, role, teamId: memberTeamId })
   );
 
   // Fetch subscribed app IDs once and reuse them
@@ -282,7 +288,8 @@ export async function getActiveUsersTrend(
     userId,
   } = await requireOrganization();
 
-  const isRestricted = role !== "ADMIN";
+  const { canReadAll } = await withReportAccess({ role });
+  const isRestricted = !canReadAll;
   const effectiveTeamId = isRestricted
     ? (memberTeamId ?? undefined)
     : undefined;
@@ -564,7 +571,7 @@ export async function getUsageExportData(filters: UsageReportFilters): Promise<{
   const { userScope, hasUserFilter } = buildUsageUserScope(
     organizationId,
     filters,
-    { id: userId, role, teamId: memberTeamId }
+    await withReportAccess({ id: userId, role, teamId: memberTeamId })
   );
   const subscribedAppIds = await getSubscribedAppIds(
     organizationId,

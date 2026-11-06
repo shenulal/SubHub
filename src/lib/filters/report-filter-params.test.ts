@@ -6,7 +6,7 @@ import {
   writeReportFilterParams,
 } from "./report-filter-params";
 
-const admin = { id: "admin", role: "ADMIN", teamId: null };
+const admin = { id: "admin", role: "ADMIN", teamId: null, canReadAll: true };
 
 describe("resolveReportFilterParams", () => {
   it("reads comma-separated teams and users for admins", () => {

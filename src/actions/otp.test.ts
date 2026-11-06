@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/db", () => ({
   prisma: {
-    user: { findUnique: vi.fn() },
-    invitation: { findFirst: vi.fn().mockResolvedValue(null) },
+    user: { findFirst: vi.fn(), create: vi.fn() },
+    invitation: { findFirst: vi.fn() },
     otpToken: {
       findFirst: vi.fn(),
       deleteMany: vi.fn(),
@@ -24,6 +24,17 @@ vi.mock("@/lib/logging", () => ({
 
 vi.mock("@/lib/logger", () => ({ logger: { warn: vi.fn() } }));
 
+vi.mock("@/lib/deployment/tenancy", () => ({
+  getSingleTenantOrganization: vi.fn().mockResolvedValue({ id: "org-1" }),
+}));
+
+const settings: Record<string, unknown> = {};
+vi.mock("@/lib/auth/auth-settings", () => ({
+  getAuthSettings: vi.fn(async (_org: string | null, keys: string[]) =>
+    Object.fromEntries(keys.map((k) => [k, settings[k]]))
+  ),
+}));
+
 const devOtp = { override: null as string | null, logInstead: false };
 vi.mock("./otp-dev", () => ({
   getDevOtpOverride: () => devOtp.override,
@@ -34,44 +45,52 @@ import { prisma } from "@/lib/db";
 import { sendOtpEmail } from "@/lib/services/notification/email-auth";
 import { sendOtp, verifyOtp } from "./otp";
 
-type MockedPrisma = {
-  user: { findUnique: ReturnType<typeof vi.fn> };
+type Fn = ReturnType<typeof vi.fn>;
+const db = prisma as unknown as {
+  user: { findFirst: Fn; create: Fn };
+  invitation: { findFirst: Fn };
   otpToken: {
-    findFirst: ReturnType<typeof vi.fn>;
-    deleteMany: ReturnType<typeof vi.fn>;
-    create: ReturnType<typeof vi.fn>;
-    update: ReturnType<typeof vi.fn>;
-    delete: ReturnType<typeof vi.fn>;
+    findFirst: Fn;
+    deleteMany: Fn;
+    create: Fn;
+    update: Fn;
+    delete: Fn;
   };
 };
-
-const db = prisma as unknown as MockedPrisma;
-const mockedSendOtpEmail = sendOtpEmail as ReturnType<typeof vi.fn>;
+const mockedSendOtpEmail = sendOtpEmail as Fn;
 
 const TEST_EMAIL = "test@example.com";
 const TEST_CODE = "123456";
 
+beforeEach(() => {
+  vi.clearAllMocks();
+  Object.assign(settings, {
+    "security.allowEmailCodeSignIn": true,
+    "security.otpExpiryMinutes": 10,
+    "security.otpMaxAttempts": 5,
+    "security.authEmailCooldownSeconds": 60,
+  });
+  db.user.findFirst.mockResolvedValue({
+    id: "user-1",
+    email: TEST_EMAIL,
+    name: "Test User",
+    organizationId: "org-1",
+  });
+  db.invitation.findFirst.mockResolvedValue(null);
+  db.otpToken.findFirst.mockResolvedValue(null);
+  db.otpToken.deleteMany.mockResolvedValue({ count: 0 });
+  db.otpToken.create.mockResolvedValue({ id: "token-1" });
+  mockedSendOtpEmail.mockResolvedValue({ success: true });
+  devOtp.override = null;
+  devOtp.logInstead = false;
+});
+
 describe("sendOtp", () => {
-  beforeEach(() => {
-    vi.clearAllMocks();
-    db.user.findUnique.mockResolvedValue({
-      id: "user-1",
-      email: TEST_EMAIL,
-      name: "Test User",
-    });
-    db.otpToken.findFirst.mockResolvedValue(null);
-    db.otpToken.deleteMany.mockResolvedValue({ count: 0 });
-    db.otpToken.create.mockResolvedValue({
-      id: "token-1",
-      email: TEST_EMAIL,
-      code: TEST_CODE,
-      expires: new Date(Date.now() + 10 * 60 * 1000),
-      attempts: 0,
-      createdAt: new Date(),
-    });
-    mockedSendOtpEmail.mockResolvedValue({ success: true });
-    devOtp.override = null;
-    devOtp.logInstead = false;
+  it("is refused while email-code sign-in is disabled (default)", async () => {
+    settings["security.allowEmailCodeSignIn"] = false;
+    const result = await sendOtp(TEST_EMAIL);
+    expect(result).toEqual({ success: false, error: "EMAIL_CODE_DISABLED" });
+    expect(db.otpToken.create).not.toHaveBeenCalled();
   });
 
   it("uses the fixed development code and skips email when AUTH_DEV_OTP is set", async () => {
@@ -82,128 +101,112 @@ describe("sendOtp", () => {
     expect(mockedSendOtpEmail).not.toHaveBeenCalled();
   });
 
-  it("succeeds without email when no provider is configured outside production", async () => {
+  it("succeeds without email when no provider is configured locally", async () => {
     devOtp.logInstead = true;
     const result = await sendOtp(TEST_EMAIL);
     expect(result.success).toBe(true);
     expect(mockedSendOtpEmail).not.toHaveBeenCalled();
   });
 
-  it("returns USER_NOT_FOUND error when email is not registered", async () => {
-    db.user.findUnique.mockResolvedValue(null);
+  it("answers an unknown email like a success and sends nothing", async () => {
+    db.user.findFirst.mockResolvedValue(null);
     const result = await sendOtp("unknown@example.com");
-    expect(result.success).toBe(false);
-    expect(result.error).toBe("USER_NOT_FOUND");
+    expect(result.success).toBe(true);
+    expect(db.otpToken.create).not.toHaveBeenCalled();
+    expect(mockedSendOtpEmail).not.toHaveBeenCalled();
   });
 
-  it("returns COOLDOWN_ACTIVE error when OTP was sent within 60 seconds", async () => {
-    db.otpToken.findFirst.mockResolvedValue({
-      id: "old-token",
-      email: TEST_EMAIL,
-      createdAt: new Date(Date.now() - 30 * 1000),
+  it("creates a provisional account for an invited email", async () => {
+    db.user.findFirst.mockResolvedValue(null);
+    db.invitation.findFirst.mockResolvedValue({ organizationId: "org-2" });
+    db.user.create.mockResolvedValue({
+      id: "user-2",
+      email: "new@example.com",
+      name: null,
+      organizationId: null,
     });
-    const result = await sendOtp(TEST_EMAIL);
-    expect(result.success).toBe(false);
-    expect(result.error).toBe("COOLDOWN_ACTIVE");
+    const result = await sendOtp("new@example.com");
+    expect(result.success).toBe(true);
+    expect(db.user.create).toHaveBeenCalled();
+    expect(mockedSendOtpEmail).toHaveBeenCalled();
   });
 
-  it("sends OTP successfully when user exists and no cooldown", async () => {
+  it("returns COOLDOWN_ACTIVE when a code was sent within the cooldown", async () => {
+    db.otpToken.findFirst.mockResolvedValue({ id: "recent" });
+    const result = await sendOtp(TEST_EMAIL);
+    expect(result).toEqual({ success: false, error: "COOLDOWN_ACTIVE" });
+  });
+
+  it("deletes existing tokens, creates a 6-digit code and emails it", async () => {
     const result = await sendOtp(TEST_EMAIL);
     expect(result.success).toBe(true);
-  });
-
-  it("deletes existing tokens before creating new one", async () => {
-    await sendOtp(TEST_EMAIL);
     expect(db.otpToken.deleteMany).toHaveBeenCalledWith({
       where: { email: TEST_EMAIL },
     });
-    expect(db.otpToken.create).toHaveBeenCalled();
-  });
-
-  it("calls sendOtpEmail with the user's email", async () => {
-    await sendOtp(TEST_EMAIL);
+    const data = db.otpToken.create.mock.calls[0][0].data;
+    expect(data.code).toMatch(/^\d{6}$/);
+    expect(data.expires.getTime()).toBeGreaterThan(Date.now() + 9 * 60_000);
     expect(mockedSendOtpEmail).toHaveBeenCalledWith(
       expect.objectContaining({ to: TEST_EMAIL })
     );
   });
 
-  it("generates a 6-digit numeric code", async () => {
-    await sendOtp(TEST_EMAIL);
-    const createData = db.otpToken.create.mock.calls[0][0].data;
-    expect(createData.code).toMatch(/^\d{6}$/);
-  });
-
-  it("returns EMAIL_SEND_FAILED error when email service fails", async () => {
-    mockedSendOtpEmail.mockResolvedValue({
-      success: false,
-      error: "Resend API error",
-    });
+  it("returns EMAIL_SEND_FAILED when the email service fails", async () => {
+    mockedSendOtpEmail.mockResolvedValue({ success: false, error: "boom" });
     const result = await sendOtp(TEST_EMAIL);
-    expect(result.success).toBe(false);
-    expect(result.error).toBe("EMAIL_SEND_FAILED");
+    expect(result).toEqual({ success: false, error: "EMAIL_SEND_FAILED" });
   });
 });
 
 describe("verifyOtp", () => {
-  const validToken = {
+  const token = (overrides: Record<string, unknown> = {}) => ({
     id: "token-1",
     email: TEST_EMAIL,
     code: TEST_CODE,
-    expires: new Date(Date.now() + 5 * 60 * 1000),
+    expires: new Date(Date.now() + 60_000),
     attempts: 0,
     createdAt: new Date(),
-  };
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-    db.otpToken.findFirst.mockResolvedValue(validToken);
-    db.otpToken.delete.mockResolvedValue(validToken);
-    db.otpToken.update.mockResolvedValue({ ...validToken, attempts: 1 });
+    ...overrides,
   });
 
-  it("returns NO_ACTIVE_OTP when no token found for email", async () => {
-    db.otpToken.findFirst.mockResolvedValue(null);
+  it("returns NO_ACTIVE_OTP when no token is found", async () => {
     const result = await verifyOtp(TEST_EMAIL, TEST_CODE);
-    expect(result.success).toBe(false);
-    expect(result.error).toBe("NO_ACTIVE_OTP");
+    expect(result).toEqual({ success: false, error: "NO_ACTIVE_OTP" });
+    expect(db.otpToken.update).not.toHaveBeenCalled();
+    expect(db.otpToken.delete).not.toHaveBeenCalled();
   });
 
-  it("returns MAX_ATTEMPTS_EXCEEDED when attempts is 5 or more", async () => {
-    db.otpToken.findFirst.mockResolvedValue({ ...validToken, attempts: 5 });
-    const result = await verifyOtp(TEST_EMAIL, "000000");
-    expect(result.success).toBe(false);
-    expect(result.error).toBe("MAX_ATTEMPTS_EXCEEDED");
+  it("returns MAX_ATTEMPTS_EXCEEDED at the configured attempt limit", async () => {
+    db.otpToken.findFirst.mockResolvedValue(token({ attempts: 5 }));
+    const result = await verifyOtp(TEST_EMAIL, TEST_CODE);
+    expect(result).toEqual({ success: false, error: "MAX_ATTEMPTS_EXCEEDED" });
   });
 
-  it("returns INVALID_OTP and increments attempts for wrong code", async () => {
+  it("returns INVALID_OTP and increments attempts for a wrong code", async () => {
+    db.otpToken.findFirst.mockResolvedValue(token());
     const result = await verifyOtp(TEST_EMAIL, "000000");
-    expect(result.success).toBe(false);
-    expect(result.error).toBe("INVALID_OTP");
+    expect(result).toEqual({ success: false, error: "INVALID_OTP" });
     expect(db.otpToken.update).toHaveBeenCalledWith({
-      where: { id: validToken.id },
+      where: { id: "token-1" },
       data: { attempts: { increment: 1 } },
     });
   });
 
-  it("returns success and deletes token for correct code", async () => {
+  it("succeeds and deletes the token for the right code", async () => {
+    db.otpToken.findFirst.mockResolvedValue(token());
     const result = await verifyOtp(TEST_EMAIL, TEST_CODE);
-    expect(result.success).toBe(true);
+    expect(result).toEqual({ success: true });
     expect(db.otpToken.delete).toHaveBeenCalledWith({
-      where: { id: validToken.id },
+      where: { id: "token-1" },
     });
   });
 
-  it("does not call delete or update when no token found", async () => {
-    db.otpToken.findFirst.mockResolvedValue(null);
+  it("only considers unexpired tokens", async () => {
     await verifyOtp(TEST_EMAIL, TEST_CODE);
-    expect(db.otpToken.delete).not.toHaveBeenCalled();
-    expect(db.otpToken.update).not.toHaveBeenCalled();
-  });
-
-  it("queries for non-expired token using expires > now filter", async () => {
-    await verifyOtp(TEST_EMAIL, TEST_CODE);
-    const findFirstCall = db.otpToken.findFirst.mock.calls[0][0];
-    expect(findFirstCall.where.email).toBe(TEST_EMAIL);
-    expect(findFirstCall.where.expires).toHaveProperty("gt");
+    expect(db.otpToken.findFirst).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { email: TEST_EMAIL, expires: { gt: expect.any(Date) } },
+      })
+    );
   });
 });

@@ -86,7 +86,7 @@ function showBlockPage(blockedDomain: BlacklistDomain): void {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    font-family: Lato, Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     color: white;
   `;
 

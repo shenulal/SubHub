@@ -8,7 +8,7 @@
 import { requireOrganization } from "@/lib/auth/require-auth";
 import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
-import { getUserPermissionSet } from "@/lib/rbac/service";
+import { can, getUserPermissionSet } from "@/lib/rbac/service";
 import { toMonthlyBaseAmount } from "@/lib/services/subscription/money-adapter";
 import type { ActionState, PaginatedResponse } from "@/types";
 import type {
@@ -35,16 +35,19 @@ import type {
 
 const DEFAULT_PAGE_SIZE = 20;
 
-async function resolveVisibility(
-  needsReadAll: boolean
-): Promise<ListVisibilityContext> {
+async function resolveVisibility(): Promise<
+  ListVisibilityContext & { canRead: boolean }
+> {
   const { organizationId, role, userId, teamId } = await requireOrganization();
-  let canReadAll = role === "ADMIN";
-  if (!canReadAll && needsReadAll) {
-    const permissions = await getUserPermissionSet(userId, organizationId);
-    canReadAll = permissions.has("subscriptions:read_all");
-  }
-  return { organizationId, userId, role, teamId, canReadAll };
+  const permissions = await getUserPermissionSet(userId, organizationId);
+  return {
+    organizationId,
+    userId,
+    role,
+    teamId,
+    canRead: permissions.has("subscriptions:read"),
+    canReadAll: permissions.has("subscriptions:read_all"),
+  };
 }
 
 /** Attach the monthly base-currency amount when FX is available. */
@@ -80,10 +83,12 @@ export async function getSubscriptions(
     page = 1,
     limit = DEFAULT_PAGE_SIZE,
   } = params;
-  const ctx = await resolveVisibility(filter.scope === "all");
+  const ctx = await resolveVisibility();
 
-  // Legacy: a MEMBER without a team sees nothing.
-  if (ctx.role === "MEMBER" && !ctx.teamId && !ctx.canReadAll) {
+  // No subscriptions:read, or team-scoped without a team: nothing to list.
+  const teamScopedWithoutTeam =
+    !ctx.canReadAll && ctx.role !== "VIEWER" && !ctx.teamId;
+  if (!ctx.canRead || teamScopedWithoutTeam) {
     return { items: [], total: 0, page, limit, totalPages: 0 };
   }
 
@@ -122,21 +127,22 @@ export async function getSubscriptions(
 export async function getSubscription(
   id: string
 ): Promise<SubscriptionDetail | null> {
-  const { organizationId, role, userId } = await requireOrganization();
+  const { organizationId, userId, canRead, canReadAll } =
+    await resolveVisibility();
+  if (!canRead) return null;
 
-  // Non-admins see subscriptions they own, are assigned to, or that are
-  // workspace-visible; personal items stay private to their owner.
-  const visibility =
-    role === "ADMIN"
-      ? {}
-      : {
-          OR: [
-            { ownerId: userId },
-            { assignedUsers: { some: { userId } } },
-            { isPersonal: false },
-          ],
-          NOT: { isPersonal: true, ownerId: { not: userId } },
-        };
+  // Without subscriptions:read_all a user sees subscriptions they own, are
+  // assigned to, or that are workspace-visible; personal items stay private.
+  const visibility = canReadAll
+    ? {}
+    : {
+        OR: [
+          { ownerId: userId },
+          { assignedUsers: { some: { userId } } },
+          { isPersonal: false },
+        ],
+        NOT: { isPersonal: true, ownerId: { not: userId } },
+      };
 
   const subscription = await prisma.subscription.findFirst({
     where: { id, organizationId, ...visibility },
@@ -158,6 +164,8 @@ export async function getLinkedPayments(
 ): Promise<ActionState<LinkedPayment[]>> {
   try {
     const { organizationId } = await requireOrganization();
+    // Payment records are organisation finance data (payments:read).
+    if (!(await can("payments:read"))) return { success: true, data: [] };
 
     const subscription = await prisma.subscription.findFirst({
       where: { id: subscriptionId, organizationId },

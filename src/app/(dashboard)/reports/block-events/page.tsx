@@ -5,6 +5,7 @@ import {
 } from "@/actions/reports/block-events";
 import { getDateRangePresets } from "@/actions/reports/browsing-usage";
 import { auth } from "@/lib/auth";
+import { requirePermissionOrRedirect } from "@/lib/rbac/service";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
@@ -31,6 +32,10 @@ interface BlockEventsPageProps {
 export default async function BlockEventsPage({
   searchParams,
 }: BlockEventsPageProps) {
+  await requirePermissionOrRedirect(
+    ["reports:read", "extensions:read"],
+    "/reports/cost"
+  );
   const session = await auth();
 
   if (!session?.user) {

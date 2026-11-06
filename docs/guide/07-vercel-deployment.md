@@ -30,13 +30,11 @@ npm run quality
 
 ### 2.1 Required Environment Variables (Phase 4 Deployment)
 
-| Variable name          | Description                           | How to obtain                    |
-| ---------------------- | ------------------------------------- | -------------------------------- |
-| `DATABASE_URL`         | Supabase PostgreSQL connection string | Supabase > Settings > Database   |
-| `NEXTAUTH_SECRET`      | NextAuth session encryption key       | `openssl rand -base64 32`        |
-| `NEXTAUTH_URL`         | Application URL                       | `https://your-domain.vercel.app` |
-| `GOOGLE_CLIENT_ID`     | Google OAuth client ID                | Google Cloud Console             |
-| `GOOGLE_CLIENT_SECRET` | Google OAuth client secret            | Google Cloud Console             |
+| Variable name     | Description                           | How to obtain                    |
+| ----------------- | ------------------------------------- | -------------------------------- |
+| `DATABASE_URL`    | Supabase PostgreSQL connection string | Supabase > Settings > Database   |
+| `NEXTAUTH_SECRET` | NextAuth session encryption key       | `openssl rand -base64 32`        |
+| `NEXTAUTH_URL`    | Application URL                       | `https://your-domain.vercel.app` |
 
 ### 2.2 Optional Environment Variables (Sprint 2+)
 
@@ -84,6 +82,10 @@ npm run db:push
 ---
 
 ## 4. Google OAuth Configuration
+
+> **SubHub:** Google sign-in has been removed — members sign in with a user name or email and
+> password. This section is only needed for the optional Gmail receipt scanning
+> (`GMAIL_CLIENT_ID` / `GMAIL_CLIENT_SECRET`, redirect URI `/api/integrations/mailbox/gmail/callback`).
 
 ### 4.1 Google Cloud Console Setup
 
@@ -138,8 +140,6 @@ Add the following variables in the **Environment Variables** section:
 - `DATABASE_URL`
 - `NEXTAUTH_SECRET`
 - `NEXTAUTH_URL` (set automatically, but adding it explicitly is recommended)
-- `GOOGLE_CLIENT_ID`
-- `GOOGLE_CLIENT_SECRET`
 
 ### 5.4 Deploy
 

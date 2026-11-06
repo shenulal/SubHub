@@ -1,59 +1,74 @@
 // src/actions/auth-credentials.ts
 "use server";
 
+import { AUTH_AUDIT_ACTIONS, recordAuthEvent } from "@/lib/auth/auth-audit";
 import { hashPassword } from "@/lib/auth/password";
+import {
+  checkPasswordPolicy,
+  getSignupPasswordPolicy,
+} from "@/lib/auth/password-policy";
+import { optionalUsernameSchema } from "@/lib/auth/username";
 import { prisma } from "@/lib/db";
 import { isSignupOpen } from "@/lib/deployment/tenancy";
 import { logger } from "@/lib/logger";
 import { withLogging } from "@/lib/logging";
 import { sendVerificationEmail } from "@/lib/services/notification/email-auth";
-import { passwordSchema } from "@/lib/validation/password";
 import type { ActionState } from "@/types";
+import { randomUUID } from "node:crypto";
 import { z } from "zod";
 
 const registerSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
-  password: passwordSchema,
-  name: z.string().min(1, "Please enter a name").max(100, "Name is too long"),
+  email: z
+    .string()
+    .trim()
+    .toLowerCase()
+    .email("Please enter a valid email address"),
+  password: z.string().min(1, "Please enter a password").max(256),
+  name: z
+    .string()
+    .trim()
+    .min(1, "Please enter a name")
+    .max(100, "Name is too long"),
+  username: optionalUsernameSchema,
 });
 
 export interface RegisterUserInput {
   email: string;
   password: string;
   name: string;
+  username?: string;
+}
+
+function readInput(input: RegisterUserInput | FormData) {
+  if (!(input instanceof FormData)) return input;
+  return {
+    email: input.get("email"),
+    password: input.get("password"),
+    name: input.get("name"),
+    username: input.get("username") ?? undefined,
+  };
 }
 
 /**
- * Sign up with email/password
- * 1. Check for a duplicate email
- * 2. Hash the password
- * 3. Create the User (emailVerified = null)
- * 4. Create a verification token and send the email
+ * Sign up with email/password (optional user name)
+ * 1. Validate input and the password policy (Settings > Security)
+ * 2. Check for a duplicate email / user name
+ * 3. Create the User with a bcrypt hash and send a verification email
+ *    (best effort: on-premise installs without email can still sign in)
  */
 async function _registerUser(
   input: RegisterUserInput | FormData
 ): Promise<ActionState> {
   try {
-    // Extract data from FormData or a plain object
-    const rawData =
-      input instanceof FormData
-        ? {
-            email: input.get("email"),
-            password: input.get("password"),
-            name: input.get("name"),
-          }
-        : input;
-
-    // Validate
-    const parsed = registerSchema.safeParse(rawData);
+    const parsed = registerSchema.safeParse(readInput(input));
     if (!parsed.success) {
       const fieldErrors = parsed.error.flatten().fieldErrors;
       const firstError =
         fieldErrors.email?.[0] ||
         fieldErrors.password?.[0] ||
         fieldErrors.name?.[0] ||
+        fieldErrors.username?.[0] ||
         "Please check your input";
-
       return {
         success: false,
         message: firstError,
@@ -61,7 +76,7 @@ async function _registerUser(
       };
     }
 
-    const { email, password, name } = parsed.data;
+    const { email, password, name, username } = parsed.data;
 
     // Server-side gate for the public form: system.allowSelfSignup, or the
     // first-run setup of a single-tenant installation.
@@ -73,84 +88,75 @@ async function _registerUser(
       };
     }
 
-    // Check for a duplicate email (including the Account table to detect OAuth users)
-    const existingUser = await prisma.user.findUnique({
-      where: { email },
-      include: {
-        accounts: {
-          select: { provider: true },
-        },
-      },
-    });
-
-    if (existingUser) {
-      // Google OAuth user
-      const googleAccount = existingUser.accounts.find(
-        (acc) => acc.provider === "google"
-      );
-
-      if (googleAccount) {
-        return {
-          success: false,
-          message: "This email is already registered with Google",
-          error: "EMAIL_EXISTS_OAUTH_GOOGLE",
-        };
-      }
-
-      // Email/password user (has a passwordHash)
-      if (existingUser.passwordHash) {
-        return {
-          success: false,
-          message: "This email is already registered",
-          error: "EMAIL_EXISTS_CREDENTIALS",
-        };
-      }
-
-      // Other OAuth users (Okta, Microsoft, etc. - future extension)
+    const issues = checkPasswordPolicy(
+      password,
+      await getSignupPasswordPolicy()
+    );
+    if (issues.length) {
       return {
         success: false,
-        message: "This email is already in use",
-        error: "EMAIL_EXISTS",
+        message: issues[0],
+        errors: { password: issues },
       };
     }
 
-    // Hash the password
-    const passwordHash = await hashPassword(password);
+    const existingUser = await prisma.user.findUnique({
+      where: { email },
+      select: { passwordHash: true },
+    });
+    if (existingUser) {
+      return existingUser.passwordHash
+        ? {
+            success: false,
+            message: "This email is already registered",
+            error: "EMAIL_EXISTS_CREDENTIALS",
+          }
+        : {
+            success: false,
+            message: "This email is already in use",
+            error: "EMAIL_EXISTS",
+          };
+    }
+    if (username) {
+      const taken = await prisma.user.findUnique({
+        where: { username },
+        select: { id: true },
+      });
+      if (taken) {
+        const message = "That user name is already taken";
+        return { success: false, message, errors: { username: [message] } };
+      }
+    }
 
-    // Create the User (emailVerified = null, organizationId = null)
-    await prisma.user.create({
+    const user = await prisma.user.create({
       data: {
         email,
         name,
-        passwordHash,
+        username,
+        passwordHash: await hashPassword(password),
+        passwordChangedAt: new Date(),
         emailVerified: null,
       },
     });
+    await recordAuthEvent({
+      action: AUTH_AUDIT_ACTIONS.passwordChanged,
+      subjectUserId: user.id,
+      organizationId: null,
+      metadata: { reason: "sign_up" },
+    });
 
     // Create a verification token (valid for 24 hours)
-    const token = crypto.randomUUID();
+    const token = randomUUID();
     const expires = new Date();
     expires.setHours(expires.getHours() + 24);
-
     await prisma.emailVerificationToken.create({
-      data: {
-        email,
-        token,
-        expires,
-      },
+      data: { email, token, expires },
     });
-
-    // Send the verification email
-    await sendVerificationEmail({
-      to: email,
-      token,
-      userName: name,
-    });
+    await sendVerificationEmail({ to: email, token, userName: name });
 
     return {
       success: true,
-      message:
-        "Sign-up complete. Please check your email to verify your account.",
+      message: "Account created. Sign in with your new password.",
     };
   } catch (error) {
     logger.error({ err: error }, "Sign-up error");
@@ -249,7 +255,7 @@ async function _resendVerificationEmail(email: string): Promise<ActionState> {
     });
 
     // Create a new token
-    const token = crypto.randomUUID();
+    const token = randomUUID();
     const expires = new Date();
     expires.setHours(expires.getHours() + 24);
 

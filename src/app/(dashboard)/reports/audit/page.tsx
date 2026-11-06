@@ -3,6 +3,7 @@ import { getAuditLogFilterOptions, getAuditLogs } from "@/actions/audit";
 import { getDateRangePresets } from "@/actions/reports/browsing-usage";
 import { auth } from "@/lib/auth";
 import { parseOptionalMultiValue } from "@/lib/filters/multi-value";
+import { can, requirePermissionOrRedirect } from "@/lib/rbac/service";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
@@ -33,6 +34,8 @@ interface AuditLogPageProps {
 export default async function AuditLogPage({
   searchParams,
 }: AuditLogPageProps) {
+  await requirePermissionOrRedirect("audit:read", "/reports/cost");
+  const canExport = await can("audit:export");
   const session = await auth();
 
   if (!session?.user) {
@@ -100,7 +103,7 @@ export default async function AuditLogPage({
         pagination={logsData.pagination}
         filterOptions={filterOptions}
         initialFilters={filters}
-        canExport={session.user.role !== "VIEWER"}
+        canExport={canExport}
         presets={presets.map((p) => ({ value: p.value, label: p.label }))}
         currentPeriod={params.period || "30d"}
         currentStartDate={startDateStr}

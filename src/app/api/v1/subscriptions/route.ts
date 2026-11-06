@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createSubscription, getSubscriptions } from "@/actions/subscriptions";
 import { auth } from "@/lib/auth";
 import { withLogging } from "@/lib/logging";
+import { can } from "@/lib/rbac/service";
 import {
   jsonBodyToFormData,
   parseSubscriptionListQuery,
@@ -41,7 +42,7 @@ export const POST = withLogging(
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
     }
 
-    if (session.user.role === "VIEWER") {
+    if (!(await can("subscriptions:create"))) {
       return NextResponse.json(
         { message: "Read-only users cannot create subscriptions" },
         { status: 403 }

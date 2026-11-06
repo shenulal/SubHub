@@ -21,7 +21,7 @@ import {
   Users,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
-import Image from "next/image";
+import { AppLogo } from "./app-logo";
 
 import { APP_STATUS_TONE } from "./app-status-tone";
 
@@ -71,19 +71,12 @@ export function AppDetail({ app, canEdit = true }: AppDetailProps) {
               <div className="flex min-w-0 flex-col gap-6 sm:flex-row">
                 {/* Logo */}
                 <div className="shrink-0">
-                  {logoUrl ? (
-                    <Image
-                      src={logoUrl}
-                      alt={app.name}
-                      width={120}
-                      height={120}
-                      className="size-[120px] rounded-lg border object-contain p-2"
-                    />
-                  ) : (
-                    <div className="tonal-primary flex size-[120px] items-center justify-center rounded-lg text-4xl font-medium">
-                      {app.name.charAt(0).toUpperCase()}
-                    </div>
-                  )}
+                  <AppLogo
+                    src={logoUrl}
+                    name={app.name}
+                    className="size-[120px] rounded-lg p-2"
+                    fallbackClassName="text-4xl"
+                  />
                 </div>
                 {/* Info */}
                 <div className="min-w-0 flex-1 space-y-3">

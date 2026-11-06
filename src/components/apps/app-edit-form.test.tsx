@@ -161,7 +161,7 @@ describe("AppEditForm", () => {
     render(<AppEditForm app={mockApp} />);
 
     expect(screen.getByDisplayValue("Slack")).toBeInTheDocument();
-    expect(screen.getByDisplayValue("Collaboration")).toBeInTheDocument();
+    // Category is chosen from the category master (searchable picker), not typed
     expect(
       screen.getByDisplayValue("https://example.com/slack.png")
     ).toBeInTheDocument();
@@ -191,7 +191,9 @@ describe("AppEditForm", () => {
     };
     render(<AppEditForm app={mockApp} />);
 
-    expect(screen.getByTestId("select-mock")).toBeInTheDocument();
+    // Status plus the master-data pickers (category, owner) render as selects
+    expect(screen.getAllByTestId("select-mock").length).toBeGreaterThan(0);
+    expect(screen.getByText("Select status")).toBeInTheDocument();
   });
 
   it("navigates back when cancel is clicked", async () => {
@@ -247,10 +249,6 @@ describe("AppEditForm", () => {
     render(<AppEditForm app={mockApp} />);
 
     expect(screen.getByLabelText(/App name/)).toHaveAttribute("name", "name");
-    expect(screen.getByLabelText(/Category/)).toHaveAttribute(
-      "name",
-      "category"
-    );
     expect(screen.getByLabelText(/Logo URL/)).toHaveAttribute(
       "name",
       "customLogoUrl"

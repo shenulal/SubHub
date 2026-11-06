@@ -7,6 +7,7 @@
 import { checkDuplicate } from "@/actions/subscriptions/subscription-lifecycle";
 import { suggestCategory } from "@/actions/taxonomy/auto-categorize";
 import { searchCatalog } from "@/actions/taxonomy/catalog";
+import { AppLogo } from "@/components/apps/app-logo";
 import {
   CreateAppDialog,
   type CreatedApp,
@@ -89,6 +90,9 @@ export function SubscriptionFormVendor({
   const catalogId = useWatch({ control, name: "catalogId" }) ?? "";
   const appWebsite = useWatch({ control, name: "appWebsite" }) ?? "";
   const appId = useWatch({ control, name: "appId" }) ?? "";
+  const catalogLogo = useWatch({ control, name: "appLogoUrl" }) ?? "";
+  const selectedLogo =
+    apps.find((a) => a.id === appId)?.logoUrl ?? (catalogLogo || null);
   const canCreateApp = usePermissionFlag("apps:manage");
   const [createName, setCreateName] = useState<string | null>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -172,7 +176,7 @@ export function SubscriptionFormVendor({
 
   const handleCreated = (app: CreatedApp) => {
     onAppCreated?.(app);
-    pickApp({ id: app.id, name: app.name });
+    pickApp({ id: app.id, name: app.name, logoUrl: app.logoUrl });
     setValue("appWebsite", app.website ?? "", { shouldDirty: true });
     if (app.categoryId) {
       setValue("categoryId", app.categoryId, { shouldDirty: true });
@@ -213,9 +217,19 @@ export function SubscriptionFormVendor({
                     !appName && "text-muted-foreground"
                   )}
                 >
-                  <span className="truncate">
-                    {appName ||
-                      t("subscriptions.form.basicInfo.appPlaceholder")}
+                  <span className="flex min-w-0 items-center gap-2">
+                    {appName && (
+                      <AppLogo
+                        src={selectedLogo}
+                        name={appName}
+                        className="size-6 rounded-sm p-0"
+                        fallbackClassName="text-xs"
+                      />
+                    )}
+                    <span className="truncate">
+                      {appName ||
+                        t("subscriptions.form.basicInfo.appPlaceholder")}
+                    </span>
                   </span>
                   <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                 </button>

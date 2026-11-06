@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { withLogging } from "@/lib/logging";
+import { can } from "@/lib/rbac/service";
 import { sendConfirmationResultEmail } from "@/lib/services/notification/email";
 import { normalizeMerchantName } from "@/lib/services/payment/merchant-matcher";
 import type { ActionState } from "@/types";
@@ -48,8 +49,8 @@ async function requireSession() {
 async function requireAdminSession() {
   const result = await requireSession();
   if ("error" in result) return result;
-  if (result.user.role !== "ADMIN") {
-    return { error: "Only admins can confirm this" };
+  if (!(await can("payments:manage"))) {
+    return { error: "You do not have permission to confirm this" };
   }
   return result;
 }

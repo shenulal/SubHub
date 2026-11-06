@@ -75,6 +75,18 @@ export function withApiAuth(
       );
     }
 
+    // A temporary password must be replaced before the account can be used
+    if (session.user.mustChangePassword) {
+      return NextResponse.json(
+        {
+          success: false,
+          error: "Password change required",
+          code: "PASSWORD_CHANGE_REQUIRED",
+        },
+        { status: 403 }
+      );
+    }
+
     // Validate the organization (SUPER_ADMIN is allowed without one)
     const userRole = session.user.role as Role;
     if (!session.user.organizationId && userRole !== "SUPER_ADMIN") {

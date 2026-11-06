@@ -3,7 +3,15 @@
 // answers, and the core flows (subscription create → approval → decision →
 // notification → lifecycle) work end to end against the real server + database.
 import { expect, test } from "@playwright/test";
-import { apiGet, apiPost, expectPageOk, login, prisma, QA } from "./helpers";
+import {
+  apiGet,
+  apiPost,
+  cleanupSmokeData,
+  expectPageOk,
+  login,
+  prisma,
+  QA,
+} from "./helpers";
 
 const PAGES = [
   "/dashboard",
@@ -57,6 +65,7 @@ test.describe("SubHub smoke", () => {
   });
 
   test.afterAll(async () => {
+    await cleanupSmokeData();
     await prisma.$disconnect();
   });
 

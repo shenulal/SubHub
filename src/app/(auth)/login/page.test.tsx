@@ -1,7 +1,9 @@
 // src/app/(auth)/login/page.test.tsx
-import messages from "@/i18n/messages/en.json";
+import { getAllMessages } from "@/i18n/messages";
 import { render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const messages = getAllMessages("en");
 
 const getMessage = (key: string): string => {
   return key.split(".").reduce((acc, part) => {
@@ -12,24 +14,9 @@ const getMessage = (key: string): string => {
   }, messages as unknown) as string;
 };
 
-const formatMessage = (
-  template: string,
-  values?: Record<string, string | number>
-) => {
-  if (!values) return template;
-  return template.replace(/\{(\w+)\}/g, (_, token) =>
-    values[token] !== undefined ? String(values[token]) : `{${token}}`
-  );
-};
-
-// Mock next-auth before importing page
 vi.mock("next-auth", () => ({
   AuthError: class AuthError extends Error {
-    type: string;
-    constructor(message?: string) {
-      super(message);
-      this.type = "CredentialsSignin";
-    }
+    type = "CredentialsSignin";
   },
 }));
 
@@ -39,56 +26,50 @@ vi.mock("@/lib/auth", () => ({
   isAppleSignInEnabled: () => false,
 }));
 
+const options = {
+  appleEnabled: false,
+  enforceSso: false,
+  allowSelfSignup: true,
+  emailCodeEnabled: false,
+};
 vi.mock("@/lib/auth/sign-in-options", () => ({
-  getSignInOptions: vi.fn().mockResolvedValue({
-    appleEnabled: false,
-    enforceSso: false,
-    allowSelfSignup: true,
-  }),
+  getSignInOptions: vi.fn(async () => options),
 }));
 
+const redirect = vi.fn((url: string) => {
+  throw new Error(`REDIRECT:${url}`);
+});
 vi.mock("next/navigation", () => ({
-  redirect: vi.fn(),
+  redirect: (url: string) => redirect(url),
 }));
 
 vi.mock("next-intl/server", () => ({
   getTranslations: async () => {
-    const t = (key: string, values?: Record<string, string | number>) =>
-      formatMessage(getMessage(key), values);
+    const t = (key: string) => getMessage(key);
     t.raw = (key: string) => getMessage(key);
     return t;
   },
 }));
 
-// Mock LoginForm to render key fields for integration testing
-vi.mock("@/components/auth/login-form", () => ({
-  LoginForm: ({
-    translations,
-  }: {
-    action: (formData: FormData) => void;
-    translations: {
-      email: string;
-      emailPlaceholder: string;
-      sendOtp: string;
-      sendingOtp: string;
-      resendOtp: string;
-      resendCooldown: string;
-      otpLabel: string;
-      otpPlaceholder: string;
-      submit: string;
-      signingIn: string;
-      changeEmail: string;
-    };
+vi.mock("@/components/auth/password-login-form", () => ({
+  PasswordLoginForm: (props: {
+    variant?: string;
+    callbackUrl?: string;
+    emailCodeHref?: string | null;
+    signupHref?: string | null;
   }) => (
-    <form data-testid="login-credentials-form">
-      <label htmlFor="mock-email">{translations.email}</label>
-      <input id="mock-email" name="email" type="email" />
-      <button type="button" data-testid="send-otp-btn">
-        {translations.sendOtp}
-      </button>
-      <button type="submit">{translations.submit}</button>
-    </form>
+    <div
+      data-testid="password-login"
+      data-variant={props.variant}
+      data-callback={props.callbackUrl}
+      data-email-code={props.emailCodeHref ?? ""}
+      data-signup={props.signupHref ?? ""}
+    />
   ),
+}));
+
+vi.mock("@/components/auth/login-form", () => ({
+  LoginForm: () => <form data-testid="login-credentials-form" />,
 }));
 
 import { auth } from "@/lib/auth";
@@ -97,100 +78,121 @@ import LoginPage from "./page";
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const mockedAuth = auth as any;
 
+type Params = {
+  error?: string;
+  message?: string;
+  method?: string;
+  callbackUrl?: string;
+};
+
+const renderLoginPage = async (searchParams: Params = {}) => {
+  const ui = await LoginPage({ searchParams: Promise.resolve(searchParams) });
+  render(ui);
+};
+
 describe("LoginPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockedAuth.mockResolvedValue(null);
-  });
-
-  const renderLoginPage = async (searchParams: { error?: string } = {}) => {
-    const ui = await LoginPage({ searchParams: Promise.resolve(searchParams) });
-    render(ui);
-  };
-
-  describe("rendering", () => {
-    it("renders the login page", async () => {
-      await renderLoginPage();
-      expect(screen.getByTestId("login-page")).toBeInTheDocument();
-    });
-
-    it("shows the login title", async () => {
-      await renderLoginPage();
-      expect(
-        screen.getByRole("heading", { name: "Sign In" })
-      ).toBeInTheDocument();
-    });
-
-    it("shows the login description", async () => {
-      await renderLoginPage();
-      expect(
-        screen.getByText("Log in with your email verification code")
-      ).toBeInTheDocument();
+    Object.assign(options, {
+      appleEnabled: false,
+      enforceSso: false,
+      allowSelfSignup: true,
+      emailCodeEnabled: false,
     });
   });
 
-  describe("email/OTP form", () => {
-    it("has an email input field", async () => {
-      await renderLoginPage();
-      expect(screen.getByLabelText(/Email/)).toBeInTheDocument();
-    });
-
-    it("has a send-OTP button", async () => {
-      await renderLoginPage();
-      expect(screen.getByTestId("send-otp-btn")).toBeInTheDocument();
-    });
-
-    it("has a login button", async () => {
-      await renderLoginPage();
-      expect(
-        screen.getByRole("button", { name: /log in/i })
-      ).toBeInTheDocument();
-    });
-
-    it("shows the correct login button text", async () => {
-      await renderLoginPage();
-      expect(
-        screen.getByRole("button", { name: "Log in" })
-      ).toBeInTheDocument();
-    });
+  it("renders the user name / password form by default", async () => {
+    await renderLoginPage();
+    const form = screen.getByTestId("password-login");
+    expect(form).toHaveAttribute("data-variant", "tenant");
+    expect(form).toHaveAttribute("data-callback", "/dashboard");
+    expect(form).toHaveAttribute("data-signup", "/signup");
+    expect(form).toHaveAttribute("data-email-code", "");
   });
 
-  describe("Google login button", () => {
-    it("has a Google login button", async () => {
-      await renderLoginPage();
-      expect(
-        screen.getByRole("button", { name: /google/i })
-      ).toBeInTheDocument();
-    });
-
-    it("has the button attached to a form", async () => {
-      await renderLoginPage();
-      const form = screen.getByTestId("login-form");
-      expect(form).toBeInTheDocument();
-    });
+  it("has no Google sign-in", async () => {
+    await renderLoginPage();
+    expect(screen.queryByRole("button", { name: /google/i })).toBeNull();
+    expect(screen.queryByText(/google/i)).toBeNull();
   });
 
-  describe("error messages", () => {
-    it("shows a message on a CredentialsSignin error", async () => {
-      await renderLoginPage({ error: "CredentialsSignin" });
-      expect(
-        screen.getByText("The verification code is incorrect")
-      ).toBeInTheDocument();
-    });
+  it("ignores ?method=email-code while email-code sign-in is off", async () => {
+    await renderLoginPage({ method: "email-code" });
+    expect(screen.getByTestId("password-login")).toBeInTheDocument();
+    expect(screen.queryByTestId("login-credentials-form")).toBeNull();
   });
 
-  describe("links", () => {
-    it("does not show a sign-up link", async () => {
-      await renderLoginPage();
-      expect(
-        screen.queryByRole("link", { name: /sign up/i })
-      ).not.toBeInTheDocument();
-    });
+  it("offers and renders email-code sign-in when the setting is on", async () => {
+    options.emailCodeEnabled = true;
+    await renderLoginPage();
+    expect(screen.getByTestId("password-login")).toHaveAttribute(
+      "data-email-code",
+      "/login?method=email-code"
+    );
+    await renderLoginPage({ method: "email-code", error: "CredentialsSignin" });
+    expect(screen.getByTestId("login-credentials-form")).toBeInTheDocument();
+    expect(
+      screen.getByText("The verification code is incorrect")
+    ).toBeInTheDocument();
+  });
 
-    it("does not show Terms of Service / Privacy Policy text", async () => {
-      await renderLoginPage();
-      expect(screen.queryByText(/Terms of Service/)).not.toBeInTheDocument();
-      expect(screen.queryByText(/Privacy Policy/)).not.toBeInTheDocument();
+  it("hides the sign-up link when self sign-up is closed", async () => {
+    options.allowSelfSignup = false;
+    await renderLoginPage();
+    expect(screen.getByTestId("password-login")).toHaveAttribute(
+      "data-signup",
+      ""
+    );
+  });
+
+  it("shows the password-reset confirmation", async () => {
+    await renderLoginPage({ message: "password-reset" });
+    expect(screen.getByTestId("login-info")).toHaveTextContent(
+      "Your password has been updated"
+    );
+  });
+
+  it("keeps only safe relative callback URLs", async () => {
+    await renderLoginPage({ callbackUrl: "//evil.example" });
+    expect(screen.getByTestId("password-login")).toHaveAttribute(
+      "data-callback",
+      "/dashboard"
+    );
+  });
+
+  it("shows the SSO-only notice instead of the form when SSO is enforced", async () => {
+    Object.assign(options, { enforceSso: true, appleEnabled: true });
+    await renderLoginPage();
+    expect(screen.queryByTestId("password-login")).toBeNull();
+    expect(screen.getByText(/requires single sign-on/)).toBeInTheDocument();
+  });
+
+  it("sends a signed-in platform super admin to /super-admin", async () => {
+    mockedAuth.mockResolvedValue({
+      user: { id: "sa", role: "SUPER_ADMIN", organizationId: null },
     });
+    await expect(renderLoginPage()).rejects.toThrow("REDIRECT:/super-admin");
+  });
+
+  it("sends a signed-in tenant user to the dashboard", async () => {
+    mockedAuth.mockResolvedValue({
+      user: { id: "u", role: "ADMIN", organizationId: "org-1" },
+    });
+    await expect(renderLoginPage()).rejects.toThrow("REDIRECT:/dashboard");
+  });
+
+  it("sends a forced password change to /change-password", async () => {
+    mockedAuth.mockResolvedValue({
+      user: {
+        id: "u",
+        role: "MEMBER",
+        organizationId: "org-1",
+        mustChangePassword: true,
+      },
+    });
+    await expect(renderLoginPage()).rejects.toThrow(
+      "REDIRECT:/change-password?callbackUrl=%2Fdashboard"
+    );
   });
 });

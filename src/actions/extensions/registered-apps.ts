@@ -3,6 +3,7 @@
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { can } from "@/lib/rbac/service";
 import { extractWildcardPattern } from "@/lib/utils/domain-extractor";
 import type { ActionState } from "@/types";
 import { revalidatePath } from "next/cache";
@@ -48,6 +49,12 @@ export async function getRegisteredApps(params: {
     const session = await auth();
     if (!session?.user?.organizationId) {
       return { success: false, error: "Authentication required" };
+    }
+    if (!(await can("extensions:read"))) {
+      return {
+        success: false,
+        error: "You do not have permission to perform this action",
+      };
     }
 
     const { page = 1, limit = 20, search } = params;
@@ -165,6 +172,12 @@ export async function syncRegisteredAppsToWhitelist(): Promise<
     if (!session?.user?.organizationId) {
       return { success: false, error: "Authentication required" };
     }
+    if (!(await can("extensions:manage"))) {
+      return {
+        success: false,
+        error: "You do not have permission to perform this action",
+      };
+    }
 
     // Fetch URLs from active apps
     const apps = await prisma.app.findMany({
@@ -246,6 +259,12 @@ export async function toggleRegisteredAppStatus(
     if (!session?.user?.organizationId) {
       return { success: false, error: "Authentication required" };
     }
+    if (!(await can("extensions:manage"))) {
+      return {
+        success: false,
+        error: "You do not have permission to perform this action",
+      };
+    }
 
     // Fetch the app
     const app = await prisma.app.findUnique({
@@ -324,6 +343,12 @@ export async function addManualRegisteredApp(input: {
     if (!session?.user?.organizationId) {
       return { success: false, error: "Authentication required" };
     }
+    if (!(await can("extensions:manage"))) {
+      return {
+        success: false,
+        error: "You do not have permission to perform this action",
+      };
+    }
 
     const validation = addManualRegisteredAppSchema.safeParse(input);
     if (!validation.success) {
@@ -367,6 +392,12 @@ export async function removeRegisteredApp(
     const session = await auth();
     if (!session?.user?.organizationId) {
       return { success: false, error: "Authentication required" };
+    }
+    if (!(await can("extensions:manage"))) {
+      return {
+        success: false,
+        error: "You do not have permission to perform this action",
+      };
     }
 
     await prisma.extensionWhitelist.delete({

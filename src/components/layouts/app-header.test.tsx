@@ -1,5 +1,6 @@
 // src/components/layouts/app-header.test.tsx
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { NextIntlClientProvider } from "next-intl";
@@ -18,10 +19,16 @@ vi.mock("@/hooks/use-mobile", () => ({
 }));
 
 const renderWithProvider = (ui: React.ReactElement) => {
+  // The header loads permissions and notification counts with React Query
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
   return render(
-    <NextIntlClientProvider locale="en" messages={messages}>
-      <SidebarProvider>{ui}</SidebarProvider>
-    </NextIntlClientProvider>
+    <QueryClientProvider client={queryClient}>
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <SidebarProvider>{ui}</SidebarProvider>
+      </NextIntlClientProvider>
+    </QueryClientProvider>
   );
 };
 

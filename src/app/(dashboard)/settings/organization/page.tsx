@@ -2,6 +2,7 @@
 import { OrganizationTabs } from "@/components/settings/organization-tabs";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { requirePermissionOrRedirect } from "@/lib/rbac/service";
 import { redirect } from "next/navigation";
 
 export const metadata = {
@@ -10,6 +11,7 @@ export const metadata = {
 };
 
 export default async function OrganizationSettingsPage() {
+  await requirePermissionOrRedirect("organization:manage", "/settings");
   const session = await auth();
 
   if (!session?.user) {

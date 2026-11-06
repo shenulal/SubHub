@@ -25,9 +25,12 @@ vi.mock("@auth/prisma-adapter", () => ({
   PrismaAdapter: vi.fn(() => ({})),
 }));
 
-// Google provider mock
-vi.mock("next-auth/providers/google", () => ({
-  default: vi.fn(() => ({ id: "google", name: "Google" })),
+// Credentials provider mock: keeps id/name so the configured providers can be inspected
+vi.mock("next-auth/providers/credentials", () => ({
+  default: vi.fn((options: Record<string, unknown>) => ({
+    type: "credentials",
+    ...options,
+  })),
 }));
 
 describe("NextAuth configuration", () => {
@@ -71,6 +74,13 @@ describe("NextAuth configuration", () => {
       // Check the providers configuration
       expect(config).toHaveProperty("providers");
       expect(Array.isArray(config?.providers)).toBe(true);
+
+      // Password + email-code credentials providers, no Google sign-in
+      const providers = config?.providers as Array<{ id?: string }>;
+      const ids = providers.map((p) => p.id);
+      expect(ids).toContain("password");
+      expect(ids).toContain("credentials");
+      expect(ids).not.toContain("google");
 
       // Check the callbacks configuration
       expect(config).toHaveProperty("callbacks");

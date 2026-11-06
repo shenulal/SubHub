@@ -3,6 +3,7 @@
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { withReportAccess } from "@/lib/rbac/report-access";
 import type { ActionState } from "@/types";
 import type {
   CostAnomaly,
@@ -60,7 +61,10 @@ export async function detectCostAnomalies(
     );
     const previousMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
 
-    const scope = resolveReportScope(options, session.user);
+    const scope = resolveReportScope(
+      options,
+      await withReportAccess(session.user)
+    );
 
     const currentWhere: Record<string, unknown> = {
       organizationId: session.user.organizationId,

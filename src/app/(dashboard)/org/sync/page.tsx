@@ -2,7 +2,7 @@
 
 import { OrgLayout } from "@/components/org/org-layout";
 import { OrgSyncForm } from "@/components/org/org-sync-form";
-import { requireAdmin } from "@/lib/auth/require-auth";
+import { requirePermissionOrRedirect } from "@/lib/rbac/service";
 
 export async function generateMetadata() {
   return {
@@ -13,7 +13,10 @@ export async function generateMetadata() {
 }
 
 export default async function OrgSyncPage() {
-  await requireAdmin("/dashboard");
+  await requirePermissionOrRedirect(
+    ["teams:manage", "members:manage"],
+    "/teams"
+  );
 
   return (
     <OrgLayout>

@@ -15,6 +15,7 @@ import {
 } from "@/lib/deployment/tenancy";
 import { withLogging } from "@/lib/logging";
 import { ensureOrganizationDefaults } from "@/lib/masters/organization-defaults";
+import { can } from "@/lib/rbac/service";
 import type { ActionState } from "@/types";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -208,7 +209,7 @@ async function _updateOrganization(formData: FormData) {
     redirect("/onboarding");
   }
 
-  if (session.user.role !== "ADMIN") {
+  if (!(await can("organization:manage"))) {
     return {
       success: false,
       message: "Only admins can update organization details",
@@ -289,7 +290,7 @@ async function _updateOrganizationTeams(teams: string[]) {
     redirect("/onboarding");
   }
 
-  if (session.user.role !== "ADMIN") {
+  if (!(await can("organization:manage"))) {
     return {
       success: false,
       message: "Only admins can manage teams/departments",
@@ -344,7 +345,7 @@ async function _updateOrganizationDomains(domains: string[]) {
     redirect("/onboarding");
   }
 
-  if (session.user.role !== "ADMIN") {
+  if (!(await can("organization:manage"))) {
     return {
       success: false,
       message: "Only admins can manage domains",

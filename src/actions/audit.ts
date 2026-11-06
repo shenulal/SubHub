@@ -8,6 +8,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { inFilter, mergeLegacyValue } from "@/lib/filters/multi-value";
+import { can } from "@/lib/rbac/service";
 import { redirect } from "next/navigation";
 
 import type {
@@ -18,11 +19,26 @@ import type {
   AuditLogListResponse,
 } from "@/types/audit";
 
+interface AuditAccess {
+  /** audit:read — own trail at least */
+  allowed: boolean;
+  /** audit:read_all — every member's trail */
+  canReadAll: boolean;
+}
+
+async function resolveAuditAccess(): Promise<AuditAccess> {
+  const [allowed, canReadAll] = await Promise.all([
+    can("audit:read"),
+    can("audit:read_all"),
+  ]);
+  return { allowed, canReadAll: allowed && canReadAll };
+}
+
 function buildAuditLogWhere(
   filters: AuditLogFilters,
   sessionUser: {
     id: string;
-    role?: string | null;
+    canReadAll: boolean;
     organizationId: string;
   }
 ) {
@@ -30,7 +46,7 @@ function buildAuditLogWhere(
     organizationId: sessionUser.organizationId,
   };
 
-  if (sessionUser.role === "MEMBER") {
+  if (!sessionUser.canReadAll) {
     where.userId = sessionUser.id;
     return where;
   }
@@ -39,7 +55,7 @@ function buildAuditLogWhere(
   if (users) where.userId = users;
 
   const teams = inFilter(mergeLegacyValue(filters.teamIds, filters.teamId));
-  if (teams && sessionUser.role === "ADMIN") {
+  if (teams) {
     where.user = { teamId: teams };
   }
 
@@ -89,7 +105,7 @@ function buildAuditLogWhere(
 
 /**
  * List audit logs (paginated)
- * Access: ADMIN sees all, MEMBER sees own entries only, VIEWER denied
+ * Access: audit:read_all sees all, audit:read sees own entries, else denied
  */
 export async function getAuditLogs(
   filters: AuditLogFilters
@@ -99,10 +115,11 @@ export async function getAuditLogs(
     redirect("/login");
   }
 
-  const { role, id: userId } = session.user;
+  const { id: userId } = session.user;
+  const access = await resolveAuditAccess();
 
-  // VIEWER cannot access audit logs
-  if (role === "VIEWER") {
+  // Without audit:read there is nothing to show
+  if (!access.allowed) {
     return {
       logs: [],
       pagination: { total: 0, page: 1, limit: 20, totalPages: 0 },
@@ -116,7 +133,7 @@ export async function getAuditLogs(
 
   const where = buildAuditLogWhere(filters, {
     id: userId,
-    role,
+    canReadAll: access.canReadAll,
     organizationId,
   });
 
@@ -175,13 +192,14 @@ export async function getAuditLogExportData(
     redirect("/login");
   }
 
-  if (session.user.role === "VIEWER") {
+  const access = await resolveAuditAccess();
+  if (!access.allowed || !(await can("audit:export"))) {
     return [];
   }
 
   const where = buildAuditLogWhere(filters, {
     id: session.user.id,
-    role: session.user.role,
+    canReadAll: access.canReadAll,
     organizationId: session.user.organizationId,
   });
 
@@ -217,7 +235,7 @@ export async function getAuditLogExportData(
 
 /**
  * Get a single audit log entry
- * Access: ADMIN sees all, MEMBER sees own entries only, VIEWER denied
+ * Access: audit:read_all sees all, audit:read sees own entries, else denied
  */
 export async function getAuditLogById(
   id: string
@@ -227,10 +245,11 @@ export async function getAuditLogById(
     redirect("/login");
   }
 
-  const { role, id: userId } = session.user;
+  const { id: userId } = session.user;
+  const access = await resolveAuditAccess();
 
-  // VIEWER cannot access audit logs
-  if (role === "VIEWER") {
+  // Without audit:read there is nothing to show
+  if (!access.allowed) {
     return null;
   }
 
@@ -255,8 +274,8 @@ export async function getAuditLogById(
     throw new Error("You do not have access permission");
   }
 
-  // MEMBER can only view their own entries
-  if (role === "MEMBER" && log.userId !== userId) {
+  // Without audit:read_all only own entries are visible
+  if (!access.canReadAll && log.userId !== userId) {
     return null;
   }
 
@@ -278,7 +297,7 @@ export async function getAuditLogById(
 
 /**
  * Get filter options (action types, entity types, user list)
- * Access: ADMIN/MEMBER only, VIEWER denied
+ * Access: audit:read (all users/teams with audit:read_all)
  */
 export async function getAuditLogFilterOptions(): Promise<AuditLogFilterOptions> {
   const session = await auth();
@@ -286,13 +305,13 @@ export async function getAuditLogFilterOptions(): Promise<AuditLogFilterOptions>
     redirect("/login");
   }
 
-  // VIEWER cannot access audit logs
-  if (session.user.role === "VIEWER") {
+  const access = await resolveAuditAccess();
+  if (!access.allowed) {
     return { actions: [], entityTypes: [], users: [], teams: [] };
   }
 
   const organizationId = session.user.organizationId;
-  const isAdmin = session.user.role === "ADMIN";
+  const isAdmin = access.canReadAll;
 
   const userWhere = isAdmin ? { organizationId } : { id: session.user.id };
 

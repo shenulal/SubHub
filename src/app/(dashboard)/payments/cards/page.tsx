@@ -3,7 +3,7 @@ import { getCorporateCards } from "@/actions/corporate-cards";
 import { getTeams } from "@/actions/teams";
 import { getUsers } from "@/actions/users-read";
 import { PageHeader } from "@/components/common/page-header";
-import { requireRole } from "@/lib/auth/require-auth";
+import { requirePermissionOrRedirect } from "@/lib/rbac/service";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { CardsPageClient } from "./page.client";
@@ -17,7 +17,10 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function CardsPage() {
-  const { role } = await requireRole(["ADMIN", "APPROVER", "MEMBER"]);
+  const { permissions } = await requirePermissionOrRedirect(
+    "payments:read",
+    "/dashboard"
+  );
 
   const [cards, teamsResult, usersResult] = await Promise.all([
     getCorporateCards(),
@@ -46,7 +49,7 @@ export default async function CardsPage() {
 
       <CardsPageClient
         initialCards={cards}
-        isAdmin={role === "ADMIN"}
+        isAdmin={permissions.has("payments:manage")}
         teams={teams}
         users={users}
       />

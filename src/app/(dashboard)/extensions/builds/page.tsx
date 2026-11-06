@@ -3,6 +3,7 @@ import { getExtensionDeploySettings } from "@/actions/extensions/builds";
 import { BuildsPageClient } from "@/components/extensions/builds-page-client";
 import { DeploySettings } from "@/components/extensions/deploy-settings";
 import { Skeleton } from "@/components/ui/skeleton";
+import { requirePermissionOrRedirect } from "@/lib/rbac/service";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
@@ -38,6 +39,7 @@ async function DeploySettingsSection() {
 }
 
 export default async function BuildsPage() {
+  await requirePermissionOrRedirect("extensions:read", "/dashboard");
   const t = await getTranslations("extensions.builds.page");
 
   return (

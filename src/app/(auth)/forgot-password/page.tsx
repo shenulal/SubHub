@@ -1,5 +1,6 @@
 // src/app/(auth)/forgot-password/page.tsx
-// Password reset request page
+// Password reset request page (email or user name). Always shows the same
+// confirmation so it never reveals whether an account exists.
 
 import { requestPasswordReset } from "@/actions/password";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -13,27 +14,24 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 
 interface ForgotPasswordPageProps {
-  searchParams: Promise<{
-    success?: string;
-  }>;
+  searchParams: Promise<{ success?: string; error?: string }>;
 }
 
 export default async function ForgotPasswordPage({
   searchParams,
 }: ForgotPasswordPageProps) {
   const t = await getTranslations();
-  const { success } = await searchParams;
+  const { success, error } = await searchParams;
 
-  // Check for an already signed-in user
   const session = await auth();
-  if (session?.user) {
-    redirect("/dashboard");
-  }
+  if (session?.user) redirect("/dashboard");
 
-  // When the email was sent successfully
   if (success === "true") {
     return (
-      <div className="flex w-full flex-col gap-5">
+      <div
+        className="flex w-full flex-col gap-5"
+        data-testid="forgot-password-sent"
+      >
         <div className="flex flex-col items-center gap-1 text-center">
           <div className="tonal-success mb-3 flex size-14 items-center justify-center rounded-full">
             <Mail className="size-7" />
@@ -59,7 +57,10 @@ export default async function ForgotPasswordPage({
   }
 
   return (
-    <div className="flex w-full flex-col gap-5">
+    <div
+      className="flex w-full flex-col gap-5"
+      data-testid="forgot-password-page"
+    >
       <div className="flex flex-col gap-1">
         <h2 className="text-foreground text-2xl font-medium">
           {t("auth.forgot.title")}
@@ -68,16 +69,20 @@ export default async function ForgotPasswordPage({
           {t("auth.forgot.description")}
         </p>
       </div>
+      {error && (
+        <Alert variant="destructive">
+          <AlertDescription>{t("auth.forgot.error")}</AlertDescription>
+        </Alert>
+      )}
       <form
         action={async (formData: FormData) => {
           "use server";
           const result = await requestPasswordReset(formData);
-          if (result.success) {
-            redirect("/forgot-password?success=true");
-          }
-          // Error handling should move to a client component
-          // For now, redirect to the same page
-          redirect("/forgot-password?success=true");
+          redirect(
+            result.success
+              ? "/forgot-password?success=true"
+              : "/forgot-password?error=1"
+          );
         }}
         className="flex flex-col gap-5"
       >
@@ -86,7 +91,10 @@ export default async function ForgotPasswordPage({
           <Input
             id="email"
             name="email"
-            type="email"
+            type="text"
+            autoComplete="username"
+            autoCapitalize="none"
+            spellCheck={false}
             placeholder={t("auth.forgot.form.emailPlaceholder")}
             required
           />

@@ -4,6 +4,8 @@ import { redirect } from "next/navigation";
 import { SidebarWrapper } from "@/components/layouts/sidebar-wrapper";
 import { ClientProviders } from "@/components/providers/client-providers";
 import { getCachedSession } from "@/lib/auth/require-auth";
+import { CHANGE_PASSWORD_PATH } from "@/lib/auth/sign-in-codes";
+import { homeForUserWithoutOrganization } from "@/lib/platform/identity";
 
 /**
  * Dashboard layout
@@ -27,9 +29,14 @@ export default async function DashboardLayout({
     redirect("/login");
   }
 
-  // Redirect users without an organization to onboarding
+  // Temporary password set by an administrator: change it first
+  if (session.user.mustChangePassword) {
+    redirect(CHANGE_PASSWORD_PATH);
+  }
+
+  // Users without an organization: onboarding (platform super admins: the Control Panel)
   if (!session.user.organizationId) {
-    redirect("/onboarding");
+    redirect(homeForUserWithoutOrganization(session.user.role as string));
   }
 
   const role = session.user.role ?? null;

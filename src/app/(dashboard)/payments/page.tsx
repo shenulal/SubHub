@@ -1,8 +1,8 @@
 // src/app/(dashboard)/payments/page.tsx
 import { PageHeader } from "@/components/common/page-header";
 import { PaymentTabs } from "@/components/payments/payment-tabs";
-import { requireRole } from "@/lib/auth/require-auth";
 import { prisma } from "@/lib/db";
+import { requirePermissionOrRedirect } from "@/lib/rbac/service";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
@@ -16,8 +16,11 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function PaymentsPage() {
+  const { organizationId } = await requirePermissionOrRedirect(
+    "payments:read",
+    "/dashboard"
+  );
   const t = await getTranslations("payments.page");
-  const { organizationId } = await requireRole(["ADMIN", "APPROVER", "MEMBER"]);
 
   // Fetch the app list for matching (includes teams - used by the subscription dialog)
   const appsRaw = await prisma.app.findMany({

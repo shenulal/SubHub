@@ -5,6 +5,7 @@ import { requireSuperAdmin } from "@/lib/auth/require-auth";
 import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { withLogging } from "@/lib/logging";
+import { writePlatformAudit } from "@/lib/platform-audit";
 import {
   isSettingKey,
   SETTING_DEFINITIONS,
@@ -20,6 +21,7 @@ import {
   type SerializedSettingDefinition,
   type SettingsGroupPayload,
 } from "@/types/platform";
+import type { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { ActionError, diffRecords, toActionError } from "./_shared";
@@ -112,6 +114,14 @@ async function _updateSystemSettings(
       )
     );
     logger.info({ userId, changes }, "[platform] system settings updated");
+    if (Object.keys(changes).length > 0) {
+      await writePlatformAudit({
+        actorId: userId,
+        action: "UPDATE_PLATFORM_SETTINGS",
+        entityType: "SystemSetting",
+        changes: changes as Prisma.InputJsonValue,
+      });
+    }
     revalidatePath(SYSTEM_PATH);
     return { success: true, data: { updatedKeys: Object.keys(changes) } };
   } catch (error) {
@@ -134,6 +144,12 @@ async function _resetSystemSetting(
     }
     await prisma.systemSetting.deleteMany({ where: { key } });
     logger.info({ userId, key }, "[platform] system setting reset");
+    await writePlatformAudit({
+      actorId: userId,
+      action: "RESET_PLATFORM_SETTING",
+      entityType: "SystemSetting",
+      entityId: key,
+    });
     revalidatePath(SYSTEM_PATH);
     return {
       success: true,

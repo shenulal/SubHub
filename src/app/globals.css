@@ -70,13 +70,13 @@
   --sidebar-ring: #8c57ff;
   --nav-active-gradient: linear-gradient(270deg, #8c57ff, #c6abff 100%);
 
-  /* Lato first; Inter (the previous typeface) is the fallback if Lato is unavailable */
-  --font-sans:
-    var(--font-lato), "Lato", var(--font-inter), "Inter", ui-sans-serif, system-ui, -apple-system,
+  /* Inter (Google Fonts via next/font), then the platform UI font */
+  --app-font-sans:
+    var(--font-inter), "Inter", ui-sans-serif, system-ui, -apple-system,
     BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial,
     sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
-  --font-serif: Source Serif 4, serif;
-  --font-mono: var(--font-geist-mono), JetBrains Mono, monospace;
+  --app-font-serif: "Source Serif 4", serif;
+  --app-font-mono: var(--font-geist-mono), "JetBrains Mono", monospace;
 
   --radius: 0.375rem;
 
@@ -158,17 +158,19 @@
 }
 
 @theme inline {
-  /* ─── Lato type system ───────────────────────────────────────────────
-   * Lato is loaded in its normal (upright) style at 300 / 400 / 700.
-   * Weights map to real Lato faces so the browser never substitutes one:
-   *   regular  400 → body, labels, buttons, tables, navigation (font-normal / font-medium)
-   *   bold     700 → titles, KPI values, deliberate emphasis   (font-semibold / font-bold)
-   * Sizes: 12px minimum (text-xs), 13px captions, 15px body, 18px card titles,
-   * 24px page titles. */
+  /* ─── Inter type system ──────────────────────────────────────────────
+   * Inter variable font (300–700 + optical size). Weights are Tailwind's real values:
+   *   light 300    → large display figures
+   *   normal 400   → body text, table cells, descriptions      (font-normal)
+   *   medium 500   → labels, buttons, navigation, table headers (font-medium)
+   *   semibold 600 → page, section, card and dialog titles      (font-semibold)
+   *   bold 700     → KPI values and deliberate emphasis         (font-bold)
+   * Sizes: 12px minimum (text-xs captions/overlines), 13px secondary, 15px body,
+   * 18px card titles, 24px page titles, 28px KPI figures. */
   --font-weight-light: 300;
   --font-weight-normal: 400;
-  --font-weight-medium: 400;
-  --font-weight-semibold: 700;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
   --font-weight-bold: 700;
   --font-weight-extrabold: 700;
   --font-weight-black: 700;
@@ -225,9 +227,11 @@
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
 
-  --font-sans: var(--font-sans);
-  --font-mono: var(--font-mono);
-  --font-serif: var(--font-serif);
+  /* Root tokens carry an app- prefix: a theme variable that refers to itself
+     (--font-sans: var(--font-sans)) is a cycle and resolves to nothing. */
+  --font-sans: var(--app-font-sans);
+  --font-mono: var(--app-font-mono);
+  --font-serif: var(--app-font-serif);
 
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
@@ -257,12 +261,18 @@
     line-height: 1.46667;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    font-optical-sizing: auto;
+    /* Inter character variants: tailed l and serifed I, so l / I / 1 stay
+       distinguishable in IDs, codes and tables */
+    font-feature-settings: "cv05", "cv08";
   }
-  /* Headings: Lato Bold, normal letter spacing */
+  /* Headings: Inter SemiBold with slightly tighter tracking as size grows */
   h1, h2, h3, h4, h5, h6 {
-    font-weight: 700;
-    letter-spacing: normal;
+    font-weight: 600;
+    letter-spacing: -0.011em;
   }
+  h1 { letter-spacing: -0.019em; }
+  h2 { letter-spacing: -0.017em; }
   /* Numbers line up in tables and KPI cards */
   td, .tabular-nums, [data-slot="card"] [data-kpi] {
     font-variant-numeric: tabular-nums;
@@ -281,7 +291,7 @@
 @utility tonal-error { background-color: rgb(255 76 81 / 0.16); color: var(--error); }
 @utility tonal-neutral { background-color: rgb(138 141 147 / 0.16); color: var(--neutral); }
 @utility nav-active { background-image: var(--nav-active-gradient); color: #fff; box-shadow: var(--shadow-xs); }
-@utility kpi-value { font-size: clamp(1.25rem, 0.9rem + 1vw, 1.75rem); line-height: 1.25; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
+@utility kpi-value { font-size: clamp(1.25rem, 0.9rem + 1vw, 1.75rem); line-height: 1.25; font-weight: 700; letter-spacing: -0.02em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-variant-numeric: tabular-nums; }
 
 
 @keyframes auth-fade-up {
@@ -336,8 +346,8 @@
   background-size: cover;
 }
 
-/* Titles always use Lato Bold, whatever weight utility the markup carries.
+/* Titles always use Inter SemiBold, whatever weight utility the markup carries.
    Unlayered on purpose so it wins over the font-* utilities. */
 :where(h1, h2, h3, h4, h5, h6, [data-slot="card-title"], [data-slot="dialog-title"], [data-slot="alert-dialog-title"], [data-slot="sheet-title"]) {
-  font-weight: 700;
+  font-weight: 600;
 }

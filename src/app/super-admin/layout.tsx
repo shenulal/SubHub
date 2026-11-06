@@ -1,33 +1,23 @@
-// src/app/(super-admin)/layout.tsx
-import { ClientProviders } from "@/components/providers/client-providers";
-import { SuperAdminSidebar } from "@/components/super-admin/super-admin-sidebar";
-import { requireSuperAdmin } from "@/lib/auth/require-auth";
-import { getDeploymentInfo } from "@/lib/deployment/mode";
-import { Suspense } from "react";
-
+// src/app/super-admin/layout.tsx
 /**
- * Super Admin layout
- * Redirects to /dashboard without the SUPER_ADMIN role
+ * SubHub Control Panel root. Holds only the providers and the title template;
+ * the guarded shell lives in `(console)/layout.tsx` so `/super-admin/login`
+ * stays reachable without a session.
  */
-export default async function SuperAdminLayout({
+import { ClientProviders } from "@/components/providers/client-providers";
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: {
+    template: "%s | SubHub Control Panel",
+    default: "SubHub Control Panel",
+  },
+};
+
+export default function ControlPanelRootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  await requireSuperAdmin();
-
-  return (
-    <ClientProviders>
-      <div className="bg-background flex min-h-screen flex-col lg:h-screen lg:flex-row lg:overflow-hidden">
-        <Suspense>
-          <SuperAdminSidebar deployment={getDeploymentInfo()} />
-        </Suspense>
-        <main className="bg-background min-w-0 flex-1 lg:overflow-y-auto">
-          <div className="mx-auto w-full max-w-[1440px] px-4 py-6 sm:px-6">
-            {children}
-          </div>
-        </main>
-      </div>
-    </ClientProviders>
-  );
+  return <ClientProviders>{children}</ClientProviders>;
 }

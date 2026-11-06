@@ -3,13 +3,16 @@
 
 import { prisma } from "@/lib/db";
 import { matchPaymentsToNewApp } from "@/lib/services/payment/payment-matching";
+import { ctxHasPermission } from "./service-permissions";
 
 // ==================== Types ====================
 
 export interface AppServiceContext {
   organizationId: string;
   userId: string;
+  /** Legacy role (informational; checks use RBAC permissions). */
   role: string;
+  permissions?: ReadonlySet<string>;
   teamId?: string;
 }
 
@@ -50,7 +53,7 @@ export async function createApp(
   input: CreateAppInput
 ): Promise<ServiceResult<{ id: string; matchedPaymentCount?: number }>> {
   // Permission check
-  if (ctx.role === "VIEWER") {
+  if (!(await ctxHasPermission(ctx, "apps:manage"))) {
     return {
       success: false,
       message: "You do not have permission to create apps",
@@ -161,7 +164,7 @@ export async function updateApp(
   input: UpdateAppInput
 ): Promise<ServiceResult<{ id: string }>> {
   // Permission check
-  if (ctx.role !== "ADMIN") {
+  if (!(await ctxHasPermission(ctx, "apps:manage"))) {
     return {
       success: false,
       message: "You do not have permission to edit this app",
@@ -285,7 +288,7 @@ export async function deleteApp(
   id: string
 ): Promise<ServiceResult> {
   // Permission check
-  if (ctx.role !== "ADMIN") {
+  if (!(await ctxHasPermission(ctx, "apps:manage"))) {
     return { success: false, message: "Admin permission required" };
   }
 

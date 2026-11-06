@@ -20,6 +20,8 @@ declare module "next-auth" {
       jobTitle?: string | null;
       phone?: string | null;
       avatarUrl?: string | null;
+      /** An administrator set a temporary password; change it before anything else. */
+      mustChangePassword?: boolean;
     } & DefaultSession["user"];
   }
 }
@@ -44,5 +46,6 @@ declare module "@auth/core/jwt" {
     organizationId?: string | null;
     role: string;
     teamId?: string | null;
+    mustChangePassword?: boolean;
   }
 }

@@ -83,20 +83,23 @@ model OtpToken {
 }
 
 model Organization {
-  id                       String                  @id @default(cuid())
+  id                       String                    @id @default(cuid())
   name                     String
-  domain                   String?                 @unique
-  logoUrl                  String?                 @map("logo_url")
-  settings                 Json                    @default("{}")
-  createdAt                DateTime                @default(now()) @map("created_at")
-  updatedAt                DateTime                @updatedAt @map("updated_at")
-  googleCustomerId         String?                 @unique @map("google_customer_id")
-  googlePrimaryDomain      String?                 @map("google_primary_domain")
-  inactiveThresholdMinutes Int                     @default(30) @map("inactive_threshold_minutes")
-  extensionAutoDeployed    Boolean                 @default(false) @map("extension_auto_deployed")
+  domain                   String?                   @unique
+  logoUrl                  String?                   @map("logo_url")
+  settings                 Json                      @default("{}")
+  createdAt                DateTime                  @default(now()) @map("created_at")
+  updatedAt                DateTime                  @updatedAt @map("updated_at")
+  googleCustomerId         String?                   @unique @map("google_customer_id")
+  googlePrimaryDomain      String?                   @map("google_primary_domain")
+  inactiveThresholdMinutes Int                       @default(30) @map("inactive_threshold_minutes")
+  extensionAutoDeployed    Boolean                   @default(false) @map("extension_auto_deployed")
   /// SaaS only: set when the platform operator deactivates the tenant. Members lose
   /// access (sessions drop the organisation) until it is reactivated.
-  deactivatedAt            DateTime?               @map("deactivated_at")
+  deactivatedAt            DateTime?                 @map("deactivated_at")
+  /// Platform Control Panel: soft delete. The tenant is hidden from the console,
+  /// stays deactivated and cannot be reactivated; its data is kept for retention.
+  deletedAt                DateTime?                 @map("deleted_at")
   apps                     App[]
   auditLogs                AuditLog[]
   cardTransactions         CardTransaction[]
@@ -130,6 +133,7 @@ model Organization {
   customFieldDefinitions   CustomFieldDefinition[]
   approvalPolicies         ApprovalPolicy[]
   approvalRequests         ApprovalRequest[]
+  approvalRejectionReasons ApprovalRejectionReason[]
   notifications            Notification[]
   savedViews               SavedView[]
   attachments              Attachment[]
@@ -167,6 +171,17 @@ model User {
   jobTitle                 String?                  @map("job_title")
   terminatedAt             DateTime?                @map("terminated_at")
   passwordHash             String?                  @map("password_hash")
+  /// Optional sign-in name, globally unique, always stored lower-case.
+  username                 String?                  @unique
+  passwordChangedAt        DateTime?                @map("password_changed_at")
+  /// Previous password hashes (newest first) for the password-history rule.
+  passwordHistory          String[]                 @default([]) @map("password_history")
+  failedLoginAttempts      Int                      @default(0) @map("failed_login_attempts")
+  lockedUntil              DateTime?                @map("locked_until")
+  /// Set by an administrator's temporary password; cleared on change.
+  mustChangePassword       Boolean                  @default(false) @map("must_change_password")
+  /// Per-user opt-in to the emailed second sign-in step.
+  loginOtpEnabled          Boolean                  @default(false) @map("login_otp_enabled")
   organizationId           String?                  @map("organization_id")
   teamId                   String?                  @map("team_id")
   managerId                String?                  @map("manager_id")
@@ -1670,40 +1685,48 @@ model ApprovalPolicyStep {
 }
 
 model ApprovalRequest {
-  id             String                @id @default(cuid())
-  organizationId String                @map("organization_id")
-  requesterId    String                @map("requester_id")
-  policyId       String?               @map("policy_id")
-  catalogId      String?               @map("catalog_id")
-  categoryId     String?               @map("category_id")
-  subscriptionId String?               @unique @map("subscription_id")
-  costCenterId   String?               @map("cost_center_id")
-  serviceName    String                @map("service_name")
-  vendorWebsite  String?               @map("vendor_website")
-  amount         Decimal               @db.Decimal(12, 2)
-  currency       String                @default("USD")
-  billingCycle   BillingCycle          @default(MONTHLY) @map("billing_cycle")
-  monthlyAmount  Decimal               @map("monthly_amount") @db.Decimal(12, 2)
-  seats          Int?
-  justification  String
-  status         ApprovalRequestStatus @default(PENDING)
-  currentStep    Int                   @default(1) @map("current_step")
-  submittedAt    DateTime              @default(now()) @map("submitted_at")
-  decidedAt      DateTime?             @map("decided_at")
-  lastReminderAt DateTime?             @map("last_reminder_at")
-  escalatedAt    DateTime?             @map("escalated_at")
-  metadata       Json?
-  createdAt      DateTime              @default(now()) @map("created_at")
-  updatedAt      DateTime              @updatedAt @map("updated_at")
-  organization   Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  requester      User                  @relation("ApprovalRequester", fields: [requesterId], references: [id])
-  policy         ApprovalPolicy?       @relation(fields: [policyId], references: [id])
-  catalog        SaaSCatalog?          @relation(fields: [catalogId], references: [id])
-  category       Category?             @relation(fields: [categoryId], references: [id])
-  costCenter     CostCenter?           @relation(fields: [costCenterId], references: [id])
-  subscription   Subscription?         @relation(fields: [subscriptionId], references: [id])
-  steps          ApprovalStep[]
-  events         ApprovalEvent[]
+  id                  String                   @id @default(cuid())
+  organizationId      String                   @map("organization_id")
+  requesterId         String                   @map("requester_id")
+  policyId            String?                  @map("policy_id")
+  catalogId           String?                  @map("catalog_id")
+  categoryId          String?                  @map("category_id")
+  subscriptionId      String?                  @unique @map("subscription_id")
+  costCenterId        String?                  @map("cost_center_id")
+  serviceName         String                   @map("service_name")
+  vendorWebsite       String?                  @map("vendor_website")
+  amount              Decimal                  @db.Decimal(12, 2)
+  currency            String                   @default("USD")
+  billingCycle        BillingCycle             @default(MONTHLY) @map("billing_cycle")
+  monthlyAmount       Decimal                  @map("monthly_amount") @db.Decimal(12, 2)
+  seats               Int?
+  justification       String
+  status              ApprovalRequestStatus    @default(PENDING)
+  currentStep         Int                      @default(1) @map("current_step")
+  submittedAt         DateTime                 @default(now()) @map("submitted_at")
+  decidedAt           DateTime?                @map("decided_at")
+  lastReminderAt      DateTime?                @map("last_reminder_at")
+  escalatedAt         DateTime?                @map("escalated_at")
+  /// Decision capture (latest decision): reason (reject), comment, conditions
+  /// to the requester (approve) and the subscription start date agreed by the approver.
+  rejectionReasonId   String?                  @map("rejection_reason_id")
+  rejectionReasonName String?                  @map("rejection_reason_name")
+  decisionComment     String?                  @map("decision_comment")
+  decisionConditions  String?                  @map("decision_conditions")
+  effectiveStartDate  DateTime?                @map("effective_start_date") @db.Date
+  metadata            Json?
+  createdAt           DateTime                 @default(now()) @map("created_at")
+  updatedAt           DateTime                 @updatedAt @map("updated_at")
+  organization        Organization             @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  requester           User                     @relation("ApprovalRequester", fields: [requesterId], references: [id])
+  rejectionReason     ApprovalRejectionReason? @relation(fields: [rejectionReasonId], references: [id], onDelete: SetNull)
+  policy              ApprovalPolicy?          @relation(fields: [policyId], references: [id])
+  catalog             SaaSCatalog?             @relation(fields: [catalogId], references: [id])
+  category            Category?                @relation(fields: [categoryId], references: [id])
+  costCenter          CostCenter?              @relation(fields: [costCenterId], references: [id])
+  subscription        Subscription?            @relation(fields: [subscriptionId], references: [id])
+  steps               ApprovalStep[]
+  events              ApprovalEvent[]
 
   @@index([organizationId, status])
   @@index([requesterId])
@@ -1744,6 +1767,25 @@ model ApprovalEvent {
 
   @@index([requestId, createdAt])
   @@map("approval_events")
+}
+
+/// Master: reasons an approver picks when rejecting a request (per organisation).
+model ApprovalRejectionReason {
+  id             String            @id @default(cuid())
+  organizationId String            @map("organization_id")
+  code           String
+  name           String
+  description    String?
+  sortOrder      Int               @default(0) @map("sort_order")
+  isActive       Boolean           @default(true) @map("is_active")
+  createdAt      DateTime          @default(now()) @map("created_at")
+  updatedAt      DateTime          @updatedAt @map("updated_at")
+  organization   Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  requests       ApprovalRequest[]
+
+  @@unique([organizationId, code])
+  @@index([organizationId, isActive, sortOrder])
+  @@map("approval_rejection_reasons")
 }
 
 // ─── Notifications ────────────────────────────────────────────────
@@ -2075,6 +2117,8 @@ model PlatformAuditLog {
 
   @@index([createdAt])
   @@index([entityType, entityId])
+  @@index([actorId])
+  @@index([action])
   @@map("platform_audit_logs")
 }
 

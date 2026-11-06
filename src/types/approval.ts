@@ -57,8 +57,11 @@ export interface ApprovalRequestListItem {
   decidedAt: string | null;
   requester: ApprovalUserRef;
   category: { id: string; name: string } | null;
+  costCenterId: string | null;
   currentApprover: ApprovalUserRef | null;
   isAwaitingMe: boolean;
+  /** Viewer may approve / reject / request info on this row right now. */
+  canDecide: boolean;
 }
 
 export interface ApprovalStepView {
@@ -82,6 +85,17 @@ export interface ApprovalEventView {
   actor: ApprovalUserRef | null;
 }
 
+/** Outcome captured with the latest decision (shown, exported, sent to the API). */
+export interface ApprovalDecisionSummary {
+  status: ApprovalRequestStatus;
+  decidedAt: string | null;
+  decidedBy: ApprovalUserRef | null;
+  comment: string | null;
+  conditions: string | null;
+  reason: { id: string | null; name: string } | null;
+  effectiveStartDate: string | null;
+}
+
 export interface ApprovalRequestDetail extends ApprovalRequestListItem {
   justification: string;
   costCenter: { id: string; code: string; name: string } | null;
@@ -92,6 +106,9 @@ export interface ApprovalRequestDetail extends ApprovalRequestListItem {
   events: ApprovalEventView[];
   escalatedAt: string | null;
   lastReminderAt: string | null;
+  /** Null while no approve / reject decision has been recorded. */
+  decision: ApprovalDecisionSummary | null;
+  effectiveStartDate: string | null;
   viewer: {
     canDecide: boolean;
     canProvideInfo: boolean;
@@ -185,4 +202,29 @@ export interface ApprovalRequestMetadata {
   escalatedTo?: string[];
   expired?: boolean;
   [key: string]: unknown;
+}
+
+export interface RejectionReasonRow {
+  id: string;
+  code: string;
+  name: string;
+  description: string | null;
+  sortOrder: number;
+  isActive: boolean;
+  usageCount: number;
+}
+
+export interface DecisionReasonOption {
+  id: string;
+  name: string;
+  description: string | null;
+}
+
+/** Everything the decision dialog needs (one fetch, cached per session). */
+export interface DecisionFormOptions {
+  requireApproveComment: boolean;
+  reasons: DecisionReasonOption[];
+  costCenters: { id: string; code: string; name: string }[];
+  canManageCostCenters: boolean;
+  canManageReasons: boolean;
 }

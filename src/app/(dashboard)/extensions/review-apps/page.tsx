@@ -1,6 +1,7 @@
 // src/app/(dashboard)/extensions/review-apps/page.tsx
 import { ReviewAppsPageClient } from "@/components/extensions/review-apps-page-client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { requirePermissionOrRedirect } from "@/lib/rbac/service";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
@@ -31,6 +32,7 @@ function PageSkeleton() {
 }
 
 export default async function ReviewAppsPage() {
+  await requirePermissionOrRedirect("extensions:read", "/dashboard");
   const t = await getTranslations("extensions.reviewApps.page");
   return (
     <div className="space-y-6">

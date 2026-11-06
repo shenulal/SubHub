@@ -25,8 +25,9 @@ vi.mock("@/lib/db", () => ({ prisma: {} }));
 vi.mock("@/lib/logger", () => ({
   logger: { warn: vi.fn(), info: vi.fn(), error: vi.fn() },
 }));
+const getSetting = vi.hoisted(() => vi.fn());
 vi.mock("@/lib/settings/service", () => ({
-  getSetting: vi.fn(),
+  getSetting,
   getSettings: vi.fn(),
 }));
 vi.mock("@/lib/rbac/service", () => ({
@@ -52,6 +53,7 @@ const ID = "req-1";
 beforeEach(() => {
   vi.resetAllMocks();
   requirePermission.mockResolvedValue(ctx);
+  getSetting.mockResolvedValue(false);
 });
 
 describe("decision actions", () => {
@@ -64,12 +66,14 @@ describe("decision actions", () => {
     });
     const res = await approveRequest(ID, "ok");
     expect(requirePermission).toHaveBeenCalledWith("approvals:decide");
-    expect(decision.approveRequest).toHaveBeenCalledWith(
-      "org",
-      actor,
-      ID,
-      "ok"
-    );
+    expect(decision.approveRequest).toHaveBeenCalledWith("org", actor, ID, {
+      requestId: ID,
+      comment: "ok",
+      conditions: null,
+      costCenterId: null,
+      categoryId: null,
+      effectiveStartDate: null,
+    });
     expect(res.success).toBe(true);
     expect(revalidatePath).toHaveBeenCalledWith(`/approvals/${ID}`);
     expect(revalidatePath).toHaveBeenCalledWith("/subscriptions");
@@ -92,13 +96,85 @@ describe("decision actions", () => {
       currentStep: 1,
     });
     const res = await rejectRequest(ID, "No budget");
-    expect(decision.rejectRequest).toHaveBeenCalledWith(
-      "org",
-      actor,
-      ID,
-      "No budget"
-    );
+    expect(decision.rejectRequest).toHaveBeenCalledWith("org", actor, ID, {
+      reasonId: null,
+      comment: "No budget",
+    });
     expect(res.data?.status).toBe("REJECTED");
+  });
+
+  it("approveRequest forwards the full decision capture and parses the start date", async () => {
+    decision.approveRequest.mockResolvedValue({
+      id: ID,
+      status: "APPROVED",
+      currentStep: 1,
+    });
+    const res = await approveRequest(ID, {
+      comment: "Go ahead",
+      conditions: "Annual plan only",
+      costCenterId: "cc-1",
+      categoryId: "cat-1",
+      effectiveStartDate: "2026-12-01",
+    });
+    expect(res.success).toBe(true);
+    expect(decision.approveRequest).toHaveBeenCalledWith("org", actor, ID, {
+      requestId: ID,
+      comment: "Go ahead",
+      conditions: "Annual plan only",
+      costCenterId: "cc-1",
+      categoryId: "cat-1",
+      effectiveStartDate: new Date("2026-12-01T00:00:00.000Z"),
+    });
+  });
+
+  it("approveRequest requires a comment when approvals.requireApproveComment is on", async () => {
+    getSetting.mockResolvedValue(true);
+    const res = await approveRequest(ID, { comment: "  " });
+    expect(getSetting).toHaveBeenCalledWith(
+      "org",
+      "approvals.requireApproveComment"
+    );
+    expect(res.success).toBe(false);
+    expect(res.errors?.comment).toBeDefined();
+    expect(decision.approveRequest).not.toHaveBeenCalled();
+  });
+
+  it("approveRequest rejects an invalid effective start date", async () => {
+    const res = await approveRequest(ID, { effectiveStartDate: "31/12/2026" });
+    expect(res.success).toBe(false);
+    expect(res.errors?.effectiveStartDate).toBeDefined();
+  });
+
+  it("rejectRequest with the new payload requires a reason and a comment", async () => {
+    const missing = await rejectRequest(ID, { reasonId: null, comment: "" });
+    expect(missing.success).toBe(false);
+    expect(missing.errors?.reasonId).toBeDefined();
+    expect(missing.errors?.comment).toBeDefined();
+    expect(decision.rejectRequest).not.toHaveBeenCalled();
+
+    decision.rejectRequest.mockResolvedValue({
+      id: ID,
+      status: "REJECTED",
+      currentStep: 1,
+    });
+    const ok = await rejectRequest(ID, {
+      reasonId: "reason-budget",
+      comment: "Over budget this quarter",
+    });
+    expect(ok.success).toBe(true);
+    expect(decision.rejectRequest).toHaveBeenCalledWith("org", actor, ID, {
+      reasonId: "reason-budget",
+      comment: "Over budget this quarter",
+    });
+  });
+
+  it("decision actions are denied without approvals:decide", async () => {
+    const forbidden = new Error("Missing approvals:decide");
+    forbidden.name = "ForbiddenError";
+    requirePermission.mockRejectedValue(forbidden);
+    const res = await rejectRequest(ID, { reasonId: "r", comment: "x" });
+    expect(res).toMatchObject({ success: false, message: "FORBIDDEN" });
+    expect(decision.rejectRequest).not.toHaveBeenCalled();
   });
 
   it("requestInfo uses approvals:decide; provideInfo, cancel and comment only need approvals:read", async () => {

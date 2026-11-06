@@ -6,6 +6,8 @@ import { PendingApprovalsCard } from "./pending-approvals-card";
 
 const getPendingApprovalsSummary = vi.hoisted(() => vi.fn());
 vi.mock("@/actions/approvals/summary", () => ({ getPendingApprovalsSummary }));
+// The shared decision dialog pulls in server actions; stub it for this card test.
+vi.mock("./decision/decision-dialog", () => ({ DecisionDialog: () => null }));
 
 function renderCard() {
   const client = new QueryClient({

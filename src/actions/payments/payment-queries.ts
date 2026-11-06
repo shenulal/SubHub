@@ -2,6 +2,7 @@
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { can } from "@/lib/rbac/service";
 import type { ActionState } from "@/types";
 import type { MatchSource, PaymentMatchStatus } from "@prisma/client";
 
@@ -61,6 +62,12 @@ export async function hasPaymentData(): Promise<
     if (!session?.user) {
       return { success: false, message: "Authentication required" };
     }
+    if (!(await can("payments:read"))) {
+      return {
+        success: false,
+        message: "You do not have permission to perform this action",
+      };
+    }
 
     if (!session.user.organizationId) {
       return {
@@ -108,6 +115,12 @@ export async function getPaymentRecords(options: {
       return {
         success: false,
         message: "Authentication required",
+      };
+    }
+    if (!(await can("payments:read"))) {
+      return {
+        success: false,
+        message: "You do not have permission to perform this action",
       };
     }
 
@@ -193,6 +206,12 @@ export async function getPaymentStatusCounts(): Promise<
     if (!session?.user) {
       return { success: false, message: "Authentication required" };
     }
+    if (!(await can("payments:read"))) {
+      return {
+        success: false,
+        message: "You do not have permission to perform this action",
+      };
+    }
 
     if (!session.user.organizationId) {
       return {
@@ -263,6 +282,12 @@ export async function getPaymentSummaryByApp(options: {
       return {
         success: false,
         message: "Authentication required",
+      };
+    }
+    if (!(await can("payments:read"))) {
+      return {
+        success: false,
+        message: "You do not have permission to perform this action",
       };
     }
 

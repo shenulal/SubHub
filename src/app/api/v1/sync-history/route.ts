@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { auth } from "@/lib/auth";
+import { can } from "@/lib/rbac/service";
 import { getSyncHistories } from "@/lib/services/payment/sync-history-service";
 import type { SyncType } from "@prisma/client";
 
@@ -18,6 +19,12 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json(
       { message: "Organization information is required" },
       { status: 401 }
+    );
+  }
+  if (!(await can("payments:read"))) {
+    return NextResponse.json(
+      { success: false, error: "Forbidden: missing permission" },
+      { status: 403 }
     );
   }
 

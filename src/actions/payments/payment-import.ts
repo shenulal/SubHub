@@ -5,6 +5,7 @@ import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { withLogging } from "@/lib/logging";
 import { parsePaymentCSV } from "@/lib/payment-csv";
+import { can } from "@/lib/rbac/service";
 import {
   type AppMatch,
   type CatalogWithPatterns,
@@ -68,7 +69,7 @@ async function _importPaymentCSV(
       };
     }
 
-    if (session.user.role !== "ADMIN") {
+    if (!(await can("payments:manage"))) {
       return {
         success: false,
         message: "Only admins can import payment records",

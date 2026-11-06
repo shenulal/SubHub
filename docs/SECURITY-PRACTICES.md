@@ -2,16 +2,17 @@
 
 ## Where secrets live
 
-| Secret                                                       | Source                        | Notes                                                                                   |
-| ------------------------------------------------------------ | ----------------------------- | --------------------------------------------------------------------------------------- |
-| `DATABASE_URL`, `DIRECT_URL`                                 | Environment / secret manager  | Never in code or docs                                                                   |
-| `AUTH_SECRET` / `NEXTAUTH_SECRET`                            | Environment                   | ≥ 32 random bytes (`openssl rand -base64 32`); production refuses to start without one  |
-| `ENCRYPTION_KEY`                                             | Environment                   | 32 characters; encrypts mailbox OAuth tokens at rest (AES-256-GCM, `src/lib/crypto.ts`) |
-| `STORAGE_SIGNING_SECRET`                                     | Environment                   | Signs local-storage download URLs; falls back to `NEXTAUTH_SECRET`                      |
-| `CRON_SECRET`                                                | Environment                   | Bearer token checked by every `/api/cron/*` route                                       |
-| OAuth client secrets (Google, Apple, Gmail, Microsoft Graph) | Environment                   | Providers are enabled only when their variables exist                                   |
-| `RESEND_API_KEY`, `FCM_SERVER_KEY`, `S3_*`, `FX_API_KEY`     | Environment                   | Optional integrations degrade gracefully when absent                                    |
-| Organisation-level secrets (`finance.fxApiKey`)              | `organization_settings` table | Masked before reaching the browser (`maskSensitiveSettings`); audit log redacts values  |
+| Secret                                                   | Source                        | Notes                                                                                   |
+| -------------------------------------------------------- | ----------------------------- | --------------------------------------------------------------------------------------- |
+| `DATABASE_URL`, `DIRECT_URL`                             | Environment / secret manager  | Never in code or docs                                                                   |
+| `AUTH_SECRET` / `NEXTAUTH_SECRET`                        | Environment                   | ≥ 32 random bytes (`openssl rand -base64 32`); production refuses to start without one  |
+| `ENCRYPTION_KEY`                                         | Environment                   | 32 characters; encrypts mailbox OAuth tokens at rest (AES-256-GCM, `src/lib/crypto.ts`) |
+| `STORAGE_SIGNING_SECRET`                                 | Environment                   | Signs local-storage download URLs; falls back to `NEXTAUTH_SECRET`                      |
+| `CRON_SECRET`                                            | Environment                   | Bearer token checked by every `/api/cron/*` route                                       |
+| OAuth client secrets (Apple, Gmail, Microsoft Graph)     | Environment                   | Providers are enabled only when their variables exist (Google sign-in was removed)      |
+| `SEED_QA_PASSWORD`                                       | `.env.local` only             | Password of the local QA users (`npm run seed:smoke`); never on a customer installation |
+| `RESEND_API_KEY`, `FCM_SERVER_KEY`, `S3_*`, `FX_API_KEY` | Environment                   | Optional integrations degrade gracefully when absent                                    |
+| Organisation-level secrets (`finance.fxApiKey`)          | `organization_settings` table | Masked before reaching the browser (`maskSensitiveSettings`); audit log redacts values  |
 
 ## Rules
 
@@ -20,7 +21,7 @@
 3. **Rotation.** `NEXTAUTH_SECRET` rotation signs users out; `ENCRYPTION_KEY` rotation requires re-connecting mailboxes (tokens cannot be decrypted with a new key) — plan a re-consent window; `CRON_SECRET` rotation must be mirrored in the scheduler.
 4. **Least privilege.** Database user limited to the application schema; S3/R2 keys scoped to the single bucket; Gmail scope is `gmail.readonly`, Graph scope `Mail.Read`.
 5. **Transport and headers.** HTTPS only (`NEXTAUTH_URL` must be https in production); `trustHost` is enabled for proxies; set HSTS, `X-Content-Type-Options`, `Referrer-Policy`, `Permissions-Policy` and a CSP at the edge (`next.config.ts` headers or the CDN).
-6. **Sessions.** JWT sessions; lifetime from `security.sessionMaxAgeHours`; SSO can be enforced per organisation (`security.enforceSso`); public sign-up can be disabled platform-wide (`system.allowSelfSignup`).
+6. **Sign-in and sessions.** Primary sign-in is user name or email + password (NextAuth credentials provider `password`, `src/lib/auth/authorize.ts`). Passwords are bcrypt-hashed (cost 12); policy (minimum length, character classes, history) and lockout (`security.maxFailedSignInAttempts`, `security.lockoutMinutes`) come from Settings > Security. Errors are generic ("user name, email or password is incorrect") and unknown accounts still run a bcrypt comparison; a locked account is reported as locked. The optional second step emails a 6-digit code after a correct password (organisation `security.requireLoginOtp` or the user's own opt-in) and is verified inside `authorize` — never from a client flag; codes use `otp_tokens` with the configured validity and attempt limit. Passwordless email-code sign-in is off by default (`security.allowEmailCodeSignIn`). Reset links are single-use, expire after `security.passwordResetExpiryMinutes`, and only a SHA-256 hash of the token is stored. Administrators with `members:manage_credentials` set temporary passwords that must be changed at next sign-in (every guarded page, action and `/api/v1` call is blocked until then). Sign-in success/failure, lockouts, password changes and resets are audit-logged. There is no request-rate limiter in the codebase yet: per-account lockout and the email cooldown (`security.authEmailCooldownSeconds`) are the brute-force controls — add an edge/WAF rate limit on `/api/auth/callback/*` and `/forgot-password` in production. JWT sessions; lifetime from `security.sessionMaxAgeHours`; SSO can be enforced per organisation (`security.enforceSso`, effective only when an SSO provider is configured); public sign-up can be disabled platform-wide (`system.allowSelfSignup`).
 7. **Access control.** Every server action and API route calls `requirePermission`; roles are organisation-scoped; the last administrator cannot be demoted.
    **Tenancy (`SUBHUB_DEPLOYMENT_MODE`, see `docs/DEPLOYMENT.md`).** In `saas` mode the permissions that change platform-wide data (`masters:manage_global`, `catalog:manage` — currencies, countries, exchange rates, vendor catalog) are stripped from every tenant role by the resolver and are held only by SUPER_ADMIN; tenant-facing fallbacks to "the first organisation" are disabled (sign-in options, FleetDM webhooks, console screens); a deactivated tenant resolves to no permissions and its members' sessions drop the organisation. In `single-tenant` mode a second organisation cannot be created.
 8. **Audit.** Create / update / delete / decision / export / settings changes are written to `audit_logs` with secrets redacted; retention is configurable (`privacy.auditLogRetentionDays`). Platform-level changes by a SUPER_ADMIN (tenant lifecycle, platform masters) go to `platform_audit_logs`.
@@ -30,5 +31,9 @@
 ## Local development
 
 `.env.local` holds local values only. The QA seed (`scripts/seed-smoke.ts`) creates throw-away accounts on the `subhub-qa.test` domain; never run it against production.
+
+QA users sign in with `SEED_QA_PASSWORD` (git-ignored `.env.local`; the smoke seed skips passwords with a warning when it is unset). Locally without `RESEND_API_KEY`, password-reset links are written to the server log.
+
+**Recovering a lost administrator password without email** (on-premise): generate a bcrypt hash (`node -e "require('bcryptjs').hash(process.argv[1],12).then(console.log)" '<temporary-password>'`) and run `UPDATE users SET password_hash='<hash>', must_change_password=true, failed_login_attempts=0, locked_until=NULL WHERE email='admin@customer.com';` — the administrator must choose a new password at the next sign-in.
 
 `AUTH_DEV_OTP` (a fixed 6-digit sign-in code) lets local and QA users sign in without an email provider. It is honoured only in development or when `NEXTAUTH_URL` points at localhost (a production build previewed on this machine); `src/actions/otp-dev.ts` rejects it for any other host. Never set it in a deployed environment's secret store, in a customer's on-premise `.env`, or in the Docker image; an on-premise installation opened through `http://localhost` (for example an SSH tunnel) would otherwise accept the fixed code. Without `RESEND_API_KEY`, local environments write the one-time code to the server log instead of emailing it.

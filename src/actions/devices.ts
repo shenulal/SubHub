@@ -4,6 +4,7 @@
 import { auth } from "@/lib/auth";
 import { logger } from "@/lib/logger";
 import { withLogging } from "@/lib/logging";
+import { can } from "@/lib/rbac/service";
 import {
   getDeviceById,
   getDevices,
@@ -31,6 +32,12 @@ export async function fetchDevices(
     if (!session?.user?.organizationId) {
       return { success: false, error: "Authentication required" };
     }
+    if (!(await can("extensions:read"))) {
+      return {
+        success: false,
+        error: "You do not have permission to perform this action",
+      };
+    }
 
     const result = await getDevices(session.user.organizationId, options);
     return { success: true, data: result };
@@ -53,6 +60,12 @@ export async function fetchDeviceById(
     const session = await auth();
     if (!session?.user?.organizationId) {
       return { success: false, error: "Authentication required" };
+    }
+    if (!(await can("extensions:read"))) {
+      return {
+        success: false,
+        error: "You do not have permission to perform this action",
+      };
     }
 
     const device = await getDeviceById(deviceId, session.user.organizationId);
@@ -80,6 +93,12 @@ export async function fetchDeviceStats(): Promise<ActionState<DeviceStats>> {
     if (!session?.user?.organizationId) {
       return { success: false, error: "Authentication required" };
     }
+    if (!(await can("extensions:read"))) {
+      return {
+        success: false,
+        error: "You do not have permission to perform this action",
+      };
+    }
 
     const stats = await getDeviceStats(session.user.organizationId);
     return { success: true, data: stats };
@@ -103,6 +122,12 @@ export async function fetchShadowITApps(): Promise<
     const session = await auth();
     if (!session?.user?.organizationId) {
       return { success: false, error: "Authentication required" };
+    }
+    if (!(await can("extensions:read"))) {
+      return {
+        success: false,
+        error: "You do not have permission to perform this action",
+      };
     }
 
     const apps = await getShadowITApps(session.user.organizationId);
@@ -133,7 +158,7 @@ async function _setDeviceAppApprovalStatus(
     }
 
     // Only Admin can change app approval status
-    if (session.user.role !== "ADMIN") {
+    if (!(await can("extensions:manage"))) {
       return { success: false, error: "Permission denied" };
     }
 
@@ -168,6 +193,12 @@ export async function fetchUsersWithoutAgent(): Promise<
     const session = await auth();
     if (!session?.user?.organizationId) {
       return { success: false, error: "Authentication required" };
+    }
+    if (!(await can("extensions:read"))) {
+      return {
+        success: false,
+        error: "You do not have permission to perform this action",
+      };
     }
 
     const users = await getUsersWithoutAgent(session.user.organizationId);

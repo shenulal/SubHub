@@ -3,6 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { syncCardTransactions } from "@/actions/cards/card-sync";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { can } from "@/lib/rbac/service";
 
 interface RouteContext {
   params: Promise<{ id: string }>;
@@ -25,6 +26,12 @@ export async function POST(
     return NextResponse.json(
       { message: "Organization information is required" },
       { status: 401 }
+    );
+  }
+  if (!(await can("payments:manage"))) {
+    return NextResponse.json(
+      { success: false, error: "Forbidden: missing permission" },
+      { status: 403 }
     );
   }
 

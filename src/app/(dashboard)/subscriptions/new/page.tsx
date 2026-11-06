@@ -2,7 +2,7 @@
 import { getApps } from "@/actions/apps";
 import { getSubscriptionFormOptions } from "@/actions/subscriptions/subscription-form-options";
 import { getUsers } from "@/actions/users-read";
-import { requireOrganization } from "@/lib/auth/require-auth";
+import { requirePermissionOrRedirect } from "@/lib/rbac/service";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { SubscriptionNewPageClient } from "./page.client";
@@ -16,8 +16,12 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function NewSubscriptionPage() {
-  const { role } = await requireOrganization();
-  const isAdmin = role === "ADMIN";
+  const { permissions } = await requirePermissionOrRedirect(
+    "subscriptions:create",
+    "/subscriptions"
+  );
+  // Seat assignment to other members (the action re-checks subscriptions:assign)
+  const isAdmin = permissions.has("subscriptions:assign");
 
   const [{ items: apps }, { items: users }, options] = await Promise.all([
     getApps({ limit: 1000 }),
@@ -30,9 +34,10 @@ export default async function NewSubscriptionPage() {
     id: app.id,
     name: app.name,
     teams: app.teams ?? [],
+    logoUrl: app.customLogoUrl || app.catalogLogoUrl || null,
   }));
 
-  // User options: visible to ADMIN only (includes teamId for per-team filtering)
+  // User options: only for subscriptions:assign holders (includes teamId for per-team filtering)
   const userOptions = isAdmin
     ? users.map((user) => ({
         id: user.id,

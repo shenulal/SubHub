@@ -19,6 +19,11 @@ vi.mock("@/lib/fx/base-currency", () => ({
   getBaseCurrency: vi.fn().mockResolvedValue("KRW"),
 }));
 
+// RBAC: permissions follow the mocked session's system role.
+vi.mock("@/lib/rbac/service", async () =>
+  (await import("@/test/rbac-session-mock")).sessionRbacMock()
+);
+
 vi.mock("@/lib/db", () => ({
   prisma: {
     user: {

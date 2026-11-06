@@ -4,6 +4,7 @@ import {
   getRegisteredAppUsageReport,
 } from "@/actions/reports/registered-app-usage";
 import { auth } from "@/lib/auth";
+import { requirePermissionOrRedirect } from "@/lib/rbac/service";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
@@ -32,6 +33,10 @@ interface RegisteredAppUsagePageProps {
 export default async function RegisteredAppUsagePage({
   searchParams,
 }: RegisteredAppUsagePageProps) {
+  await requirePermissionOrRedirect(
+    ["reports:read", "extensions:read"],
+    "/reports/cost"
+  );
   const session = await auth();
 
   if (!session?.user) {

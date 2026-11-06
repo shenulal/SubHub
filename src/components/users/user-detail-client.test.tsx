@@ -50,6 +50,10 @@ vi.mock("next-auth", () => ({
 }));
 
 // Mock dialogs to cut off server-action import chains
+vi.mock("./member-credentials-dialog", () => ({
+  MemberCredentialsButton: () => null,
+}));
+
 vi.mock("./offboard-user-dialog", () => ({
   OffboardUserDialog: () => null,
 }));

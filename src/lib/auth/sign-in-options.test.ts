@@ -11,7 +11,8 @@ vi.mock("@/lib/settings/service", () => ({
   getSetting: vi.fn(),
   getSystemSetting: vi.fn(),
 }));
-vi.mock("./index", () => ({ isAppleSignInEnabled: () => false }));
+const apple = { enabled: true };
+vi.mock("./index", () => ({ isAppleSignInEnabled: () => apple.enabled }));
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const db = prisma as any;
@@ -20,6 +21,7 @@ const systemSetting = vi.mocked(getSystemSetting);
 
 beforeEach(() => {
   vi.clearAllMocks();
+  apple.enabled = true;
   db.organization.count.mockResolvedValue(3);
   systemSetting.mockImplementation(
     async (key: string) =>
@@ -32,14 +34,17 @@ afterEach(() => vi.unstubAllEnvs());
 describe("getSignInOptions", () => {
   it("saas: uses the platform value and never reads the first organisation", async () => {
     vi.stubEnv("SUBHUB_DEPLOYMENT_MODE", "saas");
+    apple.enabled = false;
     const options = await getSignInOptions();
     expect(db.organization.findFirst).not.toHaveBeenCalled();
     expect(orgSetting).not.toHaveBeenCalled();
     expect(systemSetting).toHaveBeenCalledWith("security.enforceSso");
+    expect(systemSetting).toHaveBeenCalledWith("security.allowEmailCodeSignIn");
     expect(options).toEqual({
       appleEnabled: false,
       enforceSso: false,
       allowSelfSignup: true,
+      emailCodeEnabled: false,
     });
   });
 
@@ -67,5 +72,14 @@ describe("getSignInOptions", () => {
     const options = await getSignInOptions();
     expect(orgSetting).not.toHaveBeenCalled();
     expect(options).toMatchObject({ enforceSso: false, allowSelfSignup: true });
+  });
+
+  it("ignores enforced SSO when no SSO provider is configured (no lock-out)", async () => {
+    vi.stubEnv("SUBHUB_DEPLOYMENT_MODE", "single-tenant");
+    apple.enabled = false;
+    db.organization.findFirst.mockResolvedValue({ id: "org-1", name: "QA" });
+    const options = await getSignInOptions();
+    expect(options.enforceSso).toBe(false);
+    expect(options.emailCodeEnabled).toBe(true);
   });
 });

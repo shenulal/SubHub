@@ -1,4 +1,6 @@
 // src/actions/approvals/index.ts
+export { bulkDecideRequests } from "./bulk-decisions";
+export { getDecisionFormOptions } from "./decision-options";
 export {
   addComment,
   approveRequest,

@@ -3,6 +3,7 @@
 import { getCachedSession } from "@/lib/auth/require-auth";
 import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
+import { can } from "@/lib/rbac/service";
 import type { ActionState } from "@/types";
 
 interface MigrationResult {
@@ -27,7 +28,7 @@ export async function migrateNonSaaSMatchStatus(): Promise<
       return { success: false, message: "Authentication required" };
     }
 
-    if (session.user.role !== "ADMIN") {
+    if (!(await can("payments:manage"))) {
       return { success: false, message: "Only admins can run this" };
     }
 

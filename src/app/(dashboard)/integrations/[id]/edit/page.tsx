@@ -1,6 +1,6 @@
 // src/app/(dashboard)/integrations/[id]/edit/page.tsx
 import { IntegrationEditClient } from "@/components/integrations/integration-edit-client";
-import { requireAdmin } from "@/lib/auth/require-auth";
+import { requirePermissionOrRedirect } from "@/lib/rbac/service";
 
 interface IntegrationEditPageProps {
   params: Promise<{ id: string }>;
@@ -9,7 +9,7 @@ interface IntegrationEditPageProps {
 export default async function IntegrationEditPage({
   params,
 }: IntegrationEditPageProps) {
-  await requireAdmin("/integrations");
+  await requirePermissionOrRedirect("integrations:manage", "/integrations");
   const { id } = await params;
   return <IntegrationEditClient id={id} />;
 }

@@ -5,10 +5,12 @@
  */
 
 import { getOnboardingMonitorData } from "@/actions/extensions/onboarding-monitor";
+import { requirePermissionOrRedirect } from "@/lib/rbac/service";
 import { getTranslations } from "next-intl/server";
 import { OnboardingMonitorClient } from "./onboarding-monitor-client";
 
 export default async function ExtensionOnboardingPage() {
+  await requirePermissionOrRedirect("extensions:read", "/dashboard");
   const t = await getTranslations();
   const { items, total, completedCount, pendingCount } =
     await getOnboardingMonitorData();

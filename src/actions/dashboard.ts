@@ -6,6 +6,7 @@ import { requireOrganization } from "@/lib/auth/require-auth";
 import { prisma } from "@/lib/db";
 import { inFilter } from "@/lib/filters/multi-value";
 import { getBaseCurrency } from "@/lib/fx/base-currency";
+import { withReportAccess } from "@/lib/rbac/report-access";
 import { advanceToFutureDate } from "@/lib/utils/renewal-date";
 import type {
   CategoryDistribution,
@@ -361,11 +362,10 @@ export async function getRenewalReportData(
   const ninetyDaysFromNow = new Date();
   ninetyDaysFromNow.setDate(ninetyDaysFromNow.getDate() + 90);
 
-  const scope = resolveReportScope(filters, {
-    id: userId,
-    role,
-    teamId: memberTeamId,
-  });
+  const scope = resolveReportScope(
+    filters,
+    await withReportAccess({ id: userId, role, teamId: memberTeamId })
+  );
   const where: Record<string, unknown> = {
     organizationId,
     status: "ACTIVE",

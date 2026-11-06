@@ -35,9 +35,22 @@ const fetchSession = async (): Promise<SessionResponse | null> => {
  * - Full login/logout logic will follow the existing NextAuth flow in a later iteration.
  */
 export const authProvider: AuthProvider = {
-  login: async ({ providerName, email, password }) => {
-    // NextAuth signIn to be extended later; currently only redirects.
-    await signIn(providerName, { email, password });
+  login: async ({ providerName, email, username, password }) => {
+    // User name or email + password through the NextAuth `password` provider.
+    const result = await signIn(providerName ?? "password", {
+      identifier: username ?? email,
+      password,
+      redirect: false,
+    });
+    if (result && (result.error || result.ok === false)) {
+      return {
+        success: false,
+        error: {
+          name: "SignInError",
+          message: result.code ?? result.error ?? "invalid_credentials",
+        },
+      };
+    }
     return {
       success: true,
       redirectTo: "/",

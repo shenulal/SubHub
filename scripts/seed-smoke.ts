@@ -1,8 +1,9 @@
 // scripts/seed-smoke.ts
-// Seeds a QA organisation with admin / approver / member users and a few
+// Seeds a QA organisation with admin / approver / member / viewer users and a few
 // subscriptions so the Playwright smoke suite (tests/e2e) can run against a
 // local database. Idempotent. Run: npx tsx scripts/seed-smoke.ts
 import { PrismaClient } from "@prisma/client";
+import { hashPassword } from "../src/lib/auth/password";
 import { ensureOrganizationDefaults } from "../src/lib/masters/organization-defaults";
 import { ensurePermissionCatalog } from "../src/lib/rbac/service";
 
@@ -11,22 +12,54 @@ export const SMOKE = {
   domain: "subhub-qa.test",
   admin: {
     email: "qa-admin@subhub-qa.test",
+    username: "qa.admin",
     name: "QA Admin",
     role: "ADMIN" as const,
   },
   approver: {
     email: "qa-approver@subhub-qa.test",
+    username: "qa.approver",
     name: "QA Approver",
     role: "APPROVER" as const,
   },
   member: {
     email: "qa-member@subhub-qa.test",
+    username: "qa.member",
     name: "QA Member",
     role: "MEMBER" as const,
+  },
+  viewer: {
+    email: "qa-viewer@subhub-qa.test",
+    username: "qa.viewer",
+    name: "QA Viewer",
+    role: "VIEWER" as const,
   },
 };
 
 const prisma = new PrismaClient();
+
+/**
+ * Password for the QA users, from SEED_QA_PASSWORD (never hard-coded).
+ * Unset: users are seeded without a password change and a warning is shown.
+ */
+async function qaPasswordData() {
+  const password = process.env.SEED_QA_PASSWORD;
+  if (!password) {
+    console.warn(
+      "[seed-smoke] SEED_QA_PASSWORD is not set — QA users keep their current password (none on a fresh database)"
+    );
+    return {};
+  }
+  return {
+    passwordHash: await hashPassword(password),
+    passwordChangedAt: new Date(),
+    passwordHistory: [],
+    mustChangePassword: false,
+    failedLoginAttempts: 0,
+    lockedUntil: null,
+    loginOtpEnabled: false,
+  };
+}
 
 export async function seedSmoke() {
   await ensurePermissionCatalog(prisma);
@@ -37,8 +70,9 @@ export async function seedSmoke() {
   });
   await ensureOrganizationDefaults(org.id, { db: prisma, countryCode: "AE" });
 
+  const passwordData = await qaPasswordData();
   const users: Record<string, { id: string; email: string }> = {};
-  for (const key of ["admin", "approver", "member"] as const) {
+  for (const key of ["admin", "approver", "member", "viewer"] as const) {
     const u = SMOKE[key];
     const user = await prisma.user.upsert({
       where: { email: u.email },
@@ -47,6 +81,8 @@ export async function seedSmoke() {
         role: u.role,
         status: "ACTIVE",
         emailVerified: new Date(),
+        username: u.username,
+        ...passwordData,
       },
       create: {
         email: u.email,
@@ -55,6 +91,8 @@ export async function seedSmoke() {
         status: "ACTIVE",
         emailVerified: new Date(),
         organizationId: org.id,
+        username: u.username,
+        ...passwordData,
       },
       select: { id: true, email: true },
     });

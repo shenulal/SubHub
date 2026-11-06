@@ -151,7 +151,7 @@ async function _createSubscription(
   formData: FormData
 ): Promise<IdResult> {
   try {
-    const { organizationId, userId, role } = await requirePermission(
+    const { organizationId, userId, permissions } = await requirePermission(
       "subscriptions:create"
     );
     const raw = parseSubscriptionFormData(formData);
@@ -162,7 +162,10 @@ async function _createSubscription(
     const app = await resolveApp(organizationId, data);
     if (!app) return { success: false, message: MESSAGES.appNotFound };
 
-    if (data.assignedUserIds.length > 0 && role !== "ADMIN") {
+    if (
+      data.assignedUserIds.length > 0 &&
+      !permissions.has("subscriptions:assign")
+    ) {
       return { success: false, message: MESSAGES.assignAdminOnly };
     }
     const plan = await prepareAssignments(organizationId, app.id, userId, {

@@ -5,9 +5,13 @@
  */
 import { logger } from "@/lib/logger";
 import { isForbiddenError } from "@/lib/rbac/service";
-import { isApprovalError } from "@/lib/services/approval/shared";
+import {
+  candidatesForStep,
+  isApprovalError,
+} from "@/lib/services/approval/shared";
 import type { ActionState } from "@/types";
 import type {
+  ApprovalDecisionSummary,
   ApprovalEventView,
   ApprovalRequestListItem,
   ApprovalRequestMetadata,
@@ -76,14 +80,34 @@ export function metadataOf(row: {
 export function isAwaitingUser(row: ListRow, userId: string): boolean {
   if (row.status !== "PENDING") return false;
   const current = row.steps.find((s) => s.stepOrder === row.currentStep);
-  if (current?.approverId === userId) return true;
-  return metadataOf(row).candidateIds?.includes(userId) ?? false;
+  if (!current || current.status !== "PENDING") return false;
+  if (metadataOf(row).candidateIds?.includes(userId)) return true;
+  return candidatesForStep(row, current).includes(userId);
+}
+
+/** Who is looking: drives `canDecide` on every row (same rule as the service). */
+export interface ListViewer {
+  userId: string;
+  isAdmin: boolean;
+  hasDecidePermission: boolean;
+}
+
+export function viewerCanDecide(row: ListRow, viewer: ListViewer): boolean {
+  if (!viewer.hasDecidePermission || row.status !== "PENDING") return false;
+  const current = row.steps.find((s) => s.stepOrder === row.currentStep);
+  if (!current || current.status !== "PENDING") return false;
+  return viewer.isAdmin || isAwaitingUser(row, viewer.userId);
 }
 
 export function toListItem(
   row: ListRow,
-  userId: string
+  viewerOrUserId: ListViewer | string
 ): ApprovalRequestListItem {
+  const viewer: ListViewer =
+    typeof viewerOrUserId === "string"
+      ? { userId: viewerOrUserId, isAdmin: false, hasDecidePermission: false }
+      : viewerOrUserId;
+  const userId = viewer.userId;
   const current = row.steps.find((s) => s.stepOrder === row.currentStep);
   return {
     id: row.id,
@@ -101,11 +125,44 @@ export function toListItem(
     decidedAt: row.decidedAt?.toISOString() ?? null,
     requester: row.requester,
     category: row.category,
+    costCenterId: row.costCenterId,
     currentApprover:
       row.status === "PENDING" || row.status === "INFO_REQUESTED"
         ? (current?.approver ?? null)
         : null,
     isAwaitingMe: isAwaitingUser(row, userId),
+    canDecide: viewerCanDecide(row, viewer),
+  };
+}
+
+type DecisionRow = Pick<ListRow, "status" | "decidedAt"> & {
+  steps: Pick<ListRow["steps"][number], "status" | "comment" | "approver">[];
+  rejectionReasonId: string | null;
+  rejectionReasonName: string | null;
+  decisionComment: string | null;
+  decisionConditions: string | null;
+  effectiveStartDate: Date | null;
+};
+
+/** Latest approve / reject outcome, or null while the request is undecided. */
+export function toDecisionSummary(
+  row: DecisionRow
+): ApprovalDecisionSummary | null {
+  if (row.status !== "APPROVED" && row.status !== "REJECTED") return null;
+  const decided = [...row.steps]
+    .reverse()
+    .find((s) => s.status === "APPROVED" || s.status === "REJECTED");
+  const reasonName = row.rejectionReasonName;
+  return {
+    status: row.status,
+    decidedAt: row.decidedAt?.toISOString() ?? null,
+    decidedBy: decided?.approver ?? null,
+    comment: row.decisionComment ?? decided?.comment ?? null,
+    conditions: row.decisionConditions,
+    reason: reasonName ? { id: row.rejectionReasonId, name: reasonName } : null,
+    effectiveStartDate: row.effectiveStartDate
+      ? row.effectiveStartDate.toISOString().slice(0, 10)
+      : null,
   };
 }
 

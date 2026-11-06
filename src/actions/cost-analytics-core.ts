@@ -4,6 +4,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { getBaseCurrency } from "@/lib/fx/base-currency";
+import { withReportAccess } from "@/lib/rbac/report-access";
 import type { ActionState } from "@/types";
 import type {
   AppCostDistribution,
@@ -41,7 +42,10 @@ export async function getCostStatistics(
     }
 
     const { startDate, endDate, appIds } = filters;
-    const scope = resolveReportScope(filters, session.user);
+    const scope = resolveReportScope(
+      filters,
+      await withReportAccess(session.user)
+    );
 
     // Default dates (last 30 days when not specified)
     const now = new Date();
@@ -336,7 +340,7 @@ export async function getTopCostApps(options: {
     const take = limit === undefined ? 5 : limit;
     const scope = resolveReportScope(
       { teamId, userId, teamIds, userIds },
-      session.user
+      await withReportAccess(session.user)
     );
 
     // PaymentRecord groupBy (5 unified matchStatus values)

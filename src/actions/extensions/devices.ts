@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { withLogging } from "@/lib/logging";
+import { can } from "@/lib/rbac/service";
 import type { ActionState } from "@/types";
 import type {
   ExtensionDeviceDetail,
@@ -26,6 +27,12 @@ export async function getExtensionDevices(
     const session = await auth();
     if (!session?.user?.organizationId) {
       return { success: false, error: "Authentication required" };
+    }
+    if (!(await can("extensions:read"))) {
+      return {
+        success: false,
+        error: "You do not have permission to perform this action",
+      };
     }
 
     const { page = 1, limit = 20, status } = params;
@@ -87,6 +94,12 @@ export async function getExtensionDevice(
     if (!session?.user?.organizationId) {
       return { success: false, error: "Authentication required" };
     }
+    if (!(await can("extensions:read"))) {
+      return {
+        success: false,
+        error: "You do not have permission to perform this action",
+      };
+    }
 
     const device = await prisma.extensionDevice.findUnique({
       where: { id },
@@ -127,6 +140,12 @@ async function _updateExtensionDeviceStatus(
     const session = await auth();
     if (!session?.user?.organizationId) {
       return { success: false, error: "Authentication required" };
+    }
+    if (!(await can("extensions:manage"))) {
+      return {
+        success: false,
+        error: "You do not have permission to perform this action",
+      };
     }
 
     // Validate input
@@ -180,6 +199,12 @@ async function _syncExtensionDevice(
     const session = await auth();
     if (!session?.user?.organizationId) {
       return { success: false, error: "Authentication required" };
+    }
+    if (!(await can("extensions:manage"))) {
+      return {
+        success: false,
+        error: "You do not have permission to perform this action",
+      };
     }
 
     // Check the existing entry

@@ -7,6 +7,7 @@
 import { auth as getAuth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
+import { can } from "@/lib/rbac/service";
 import { NextRequest, NextResponse } from "next/server";
 
 /**
@@ -27,6 +28,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         { success: false, error: "Unauthorized" },
         { status: 401 }
+      );
+    }
+    if (!(await can("extensions:read"))) {
+      return NextResponse.json(
+        { success: false, error: "Forbidden: missing permission" },
+        { status: 403 }
       );
     }
 

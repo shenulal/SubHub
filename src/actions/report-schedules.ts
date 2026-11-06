@@ -5,6 +5,7 @@ import { requireOrganization } from "@/lib/auth/require-auth";
 import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { withLogging } from "@/lib/logging";
+import { can } from "@/lib/rbac/service";
 import { getSetting } from "@/lib/settings/service";
 import type { ActionState } from "@/types";
 import type {
@@ -110,9 +111,9 @@ async function _createReportSchedule(
   input: CreateReportScheduleInput
 ): Promise<ActionState<{ id: string }>> {
   try {
-    const { organizationId, userId, role } = await requireOrganization();
+    const { organizationId, userId } = await requireOrganization();
 
-    if (role !== "ADMIN") {
+    if (!(await can("reports:export"))) {
       return { success: false, message: "Admin permission required" };
     }
 
@@ -189,9 +190,9 @@ async function _updateReportSchedule(
   input: UpdateReportScheduleInput
 ): Promise<ActionState> {
   try {
-    const { organizationId, role } = await requireOrganization();
+    const { organizationId } = await requireOrganization();
 
-    if (role !== "ADMIN") {
+    if (!(await can("reports:export"))) {
       return { success: false, message: "Admin permission required" };
     }
 
@@ -266,9 +267,9 @@ export const updateReportSchedule = withLogging(
  */
 async function _deleteReportSchedule(id: string): Promise<ActionState> {
   try {
-    const { organizationId, role } = await requireOrganization();
+    const { organizationId } = await requireOrganization();
 
-    if (role !== "ADMIN") {
+    if (!(await can("reports:export"))) {
       return { success: false, message: "Admin permission required" };
     }
 

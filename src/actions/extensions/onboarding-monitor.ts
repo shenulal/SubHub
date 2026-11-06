@@ -1,8 +1,8 @@
 // src/actions/extensions/onboarding-monitor.ts
 "use server";
 
-import { requireOrganization } from "@/lib/auth/require-auth";
 import { prisma } from "@/lib/db";
+import { requirePermission } from "@/lib/rbac/service";
 
 export interface OnboardingMonitorItem {
   userId: string;
@@ -21,7 +21,7 @@ export async function getOnboardingMonitorData(): Promise<{
   completedCount: number;
   pendingCount: number;
 }> {
-  const { organizationId } = await requireOrganization();
+  const { organizationId } = await requirePermission("extensions:read");
 
   const users = await prisma.user.findMany({
     where: {

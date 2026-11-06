@@ -82,6 +82,30 @@ describe("exportApprovals", () => {
     );
   });
 
+  it("exports the captured decision (decided by, reason, comment, conditions, start date)", async () => {
+    // Reuse the fixture from beforeEach as the base row.
+    const [row] = await prisma.approvalRequest.findMany();
+    prisma.approvalRequest.findMany.mockClear();
+    prisma.approvalRequest.findMany.mockResolvedValue([
+      {
+        ...row,
+        status: "REJECTED",
+        rejectionReasonId: "r1",
+        rejectionReasonName: "Security concern",
+        decisionComment: "No SSO support",
+        decisionConditions: null,
+        effectiveStartDate: null,
+        steps: [{ ...row.steps[0], status: "REJECTED", comment: null }],
+      },
+    ]);
+    const res = await exportApprovals({});
+    const [header, line] = res.data!.csv.replace(/^\uFEFF/, "").split("\n");
+    expect(header).toContain(
+      "Decided by,Rejection reason,Decision comment,Approval conditions,Effective start date"
+    );
+    expect(line).toContain("Mgr,Security concern,No SSO support");
+  });
+
   it("ignores invalid filters instead of failing", async () => {
     const res = await exportApprovals({ status: "WHATEVER" });
     expect(res.success).toBe(true);

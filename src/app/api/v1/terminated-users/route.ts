@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { logger } from "@/lib/logger";
 import { withLogging } from "@/lib/logging";
+import { can } from "@/lib/rbac/service";
 
 export const GET = withLogging(
   "GET /api/v1/terminated-users",
@@ -14,6 +15,12 @@ export const GET = withLogging(
 
       if (!session?.user?.organizationId) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+      if (!(await can("members:read"))) {
+        return NextResponse.json(
+          { success: false, error: "Forbidden: missing permission" },
+          { status: 403 }
+        );
       }
 
       const { searchParams } = new URL(request.url);

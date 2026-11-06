@@ -3,7 +3,7 @@ import { getApps } from "@/actions/apps";
 import { getSubscriptionCached } from "@/actions/subscriptions";
 import { getSubscriptionFormOptions } from "@/actions/subscriptions/subscription-form-options";
 import { getUsers } from "@/actions/users-read";
-import { requireOrganization } from "@/lib/auth/require-auth";
+import { requirePermissionOrRedirect } from "@/lib/rbac/service";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { notFound } from "next/navigation";
@@ -32,9 +32,13 @@ export async function generateMetadata({
 export default async function SubscriptionEditPage({
   params,
 }: SubscriptionEditPageProps) {
+  const { permissions } = await requirePermissionOrRedirect(
+    "subscriptions:update",
+    "/subscriptions"
+  );
   const { id } = await params;
-  const { role } = await requireOrganization();
-  const isAdmin = role === "ADMIN";
+  // Seat assignment to other members (the action re-checks subscriptions:assign)
+  const isAdmin = permissions.has("subscriptions:assign");
 
   const [subscription, { items: apps }, { items: users }, options] =
     await Promise.all([
@@ -52,6 +56,7 @@ export default async function SubscriptionEditPage({
     id: app.id,
     name: app.name,
     teams: app.teams ?? [],
+    logoUrl: app.customLogoUrl || app.catalogLogoUrl || null,
   }));
 
   const userOptions = isAdmin

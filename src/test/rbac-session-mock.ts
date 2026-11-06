@@ -38,30 +38,50 @@ function hasNeeded(set: Set<string>, needed: string | string[], any = false) {
 }
 
 export function sessionRbacMock() {
+  const requirePermission = async (
+    needed: string | string[],
+    options: { mode?: "all" | "any" } = {}
+  ) => {
+    const ctx = await sessionGrants();
+    if (!ctx) redirect("/login");
+    const user = ctx!.session.user!;
+    if (!user.organizationId) redirect("/onboarding");
+    if (!hasNeeded(ctx!.set, needed, options.mode === "any")) {
+      throw new ForbiddenError(String(needed));
+    }
+    return {
+      userId: user.id,
+      organizationId: user.organizationId,
+      role: ctx!.role,
+      permissions: ctx!.set,
+    };
+  };
   return {
     ForbiddenError,
     isForbiddenError: (e: unknown) => e instanceof ForbiddenError,
+    hasAll: (set: Set<string>, needed: string | string[]) =>
+      hasNeeded(set, needed),
+    hasAny: (set: Set<string>, needed: string | string[]) =>
+      hasNeeded(set, needed, true),
+    /** Grants of the mocked session's role (ids are not checked). */
+    getUserPermissionSet: async () =>
+      (await sessionGrants())?.set ?? new Set<string>(),
+    requirePermissionOrRedirect: async (
+      needed: string | string[],
+      redirectTo = "/dashboard",
+      options: { mode?: "all" | "any" } = {}
+    ) => {
+      try {
+        return await requirePermission(needed, options);
+      } catch (error) {
+        if (error instanceof ForbiddenError) redirect(redirectTo);
+        throw error;
+      }
+    },
     can: async (needed: string | string[], mode: "all" | "any" = "all") => {
       const ctx = await sessionGrants();
       return ctx ? hasNeeded(ctx.set, needed, mode === "any") : false;
     },
-    requirePermission: async (
-      needed: string | string[],
-      options: { mode?: "all" | "any" } = {}
-    ) => {
-      const ctx = await sessionGrants();
-      if (!ctx) redirect("/login");
-      const user = ctx!.session.user!;
-      if (!user.organizationId) redirect("/onboarding");
-      if (!hasNeeded(ctx!.set, needed, options.mode === "any")) {
-        throw new ForbiddenError(String(needed));
-      }
-      return {
-        userId: user.id,
-        organizationId: user.organizationId,
-        role: ctx!.role,
-        permissions: ctx!.set,
-      };
-    },
+    requirePermission,
   };
 }

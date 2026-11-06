@@ -6,10 +6,14 @@ import type { ApprovalRequestListItem } from "@/types/approval";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
 import { useMemo } from "react";
+import { ApprovalRowActions } from "./approval-row-actions";
 import { ApprovalStatusBadge } from "./approval-status-badge";
+import type { DecisionKind } from "./decision/types";
 import { formatMoney, formatRelative, userLabel } from "./format";
 
-export function useInboxColumns(): DataTableColumn<ApprovalRequestListItem>[] {
+export function useInboxColumns(
+  onDecide: (kind: DecisionKind, row: ApprovalRequestListItem) => void
+): DataTableColumn<ApprovalRequestListItem>[] {
   const t = useTranslations("approvals.inbox");
   const tc = useTranslations("approvals.common");
   const tCycle = useTranslations("approvals.cycle");
@@ -22,7 +26,7 @@ export function useInboxColumns(): DataTableColumn<ApprovalRequestListItem>[] {
         header: t("columns.service"),
         sortable: true,
         cell: (row) => (
-          <div className="max-w-[320px] min-w-0">
+          <div className="max-w-[260px] min-w-0">
             <div className="flex min-w-0 items-center gap-2">
               <Link
                 href={`/approvals/${row.id}`}
@@ -114,7 +118,14 @@ export function useInboxColumns(): DataTableColumn<ApprovalRequestListItem>[] {
           </span>
         ),
       },
+      {
+        id: "actions",
+        header: "",
+        className: "w-px text-right",
+        headerClassName: "w-px",
+        cell: (row) => <ApprovalRowActions row={row} onDecide={onDecide} />,
+      },
     ],
-    [t, tc, tCycle, perMonth]
+    [t, tc, tCycle, perMonth, onDecide]
   );
 }

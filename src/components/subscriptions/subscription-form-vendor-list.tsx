@@ -6,6 +6,7 @@
  * vendor-catalog matches, then either "+ Create app …" (apps:manage) or the
  * free-text fallback that registers the vendor when the subscription is saved.
  */
+import { AppLogo } from "@/components/apps/app-logo";
 import {
   CommandEmpty,
   CommandGroup,
@@ -13,12 +14,14 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import type { CatalogItemDto } from "@/types/taxonomy";
-import { AppWindow, Check, Loader2, Plus } from "lucide-react";
+import { Check, Loader2, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 export interface VendorAppOption {
   id: string;
   name: string;
+  /** Custom icon or the linked catalog logo. */
+  logoUrl?: string | null;
 }
 
 /** How many of the organisation's apps the list shows at once. */
@@ -84,7 +87,12 @@ export function VendorList(props: VendorListProps) {
               onSelect={() => props.onPickApp(app)}
               className="flex min-w-0 items-center gap-2"
             >
-              <AppWindow className="text-muted-foreground size-4 shrink-0" />
+              <AppLogo
+                src={app.logoUrl}
+                name={app.name}
+                className="size-5 rounded-sm p-0"
+                fallbackClassName="text-[0.6875rem]"
+              />
               <span className="min-w-0 flex-1 truncate">{app.name}</span>
               {props.selectedAppId === app.id && <Check className="size-4" />}
             </CommandItem>

@@ -3,6 +3,7 @@
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { can } from "@/lib/rbac/service";
 import { classifyMerchantWithLLM } from "@/lib/services/saas-classifier";
 import {
   extractMainDomain,
@@ -52,6 +53,12 @@ export async function getRecommendedApps(params: {
     const session = await auth();
     if (!session?.user?.organizationId) {
       return { success: false, error: "Authentication required" };
+    }
+    if (!(await can("extensions:read"))) {
+      return {
+        success: false,
+        error: "You do not have permission to perform this action",
+      };
     }
 
     const { page = 1, limit = 20, search } = params;
@@ -159,6 +166,12 @@ export async function scanUnregisteredDomains(params: {
     if (!session?.user?.organizationId) {
       return { success: false, error: "Authentication required" };
     }
+    if (!(await can("extensions:manage"))) {
+      return {
+        success: false,
+        error: "You do not have permission to perform this action",
+      };
+    }
 
     const { batchSize = 10 } = params;
 
@@ -252,6 +265,12 @@ export async function registerRecommendedApp(
     if (!session?.user?.organizationId) {
       return { success: false, error: "Authentication required" };
     }
+    if (!(await can("extensions:manage"))) {
+      return {
+        success: false,
+        error: "You do not have permission to perform this action",
+      };
+    }
 
     // Fetch scan history
     const scanHistory = await prisma.saaSDomainScanHistory.findUnique({
@@ -326,6 +345,12 @@ export async function dismissRecommendedApp(
     const session = await auth();
     if (!session?.user?.organizationId) {
       return { success: false, error: "Authentication required" };
+    }
+    if (!(await can("extensions:manage"))) {
+      return {
+        success: false,
+        error: "You do not have permission to perform this action",
+      };
     }
 
     // Set isSaaS to false in scan history

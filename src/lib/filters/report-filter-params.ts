@@ -2,8 +2,8 @@
 /**
  * Team / user selection shared by the cost, renewal and usage reports.
  * URL keys stay `teamId` / `userId`; each holds a comma-separated list
- * (a legacy single id still works). Restricted roles (non-admin) are pinned
- * to their own team, or to themselves when they have no team.
+ * (a legacy single id still works). Viewers without `subscriptions:read_all`
+ * (`canReadAll`) are pinned to their own team, or to themselves without one.
  */
 import { parseMultiValue, serializeMultiValue } from "./multi-value";
 
@@ -16,12 +16,14 @@ export interface ReportFilterViewer {
   id: string;
   role?: string | null;
   teamId?: string | null;
+  /** Holds `subscriptions:read_all` (resolved with `withReportAccess`). */
+  canReadAll?: boolean;
 }
 
 type RawParam = string | string[] | null | undefined;
 
 export function isRestrictedReportViewer(viewer: ReportFilterViewer): boolean {
-  return viewer.role !== "ADMIN";
+  return viewer.canReadAll !== true;
 }
 
 export function resolveReportFilterParams(

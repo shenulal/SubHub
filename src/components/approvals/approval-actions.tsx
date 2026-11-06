@@ -2,48 +2,21 @@
 "use client";
 
 /**
- * Feature 2.4 — decision buttons + confirmation dialogs for the detail page.
+ * Feature 2.4 — decision buttons on the request detail page. The dialog is the
+ * shared `DecisionDialog` (also used by the inbox and the dashboard card).
  */
-import {
-  approveRequest,
-  cancelRequest,
-  provideInfo,
-  rejectRequest,
-  requestInfo,
-} from "@/actions/approvals/decisions";
 import { Can } from "@/components/common/can";
 import { Button } from "@/components/ui/button";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
 import type { ApprovalRequestDetail } from "@/types/approval";
-import {
-  Check,
-  CircleSlash,
-  HelpCircle,
-  Loader2,
-  Reply,
-  X,
-} from "lucide-react";
+import { Check, CircleSlash, HelpCircle, Reply, X } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useState, useTransition } from "react";
-import { toast } from "sonner";
-
-type Kind = "approve" | "reject" | "requestInfo" | "provideInfo" | "cancel";
-
-const REQUIRES_COMMENT: Record<Kind, boolean> = {
-  approve: false,
-  reject: true,
-  requestInfo: true,
-  provideInfo: true,
-  cancel: false,
-};
+import { useState } from "react";
+import { DecisionDialog } from "./decision/decision-dialog";
+import {
+  targetOf,
+  type DecisionKind,
+  type DecisionTarget,
+} from "./decision/types";
 
 interface Props {
   request: ApprovalRequestDetail;
@@ -52,56 +25,14 @@ interface Props {
 
 export function ApprovalActions({ request, onChanged }: Props) {
   const t = useTranslations("approvals.detail.actions");
-  const tc = useTranslations("approvals.common");
-  const [kind, setKind] = useState<Kind | null>(null);
-  const [comment, setComment] = useState("");
-  const [isPending, startTransition] = useTransition();
+  const [kind, setKind] = useState<DecisionKind | null>(null);
+  const [target, setTarget] = useState<DecisionTarget | null>(null);
   const { viewer } = request;
 
-  const open = (next: Kind) => {
-    setComment("");
+  const open = (next: DecisionKind) => {
+    setTarget(targetOf(request));
     setKind(next);
   };
-
-  const run = () => {
-    if (!kind) return;
-    const id = request.id;
-    startTransition(async () => {
-      const res =
-        kind === "approve"
-          ? await approveRequest(id, comment || null)
-          : kind === "reject"
-            ? await rejectRequest(id, comment)
-            : kind === "requestInfo"
-              ? await requestInfo(id, comment)
-              : kind === "provideInfo"
-                ? await provideInfo(id, comment)
-                : await cancelRequest(id, comment || null);
-      if (!res.success) {
-        toast.error(res.error ?? tc("errorGeneric"));
-        return;
-      }
-      const doneKey = {
-        approve: "approved",
-        reject: "rejected",
-        requestInfo: "infoRequested",
-        provideInfo: "infoProvided",
-        cancel: "cancelled",
-      }[kind] as
-        | "approved"
-        | "rejected"
-        | "infoRequested"
-        | "infoProvided"
-        | "cancelled";
-      toast.success(t(doneKey));
-      setKind(null);
-      onChanged();
-    });
-  };
-
-  const canConfirm = kind
-    ? !REQUIRES_COMMENT[kind] || comment.trim().length > 0
-    : false;
 
   return (
     <>
@@ -142,53 +73,12 @@ export function ApprovalActions({ request, onChanged }: Props) {
           </Button>
         )}
       </div>
-
-      <Dialog
-        open={kind !== null}
-        onOpenChange={(o) => !o && !isPending && setKind(null)}
-      >
-        <DialogContent>
-          {kind && (
-            <>
-              <DialogHeader>
-                <DialogTitle>{t(`${kind}Title`)}</DialogTitle>
-                <DialogDescription>{t(`${kind}Description`)}</DialogDescription>
-              </DialogHeader>
-              <Textarea
-                autoFocus
-                rows={4}
-                value={comment}
-                onChange={(e) => setComment(e.target.value)}
-                placeholder={t("comment")}
-                aria-label={t("comment")}
-              />
-              <DialogFooter>
-                <Button
-                  variant="outline"
-                  onClick={() => setKind(null)}
-                  disabled={isPending}
-                >
-                  {tc("cancel")}
-                </Button>
-                <Button
-                  onClick={run}
-                  disabled={isPending || !canConfirm}
-                  variant={
-                    kind === "reject" || kind === "cancel"
-                      ? "destructive"
-                      : "default"
-                  }
-                >
-                  {isPending && (
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  )}
-                  {t("confirm")}
-                </Button>
-              </DialogFooter>
-            </>
-          )}
-        </DialogContent>
-      </Dialog>
+      <DecisionDialog
+        kind={kind}
+        target={target}
+        onClose={() => setKind(null)}
+        onDone={onChanged}
+      />
     </>
   );
 }

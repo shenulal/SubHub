@@ -48,6 +48,20 @@ vi.mock("@/actions/auth-credentials", () => ({
   registerUser: vi.fn(),
 }));
 
+vi.mock("@/lib/auth/password-policy", () => ({
+  getSignupPasswordPolicy: vi.fn().mockResolvedValue({
+    minLength: 10,
+    requireUppercase: true,
+    requireLowercase: true,
+    requireNumber: true,
+    requireSymbol: true,
+    historyCount: 0,
+  }),
+  describePasswordPolicy: () => "Use at least 10 characters.",
+}));
+
+vi.mock("next-auth/react", () => ({ signIn: vi.fn() }));
+
 vi.mock("next-intl/server", () => ({
   getTranslations:
     async () => (key: string, values?: Record<string, string | number>) =>
@@ -62,19 +76,26 @@ describe("SignupPage", () => {
   });
 
   it("should render signup form", async () => {
-    render(await SignupPage({ searchParams: Promise.resolve({}) }));
+    render(await SignupPage());
 
     expect(screen.getByText("Sign up")).toBeInTheDocument();
-    expect(screen.getByLabelText(/Name/)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Email/)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Password/)).toBeInTheDocument();
+    expect(screen.getByLabelText("Name")).toBeInTheDocument();
+    expect(screen.getByLabelText("Email")).toBeInTheDocument();
+    expect(screen.getByLabelText("Password")).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: /Create account/i })
     ).toBeInTheDocument();
   });
 
+  it("offers an optional user name and shows the password policy", async () => {
+    render(await SignupPage());
+
+    expect(screen.getByLabelText(/User name/)).not.toBeRequired();
+    expect(screen.getByText("Use at least 10 characters.")).toBeInTheDocument();
+  });
+
   it("should have link to login page", async () => {
-    render(await SignupPage({ searchParams: Promise.resolve({}) }));
+    render(await SignupPage());
 
     expect(screen.getByText(/Already have an account/)).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Log in/ })).toHaveAttribute(
@@ -83,62 +104,9 @@ describe("SignupPage", () => {
     );
   });
 
-  it("should have Google OAuth button", async () => {
-    render(await SignupPage({ searchParams: Promise.resolve({}) }));
+  it("has no Google sign-up", async () => {
+    render(await SignupPage());
 
-    expect(screen.getByText(/Continue with Google/)).toBeInTheDocument();
-  });
-
-  describe("error handling", () => {
-    it("should display Google login button when EMAIL_EXISTS_OAUTH_GOOGLE error", async () => {
-      render(
-        await SignupPage({
-          searchParams: Promise.resolve({ error: "EMAIL_EXISTS_OAUTH_GOOGLE" }),
-        })
-      );
-
-      expect(
-        screen.getByText(/already registered with Google/)
-      ).toBeInTheDocument();
-      expect(
-        screen.getByRole("button", { name: /Log in with Google/ })
-      ).toBeInTheDocument();
-    });
-
-    it("should display login link when EMAIL_EXISTS_CREDENTIALS error", async () => {
-      render(
-        await SignupPage({
-          searchParams: Promise.resolve({ error: "EMAIL_EXISTS_CREDENTIALS" }),
-        })
-      );
-
-      expect(
-        screen.getByText(/This email is already registered/)
-      ).toBeInTheDocument();
-      expect(screen.getByRole("link", { name: /Go to login/ })).toHaveAttribute(
-        "href",
-        "/login"
-      );
-    });
-
-    it("should display generic error message for unknown error code", async () => {
-      render(
-        await SignupPage({
-          searchParams: Promise.resolve({ error: "UNKNOWN_ERROR" }),
-        })
-      );
-
-      expect(screen.getByText(/An error occurred/)).toBeInTheDocument();
-    });
-
-    it("should display generic error for EMAIL_EXISTS", async () => {
-      render(
-        await SignupPage({
-          searchParams: Promise.resolve({ error: "EMAIL_EXISTS" }),
-        })
-      );
-
-      expect(screen.getByText(/already in use/)).toBeInTheDocument();
-    });
+    expect(screen.queryByText(/Google/)).not.toBeInTheDocument();
   });
 });

@@ -11,6 +11,11 @@ vi.mock("@/lib/auth", () => ({
 }));
 
 // Mock Prisma
+// RBAC: permissions follow the mocked session's system role.
+vi.mock("@/lib/rbac/service", async () =>
+  (await import("@/test/rbac-session-mock")).sessionRbacMock()
+);
+
 vi.mock("@/lib/db", () => ({
   prisma: {
     paymentRecord: {
@@ -527,6 +532,12 @@ val1,val2,val3`;
       vi.mocked(prisma.subscription.findFirst).mockResolvedValue({
         id: "sub-1",
         appId: "app-1",
+      } as never);
+
+      // The record must belong to the organisation before it is linked
+      vi.mocked(prisma.paymentRecord.findFirst).mockResolvedValue({
+        id: "pr-1",
+        organizationId: "org-1",
       } as never);
 
       vi.mocked(prisma.paymentRecord.update).mockResolvedValue({

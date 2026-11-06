@@ -10,6 +10,17 @@ import type { ApprovalRequestStatus } from "@prisma/client";
 import { recordApprovalEvent } from "./audit";
 import { addDays, getCycleMonths } from "./cycle";
 import {
+  approveEventMetadata,
+  approveRequestColumns,
+  resolveApproveCapture,
+  resolveRejectCapture,
+  toApproveCapture,
+  toDateOnly,
+  toRejectCapture,
+  type ApproveCapture,
+  type RejectCapture,
+} from "./decision-capture";
+import {
   notifyApprovalRequested,
   notifyRequesterDecided,
 } from "./notifications";
@@ -57,7 +68,8 @@ async function finalise(
   tx: Db,
   request: LoadedRequest,
   actor: Actor,
-  now: Date
+  now: Date,
+  columns: ReturnType<typeof approveRequestColumns>
 ): Promise<string | null> {
   const settings = await getSettings(request.organizationId, [
     "approvals.autoCreateSubscription",
@@ -68,6 +80,7 @@ async function finalise(
     data: {
       status: "APPROVED",
       decidedAt: now,
+      ...columns,
       metadata: toJson({ ...readMetadata(request), candidateIds: [] }),
     },
   });
@@ -81,12 +94,13 @@ async function finalise(
       requesterId: request.requesterId,
       serviceName: request.serviceName,
       catalogId: request.catalogId,
-      categoryId: request.categoryId,
-      costCenterId: request.costCenterId,
+      categoryId: columns.categoryId ?? request.categoryId,
+      costCenterId: columns.costCenterId ?? request.costCenterId,
       amount: Number(request.amount),
       currency: request.currency,
       billingCycle: request.billingCycle,
       seats: request.seats,
+      startDate: columns.effectiveStartDate ?? request.effectiveStartDate,
     },
     {
       cycleMonths,
@@ -97,11 +111,27 @@ async function finalise(
   );
 }
 
+/** What the requester is told on final approval (all steps' conditions). */
+function decidedDetails(
+  request: LoadedRequest,
+  columns: ReturnType<typeof approveRequestColumns>
+) {
+  const start = columns.effectiveStartDate ?? request.effectiveStartDate;
+  return {
+    conditions: columns.decisionConditions,
+    effectiveStartDate: start ? toDateOnly(start) : null,
+  };
+}
+
+/**
+ * `input` is the decision capture (comment, conditions, cost centre / category
+ * assignment, effective start date); a plain string is the legacy comment.
+ */
 export async function approveRequest(
   organizationId: string,
   actor: Actor,
   requestId: string,
-  comment?: string | null,
+  input?: string | null | Partial<ApproveCapture>,
   now: Date = new Date(),
   db: Db = prisma
 ): Promise<DecisionResult> {
@@ -110,6 +140,13 @@ export async function approveRequest(
   const next = nextWaitingStep(request);
   const reminderDays = await reminderDaysFor(organizationId, request.policy);
   const meta = readMetadata(request);
+  const resolved = await resolveApproveCapture(
+    db,
+    request,
+    toApproveCapture(input)
+  );
+  const comment = resolved.comment;
+  const columns = approveRequestColumns(request, resolved, step.label);
 
   const run = async (tx: Db): Promise<DecisionResult> => {
     await tx.approvalStep.update({
@@ -131,6 +168,7 @@ export async function approveRequest(
         stepOrder: step.stepOrder,
         stepLabel: step.label,
         final: !next,
+        ...approveEventMetadata(resolved),
       },
     });
     if (next) {
@@ -146,12 +184,13 @@ export async function approveRequest(
         data: {
           currentStep: next.stepOrder,
           lastReminderAt: null,
+          ...columns,
           metadata: toJson({ ...meta, candidateIds: candidates }),
         },
       });
       return { id: requestId, status: "PENDING", currentStep: next.stepOrder };
     }
-    const subscriptionId = await finalise(tx, request, actor, now);
+    const subscriptionId = await finalise(tx, request, actor, now, columns);
     return {
       id: requestId,
       status: "APPROVED",
@@ -170,7 +209,8 @@ export async function approveRequest(
       toRef(request),
       request.requesterId,
       "APPROVED",
-      comment
+      comment,
+      decidedDetails(request, columns)
     );
   } else if (next) {
     const candidates = meta.stepCandidates?.[String(next.stepOrder)] ?? [
@@ -185,16 +225,22 @@ export async function approveRequest(
   return result;
 }
 
+/** `input` carries the rejection reason + comment; a string is the legacy comment. */
 export async function rejectRequest(
   organizationId: string,
   actor: Actor,
   requestId: string,
-  comment: string,
+  input: string | Partial<RejectCapture>,
   now: Date = new Date(),
   db: Db = prisma
 ): Promise<DecisionResult> {
   const request = await loadRequest(db, organizationId, requestId);
   const step = assertDecidable(request, actor);
+  const { comment, reason } = await resolveRejectCapture(
+    db,
+    organizationId,
+    toRejectCapture(input)
+  );
 
   const run = async (tx: Db) => {
     await tx.approvalStep.update({
@@ -211,6 +257,9 @@ export async function rejectRequest(
       data: {
         status: "REJECTED",
         decidedAt: now,
+        rejectionReasonId: reason?.id ?? null,
+        rejectionReasonName: reason?.name ?? null,
+        decisionComment: comment,
         metadata: toJson({ ...readMetadata(request), candidateIds: [] }),
       },
     });
@@ -220,7 +269,11 @@ export async function rejectRequest(
       actorId: actor.userId,
       type: "REJECTED",
       comment,
-      metadata: { stepOrder: step.stepOrder, stepLabel: step.label },
+      metadata: {
+        stepOrder: step.stepOrder,
+        stepLabel: step.label,
+        ...(reason ? { reason } : {}),
+      },
     });
   };
   if ("$transaction" in db) await db.$transaction((tx) => run(tx));
@@ -230,7 +283,8 @@ export async function rejectRequest(
     toRef(request),
     request.requesterId,
     "REJECTED",
-    comment
+    comment,
+    { reason: reason?.name ?? null }
   );
   return { id: requestId, status: "REJECTED", currentStep: step.stepOrder };
 }

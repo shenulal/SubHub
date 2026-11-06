@@ -11,6 +11,7 @@ import { CategoryTreeEditor } from "@/components/taxonomy/category-tree-editor";
 import { CustomFieldManager } from "@/components/taxonomy/custom-field-manager";
 import { TagManager } from "@/components/taxonomy/tag-manager";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import type { RejectionReasonRow } from "@/types/approval";
 import type {
   BillingCycleRow,
   CostCenterRow,
@@ -37,6 +38,7 @@ import {
   Receipt,
   Store,
   Tags,
+  ThumbsDown,
 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -46,6 +48,7 @@ import { CostCentersPanel } from "./cost-centers-panel";
 import { CountriesPanel } from "./countries-panel";
 import { CurrenciesPanel } from "./currencies-panel";
 import { PaymentMethodsPanel } from "./payment-methods-panel";
+import { RejectionReasonsPanel } from "./rejection-reasons-panel";
 import { TaxRatesPanel } from "./tax-rates-panel";
 import { VendorCatalogPanel } from "./vendor-catalog-panel";
 
@@ -59,6 +62,7 @@ export const MASTER_TABS = [
   "categories",
   "tags",
   "custom-fields",
+  "rejection-reasons",
   "vendor-catalog",
 ] as const;
 export type MasterTabKey = (typeof MASTER_TABS)[number];
@@ -72,6 +76,8 @@ export interface MastersData {
   paymentMethods: PaymentMethodRow[];
   corporateCards: MasterOption[];
   billingCycles: BillingCycleRow[];
+  /** Optional so older callers / tests without the master keep working. */
+  rejectionReasons?: RejectionReasonRow[];
   categoryTree: CategoryNode[];
   tags: TagDto[];
   customFields: CustomFieldDefinitionDto[];
@@ -106,6 +112,7 @@ const ICONS: Record<MasterTabKey, LucideIcon> = {
   categories: FolderTree,
   tags: Tags,
   "custom-fields": ListPlus,
+  "rejection-reasons": ThumbsDown,
   "vendor-catalog": Store,
 };
 
@@ -195,6 +202,13 @@ function renderPanel(
           fields={data.customFields}
           maxFields={data.maxCustomFields}
           canManage={access.manageCustomFields}
+        />
+      );
+    case "rejection-reasons":
+      return (
+        <RejectionReasonsPanel
+          rows={data.rejectionReasons ?? []}
+          canManage={access.manageMasters}
         />
       );
     case "vendor-catalog":

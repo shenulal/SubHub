@@ -1,6 +1,7 @@
 // src/app/(dashboard)/extensions/blocked-apps/page.tsx
 import { BlockedAppsPageClient } from "@/components/extensions/blocked-apps-page-client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { requirePermissionOrRedirect } from "@/lib/rbac/service";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
@@ -26,6 +27,7 @@ function PageSkeleton() {
 }
 
 export default async function BlockedAppsPage() {
+  await requirePermissionOrRedirect("extensions:read", "/dashboard");
   const t = await getTranslations("extensions.blockedApps.page");
 
   return (

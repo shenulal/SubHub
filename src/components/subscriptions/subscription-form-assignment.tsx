@@ -36,6 +36,7 @@ export interface AppWithTeams {
   id: string;
   name: string;
   teams: TeamOption[];
+  logoUrl?: string | null;
 }
 
 interface SubscriptionFormAssignmentProps {

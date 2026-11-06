@@ -12,6 +12,7 @@ import {
 import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { withLogging } from "@/lib/logging";
+import { can } from "@/lib/rbac/service";
 import type { ActionState } from "@/types";
 import type { BillingCycle, UserRole } from "@prisma/client";
 import { revalidatePath } from "next/cache";
@@ -43,7 +44,7 @@ async function _bulkImportApps(
     }
 
     // Check admin permission
-    if (session.user.role !== "ADMIN") {
+    if (!(await can("apps:manage"))) {
       return {
         success: false,
         message: "Only admins can bulk import",
@@ -135,7 +136,7 @@ async function _bulkImportSubscriptions(
     }
 
     // Check admin permission
-    if (session.user.role !== "ADMIN") {
+    if (!(await can("subscriptions:bulk"))) {
       return {
         success: false,
         message: "Only admins can bulk import",
@@ -269,7 +270,7 @@ async function _bulkImportUsers(
     }
 
     // Check admin permission
-    if (session.user.role !== "ADMIN") {
+    if (!(await can("members:manage"))) {
       return {
         success: false,
         message: "Only admins can bulk import",
@@ -406,7 +407,7 @@ async function _importUsersChunk(
       };
     }
 
-    if (session.user.role !== "ADMIN") {
+    if (!(await can("members:manage"))) {
       return { success: false, message: "Only admins can bulk import" };
     }
 

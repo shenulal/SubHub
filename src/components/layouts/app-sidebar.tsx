@@ -70,7 +70,7 @@ interface MenuItemConfig {
   icon: React.ComponentType<{ className?: string }>;
   labelKey: string;
   href: string;
-  /** Shown when the viewer holds any of these (overrides the role filter). */
+  /** Shown when the viewer holds any of these; omitted = every signed-in user. */
   permissionAny?: PermissionKey[];
   badge?: string;
   badgeVariant?: "default" | "secondary" | "destructive" | "outline";
@@ -106,6 +106,7 @@ const menuConfig: MenuSectionConfig[] = [
         icon: BarChart3,
         labelKey: "sidebar.menu.reports.root",
         href: "/reports/cost",
+        permissionAny: ["reports:read"],
       },
     ],
   },
@@ -117,31 +118,37 @@ const menuConfig: MenuSectionConfig[] = [
         icon: Building2,
         labelKey: "sidebar.menu.org.root",
         href: "/teams",
+        permissionAny: ["teams:read", "members:read"],
       },
       {
         icon: CreditCard,
         labelKey: "sidebar.menu.subscriptions.root",
         href: "/subscriptions",
+        permissionAny: ["subscriptions:read"],
       },
       {
         icon: KanbanSquare,
         labelKey: "sidebar.menu.subscriptions.pipeline",
         href: "/subscriptions/pipeline",
+        permissionAny: ["subscriptions:read"],
       },
       {
         icon: CheckSquare,
         labelKey: "sidebar.menu.approvals.root",
         href: "/approvals",
+        permissionAny: ["approvals:read"],
       },
       {
         icon: Receipt,
         labelKey: "sidebar.menu.payments.root",
         href: "/payments",
+        permissionAny: ["payments:read"],
       },
       {
         icon: Puzzle,
         labelKey: "sidebar.menu.extensions.root",
         href: "/extensions/usage",
+        permissionAny: ["extensions:read"],
       },
     ],
   },
@@ -153,6 +160,7 @@ const menuConfig: MenuSectionConfig[] = [
         icon: Bell,
         labelKey: "sidebar.menu.notifications",
         href: "/notifications",
+        permissionAny: ["notifications:read"],
       },
       {
         icon: Database,
@@ -164,6 +172,7 @@ const menuConfig: MenuSectionConfig[] = [
         icon: LinkIcon,
         labelKey: "sidebar.menu.integrations",
         href: "/integrations",
+        permissionAny: ["integrations:read"],
       },
       {
         icon: Settings,
@@ -177,6 +186,7 @@ const menuConfig: MenuSectionConfig[] = [
 // AppSidebar props
 interface AppSidebarProps {
   variant?: "sidebar" | "floating" | "inset";
+  /** Legacy role (display only; menu gating uses permissions). */
   role?: "ADMIN" | "APPROVER" | "MEMBER" | "VIEWER" | null;
   user?: {
     name: string | null;
@@ -184,11 +194,7 @@ interface AppSidebarProps {
   };
 }
 
-export function AppSidebar({
-  variant = "sidebar",
-  role,
-  user,
-}: AppSidebarProps) {
+export function AppSidebar({ variant = "sidebar", user }: AppSidebarProps) {
   const pathname = usePathname();
   const t = useTranslations();
   const { can } = useSafePermissions();
@@ -239,26 +245,15 @@ export function AppSidebar({
     return pathname.startsWith(href);
   };
 
-  // Filter menus by role
-  // MEMBER: dashboard and subscriptions only
-  // VIEWER: payments hidden
+  // Permission-based gating (pages and actions re-check on the server). While
+  // the permission set loads, gated entries stay hidden.
   const filteredMenuItems = menuItems
     .map((section) => ({
       ...section,
-      items: section.items.filter((item) => {
-        if (item.permissionAny) {
-          return item.permissionAny.some((key) => can(key));
-        }
-        // MEMBER: only dashboard and subscriptions allowed
-        if (role === "MEMBER") {
-          return item.href === "/dashboard" || item.href === "/subscriptions";
-        }
-        // VIEWER: hide the payments menu
-        if (item.href === "/payments" && role === "VIEWER") {
-          return false;
-        }
-        return true;
-      }),
+      items: section.items.filter(
+        (item) =>
+          !item.permissionAny || item.permissionAny.some((key) => can(key))
+      ),
     }))
     .filter((section) => section.items.length > 0);
 

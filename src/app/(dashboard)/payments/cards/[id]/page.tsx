@@ -14,8 +14,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { requireAdmin } from "@/lib/auth/require-auth";
 import { prisma } from "@/lib/db";
+import { requirePermissionOrRedirect } from "@/lib/rbac/service";
 import {
   CARD_COMPANIES,
   type CardCompanyCode,
@@ -49,9 +49,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function CardDetailPage({ params }: Props) {
+  const { organizationId } = await requirePermissionOrRedirect(
+    "payments:manage",
+    "/payments/cards"
+  );
   const t = await getTranslations("cards.detail");
   const dateLocale = enUS;
-  const { organizationId } = await requireAdmin();
 
   const { id } = await params;
   const card = await getCorporateCardCached(id);

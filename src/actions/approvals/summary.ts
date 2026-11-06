@@ -10,11 +10,12 @@ import { withLogging } from "@/lib/logging";
 import { requirePermission } from "@/lib/rbac/service";
 import { roundMoney } from "@/lib/services/approval/cycle";
 import { convertAmount } from "@/lib/services/approval/fx";
+import { isAdminRole } from "@/lib/services/approval/shared";
 import { getSetting } from "@/lib/settings/service";
 import type { ActionState } from "@/types";
 import type { PendingApprovalsSummary } from "@/types/approval";
 import type { Prisma } from "@prisma/client";
-import { LIST_INCLUDE, runAction, toListItem } from "./shared";
+import { isAwaitingUser, LIST_INCLUDE, runAction, toListItem } from "./shared";
 
 /** Number of highlighted requests on the card (UI constant). */
 const TOP_ITEMS = 5;
@@ -39,11 +40,21 @@ function scopeWhere(
   };
 }
 
+/** Requests awaiting the viewer come first, then the largest by monthly cost. */
+function topItems<T extends Parameters<typeof isAwaitingUser>[0]>(
+  rows: T[],
+  userId: string
+): T[] {
+  const mine = rows.filter((r) => isAwaitingUser(r, userId));
+  const rest = rows.filter((r) => !isAwaitingUser(r, userId));
+  return [...mine, ...rest].slice(0, TOP_ITEMS);
+}
+
 async function _getPendingApprovalsSummary(): Promise<
   ActionState<PendingApprovalsSummary>
 > {
   return runAction("getPendingApprovalsSummary", async () => {
-    const { organizationId, userId, permissions } =
+    const { organizationId, userId, role, permissions } =
       await requirePermission("approvals:read");
     const canReadAll = permissions.has("approvals:read_all");
     const where = scopeWhere(organizationId, userId, canReadAll);
@@ -70,7 +81,13 @@ async function _getPendingApprovalsSummary(): Promise<
         count: rows.length,
         committedMonthly: roundMoney(committed),
         currency,
-        items: rows.slice(0, TOP_ITEMS).map((r) => toListItem(r, userId)),
+        items: topItems(rows, userId).map((r) =>
+          toListItem(r, {
+            userId,
+            isAdmin: isAdminRole(role),
+            hasDecidePermission: permissions.has("approvals:decide"),
+          })
+        ),
       },
     };
   });

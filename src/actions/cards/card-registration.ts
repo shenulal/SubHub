@@ -5,6 +5,7 @@ import { encryptJson, getCardLast4, maskCardNumber } from "@/lib/crypto";
 import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { withLogging } from "@/lib/logging";
+import { can } from "@/lib/rbac/service";
 import {
   CARD_COMPANIES,
   type CardCompanyCode,
@@ -47,7 +48,7 @@ async function _registerCorporateCard(
     if (!session?.user?.organizationId) {
       return { success: false, message: "Authentication required" };
     }
-    if (session.user.role !== "ADMIN") {
+    if (!(await can("payments:manage"))) {
       return { success: false, message: "Only admins can register cards" };
     }
 
@@ -334,6 +335,9 @@ export async function getCorporateCards(): Promise<CorporateCardWithCount[]> {
   if (!session?.user?.organizationId) {
     return [];
   }
+  if (!(await can("payments:read"))) {
+    return [];
+  }
 
   const cards = await prisma.corporateCard.findMany({
     where: {
@@ -413,6 +417,9 @@ export async function getCorporateCard(
   if (!session?.user?.organizationId) {
     return null;
   }
+  if (!(await can("payments:read"))) {
+    return null;
+  }
 
   return prisma.corporateCard.findFirst({
     where: {
@@ -436,7 +443,7 @@ async function _deleteCorporateCard(cardId: string): Promise<ActionState> {
     if (!session?.user?.organizationId) {
       return { success: false, message: "Authentication required" };
     }
-    if (session.user.role !== "ADMIN") {
+    if (!(await can("payments:manage"))) {
       return { success: false, message: "Only admins can delete cards" };
     }
 
@@ -498,7 +505,7 @@ async function _updateCorporateCardTeam(
     if (!session?.user?.organizationId) {
       return { success: false, message: "Authentication required" };
     }
-    if (session.user.role !== "ADMIN") {
+    if (!(await can("payments:manage"))) {
       return { success: false, message: "Only admins can edit cards" };
     }
 

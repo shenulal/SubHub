@@ -244,3 +244,59 @@ describe("getApprovalRequest", () => {
     );
   });
 });
+
+describe("decision rights and captured decision (consistency with the service)", () => {
+  it("marks rows the viewer may decide: candidate approver with approvals:decide", async () => {
+    requirePermission.mockResolvedValue(
+      ctx("u-alt", ["approvals:read", "approvals:decide"], "APPROVER")
+    );
+    const res = await getApprovalRequests({ tab: "to_review" });
+    expect(res.data?.items[0]).toMatchObject({
+      isAwaitingMe: true,
+      canDecide: true,
+    });
+  });
+
+  it("does not offer decisions without approvals:decide", async () => {
+    requirePermission.mockResolvedValue(ctx("u-mgr", ["approvals:read"]));
+    const res = await getApprovalRequests({ tab: "to_review" });
+    expect(res.data?.items[0].canDecide).toBe(false);
+  });
+
+  it("treats SUPER_ADMIN like ADMIN on the detail page (may decide any pending request)", async () => {
+    prisma.approvalRequest.findFirst.mockResolvedValue(row);
+    requirePermission.mockResolvedValue(
+      ctx("root", ["approvals:read", "approvals:decide"], "SUPER_ADMIN")
+    );
+    const res = await getApprovalRequest("req-1");
+    expect(res.success).toBe(true);
+    expect(res.data?.viewer.canDecide).toBe(true);
+    expect(res.data?.decision).toBeNull();
+  });
+
+  it("returns the captured decision of a rejected request", async () => {
+    prisma.approvalRequest.findFirst.mockResolvedValue({
+      ...row,
+      status: "REJECTED",
+      decidedAt: new Date("2026-03-02T09:00:00Z"),
+      rejectionReasonId: "r-budget",
+      rejectionReasonName: "No budget available",
+      decisionComment: "Next quarter",
+      decisionConditions: null,
+      effectiveStartDate: null,
+      steps: [{ ...row.steps[0], status: "REJECTED", comment: "Next quarter" }],
+    });
+    requirePermission.mockResolvedValue(ctx("u-req", ["approvals:read"]));
+    const res = await getApprovalRequest("req-1");
+    expect(res.data?.decision).toEqual({
+      status: "REJECTED",
+      decidedAt: "2026-03-02T09:00:00.000Z",
+      decidedBy: approver,
+      comment: "Next quarter",
+      conditions: null,
+      reason: { id: "r-budget", name: "No budget available" },
+      effectiveStartDate: null,
+    });
+    expect(res.data?.viewer.canDecide).toBe(false);
+  });
+});

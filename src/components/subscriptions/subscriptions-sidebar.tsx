@@ -25,6 +25,9 @@ import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
 import { useMemo } from "react";
 
+import { useSafePermissions } from "@/hooks/use-permission-flag";
+import type { PermissionKey } from "@/lib/rbac/permissions";
+
 interface NavItem {
   key: string;
   icon: LucideIcon;
@@ -32,6 +35,10 @@ interface NavItem {
   /** Match only when the path (and preset) is exactly this entry. */
   exact?: boolean;
   preset?: "archived";
+  /** Shown only with every listed permission (the page re-checks). */
+  permissionAll?: PermissionKey[];
+  /** Shown with any of the listed permissions (the page re-checks). */
+  permissionAny?: PermissionKey[];
 }
 
 export const ARCHIVED_HREF = `/subscriptions?${serializeListQuery({ filter: ARCHIVED_PRESET }).toString()}`;
@@ -40,8 +47,18 @@ const NAV_ITEMS: NavItem[] = [
   { key: "list", icon: CreditCard, href: "/subscriptions", exact: true },
   { key: "pipeline", icon: KanbanSquare, href: "/subscriptions/pipeline" },
   { key: "calendar", icon: CalendarDays, href: "/subscriptions/calendar" },
-  { key: "receipts", icon: Mail, href: "/subscriptions/receipts" },
-  { key: "suggestions", icon: Sparkles, href: "/subscriptions/suggestions" },
+  {
+    key: "receipts",
+    icon: Mail,
+    href: "/subscriptions/receipts",
+    permissionAny: ["mailboxes:connect_own", "mailboxes:manage"],
+  },
+  {
+    key: "suggestions",
+    icon: Sparkles,
+    href: "/subscriptions/suggestions",
+    permissionAll: ["subscriptions:create", "subscriptions:assign"],
+  },
   {
     key: "archived",
     icon: Archive,
@@ -59,6 +76,14 @@ export function SubscriptionsSidebar() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const t = useTranslations("discovery.nav");
+  const { can, isLoading } = useSafePermissions();
+  const visibleItems = NAV_ITEMS.filter(
+    (item) =>
+      (!item.permissionAll ||
+        (!isLoading && item.permissionAll.every((key) => can(key)))) &&
+      (!item.permissionAny ||
+        (!isLoading && item.permissionAny.some((key) => can(key))))
+  );
 
   const archivedActive = useMemo(
     () => pathname === "/subscriptions" && isArchivedPreset(searchParams),
@@ -76,7 +101,7 @@ export function SubscriptionsSidebar() {
       className="flex min-w-0 gap-1 overflow-x-auto pb-1 2xl:flex-col 2xl:overflow-visible 2xl:pb-0"
       aria-label={t("label")}
     >
-      {NAV_ITEMS.map((item) => {
+      {visibleItems.map((item) => {
         const active = isActive(item);
         const Icon = item.icon;
         return (

@@ -4,6 +4,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { withLogging } from "@/lib/logging";
+import { can } from "@/lib/rbac/service";
 import type { ActionState } from "@/types";
 import type { MatchSource, PaymentMatchStatus } from "@prisma/client";
 import { revalidatePath } from "next/cache";
@@ -54,7 +55,7 @@ async function _updatePaymentMatch(
       };
     }
 
-    if (session.user.role !== "ADMIN") {
+    if (!(await can("payments:manage"))) {
       return {
         success: false,
         message: "Only admins can change matching",
@@ -195,7 +196,7 @@ async function _linkPaymentToSubscription(
     }
 
     // Permission check: only ADMIN can link payment records
-    if (session.user.role !== "ADMIN") {
+    if (!(await can("payments:manage"))) {
       return {
         success: false,
         message: "Only admins can link payment records",
@@ -329,7 +330,7 @@ async function _updatePaymentRecord(
         message: "Organization information is required",
       };
     }
-    if (session.user.role !== "ADMIN") {
+    if (!(await can("payments:manage"))) {
       return { success: false, message: "Admin permission required" };
     }
 
@@ -389,7 +390,7 @@ async function _deletePaymentRecord(id: string): Promise<ActionState> {
         message: "Organization information is required",
       };
     }
-    if (session.user.role !== "ADMIN") {
+    if (!(await can("payments:manage"))) {
       return { success: false, message: "Admin permission required" };
     }
 

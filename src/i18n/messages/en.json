@@ -79,11 +79,6 @@
         "changeEmail": "Change email"
       },
       "socialDivider": "OR",
-      "social": {
-        "google": "Continue with Google",
-        "github": "Continue with GitHub",
-        "githubSoon": "Coming soon"
-      },
       "footer": {
         "noAccount": "Don’t have an account?",
         "signUp": "Sign up"
@@ -94,15 +89,10 @@
       "title": "Sign up",
       "description": "Create your SubHub account",
       "errors": {
-        "emailExistsGoogle": "This email is already registered with Google",
         "emailExistsCredentials": "This email is already registered",
         "emailExists": "This email is already in use",
         "default": "An error occurred during sign up",
-        "googleLogin": "Log in with Google",
         "loginLink": "Go to login"
-      },
-      "social": {
-        "googleContinue": "Continue with Google"
       },
       "emailDivider": "Or sign up with email",
       "form": {

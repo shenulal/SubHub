@@ -4,6 +4,7 @@ import { getCachedSession } from "@/lib/auth/require-auth";
 import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { withLogging } from "@/lib/logging";
+import { can } from "@/lib/rbac/service";
 import { normalizeMerchantName } from "@/lib/services/payment/merchant-matcher";
 import {
   checkNonSaaSCache,
@@ -53,6 +54,9 @@ export async function getCardTransactions(
 ): Promise<TransactionListResult> {
   const session = await getCachedSession();
   if (!session?.user?.organizationId) {
+    return { transactions: [], total: 0, page: 1, pageSize: 20 };
+  }
+  if (!(await can("payments:read"))) {
     return { transactions: [], total: 0, page: 1, pageSize: 20 };
   }
 
@@ -192,6 +196,12 @@ async function _matchTransactionToAppManually(
     const session = await getCachedSession();
     if (!session?.user?.organizationId) {
       return { success: false, message: "Authentication required" };
+    }
+    if (!(await can("payments:manage"))) {
+      return {
+        success: false,
+        message: "You do not have permission to perform this action",
+      };
     }
 
     const organizationId = session.user.organizationId;

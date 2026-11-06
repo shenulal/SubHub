@@ -30,6 +30,7 @@ import type React from "react";
 import { useState } from "react";
 
 import { TransferAdminDialog } from "@/components/team/transfer-admin-dialog";
+import { MemberCredentialsButton } from "./member-credentials-dialog";
 import { OffboardUserDialog } from "./offboard-user-dialog";
 
 interface UserDetailClientProps {
@@ -139,9 +140,16 @@ export function UserDetailClient({ id }: UserDetailClientProps) {
         backHref="/users"
       >
         <div className="flex flex-wrap items-center gap-2">
+          {identity?.id !== user.id && user.status !== "TERMINATED" && (
+            <MemberCredentialsButton
+              userId={user.id}
+              memberName={user.name || user.email}
+              onSaved={() => router.refresh()}
+            />
+          )}
           {canDelete?.can &&
-            identity?.role === "ADMIN" &&
             user.role !== "ADMIN" &&
+            identity &&
             identity.id !== user.id &&
             user.status === "ACTIVE" && (
               <Button

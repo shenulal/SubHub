@@ -2,7 +2,8 @@
 /**
  * Seeds the per-organisation master data a workspace needs to function:
  * system roles, default two-level categories, payment methods, billing-cycle
- * configuration and a tax rate derived from the organisation country.
+ * configuration, a tax rate derived from the organisation country and the
+ * approval rejection reasons.
  *
  * Called inside `createOrganization` and by `scripts/backfill-organization-defaults.ts`.
  * Idempotent: existing rows are never overwritten.
@@ -11,6 +12,7 @@ import { prisma } from "@/lib/db";
 import { ensureOrganizationRoles } from "@/lib/rbac/service";
 import { getSetting } from "@/lib/settings/service";
 import type { BillingCycle, PaymentMethodKind, Prisma } from "@prisma/client";
+import { ensureDefaultRejectionReasons } from "./rejection-reasons";
 
 type Db = Prisma.TransactionClient | typeof prisma;
 
@@ -236,4 +238,5 @@ export async function ensureOrganizationDefaults(
   await ensureDefaultPaymentMethods(organizationId, db);
   await ensureBillingCycleConfigs(organizationId, db);
   await ensureDefaultTaxRate(organizationId, countryCode, db);
+  await ensureDefaultRejectionReasons(organizationId, db);
 }

@@ -31,7 +31,7 @@ vi.mock("@/lib/db", () => ({
       create: vi.fn(),
     },
     permission: { findMany: vi.fn(), upsert: vi.fn() },
-    rolePermission: { createMany: vi.fn() },
+    rolePermission: { createMany: vi.fn(), deleteMany: vi.fn() },
   },
 }));
 vi.mock("@/lib/auth/require-auth", () => ({ getCachedSession: vi.fn() }));
@@ -220,6 +220,7 @@ describe("applyPermissionRollouts", () => {
       { id: "r-viewer", key: "VIEWER" },
     ]);
     db.rolePermission.createMany.mockResolvedValue({ count: 1 });
+    db.rolePermission.deleteMany.mockResolvedValue({ count: 0 });
     const count = await applyPermissionRollouts("org");
     expect(count).toBe(1);
     expect(db.role.findMany).toHaveBeenCalledWith(
@@ -230,6 +231,27 @@ describe("applyPermissionRollouts", () => {
     expect(db.rolePermission.createMany).toHaveBeenCalledWith({
       data: [{ roleId: "r-admin", permissionId: "p-global" }],
       skipDuplicates: true,
+    });
+  });
+
+  it("revokes a rolled-out key from system roles whose template dropped it", async () => {
+    db.permission.findMany.mockResolvedValue([
+      { id: "p-pay", key: "payments:read" },
+    ]);
+    db.role.findMany.mockResolvedValue([
+      { id: "r-approver", key: "APPROVER" },
+      { id: "r-member", key: "MEMBER" },
+      { id: "r-custom", key: "custom_ops" },
+    ]);
+    db.rolePermission.createMany.mockResolvedValue({ count: 0 });
+    db.rolePermission.deleteMany.mockResolvedValue({ count: 1 });
+    expect(await applyPermissionRollouts("org")).toBe(1);
+    expect(db.rolePermission.createMany).toHaveBeenCalledWith({
+      data: [{ roleId: "r-approver", permissionId: "p-pay" }],
+      skipDuplicates: true,
+    });
+    expect(db.rolePermission.deleteMany).toHaveBeenCalledWith({
+      where: { OR: [{ roleId: "r-member", permissionId: "p-pay" }] },
     });
   });
 

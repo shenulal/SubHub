@@ -135,16 +135,16 @@ function renewingClause(days: number | undefined, now: Date): Where {
   return { renewalDate: { gte: now, lte: future } };
 }
 
-/** Legacy role visibility: MEMBER sees own team, VIEWER sees assignments. */
+/**
+ * Visibility without `subscriptions:read_all`: a legacy VIEWER sees its
+ * assignments; everyone else (MEMBER, or any custom role) sees their own team.
+ */
 function legacyVisibilityClause(ctx: ListVisibilityContext): Where {
   if (ctx.canReadAll) return {};
-  if (ctx.role === "MEMBER") {
-    return ctx.teamId ? { teamId: ctx.teamId } : {};
-  }
   if (ctx.role === "VIEWER") {
     return { assignedUsers: { some: { userId: ctx.userId } } };
   }
-  return {};
+  return ctx.teamId ? { teamId: ctx.teamId } : {};
 }
 
 export function buildSubscriptionWhere(

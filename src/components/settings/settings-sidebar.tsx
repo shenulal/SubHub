@@ -21,17 +21,34 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMemo } from "react";
 
+import type { PermissionKey } from "@/lib/rbac/permissions";
 import { cn } from "@/lib/utils";
+
+/** Any of these opens the Master data hub (the page re-checks the same list). */
+const MASTER_DATA_READ: PermissionKey[] = [
+  "masters:read",
+  "catalog:read",
+  "categories:read",
+  "tags:read",
+  "custom_fields:read",
+];
 
 interface SettingsMenuItem {
   icon: LucideIcon;
   label: string;
   href: string;
   description?: string;
-  adminOnly?: boolean;
+  /** Shown when the viewer holds any of these; omitted = every signed-in user. */
+  permissionAny?: readonly PermissionKey[];
 }
 
-const settingsMenuConfig = [
+const settingsMenuConfig: {
+  icon: LucideIcon;
+  labelKey: string;
+  descriptionKey?: string;
+  href: string;
+  permissionAny?: readonly PermissionKey[];
+}[] = [
   {
     icon: User,
     labelKey: "settings.sidebar.profile.title",
@@ -43,49 +60,49 @@ const settingsMenuConfig = [
     labelKey: "settings.sidebar.organization.title",
     descriptionKey: "settings.sidebar.organization.description",
     href: "/settings/organization",
-    adminOnly: true,
+    permissionAny: ["organization:manage"],
   },
   {
     icon: Users,
     labelKey: "settings.sidebar.team.title",
     descriptionKey: "settings.sidebar.team.description",
     href: "/settings/team",
-    adminOnly: true,
+    permissionAny: ["members:invite", "members:manage"],
   },
   {
     icon: Wallet,
     labelKey: "settings.sidebar.budget.title",
     descriptionKey: "settings.sidebar.budget.description",
     href: "/settings/budget",
-    adminOnly: true,
+    permissionAny: ["budgets:manage"],
   },
   {
     icon: SlidersHorizontal,
     labelKey: "platform.sidebar.workspace.title",
     descriptionKey: "platform.sidebar.workspace.description",
     href: "/settings/workspace",
-    adminOnly: true,
+    permissionAny: ["settings:manage"],
   },
   {
     icon: Database,
     labelKey: "platform.sidebar.masters.title",
     descriptionKey: "platform.sidebar.masters.description",
     href: "/settings/masters",
-    adminOnly: true,
+    permissionAny: MASTER_DATA_READ,
   },
   {
     icon: KeyRound,
     labelKey: "platform.sidebar.roles.title",
     descriptionKey: "platform.sidebar.roles.description",
     href: "/settings/roles",
-    adminOnly: true,
+    permissionAny: ["roles:manage"],
   },
   {
     icon: BellRing,
     labelKey: "platform.sidebar.templates.title",
     descriptionKey: "platform.sidebar.templates.description",
     href: "/settings/notification-templates",
-    adminOnly: true,
+    permissionAny: ["notifications:manage_templates"],
   },
   {
     icon: Monitor,
@@ -98,19 +115,21 @@ const settingsMenuConfig = [
     labelKey: "settings.sidebar.notifications.title",
     descriptionKey: "settings.sidebar.notifications.description",
     href: "/settings/notifications",
+    permissionAny: ["notifications:manage_own"],
   },
   {
     icon: CheckSquare,
     labelKey: "settings.sidebar.approvals.title",
     descriptionKey: "settings.sidebar.approvals.description",
     href: "/settings/approvals",
-    adminOnly: true,
+    permissionAny: ["approval_policies:manage"],
   },
   {
     icon: Mail,
     labelKey: "settings.sidebar.mailboxes.title",
     descriptionKey: "settings.sidebar.mailboxes.description",
     href: "/settings/mailboxes",
+    permissionAny: ["mailboxes:connect_own", "mailboxes:manage"],
   },
   {
     icon: ShieldCheck,
@@ -121,10 +140,16 @@ const settingsMenuConfig = [
 ];
 
 interface SettingsSidebarProps {
+  /** Effective permission keys of the viewer (resolved on the server). */
+  permissions?: readonly string[];
+  /** Shows every entry (kept for previews and tests). */
   isAdmin?: boolean;
 }
 
-export function SettingsSidebar({ isAdmin = false }: SettingsSidebarProps) {
+export function SettingsSidebar({
+  permissions = [],
+  isAdmin = false,
+}: SettingsSidebarProps) {
   const pathname = usePathname();
   const t = useTranslations();
   const settingsMenuItems: SettingsMenuItem[] = useMemo(
@@ -134,16 +159,21 @@ export function SettingsSidebar({ isAdmin = false }: SettingsSidebarProps) {
         label: t(item.labelKey),
         href: item.href,
         description: item.descriptionKey ? t(item.descriptionKey) : undefined,
-        adminOnly: item.adminOnly,
+        permissionAny: item.permissionAny,
       })),
     [t]
   );
+  const held = useMemo(() => new Set(permissions), [permissions]);
+  const isVisible = (item: SettingsMenuItem) =>
+    isAdmin ||
+    !item.permissionAny ||
+    item.permissionAny.some((key) => held.has(key));
 
   return (
     <nav className="flex min-w-0 gap-1 overflow-x-auto pb-1 xl:flex-col xl:overflow-visible xl:pb-0">
       {settingsMenuItems.map((item) => {
-        // Handle admin-only items
-        if (item.adminOnly && !isAdmin) {
+        // Permission-gated entries (pages re-check on the server)
+        if (!isVisible(item)) {
           return null;
         }
 

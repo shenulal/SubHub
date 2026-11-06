@@ -26,9 +26,22 @@ import { useQuery } from "@tanstack/react-query";
 import { Download, Hourglass, Inbox, Plus, Wallet } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useCallback, useMemo, useState, useTransition } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  useTransition,
+} from "react";
 import { toast } from "sonner";
+import { ApprovalsBulkBar } from "./approvals-bulk-bar";
 import { useInboxColumns } from "./approvals-inbox-columns";
+import { DecisionDialog } from "./decision/decision-dialog";
+import {
+  targetOf,
+  type DecisionKind,
+  type DecisionTarget,
+} from "./decision/types";
 import { formatMoney } from "./format";
 
 export interface InboxFilterOptions {
@@ -75,7 +88,21 @@ export function ApprovalsInboxClient({
   });
   const [pageIndex, setPageIndex] = useState(0);
   const [isExporting, startExport] = useTransition();
-  const columns = useInboxColumns();
+  const [decision, setDecision] = useState<{
+    kind: DecisionKind;
+    target: DecisionTarget;
+  } | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const onDecide = useCallback(
+    (kind: DecisionKind, row: ApprovalRequestListItem) =>
+      setDecision({ kind, target: targetOf(row) }),
+    []
+  );
+  const columns = useInboxColumns(onDecide);
+  const isDecidable = useCallback(
+    (row: ApprovalRequestListItem) => row.canDecide,
+    []
+  );
 
   const query = useMemo(
     () => ({
@@ -115,6 +142,26 @@ export function ApprovalsInboxClient({
   });
 
   const counts = list.data?.counts;
+  const items = list.data?.items;
+  const decidable = useMemo(
+    () => (items ?? []).filter((r) => r.canDecide),
+    [items]
+  );
+  const selectedDecidable = decidable.filter((r) => selected.has(r.id));
+
+  // Selection is per page/filter: clear it whenever the visible rows change.
+  useEffect(() => setSelected(new Set()), [query]);
+
+  const bulkDecide = (kind: "approve" | "reject") =>
+    setDecision({
+      kind,
+      target: {
+        ids: selectedDecidable.map((r) => r.id),
+        serviceName: selectedDecidable[0]?.serviceName ?? "",
+        categoryId: null,
+        costCenterId: null,
+      },
+    });
   const tabs = useMemo(() => {
     const items: {
       value: ApprovalInboxTab;
@@ -305,10 +352,15 @@ export function ApprovalsInboxClient({
         </div>
 
         <DataTable<ApprovalRequestListItem>
-          data={list.data?.items ?? []}
+          data={items ?? []}
           columns={columns}
           getRowId={(row) => row.id}
           isLoading={list.isLoading}
+          onRowClick={(row) => router.push(`/approvals/${row.id}`)}
+          enableRowSelection={decidable.length > 0}
+          selectedRows={selected}
+          onSelectedRowsChange={setSelected}
+          isRowSelectable={isDecidable}
           enableSorting
           sortState={sort}
           onSortChange={(s) => {
@@ -323,7 +375,18 @@ export function ApprovalsInboxClient({
           emptyMessage={t(`empty.${emptyKey}`)}
           hideToolbar
         />
+        <ApprovalsBulkBar
+          count={selectedDecidable.length}
+          onDecide={bulkDecide}
+          onClear={() => setSelected(new Set())}
+        />
       </div>
+      <DecisionDialog
+        kind={decision?.kind ?? null}
+        target={decision?.target ?? null}
+        onClose={() => setDecision(null)}
+        onDone={() => setSelected(new Set())}
+      />
     </div>
   );
 }

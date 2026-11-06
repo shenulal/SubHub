@@ -7,6 +7,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { isSaas } from "@/lib/deployment/mode";
 import { withLogging } from "@/lib/logging";
+import { can } from "@/lib/rbac/service";
 import type { ActionState } from "@/types";
 import type {
   CreateOsDefaultAppInput,
@@ -108,11 +109,13 @@ export function checkIsOsDefault(
  * every tenant shares, so tenant writes are refused (seeded/maintained by the
  * platform operator).
  */
-function osDefaultAppsWriteDenied(role: string): string | null {
+async function osDefaultAppsWriteDenied(): Promise<string | null> {
   if (isSaas()) {
     return "OS default apps are shared by every tenant and are maintained by the platform operator.";
   }
-  return role === "ADMIN" ? null : "Admin permission required.";
+  return (await can("catalog:manage"))
+    ? null
+    : "You do not have permission to edit OS default apps.";
 }
 
 /**
@@ -127,7 +130,7 @@ async function _createOsDefaultApp(
     return { success: false, error: "Authentication required." };
   }
 
-  const denied = osDefaultAppsWriteDenied(session.user.role);
+  const denied = await osDefaultAppsWriteDenied();
   if (denied) return { success: false, error: denied };
 
   try {
@@ -188,7 +191,7 @@ async function _updateOsDefaultApp(
     return { success: false, error: "Authentication required." };
   }
 
-  const denied = osDefaultAppsWriteDenied(session.user.role);
+  const denied = await osDefaultAppsWriteDenied();
   if (denied) return { success: false, error: denied };
 
   try {
@@ -252,7 +255,7 @@ async function _deleteOsDefaultApp(id: string): Promise<ActionState<void>> {
     return { success: false, error: "Authentication required." };
   }
 
-  const denied = osDefaultAppsWriteDenied(session.user.role);
+  const denied = await osDefaultAppsWriteDenied();
   if (denied) return { success: false, error: denied };
 
   try {

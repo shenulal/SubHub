@@ -1,7 +1,16 @@
 // src/app/api/v1/approvals/[id]/decision/route.ts
 /**
  * POST /api/v1/approvals/:id/decision
- * body: { action: "approve" | "reject" | "request_info" | "provide_info" | "cancel", comment?: string }
+ * body: {
+ *   action: "approve" | "reject" | "request_info" | "provide_info" | "cancel",
+ *   comment?: string,
+ *   // approve (all optional; comment may be required by approvals.requireApproveComment)
+ *   conditions?: string, costCenterId?: string, categoryId?: string,
+ *   effectiveStartDate?: "YYYY-MM-DD",
+ *   // reject: reasonId from GET /api/v1/approvals/decision-options (required by the
+ *   // current apps; omitted by older builds, which still work with a comment only)
+ *   reasonId?: string
+ * }
  */
 import {
   approveRequest,
@@ -16,10 +25,20 @@ import { approvalDecisionActionSchema } from "@/lib/validations/approvals";
 import { NextRequest, NextResponse } from "next/server";
 import { z } from "zod";
 
+const optional = (max: number) =>
+  z.string().trim().max(max).optional().nullable();
+
 const bodySchema = z.object({
   action: approvalDecisionActionSchema,
-  comment: z.string().trim().max(2000).optional().nullable(),
+  comment: optional(2000),
+  reasonId: optional(64),
+  conditions: optional(2000),
+  costCenterId: optional(64),
+  categoryId: optional(64),
+  effectiveStartDate: optional(10),
 });
+
+type Body = z.infer<typeof bodySchema>;
 
 function idFromUrl(request: NextRequest): string {
   const segments = new URL(request.url).pathname.split("/").filter(Boolean);
@@ -43,6 +62,31 @@ function statusFor(message?: string): number {
   }
 }
 
+function decide(id: string, body: Body) {
+  const comment = body.comment ?? null;
+  switch (body.action) {
+    case "approve":
+      return approveRequest(id, {
+        comment,
+        conditions: body.conditions ?? null,
+        costCenterId: body.costCenterId ?? null,
+        categoryId: body.categoryId ?? null,
+        effectiveStartDate: body.effectiveStartDate ?? null,
+      });
+    case "reject":
+      // Legacy clients send only a comment; new clients send the reason too.
+      return body.reasonId
+        ? rejectRequest(id, { reasonId: body.reasonId, comment: comment ?? "" })
+        : rejectRequest(id, comment ?? "");
+    case "request_info":
+      return requestInfo(id, comment ?? "");
+    case "provide_info":
+      return provideInfo(id, comment ?? "");
+    default:
+      return cancelRequest(id, comment);
+  }
+}
+
 export const POST = withApiAuth(
   withLogging(
     "POST /api/v1/approvals/[id]/decision",
@@ -60,17 +104,7 @@ export const POST = withApiAuth(
           { status: 400 }
         );
       }
-      const { action, comment } = parsed.data;
-      const result =
-        action === "approve"
-          ? await approveRequest(id, comment)
-          : action === "reject"
-            ? await rejectRequest(id, comment ?? "")
-            : action === "request_info"
-              ? await requestInfo(id, comment ?? "")
-              : action === "provide_info"
-                ? await provideInfo(id, comment ?? "")
-                : await cancelRequest(id, comment);
+      const result = await decide(id, parsed.data);
       if (!result.success) {
         return NextResponse.json(
           { success: false, error: result.error, errors: result.errors },

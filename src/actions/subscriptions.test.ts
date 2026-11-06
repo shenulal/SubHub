@@ -42,12 +42,20 @@ vi.mock("@/lib/db", () => ({
 // RBAC: delegate to the session helper so unauthenticated calls still redirect.
 vi.mock("@/lib/rbac/service", async () => {
   const { requireOrganization } = await import("@/lib/auth/require-auth");
+  const { SYSTEM_ROLE_TEMPLATES } = await import("@/lib/rbac/permissions");
+  const roleGrants = async () => {
+    const ctx = (await requireOrganization()) as { role?: string };
+    const role = (ctx.role ?? "ADMIN") as keyof typeof SYSTEM_ROLE_TEMPLATES;
+    return new Set<string>(SYSTEM_ROLE_TEMPLATES[role]?.grants ?? []);
+  };
   return {
     requirePermission: vi.fn(async () => {
       const ctx = await requireOrganization();
       return { ...ctx, permissions: new Set<string>() };
     }),
-    getUserPermissionSet: vi.fn(async () => new Set<string>()),
+    // Template grants of the mocked session role (ADMIN when absent).
+    getUserPermissionSet: vi.fn(async () => roleGrants()),
+    can: vi.fn(async (key: string) => (await roleGrants()).has(key)),
     isForbiddenError: () => false,
   };
 });

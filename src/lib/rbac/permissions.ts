@@ -49,6 +49,12 @@ export const PERMISSIONS = [
     "Subscriptions",
     "See every subscription, not only own/team"
   ),
+  p(
+    "subscriptions",
+    "assign",
+    "Subscriptions",
+    "Assign subscription seats to other members"
+  ),
   // Approvals
   p("approvals", "read", "Approvals", "View own approval requests"),
   p("approvals", "read_all", "Approvals", "View all approval requests"),
@@ -119,6 +125,12 @@ export const PERMISSIONS = [
   p("members", "read", "Members", "View members"),
   p("members", "invite", "Members", "Invite members"),
   p("members", "manage", "Members", "Change roles, deactivate members"),
+  p(
+    "members",
+    "manage_credentials",
+    "Members",
+    "Set member user names and temporary passwords, unlock accounts"
+  ),
   p("teams", "read", "Members", "View teams"),
   p("teams", "manage", "Members", "Create and edit teams, assign approvers"),
   p("roles", "manage", "Members", "Create custom roles and grant permissions"),
@@ -129,7 +141,8 @@ export const PERMISSIONS = [
   // Insights
   p("reports", "read", "Insights", "View dashboards and reports"),
   p("reports", "export", "Insights", "Export reports"),
-  p("audit", "read", "Insights", "View audit log"),
+  p("audit", "read", "Insights", "View own audit trail"),
+  p("audit", "read_all", "Insights", "View every member's audit trail"),
   p("audit", "export", "Insights", "Export audit log"),
   // Integrations
   p("integrations", "read", "Integrations", "View integrations"),
@@ -141,6 +154,19 @@ export const PERMISSIONS = [
     "Connect own mailbox for receipt detection"
   ),
   p("mailboxes", "manage", "Integrations", "Manage all mailbox connections"),
+  // Browser extension & device monitoring (usage, devices, block lists)
+  p(
+    "extensions",
+    "read",
+    "Extensions",
+    "View browser-extension usage, devices and block lists"
+  ),
+  p(
+    "extensions",
+    "manage",
+    "Extensions",
+    "Manage extension builds, tokens, block lists and device apps"
+  ),
   // Settings
   p("settings", "read", "Settings", "View organisation settings"),
   p("settings", "manage", "Settings", "Change organisation settings"),
@@ -200,7 +226,6 @@ const MEMBER_GRANTS: PermissionKey[] = [
   "tags:create",
   "attachments:upload",
   "comments:create",
-  "payments:read",
   "audit:read",
   "mailboxes:connect_own",
 ];
@@ -212,6 +237,8 @@ const APPROVER_GRANTS: PermissionKey[] = [
   "approvals:decide",
   "approvals:export",
   "reports:export",
+  "payments:read",
+  "audit:read_all",
 ];
 
 const ADMIN_GRANTS: PermissionKey[] = [...PERMISSION_KEYS];
@@ -245,16 +272,25 @@ export const SYSTEM_ROLE_TEMPLATES: Record<
 };
 
 /**
- * Permissions added after organisations were created. `applyPermissionRollouts`
- * (run by `npm run db:backfill-defaults`) grants each key to every existing
- * system role whose template includes it. System-role grants cannot be edited
- * by hand (only reset to the template), so re-applying is safe and idempotent.
+ * Permissions whose system-role grants changed after organisations were created.
+ * `applyPermissionRollouts` (run by `npm run db:backfill-defaults`) re-syncs each
+ * listed key on every existing system role to its template: granted where the
+ * template includes it, revoked where it does not. System-role grants cannot be
+ * edited by hand (only reset to the template), so re-applying is safe and
+ * idempotent. Custom roles are never touched.
  */
 export const PERMISSION_ROLLOUTS: readonly PermissionKey[] = [
+  "members:manage_credentials",
   "masters:manage_global",
   "catalog:read",
   "apps:read",
   "apps:manage",
+  // Nov 2026 RBAC review
+  "subscriptions:assign",
+  "audit:read_all",
+  "extensions:read",
+  "extensions:manage",
+  "payments:read", // revoked from MEMBER (organisation finance data)
 ];
 
 /**

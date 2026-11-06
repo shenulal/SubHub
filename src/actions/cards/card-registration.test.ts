@@ -2,6 +2,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock setup
+vi.mock("@/lib/rbac/service", async () =>
+  (await import("@/test/rbac-org-mock")).orgRbacMock()
+);
 vi.mock("@/lib/db", () => ({
   prisma: {
     corporateCard: {

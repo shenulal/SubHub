@@ -21,6 +21,31 @@ const member: ListVisibilityContext = {
 };
 
 describe("buildSubscriptionWhere", () => {
+  it("scopes a legacy ADMIN with a restricted custom role to their team", () => {
+    const where = buildSubscriptionWhere(
+      {},
+      { ...admin, teamId: "team-9", canReadAll: false }
+    );
+    expect(where.AND).toEqual(expect.arrayContaining([{ teamId: "team-9" }]));
+  });
+
+  it("does not scope a custom-role MEMBER holding subscriptions:read_all", () => {
+    const where = buildSubscriptionWhere({}, { ...member, canReadAll: true });
+    expect(JSON.stringify(where)).not.toContain("team-1");
+  });
+
+  it("limits a viewer without read_all to their assignments", () => {
+    const where = buildSubscriptionWhere(
+      {},
+      { ...member, role: "VIEWER", canReadAll: false }
+    );
+    expect(where.AND).toEqual(
+      expect.arrayContaining([
+        { assignedUsers: { some: { userId: "user-1" } } },
+      ])
+    );
+  });
+
   it("hides archived rows and personal rows by default", () => {
     const where = buildSubscriptionWhere({}, admin);
     expect(where).toEqual({

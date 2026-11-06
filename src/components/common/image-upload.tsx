@@ -108,8 +108,15 @@ export function ImageUpload({
       return;
     }
 
-    // Validate file type
-    if (!file.type.startsWith("image/")) {
+    // Validate file type (against `accept` when it lists concrete types)
+    const allowed = accept
+      .split(",")
+      .map((type) => type.trim())
+      .filter((type) => type && !type.endsWith("/*"));
+    if (
+      !file.type.startsWith("image/") ||
+      (allowed.length > 0 && !allowed.includes(file.type))
+    ) {
       toast.error(t("fileTypeError"));
       return;
     }
@@ -162,11 +169,13 @@ export function ImageUpload({
       >
         {previewUrl ? (
           <>
-            <Image
+            {/* Plain <img>: previews are data URLs or arbitrary https URLs the
+                Next.js optimiser cannot allow-list. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
               src={previewUrl}
               alt="Preview"
-              fill
-              className="rounded-lg object-cover"
+              className="absolute inset-0 size-full rounded-lg object-contain p-2"
             />
             {!disabled && (
               <div className="absolute inset-0 flex items-center justify-center gap-2 rounded-lg bg-black/50 opacity-0 transition-opacity hover:opacity-100">

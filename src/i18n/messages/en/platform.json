@@ -53,7 +53,8 @@
         "categories": "Categories",
         "tags": "Tags",
         "custom-fields": "Custom fields",
-        "vendor-catalog": "Vendor catalog"
+        "vendor-catalog": "Vendor catalog",
+        "rejection-reasons": "Rejection reasons"
       },
       "common": {
         "active": "Active",
@@ -300,7 +301,7 @@
     },
     "auth": {
       "continueWithApple": "Continue with Apple",
-      "ssoOnly": "This workspace requires single sign-on. Use one of the providers above.",
+      "ssoOnly": "This workspace requires single sign-on. Continue with your organisation's provider below.",
       "selfSignupDisabled": "Self-service sign-up is disabled. Ask your administrator for an invitation."
     },
     "onboarding": {

@@ -1,5 +1,5 @@
 import { DevicesPageClient } from "@/components/devices";
-import { requireOrganization } from "@/lib/auth/require-auth";
+import { requirePermissionOrRedirect } from "@/lib/rbac/service";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 
@@ -12,7 +12,10 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function DevicesPage() {
-  const { role } = await requireOrganization();
+  const { permissions } = await requirePermissionOrRedirect(
+    "extensions:read",
+    "/dashboard"
+  );
 
-  return <DevicesPageClient role={role} />;
+  return <DevicesPageClient canManage={permissions.has("extensions:manage")} />;
 }

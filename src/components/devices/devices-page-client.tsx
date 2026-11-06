@@ -59,10 +59,9 @@ const DEVICE_PLATFORMS: DevicePlatform[] = [
   "ANDROID",
 ];
 
-type Role = "ADMIN" | "APPROVER" | "MEMBER" | "VIEWER" | null | undefined;
-
 interface DevicesPageClientProps {
-  role?: Role;
+  /** Holds extensions:manage (resolved on the server; the action re-checks). */
+  canManage?: boolean;
 }
 
 interface UserWithoutAgent {
@@ -71,7 +70,9 @@ interface UserWithoutAgent {
   email: string;
 }
 
-export function DevicesPageClient({ role }: DevicesPageClientProps) {
+export function DevicesPageClient({
+  canManage = false,
+}: DevicesPageClientProps) {
   const t = useTranslations("devices");
   const [isPending, startTransition] = useTransition();
   const [activeTab, setActiveTab] = useState("devices");
@@ -137,7 +138,7 @@ export function DevicesPageClient({ role }: DevicesPageClientProps) {
 
   // Approve/block Shadow IT apps
   const handleApproveShadowIT = (appName: string, approve: boolean) => {
-    if (role !== "ADMIN") return;
+    if (!canManage) return;
 
     startTransition(async () => {
       const result = await setDeviceAppApprovalStatus(
@@ -263,7 +264,7 @@ export function DevicesPageClient({ role }: DevicesPageClientProps) {
               <TabsContent value="shadow-it" className="mt-4 space-y-4">
                 <ShadowITTable
                   shadowITApps={shadowITApps}
-                  role={role}
+                  canManage={canManage}
                   isPending={isPending}
                   onApprove={handleApproveShadowIT}
                 />

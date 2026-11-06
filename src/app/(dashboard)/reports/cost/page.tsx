@@ -25,6 +25,8 @@ import { auth } from "@/lib/auth";
 import { resolveReportFilterParams } from "@/lib/filters/report-filter-params";
 import { getBaseCurrency } from "@/lib/fx/base-currency";
 import { DEFAULT_BASE_CURRENCY, formatMoney } from "@/lib/fx/convert";
+import { withReportAccess } from "@/lib/rbac/report-access";
+import { can, requirePermissionOrRedirect } from "@/lib/rbac/service";
 import {
   AlertTriangle,
   ArrowDownIcon,
@@ -68,6 +70,8 @@ interface PageProps {
 }
 
 export default async function CostAnalysisPage({ searchParams }: PageProps) {
+  await requirePermissionOrRedirect("reports:read", "/dashboard");
+  const canExport = await can("reports:export");
   const t = await getTranslations("reports.cost");
   const session = await auth();
 
@@ -79,9 +83,10 @@ export default async function CostAnalysisPage({ searchParams }: PageProps) {
     ? await getBaseCurrency(session.user.organizationId)
     : DEFAULT_BASE_CURRENCY;
   const params = await searchParams;
-  const isRestricted = session.user.role !== "ADMIN";
   // `teamId` / `userId` hold comma-separated lists (legacy single ids work)
-  const { teamIds, userIds } = resolveReportFilterParams(params, session.user);
+  const viewer = await withReportAccess(session.user);
+  const { teamIds, userIds } = resolveReportFilterParams(params, viewer);
+  const isRestricted = !viewer.canReadAll;
 
   // Fetch data
   const [statisticsResult, trendResult, topAppsResult, anomaliesResult] =
@@ -147,7 +152,7 @@ export default async function CostAnalysisPage({ searchParams }: PageProps) {
         <div className="min-w-0">
           <h1 className="truncate text-2xl font-medium">{t("page.title")}</h1>
         </div>
-        {session.user.role !== "VIEWER" && (
+        {canExport && (
           <ExportButtons
             statistics={statistics}
             trends={trends || []}

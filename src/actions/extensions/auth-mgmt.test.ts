@@ -17,6 +17,17 @@ vi.mock("@/lib/db", () => ({
   },
 }));
 
+// RBAC mock: the caller manages extensions in org-1 unless a test overrides it
+const mockRequirePermission = vi.fn();
+vi.mock("@/lib/rbac/service", () => {
+  class ForbiddenError extends Error {}
+  return {
+    ForbiddenError,
+    isForbiddenError: (e: unknown) => e instanceof ForbiddenError,
+    requirePermission: (...args: unknown[]) => mockRequirePermission(...args),
+  };
+});
+
 // Auth mock
 vi.mock("@/lib/api/extension-auth", () => ({
   generateToken: vi.fn(() => "test-raw-auth-abc123"),
@@ -35,6 +46,7 @@ import {
 describe("Extension Auth Management Actions", () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    mockRequirePermission.mockResolvedValue({ organizationId: "org-1" });
   });
 
   describe("createExtensionAuth", () => {
@@ -301,6 +313,27 @@ describe("Extension Auth Management Actions", () => {
       expect(result.success).toBe(false);
       expect(result.error).toContain("Extension auth not found");
       expect(prisma.extensionApiToken.delete).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("authorization", () => {
+    it("refuses callers without extensions:manage", async () => {
+      const { ForbiddenError } =
+        (await import("@/lib/rbac/service")) as unknown as {
+          ForbiddenError: new () => Error;
+        };
+      mockRequirePermission.mockRejectedValueOnce(new ForbiddenError());
+      const result = await createExtensionAuth({ organizationId: "org-1" });
+      expect(result.success).toBe(false);
+      expect(result.error).toMatch(/permission/);
+      expect(prisma.extensionApiToken.create).not.toHaveBeenCalled();
+    });
+
+    it("refuses another organisation's id even with the permission", async () => {
+      const result = await listExtensionAuths("org-2");
+      expect(result.success).toBe(false);
+      expect(prisma.extensionApiToken.findMany).not.toHaveBeenCalled();
+      expect(mockRequirePermission).toHaveBeenCalledWith("extensions:manage");
     });
   });
 });

@@ -5,7 +5,28 @@ import { generateToken, hashToken } from "@/lib/api/extension-auth";
 import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { withLogging } from "@/lib/logging";
+import { isForbiddenError, requirePermission } from "@/lib/rbac/service";
 import type { ActionState } from "@/types";
+
+/**
+ * Extension credentials grant API access to an organisation, so every call needs
+ * `extensions:manage` and may only target the caller's own organisation (the
+ * organizationId argument is never trusted on its own).
+ */
+async function authorizeOrganization(
+  organizationId: string
+): Promise<string | null> {
+  try {
+    const { organizationId: own } =
+      await requirePermission("extensions:manage");
+    return own === organizationId ? null : "Organization not found";
+  } catch (error) {
+    if (isForbiddenError(error)) {
+      return "You do not have permission to manage extension credentials";
+    }
+    throw error;
+  }
+}
 
 /**
  * Extension auth metadata (without sensitive hash)
@@ -55,6 +76,9 @@ async function _createExtensionAuth(
   input: CreateExtensionAuthInput
 ): Promise<CreateExtensionAuthResult> {
   try {
+    const denied = await authorizeOrganization(input.organizationId);
+    if (denied) return { success: false, error: denied };
+
     // Verify organization exists
     const org = await prisma.organization.findUnique({
       where: { id: input.organizationId },
@@ -111,6 +135,9 @@ export async function listExtensionAuths(
   organizationId: string
 ): Promise<ListExtensionAuthsResult> {
   try {
+    const denied = await authorizeOrganization(organizationId);
+    if (denied) return { success: false, error: denied };
+
     const auths = await prisma.extensionApiToken.findMany({
       where: { organizationId },
       select: {
@@ -151,6 +178,9 @@ async function _revokeExtensionAuth(
   organizationId: string
 ): Promise<ActionState> {
   try {
+    const denied = await authorizeOrganization(organizationId);
+    if (denied) return { success: false, error: denied };
+
     // Verify auth exists and belongs to the organization
     const auth = await prisma.extensionApiToken.findUnique({
       where: { id: authId },
@@ -194,6 +224,9 @@ async function _deleteExtensionAuth(
   organizationId: string
 ): Promise<ActionState> {
   try {
+    const denied = await authorizeOrganization(organizationId);
+    if (denied) return { success: false, error: denied };
+
     // Verify auth exists and belongs to the organization
     const auth = await prisma.extensionApiToken.findUnique({
       where: { id: authId },

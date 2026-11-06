@@ -18,22 +18,45 @@ describe("authProvider", () => {
   });
 
   describe("login", () => {
-    it("calls signIn and returns success", async () => {
-      mockSignIn.mockResolvedValueOnce(undefined);
+    it("signs in with the password provider and returns success", async () => {
+      mockSignIn.mockResolvedValueOnce({ ok: true, error: undefined });
 
       const result = await authProvider.login?.({
-        providerName: "google",
         email: "test@example.com",
         password: "password",
       });
 
-      expect(mockSignIn).toHaveBeenCalledWith("google", {
-        email: "test@example.com",
+      expect(mockSignIn).toHaveBeenCalledWith("password", {
+        identifier: "test@example.com",
         password: "password",
+        redirect: false,
       });
       expect(result).toEqual({
         success: true,
         redirectTo: "/",
+      });
+    });
+
+    it("returns the sign-in error code on failure", async () => {
+      mockSignIn.mockResolvedValueOnce({
+        ok: false,
+        error: "CredentialsSignin",
+        code: "invalid_credentials",
+      });
+
+      const result = await authProvider.login?.({
+        username: "jane",
+        password: "bad",
+      });
+
+      expect(mockSignIn).toHaveBeenCalledWith("password", {
+        identifier: "jane",
+        password: "bad",
+        redirect: false,
+      });
+      expect(result).toMatchObject({
+        success: false,
+        error: { message: "invalid_credentials" },
       });
     });
   });

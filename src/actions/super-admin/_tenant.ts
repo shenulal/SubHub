@@ -25,8 +25,8 @@ export async function resolveConsoleTenant(
 ): Promise<TenantResolution> {
   const select = { id: true, name: true } as const;
   if (organizationId) {
-    const tenant = await prisma.organization.findUnique({
-      where: { id: organizationId },
+    const tenant = await prisma.organization.findFirst({
+      where: { id: organizationId, deletedAt: null },
       select,
     });
     return tenant
@@ -35,6 +35,7 @@ export async function resolveConsoleTenant(
   }
   if (isSaas()) return { ok: false, message: SELECT_TENANT_MESSAGE };
   const tenant = await prisma.organization.findFirst({
+    where: { deletedAt: null },
     orderBy: { createdAt: "asc" },
     select,
   });

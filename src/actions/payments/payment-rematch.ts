@@ -1,6 +1,7 @@
 "use server";
 
 import { getCachedSession } from "@/lib/auth/require-auth";
+import { can } from "@/lib/rbac/service";
 import {
   rematchRecords,
   type RematchResult,
@@ -20,6 +21,12 @@ export async function rematchPaymentRecords(
 
     if (!session?.user) {
       return { success: false, error: "Authentication required" };
+    }
+    if (!(await can("payments:manage"))) {
+      return {
+        success: false,
+        error: "You do not have permission to perform this action",
+      };
     }
 
     if (!session.user.organizationId) {
@@ -54,6 +61,12 @@ export async function rematchCardTransactions(
 
     if (!session?.user) {
       return { success: false, error: "Authentication required" };
+    }
+    if (!(await can("payments:manage"))) {
+      return {
+        success: false,
+        error: "You do not have permission to perform this action",
+      };
     }
 
     if (!session.user.organizationId) {

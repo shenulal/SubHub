@@ -4,6 +4,7 @@
 import { requireSuperAdmin } from "@/lib/auth/require-auth";
 import { prisma } from "@/lib/db";
 import { withLogging } from "@/lib/logging";
+import { writePlatformAudit } from "@/lib/platform-audit";
 import { sendInvitationEmail } from "@/lib/services/notification/email";
 import type { ActionState } from "@/types";
 import { revalidatePath } from "next/cache";
@@ -68,7 +69,7 @@ async function _inviteTenantAdmin(
   email: string,
   organizationId?: string
 ): Promise<ActionState> {
-  await requireSuperAdmin();
+  const { userId: actorId } = await requireSuperAdmin();
 
   const parsed = inviteSchema.safeParse({ email });
   if (!parsed.success) {
@@ -134,6 +135,14 @@ async function _inviteTenantAdmin(
     return { success: false, message: "Failed to send the invitation email." };
   }
 
+  await writePlatformAudit({
+    actorId,
+    action: "INVITE_TENANT_ADMIN",
+    entityType: "Invitation",
+    entityId: invitation.id,
+    changes: { email: parsed.data.email, role: "ADMIN" },
+    metadata: { organizationId: org.id },
+  });
   revalidatePath("/super-admin/admins");
   return { success: true, message: "Invitation sent." };
 }
@@ -150,11 +159,46 @@ async function _changeAdminRole(
   userId: string,
   role: "ADMIN" | "MEMBER"
 ): Promise<ActionState> {
-  await requireSuperAdmin();
+  const { userId: actorId } = await requireSuperAdmin();
+  if (role !== "ADMIN" && role !== "MEMBER") {
+    return { success: false, message: "Invalid role." };
+  }
+
+  const target = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { organizationId: true, role: true, email: true },
+  });
+  if (!target?.organizationId || target.role === "SUPER_ADMIN") {
+    return { success: false, message: "User not found." };
+  }
+  if (target.role === "ADMIN" && role !== "ADMIN") {
+    const otherAdmins = await prisma.user.count({
+      where: {
+        organizationId: target.organizationId,
+        role: "ADMIN",
+        status: "ACTIVE",
+        id: { not: userId },
+      },
+    });
+    if (otherAdmins === 0) {
+      return {
+        success: false,
+        message: "The tenant must keep at least one active administrator.",
+      };
+    }
+  }
 
   await prisma.user.update({
     where: { id: userId },
     data: { role },
+  });
+  await writePlatformAudit({
+    actorId,
+    action: "CHANGE_TENANT_ADMIN_ROLE",
+    entityType: "User",
+    entityId: userId,
+    changes: { email: target.email, role: { from: target.role, to: role } },
+    metadata: { organizationId: target.organizationId },
   });
 
   revalidatePath("/super-admin/admins");
@@ -211,7 +255,7 @@ export const listTenantInvitations = withLogging(
 async function _resendTenantInvitation(
   invitationId: string
 ): Promise<ActionState> {
-  await requireSuperAdmin();
+  const { userId: actorId } = await requireSuperAdmin();
 
   const invitation = await prisma.invitation.findUnique({
     where: { id: invitationId },
@@ -236,6 +280,14 @@ async function _resendTenantInvitation(
     token: newToken,
     organizationName: invitation.organization.name,
     role: invitation.role as "ADMIN",
+  });
+  await writePlatformAudit({
+    actorId,
+    action: "RESEND_TENANT_INVITATION",
+    entityType: "Invitation",
+    entityId: invitation.id,
+    changes: { email: invitation.email },
+    metadata: { organizationId: invitation.organizationId },
   });
 
   revalidatePath("/super-admin/admins");

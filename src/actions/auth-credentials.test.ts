@@ -21,6 +21,23 @@ vi.mock("@/lib/deployment/tenancy", () => ({
   isSignupOpen: vi.fn().mockResolvedValue(true),
 }));
 
+vi.mock("@/lib/auth/password-policy", async (orig) => ({
+  ...(await orig<typeof import("@/lib/auth/password-policy")>()),
+  getSignupPasswordPolicy: vi.fn().mockResolvedValue({
+    minLength: 10,
+    requireUppercase: true,
+    requireLowercase: true,
+    requireNumber: true,
+    requireSymbol: true,
+    historyCount: 0,
+  }),
+}));
+
+vi.mock("@/lib/auth/auth-audit", () => ({
+  AUTH_AUDIT_ACTIONS: { passwordChanged: "AUTH_PASSWORD_CHANGED" },
+  recordAuthEvent: vi.fn(),
+}));
+
 vi.mock("@/lib/services/notification/email-auth", () => ({
   sendVerificationEmail: vi.fn().mockResolvedValue({ success: true }),
 }));
@@ -62,8 +79,14 @@ describe("auth-credentials", () => {
         name: "Test User",
       });
 
+      expect(result.message).toContain("Sign in");
       expect(result.success).toBe(true);
-      expect(result.message).toContain("verify");
+      expect(vi.mocked(prisma.user.create).mock.calls[0][0].data).toMatchObject(
+        {
+          email: "test@example.com",
+          passwordHash: "hashed_password",
+        }
+      );
       expect(prisma.user.create).toHaveBeenCalled();
       expect(prisma.emailVerificationToken.create).toHaveBeenCalled();
     });
@@ -92,18 +115,10 @@ describe("auth-credentials", () => {
       expect(prisma.user.create).not.toHaveBeenCalled();
     });
 
-    it("should return EMAIL_EXISTS_OAUTH_GOOGLE when email is registered with Google OAuth", async () => {
-      const existingUser = {
-        id: "user-1",
-        email: "google@example.com",
-        name: "Google User",
+    it("returns EMAIL_EXISTS for an account without a password (no provider is revealed)", async () => {
+      vi.mocked(prisma.user.findUnique).mockResolvedValue({
         passwordHash: null,
-        accounts: [{ provider: "google" }],
-      };
-
-      vi.mocked(prisma.user.findUnique).mockResolvedValue(
-        existingUser as never
-      );
+      } as never);
 
       const result = await registerUser({
         email: "google@example.com",
@@ -112,9 +127,37 @@ describe("auth-credentials", () => {
       });
 
       expect(result.success).toBe(false);
-      expect(result.error).toBe("EMAIL_EXISTS_OAUTH_GOOGLE");
-      expect(result.message).toContain("Google");
+      expect(result.error).toBe("EMAIL_EXISTS");
+      expect(result.message).not.toContain("Google");
       expect(prisma.user.create).not.toHaveBeenCalled();
+    });
+
+    it("rejects a password that breaks the policy", async () => {
+      const result = await registerUser({
+        email: "test@example.com",
+        password: "alllowercase1!",
+        name: "Test User",
+      });
+      expect(result.success).toBe(false);
+      expect(result.errors?.password?.[0]).toContain("uppercase");
+    });
+
+    it("lower-cases the email and stores an optional user name", async () => {
+      vi.mocked(prisma.user.findUnique).mockResolvedValue(null);
+      vi.mocked(prisma.user.create).mockResolvedValue({ id: "u" } as never);
+      const result = await registerUser({
+        email: "Jane@Example.com",
+        password: "TestPassword123!",
+        name: "Jane",
+        username: "Jane.Doe",
+      });
+      expect(result.success).toBe(true);
+      expect(vi.mocked(prisma.user.create).mock.calls[0][0].data).toMatchObject(
+        {
+          email: "jane@example.com",
+          username: "jane.doe",
+        }
+      );
     });
 
     it("should return EMAIL_EXISTS_CREDENTIALS when email is registered with credentials", async () => {

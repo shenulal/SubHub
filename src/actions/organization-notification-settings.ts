@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import { requireOrganization } from "@/lib/auth/require-auth";
 import { prisma } from "@/lib/db";
 import { withLogging } from "@/lib/logging";
+import { can } from "@/lib/rbac/service";
 import { getSetting } from "@/lib/settings/service";
 import { revalidatePath } from "next/cache";
 
@@ -114,7 +115,7 @@ async function _updateOrganizationNotificationSettings(
   }
 
   // Check admin permission
-  if (user.role !== "ADMIN") {
+  if (!(await can("settings:manage"))) {
     return {
       success: false,
       message: "Admin permission required",

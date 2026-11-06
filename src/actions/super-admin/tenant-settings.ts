@@ -63,7 +63,8 @@ function toTenantInfo(org: TenantRow): TenantInfo {
 
 function revalidateConsole() {
   revalidatePath("/super-admin");
-  revalidatePath("/super-admin/tenant");
+  revalidatePath("/super-admin/tenants");
+  revalidatePath("/super-admin/installation");
   revalidatePath("/super-admin/admins");
 }
 
@@ -91,6 +92,7 @@ export const getTenantInfo = withLogging("getTenantInfo", _getTenantInfo);
 async function _listTenants(): Promise<ActionState<TenantInfo[]>> {
   await requireSuperAdmin();
   const rows = await prisma.organization.findMany({
+    where: { deletedAt: null },
     orderBy: { createdAt: "asc" },
     select: TENANT_SELECT,
   });
@@ -193,8 +195,8 @@ async function updateTenantField(
   value: string | null
 ): Promise<ActionState> {
   const { userId } = await requireSuperAdmin();
-  const existing = await prisma.organization.findUnique({
-    where: { id: orgId },
+  const existing = await prisma.organization.findFirst({
+    where: { id: orgId, deletedAt: null },
     select: { name: true, domain: true, logoUrl: true },
   });
   if (!existing)
@@ -324,9 +326,9 @@ async function _setTenantActive(
   }
   const existing = await prisma.organization.findUnique({
     where: { id: orgId },
-    select: { deactivatedAt: true },
+    select: { deactivatedAt: true, deletedAt: true },
   });
-  if (!existing)
+  if (!existing || existing.deletedAt)
     return { success: false, message: "Tenant information not found." };
   const deactivatedAt = active ? null : (existing.deactivatedAt ?? new Date());
   await prisma.organization.update({

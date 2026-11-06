@@ -5,6 +5,7 @@ import { requireSuperAdmin } from "@/lib/auth/require-auth";
 import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { withLogging } from "@/lib/logging";
+import { writePlatformAudit } from "@/lib/platform-audit";
 import type { ActionState } from "@/types";
 import { revalidatePath } from "next/cache";
 import { resolveConsoleTenant } from "./_tenant";
@@ -71,7 +72,7 @@ export const listExtensionBuilds = withLogging(
 async function _triggerExtensionBuild(input?: {
   organizationId?: string;
 }): Promise<ActionState<{ buildId: string; version: string }>> {
-  await requireSuperAdmin();
+  const { userId } = await requireSuperAdmin();
 
   const resolved = await resolveConsoleTenant(input?.organizationId);
   if (!resolved.ok) return { success: false, message: resolved.message };
@@ -99,6 +100,15 @@ async function _triggerExtensionBuild(input?: {
       platform: "CHROME",
       status: "PENDING",
     },
+  });
+
+  await writePlatformAudit({
+    actorId: userId,
+    action: "TRIGGER_EXTENSION_BUILD",
+    entityType: "ExtensionBuild",
+    entityId: build.id,
+    changes: { version: nextVersion, platform: "CHROME" },
+    metadata: { organizationId: org.id },
   });
 
   // 2. Call the correct endpoint with x-internal-secret auth (fire-and-forget)

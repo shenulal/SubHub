@@ -8,6 +8,23 @@ const { prisma } = vi.hoisted(() => ({
   },
 }));
 
+// RBAC: grants of the mocked requireOrganization() role
+vi.mock("@/lib/rbac/service", async () => {
+  const { requireOrganization } = await import("@/lib/auth/require-auth");
+  const { SYSTEM_ROLE_TEMPLATES } = await import("@/lib/rbac/permissions");
+  const grants = async () => {
+    const { role } = (await requireOrganization()) as { role: "ADMIN" };
+    return new Set<string>(SYSTEM_ROLE_TEMPLATES[role]?.grants ?? []);
+  };
+  return {
+    can: async (key: string) => (await grants()).has(key),
+    requirePermission: async (key: string) => {
+      const ctx = await requireOrganization();
+      if (!(await grants()).has(key)) throw new Error("Forbidden");
+      return { ...ctx, permissions: await grants() };
+    },
+  };
+});
 vi.mock("@/lib/db", () => ({ prisma }));
 vi.mock("@/lib/auth/require-auth", () => ({
   requireOrganization: vi.fn().mockResolvedValue({

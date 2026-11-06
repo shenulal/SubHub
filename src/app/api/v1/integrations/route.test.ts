@@ -4,6 +4,9 @@ import { auth } from "@/lib/auth";
 import { NextRequest } from "next/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("@/lib/rbac/service", async () =>
+  (await import("@/test/rbac-session-mock")).sessionRbacMock()
+);
 vi.mock("@/lib/auth", () => ({
   auth: vi.fn(),
 }));
@@ -35,7 +38,7 @@ describe("/api/v1/integrations contract", () => {
     });
 
     it("GET 403 when organizationId missing", async () => {
-      mockAuth.mockResolvedValueOnce({
+      mockAuth.mockResolvedValue({
         user: { id: "user-1", role: "ADMIN" },
       } as never);
 
@@ -48,7 +51,7 @@ describe("/api/v1/integrations contract", () => {
     });
 
     it("GET 200 with items/total", async () => {
-      mockAuth.mockResolvedValueOnce({
+      mockAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
       mockGetIntegrations.mockResolvedValueOnce({
@@ -71,7 +74,7 @@ describe("/api/v1/integrations contract", () => {
     });
 
     it("GET parses a comma-separated status list and drops unknown values", async () => {
-      mockAuth.mockResolvedValueOnce({
+      mockAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
       mockGetIntegrations.mockResolvedValueOnce({
@@ -112,7 +115,7 @@ describe("/api/v1/integrations contract", () => {
     });
 
     it("POST 403 when not admin", async () => {
-      mockAuth.mockResolvedValueOnce({
+      mockAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "MEMBER" },
       } as never);
 
@@ -124,11 +127,14 @@ describe("/api/v1/integrations contract", () => {
       const json = await res.json();
 
       expect(res.status).toBe(403);
-      expect(json).toEqual({ error: "Admin permission required" });
+      expect(json).toEqual({
+        success: false,
+        error: "Forbidden: missing permission",
+      });
     });
 
     it("POST 200 on success", async () => {
-      mockAuth.mockResolvedValueOnce({
+      mockAuth.mockResolvedValue({
         user: { id: "user-1", organizationId: "org-1", role: "ADMIN" },
       } as never);
       mockCreateIntegration.mockResolvedValueOnce({

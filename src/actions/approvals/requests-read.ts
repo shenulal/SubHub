@@ -8,6 +8,7 @@ import { prisma } from "@/lib/db";
 import { inFilter } from "@/lib/filters/multi-value";
 import { withLogging } from "@/lib/logging";
 import { requirePermission } from "@/lib/rbac/service";
+import { isAdminRole } from "@/lib/services/approval/shared";
 import { approvalListFiltersSchema } from "@/lib/validations/approvals";
 import type { ActionState } from "@/types";
 import type {
@@ -21,6 +22,7 @@ import {
   LIST_INCLUDE,
   metadataOf,
   runAction,
+  toDecisionSummary,
   toEventView,
   toListItem,
   toStepView,
@@ -88,7 +90,7 @@ async function _getApprovalRequests(
   rawFilters: unknown = {}
 ): Promise<ActionState<ApprovalListResult>> {
   return runAction("getApprovalRequests", async () => {
-    const { organizationId, userId, permissions } =
+    const { organizationId, userId, role, permissions } =
       await requirePermission("approvals:read");
     const parsed = approvalListFiltersSchema.safeParse(rawFilters ?? {});
     if (!parsed.success) {
@@ -138,7 +140,13 @@ async function _getApprovalRequests(
     return {
       success: true,
       data: {
-        items: rows.map((r) => toListItem(r, userId)),
+        items: rows.map((r) =>
+          toListItem(r, {
+            userId,
+            isAdmin: isAdminRole(role),
+            hasDecidePermission: permissions.has("approvals:decide"),
+          })
+        ),
         total,
         page: f.page,
         limit: f.limit,
@@ -192,7 +200,7 @@ async function _getApprovalRequest(
     const candidateIds = Array.from(
       new Set(Object.values(meta.stepCandidates ?? {}).flat())
     );
-    const isAdmin = role === "ADMIN";
+    const isAdmin = isAdminRole(role);
     const isRequester = row.requesterId === userId;
     const isParticipant =
       isRequester ||
@@ -204,13 +212,11 @@ async function _getApprovalRequest(
     }
 
     const users = await loadCandidates(organizationId, candidateIds);
-    const current = row.steps.find((s) => s.stepOrder === row.currentStep);
-    const awaitingMe =
-      row.status === "PENDING" &&
-      (isAdmin ||
-        current?.approverId === userId ||
-        (meta.candidateIds ?? []).includes(userId));
-    const base = toListItem(row, userId);
+    const base = toListItem(row, {
+      userId,
+      isAdmin,
+      hasDecidePermission: permissions.has("approvals:decide"),
+    });
     return {
       success: true,
       data: {
@@ -222,6 +228,10 @@ async function _getApprovalRequest(
         catalog: row.catalog,
         escalatedAt: row.escalatedAt?.toISOString() ?? null,
         lastReminderAt: row.lastReminderAt?.toISOString() ?? null,
+        decision: toDecisionSummary(row),
+        effectiveStartDate: row.effectiveStartDate
+          ? row.effectiveStartDate.toISOString().slice(0, 10)
+          : null,
         steps: row.steps.map((s) =>
           toStepView(
             s,
@@ -232,7 +242,7 @@ async function _getApprovalRequest(
         ),
         events: row.events.map(toEventView),
         viewer: {
-          canDecide: awaitingMe && permissions.has("approvals:decide"),
+          canDecide: base.canDecide,
           canProvideInfo: isRequester && row.status === "INFO_REQUESTED",
           canCancel:
             (isRequester || permissions.has("approvals:cancel_any")) &&

@@ -5,6 +5,8 @@ import { getUsageReport } from "@/actions/usage-analytics";
 import { getUsers } from "@/actions/users-read";
 import { auth } from "@/lib/auth";
 import { resolveReportFilterParams } from "@/lib/filters/report-filter-params";
+import { withReportAccess } from "@/lib/rbac/report-access";
+import { can, requirePermissionOrRedirect } from "@/lib/rbac/service";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { redirect } from "next/navigation";
@@ -29,6 +31,8 @@ interface PageProps {
 }
 
 export default async function UsageReportPage({ searchParams }: PageProps) {
+  await requirePermissionOrRedirect("reports:read", "/dashboard");
+  const canExport = await can("reports:export");
   const session = await auth();
 
   if (!session?.user) {
@@ -36,7 +40,6 @@ export default async function UsageReportPage({ searchParams }: PageProps) {
   }
 
   const params = await searchParams;
-  const isRestricted = session.user.role !== "ADMIN";
 
   // Defaults (last 30 days)
   const today = new Date();
@@ -48,7 +51,9 @@ export default async function UsageReportPage({ searchParams }: PageProps) {
     params.startDate || thirtyDaysAgo.toISOString().split("T")[0];
   const endDate = params.endDate || today.toISOString().split("T")[0];
   // `teamId` / `userId` hold comma-separated lists (legacy single ids work)
-  const { teamIds, userIds } = resolveReportFilterParams(params, session.user);
+  const viewer = await withReportAccess(session.user);
+  const { teamIds, userIds } = resolveReportFilterParams(params, viewer);
+  const isRestricted = !viewer.canReadAll;
 
   const filters = {
     period,
@@ -93,7 +98,7 @@ export default async function UsageReportPage({ searchParams }: PageProps) {
         initialFilters={filters}
         teams={filteredTeams}
         users={filteredUsers}
-        canExport={session.user.role !== "VIEWER"}
+        canExport={canExport}
         includeAllOption={!isRestricted}
         presets={presets.map((p) => ({ value: p.value, label: p.label }))}
       />

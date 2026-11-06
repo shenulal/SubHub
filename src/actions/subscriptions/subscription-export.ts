@@ -43,7 +43,7 @@ async function _exportSubscriptions(
       userId,
       role,
       teamId: null,
-      canReadAll: role === "ADMIN" || permissions.has("subscriptions:read_all"),
+      canReadAll: permissions.has("subscriptions:read_all"),
     });
     const rows = await prisma.subscription.findMany({
       where,

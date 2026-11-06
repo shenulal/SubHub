@@ -8,6 +8,11 @@ vi.mock("@/lib/auth", () => ({
   auth: vi.fn(),
 }));
 
+// RBAC: the route checks a permission with can(); this suite covers the HTTP
+// contract, so the permission is granted (denial is covered in the RBAC tests).
+const mockCan = vi.hoisted(() => vi.fn(async () => true));
+vi.mock("@/lib/rbac/service", () => ({ can: mockCan }));
+
 vi.mock("@/actions/subscriptions", () => ({
   getSubscriptions: vi.fn(),
   createSubscription: vi.fn(),

@@ -4,6 +4,7 @@ import { PageHeader } from "@/components/common/page-header";
 import { OrgLayout } from "@/components/org/org-layout";
 import { TeamsPageClient } from "@/components/teams/teams-page-client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { requirePermissionOrRedirect } from "@/lib/rbac/service";
 import { getTranslations } from "next-intl/server";
 
 export async function generateMetadata() {
@@ -28,6 +29,7 @@ function TeamsLoading() {
 }
 
 export default async function TeamsPage() {
+  await requirePermissionOrRedirect("teams:read", "/dashboard");
   const t = await getTranslations("teams.page");
   return (
     <OrgLayout>

@@ -1,97 +1,135 @@
 // src/actions/password.ts
 "use server";
 
-import { hashPassword } from "@/lib/auth/password";
+import {
+  getDevOtpOverride,
+  shouldLogOtpInsteadOfEmail,
+} from "@/actions/otp-dev";
+import { AUTH_AUDIT_ACTIONS, recordAuthEvent } from "@/lib/auth/auth-audit";
+import { getAuthSettings } from "@/lib/auth/auth-settings";
+import { findAccountByIdentifier } from "@/lib/auth/authorize";
+import { verifyPassword } from "@/lib/auth/password";
+import {
+  buildPasswordUpdate,
+  getPasswordPolicy,
+  validateNewPassword,
+} from "@/lib/auth/password-policy";
+import {
+  createResetToken,
+  findResetToken,
+  hasRecentResetToken,
+} from "@/lib/auth/password-reset";
+import { requireAuth } from "@/lib/auth/require-auth";
 import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { withLogging } from "@/lib/logging";
-import { sendPasswordResetEmail } from "@/lib/services/notification/email-auth";
-import { passwordSchema } from "@/lib/validation/password";
+import {
+  passwordResetUrl,
+  sendPasswordResetEmail,
+} from "@/lib/services/notification/email-auth";
 import type { ActionState } from "@/types";
+import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
+const GENERIC_RESET_RESPONSE: ActionState = {
+  success: true,
+  message:
+    "If an account matches, a password reset link is on its way. Check your inbox.",
+};
+
 const requestResetSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
+  email: z.string().trim().min(1, "Enter your email or user name").max(254),
 });
 
 const resetPasswordSchema = z.object({
   token: z.string().min(1, "Token is required"),
-  password: passwordSchema,
+  password: z.string().min(1, "Enter a new password").max(256),
 });
 
+const changePasswordSchema = z.object({
+  currentPassword: z.string().max(256).optional().default(""),
+  newPassword: z.string().min(1, "Enter a new password").max(256),
+  confirmPassword: z.string().max(256).optional(),
+});
+
+function field(input: FormData | Record<string, unknown>, key: string) {
+  const value = input instanceof FormData ? input.get(key) : input[key];
+  return typeof value === "string" ? value : undefined;
+}
+
+const PASSWORD_ACCOUNT_SELECT = {
+  id: true,
+  email: true,
+  name: true,
+  organizationId: true,
+  status: true,
+  passwordHash: true,
+  passwordHistory: true,
+  mustChangePassword: true,
+} as const;
+
 /**
- * Request a password reset
- * 1. Look up the user by email
- * 2. Create a reset token (valid for 1 hour)
- * 3. Send the email
- *
- * For security, returns the same response whether or not the user exists
+ * Request a password reset (email or user name). Same response whether or not
+ * the account exists. Locally without RESEND_API_KEY the link is written to
+ * the server log instead of emailed.
  */
 async function _requestPasswordReset(
   input: { email: string } | FormData
 ): Promise<ActionState> {
   try {
-    // Extract data from FormData or a plain object
-    const rawData =
-      input instanceof FormData ? { email: input.get("email") } : input;
-
-    // Validate
-    const parsed = requestResetSchema.safeParse(rawData);
+    const parsed = requestResetSchema.safeParse({
+      email: field(input, "email"),
+    });
     if (!parsed.success) {
       return {
         success: false,
-        message:
-          parsed.error.flatten().fieldErrors.email?.[0] ||
-          "Please enter a valid email address",
+        message: parsed.error.issues[0]?.message ?? "Enter your email",
       };
     }
-
-    const { email } = parsed.data;
-
-    // Look up the user
-    const user = await prisma.user.findUnique({
-      where: { email },
-      select: { id: true, name: true, passwordHash: true },
-    });
-
-    // No user, or no password set (OAuth-only account)
-    // Return the same response for security
-    if (!user || !user.passwordHash) {
-      return {
-        success: true,
-        message: "Email sent. Please check your inbox.",
-      };
+    const account = await findAccountByIdentifier(parsed.data.email);
+    if (!account || account.status === "TERMINATED") {
+      return GENERIC_RESET_RESPONSE;
     }
-
-    // Delete existing tokens
-    await prisma.passwordResetToken.deleteMany({
-      where: { email },
+    const s = await getAuthSettings(account.organizationId, [
+      "security.passwordResetExpiryMinutes",
+      "security.authEmailCooldownSeconds",
+    ] as const);
+    if (
+      await hasRecentResetToken(
+        account.email,
+        s["security.authEmailCooldownSeconds"]
+      )
+    ) {
+      return GENERIC_RESET_RESPONSE;
+    }
+    const expiryMinutes = s["security.passwordResetExpiryMinutes"];
+    const { token } = await createResetToken(account.email, expiryMinutes);
+    await recordAuthEvent({
+      action: AUTH_AUDIT_ACTIONS.passwordResetRequested,
+      subjectUserId: account.id,
+      organizationId: account.organizationId,
     });
 
-    // Create a new token (valid for 1 hour)
-    const token = crypto.randomUUID();
-    const expires = new Date();
-    expires.setHours(expires.getHours() + 1);
-
-    await prisma.passwordResetToken.create({
-      data: {
-        email,
-        token,
-        expires,
-      },
-    });
-
-    // Send the email
-    await sendPasswordResetEmail({
-      to: email,
+    if (getDevOtpOverride() || shouldLogOtpInsteadOfEmail()) {
+      logger.warn(
+        { email: account.email, resetUrl: passwordResetUrl(token) },
+        "[auth] development password-reset link issued without email delivery"
+      );
+      return GENERIC_RESET_RESPONSE;
+    }
+    const sent = await sendPasswordResetEmail({
+      to: account.email,
       token,
-      userName: user.name || undefined,
+      userName: account.name ?? undefined,
+      expiryMinutes,
     });
-
-    return {
-      success: true,
-      message: "Email sent. Please check your inbox.",
-    };
+    if (!sent.success) {
+      logger.error(
+        { userId: account.id, error: sent.error },
+        "[auth] password reset email failed"
+      );
+    }
+    return GENERIC_RESET_RESPONSE;
   } catch (error) {
     logger.error({ err: error }, "Password reset request error");
     return {
@@ -106,79 +144,63 @@ export const requestPasswordReset = withLogging(
 );
 
 /**
- * Reset the password
- * 1. Verify the token
- * 2. Check expiry
- * 3. Hash and update the password
- * 4. Delete the token
+ * Reset the password with a single-use token. Applies the organisation's
+ * policy and history rule, clears any lockout and a pending forced change.
  */
 async function _resetPassword(
   input: { token: string; password: string } | FormData
 ): Promise<ActionState> {
   try {
-    // Extract data from FormData or a plain object
-    const rawData =
-      input instanceof FormData
-        ? { token: input.get("token"), password: input.get("password") }
-        : input;
-
-    // Validate
-    const parsed = resetPasswordSchema.safeParse(rawData);
+    const parsed = resetPasswordSchema.safeParse({
+      token: field(input, "token"),
+      password: field(input, "password"),
+    });
     if (!parsed.success) {
-      const fieldErrors = parsed.error.flatten().fieldErrors;
-      const firstError =
-        fieldErrors.token?.[0] ||
-        fieldErrors.password?.[0] ||
-        "Please check your input";
-
       return {
         success: false,
-        message: firstError,
-        errors: fieldErrors as Record<string, string[]>,
+        message: parsed.error.issues[0]?.message ?? "Please check your input",
       };
     }
-
-    const { token, password } = parsed.data;
-
-    // Look up the token
-    const resetToken = await prisma.passwordResetToken.findUnique({
-      where: { token },
-    });
-
-    if (!resetToken) {
+    const lookup = await findResetToken(parsed.data.token);
+    if (lookup.status === "expired" && lookup.id) {
+      await prisma.passwordResetToken.delete({ where: { id: lookup.id } });
+    }
+    if (lookup.status !== "valid" || !lookup.email) {
       return {
         success: false,
-        message: "Invalid reset link",
+        message:
+          lookup.status === "expired"
+            ? "The reset link has expired. Please request a new one."
+            : "Invalid reset link",
       };
     }
-
-    // Check expiry
-    if (new Date() > resetToken.expires) {
-      // Delete the expired token
-      await prisma.passwordResetToken.delete({
-        where: { id: resetToken.id },
-      });
-
-      return {
-        success: false,
-        message: "The reset link has expired. Please request a new one.",
-      };
+    const account = await prisma.user.findUnique({
+      where: { email: lookup.email },
+      select: PASSWORD_ACCOUNT_SELECT,
+    });
+    if (!account || account.status === "TERMINATED") {
+      return { success: false, message: "Invalid reset link" };
     }
+    const policy = await getPasswordPolicy(account.organizationId);
+    const problem = await validateNewPassword(
+      parsed.data.password,
+      account,
+      policy
+    );
+    if (problem) return { success: false, message: problem };
 
-    // Hash the password
-    const passwordHash = await hashPassword(password);
-
-    // Update the password
-    await prisma.user.update({
-      where: { email: resetToken.email },
-      data: { passwordHash },
+    const data = await buildPasswordUpdate(parsed.data.password, account, {
+      historyCount: policy.historyCount,
     });
-
-    // Delete the used token
-    await prisma.passwordResetToken.delete({
-      where: { id: resetToken.id },
+    await prisma.$transaction([
+      prisma.user.update({ where: { id: account.id }, data }),
+      prisma.passwordResetToken.deleteMany({ where: { email: account.email } }),
+    ]);
+    await recordAuthEvent({
+      action: AUTH_AUDIT_ACTIONS.passwordReset,
+      subjectUserId: account.id,
+      organizationId: account.organizationId,
     });
-
     return {
       success: true,
       message:
@@ -193,3 +215,68 @@ async function _resetPassword(
   }
 }
 export const resetPassword = withLogging("resetPassword", _resetPassword);
+
+/**
+ * Change the signed-in user's password. Requires the current password when one
+ * is set (also for a forced change after an administrator's temporary
+ * password). Clears the forced-change flag.
+ */
+async function _changePassword(
+  _prev: ActionState,
+  formData: FormData
+): Promise<ActionState> {
+  const session = await requireAuth();
+  const parsed = changePasswordSchema.safeParse({
+    currentPassword: field(formData, "currentPassword") ?? "",
+    newPassword: field(formData, "newPassword"),
+    confirmPassword: field(formData, "confirmPassword"),
+  });
+  if (!parsed.success) {
+    return {
+      success: false,
+      message: parsed.error.issues[0]?.message ?? "Please check your input",
+    };
+  }
+  const { currentPassword, newPassword, confirmPassword } = parsed.data;
+  if (confirmPassword !== undefined && confirmPassword !== newPassword) {
+    return { success: false, message: "The new passwords do not match" };
+  }
+  const account = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: PASSWORD_ACCOUNT_SELECT,
+  });
+  if (!account) return { success: false, message: "Account not found" };
+  if (account.passwordHash) {
+    const ok = await verifyPassword(currentPassword, account.passwordHash);
+    if (!ok) {
+      return {
+        success: false,
+        message: "Your current password is incorrect",
+        errors: { currentPassword: ["Your current password is incorrect"] },
+      };
+    }
+    if (await verifyPassword(newPassword, account.passwordHash)) {
+      return {
+        success: false,
+        message: "Choose a password different from your current one",
+      };
+    }
+  }
+  const policy = await getPasswordPolicy(account.organizationId);
+  const problem = await validateNewPassword(newPassword, account, policy);
+  if (problem) return { success: false, message: problem };
+
+  const data = await buildPasswordUpdate(newPassword, account, {
+    historyCount: policy.historyCount,
+  });
+  await prisma.user.update({ where: { id: account.id }, data });
+  await recordAuthEvent({
+    action: AUTH_AUDIT_ACTIONS.passwordChanged,
+    subjectUserId: account.id,
+    organizationId: account.organizationId,
+    metadata: { forced: account.mustChangePassword },
+  });
+  revalidatePath("/settings/profile");
+  return { success: true, message: "Password updated" };
+}
+export const changePassword = withLogging("changePassword", _changePassword);

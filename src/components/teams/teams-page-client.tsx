@@ -37,6 +37,7 @@ import {
 import { useTranslations } from "next-intl";
 
 import { ReportStatCard } from "@/components/reports/report-stat-card";
+import { useSafePermissions } from "@/hooks/use-permission-flag";
 
 import { CreateTeamDialog } from "./create-team-dialog";
 import { DeleteTeamDialog } from "./delete-team-dialog";
@@ -54,6 +55,8 @@ interface TeamStats {
 }
 
 export function TeamsPageClient({ initialTeams }: TeamsPageClientProps) {
+  const { can } = useSafePermissions();
+  const canManageTeams = can("teams:manage");
   const t = useTranslations();
   const [teams, setTeams] = useState<TeamNode[]>(initialTeams || []);
   const [stats, setStats] = useState<TeamStats | null>(null);
@@ -303,7 +306,7 @@ export function TeamsPageClient({ initialTeams }: TeamsPageClientProps) {
           )}
 
           {/* Manual team: edit/delete menu */}
-          {isManualTeam && (
+          {canManageTeams && isManualTeam && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
@@ -473,10 +476,12 @@ export function TeamsPageClient({ initialTeams }: TeamsPageClientProps) {
                   className={`h-4 w-4 ${isPending ? "animate-spin" : ""}`}
                 />
               </Button>
-              <Button size="sm" onClick={() => setIsCreateDialogOpen(true)}>
-                <Plus className="mr-2 h-4 w-4" />
-                {t("teams.tree.addTeam")}
-              </Button>
+              {canManageTeams && (
+                <Button size="sm" onClick={() => setIsCreateDialogOpen(true)}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  {t("teams.tree.addTeam")}
+                </Button>
+              )}
             </div>
           </div>
           {/* Search */}

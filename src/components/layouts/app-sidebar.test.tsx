@@ -1,6 +1,10 @@
 // src/components/layouts/app-sidebar.test.tsx
 import { SidebarProvider } from "@/components/ui/sidebar";
 import messages from "@/i18n/messages/en.json";
+import {
+  SYSTEM_ROLE_TEMPLATES,
+  type SystemRoleKey,
+} from "@/lib/rbac/permissions";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import { NextIntlClientProvider } from "next-intl";
@@ -28,11 +32,21 @@ vi.mock("@/hooks/use-mobile", () => ({
   useIsMobile: vi.fn(() => false),
 }));
 
-const renderWithProvider = (ui: React.ReactElement) => {
+const renderWithProvider = (
+  ui: React.ReactElement,
+  role: SystemRoleKey = "ADMIN"
+) => {
+  const client = new QueryClient();
+  client.setQueryData(
+    ["me", "permissions"],
+    new Set<string>(SYSTEM_ROLE_TEMPLATES[role].grants)
+  );
   return render(
-    <NextIntlClientProvider locale="en" messages={messages}>
-      <SidebarProvider>{ui}</SidebarProvider>
-    </NextIntlClientProvider>
+    <QueryClientProvider client={client}>
+      <NextIntlClientProvider locale="en" messages={messages}>
+        <SidebarProvider>{ui}</SidebarProvider>
+      </NextIntlClientProvider>
+    </QueryClientProvider>
   );
 };
 
@@ -119,7 +133,7 @@ describe("AppSidebar", () => {
       // Every menu renders as a single link without submenus
       expect(screen.getByRole("link", { name: /Reports/ })).toHaveAttribute(
         "href",
-        "/reports"
+        "/reports/cost"
       );
       expect(
         screen.getByRole("link", { name: /Organization/ })
@@ -165,6 +179,35 @@ describe("AppSidebar", () => {
 
       const orgLink = screen.getByRole("link", { name: /Organization/ });
       expect(orgLink).toHaveAttribute("data-active", "true");
+    });
+  });
+
+  describe("permission gating", () => {
+    it("shows a member approvals and subscriptions but not payments or extensions", () => {
+      renderWithProvider(<AppSidebar />, "MEMBER");
+      expect(screen.getByRole("link", { name: /Approvals/ })).toBeTruthy();
+      expect(screen.getByRole("link", { name: /^Subscriptions/ })).toBeTruthy();
+      expect(screen.queryByRole("link", { name: /Payments/ })).toBeNull();
+      expect(screen.queryByRole("link", { name: /Extensions/ })).toBeNull();
+    });
+
+    it("shows an approver payments but not extensions", () => {
+      renderWithProvider(<AppSidebar />, "APPROVER");
+      expect(screen.getByRole("link", { name: /Payments/ })).toBeTruthy();
+      expect(screen.getByRole("link", { name: /Approvals/ })).toBeTruthy();
+      expect(screen.queryByRole("link", { name: /Extensions/ })).toBeNull();
+    });
+
+    it("keeps only ungated entries while permissions are unknown", () => {
+      render(
+        <NextIntlClientProvider locale="en" messages={messages}>
+          <SidebarProvider>
+            <AppSidebar />
+          </SidebarProvider>
+        </NextIntlClientProvider>
+      );
+      expect(screen.getByRole("link", { name: /Settings/ })).toBeTruthy();
+      expect(screen.queryByRole("link", { name: /Approvals/ })).toBeNull();
     });
   });
 

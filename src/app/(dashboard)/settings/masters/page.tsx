@@ -10,6 +10,7 @@ import {
   listCorporateCardOptions,
   listPaymentMethods,
 } from "@/actions/platform/masters/payment-methods";
+import { listRejectionReasons } from "@/actions/platform/masters/rejection-reasons";
 import { listTaxRates } from "@/actions/platform/masters/tax-rates";
 import {
   listCatalogEntries,
@@ -90,6 +91,7 @@ async function loadMasters(access: MastersAccess, organizationId: string) {
     when(m, () => listCorporateCardOptions(), null),
     when(m, () => listBillingCycles(), null),
     when(access.readCatalog, () => listCatalogEntries({}), null),
+    when(m, () => listRejectionReasons(), null),
     getSettings(organizationId, [
       "subscriptions.maxCustomFields",
       "discovery.searchDebounceMs",
@@ -111,6 +113,7 @@ export default async function MastersPage() {
       corporateCards,
       billingCycles,
       catalog,
+      rejectionReasons,
       settings,
     ],
     categoryTree,
@@ -144,6 +147,7 @@ export default async function MastersPage() {
     paymentMethods: paymentMethods?.data ?? [],
     corporateCards: corporateCards?.data ?? [],
     billingCycles: billingCycles?.data ?? [],
+    rejectionReasons: rejectionReasons?.data ?? [],
     categoryTree,
     tags,
     customFields,

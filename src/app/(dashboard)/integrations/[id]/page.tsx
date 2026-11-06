@@ -1,6 +1,7 @@
 // src/app/(dashboard)/integrations/[id]/page.tsx
 import { IntegrationDetailClient } from "@/components/integrations/integration-detail-client";
 import { requireOrganization } from "@/lib/auth/require-auth";
+import { can, requirePermissionOrRedirect } from "@/lib/rbac/service";
 
 interface IntegrationDetailPageProps {
   params: Promise<{ id: string }>;
@@ -9,8 +10,9 @@ interface IntegrationDetailPageProps {
 export default async function IntegrationDetailPage({
   params,
 }: IntegrationDetailPageProps) {
-  const { role } = await requireOrganization();
+  await requireOrganization();
+  await requirePermissionOrRedirect("integrations:read");
   const { id } = await params;
-  const canManage = role === "ADMIN";
+  const canManage = await can("integrations:manage");
   return <IntegrationDetailClient id={id} canManage={canManage} />;
 }

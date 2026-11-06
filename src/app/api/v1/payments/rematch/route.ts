@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 import { auth } from "@/lib/auth";
+import { can } from "@/lib/rbac/service";
 import { rematchRecords } from "@/lib/services/payment/rematch-service";
 
 const VALID_RECORD_TYPES = ["payment", "card-transaction"] as const;
@@ -20,6 +21,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json(
       { message: "Organization information is required" },
       { status: 401 }
+    );
+  }
+  if (!(await can("payments:manage"))) {
+    return NextResponse.json(
+      { success: false, error: "Forbidden: missing permission" },
+      { status: 403 }
     );
   }
 

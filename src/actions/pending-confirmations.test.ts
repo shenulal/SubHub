@@ -2,6 +2,9 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 // Mock Prisma
+vi.mock("@/lib/rbac/service", async () =>
+  (await import("@/test/rbac-session-mock")).sessionRbacMock()
+);
 vi.mock("@/lib/db", () => ({
   prisma: {
     vendorInferenceLog: {
@@ -207,7 +210,7 @@ describe("pending-confirmations", () => {
 
       // Assert
       expect(result.success).toBe(false);
-      expect(result.message).toBe("Only admins can confirm this");
+      expect(result.message).toBe("You do not have permission to confirm this");
     });
   });
 

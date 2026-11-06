@@ -16,7 +16,8 @@ export type ApprovalErrorCode =
   | "NOT_APPROVER"
   | "NOT_REQUESTER"
   | "FORBIDDEN"
-  | "INVALID_STATE";
+  | "INVALID_STATE"
+  | "INVALID_INPUT";
 
 export class ApprovalError extends Error {
   constructor(
@@ -98,8 +99,13 @@ export function candidatesForStep(
   return Array.from(new Set([step.approverId, ...listed]));
 }
 
-export function isAdmin(actor: Actor): boolean {
-  return actor.role === "ADMIN" || actor.role === "SUPER_ADMIN";
+/** Administrators may decide any pending request (single rule for all callers). */
+export function isAdminRole(role: string | null | undefined): boolean {
+  return role === "ADMIN" || role === "SUPER_ADMIN";
+}
+
+export function isAdmin(actor: Pick<Actor, "role">): boolean {
+  return isAdminRole(actor.role);
 }
 
 export function canDecide(

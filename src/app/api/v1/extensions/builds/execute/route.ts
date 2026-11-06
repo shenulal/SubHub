@@ -10,6 +10,7 @@ import { generateToken, hashToken } from "@/lib/api/extension-auth";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
+import { can } from "@/lib/rbac/service";
 import { execFile } from "child_process";
 import { NextRequest, NextResponse } from "next/server";
 
@@ -166,6 +167,12 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           { success: false, error: "Authentication required" },
           { status: 401 }
+        );
+      }
+      if (!(await can("extensions:manage"))) {
+        return NextResponse.json(
+          { success: false, error: "Forbidden: missing permission" },
+          { status: 403 }
         );
       }
       organizationId = session.user.organizationId;

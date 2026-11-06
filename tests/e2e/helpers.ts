@@ -1,6 +1,8 @@
 // tests/e2e/helpers.ts
 import { expect, type Page } from "@playwright/test";
 import { PrismaClient } from "@prisma/client";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 
 export const prisma = new PrismaClient();
 
@@ -10,17 +12,35 @@ export const QA = {
   member: "qa-member@subhub-qa.test",
 };
 
-/** Sign in through the NextAuth credentials provider using a seeded one-time code. */
+/**
+ * QA user password: SEED_QA_PASSWORD from the environment, or from .env.local
+ * (never hard-coded). The smoke seed gives the QA users this password.
+ */
+export function qaPassword(): string {
+  if (process.env.SEED_QA_PASSWORD) return process.env.SEED_QA_PASSWORD;
+  try {
+    const env = readFileSync(join(process.cwd(), ".env.local"), "utf8");
+    const m = env.match(/^SEED_QA_PASSWORD=(?:"([^"]*)"|'([^']*)'|(.*))$/m);
+    if (m) return (m[1] ?? m[2] ?? m[3] ?? "").trim();
+  } catch {
+    // fall through
+  }
+  throw new Error(
+    "SEED_QA_PASSWORD is not set (env or .env.local); seed the QA users with it"
+  );
+}
+
+/** Sign in through the NextAuth `password` credentials provider. */
 export async function login(page: Page, email: string): Promise<void> {
-  const code = "246810";
-  await prisma.otpToken.deleteMany({ where: { email } });
-  await prisma.otpToken.create({
-    data: { email, code, expires: new Date(Date.now() + 3600_000) },
-  });
   const csrf = await page.request.get("/api/auth/csrf");
   const { csrfToken } = (await csrf.json()) as { csrfToken: string };
-  const res = await page.request.post("/api/auth/callback/credentials", {
-    form: { csrfToken, email, otp: code, redirectTo: "/dashboard" },
+  const res = await page.request.post("/api/auth/callback/password", {
+    form: {
+      csrfToken,
+      identifier: email,
+      password: qaPassword(),
+      redirectTo: "/dashboard",
+    },
     maxRedirects: 0,
   });
   expect([200, 302]).toContain(res.status());
@@ -77,4 +97,57 @@ export async function apiPost<T = unknown>(
     status: res.status(),
     body: (await res.json().catch(() => null)) as T,
   };
+}
+
+/**
+ * Removes the records the smoke flows create ("QA Approval …", "QA Vendor …",
+ * "QA view …") so repeated runs leave no test data behind in the application.
+ */
+export async function cleanupSmokeData(): Promise<void> {
+  const apps = await prisma.app.findMany({
+    where: {
+      OR: [
+        { name: { startsWith: "QA Approval " } },
+        { name: { startsWith: "QA Vendor " } },
+      ],
+    },
+    select: { id: true },
+  });
+  const appIds = apps.map((a) => a.id);
+  const subs = await prisma.subscription.findMany({
+    where: { appId: { in: appIds } },
+    select: { id: true },
+  });
+  const subIds = subs.map((s) => s.id);
+  const requests = await prisma.approvalRequest.findMany({
+    where: {
+      OR: [
+        { serviceName: { startsWith: "QA Approval " } },
+        { subscriptionId: { in: subIds } },
+      ],
+    },
+    select: { id: true },
+  });
+  const requestIds = requests.map((r) => r.id);
+  const entityIds = [...appIds, ...subIds, ...requestIds];
+  await prisma.$transaction([
+    prisma.notification.deleteMany({
+      where: {
+        OR: [
+          { title: { contains: "QA Approval " } },
+          { title: { contains: "QA Vendor " } },
+          { body: { contains: "QA Approval " } },
+          { body: { contains: "QA Vendor " } },
+          ...requestIds.map((id) => ({ link: { contains: id } })),
+        ],
+      },
+    }),
+    prisma.auditLog.deleteMany({ where: { entityId: { in: entityIds } } }),
+    prisma.approvalRequest.deleteMany({ where: { id: { in: requestIds } } }),
+    prisma.subscription.deleteMany({ where: { id: { in: subIds } } }),
+    prisma.app.deleteMany({ where: { id: { in: appIds } } }),
+    prisma.savedView.deleteMany({
+      where: { name: { startsWith: "QA view " } },
+    }),
+  ]);
 }

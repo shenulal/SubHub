@@ -180,10 +180,10 @@ export function SubscriptionForm({
   const [createdApps, setCreatedApps] = useState<AppWithTeams[]>([]);
   const allApps = useMemo(() => [...apps, ...createdApps], [apps, createdApps]);
   const addCreatedApp = useCallback(
-    (app: { id: string; name: string }) =>
+    (app: { id: string; name: string; logoUrl?: string | null }) =>
       setCreatedApps((prev) => [
         ...prev,
-        { id: app.id, name: app.name, teams: [] },
+        { id: app.id, name: app.name, teams: [], logoUrl: app.logoUrl },
       ]),
     []
   );

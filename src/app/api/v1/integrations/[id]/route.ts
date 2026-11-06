@@ -7,6 +7,7 @@ import {
   updateIntegrationStatus,
 } from "@/actions/integrations";
 import { auth } from "@/lib/auth";
+import { can } from "@/lib/rbac/service";
 import { formatValidationError, uuidParamSchema } from "@/lib/validations/api";
 
 type RouteContext = { params: Promise<{ id: string }> };
@@ -54,7 +55,9 @@ export async function GET(_request: NextRequest, { params }: RouteContext) {
     const status =
       result.message === "Integration not found"
         ? 404
-        : result.message === "You do not have access permission"
+        : result.message === "You do not have access permission" ||
+            result.message ===
+              "You do not have permission to perform this action"
           ? 403
           : 400;
     return NextResponse.json({ error: result.message }, { status });
@@ -77,7 +80,7 @@ export async function PUT(request: NextRequest, { params }: RouteContext) {
   }
 
   // Check ADMIN permission
-  if (session.user.role !== "ADMIN") {
+  if (!(await can("integrations:manage"))) {
     return NextResponse.json(
       { error: "Admin permission required" },
       { status: 403 }
@@ -124,7 +127,7 @@ export async function DELETE(_request: NextRequest, { params }: RouteContext) {
   }
 
   // Check ADMIN permission
-  if (session.user.role !== "ADMIN") {
+  if (!(await can("integrations:manage"))) {
     return NextResponse.json(
       { error: "Admin permission required" },
       { status: 403 }

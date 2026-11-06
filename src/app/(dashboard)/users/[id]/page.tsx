@@ -1,6 +1,7 @@
 // src/app/(dashboard)/users/[id]/page.tsx
 import { getUserCached } from "@/actions/users";
 import { UserDetailClient } from "@/components/users/user-detail-client";
+import { requirePermissionOrRedirect } from "@/lib/rbac/service";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
@@ -27,6 +28,7 @@ export async function generateMetadata({
 }
 
 export default async function UserDetailPage({ params }: UserDetailPageProps) {
+  await requirePermissionOrRedirect("members:read", "/users");
   const { id } = await params;
   const user = await getUserCached(id);
 

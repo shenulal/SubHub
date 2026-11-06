@@ -1,14 +1,16 @@
 // src/app/(auth)/reset-password/[token]/page.tsx
-// Password reset page
+// Password reset page (single-use, expiring token from the emailed link)
 
-import { resetPassword } from "@/actions/password";
+import { NewPasswordForm } from "@/components/auth/new-password-form";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import {
+  describePasswordPolicy,
+  getPasswordPolicy,
+} from "@/lib/auth/password-policy";
+import { findResetToken } from "@/lib/auth/password-reset";
 import { prisma } from "@/lib/db";
 import { getTranslations } from "next-intl/server";
 import Link from "next/link";
-import { redirect } from "next/navigation";
 
 interface ResetPasswordPageProps {
   params: Promise<{ token: string }>;
@@ -42,23 +44,18 @@ export default async function ResetPasswordPage({
 }: ResetPasswordPageProps) {
   const t = await getTranslations();
   const { token } = await params;
+  const lookup = await findResetToken(token ?? "");
 
-  if (!token) {
+  if (lookup.status === "expired") {
     return (
       <TokenProblem
-        title={t("auth.reset.invalid.title")}
-        description={t("auth.reset.invalid.description")}
-        cta={t("auth.reset.invalid.cta")}
+        title={t("auth.reset.expired.title")}
+        description={t("auth.reset.expired.description")}
+        cta={t("auth.reset.expired.cta")}
       />
     );
   }
-
-  // Validate the token
-  const resetToken = await prisma.passwordResetToken.findUnique({
-    where: { token },
-  });
-
-  if (!resetToken) {
+  if (lookup.status !== "valid" || !lookup.email) {
     return (
       <TokenProblem
         title={t("auth.reset.invalidLink.title")}
@@ -68,19 +65,17 @@ export default async function ResetPasswordPage({
     );
   }
 
-  // Check expiry
-  if (new Date() > resetToken.expires) {
-    return (
-      <TokenProblem
-        title={t("auth.reset.expired.title")}
-        description={t("auth.reset.expired.description")}
-        cta={t("auth.reset.expired.cta")}
-      />
-    );
-  }
+  const account = await prisma.user.findUnique({
+    where: { email: lookup.email },
+    select: { organizationId: true },
+  });
+  const policy = await getPasswordPolicy(account?.organizationId ?? null);
 
   return (
-    <div className="flex w-full flex-col gap-5">
+    <div
+      className="flex w-full flex-col gap-5"
+      data-testid="reset-password-page"
+    >
       <div className="flex flex-col gap-1">
         <h2 className="text-foreground text-2xl font-medium">
           {t("auth.reset.title")}
@@ -89,35 +84,20 @@ export default async function ResetPasswordPage({
           {t("auth.reset.description")}
         </p>
       </div>
-      <form
-        action={async (formData: FormData) => {
-          "use server";
-          formData.set("token", token);
-          const result = await resetPassword(formData);
-          if (result.success) {
-            redirect("/login?message=password-reset");
-          }
-          // TODO: move error handling to a client component
-        }}
-        className="flex flex-col gap-5"
+      <NewPasswordForm
+        mode={{ kind: "reset", token }}
+        passwordHint={describePasswordPolicy(policy)}
+        minLength={policy.minLength}
+        successHref="/login?message=password-reset"
+        submitLabel={t("auth.reset.form.submit")}
+        fullWidth
+      />
+      <Link
+        href="/login"
+        className="text-primary text-center text-[0.9375rem] hover:underline"
       >
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="password">{t("auth.reset.form.password")}</Label>
-          <Input
-            id="password"
-            name="password"
-            type="password"
-            placeholder={t("auth.reset.form.passwordPlaceholder")}
-            required
-          />
-          <p className="text-muted-foreground text-[0.8125rem]">
-            {t("auth.reset.form.passwordHint")}
-          </p>
-        </div>
-        <Button type="submit" className="w-full">
-          {t("auth.reset.form.submit")}
-        </Button>
-      </form>
+        {t("auth.forgot.footer.backToLogin")}
+      </Link>
     </div>
   );
 }

@@ -1,7 +1,14 @@
 // src/services/app.service.test.ts
 // TDD RED: service layer tests — written before the implementation
+import { SYSTEM_ROLE_TEMPLATES } from "@/lib/rbac/permissions";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+const grants = (role: keyof typeof SYSTEM_ROLE_TEMPLATES) =>
+  new Set<string>(SYSTEM_ROLE_TEMPLATES[role].grants);
+
+vi.mock("@/lib/rbac/service", () => ({
+  getUserPermissionSet: vi.fn(async () => new Set<string>()),
+}));
 vi.mock("@/lib/db", () => ({
   prisma: {
     app: {
@@ -44,6 +51,7 @@ const mockCtx: AppServiceContext = {
   organizationId: "org-1",
   userId: "user-1",
   role: "ADMIN",
+  permissions: grants("ADMIN"),
 };
 
 describe("AppService", () => {
@@ -87,7 +95,11 @@ describe("AppService", () => {
     });
 
     it("fails for a VIEWER role", async () => {
-      const viewerCtx = { ...mockCtx, role: "VIEWER" };
+      const viewerCtx = {
+        ...mockCtx,
+        role: "VIEWER",
+        permissions: grants("VIEWER"),
+      };
 
       const result = await createApp(viewerCtx, {
         name: "Slack",
@@ -218,7 +230,11 @@ describe("AppService", () => {
     });
 
     it("fails when the user is not an ADMIN", async () => {
-      const memberCtx = { ...mockCtx, role: "MEMBER" };
+      const memberCtx = {
+        ...mockCtx,
+        role: "MEMBER",
+        permissions: grants("MEMBER"),
+      };
 
       const result = await updateApp(memberCtx, "app-1", {
         name: "New",
@@ -278,7 +294,11 @@ describe("AppService", () => {
     });
 
     it("fails when the user is not an ADMIN", async () => {
-      const memberCtx = { ...mockCtx, role: "MEMBER" };
+      const memberCtx = {
+        ...mockCtx,
+        role: "MEMBER",
+        permissions: grants("MEMBER"),
+      };
 
       const result = await deleteApp(memberCtx, "app-1");
 

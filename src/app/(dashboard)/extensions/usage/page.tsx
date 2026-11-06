@@ -1,6 +1,7 @@
 // src/app/(dashboard)/extensions/usage/page.tsx
 import { UsageAnalyticsClient } from "@/components/extensions/usage-analytics-client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { requirePermissionOrRedirect } from "@/lib/rbac/service";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 import { Suspense } from "react";
@@ -23,6 +24,7 @@ function UsageSkeleton() {
 }
 
 export default async function ExtensionUsagePage() {
+  await requirePermissionOrRedirect("extensions:read", "/dashboard");
   const t = await getTranslations("extensions.usage.page");
 
   return (

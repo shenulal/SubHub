@@ -3,6 +3,7 @@
 
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { withReportAccess } from "@/lib/rbac/report-access";
 import type { ActionState } from "@/types";
 import type {
   GetMonthlyCostTrendResult,
@@ -48,7 +49,7 @@ export async function getMonthlyCostTrend(options: {
     const { months = 6, appIds, teamId, userId, teamIds, userIds } = options;
     const scope = resolveReportScope(
       { teamId, userId, teamIds, userIds },
-      session.user
+      await withReportAccess(session.user)
     );
 
     // Calculate the period

@@ -16,8 +16,10 @@
  * organisation resolves to an empty set.
  */
 import { getCachedSession } from "@/lib/auth/require-auth";
+import { CHANGE_PASSWORD_PATH } from "@/lib/auth/sign-in-codes";
 import { prisma } from "@/lib/db";
 import { isSaas } from "@/lib/deployment/mode";
+import { homeForUserWithoutOrganization } from "@/lib/platform/identity";
 import type { Prisma, UserRole } from "@prisma/client";
 import { redirect } from "next/navigation";
 import { cache } from "react";
@@ -157,7 +159,9 @@ export async function requirePermission(
 ): Promise<RequirePermissionResult> {
   const session = await getCachedSession();
   if (!session?.user) redirect("/login");
-  if (!session.user.organizationId) redirect("/onboarding");
+  if (session.user.mustChangePassword) redirect(CHANGE_PASSWORD_PATH);
+  if (!session.user.organizationId)
+    redirect(homeForUserWithoutOrganization(session.user.role as string));
   const permissions = await getUserPermissionSet(
     session.user.id,
     session.user.organizationId
@@ -217,10 +221,11 @@ export async function requirePlatformActor(
  */
 export async function requirePermissionOrRedirect(
   permission: PermissionKey | PermissionKey[],
-  redirectTo = "/dashboard"
+  redirectTo = "/dashboard",
+  options: { mode?: "all" | "any" } = {}
 ): Promise<RequirePermissionResult> {
   try {
-    return await requirePermission(permission);
+    return await requirePermission(permission, options);
   } catch (error) {
     if (isForbiddenError(error)) redirect(redirectTo);
     throw error;
@@ -312,9 +317,10 @@ export async function ensureOrganizationRoles(
 }
 
 /**
- * Grant permissions introduced after an organisation was created
- * (`PERMISSION_ROLLOUTS`) to its existing system roles, following the role
- * templates. Additive and idempotent; returns the number of grants written.
+ * Re-sync the keys in `PERMISSION_ROLLOUTS` on an organisation's existing system
+ * roles to the role templates: grant where the template includes the key,
+ * revoke where it does not. Custom roles are untouched. Idempotent; returns the
+ * number of grants written plus grants removed.
  */
 export async function applyPermissionRollouts(
   organizationId: string,
@@ -332,18 +338,28 @@ export async function applyPermissionRollouts(
     }),
   ]);
   const idByKey = new Map(permissionRows.map((r) => [r.key, r.id]));
-  const data = roles.flatMap((role) => {
+  const grants: { roleId: string; permissionId: string }[] = [];
+  const revokes: { roleId: string; permissionId: string }[] = [];
+  for (const role of roles) {
     const template = SYSTEM_ROLE_TEMPLATES[role.key as SystemRoleKey];
-    if (!template) return [];
-    return PERMISSION_ROLLOUTS.filter((k) => template.grants.includes(k))
-      .map((k) => idByKey.get(k))
-      .filter((id): id is string => Boolean(id))
-      .map((permissionId) => ({ roleId: role.id, permissionId }));
-  });
-  if (data.length === 0) return 0;
-  const result = await db.rolePermission.createMany({
-    data,
-    skipDuplicates: true,
-  });
-  return result.count;
+    if (!template) continue;
+    for (const key of PERMISSION_ROLLOUTS) {
+      const permissionId = idByKey.get(key);
+      if (!permissionId) continue;
+      const target = template.grants.includes(key) ? grants : revokes;
+      target.push({ roleId: role.id, permissionId });
+    }
+  }
+  const granted = grants.length
+    ? (
+        await db.rolePermission.createMany({
+          data: grants,
+          skipDuplicates: true,
+        })
+      ).count
+    : 0;
+  const revoked = revokes.length
+    ? (await db.rolePermission.deleteMany({ where: { OR: revokes } })).count
+    : 0;
+  return granted + revoked;
 }

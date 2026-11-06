@@ -19,6 +19,7 @@ vi.mock("@/lib/db", () => ({
     billingCycleConfig: { upsert: vi.fn() },
     taxRate: { count: vi.fn(), create: vi.fn() },
     country: { findUnique: vi.fn() },
+    approvalRejectionReason: { count: vi.fn(), createMany: vi.fn() },
   },
 }));
 vi.mock("@/lib/rbac/service", () => ({ ensureOrganizationRoles: vi.fn() }));

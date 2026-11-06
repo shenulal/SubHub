@@ -28,8 +28,25 @@ function amountLine(ref: ApprovalNotifyRef): string {
   return ` (${ref.currency} ${ref.monthlyAmount.toLocaleString()} / month)`;
 }
 
+const HTML_ESCAPES: Record<string, string> = {
+  "&": "&amp;",
+  "<": "&lt;",
+  ">": "&gt;",
+  '"': "&quot;",
+  "'": "&#39;",
+};
+
+/** User-entered text (service names, comments, conditions) is escaped for email. */
+export function escapeHtml(value: string): string {
+  return value.replace(/[&<>"']/g, (c) => HTML_ESCAPES[c] ?? c);
+}
+
 function html(title: string, body: string, ref: ApprovalNotifyRef): string {
-  return `<p>${title}</p><p>${body}</p><p><a href="${absoluteLink(ref)}">Open the request</a></p>`;
+  const lines = body
+    .split("\n")
+    .map((line) => escapeHtml(line))
+    .join("<br />");
+  return `<p>${escapeHtml(title)}</p><p>${lines}</p><p><a href="${absoluteLink(ref)}">Open the request</a></p>`;
 }
 
 export async function notifyApprovalRequested(
@@ -53,17 +70,46 @@ export async function notifyApprovalRequested(
   });
 }
 
+export interface DecisionDetails {
+  /** Rejection reason label (from the "Rejection reasons" master). */
+  reason?: string | null;
+  /** Conditions / notes the approver attached to an approval. */
+  conditions?: string | null;
+  /** Agreed subscription start date (YYYY-MM-DD). */
+  effectiveStartDate?: string | null;
+}
+
+/** Plain-text body shared by the in-app notification and the email. */
+export function decisionBody(
+  ref: Pick<ApprovalNotifyRef, "serviceName">,
+  status: "APPROVED" | "REJECTED",
+  comment?: string | null,
+  details: DecisionDetails = {}
+): string {
+  const verb = status === "APPROVED" ? "approved" : "rejected";
+  const lines = [
+    details.reason ? `Reason: ${details.reason}` : null,
+    comment ? `Reviewer comment: ${comment}` : null,
+    details.conditions ? `Conditions: ${details.conditions}` : null,
+    details.effectiveStartDate
+      ? `Subscription starts on ${details.effectiveStartDate}`
+      : null,
+  ].filter((line): line is string => Boolean(line));
+  return lines.length
+    ? lines.join("\n")
+    : `The request for ${ref.serviceName} has been ${verb}.`;
+}
+
 export async function notifyRequesterDecided(
   ref: ApprovalNotifyRef,
   requesterId: string,
   status: "APPROVED" | "REJECTED",
-  comment?: string | null
+  comment?: string | null,
+  details: DecisionDetails = {}
 ) {
   const verb = status === "APPROVED" ? "approved" : "rejected";
   const title = `Your request for ${ref.serviceName} was ${verb}`;
-  const body = comment
-    ? `Reviewer comment: ${comment}`
-    : `The request for ${ref.serviceName} has been ${verb}.`;
+  const body = decisionBody(ref, status, comment, details);
   await notify({
     organizationId: ref.organizationId,
     userIds: [requesterId],
@@ -72,7 +118,11 @@ export async function notifyRequesterDecided(
     body,
     link: linkFor(ref),
     dedupeKey: `approval:${ref.id}:decided:${status}`,
-    metadata: { requestId: ref.id, status },
+    metadata: {
+      requestId: ref.id,
+      status,
+      ...(details.reason ? { reason: details.reason } : {}),
+    },
     email: { subject: title, html: html(title, body, ref), text: body },
   });
 }

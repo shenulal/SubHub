@@ -1,6 +1,7 @@
 "use server";
 
 import { getCachedSession } from "@/lib/auth/require-auth";
+import { can } from "@/lib/rbac/service";
 import { getSyncHistories } from "@/lib/services/payment/sync-history-service";
 import type { ActionState } from "@/types";
 import type { SyncHistory, SyncType } from "@prisma/client";
@@ -24,6 +25,12 @@ export async function getSyncHistory(
 
     if (!session?.user) {
       return { success: false, error: "Authentication required" };
+    }
+    if (!(await can("payments:read"))) {
+      return {
+        success: false,
+        error: "You do not have permission to perform this action",
+      };
     }
 
     if (!session.user.organizationId) {

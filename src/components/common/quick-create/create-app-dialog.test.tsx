@@ -11,6 +11,12 @@ const { createApp, toastSuccess } = vi.hoisted(() => ({
   toastSuccess: vi.fn(),
 }));
 vi.mock("@/actions/apps", () => ({ createApp }));
+vi.mock("@/actions/apps-form-options", () => ({
+  getAppFormOptions: vi.fn().mockResolvedValue({
+    success: true,
+    data: { owners: [], teams: [], logoMaxSizeKb: 512 },
+  }),
+}));
 vi.mock("@/actions/taxonomy/catalog", () => ({
   searchCatalog: vi.fn().mockResolvedValue([]),
 }));
@@ -58,6 +64,65 @@ describe("CreateAppDialog", () => {
     );
     expect(toastSuccess).toHaveBeenCalledWith("App “Figma” created");
     expect(onOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it("uploads an icon and sends the owner-free details with the app", async () => {
+    createApp.mockResolvedValue({
+      success: true,
+      data: { id: "app-7", customLogoUrl: "/api/v1/app-logos/o/x.png" },
+    });
+    const { onCreated } = renderDialog();
+    const png = new File([new Uint8Array([0x89, 0x50, 0x4e, 0x47])], "i.png", {
+      type: "image/png",
+    });
+    await userEvent.upload(screen.getByTestId("app-icon-file"), png);
+    await waitFor(() =>
+      expect(screen.getByRole("img", { name: "Figma" })).toHaveAttribute(
+        "src",
+        expect.stringMatching(/^data:image\/png;base64,/)
+      )
+    );
+    await userEvent.click(screen.getByRole("button", { name: "More details" }));
+    await userEvent.type(screen.getByLabelText("Tags"), "design, ux");
+    await userEvent.type(screen.getByLabelText("Notes"), "Team plan");
+    expect(
+      screen.getByRole("link", { name: /open the full app form/i })
+    ).toHaveAttribute("href", "/apps/new?name=Figma");
+    await userEvent.click(screen.getByRole("button", { name: "Create app" }));
+
+    await waitFor(() => expect(onCreated).toHaveBeenCalled());
+    const fd = createApp.mock.calls[0][1] as FormData;
+    expect(String(fd.get("customLogoUrl"))).toMatch(/^data:image\/png;base64,/);
+    expect(fd.get("tags")).toBe("design, ux");
+    expect(fd.get("notes")).toBe("Team plan");
+    expect(onCreated).toHaveBeenCalledWith(
+      expect.objectContaining({ logoUrl: "/api/v1/app-logos/o/x.png" })
+    );
+  });
+
+  it("refuses an SVG icon before calling the server and shows the server's icon error", async () => {
+    renderDialog();
+    const svg = new File(["<svg/>"], "i.svg", { type: "image/svg+xml" });
+    await userEvent.upload(screen.getByTestId("app-icon-file"), svg, {
+      applyAccept: false,
+    });
+    expect(
+      await screen.findByText("Use a PNG, JPEG, WebP or GIF image")
+    ).toBeInTheDocument();
+
+    createApp.mockResolvedValue({
+      success: false,
+      message: "The icon is larger than 512 KB",
+      errors: { customLogoUrl: ["The icon is larger than 512 KB"] },
+    });
+    await userEvent.type(
+      screen.getByLabelText("Image URL"),
+      "https://cdn.example.com/big.png"
+    );
+    await userEvent.click(screen.getByRole("button", { name: "Create app" }));
+    expect(
+      (await screen.findAllByText("The icon is larger than 512 KB")).length
+    ).toBeGreaterThan(0);
   });
 
   it("validates inline before calling the server", async () => {

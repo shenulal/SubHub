@@ -94,5 +94,5 @@ export function textToHtml(text: string): string {
     .split(/\n{2,}/)
     .map((p) => `<p style="margin:0 0 12px;">${p.replace(/\n/g, "<br/>")}</p>`)
     .join("");
-  return `<!DOCTYPE html><html><body style="font-family:Lato,Inter,Segoe UI,Arial,sans-serif;color:#1f2937;max-width:600px;margin:0 auto;padding:24px;line-height:1.6;">${paragraphs}</body></html>`;
+  return `<!DOCTYPE html><html><body style="font-family:Inter,Segoe UI,Arial,sans-serif;color:#1f2937;max-width:600px;margin:0 auto;padding:24px;line-height:1.6;">${paragraphs}</body></html>`;
 }

@@ -1,9 +1,9 @@
 // src/app/(dashboard)/integrations/new/page.tsx
 import { IntegrationCreateForm } from "@/components/integrations/integration-create-form";
-import { requireAdmin } from "@/lib/auth/require-auth";
+import { requirePermissionOrRedirect } from "@/lib/rbac/service";
 
 export default async function NewIntegrationPage() {
-  await requireAdmin("/integrations");
+  await requirePermissionOrRedirect("integrations:manage", "/integrations");
 
   return (
     <div className="mx-auto max-w-3xl space-y-6">

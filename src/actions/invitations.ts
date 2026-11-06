@@ -197,6 +197,12 @@ export async function getInvitations(): Promise<
         message: "Authentication required",
       };
     }
+    if (!(await can("members:read"))) {
+      return {
+        success: false,
+        message: "You do not have permission to perform this action",
+      };
+    }
 
     if (!session.user.organizationId) {
       return {
@@ -256,7 +262,7 @@ async function _cancelInvitation(
     }
 
     // Check admin permission
-    if (session.user.role !== "ADMIN") {
+    if (!(await can("members:invite"))) {
       return {
         success: false,
         message: "Only admins can cancel invitations",
@@ -332,7 +338,7 @@ async function _resendInvitation(
     }
 
     // Check admin permission
-    if (session.user.role !== "ADMIN") {
+    if (!(await can("members:invite"))) {
       return {
         success: false,
         message: "Only admins can resend invitations",
@@ -457,6 +463,7 @@ async function _acceptInvitation(token: string): Promise<ActionState> {
       return {
         success: false,
         message: "Please sign in first",
+        error: "SIGN_IN_REQUIRED",
       };
     }
 

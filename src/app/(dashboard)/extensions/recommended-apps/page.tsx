@@ -1,6 +1,7 @@
 // src/app/(dashboard)/extensions/recommended-apps/page.tsx
 import { RecommendedAppsPageClient } from "@/components/extensions/recommended-apps-page-client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { requirePermissionOrRedirect } from "@/lib/rbac/service";
 import { Suspense } from "react";
 
 export const metadata = {
@@ -21,7 +22,8 @@ function PageSkeleton() {
   );
 }
 
-export default function RecommendedAppsPage() {
+export default async function RecommendedAppsPage() {
+  await requirePermissionOrRedirect("extensions:read", "/dashboard");
   return (
     <div className="space-y-6">
       <h1 className="text-foreground text-xl font-medium">Recommended Apps</h1>

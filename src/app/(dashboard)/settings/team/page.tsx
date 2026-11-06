@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/card";
 import { requireOrganization } from "@/lib/auth/require-auth";
 import { prisma } from "@/lib/db";
+import { requirePermissionOrRedirect } from "@/lib/rbac/service";
 import type { Metadata } from "next";
 import { getTranslations } from "next-intl/server";
 
@@ -29,18 +30,16 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function TeamPage() {
+  const { permissions } = await requirePermissionOrRedirect(
+    ["members:invite", "members:manage"],
+    "/settings",
+    { mode: "any" }
+  );
+  const canManageMembers = permissions.has("members:manage");
+  const canInvite = permissions.has("members:invite");
   const t = await getTranslations("teamMembers.page");
   const tMemberList = await getTranslations("teamMembers.memberList");
-  const { organizationId, userId, role } = await requireOrganization();
-
-  if (role !== "ADMIN") {
-    return (
-      <div className="space-y-2">
-        <h1 className="text-foreground text-2xl font-medium">{t("title")}</h1>
-        <p className="text-muted-foreground">{t("adminOnly")}</p>
-      </div>
-    );
-  }
+  const { organizationId, userId } = await requireOrganization();
 
   const [invitations, teamsResult, members] = await Promise.all([
     getInvitations(),
@@ -85,23 +84,25 @@ export default async function TeamPage() {
             <MemberList
               members={members}
               currentUserId={userId}
-              isAdmin={role === "ADMIN"}
+              isAdmin={canManageMembers}
             />
           )}
         </CardContent>
       </Card>
 
-      <Card className={NESTED_CARD}>
-        <CardHeader>
-          <CardTitle>{tForm("title")}</CardTitle>
-          <CardDescription>{tForm("description")}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <InviteMemberInlineForm
-            teams={teams.map((team) => ({ id: team.id, name: team.name }))}
-          />
-        </CardContent>
-      </Card>
+      {canInvite && (
+        <Card className={NESTED_CARD}>
+          <CardHeader>
+            <CardTitle>{tForm("title")}</CardTitle>
+            <CardDescription>{tForm("description")}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <InviteMemberInlineForm
+              teams={teams.map((team) => ({ id: team.id, name: team.name }))}
+            />
+          </CardContent>
+        </Card>
+      )}
 
       <InvitationsTable
         invitations={

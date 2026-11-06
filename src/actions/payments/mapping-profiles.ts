@@ -4,6 +4,7 @@
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { withLogging } from "@/lib/logging";
+import { can } from "@/lib/rbac/service";
 import type { ActionState } from "@/types";
 import { revalidatePath } from "next/cache";
 
@@ -37,6 +38,12 @@ async function _getMappingProfiles(): Promise<
   const session = await auth();
   if (!session?.user?.organizationId) {
     return { success: false, message: "Authentication required" };
+  }
+  if (!(await can("payments:read"))) {
+    return {
+      success: false,
+      message: "You do not have permission to perform this action",
+    };
   }
 
   const profiles = await prisma.csvMappingProfile.findMany({
@@ -75,6 +82,12 @@ async function _createMappingProfile(
   const session = await auth();
   if (!session?.user?.organizationId) {
     return { success: false, message: "Authentication required" };
+  }
+  if (!(await can("payments:manage"))) {
+    return {
+      success: false,
+      message: "You do not have permission to perform this action",
+    };
   }
 
   const name = formData.get("name") as string;
@@ -147,6 +160,12 @@ async function _updateMappingProfile(
   const session = await auth();
   if (!session?.user?.organizationId) {
     return { success: false, message: "Authentication required" };
+  }
+  if (!(await can("payments:manage"))) {
+    return {
+      success: false,
+      message: "You do not have permission to perform this action",
+    };
   }
 
   const id = formData.get("id") as string;
@@ -234,6 +253,12 @@ async function _deleteMappingProfile(
   const session = await auth();
   if (!session?.user?.organizationId) {
     return { success: false, message: "Authentication required" };
+  }
+  if (!(await can("payments:manage"))) {
+    return {
+      success: false,
+      message: "You do not have permission to perform this action",
+    };
   }
 
   const id = formData.get("id") as string;

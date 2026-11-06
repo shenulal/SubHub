@@ -28,7 +28,7 @@ import { getSuggestionCount } from "@/actions/subscriptions/subscription-suggest
 import { getUnusedApps } from "@/actions/unused-apps";
 import { NewDashboardClient } from "@/components/dashboard";
 import { requireOrganization } from "@/lib/auth/require-auth";
-import { requirePermissionOrRedirect } from "@/lib/rbac/service";
+import { can, requirePermissionOrRedirect } from "@/lib/rbac/service";
 import type { Metadata } from "next";
 
 import { transformToDashboardV3Data } from "./transforms";
@@ -40,8 +40,9 @@ const TREND_MONTHS = 12;
 
 export default async function DashboardPage() {
   await requirePermissionOrRedirect("reports:read", "/subscriptions");
-  const { role, userId, teamId } = await requireOrganization();
-  const isMember = role === "MEMBER";
+  const { userId, teamId } = await requireOrganization();
+  // Without subscriptions:read_all the dashboard is scoped to own team / self.
+  const isMember = !(await can("subscriptions:read_all"));
   const { scope } = await getWorkspaceScope();
 
   // Batch 1: overview (base currency, scope-aware) + legacy core data.

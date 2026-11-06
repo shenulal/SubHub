@@ -124,9 +124,11 @@ export function IntegrationsPageClient({
     queryOptions: { enabled: true },
   });
 
-  const canManageActions = role === "ADMIN" || role === "MEMBER" || canManage;
-  const canCreate = createAccess?.can ?? canManageActions;
-  const canDelete = deleteAccess?.can ?? role === "ADMIN";
+  // `canManage` is resolved server-side from integrations:manage; the refine
+  // checks use the same permission set and only narrow it further.
+  const canManageActions = canManage;
+  const canCreate = canManage && (createAccess?.can ?? true);
+  const canDelete = canManage && (deleteAccess?.can ?? true);
 
   const { query, result } = useList<Integration, HttpError>({
     resource: "integrations",

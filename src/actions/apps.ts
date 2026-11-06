@@ -6,7 +6,16 @@ import { requireOrganization } from "@/lib/auth/require-auth";
 import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { withLogging } from "@/lib/logging";
-import { isForbiddenError, requirePermission } from "@/lib/rbac/service";
+import {
+  getUserPermissionSet,
+  isForbiddenError,
+  requirePermission,
+} from "@/lib/rbac/service";
+import {
+  deleteManagedLogo,
+  isAppLogoError,
+  resolveLogoInput,
+} from "@/lib/services/app-logo";
 import { matchPaymentsToNewApp } from "@/lib/services/payment/payment-matching";
 import type { ActionState, PaginatedResponse } from "@/types";
 import type {
@@ -47,6 +56,38 @@ async function requireAppsManage(): Promise<{
   } catch (error) {
     if (isForbiddenError(error)) return null;
     throw error;
+  }
+}
+
+type LogoResult =
+  | { ok: true; url: string | null }
+  | { ok: false; state: ActionState<never> };
+
+/**
+ * Uploaded icons (data URLs) are validated and moved to storage; URLs are
+ * checked. An unchanged value (`current`) is kept without re-processing.
+ */
+async function resolveLogoField(
+  organizationId: string,
+  raw: string | null | undefined,
+  current?: string | null
+): Promise<LogoResult> {
+  const value = raw?.trim() || null;
+  if (current !== undefined && value === current) {
+    return { ok: true, url: current };
+  }
+  try {
+    return { ok: true, url: await resolveLogoInput(organizationId, value) };
+  } catch (error) {
+    if (!isAppLogoError(error)) throw error;
+    return {
+      ok: false,
+      state: {
+        success: false,
+        message: error.message,
+        errors: { customLogoUrl: [error.message] },
+      },
+    };
   }
 }
 
@@ -101,12 +142,27 @@ interface GetAppsParams {
 }
 
 /**
+ * App visibility follows permissions, not the legacy role: users who may read
+ * every subscription (subscriptions:read_all) see every app; everyone else sees
+ * the apps assigned to their team. Custom roles are honoured.
+ */
+async function appVisibility() {
+  const { organizationId, userId, teamId } = await requireOrganization();
+  const permissions = await getUserPermissionSet(userId, organizationId);
+  return {
+    organizationId,
+    teamId,
+    orgWide: permissions.has("subscriptions:read_all"),
+  };
+}
+
+/**
  * List apps
  */
 export async function getApps(
   params: GetAppsParams = {}
 ): Promise<PaginatedResponse<AppListItem>> {
-  const { organizationId, role, teamId } = await requireOrganization();
+  const { organizationId, teamId, orgWide } = await appVisibility();
 
   const {
     filter = {},
@@ -115,8 +171,8 @@ export async function getApps(
     limit = 20,
   } = params;
 
-  // MEMBER/VIEWER can only see their own teams' apps
-  if (role === "MEMBER" || role === "VIEWER") {
+  // Team-scoped users without a team see nothing
+  if (!orgWide) {
     if (!teamId) {
       // No team membership: return an empty result
       return {
@@ -135,8 +191,8 @@ export async function getApps(
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const where: any = { organizationId };
 
-  // MEMBER/VIEWER only see apps assigned to their teams
-  if ((role === "MEMBER" || role === "VIEWER") && teamId) {
+  // Team-scoped users only see apps assigned to their team
+  if (!orgWide && teamId) {
     where.teams = { some: { teamId } };
   }
 
@@ -156,7 +212,7 @@ export async function getApps(
     where.name = { contains: filter.search, mode: "insensitive" };
   }
   // Only ADMIN may use the teamIds filter (MEMBER/VIEWER are already limited to their teams)
-  if (role === "ADMIN" && filter.teamIds && filter.teamIds.length > 0) {
+  if (orgWide && filter.teamIds && filter.teamIds.length > 0) {
     where.teams = {
       some: { teamId: { in: filter.teamIds } },
     };
@@ -213,7 +269,7 @@ export async function getApps(
  * Get app details
  */
 export async function getApp(id: string): Promise<AppDetail | null> {
-  const { organizationId, role, teamId } = await requireOrganization();
+  const { organizationId, teamId, orgWide } = await appVisibility();
 
   const app = await prisma.app.findFirst({
     where: { id, organizationId },
@@ -229,8 +285,8 @@ export async function getApp(id: string): Promise<AppDetail | null> {
     return null;
   }
 
-  // MEMBER/VIEWER can only see apps assigned to their teams
-  if (role === "MEMBER" || role === "VIEWER") {
+  // Team-scoped users can only see apps assigned to their team
+  if (!orgWide) {
     const isTeamApp = teamId && app.teams.some((at) => at.teamId === teamId);
     if (!isTeamApp) {
       return null; // No access → treat as Not Found
@@ -268,7 +324,13 @@ export async function getApp(id: string): Promise<AppDetail | null> {
 async function _createApp(
   _prevState: ActionState<{ id: string; matchedPaymentCount?: number }>,
   formData: FormData
-): Promise<ActionState<{ id: string; matchedPaymentCount?: number }>> {
+): Promise<
+  ActionState<{
+    id: string;
+    matchedPaymentCount?: number;
+    customLogoUrl?: string | null;
+  }>
+> {
   try {
     const scope = await requireAppsManage();
     if (!scope) {
@@ -360,13 +422,16 @@ async function _createApp(
       return { success: false, message: categoryRef.message };
     }
 
+    const logo = await resolveLogoField(organizationId, data.customLogoUrl);
+    if (!logo.ok) return logo.state;
+
     // Create app
     const app = await prisma.app.create({
       data: {
         name: data.name,
         category: categoryRef.category,
         categoryId: categoryRef.categoryId,
-        customLogoUrl: data.customLogoUrl || null,
+        customLogoUrl: logo.url,
         customWebsite: data.customWebsite || null,
         notes: data.notes || null,
         tags,
@@ -409,13 +474,26 @@ async function _createApp(
         entityId: app.id,
         userId,
         organizationId,
-        metadata: { appName: app.name, matchedPaymentCount },
+        metadata: {
+          appName: app.name,
+          matchedPaymentCount,
+          customLogoUrl: logo.url,
+          ownerId: app.ownerId,
+          teamIds: data.teamIds ?? [],
+        },
       },
     });
 
     revalidatePath("/apps");
 
-    return { success: true, data: { id: app.id, matchedPaymentCount } };
+    return {
+      success: true,
+      data: {
+        id: app.id,
+        matchedPaymentCount,
+        customLogoUrl: app.customLogoUrl,
+      },
+    };
   } catch (error) {
     logger.error({ err: error }, "App creation error");
     if (isRedirectError(error)) throw error;
@@ -542,6 +620,13 @@ async function _updateApp(
       return { success: false, message: categoryRef.message };
     }
 
+    const logo = await resolveLogoField(
+      organizationId,
+      data.customLogoUrl,
+      existingApp.customLogoUrl
+    );
+    if (!logo.ok) return logo.state;
+
     // Update app
     const app = await prisma.app.update({
       where: { id },
@@ -554,11 +639,14 @@ async function _updateApp(
               categoryId: categoryRef.categoryId,
             }
           : { category: data.category || null }),
-        customLogoUrl: data.customLogoUrl || null,
+        customLogoUrl: logo.url,
         customWebsite: data.customWebsite || null,
         notes: data.notes || null,
         tags,
-        ownerId: data.ownerId || null,
+        // Forms without an owner field must not clear the existing owner.
+        ownerId: formData.has("ownerId")
+          ? data.ownerId || null
+          : existingApp.ownerId,
       },
     });
 
@@ -585,9 +673,22 @@ async function _updateApp(
         entityId: app.id,
         userId,
         organizationId,
-        metadata: { appName: app.name },
+        metadata: {
+          appName: app.name,
+          ...(logo.url !== existingApp.customLogoUrl
+            ? {
+                customLogoUrl: {
+                  from: existingApp.customLogoUrl,
+                  to: logo.url,
+                },
+              }
+            : {}),
+        },
       },
     });
+    if (logo.url !== existingApp.customLogoUrl) {
+      await deleteManagedLogo(existingApp.customLogoUrl);
+    }
 
     revalidatePath("/apps");
     revalidatePath(`/apps/${id}`);
@@ -629,6 +730,7 @@ async function _deleteApp(id: string): Promise<ActionState> {
 
     // Delete app (cascade will delete related subscriptions and user accesses)
     await prisma.app.delete({ where: { id } });
+    await deleteManagedLogo(existingApp.customLogoUrl);
 
     // Create audit log
     await prisma.auditLog.create({

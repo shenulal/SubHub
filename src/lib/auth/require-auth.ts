@@ -5,9 +5,16 @@
  * - Redirects to /onboarding when there is no organization
  */
 
+import {
+  homeForUserWithoutOrganization,
+  isPlatformSuperAdmin,
+  PLATFORM_LOGIN_PATH,
+} from "@/lib/platform/identity";
+import { loadPlatformUser } from "@/lib/platform/platform-user";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 import { auth } from "./index";
+import { CHANGE_PASSWORD_PATH } from "./sign-in-codes";
 
 // Session lookup is called from many places, so cache() prevents duplicate calls within the same request
 export const getCachedSession = cache(async () => auth());
@@ -24,9 +31,14 @@ export async function requireOrganization() {
     redirect("/login");
   }
 
-  // No organization: go to onboarding
+  // Temporary password: change it before anything else
+  if (session.user.mustChangePassword) {
+    redirect(CHANGE_PASSWORD_PATH);
+  }
+
+  // No organization: onboarding (platform super admins: the Control Panel)
   if (!session.user.organizationId) {
-    redirect("/onboarding");
+    redirect(homeForUserWithoutOrganization(session.user.role as string));
   }
 
   return {
@@ -93,19 +105,31 @@ export async function requireAdmin(
 }
 
 /**
- * Requires Super Admin role (organizationId not required)
+ * Requires an active platform super admin (SUPER_ADMIN without an organisation).
+ * Not signed in → the Control Panel sign-in; tenant users (tenant ADMIN too) →
+ * their dashboard; a disabled super admin → the sign-in page with a notice.
  * @returns Session (userId and role guaranteed)
  */
 export async function requireSuperAdmin() {
   const session = await getCachedSession();
 
   if (!session?.user) {
-    redirect("/login");
+    redirect(PLATFORM_LOGIN_PATH);
   }
 
   // SUPER_ADMIN was added to the UserRole enum (see prisma/schema.prisma)
   if ((session.user.role as string) !== "SUPER_ADMIN") {
     redirect("/dashboard");
+  }
+
+  const user = await loadPlatformUser(session.user.id);
+  if (!user || !isPlatformSuperAdmin(user)) redirect("/dashboard");
+  if (user.status !== "ACTIVE")
+    redirect(`${PLATFORM_LOGIN_PATH}?error=disabled`);
+
+  // Temporary password: change it before anything else
+  if (session.user.mustChangePassword) {
+    redirect(CHANGE_PASSWORD_PATH);
   }
 
   return {

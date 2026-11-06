@@ -5,6 +5,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { withLogging } from "@/lib/logging";
+import { can } from "@/lib/rbac/service";
 import type { ActionState } from "@/types";
 import type {
   ExtensionBuildItem,
@@ -75,6 +76,12 @@ export async function getBuilds(
     if (!session?.user?.organizationId) {
       return { success: false, error: "Authentication required" };
     }
+    if (!(await can("extensions:read"))) {
+      return {
+        success: false,
+        error: "You do not have permission to perform this action",
+      };
+    }
 
     const { page = 1, limit = 20, status, platform } = params;
     const skip = (page - 1) * limit;
@@ -134,6 +141,12 @@ export async function getBuild(
     if (!session?.user?.organizationId) {
       return { success: false, error: "Authentication required" };
     }
+    if (!(await can("extensions:read"))) {
+      return {
+        success: false,
+        error: "You do not have permission to perform this action",
+      };
+    }
 
     const build = await prisma.extensionBuild.findUnique({
       where: { id },
@@ -164,6 +177,12 @@ async function _triggerBuild(
     const session = await auth();
     if (!session?.user?.organizationId) {
       return { success: false, error: "Authentication required" };
+    }
+    if (!(await can("extensions:manage"))) {
+      return {
+        success: false,
+        error: "You do not have permission to perform this action",
+      };
     }
 
     // Validate input
@@ -240,6 +259,12 @@ async function _deleteBuild(id: string): Promise<ActionState> {
     if (!session?.user?.organizationId) {
       return { success: false, error: "Authentication required" };
     }
+    if (!(await can("extensions:manage"))) {
+      return {
+        success: false,
+        error: "You do not have permission to perform this action",
+      };
+    }
 
     // Check the existing entry
     const existing = await prisma.extensionBuild.findUnique({
@@ -282,6 +307,12 @@ async function _retryBuild(
     const session = await auth();
     if (!session?.user?.organizationId) {
       return { success: false, error: "Authentication required" };
+    }
+    if (!(await can("extensions:manage"))) {
+      return {
+        success: false,
+        error: "You do not have permission to perform this action",
+      };
     }
 
     // Check the existing entry
@@ -388,7 +419,7 @@ async function _updateExtensionDeploySettings(input: {
     }
 
     // Check admin permission
-    if (session.user.role !== "ADMIN") {
+    if (!(await can("extensions:manage"))) {
       return {
         success: false,
         error: "Only admins can change deployment settings",

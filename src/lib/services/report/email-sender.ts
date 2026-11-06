@@ -64,7 +64,7 @@ export async function sendReportEmail(
     to: recipients,
     subject: `[${organizationName}] ${reportLabel} Report - ${new Date().toLocaleDateString("en-US")}`,
     html: `
-      <div style="font-family: Lato, Inter, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="font-family: Inter, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #333;">📊 ${reportLabel} Report</h2>
         <p>Hello,</p>
         <p>The ${reportLabel} report for ${organizationName} has been generated.</p>

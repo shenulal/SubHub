@@ -8,6 +8,9 @@ import {
 } from "./devices";
 
 // Mock auth
+vi.mock("@/lib/rbac/service", async () =>
+  (await import("@/test/rbac-session-mock")).sessionRbacMock()
+);
 vi.mock("@/lib/auth", () => ({
   auth: vi.fn(),
 }));

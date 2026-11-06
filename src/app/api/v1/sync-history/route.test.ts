@@ -5,6 +5,11 @@ vi.mock("@/lib/auth", () => ({
   auth: vi.fn(),
 }));
 
+// RBAC: the route checks a permission with can(); this suite covers the HTTP
+// contract, so the permission is granted (denial is covered in the RBAC tests).
+const mockCan = vi.hoisted(() => vi.fn(async () => true));
+vi.mock("@/lib/rbac/service", () => ({ can: mockCan }));
+
 vi.mock("@/lib/services/payment/sync-history-service", () => ({
   getSyncHistories: vi.fn(),
 }));
@@ -129,5 +134,18 @@ describe("GET /api/v1/sync-history", () => {
     const res = await handler.GET(req);
 
     expect(res.status).toBe(500);
+  });
+});
+
+describe("GET /api/v1/sync-history permission", () => {
+  it("returns 403 without payments:read", async () => {
+    vi.mocked(auth).mockResolvedValue({
+      user: { id: "user-1", organizationId: "org-1" },
+    } as never);
+    mockCan.mockResolvedValueOnce(false);
+    const res = await handler.GET(
+      new NextRequest("http://localhost/api/v1/sync-history")
+    );
+    expect(res.status).toBe(403);
   });
 });

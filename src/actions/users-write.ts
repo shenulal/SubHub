@@ -13,6 +13,7 @@ import type { ActionState } from "@/types";
 import type { UserRole } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
+import { can } from "@/lib/rbac/service";
 import { isLastAdmin } from "./users-utils";
 import { updateUserSchema } from "./users.types";
 
@@ -25,6 +26,12 @@ async function _updateUser(
   formData: FormData
 ): Promise<ActionState<{ id: string }>> {
   const { organizationId, userId } = await requireOrganization();
+  if (!(await can("members:manage"))) {
+    return {
+      success: false,
+      message: "You do not have permission to perform this action",
+    };
+  }
 
   // Check if user exists and belongs to organization
   const existingUser = await prisma.user.findFirst({
@@ -128,6 +135,12 @@ async function _revokeUserAppAccess(
   appId: string
 ): Promise<ActionState> {
   const { organizationId, userId } = await requireOrganization();
+  if (!(await can("members:manage"))) {
+    return {
+      success: false,
+      message: "You do not have permission to perform this action",
+    };
+  }
 
   // Find user with app access
   const user = await prisma.user.findFirst({
@@ -232,6 +245,12 @@ async function _revokeAllUserAppAccess(
   userIdToRevoke: string
 ): Promise<ActionState> {
   const { organizationId, userId } = await requireOrganization();
+  if (!(await can("members:manage"))) {
+    return {
+      success: false,
+      message: "You do not have permission to perform this action",
+    };
+  }
 
   // Find user with both appAccesses and subscriptionAssignments
   const user = await prisma.user.findFirst({
@@ -341,9 +360,9 @@ async function _transferAdminRole(
   targetUserId: string,
   newSelfRole: Exclude<UserRole, "ADMIN">
 ): Promise<ActionState> {
-  const { organizationId, userId, role } = await requireOrganization();
+  const { organizationId, userId } = await requireOrganization();
 
-  if (role !== "ADMIN") {
+  if (!(await can("roles:manage"))) {
     return { success: false, message: "Only admins can transfer admin rights" };
   }
 
@@ -435,9 +454,9 @@ export const transferAdminRole = withLogging(
  * Related data (owned apps, cards, transactions, etc.) is kept so it can be managed on the offboarded page.
  */
 async function _offboardUser(targetUserId: string): Promise<ActionState> {
-  const { organizationId, userId, role } = await requireOrganization();
+  const { organizationId, userId } = await requireOrganization();
 
-  if (role !== "ADMIN") {
+  if (!(await can("members:manage"))) {
     return { success: false, message: "Only admins can offboard users" };
   }
 
@@ -546,9 +565,9 @@ export const offboardUser = withLogging("offboardUser", _offboardUser);
 async function _permanentlyDeleteUser(
   targetUserId: string
 ): Promise<ActionState> {
-  const { organizationId, userId, role } = await requireOrganization();
+  const { organizationId, userId } = await requireOrganization();
 
-  if (role !== "ADMIN") {
+  if (!(await can("members:manage"))) {
     return {
       success: false,
       message: "Only admins can permanently delete users",

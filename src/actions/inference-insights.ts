@@ -5,6 +5,7 @@ import { requireOrganization } from "@/lib/auth/require-auth";
 import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { withLogging } from "@/lib/logging";
+import { can } from "@/lib/rbac/service";
 import { Prisma } from "@prisma/client";
 import { Resend } from "resend";
 
@@ -131,9 +132,9 @@ interface SendInferenceMetricsEmailResult {
 }
 
 async function _sendInferenceMetricsEmail(): Promise<SendInferenceMetricsEmailResult> {
-  const { organizationId, role, session } = await requireOrganization();
+  const { organizationId, session } = await requireOrganization();
 
-  if (role !== "ADMIN") {
+  if (!(await can("apps:manage"))) {
     return {
       success: false,
       message: "Only admins can send email alerts.",
@@ -178,7 +179,7 @@ async function _sendInferenceMetricsEmail(): Promise<SendInferenceMetricsEmailRe
   const subject = `[${orgName}] LLM matching metrics alert - ${today}`;
 
   const html = `
-    <div style="font-family: Lato, Inter, sans-serif; max-width: 640px;">
+    <div style="font-family: Inter, sans-serif; max-width: 640px;">
       <h2>LLM matching metrics alert</h2>
       <p>Recent LLM matching metrics for ${orgName}.</p>
       <ul>

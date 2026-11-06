@@ -24,6 +24,36 @@ vi.mock("@/lib/db", () => ({
   },
 }));
 
+vi.mock("@/actions/account-security", () => ({
+  getAccountSecurity: vi.fn().mockResolvedValue({
+    username: "test.user",
+    email: "test@example.com",
+    hasPassword: true,
+    passwordChangedAt: null,
+    loginOtpEnabled: false,
+    loginOtpRequired: false,
+  }),
+  updateOwnUsername: vi.fn(),
+  setOwnTwoStepVerification: vi.fn(),
+}));
+
+vi.mock("@/lib/auth/password-policy", () => ({
+  getPasswordPolicy: vi.fn().mockResolvedValue({
+    minLength: 10,
+    requireUppercase: true,
+    requireLowercase: true,
+    requireNumber: true,
+    requireSymbol: true,
+    historyCount: 0,
+  }),
+  describePasswordPolicy: () => "Use at least 10 characters.",
+}));
+
+vi.mock("@/actions/password", () => ({
+  changePassword: vi.fn(),
+  resetPassword: vi.fn(),
+}));
+
 describe("ProfilePage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -86,6 +116,19 @@ describe("ProfilePage", () => {
     expect(
       screen.queryByPlaceholderText(/Platform Team/)
     ).not.toBeInTheDocument();
+  });
+
+  it("shows the sign-in & security section with the user name", async () => {
+    vi.mocked(prisma.user.findUnique).mockResolvedValue({
+      name: "Test User",
+      department: "Platform",
+    } as never);
+
+    const page = await ProfilePage();
+    render(page);
+
+    expect(screen.getByTestId("account-security")).toBeInTheDocument();
+    expect(screen.getByDisplayValue("test.user")).toBeInTheDocument();
   });
 
   it("shows the email as text", async () => {

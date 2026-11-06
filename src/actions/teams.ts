@@ -308,9 +308,9 @@ async function _updateTeam(
   input: UpdateTeamInput
 ): Promise<ActionState<Team>> {
   try {
-    const { organizationId, role } = await requireOrganization();
+    const { organizationId } = await requireOrganization();
 
-    if (role !== "ADMIN") {
+    if (!(await can("teams:manage"))) {
       return { success: false, message: "Admin permission required" };
     }
 
@@ -588,9 +588,9 @@ export async function getTeamImpact(
  */
 async function _deleteTeam(teamId: string): Promise<ActionState> {
   try {
-    const { organizationId, role } = await requireOrganization();
+    const { organizationId } = await requireOrganization();
 
-    if (role !== "ADMIN") {
+    if (!(await can("teams:manage"))) {
       return { success: false, message: "Admin permission required" };
     }
 
@@ -691,9 +691,9 @@ async function _assignUserToTeam(
   teamId: string | null
 ): Promise<ActionState> {
   try {
-    const { organizationId, role } = await requireOrganization();
+    const { organizationId } = await requireOrganization();
 
-    if (role !== "ADMIN") {
+    if (!(await can("teams:manage"))) {
       return { success: false, message: "Admin permission required" };
     }
 

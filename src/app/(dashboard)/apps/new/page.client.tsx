@@ -12,12 +12,15 @@ interface AppNewPageClientProps {
   userRole: string | undefined;
   userTeamId: string | null;
   title: string;
+  /** Prefill from `?name=` (e.g. the quick-create dialog's "full form" link). */
+  initialName?: string;
 }
 
 export function AppNewPageClient({
   userRole,
   userTeamId,
   title,
+  initialName,
 }: AppNewPageClientProps) {
   const t = useTranslations("apps");
   const router = useRouter();
@@ -52,6 +55,7 @@ export function AppNewPageClient({
         hideActions={true}
         formId="app-new-form"
         onPendingChange={setIsPending}
+        initialName={initialName}
       />
     </div>
   );

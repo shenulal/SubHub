@@ -59,3 +59,15 @@ export function initials(name: string): string {
     .map((p) => p[0]?.toUpperCase() ?? "")
     .join("");
 }
+
+/** Calendar date stored as `YYYY-MM-DD` (no time zone shift). */
+export function formatDateOnly(
+  value: string | null | undefined,
+  locale = "en"
+): string {
+  if (!value) return "—";
+  return new Intl.DateTimeFormat(locale, {
+    dateStyle: "medium",
+    timeZone: "UTC",
+  }).format(new Date(`${value.slice(0, 10)}T00:00:00Z`));
+}

@@ -6,6 +6,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMemo } from "react";
 
+import { useSafePermissions } from "@/hooks/use-permission-flag";
+import type { PermissionKey } from "@/lib/rbac/permissions";
 import { cn } from "@/lib/utils";
 
 interface OrgMenuItem {
@@ -14,9 +16,18 @@ interface OrgMenuItem {
   href: string;
   description?: string;
   exact?: boolean;
+  /** Shown only with every listed permission (the page re-checks). */
+  permissionAll?: PermissionKey[];
 }
 
-const orgMenuConfig = [
+const orgMenuConfig: {
+  icon: LucideIcon;
+  labelKey: string;
+  descriptionKey?: string;
+  href: string;
+  exact?: boolean;
+  permissionAll?: PermissionKey[];
+}[] = [
   {
     icon: Building2,
     labelKey: "sidebar.menu.org.teams",
@@ -42,12 +53,14 @@ const orgMenuConfig = [
     labelKey: "sidebar.menu.org.sync",
     descriptionKey: "sidebar.menu.org.syncDescription",
     href: "/org/sync",
+    permissionAll: ["teams:manage", "members:manage"],
   },
 ];
 
 export function OrgSidebar() {
   const pathname = usePathname();
   const t = useTranslations();
+  const { can, isLoading } = useSafePermissions();
 
   const menuItems: OrgMenuItem[] = useMemo(
     () =>
@@ -57,13 +70,19 @@ export function OrgSidebar() {
         href: item.href,
         description: item.descriptionKey ? t(item.descriptionKey) : undefined,
         exact: item.exact,
+        permissionAll: item.permissionAll,
       })),
     [t]
+  );
+  const visibleItems = menuItems.filter(
+    (item) =>
+      !item.permissionAll ||
+      (!isLoading && item.permissionAll.every((key) => can(key)))
   );
 
   return (
     <nav className="flex min-w-0 gap-1 overflow-x-auto pb-1 xl:flex-col xl:overflow-visible xl:pb-0">
-      {menuItems.map((item) => {
+      {visibleItems.map((item) => {
         const isActive = item.exact
           ? pathname === item.href
           : pathname === item.href || pathname.startsWith(item.href + "/");

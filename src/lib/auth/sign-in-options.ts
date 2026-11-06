@@ -18,8 +18,11 @@ import { isAppleSignInEnabled } from "./index";
 
 export interface SignInOptions {
   appleEnabled: boolean;
+  /** Password sign-in hidden: SSO enforced AND an SSO provider is configured. */
   enforceSso: boolean;
   allowSelfSignup: boolean;
+  /** Passwordless "email me a code" sign-in (security.allowEmailCodeSignIn). */
+  emailCodeEnabled: boolean;
 }
 
 export interface SignInContext {
@@ -39,11 +42,21 @@ export async function getSignInOptions(
   context: SignInContext = {}
 ): Promise<SignInOptions> {
   const organizationId = await resolveOrganizationId(context);
-  const [enforceSso, allowSelfSignup] = await Promise.all([
+  const [enforceSso, allowSelfSignup, emailCodeEnabled] = await Promise.all([
     organizationId
       ? getSetting(organizationId, "security.enforceSso")
       : getSystemSetting("security.enforceSso"),
     isSignupOpen(),
+    organizationId
+      ? getSetting(organizationId, "security.allowEmailCodeSignIn")
+      : getSystemSetting("security.allowEmailCodeSignIn"),
   ]);
-  return { appleEnabled: isAppleSignInEnabled(), enforceSso, allowSelfSignup };
+  const appleEnabled = isAppleSignInEnabled();
+  return {
+    appleEnabled,
+    // Without a configured SSO provider, enforcing it would lock everyone out.
+    enforceSso: enforceSso && appleEnabled,
+    allowSelfSignup,
+    emailCodeEnabled,
+  };
 }

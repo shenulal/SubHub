@@ -1,6 +1,9 @@
 // src/actions/payments/payment-rematch.test.ts
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+vi.mock("@/lib/rbac/service", async () =>
+  (await import("@/test/rbac-org-mock")).orgRbacMock()
+);
 vi.mock("@/lib/auth", () => ({
   auth: vi.fn(),
 }));

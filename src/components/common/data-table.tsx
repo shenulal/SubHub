@@ -83,6 +83,8 @@ interface DataTableProps<T> {
   enableRowSelection?: boolean;
   selectedRows?: Set<string>;
   onSelectedRowsChange?: (selectedRows: Set<string>) => void;
+  /** Rows that may be selected (others get a disabled checkbox). Default: all. */
+  isRowSelectable?: (row: T) => boolean;
   // Column visibility
   enableColumnVisibility?: boolean;
   columnVisibility?: Record<string, boolean>;
@@ -106,6 +108,21 @@ interface DataTableProps<T> {
   toolbarLeft?: React.ReactNode;
   /** When true, hides the "1-10 of 10 items" footer text (avoids duplication with server-side pagination) */
   hideFooterItemCount?: boolean;
+  /**
+   * Makes the whole row clickable (pointer cursor + hover). Clicks that start on
+   * a link, button, checkbox or menu inside the row are left to that control.
+   */
+  onRowClick?: (row: T) => void;
+}
+
+const INTERACTIVE_SELECTOR =
+  'a,button,input,select,textarea,label,[role="checkbox"],[role="menuitem"],[role="menu"],[data-row-click-ignore]';
+
+function isInteractiveTarget(event: React.MouseEvent): boolean {
+  const target = event.target as HTMLElement | null;
+  const row = event.currentTarget as HTMLElement;
+  const hit = target?.closest(INTERACTIVE_SELECTOR);
+  return Boolean(hit && row.contains(hit));
 }
 
 /**
@@ -123,6 +140,7 @@ export function DataTable<T>({
   enableRowSelection = false,
   selectedRows = new Set(),
   onSelectedRowsChange,
+  isRowSelectable,
   // Column visibility
   enableColumnVisibility = false,
   columnVisibility = {},
@@ -144,6 +162,7 @@ export function DataTable<T>({
   hideToolbar = false,
   toolbarLeft,
   hideFooterItemCount = false,
+  onRowClick,
 }: DataTableProps<T>) {
   // Filter to visible columns
   const visibleColumns = React.useMemo(() => {
@@ -154,7 +173,10 @@ export function DataTable<T>({
   }, [columns, columnVisibility, enableColumnVisibility]);
 
   // Compute select-all state
-  const allRowIds = React.useMemo(() => data.map(getRowId), [data, getRowId]);
+  const allRowIds = React.useMemo(
+    () => (isRowSelectable ? data.filter(isRowSelectable) : data).map(getRowId),
+    [data, getRowId, isRowSelectable]
+  );
   const isAllSelected =
     allRowIds.length > 0 && allRowIds.every((id) => selectedRows.has(id));
   const isSomeSelected = allRowIds.some((id) => selectedRows.has(id));
@@ -360,12 +382,27 @@ export function DataTable<T>({
                     <TableRow
                       key={rowId}
                       data-state={isSelected ? "selected" : undefined}
-                      className="transition-colors"
+                      className={cn(
+                        "transition-colors",
+                        onRowClick && "hover:bg-primary/5 cursor-pointer"
+                      )}
+                      onClick={
+                        onRowClick
+                          ? (event) => {
+                              if (isInteractiveTarget(event)) return;
+                              if (window.getSelection()?.toString()) return;
+                              onRowClick(row);
+                            }
+                          : undefined
+                      }
                     >
                       {enableRowSelection && (
                         <TableCell>
                           <Checkbox
                             checked={isSelected}
+                            disabled={
+                              isRowSelectable ? !isRowSelectable(row) : false
+                            }
                             onCheckedChange={(checked) =>
                               handleSelectRow(rowId, !!checked)
                             }

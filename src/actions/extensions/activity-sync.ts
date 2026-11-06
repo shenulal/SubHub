@@ -10,6 +10,7 @@ import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { logger } from "@/lib/logger";
 import { withLogging } from "@/lib/logging";
+import { can } from "@/lib/rbac/service";
 import { matchDomainToApp } from "@/lib/services/discovery/domain-matcher";
 
 const BATCH_SIZE = 100;
@@ -32,7 +33,7 @@ export const syncLoginEventsToAppAccess = withLogging(
     if (!session?.user?.organizationId) {
       throw new Error("Authentication required");
     }
-    if (session.user.role !== "ADMIN") {
+    if (!(await can("extensions:manage"))) {
       throw new Error("Only admins can access this");
     }
 

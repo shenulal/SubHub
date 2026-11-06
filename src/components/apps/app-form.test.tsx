@@ -86,6 +86,16 @@ vi.mock("@/components/taxonomy/category-picker", () => ({
   ),
 }));
 
+vi.mock("@/actions/apps-form-options", () => ({
+  getAppFormOptions: vi.fn().mockResolvedValue({
+    success: true,
+    data: {
+      owners: [{ id: "u-1", name: "Owner One", email: "o@acme.test" }],
+      teams: [],
+      logoMaxSizeKb: 512,
+    },
+  }),
+}));
 vi.mock("@/actions/teams", () => ({
   getTeams: vi.fn().mockResolvedValue({ success: true, data: [] }),
 }));

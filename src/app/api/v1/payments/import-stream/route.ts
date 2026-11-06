@@ -289,5 +289,5 @@ export const POST = withApiAuth(
       },
     });
   },
-  { allowRoles: ["ADMIN"] }
+  { permission: "payments:manage" }
 );

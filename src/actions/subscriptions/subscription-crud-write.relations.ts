@@ -4,6 +4,7 @@
  * team/user assignments, tags and custom-field values.
  */
 import { prisma } from "@/lib/db";
+import { isAppLogoError, resolveLogoInput } from "@/lib/services/app-logo";
 
 import { ensureTags, validateCustomFieldValues } from "./taxonomy-adapter";
 
@@ -52,11 +53,24 @@ export async function resolveApp(
       source: "MANUAL",
       catalogId: input.catalogId || null,
       customWebsite: input.appWebsite || null,
-      customLogoUrl: input.appLogoUrl || null,
+      customLogoUrl: await safeLogo(organizationId, input.appLogoUrl),
       categoryId: input.categoryId || null,
     },
     select: { id: true, name: true },
   });
+}
+
+/** Catalog / typed icon for an app created on the fly; invalid values are dropped. */
+async function safeLogo(
+  organizationId: string,
+  raw: string | null | undefined
+): Promise<string | null> {
+  try {
+    return await resolveLogoInput(organizationId, raw);
+  } catch (error) {
+    if (isAppLogoError(error)) return null;
+    throw error;
+  }
 }
 
 export interface AssignmentInput {

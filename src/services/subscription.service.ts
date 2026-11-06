@@ -3,13 +3,16 @@
 
 import { prisma } from "@/lib/db";
 import { getBaseCurrency } from "@/lib/fx/base-currency";
+import { ctxHasPermission } from "./service-permissions";
 
 // ==================== Types ====================
 
 export interface SubscriptionServiceContext {
   organizationId: string;
   userId: string;
+  /** Legacy role (informational; checks use RBAC permissions). */
   role: string;
+  permissions?: ReadonlySet<string>;
 }
 
 export interface CreateSubscriptionInput {
@@ -49,7 +52,7 @@ export async function createSubscription(
   input: CreateSubscriptionInput
 ): Promise<ServiceResult<{ id: string }>> {
   // Permission check
-  if (ctx.role === "VIEWER") {
+  if (!(await ctxHasPermission(ctx, "subscriptions:create"))) {
     return {
       success: false,
       message: "You do not have permission to create subscriptions",
@@ -104,7 +107,7 @@ export async function updateSubscription(
   input: UpdateSubscriptionInput
 ): Promise<ServiceResult<{ id: string }>> {
   // Permission check
-  if (ctx.role !== "ADMIN") {
+  if (!(await ctxHasPermission(ctx, "subscriptions:update"))) {
     return {
       success: false,
       message: "You do not have permission to edit this subscription",
@@ -160,7 +163,7 @@ export async function deleteSubscription(
   id: string
 ): Promise<ServiceResult> {
   // Permission check
-  if (ctx.role !== "ADMIN") {
+  if (!(await ctxHasPermission(ctx, "subscriptions:delete"))) {
     return { success: false, message: "Admin permission required" };
   }
 

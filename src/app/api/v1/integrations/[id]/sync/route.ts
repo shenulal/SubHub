@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 
 import { syncIntegrationNow } from "@/actions/integrations";
 import { auth } from "@/lib/auth";
+import { can } from "@/lib/rbac/service";
 
 /**
  * POST /api/v1/integrations/[id]/sync
@@ -18,7 +19,7 @@ export async function POST(
   }
 
   // Only ADMIN can sync
-  if (session.user.role !== "ADMIN") {
+  if (!(await can("integrations:manage"))) {
     return NextResponse.json(
       { message: "You do not have permission to sync this integration" },
       { status: 403 }

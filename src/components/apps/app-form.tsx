@@ -6,7 +6,9 @@ import {
   appFormSchema,
   type AppFormValues,
 } from "@/components/apps/app-form-schema";
+import { useAppFormOptions } from "@/components/apps/use-app-form-options";
 import { ImageUpload } from "@/components/common/image-upload";
+import { APP_ICON_TYPES } from "@/components/common/quick-create/app-icon-field";
 import { CategoryPicker } from "@/components/taxonomy/category-picker";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -106,6 +108,8 @@ export function AppForm({
   const [teams, setTeams] = useState<TeamWithStats[]>([]);
   const [templateLogoPath, setTemplateLogoPath] = useState<string | null>(null);
   const [urlInputValue, setUrlInputValue] = useState<string>("");
+  const formOptions = useAppFormOptions();
+  const logoMaxKb = formOptions.data?.logoMaxSizeKb;
 
   // Whether role-based restrictions apply
   const isRestricted = userRole === "MEMBER" || userRole === "VIEWER";
@@ -463,12 +467,37 @@ export function AppForm({
               )}
             </div>
 
-            {/* Owner (reserved for future use) */}
             <div className="space-y-2">
-              <Label>{t("apps.form.fields.owner")}</Label>
-              <p className="text-muted-foreground text-sm">
-                {t("apps.form.fields.ownerComingSoon")}
-              </p>
+              <Label htmlFor="ownerId">{t("apps.form.fields.owner")}</Label>
+              <Controller
+                name="ownerId"
+                control={control}
+                render={({ field }) => (
+                  <Select
+                    value={field.value || "__none__"}
+                    onValueChange={(v) =>
+                      field.onChange(v === "__none__" ? "" : v)
+                    }
+                    disabled={isPending || !formOptions.data}
+                  >
+                    <SelectTrigger id="ownerId" className="w-full">
+                      <SelectValue
+                        placeholder={t("shell.createApp.ownerPlaceholder")}
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="__none__">
+                        {t("shell.createApp.noOwner")}
+                      </SelectItem>
+                      {formOptions.data?.owners.map((u) => (
+                        <SelectItem key={u.id} value={u.id}>
+                          {u.name ?? u.email}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
+              />
             </div>
           </CardContent>
         </Card>
@@ -494,6 +523,8 @@ export function AppForm({
                     }
                   }}
                   aspectRatio="square"
+                  accept={APP_ICON_TYPES.join(",")}
+                  maxSize={logoMaxKb ? logoMaxKb / 1024 : undefined}
                   disabled={isPending}
                   placeholder={t("apps.form.fields.logoUploadPlaceholder")}
                   className="max-w-[200px]"

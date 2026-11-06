@@ -1,6 +1,7 @@
 // src/app/(dashboard)/extensions/whitelist/page.tsx
 import { WhitelistPageClient } from "@/components/extensions/whitelist-page-client";
 import { Skeleton } from "@/components/ui/skeleton";
+import { requirePermissionOrRedirect } from "@/lib/rbac/service";
 import { Suspense } from "react";
 
 export const metadata = {
@@ -20,7 +21,8 @@ function PageSkeleton() {
   );
 }
 
-export default function WhitelistPage() {
+export default async function WhitelistPage() {
+  await requirePermissionOrRedirect("extensions:read", "/dashboard");
   return (
     <div className="space-y-6">
       <h1 className="text-foreground text-xl font-medium">Whitelist</h1>

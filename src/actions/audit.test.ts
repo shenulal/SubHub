@@ -7,6 +7,9 @@ vi.mock("@/lib/auth", () => ({
 }));
 
 // Prisma mock
+vi.mock("@/lib/rbac/service", async () =>
+  (await import("@/test/rbac-session-mock")).sessionRbacMock()
+);
 vi.mock("@/lib/db", () => ({
   prisma: {
     auditLog: {
@@ -407,6 +410,48 @@ describe("audit actions", () => {
       expect(result).toHaveLength(1);
       expect(result[0].teamName).toBe("Marketing");
       expect(result[0].action).toBe("EXPORT");
+    });
+  });
+
+  describe("RBAC scoping", () => {
+    async function whereAs(role: string) {
+      const { auth } = await import("@/lib/auth");
+      (auth as ReturnType<typeof vi.fn>).mockResolvedValue({
+        user: { id: "u-self", organizationId: "org-1", role },
+      });
+      const { prisma } = await import("@/lib/db");
+      const findMany = prisma.auditLog.findMany as ReturnType<typeof vi.fn>;
+      findMany.mockClear();
+      findMany.mockResolvedValue([]);
+      (prisma.auditLog.count as ReturnType<typeof vi.fn>).mockResolvedValue(0);
+      const { getAuditLogs } = await import("./audit");
+      const result = await getAuditLogs({ userIds: ["someone-else"] });
+      return { result, where: findMany.mock.calls.at(-1)?.[0]?.where };
+    }
+
+    it("pins a member (audit:read only) to their own entries", async () => {
+      const { where } = await whereAs("MEMBER");
+      expect(where).toMatchObject({ userId: "u-self" });
+    });
+
+    it("lets an approver (audit:read_all) filter other members", async () => {
+      const { where } = await whereAs("APPROVER");
+      expect(where).toMatchObject({ userId: "someone-else" });
+    });
+
+    it("returns nothing to a viewer (no audit:read)", async () => {
+      const { result, where } = await whereAs("VIEWER");
+      expect(result.logs).toEqual([]);
+      expect(where).toBeUndefined();
+    });
+
+    it("refuses the export without audit:export", async () => {
+      const { auth } = await import("@/lib/auth");
+      (auth as ReturnType<typeof vi.fn>).mockResolvedValue({
+        user: { id: "u-self", organizationId: "org-1", role: "APPROVER" },
+      });
+      const { getAuditLogExportData } = await import("./audit");
+      expect(await getAuditLogExportData({})).toEqual([]);
     });
   });
 });

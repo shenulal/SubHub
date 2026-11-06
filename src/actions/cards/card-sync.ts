@@ -6,6 +6,7 @@ import { prisma } from "@/lib/db";
 import { getBaseCurrency } from "@/lib/fx/base-currency";
 import { logger } from "@/lib/logger";
 import { withLogging } from "@/lib/logging";
+import { can } from "@/lib/rbac/service";
 import {
   getCardApprovals,
   getLastNDaysRange,
@@ -63,6 +64,12 @@ async function _syncCardTransactions(
     const session = await getCachedSession();
     if (!session?.user?.organizationId) {
       return { success: false, message: "Authentication required" };
+    }
+    if (!(await can("payments:manage"))) {
+      return {
+        success: false,
+        message: "You do not have permission to perform this action",
+      };
     }
 
     const organizationId = session.user.organizationId;

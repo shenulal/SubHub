@@ -17,55 +17,61 @@ import { IntegrationStatus } from "@prisma/client";
  */
 export const GET = withLogging(
   "GET /api/v1/integrations",
-  withApiAuth(async (request: NextRequest) => {
-    const { searchParams } = new URL(request.url);
+  withApiAuth(
+    async (request: NextRequest) => {
+      const { searchParams } = new URL(request.url);
 
-    // Validate pagination
-    const paginationResult = paginationSchema.safeParse({
-      page: Number(searchParams.get("page") ?? "1"),
-      limit: Number(searchParams.get("limit") ?? "20"),
-    });
-
-    if (!paginationResult.success) {
-      return NextResponse.json(formatValidationError(paginationResult.error), {
-        status: 400,
+      // Validate pagination
+      const paginationResult = paginationSchema.safeParse({
+        page: Number(searchParams.get("page") ?? "1"),
+        limit: Number(searchParams.get("limit") ?? "20"),
       });
-    }
 
-    const { page, limit } = paginationResult.data;
+      if (!paginationResult.success) {
+        return NextResponse.json(
+          formatValidationError(paginationResult.error),
+          {
+            status: 400,
+          }
+        );
+      }
 
-    const sortBy = (searchParams.get("sortBy") ?? "createdAt") as
-      | "createdAt"
-      | "updatedAt"
-      | "type";
-    const sortOrder = (searchParams.get("sortOrder") ?? "desc") as
-      | "asc"
-      | "desc";
+      const { page, limit } = paginationResult.data;
 
-    // `status` accepts a comma-separated list (multi-select); unknown values are dropped
-    const filter = {
-      category: searchParams.get("category") ?? undefined,
-      status: parseMultiEnum(
-        searchParams.getAll("status"),
-        Object.values(IntegrationStatus)
-      ),
-      search: searchParams.get("search") ?? undefined,
-    };
+      const sortBy = (searchParams.get("sortBy") ?? "createdAt") as
+        | "createdAt"
+        | "updatedAt"
+        | "type";
+      const sortOrder = (searchParams.get("sortOrder") ?? "desc") as
+        | "asc"
+        | "desc";
 
-    const result = await getIntegrations({
-      filter,
-      sort: { sortBy, sortOrder },
-      page,
-      limit,
-    });
+      // `status` accepts a comma-separated list (multi-select); unknown values are dropped
+      const filter = {
+        category: searchParams.get("category") ?? undefined,
+        status: parseMultiEnum(
+          searchParams.getAll("status"),
+          Object.values(IntegrationStatus)
+        ),
+        search: searchParams.get("search") ?? undefined,
+      };
 
-    return NextResponse.json(result);
-  })
+      const result = await getIntegrations({
+        filter,
+        sort: { sortBy, sortOrder },
+        page,
+        limit,
+      });
+
+      return NextResponse.json(result);
+    },
+    { permission: "integrations:read" }
+  )
 );
 
 /**
  * POST /api/v1/integrations
- * - Create an integration (ADMIN only)
+ * - Create an integration (integrations:manage)
  */
 export const POST = withLogging(
   "POST /api/v1/integrations",
@@ -91,6 +97,6 @@ export const POST = withLogging(
 
       return NextResponse.json(result);
     },
-    { requireAdmin: true }
+    { permission: "integrations:manage" }
   )
 );

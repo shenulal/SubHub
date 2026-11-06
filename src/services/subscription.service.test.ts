@@ -1,11 +1,18 @@
 // src/services/subscription.service.test.ts
 // TDD RED → GREEN: Subscription service layer tests
+import { SYSTEM_ROLE_TEMPLATES } from "@/lib/rbac/permissions";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const grants = (role: keyof typeof SYSTEM_ROLE_TEMPLATES) =>
+  new Set<string>(SYSTEM_ROLE_TEMPLATES[role].grants);
 
 vi.mock("@/lib/fx/base-currency", () => ({
   getBaseCurrency: vi.fn().mockResolvedValue("KRW"),
 }));
 
+vi.mock("@/lib/rbac/service", () => ({
+  getUserPermissionSet: vi.fn(async () => new Set<string>()),
+}));
 vi.mock("@/lib/db", () => ({
   prisma: {
     app: {
@@ -35,6 +42,7 @@ const mockCtx: SubscriptionServiceContext = {
   organizationId: "org-1",
   userId: "user-1",
   role: "ADMIN",
+  permissions: grants("ADMIN"),
 };
 
 describe("SubscriptionService", () => {
@@ -83,7 +91,11 @@ describe("SubscriptionService", () => {
     });
 
     it("fails for a VIEWER role", async () => {
-      const viewerCtx = { ...mockCtx, role: "VIEWER" };
+      const viewerCtx = {
+        ...mockCtx,
+        role: "VIEWER",
+        permissions: grants("VIEWER"),
+      };
 
       const result = await createSubscription(viewerCtx, {
         appId: "app-1",
@@ -174,8 +186,12 @@ describe("SubscriptionService", () => {
       expect(result.message).toContain("not found");
     });
 
-    it("fails when the user is not an ADMIN", async () => {
-      const memberCtx = { ...mockCtx, role: "MEMBER" };
+    it("fails without subscriptions:update (viewer)", async () => {
+      const memberCtx = {
+        ...mockCtx,
+        role: "VIEWER",
+        permissions: grants("VIEWER"),
+      };
 
       const result = await updateSubscription(memberCtx, "sub-1", {
         amount: "25000",
@@ -239,8 +255,12 @@ describe("SubscriptionService", () => {
       expect(result.message).toContain("not found");
     });
 
-    it("fails when the user is not an ADMIN", async () => {
-      const memberCtx = { ...mockCtx, role: "MEMBER" };
+    it("fails without subscriptions:delete (member)", async () => {
+      const memberCtx = {
+        ...mockCtx,
+        role: "MEMBER",
+        permissions: grants("MEMBER"),
+      };
 
       const result = await deleteSubscription(memberCtx, "sub-1");
 

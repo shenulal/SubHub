@@ -3,6 +3,7 @@ import { getApp } from "@/actions/apps";
 import { AppEditForm } from "@/components/apps/app-edit-form";
 import { PageHeader } from "@/components/common/page-header";
 import { auth } from "@/lib/auth";
+import { requirePermissionOrRedirect } from "@/lib/rbac/service";
 import { notFound, redirect } from "next/navigation";
 
 interface AppEditPageProps {
@@ -10,6 +11,7 @@ interface AppEditPageProps {
 }
 
 export default async function AppEditPage({ params }: AppEditPageProps) {
+  await requirePermissionOrRedirect("apps:manage", "/apps");
   const session = await auth();
 
   if (!session?.user) {

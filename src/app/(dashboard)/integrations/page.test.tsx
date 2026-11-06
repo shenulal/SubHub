@@ -4,6 +4,14 @@ import IntegrationsPage from "./page";
 
 const mockRedirect = vi.fn();
 const mockRequireOrganization = vi.fn();
+const mockCan = vi.fn();
+const mockRequirePermissionOrRedirect = vi.fn();
+
+vi.mock("@/lib/rbac/service", () => ({
+  can: (...args: unknown[]) => mockCan(...args),
+  requirePermissionOrRedirect: (...args: unknown[]) =>
+    mockRequirePermissionOrRedirect(...args),
+}));
 
 vi.mock("@/components/integrations/integrations-page-client", () => ({
   IntegrationsPageClient: ({
@@ -48,6 +56,8 @@ describe("IntegrationsPage (server)", () => {
       userId: "user-1",
       role: "ADMIN",
     });
+    mockCan.mockResolvedValue(true);
+    mockRequirePermissionOrRedirect.mockResolvedValue({});
   });
 
   it("renders the client with canManage=true for admins", async () => {
@@ -74,6 +84,7 @@ describe("IntegrationsPage (server)", () => {
       userId: "user-2",
       role: "MEMBER",
     });
+    mockCan.mockResolvedValueOnce(false);
 
     const page = await IntegrationsPage();
     render(page);
@@ -81,6 +92,21 @@ describe("IntegrationsPage (server)", () => {
     const client = screen.getByTestId("integrations-client");
     expect(client).toHaveAttribute("data-can-manage", "false");
     expect(client).toHaveAttribute("data-role", "MEMBER");
+  });
+
+  it("gates the page on integrations:read and actions on integrations:manage", async () => {
+    await IntegrationsPage();
+    expect(mockRequirePermissionOrRedirect).toHaveBeenCalledWith(
+      "integrations:read"
+    );
+    expect(mockCan).toHaveBeenCalledWith("integrations:manage");
+  });
+
+  it("redirects when integrations:read is missing", async () => {
+    mockRequirePermissionOrRedirect.mockImplementationOnce(() => {
+      throw new Error("NEXT_REDIRECT");
+    });
+    await expect(IntegrationsPage()).rejects.toThrow("NEXT_REDIRECT");
   });
 
   it("lets requireOrganization handle the redirect when there is no session", async () => {

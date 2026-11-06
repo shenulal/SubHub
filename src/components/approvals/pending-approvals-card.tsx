@@ -20,12 +20,25 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowUpRight, ClipboardCheck } from "lucide-react";
 import { useTranslations } from "next-intl";
 import Link from "next/link";
+import { useState } from "react";
+import { ApprovalRowActions } from "./approval-row-actions";
 import { ApprovalStatusBadge } from "./approval-status-badge";
+import { DecisionDialog } from "./decision/decision-dialog";
+import {
+  targetOf,
+  type DecisionKind,
+  type DecisionTarget,
+} from "./decision/types";
 import { formatMoney, userLabel } from "./format";
 
 export function PendingApprovalsCard({ className }: { className?: string }) {
   const t = useTranslations("approvals.summary");
   const tc = useTranslations("approvals.common");
+  const tInbox = useTranslations("approvals.inbox");
+  const [decision, setDecision] = useState<{
+    kind: DecisionKind;
+    target: DecisionTarget;
+  } | null>(null);
   const { data, isLoading } = useQuery({
     queryKey: ["approvals", "summary"],
     queryFn: async () => {
@@ -107,17 +120,27 @@ export function PendingApprovalsCard({ className }: { className?: string }) {
                 </p>
                 <ul className="divide-border divide-y">
                   {data.items.map((item) => (
-                    <li key={item.id}>
+                    <li
+                      key={item.id}
+                      className="-mx-2 flex min-w-0 items-center gap-2"
+                    >
                       <Link
                         href={`/approvals/${item.id}`}
-                        className="hover:bg-accent -mx-2 flex min-w-0 items-center justify-between gap-3 rounded-md px-2 py-2.5 transition-colors"
+                        className="hover:bg-accent flex min-w-0 flex-1 items-center justify-between gap-3 rounded-md px-2 py-2.5 transition-colors"
                       >
                         <div className="min-w-0">
-                          <p
-                            className="text-foreground truncate text-sm font-medium"
-                            title={item.serviceName}
-                          >
-                            {item.serviceName}
+                          <p className="flex min-w-0 items-center gap-2">
+                            <span
+                              className="text-foreground truncate text-sm font-medium"
+                              title={item.serviceName}
+                            >
+                              {item.serviceName}
+                            </span>
+                            {item.isAwaitingMe && (
+                              <span className="tonal-primary shrink-0 rounded-full px-2 py-0.5 text-[0.6875rem] font-medium">
+                                {tInbox("awaitingYou")}
+                              </span>
+                            )}
                           </p>
                           <p className="text-muted-foreground truncate text-xs">
                             {userLabel(item.requester, tc("unknownUser"))}
@@ -127,9 +150,20 @@ export function PendingApprovalsCard({ className }: { className?: string }) {
                           <span className="text-sm font-medium whitespace-nowrap tabular-nums">
                             {formatMoney(item.monthlyAmount, item.currency)}
                           </span>
-                          <ApprovalStatusBadge status={item.status} />
+                          {!item.canDecide && (
+                            <ApprovalStatusBadge status={item.status} />
+                          )}
                         </div>
                       </Link>
+                      {item.canDecide && (
+                        <ApprovalRowActions
+                          row={item}
+                          compact
+                          onDecide={(kind, row) =>
+                            setDecision({ kind, target: targetOf(row) })
+                          }
+                        />
+                      )}
                     </li>
                   ))}
                 </ul>
@@ -138,6 +172,11 @@ export function PendingApprovalsCard({ className }: { className?: string }) {
           </>
         )}
       </CardContent>
+      <DecisionDialog
+        kind={decision?.kind ?? null}
+        target={decision?.target ?? null}
+        onClose={() => setDecision(null)}
+      />
     </Card>
   );
 }

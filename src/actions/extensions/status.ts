@@ -7,6 +7,7 @@
 
 import { requireOrganization } from "@/lib/auth/require-auth";
 import { prisma } from "@/lib/db";
+import { can, requirePermission } from "@/lib/rbac/service";
 import { revalidatePath } from "next/cache";
 
 export interface ExtensionDeviceStatusItem {
@@ -128,7 +129,7 @@ function computeDeviceStatus(
 export async function getExtensionStatus(
   filters: ExtensionStatusFilters
 ): Promise<ExtensionStatusResult> {
-  const { organizationId } = await requireOrganization();
+  const { organizationId } = await requirePermission("extensions:read");
   const page = filters.page || 1;
   const limit = Math.min(filters.limit || 50, 100);
 
@@ -266,10 +267,13 @@ export async function getExtensionStatus(
 export async function updateInactiveThreshold(
   minutes: number
 ): Promise<{ success: boolean; message: string }> {
-  const { organizationId, role } = await requireOrganization();
+  const { organizationId } = await requireOrganization();
 
-  if (role !== "ADMIN") {
-    return { success: false, message: "Only admins can change settings" };
+  if (!(await can("extensions:manage"))) {
+    return {
+      success: false,
+      message: "You do not have permission to change extension settings",
+    };
   }
 
   if (minutes < 5 || minutes > 10080) {
@@ -293,9 +297,9 @@ export async function updateInactiveThreshold(
 export async function deleteExtensionDevice(
   deviceId: string
 ): Promise<{ success: boolean; message: string }> {
-  const { organizationId, role } = await requireOrganization();
+  const { organizationId } = await requireOrganization();
 
-  if (role !== "ADMIN") {
+  if (!(await can("extensions:manage"))) {
     return {
       success: false,
       message: "Only admins can delete devices",

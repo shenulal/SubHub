@@ -8,6 +8,7 @@ import type { Locale } from "@/i18n/config";
 
 import enBase from "./en.json";
 import enApprovals from "./en/approvals.json";
+import enAuth from "./en/auth.json";
 import enDiscovery from "./en/discovery.json";
 import enLifecycle from "./en/lifecycle.json";
 import enNotifications from "./en/notifications.json";
@@ -46,6 +47,7 @@ const FEATURE_MESSAGES: Record<Locale, Messages[]> = {
     enReceipts,
     enDiscovery,
     enShell,
+    enAuth,
   ],
 };
 

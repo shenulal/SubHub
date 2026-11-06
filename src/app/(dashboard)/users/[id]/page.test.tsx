@@ -5,6 +5,21 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import UserDetailPage from "./page";
 
 // Mock actions
+// RBAC: the page guard passes (permission gating is covered in src/lib/rbac)
+vi.mock("@/lib/rbac/service", async () => {
+  const { PERMISSION_KEYS } = await import("@/lib/rbac/permissions");
+  const all = new Set<string>(PERMISSION_KEYS);
+  return {
+    can: vi.fn(async () => true),
+    requirePermissionOrRedirect: vi.fn(async () => ({
+      userId: "user-1",
+      organizationId: "org-1",
+      role: "ADMIN",
+      permissions: all,
+    })),
+    getUserPermissionSet: vi.fn(async () => all),
+  };
+});
 vi.mock("@/actions/users", () => ({
   getUserCached: vi.fn(),
 }));

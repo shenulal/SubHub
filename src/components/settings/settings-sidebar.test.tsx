@@ -27,4 +27,26 @@ describe("SettingsSidebar", () => {
       screen.getByRole("link", { name: /Privacy & data/ })
     ).toHaveAttribute("href", "/settings/privacy");
   });
+
+  it("gates each entry on the viewer's permissions", () => {
+    render(
+      <SettingsSidebar
+        permissions={["notifications:manage_own", "roles:manage", "tags:read"]}
+      />
+    );
+    expect(
+      screen.getByRole("link", { name: /Roles & permissions/ })
+    ).toBeTruthy();
+    expect(screen.getByRole("link", { name: /Master data/ })).toBeTruthy();
+    expect(screen.getByRole("link", { name: /Profile/ })).toBeTruthy();
+    expect(screen.getByRole("link", { name: /Appearance/ })).toBeTruthy();
+    expect(
+      screen.queryByRole("link", { name: /Workspace settings/ })
+    ).toBeNull();
+    expect(screen.queryByRole("link", { name: /Organization/ })).toBeNull();
+    expect(
+      screen.queryByRole("link", { name: /Notification templates/ })
+    ).toBeNull();
+    expect(screen.queryByRole("link", { name: /Mailboxes/ })).toBeNull();
+  });
 });

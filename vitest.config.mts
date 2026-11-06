@@ -60,10 +60,12 @@ export default defineConfig({
     // Reporter settings
     reporters: ["default", "html"],
 
-    // framer-motion ESM compatibility (so it works under jsdom)
+    // framer-motion ESM compatibility (so it works under jsdom). next-auth imports
+    // "next/server" without an extension, which Node's resolver rejects; letting
+    // Vite transform it fixes suites that reach the server auth config.
     server: {
       deps: {
-        inline: ["framer-motion"],
+        inline: ["framer-motion", "next-auth"],
       },
     },
   },

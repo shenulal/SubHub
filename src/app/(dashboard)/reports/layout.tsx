@@ -1,5 +1,6 @@
 import { ReportsSidebar } from "@/components/reports/reports-sidebar";
 import { Card } from "@/components/ui/card";
+import { requirePermissionOrRedirect } from "@/lib/rbac/service";
 import { getTranslations } from "next-intl/server";
 
 interface ReportsLayoutProps {
@@ -7,6 +8,7 @@ interface ReportsLayoutProps {
 }
 
 export default async function ReportsLayout({ children }: ReportsLayoutProps) {
+  await requirePermissionOrRedirect("reports:read", "/dashboard");
   const t = await getTranslations("sidebar.menu.reports");
 
   return (

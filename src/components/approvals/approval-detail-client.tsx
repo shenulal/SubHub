@@ -18,6 +18,7 @@ import Link from "next/link";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { ApprovalActions } from "./approval-actions";
+import { ApprovalDecisionSummaryCard } from "./approval-decision-summary";
 import { ApprovalStatusBadge } from "./approval-status-badge";
 import { ApprovalStepsList } from "./approval-steps-list";
 import { ApprovalTimeline } from "./approval-timeline";
@@ -173,6 +174,10 @@ export function ApprovalDetailClient({
               )}
             </CardContent>
           </Card>
+
+          {request.decision && (
+            <ApprovalDecisionSummaryCard decision={request.decision} />
+          )}
 
           <Card>
             <CardHeader>

@@ -1,11 +1,11 @@
 // src/components/subscriptions/subscription-detail-app-card.tsx
 "use client";
 
+import { AppLogo } from "@/components/apps/app-logo";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import type { BillingCycle, SubscriptionStatus } from "@prisma/client";
 import { useTranslations } from "next-intl";
-import Image from "next/image";
 import {
   getBillingCycleLabels,
   getStatusLabels,
@@ -38,19 +38,12 @@ export function SubscriptionDetailAppCard({
     <Card>
       <CardContent className="p-6">
         <div className="flex flex-col items-center text-center">
-          {appLogoUrl ? (
-            <Image
-              src={appLogoUrl}
-              alt={appName}
-              width={96}
-              height={96}
-              className="size-24 rounded-md border object-contain p-1"
-            />
-          ) : (
-            <div className="tonal-primary flex size-24 items-center justify-center rounded-md text-3xl font-medium">
-              {appName.charAt(0)}
-            </div>
-          )}
+          <AppLogo
+            src={appLogoUrl}
+            name={appName}
+            className="size-24 rounded-md p-1"
+            fallbackClassName="text-3xl"
+          />
           <h2
             className="text-foreground mt-4 max-w-full truncate text-xl font-medium"
             title={appName}
