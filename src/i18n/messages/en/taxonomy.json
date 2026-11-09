@@ -64,7 +64,19 @@
       "empty": "No categories yet. Add one to get started.",
       "topLevelCount": "{count, plural, =1 {1 category} other {# categories}}",
       "expand": "Expand",
-      "collapse": "Collapse"
+      "collapse": "Collapse",
+      "search": "Search categories",
+      "viewTree": "Tree",
+      "viewList": "List",
+      "viewLabel": "View",
+      "columns": {
+        "name": "Category",
+        "parent": "Parent",
+        "subscriptions": "Subscriptions",
+        "status": "Status"
+      },
+      "topLevel": "Top level",
+      "statusActive": "Active"
     },
     "tags": {
       "title": "Tags",
@@ -88,7 +100,8 @@
         "name": "Tag",
         "usage": "Used by",
         "color": "Colour"
-      }
+      },
+      "search": "Search tags"
     },
     "customFields": {
       "title": "Custom fields",
@@ -127,7 +140,8 @@
       },
       "multiSelectPlaceholder": "Select one or more…",
       "searchOptions": "Search options",
-      "noOptions": "No matching options"
+      "noOptions": "No matching options",
+      "search": "Search custom fields"
     },
     "cancellation": {
       "title": "How to cancel",

@@ -96,4 +96,15 @@ describe("CustomFieldManager", () => {
       screen.getByRole("heading", { name: "New custom field" })
     ).toBeInTheDocument();
   });
+  it("lists fields in a table that can be searched", () => {
+    render(<CustomFieldManager fields={fields} maxFields={5} canManage />);
+    expect(screen.getByRole("table")).toBeInTheDocument();
+    expect(screen.getByText("Showing 2 of 2")).toBeInTheDocument();
+    fireEvent.change(screen.getByRole("searchbox"), {
+      target: { value: "tier" },
+    });
+    expect(screen.getByText("Tier")).toBeInTheDocument();
+    expect(screen.queryByText("Owner")).not.toBeInTheDocument();
+    expect(screen.getByText("Showing 1 of 2")).toBeInTheDocument();
+  });
 });

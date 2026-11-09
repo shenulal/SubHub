@@ -3,7 +3,6 @@
 /** Master data → Countries (platform-wide; edits need masters:manage_global). */
 import { setCountryActive } from "@/actions/platform/masters/countries";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Table,
   TableBody,
@@ -17,9 +16,14 @@ import type { CountryRow } from "@/types/platform";
 import { Pencil, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
-import { useMemo, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { CountryDialog } from "./country-dialog";
+import {
+  MasterListNoMatches,
+  MasterListToolbar,
+  useMasterList,
+} from "./master-list";
 import { ActiveToggleButton, PanelHeader, StatusBadge } from "./master-shared";
 
 export interface CountriesPanelProps {
@@ -30,12 +34,6 @@ export interface CountriesPanelProps {
 
 type DialogState = { country: CountryRow | null } | null;
 
-function matches(row: CountryRow, q: string): boolean {
-  return [row.code, row.name, row.region ?? "", row.currencyCode ?? ""].some(
-    (v) => v.toLowerCase().includes(q)
-  );
-}
-
 export function CountriesPanel({
   rows,
   currencyCodes,
@@ -44,14 +42,20 @@ export function CountriesPanel({
   const t = useTranslations("platform.masters.countries");
   const tc = useTranslations("platform.masters.common");
   const router = useRouter();
-  const [query, setQuery] = useState("");
   const [dialog, setDialog] = useState<DialogState>(null);
   const [isPending, startTransition] = useTransition();
 
-  const visible = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    return q ? rows.filter((r) => matches(r, q)) : rows;
-  }, [rows, query]);
+  const list = useMasterList(rows, {
+    searchText: (r) => [
+      r.code,
+      r.name,
+      r.region,
+      r.currencyCode,
+      r.phonePrefix,
+    ],
+    isActive: (r) => r.isActive,
+  });
+  const visible = list.visible;
 
   const setActive = (code: string, isActive: boolean) => {
     startTransition(async () => {
@@ -75,13 +79,7 @@ export function CountriesPanel({
           )
         }
       />
-      <Input
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        placeholder={t("search")}
-        aria-label={t("search")}
-        className="mb-4 w-full sm:max-w-xs"
-      />
+      <MasterListToolbar list={list} searchPlaceholder={t("search")} />
       <div className="overflow-x-auto rounded-md border">
         <Table>
           <TableHeader>
@@ -103,7 +101,10 @@ export function CountriesPanel({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {visible.length === 0 && (
+            {rows.length > 0 && visible.length === 0 && (
+              <MasterListNoMatches colSpan={canManageGlobal ? 8 : 7} />
+            )}
+            {rows.length === 0 && (
               <TableRow>
                 <TableCell
                   colSpan={8}

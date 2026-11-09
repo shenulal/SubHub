@@ -20,6 +20,11 @@ import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
 import {
+  MasterListNoMatches,
+  MasterListToolbar,
+  useMasterList,
+} from "./master-list";
+import {
   ConfirmDelete,
   DefaultBadge,
   PanelHeader,
@@ -56,6 +61,12 @@ export function PaymentMethodsPanel({
   const [isPending, startTransition] = useTransition();
 
   useEffect(() => setOrdered(rows), [rows]);
+  const list = useMasterList(ordered, {
+    searchText: (r) => [r.code, r.name, r.kind, r.corporateCardLabel],
+    isActive: (r) => r.isActive,
+  });
+  // Reordering works on the full list, so it is paused while filtering.
+  const isFiltered = list.visible.length !== ordered.length;
 
   const reorder = (from: number, to: number) => {
     const next = move(ordered, from, to);
@@ -96,7 +107,8 @@ export function PaymentMethodsPanel({
           )
         }
       />
-      <div className="overflow-hidden rounded-md border">
+      <MasterListToolbar list={list} searchPlaceholder={t("search")} />
+      <div className="overflow-x-auto rounded-md border">
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
@@ -106,7 +118,9 @@ export function PaymentMethodsPanel({
               <TableHead className="w-36">{tc("code")}</TableHead>
               <TableHead>{tc("name")}</TableHead>
               <TableHead className="w-24">{t("kind")}</TableHead>
-              <TableHead>{t("linkedCard")}</TableHead>
+              <TableHead className="hidden 2xl:table-cell">
+                {t("linkedCard")}
+              </TableHead>
               <TableHead className="w-28">{tc("status")}</TableHead>
               {canManage && (
                 <TableHead className="w-24 text-right">
@@ -116,74 +130,89 @@ export function PaymentMethodsPanel({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {ordered.map((row, index) => (
-              <TableRow key={row.id}>
-                {canManage && (
+            {ordered.length > 0 && list.visible.length === 0 && (
+              <MasterListNoMatches colSpan={canManage ? 7 : 5} />
+            )}
+            {list.visible.map((row) => {
+              const index = ordered.indexOf(row);
+              return (
+                <TableRow key={row.id}>
+                  {canManage && (
+                    <TableCell>
+                      <div className="flex gap-0.5">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          aria-label={t("moveUp")}
+                          disabled={index === 0 || isPending || isFiltered}
+                          onClick={() => reorder(index, index - 1)}
+                        >
+                          <ArrowUp className="h-3.5 w-3.5" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          aria-label={t("moveDown")}
+                          disabled={
+                            index === ordered.length - 1 ||
+                            isPending ||
+                            isFiltered
+                          }
+                          onClick={() => reorder(index, index + 1)}
+                        >
+                          <ArrowDown className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  )}
+                  <TableCell className="font-mono text-xs font-medium">
+                    {row.code}
+                  </TableCell>
                   <TableCell>
-                    <div className="flex gap-0.5">
+                    <span className="flex items-center gap-2 font-medium">
+                      {row.name}
+                      {row.isDefault && <DefaultBadge />}
+                    </span>
+                    {row.corporateCardLabel && (
+                      <span className="text-muted-foreground block text-xs 2xl:hidden">
+                        {t("linkedCard")}: {row.corporateCardLabel}
+                      </span>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <span className="tonal-neutral rounded px-1.5 py-0.5 text-xs font-medium tracking-wide">
+                      {row.kind}
+                    </span>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground hidden text-sm 2xl:table-cell">
+                    {row.corporateCardLabel ?? "—"}
+                  </TableCell>
+                  <TableCell>
+                    <StatusBadge active={row.isActive} />
+                  </TableCell>
+                  {canManage && (
+                    <TableCell className="text-right">
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-7 w-7"
-                        aria-label={t("moveUp")}
-                        disabled={index === 0 || isPending}
-                        onClick={() => reorder(index, index - 1)}
+                        className="h-8 w-8"
+                        aria-label={tc("edit")}
+                        onClick={() => setDialog({ row })}
                       >
-                        <ArrowUp className="h-3.5 w-3.5" />
+                        <Pencil className="h-4 w-4" />
                       </Button>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
-                        aria-label={t("moveDown")}
-                        disabled={index === ordered.length - 1 || isPending}
-                        onClick={() => reorder(index, index + 1)}
-                      >
-                        <ArrowDown className="h-3.5 w-3.5" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                )}
-                <TableCell className="font-mono text-xs font-medium">
-                  {row.code}
-                </TableCell>
-                <TableCell>
-                  <span className="flex items-center gap-2 font-medium">
-                    {row.name}
-                    {row.isDefault && <DefaultBadge />}
-                  </span>
-                </TableCell>
-                <TableCell>
-                  <span className="tonal-neutral rounded px-1.5 py-0.5 text-xs font-medium tracking-wide">
-                    {row.kind}
-                  </span>
-                </TableCell>
-                <TableCell className="text-muted-foreground text-sm">
-                  {row.corporateCardLabel ?? "—"}
-                </TableCell>
-                <TableCell>
-                  <StatusBadge active={row.isActive} />
-                </TableCell>
-                {canManage && (
-                  <TableCell className="text-right">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-8 w-8"
-                      aria-label={tc("edit")}
-                      onClick={() => setDialog({ row })}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Button>
-                    <ConfirmDelete
-                      label={row.name}
-                      onConfirm={() => remove(row.id)}
-                      disabled={isPending}
-                    />
-                  </TableCell>
-                )}
-              </TableRow>
-            ))}
+                      <ConfirmDelete
+                        label={row.name}
+                        onConfirm={() => remove(row.id)}
+                        disabled={isPending}
+                      />
+                    </TableCell>
+                  )}
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </div>

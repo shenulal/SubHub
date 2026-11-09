@@ -20,9 +20,22 @@ import {
   reorderCustomFields,
   restoreCustomField,
 } from "@/actions/taxonomy/custom-fields";
+import {
+  MasterListNoMatches,
+  MasterListToolbar,
+  useMasterList,
+} from "@/components/platform/masters/master-list";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { cn } from "@/lib/utils";
 import type { CustomFieldDefinitionDto } from "@/types/taxonomy";
 
@@ -51,7 +64,16 @@ export function CustomFieldManager({
   const [busy, setBusy] = useState(false);
 
   const active = fields.filter((f) => !f.isArchived);
-  const visible = showArchived ? fields : active;
+  const shown = showArchived ? fields : active;
+  const list = useMasterList(shown, {
+    searchText: (f) => [
+      f.label,
+      f.key,
+      t(`types.${f.fieldType}`),
+      ...(f.options ?? []),
+    ],
+  });
+  const visible = list.visible;
   const limitReached = active.length >= maxFields;
 
   const run = async (fn: () => Promise<Result>) => {
@@ -113,115 +135,156 @@ export function CustomFieldManager({
         </div>
       </div>
 
-      {visible.length === 0 ? (
+      {shown.length === 0 ? (
         <p className="text-muted-foreground rounded-md border border-dashed p-8 text-center text-sm">
           {t("empty")}
         </p>
       ) : (
-        <ol className="divide-y rounded-md border">
-          {visible.map((field) => {
-            const index = active.findIndex((f) => f.id === field.id);
-            return (
-              <li
-                key={field.id}
-                className={cn(
-                  "group flex items-center gap-3 px-3 py-2.5",
-                  field.isArchived && "opacity-60"
+        <div>
+          <MasterListToolbar list={list} searchPlaceholder={t("search")} />
+          <div className="overflow-x-auto rounded-md border">
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  <TableHead className="w-12 text-right">#</TableHead>
+                  <TableHead>{t("labelLabel")}</TableHead>
+                  <TableHead>{t("keyLabel")}</TableHead>
+                  <TableHead className="w-32">{t("typeLabel")}</TableHead>
+                  <TableHead className="hidden xl:table-cell">
+                    {t("optionsLabel")}
+                  </TableHead>
+                  <TableHead className="w-28 text-right">
+                    {tc("usage")}
+                  </TableHead>
+                  {canManage && (
+                    <TableHead className="w-36 text-right">
+                      {tc("actions")}
+                    </TableHead>
+                  )}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {visible.length === 0 && (
+                  <MasterListNoMatches colSpan={canManage ? 7 : 6} />
                 )}
-              >
-                <span className="text-muted-foreground w-5 text-right text-xs tabular-nums">
-                  {index >= 0 ? index + 1 : "–"}
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                    <span className="font-medium">{field.label}</span>
-                    {field.isRequired && (
-                      <Badge
-                        variant="outline"
-                        className="text-destructive border-destructive/40 h-5 font-normal"
-                      >
-                        {t("requiredMarker")}
-                      </Badge>
-                    )}
-                    {field.isArchived && (
-                      <Badge variant="secondary" className="h-5 font-normal">
-                        {tc("archived")}
-                      </Badge>
-                    )}
-                  </div>
-                  <p className="text-muted-foreground truncate font-mono text-xs">
-                    {field.key} · {t(`types.${field.fieldType}`)}
-                    {isOptionFieldType(field.fieldType) && field.options?.length
-                      ? ` · ${field.options.join(", ")}`
-                      : ""}
-                  </p>
-                </div>
-                <span className="text-muted-foreground w-20 shrink-0 text-right text-xs tabular-nums">
-                  {t("usage", { count: field.usageCount ?? 0 })}
-                </span>
-                {canManage && (
-                  <div className="flex shrink-0 items-center gap-0.5 opacity-60 group-hover:opacity-100 focus-within:opacity-100">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      aria-label={tc("moveUp")}
-                      disabled={busy || field.isArchived || index <= 0}
-                      onClick={() => move(field.id, -1)}
+                {visible.map((field) => {
+                  const index = active.findIndex((f) => f.id === field.id);
+                  return (
+                    <TableRow
+                      key={field.id}
+                      className={cn(field.isArchived && "opacity-60")}
                     >
-                      <ArrowUp className="size-3.5" />
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      aria-label={tc("moveDown")}
-                      disabled={
-                        busy || field.isArchived || index >= active.length - 1
-                      }
-                      onClick={() => move(field.id, 1)}
-                    >
-                      <ArrowDown className="size-3.5" />
-                    </Button>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      aria-label={tc("edit")}
-                      disabled={busy}
-                      onClick={() => setDialog({ field })}
-                    >
-                      <Pencil className="size-3.5" />
-                    </Button>
-                    {field.isArchived ? (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        aria-label={tc("restore")}
-                        disabled={busy || limitReached}
-                        onClick={() => run(() => restoreCustomField(field.id))}
-                      >
-                        <ArchiveRestore className="size-3.5" />
-                      </Button>
-                    ) : (
-                      <Button
-                        type="button"
-                        variant="ghost"
-                        size="icon-sm"
-                        aria-label={tc("archive")}
-                        disabled={busy}
-                        onClick={() => run(() => archiveCustomField(field.id))}
-                      >
-                        <Archive className="size-3.5" />
-                      </Button>
-                    )}
-                  </div>
-                )}
-              </li>
-            );
-          })}
-        </ol>
+                      <TableCell className="text-muted-foreground text-right text-xs tabular-nums">
+                        {index >= 0 ? index + 1 : "–"}
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                          <span className="font-medium">{field.label}</span>
+                          {field.isRequired && (
+                            <Badge
+                              variant="outline"
+                              className="text-destructive border-destructive/40 h-5 font-normal"
+                            >
+                              {t("requiredMarker")}
+                            </Badge>
+                          )}
+                          {field.isArchived && (
+                            <Badge
+                              variant="secondary"
+                              className="h-5 font-normal"
+                            >
+                              {tc("archived")}
+                            </Badge>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-mono text-xs">
+                        {field.key}
+                      </TableCell>
+                      <TableCell>{t(`types.${field.fieldType}`)}</TableCell>
+                      <TableCell className="text-muted-foreground hidden max-w-xs truncate text-xs xl:table-cell">
+                        {isOptionFieldType(field.fieldType) &&
+                        field.options?.length
+                          ? field.options.join(", ")
+                          : "—"}
+                      </TableCell>
+                      <TableCell className="text-muted-foreground text-right text-xs tabular-nums">
+                        {t("usage", { count: field.usageCount ?? 0 })}
+                      </TableCell>
+                      {canManage && (
+                        <TableCell>
+                          <div className="flex items-center justify-end gap-0.5">
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon-sm"
+                              aria-label={tc("moveUp")}
+                              disabled={busy || field.isArchived || index <= 0}
+                              onClick={() => move(field.id, -1)}
+                            >
+                              <ArrowUp className="size-3.5" />
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon-sm"
+                              aria-label={tc("moveDown")}
+                              disabled={
+                                busy ||
+                                field.isArchived ||
+                                index >= active.length - 1
+                              }
+                              onClick={() => move(field.id, 1)}
+                            >
+                              <ArrowDown className="size-3.5" />
+                            </Button>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon-sm"
+                              aria-label={tc("edit")}
+                              disabled={busy}
+                              onClick={() => setDialog({ field })}
+                            >
+                              <Pencil className="size-3.5" />
+                            </Button>
+                            {field.isArchived ? (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon-sm"
+                                aria-label={tc("restore")}
+                                disabled={busy || limitReached}
+                                onClick={() =>
+                                  run(() => restoreCustomField(field.id))
+                                }
+                              >
+                                <ArchiveRestore className="size-3.5" />
+                              </Button>
+                            ) : (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon-sm"
+                                aria-label={tc("archive")}
+                                disabled={busy}
+                                onClick={() =>
+                                  run(() => archiveCustomField(field.id))
+                                }
+                              >
+                                <Archive className="size-3.5" />
+                              </Button>
+                            )}
+                          </div>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
       )}
       <p className="text-muted-foreground text-xs">{t("archivedHint")}</p>
 

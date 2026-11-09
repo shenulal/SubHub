@@ -106,7 +106,9 @@
         "globalHint": "Currencies are shared by every workspace on the platform.",
         "enableNow": "Enable for this workspace",
         "created": "Currency added",
-        "codeHint": "Three-letter ISO 4217 code, e.g. AED"
+        "codeHint": "Three-letter ISO 4217 code, e.g. AED",
+        "statusEnabled": "Enabled",
+        "statusDisabled": "Disabled"
       },
       "taxRates": {
         "title": "Tax rates",
@@ -120,7 +122,8 @@
         "validity": "Validity",
         "validFrom": "Valid from",
         "validTo": "Valid to",
-        "empty": "No tax rates yet."
+        "empty": "No tax rates yet.",
+        "search": "Search tax rates"
       },
       "costCenters": {
         "title": "Cost centres",
@@ -133,7 +136,8 @@
         "team": "Team",
         "monthlyBudget": "Monthly budget",
         "budgetCurrency": "Budget currency",
-        "empty": "No cost centres yet."
+        "empty": "No cost centres yet.",
+        "search": "Search cost centres"
       },
       "paymentMethods": {
         "title": "Payment methods",
@@ -145,7 +149,8 @@
         "kind": "Kind",
         "linkedCard": "Linked corporate card",
         "moveUp": "Move up",
-        "moveDown": "Move down"
+        "moveDown": "Move down",
+        "search": "Search payment methods"
       },
       "billingCycles": {
         "title": "Billing cycles",
@@ -153,7 +158,10 @@
         "cycle": "Cycle",
         "label": "Label",
         "months": "Months",
-        "enabled": "Enabled"
+        "enabled": "Enabled",
+        "search": "Search billing cycles",
+        "statusEnabled": "Enabled",
+        "statusDisabled": "Disabled"
       },
       "inline": {
         "create": "Create “{name}”",
@@ -215,6 +223,14 @@
         "activate": "Activate",
         "deactivate": "Deactivate",
         "price": "Price"
+      },
+      "list": {
+        "allStatuses": "All statuses",
+        "active": "Active",
+        "inactive": "Inactive",
+        "statusFilter": "Filter by status",
+        "showing": "Showing {shown} of {total}",
+        "noMatches": "No records match your search or filter."
       }
     },
     "roles": {

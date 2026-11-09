@@ -21,9 +21,14 @@ import {
   reorderCategories,
   restoreCategory,
 } from "@/actions/taxonomy/categories";
+import {
+  MasterListToolbar,
+  useMasterList,
+} from "@/components/platform/masters/master-list";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { cn } from "@/lib/utils";
 import type { CategoryNode } from "@/types/taxonomy";
 
@@ -31,6 +36,7 @@ import {
   CategoryFormDialog,
   type CategoryFormDialogProps,
 } from "./category-form-dialog";
+import { CategoryListView, flattenCategories } from "./category-list-view";
 
 export interface CategoryTreeEditorProps {
   tree: CategoryNode[];
@@ -38,6 +44,10 @@ export interface CategoryTreeEditorProps {
 }
 
 type DialogState = Pick<CategoryFormDialogProps, "category" | "parent"> | null;
+type CategoryView = "tree" | "list";
+
+const VIEW_ITEM_CLASSES =
+  "text-muted-foreground data-[state=on]:bg-card data-[state=on]:text-primary h-8 shrink-0 rounded-sm px-3 text-sm whitespace-nowrap data-[state=on]:font-medium data-[state=on]:shadow-xs";
 
 function moveId(ids: string[], id: string, direction: -1 | 1): string[] | null {
   const index = ids.indexOf(id);
@@ -250,6 +260,25 @@ export function CategoryTreeEditor({
       .map((p) => ({ ...p, children: p.children.filter(keep) }));
   }, [tree, showArchived]);
   const refresh = () => router.refresh();
+  const [view, setView] = useState<CategoryView>("tree");
+  const flat = useMemo(() => flattenCategories(visible), [visible]);
+  const list = useMasterList(flat, {
+    searchText: (row) => [row.node.name, row.parent?.name],
+  });
+  const isSearching = list.query.trim() !== "";
+  // Tree shown while searching: a parent stays when it or a child matches.
+  // Reordering still uses the full `visible` siblings, never the filtered ones.
+  const treeShown = useMemo(() => {
+    if (!isSearching) return visible;
+    const hit = new Set(list.visible.map((row) => row.node.id));
+    return visible
+      .filter((p) => hit.has(p.id) || p.children.some((c) => hit.has(c.id)))
+      .map((p) =>
+        hit.has(p.id)
+          ? p
+          : { ...p, children: p.children.filter((c) => hit.has(c.id)) }
+      );
+  }, [visible, list.visible, isSearching]);
 
   return (
     <div className="space-y-4">
@@ -257,7 +286,21 @@ export function CategoryTreeEditor({
         <p className="text-muted-foreground max-w-prose text-sm">
           {t("description")}
         </p>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <ToggleGroup
+            type="single"
+            value={view}
+            onValueChange={(value) => value && setView(value as CategoryView)}
+            aria-label={t("viewLabel")}
+            className="bg-muted shrink-0 gap-0 rounded-md p-[3px]"
+          >
+            <ToggleGroupItem value="tree" className={VIEW_ITEM_CLASSES}>
+              {t("viewTree")}
+            </ToggleGroupItem>
+            <ToggleGroupItem value="list" className={VIEW_ITEM_CLASSES}>
+              {t("viewList")}
+            </ToggleGroupItem>
+          </ToggleGroup>
           <label className="text-muted-foreground flex items-center gap-2 text-sm">
             <Switch
               checked={showArchived}
@@ -275,13 +318,28 @@ export function CategoryTreeEditor({
         </div>
       </div>
 
+      {visible.length > 0 && (
+        <MasterListToolbar list={list} searchPlaceholder={t("search")} />
+      )}
+
       {visible.length === 0 ? (
         <p className="text-muted-foreground rounded-md border border-dashed p-8 text-center text-sm">
           {t("empty")}
         </p>
+      ) : view === "list" ? (
+        <CategoryListView
+          rows={list.visible}
+          canManage={canManage}
+          onEdit={(node) => setDialog({ category: node })}
+          onChanged={refresh}
+        />
+      ) : treeShown.length === 0 ? (
+        <p className="text-muted-foreground rounded-md border p-8 text-center text-sm">
+          {tc("noResults")}
+        </p>
       ) : (
         <div className="divide-y rounded-md border">
-          {visible.map((parent) => {
+          {treeShown.map((parent) => {
             const expanded = !collapsed[parent.id];
             return (
               <div key={parent.id} className="py-1">
@@ -308,7 +366,10 @@ export function CategoryTreeEditor({
                         <CategoryRow
                           key={child.id}
                           node={child}
-                          siblings={parent.children}
+                          siblings={
+                            visible.find((p) => p.id === parent.id)?.children ??
+                            parent.children
+                          }
                           canManage={canManage}
                           isChild
                           onEdit={() => setDialog({ category: child })}

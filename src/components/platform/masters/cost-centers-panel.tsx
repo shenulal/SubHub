@@ -21,6 +21,11 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import { CostCenterDialog } from "./cost-center-dialog";
+import {
+  MasterListNoMatches,
+  MasterListToolbar,
+  useMasterList,
+} from "./master-list";
 import { ConfirmDelete, PanelHeader, StatusBadge } from "./master-shared";
 
 interface CostCentersPanelProps {
@@ -38,6 +43,10 @@ export function CostCentersPanel({
 }: CostCentersPanelProps) {
   const t = useTranslations("platform.masters.costCenters");
   const tc = useTranslations("platform.masters.common");
+  const list = useMasterList(rows, {
+    searchText: (r) => [r.code, r.name, r.description, r.ownerName, r.teamName],
+    isActive: (r) => r.isActive,
+  });
   const router = useRouter();
   const [dialog, setDialog] = useState<DialogState>(null);
   const [isPending, startTransition] = useTransition();
@@ -66,7 +75,8 @@ export function CostCentersPanel({
           )
         }
       />
-      <div className="overflow-hidden rounded-md border">
+      <MasterListToolbar list={list} searchPlaceholder={t("search")} />
+      <div className="overflow-x-auto rounded-md border">
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
@@ -94,7 +104,10 @@ export function CostCentersPanel({
                 </TableCell>
               </TableRow>
             )}
-            {rows.map((row) => (
+            {rows.length > 0 && list.visible.length === 0 && (
+              <MasterListNoMatches colSpan={canManage ? 7 : 6} />
+            )}
+            {list.visible.map((row) => (
               <TableRow key={row.id}>
                 <TableCell className="font-mono text-xs font-medium">
                   {row.code}

@@ -55,4 +55,21 @@ describe("SubscriptionsSidebar permission gating", () => {
     expect(hrefs()).not.toContain("/subscriptions/receipts");
     expect(hrefs()).toContain("/subscriptions");
   });
+
+  it("links the Apps list for every role that can read apps", () => {
+    for (const role of ["ADMIN", "APPROVER", "MEMBER", "VIEWER"] as const) {
+      const { unmount } = renderAs(role);
+      const canRead = (
+        SYSTEM_ROLE_TEMPLATES[role].grants as readonly string[]
+      ).includes("apps:read");
+      if (canRead) expect(hrefs()).toContain("/apps");
+      else expect(hrefs()).not.toContain("/apps");
+      unmount();
+    }
+    renderAs("ADMIN");
+    expect(screen.getByRole("link", { name: /Apps/ })).toHaveAttribute(
+      "href",
+      "/apps"
+    );
+  });
 });

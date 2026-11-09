@@ -68,4 +68,13 @@ describe("TagManager", () => {
     fireEvent.click(screen.getByRole("button", { name: "Merge" }));
     expect(screen.getByRole("dialog")).toBeInTheDocument();
   });
+  it("searches the tag list", () => {
+    render(<TagManager tags={tags} canManage={false} canCreate={false} />);
+    fireEvent.change(screen.getByRole("searchbox", { name: "Search tags" }), {
+      target: { value: "fin" },
+    });
+    expect(screen.getByText("Finance")).toBeInTheDocument();
+    expect(screen.queryByText("Ops")).not.toBeInTheDocument();
+    expect(screen.getByText("Showing 1 of 2")).toBeInTheDocument();
+  });
 });

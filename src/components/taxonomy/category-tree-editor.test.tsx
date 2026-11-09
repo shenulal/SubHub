@@ -92,4 +92,41 @@ describe("CategoryTreeEditor", () => {
       screen.getByRole("heading", { name: "New category" })
     ).toBeInTheDocument();
   });
+  it("switches to a flat list with the parent of each category", () => {
+    render(<CategoryTreeEditor tree={tree} canManage />);
+    fireEvent.click(screen.getByRole("radio", { name: "List" }));
+    const table = screen.getByRole("table");
+    expect(table).toHaveTextContent("Software");
+    expect(table).toHaveTextContent("Infrastructure");
+    const design = screen.getByRole("row", { name: /Design/ });
+    expect(design).toHaveTextContent("Software");
+    expect(
+      screen.getByRole("row", { name: /Infrastructure/ })
+    ).toHaveTextContent("Top level");
+    expect(screen.queryByText("Old")).not.toBeInTheDocument();
+    expect(screen.getByText("Showing 3 of 3")).toBeInTheDocument();
+  });
+  it("archives from the list view after confirmation", async () => {
+    vi.spyOn(window, "confirm").mockReturnValue(true);
+    render(<CategoryTreeEditor tree={tree} canManage />);
+    fireEvent.click(screen.getByRole("radio", { name: "List" }));
+    fireEvent.click(screen.getByRole("button", { name: "Archive Design" }));
+    await waitFor(() => expect(archiveCategory).toHaveBeenCalledWith("design"));
+  });
+  it("searches in both views and keeps the full sibling order for reordering", () => {
+    render(<CategoryTreeEditor tree={tree} canManage />);
+    fireEvent.change(screen.getByRole("searchbox"), {
+      target: { value: "infra" },
+    });
+    expect(screen.getByText("Infrastructure")).toBeInTheDocument();
+    expect(screen.queryByText("Software")).not.toBeInTheDocument();
+    // Moving the only visible parent up still sends the complete order.
+    fireEvent.click(screen.getByRole("button", { name: "Move up" }));
+    expect(reorderCategories).toHaveBeenCalledWith({
+      parentId: null,
+      orderedIds: ["infra", "sw"],
+    });
+    fireEvent.click(screen.getByRole("radio", { name: "List" }));
+    expect(screen.getByText("Showing 1 of 3")).toBeInTheDocument();
+  });
 });

@@ -6,6 +6,10 @@
         "label": "List",
         "description": "Filter, sort and bulk-edit subscriptions"
       },
+      "apps": {
+        "label": "Apps",
+        "description": "Every app your organisation uses"
+      },
       "pipeline": {
         "label": "Pipeline",
         "description": "Renewals grouped by due date"

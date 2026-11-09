@@ -37,6 +37,11 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import {
+  MasterListNoMatches,
+  MasterListToolbar,
+  useMasterList,
+} from "./master-list";
+import {
   ActiveToggleButton,
   codeFromName,
   ConfirmDelete,
@@ -93,6 +98,10 @@ export function RejectionReasonsPanel({
 }) {
   const t = useTranslations("approvals.reasonsMaster");
   const tc = useTranslations("platform.masters.common");
+  const list = useMasterList(rows, {
+    searchText: (r) => [r.code, r.name, r.description],
+    isActive: (r) => r.isActive,
+  });
   const router = useRouter();
   const [draft, setDraft] = useState<Draft | null>(null);
   const [errors, setErrors] = useState<Record<string, string[]>>({});
@@ -149,6 +158,7 @@ export function RejectionReasonsPanel({
           )
         }
       />
+      <MasterListToolbar list={list} searchPlaceholder={t("search")} />
       <div className="overflow-x-auto rounded-md border">
         <Table>
           <TableHeader>
@@ -178,7 +188,10 @@ export function RejectionReasonsPanel({
                 </TableCell>
               </TableRow>
             )}
-            {rows.map((row) => (
+            {rows.length > 0 && list.visible.length === 0 && (
+              <MasterListNoMatches colSpan={canManage ? 6 : 5} />
+            )}
+            {list.visible.map((row) => (
               <TableRow key={row.id}>
                 <TableCell className="text-muted-foreground text-right tabular-nums">
                   {row.sortOrder}

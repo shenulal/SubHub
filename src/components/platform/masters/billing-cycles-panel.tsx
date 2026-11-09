@@ -18,6 +18,11 @@ import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { toast } from "sonner";
+import {
+  MasterListNoMatches,
+  MasterListToolbar,
+  useMasterList,
+} from "./master-list";
 import { PanelHeader } from "./master-shared";
 
 interface BillingCyclesPanelProps {
@@ -35,6 +40,10 @@ export function BillingCyclesPanel({
   const [drafts, setDrafts] = useState(rows);
   const [isPending, startTransition] = useTransition();
   useEffect(() => setDrafts(rows), [rows]);
+  const list = useMasterList(drafts, {
+    searchText: (r) => [r.cycle, r.label],
+    isActive: (r) => r.isEnabled,
+  });
 
   const update = (cycle: string, patch: Partial<BillingCycleRow>) =>
     setDrafts((prev) =>
@@ -69,7 +78,15 @@ export function BillingCyclesPanel({
   return (
     <div>
       <PanelHeader title={t("title")} description={t("description")} />
-      <div className="overflow-hidden rounded-md border">
+      <MasterListToolbar
+        list={list}
+        searchPlaceholder={t("search")}
+        statusLabels={{
+          active: t("statusEnabled"),
+          inactive: t("statusDisabled"),
+        }}
+      />
+      <div className="overflow-x-auto rounded-md border">
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
@@ -85,7 +102,10 @@ export function BillingCyclesPanel({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {drafts.map((row) => (
+            {drafts.length > 0 && list.visible.length === 0 && (
+              <MasterListNoMatches colSpan={canManage ? 5 : 4} />
+            )}
+            {list.visible.map((row) => (
               <TableRow key={row.cycle}>
                 <TableCell className="font-mono text-xs font-medium">
                   {row.cycle}

@@ -13,6 +13,7 @@ import {
 } from "@/lib/services/discovery/filter-params";
 import { cn } from "@/lib/utils";
 import {
+  AppWindow,
   Archive,
   CalendarDays,
   CreditCard,
@@ -46,6 +47,12 @@ export const ARCHIVED_HREF = `/subscriptions?${serializeListQuery({ filter: ARCH
 
 const NAV_ITEMS: NavItem[] = [
   { key: "list", icon: CreditCard, href: "/subscriptions", exact: true },
+  {
+    key: "apps",
+    icon: AppWindow,
+    href: "/apps",
+    permissionAny: ["apps:read"],
+  },
   { key: "pipeline", icon: KanbanSquare, href: "/subscriptions/pipeline" },
   { key: "calendar", icon: CalendarDays, href: "/subscriptions/calendar" },
   {

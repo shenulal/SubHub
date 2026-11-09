@@ -30,6 +30,11 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
 import {
+  MasterListNoMatches,
+  MasterListToolbar,
+  useMasterList,
+} from "./master-list";
+import {
   ConfirmDelete,
   DefaultBadge,
   Field,
@@ -84,6 +89,10 @@ function dateLabel(iso: string | null): string {
 export function TaxRatesPanel({ rows, canManage }: TaxRatesPanelProps) {
   const t = useTranslations("platform.masters.taxRates");
   const tc = useTranslations("platform.masters.common");
+  const list = useMasterList(rows, {
+    searchText: (r) => [r.name, r.countryCode, `${r.ratePercent}`],
+    isActive: (r) => r.isActive,
+  });
   const router = useRouter();
   const [draft, setDraft] = useState<Draft | null>(null);
   const [errors, setErrors] = useState<Record<string, string[]>>({});
@@ -140,7 +149,8 @@ export function TaxRatesPanel({ rows, canManage }: TaxRatesPanelProps) {
           )
         }
       />
-      <div className="overflow-hidden rounded-md border">
+      <MasterListToolbar list={list} searchPlaceholder={t("search")} />
+      <div className="overflow-x-auto rounded-md border">
         <Table>
           <TableHeader>
             <TableRow className="hover:bg-transparent">
@@ -167,7 +177,10 @@ export function TaxRatesPanel({ rows, canManage }: TaxRatesPanelProps) {
                 </TableCell>
               </TableRow>
             )}
-            {rows.map((row) => (
+            {rows.length > 0 && list.visible.length === 0 && (
+              <MasterListNoMatches colSpan={canManage ? 6 : 5} />
+            )}
+            {list.visible.map((row) => (
               <TableRow key={row.id}>
                 <TableCell className="font-medium">
                   <span className="flex items-center gap-2">

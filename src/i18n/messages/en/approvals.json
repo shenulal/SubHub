@@ -336,7 +336,8 @@
       "usage": "Used",
       "usageCount": "{count, plural, =0 {Not used} one {# request} other {# requests}}",
       "empty": "No rejection reasons yet.",
-      "codeHint": "Letters, digits and underscores; stored in upper case."
+      "codeHint": "Letters, digits and underscores; stored in upper case.",
+      "search": "Search rejection reasons"
     }
   }
 }

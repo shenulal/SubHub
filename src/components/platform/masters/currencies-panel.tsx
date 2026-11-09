@@ -49,6 +49,11 @@ import { useMemo, useState, useTransition } from "react";
 import { toast } from "sonner";
 import { CurrencyDialog } from "./currency-dialog";
 import {
+  MasterListNoMatches,
+  MasterListToolbar,
+  useMasterList,
+} from "./master-list";
+import {
   ActiveToggleButton,
   Field,
   PanelHeader,
@@ -170,28 +175,26 @@ export function CurrenciesPanel({
   const tc = useTranslations("platform.masters.common");
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
-  const [query, setQuery] = useState("");
   const [dialog, setDialog] = useState<CurrencyDialogState>(null);
   const base = rows.find((r) => r.isBase)?.code ?? "";
   const staleCount = rows.filter(
     (r) => r.isEnabled && !r.isBase && (r.stale || r.rate === null)
   ).length;
 
-  const visible = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    const list = q
-      ? rows.filter(
-          (r) =>
-            r.code.toLowerCase().includes(q) || r.name.toLowerCase().includes(q)
-        )
-      : rows;
-    return [...list].sort(
-      (a, b) =>
-        Number(b.isBase) - Number(a.isBase) ||
-        Number(b.isEnabled) - Number(a.isEnabled) ||
-        a.code.localeCompare(b.code)
-    );
-  }, [rows, query]);
+  const list = useMasterList(rows, {
+    searchText: (r) => [r.code, r.name, r.symbol],
+    isActive: (r) => r.isEnabled,
+  });
+  const visible = useMemo(
+    () =>
+      [...list.visible].sort(
+        (a, b) =>
+          Number(b.isBase) - Number(a.isBase) ||
+          Number(b.isEnabled) - Number(a.isEnabled) ||
+          a.code.localeCompare(b.code)
+      ),
+    [list.visible]
+  );
 
   const setActive = (code: string, isActive: boolean) => {
     startTransition(async () => {
@@ -273,11 +276,13 @@ export function CurrenciesPanel({
           </span>
         </div>
       )}
-      <Input
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        placeholder={t("search")}
-        className="mb-4 w-full sm:max-w-xs"
+      <MasterListToolbar
+        list={list}
+        searchPlaceholder={t("search")}
+        statusLabels={{
+          active: t("statusEnabled"),
+          inactive: t("statusDisabled"),
+        }}
       />
       <div className="overflow-x-auto rounded-md border">
         <Table>
@@ -301,6 +306,9 @@ export function CurrenciesPanel({
             </TableRow>
           </TableHeader>
           <TableBody>
+            {rows.length > 0 && visible.length === 0 && (
+              <MasterListNoMatches colSpan={canManageGlobal ? 7 : 6} />
+            )}
             {visible.map((row) => (
               <TableRow
                 key={row.code}

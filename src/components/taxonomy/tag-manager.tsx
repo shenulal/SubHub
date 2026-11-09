@@ -1,6 +1,11 @@
 // src/components/taxonomy/tag-manager.tsx
 "use client";
 
+import {
+  MasterListNoMatches,
+  MasterListToolbar,
+  useMasterList,
+} from "@/components/platform/masters/master-list";
 import { Check, GitMerge, Pencil, Plus, Trash2, X } from "lucide-react";
 import { useTranslations } from "next-intl";
 import { useRouter } from "next/navigation";
@@ -180,6 +185,7 @@ export function TagManager({ tags, canManage, canCreate }: TagManagerProps) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [newName, setNewName] = useState("");
   const [isMergeOpen, setIsMergeOpen] = useState(false);
+  const list = useMasterList(tags, { searchText: (tag) => [tag.name] });
   const refresh = () => {
     setSelected(new Set());
     router.refresh();
@@ -257,42 +263,48 @@ export function TagManager({ tags, canManage, canCreate }: TagManagerProps) {
           {t("noTags")}
         </p>
       ) : (
-        <div className="overflow-hidden rounded-md border">
-          <table className="w-full text-sm">
-            <thead className="bg-muted/40 text-muted-foreground text-xs">
-              <tr>
-                <th className="w-8 px-2 py-2" />
-                <th className="px-2 py-2 text-left font-medium">
-                  {t("columns.name")}
-                </th>
-                <th className="px-2 py-2 text-right font-medium">
-                  {t("columns.usage")}
-                </th>
-                <th className="w-24 px-2 py-2 text-right font-medium">
-                  {tc("actions")}
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {tags.map((tag) => (
-                <TagRow
-                  key={tag.id}
-                  tag={tag}
-                  canManage={canManage}
-                  selected={selected.has(tag.id)}
-                  onSelect={(v) =>
-                    setSelected((prev) => {
-                      const next = new Set(prev);
-                      if (v) next.add(tag.id);
-                      else next.delete(tag.id);
-                      return next;
-                    })
-                  }
-                  onChanged={refresh}
-                />
-              ))}
-            </tbody>
-          </table>
+        <div>
+          <MasterListToolbar list={list} searchPlaceholder={t("search")} />
+          <div className="overflow-x-auto rounded-md border">
+            <table className="w-full text-sm">
+              <thead className="bg-muted/40 text-muted-foreground text-xs">
+                <tr>
+                  <th className="w-8 px-2 py-2" />
+                  <th className="px-2 py-2 text-left font-medium">
+                    {t("columns.name")}
+                  </th>
+                  <th className="px-2 py-2 text-right font-medium">
+                    {t("columns.usage")}
+                  </th>
+                  <th className="w-24 px-2 py-2 text-right font-medium">
+                    {tc("actions")}
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {list.visible.length === 0 && (
+                  <MasterListNoMatches colSpan={4} />
+                )}
+                {list.visible.map((tag) => (
+                  <TagRow
+                    key={tag.id}
+                    tag={tag}
+                    canManage={canManage}
+                    selected={selected.has(tag.id)}
+                    onSelect={(v) =>
+                      setSelected((prev) => {
+                        const next = new Set(prev);
+                        if (v) next.add(tag.id);
+                        else next.delete(tag.id);
+                        return next;
+                      })
+                    }
+                    onChanged={refresh}
+                  />
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
 
