@@ -5,6 +5,7 @@
  * read permission; create / edit / archive controls need the matching manage
  * permission (enforced again by the server actions).
  */
+import type { AppsMasterPage } from "@/actions/apps-master-list";
 import type { CostCenterOptions } from "@/actions/platform/masters/cost-centers";
 import type { CatalogPage } from "@/actions/taxonomy/catalog-admin";
 import { CategoryTreeEditor } from "@/components/taxonomy/category-tree-editor";
@@ -27,6 +28,7 @@ import type {
   TagDto,
 } from "@/types/taxonomy";
 import {
+  AppWindow,
   Banknote,
   Building,
   CalendarClock,
@@ -43,6 +45,7 @@ import {
 import { useTranslations } from "next-intl";
 import { useRouter, useSearchParams } from "next/navigation";
 import type { ReactNode } from "react";
+import { AppsPanel } from "./apps-panel";
 import { BillingCyclesPanel } from "./billing-cycles-panel";
 import { CostCentersPanel } from "./cost-centers-panel";
 import { CountriesPanel } from "./countries-panel";
@@ -63,7 +66,8 @@ export const MASTER_TABS = [
   "tags",
   "custom-fields",
   "rejection-reasons",
-  "vendor-catalog",
+  "apps",
+  "app-catalog",
 ] as const;
 export type MasterTabKey = (typeof MASTER_TABS)[number];
 
@@ -83,8 +87,22 @@ export interface MastersData {
   customFields: CustomFieldDefinitionDto[];
   maxCustomFields: number;
   catalog: CatalogPage;
+  /** First page of the organisation's apps (optional for older callers). */
+  apps?: AppsMasterPage;
   searchDebounceMs: number;
 }
+
+/** Old links used `?tab=vendor-catalog`; the tab is now the App catalog. */
+const TAB_ALIASES: Record<string, MasterTabKey> = {
+  "vendor-catalog": "app-catalog",
+};
+
+const EMPTY_APPS: AppsMasterPage = {
+  items: [],
+  total: 0,
+  page: 1,
+  pageSize: 1,
+};
 
 /** Resolved permission flags (server-computed). */
 export interface MastersAccess {
@@ -100,6 +118,9 @@ export interface MastersAccess {
   readCustomFields: boolean;
   manageCustomFields: boolean;
   manageCatalog: boolean;
+  /** The organisation's own apps (Master data → Apps). */
+  readApps?: boolean;
+  manageApps?: boolean;
 }
 
 const ICONS: Record<MasterTabKey, LucideIcon> = {
@@ -113,7 +134,8 @@ const ICONS: Record<MasterTabKey, LucideIcon> = {
   tags: Tags,
   "custom-fields": ListPlus,
   "rejection-reasons": ThumbsDown,
-  "vendor-catalog": Store,
+  apps: AppWindow,
+  "app-catalog": Store,
 };
 
 export function visibleMasterTabs(access: MastersAccess): MasterTabKey[] {
@@ -121,7 +143,8 @@ export function visibleMasterTabs(access: MastersAccess): MasterTabKey[] {
     if (key === "categories") return access.readCategories;
     if (key === "tags") return access.readTags;
     if (key === "custom-fields") return access.readCustomFields;
-    if (key === "vendor-catalog") return access.readCatalog;
+    if (key === "apps") return Boolean(access.readApps);
+    if (key === "app-catalog") return access.readCatalog;
     return access.readMasters;
   });
 }
@@ -211,7 +234,15 @@ function renderPanel(
           canManage={access.manageMasters}
         />
       );
-    case "vendor-catalog":
+    case "apps":
+      return (
+        <AppsPanel
+          initial={data.apps ?? EMPTY_APPS}
+          canManage={Boolean(access.manageApps)}
+          searchDebounceMs={data.searchDebounceMs}
+        />
+      );
+    case "app-catalog":
       return (
         <VendorCatalogPanel
           initial={data.catalog}
@@ -238,7 +269,9 @@ export function MastersTabs({
   const router = useRouter();
   const params = useSearchParams();
   const tabs = visibleMasterTabs(access);
-  const requested = params.get("tab") as MasterTabKey | null;
+  const rawTab = params.get("tab");
+  const requested = (rawTab &&
+    (TAB_ALIASES[rawTab] ?? rawTab)) as MasterTabKey | null;
   const active: MasterTabKey | undefined =
     requested && tabs.includes(requested) ? requested : tabs[0];
   if (!active) return null;

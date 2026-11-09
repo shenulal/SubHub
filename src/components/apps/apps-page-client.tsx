@@ -16,7 +16,8 @@ import type { AppListItem } from "@/types/app";
 import { useList } from "@refinedev/core";
 import { AppWindow, CheckCircle, Plus } from "lucide-react";
 import { useTranslations } from "next-intl";
-import { useCallback, useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 type Role = "ADMIN" | "APPROVER" | "MEMBER" | "VIEWER" | null | undefined;
 
@@ -154,6 +155,21 @@ export function AppsPageClient(_props: AppsPageClientProps) {
   const canManage = can("apps:manage");
   const canDelete = canManage;
   const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [createName, setCreateName] = useState<string | undefined>();
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
+
+  // `/apps?create=1[&name=…]` (old /apps/new links, empty-state button) opens
+  // the Create app dialog once permissions are known.
+  useEffect(() => {
+    if (searchParams.get("create") !== "1" || isLoadingPermissions) return;
+    if (canManage) {
+      setCreateName(searchParams.get("name") ?? undefined);
+      setIsCreateOpen(true);
+    }
+    router.replace(pathname, { scroll: false });
+  }, [searchParams, isLoadingPermissions, canManage, router, pathname]);
 
   return (
     <div className="min-w-0 space-y-6">
@@ -166,7 +182,10 @@ export function AppsPageClient(_props: AppsPageClientProps) {
                 {
                   label: t("shell.actions.addApp"),
                   icon: Plus,
-                  onClick: () => setIsCreateOpen(true),
+                  onClick: () => {
+                    setCreateName(undefined);
+                    setIsCreateOpen(true);
+                  },
                 },
               ]
             : undefined
@@ -175,6 +194,7 @@ export function AppsPageClient(_props: AppsPageClientProps) {
       <CreateAppDialog
         open={isCreateOpen}
         onOpenChange={setIsCreateOpen}
+        defaultName={createName}
         onCreated={() => void refetch()}
       />
 

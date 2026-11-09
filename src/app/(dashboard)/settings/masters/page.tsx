@@ -1,4 +1,5 @@
 // src/app/(dashboard)/settings/masters/page.tsx
+import { listAppsForMasters } from "@/actions/apps-master-list";
 import { listBillingCycles } from "@/actions/platform/masters/billing-cycles";
 import {
   listCostCenterOptions,
@@ -39,6 +40,7 @@ const READ_ANY: PermissionKey[] = [
   "categories:read",
   "tags:read",
   "custom_fields:read",
+  "apps:read",
 ];
 
 const EMPTY_CATALOG: CatalogPage = {
@@ -72,6 +74,8 @@ function toAccess(set: Set<string>): MastersAccess {
     manageCustomFields: set.has("custom_fields:manage"),
     readCatalog: set.has("catalog:read"),
     manageCatalog: set.has("catalog:manage"),
+    readApps: set.has("apps:read"),
+    manageApps: set.has("apps:manage"),
   };
 }
 
@@ -92,6 +96,7 @@ async function loadMasters(access: MastersAccess, organizationId: string) {
     when(m, () => listBillingCycles(), null),
     when(access.readCatalog, () => listCatalogEntries({}), null),
     when(m, () => listRejectionReasons(), null),
+    when(Boolean(access.readApps), () => listAppsForMasters({}), null),
     getSettings(organizationId, [
       "subscriptions.maxCustomFields",
       "discovery.searchDebounceMs",
@@ -114,6 +119,7 @@ export default async function MastersPage() {
       billingCycles,
       catalog,
       rejectionReasons,
+      apps,
       settings,
     ],
     categoryTree,
@@ -153,6 +159,7 @@ export default async function MastersPage() {
     customFields,
     maxCustomFields: settings["subscriptions.maxCustomFields"],
     catalog: catalog?.data ?? EMPTY_CATALOG,
+    apps: apps?.data ?? undefined,
     searchDebounceMs: settings["discovery.searchDebounceMs"],
   };
   return (

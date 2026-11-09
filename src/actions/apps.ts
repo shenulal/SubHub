@@ -128,11 +128,10 @@ const createAppSchema = z.object({
   ownerId: z.string().nullish(),
   catalogId: z.string().nullish(),
   teamIds: z.array(z.string()).optional(),
-});
-
-const updateAppSchema = createAppSchema.extend({
   status: z.nativeEnum(AppStatus).nullish(),
 });
+
+const updateAppSchema = createAppSchema;
 
 interface GetAppsParams {
   filter?: AppFilterOptions;
@@ -227,7 +226,7 @@ export async function getApps(
     prisma.app.findMany({
       where,
       include: {
-        catalog: { select: { logoUrl: true, category: true } },
+        catalog: { select: { logoUrl: true, category: true, name: true } },
         owner: { select: { name: true, email: true } },
         teams: { include: { team: { select: { id: true, name: true } } } },
         _count: { select: { subscriptions: true, userAccesses: true } },
@@ -247,6 +246,7 @@ export async function getApps(
     category: app.category || app.catalog?.category || null,
     customLogoUrl: app.customLogoUrl,
     catalogLogoUrl: app.catalog?.logoUrl ?? null,
+    catalogName: app.catalog?.name ?? null,
     ownerName: app.owner?.name ?? null,
     ownerEmail: app.owner?.email ?? null,
     subscriptionCount: app._count.subscriptions,
@@ -354,6 +354,7 @@ async function _createApp(
       ownerId: formData.get("ownerId") as string | null,
       catalogId: formData.get("catalogId") as string | null,
       teamIds: teamIdsRaw.filter(Boolean),
+      status: (formData.get("status") as AppStatus | null) || null,
     };
 
     // Validate
@@ -437,6 +438,7 @@ async function _createApp(
         tags,
         ownerId: data.ownerId || null,
         catalogId: data.catalogId || null,
+        ...(data.status ? { status: data.status } : {}),
         organizationId,
       },
     });

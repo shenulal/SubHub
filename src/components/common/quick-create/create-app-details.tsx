@@ -2,8 +2,9 @@
 "use client";
 
 /**
- * "More details" section of the quick-create app dialog: owner, teams, tags
- * and notes, plus a link to the full app form for everything else.
+ * Owner, teams, tags and description fields of the Create app dialog. Rendered
+ * as direct children of the dialog's two-column grid (owner | teams, then tags
+ * and description across both columns).
  */
 import type { AppFormOptions } from "@/actions/apps-form-options";
 import { Input } from "@/components/ui/input";
@@ -17,9 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { ExternalLink } from "lucide-react";
 import { useTranslations } from "next-intl";
-import Link from "next/link";
 
 export interface AppDetailsDraft {
   ownerId: string | null;
@@ -42,7 +41,6 @@ interface Props {
   value: AppDetailsDraft;
   onChange: (patch: Partial<AppDetailsDraft>) => void;
   options: AppFormOptions | undefined;
-  appName: string;
   disabled?: boolean;
 }
 
@@ -50,54 +48,48 @@ export function CreateAppDetails({
   value,
   onChange,
   options,
-  appName,
   disabled,
 }: Props) {
   const t = useTranslations("shell.createApp");
-  const fullFormHref = appName.trim()
-    ? `/apps/new?name=${encodeURIComponent(appName.trim())}`
-    : "/apps/new";
   return (
-    <div className="grid gap-4 rounded-md border p-4">
-      <div className="grid gap-4 sm:grid-cols-2">
-        <div className="grid min-w-0 gap-1.5">
-          <Label htmlFor="create-app-owner">{t("owner")}</Label>
-          <Select
-            value={value.ownerId ?? NO_OWNER}
-            onValueChange={(v) =>
-              onChange({ ownerId: v === NO_OWNER ? null : v })
-            }
-            disabled={disabled || !options}
-          >
-            <SelectTrigger id="create-app-owner" className="w-full">
-              <SelectValue placeholder={t("ownerPlaceholder")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value={NO_OWNER}>{t("noOwner")}</SelectItem>
-              {options?.owners.map((u) => (
-                <SelectItem key={u.id} value={u.id}>
-                  {u.name ?? u.email}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="grid min-w-0 gap-1.5">
-          <Label htmlFor="create-app-teams">{t("teams")}</Label>
-          <MultiSelect
-            id="create-app-teams"
-            options={(options?.teams ?? []).map((team) => ({
-              value: team.id,
-              label: team.name,
-            }))}
-            value={value.teamIds}
-            onValueChange={(teamIds) => onChange({ teamIds })}
-            placeholder={t("teamsPlaceholder")}
-            disabled={disabled || !options}
-          />
-        </div>
+    <>
+      <div className="grid min-w-0 gap-1.5">
+        <Label htmlFor="create-app-owner">{t("owner")}</Label>
+        <Select
+          value={value.ownerId ?? NO_OWNER}
+          onValueChange={(v) =>
+            onChange({ ownerId: v === NO_OWNER ? null : v })
+          }
+          disabled={disabled || !options}
+        >
+          <SelectTrigger id="create-app-owner" className="w-full">
+            <SelectValue placeholder={t("ownerPlaceholder")} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value={NO_OWNER}>{t("noOwner")}</SelectItem>
+            {options?.owners.map((u) => (
+              <SelectItem key={u.id} value={u.id}>
+                {u.name ?? u.email}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
-      <div className="grid gap-1.5">
+      <div className="grid min-w-0 gap-1.5">
+        <Label htmlFor="create-app-teams">{t("teams")}</Label>
+        <MultiSelect
+          id="create-app-teams"
+          options={(options?.teams ?? []).map((team) => ({
+            value: team.id,
+            label: team.name,
+          }))}
+          value={value.teamIds}
+          onValueChange={(teamIds) => onChange({ teamIds })}
+          placeholder={t("teamsPlaceholder")}
+          disabled={disabled || !options}
+        />
+      </div>
+      <div className="grid min-w-0 gap-1.5 sm:col-span-2">
         <Label htmlFor="create-app-tags">{t("tags")}</Label>
         <Input
           id="create-app-tags"
@@ -110,7 +102,7 @@ export function CreateAppDetails({
           {t("tagsHint")}
         </p>
       </div>
-      <div className="grid gap-1.5">
+      <div className="grid min-w-0 gap-1.5 sm:col-span-2">
         <Label htmlFor="create-app-notes">{t("notes")}</Label>
         <Textarea
           id="create-app-notes"
@@ -122,15 +114,6 @@ export function CreateAppDetails({
           disabled={disabled}
         />
       </div>
-      <Link
-        href={fullFormHref}
-        target="_blank"
-        rel="noopener"
-        className="text-primary inline-flex w-fit items-center gap-1.5 text-[0.8125rem] font-medium hover:underline"
-      >
-        {t("fullForm")}
-        <ExternalLink className="size-3.5" />
-      </Link>
-    </div>
+    </>
   );
 }

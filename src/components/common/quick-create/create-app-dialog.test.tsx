@@ -82,17 +82,19 @@ describe("CreateAppDialog", () => {
         expect.stringMatching(/^data:image\/png;base64,/)
       )
     );
-    await userEvent.click(screen.getByRole("button", { name: "More details" }));
-    await userEvent.type(screen.getByLabelText("Tags"), "design, ux");
-    await userEvent.type(screen.getByLabelText("Notes"), "Team plan");
+    // Every field is on the form; there is no separate full-form page any more.
     expect(
-      screen.getByRole("link", { name: /open the full app form/i })
-    ).toHaveAttribute("href", "/apps/new?name=Figma");
+      screen.queryByRole("link", { name: /full app form/i })
+    ).not.toBeInTheDocument();
+    expect(screen.getByLabelText("Status")).toHaveTextContent("In Use");
+    await userEvent.type(screen.getByLabelText("Tags"), "design, ux");
+    await userEvent.type(screen.getByLabelText("Description"), "Team plan");
     await userEvent.click(screen.getByRole("button", { name: "Create app" }));
 
     await waitFor(() => expect(onCreated).toHaveBeenCalled());
     const fd = createApp.mock.calls[0][1] as FormData;
     expect(String(fd.get("customLogoUrl"))).toMatch(/^data:image\/png;base64,/);
+    expect(fd.get("status")).toBe("ACTIVE");
     expect(fd.get("tags")).toBe("design, ux");
     expect(fd.get("notes")).toBe("Team plan");
     expect(onCreated).toHaveBeenCalledWith(

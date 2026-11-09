@@ -1,7 +1,7 @@
 // src/app/super-admin/masters/page.tsx
 /**
  * Platform masters — the platform-wide tables every organisation shares:
- * currencies, countries and the vendor catalog. In SaaS mode this console is the
+ * currencies, countries and the App catalog. In SaaS mode this console is the
  * only place they can be edited (tenant roles never hold `masters:manage_global`
  * or `catalog:manage`); in single-tenant mode the organisation ADMIN can also
  * edit them under Settings → Master data.
@@ -60,7 +60,7 @@ export default async function PlatformMastersPage() {
         <TabsList>
           <TabsTrigger value="currencies">Currencies</TabsTrigger>
           <TabsTrigger value="countries">Countries</TabsTrigger>
-          <TabsTrigger value="vendor-catalog">Vendor catalog</TabsTrigger>
+          <TabsTrigger value="app-catalog">App catalog</TabsTrigger>
         </TabsList>
         <TabsContent value="currencies">
           <Card className="p-5 sm:p-6">
@@ -80,7 +80,7 @@ export default async function PlatformMastersPage() {
             />
           </Card>
         </TabsContent>
-        <TabsContent value="vendor-catalog">
+        <TabsContent value="app-catalog">
           <Card className="p-5 sm:p-6">
             <VendorCatalogPanel
               initial={catalog.data ?? EMPTY_CATALOG}

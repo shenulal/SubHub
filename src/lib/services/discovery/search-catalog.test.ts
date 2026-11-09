@@ -46,7 +46,10 @@ describe("search-catalog", () => {
     expect(tabs.map((e) => e.href)).toContain(
       "/settings/masters?tab=payment-methods"
     );
-    expect(tabs).toHaveLength(10);
+    expect(tabs).toHaveLength(12);
+    expect(tabs.map((e) => e.href)).toContain(
+      "/settings/masters?tab=app-catalog"
+    );
     const tagsOnly = new Set(["tags:read"]);
     expect(searchCatalog("master data", tagsOnly, 20).map((r) => r.id)).toEqual(
       ["page-masters-tags"]

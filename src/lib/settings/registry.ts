@@ -1192,7 +1192,7 @@ export const SETTING_DEFINITIONS = {
     scope: "system",
     schema: z.boolean(),
     defaultValue: true,
-    label: "Refresh vendor catalog metadata automatically",
+    label: "Refresh App catalog metadata automatically",
     input: "boolean",
   }),
   "system.platformAuditPageSize": define({

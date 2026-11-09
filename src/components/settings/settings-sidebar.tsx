@@ -32,6 +32,7 @@ const MASTER_DATA_READ: PermissionKey[] = [
   "categories:read",
   "tags:read",
   "custom_fields:read",
+  "apps:read",
 ];
 
 interface SettingsMenuItem {

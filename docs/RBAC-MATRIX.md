@@ -61,8 +61,8 @@ reports with export.
 | `masters:read`                   | View currencies, tax rates, cost centres, payment methods      |   ✓   |    ✓     |   ✓    |   ✓    |            –             |
 | `masters:manage`                 | Edit master data                                               |   ✓   |    –     |   –    |   –    |            –             |
 | `masters:manage_global`          | Create and edit platform-wide masters: currencies, countries   |   ✓   |    –     |   –    |   –    |            –             |
-| `catalog:read`                   | View the vendor catalog                                        |   ✓   |    ✓     |   ✓    |   ✓    |            –             |
-| `catalog:manage`                 | Edit vendor catalog entries and cancellation guides            |   ✓   |    –     |   –    |   –    |            –             |
+| `catalog:read`                   | View the App catalog                                           |   ✓   |    ✓     |   ✓    |   ✓    |            –             |
+| `catalog:manage`                 | Edit App catalog entries and cancellation guides               |   ✓   |    –     |   –    |   –    |            –             |
 | **Documents**                    |                                                                |       |          |        |        |                          |
 | `attachments:read`               | View and download attachments                                  |   ✓   |    ✓     |   ✓    |   ✓    |            –             |
 | `attachments:upload`             | Upload attachments                                             |   ✓   |    ✓     |   ✓    |   –    |            –             |
@@ -141,7 +141,7 @@ reports with export.
 | `/subscriptions/suggestions`                                                               | `subscriptions:create` + `subscriptions:assign`                                       |   ✓   |    –     |   –    |   –    |
 | `/subscriptions/receipts`                                                                  | receipts scope (`mailboxes:*`)                                                        |   ✓   |    ✓     |   ✓    |   –    |
 | `/apps`, `/apps/[id]`                                                                      | `apps:read`                                                                           |   ✓   |    ✓     |   ✓    |   ✓    |
-| `/apps/new`, `/apps/[id]/edit`                                                             | `apps:manage`                                                                         |   ✓   |    –     |   –    |   –    |
+| `/apps/new` (redirects to `/apps` with the Create app dialog), `/apps/[id]/edit`           | `apps:manage`                                                                         |   ✓   |    –     |   –    |   –    |
 | `/approvals`, `/approvals/[id]`                                                            | `approvals:read`                                                                      |   ✓   |    ✓     |   ✓    |   ✓    |
 | `/approvals/new`                                                                           | `approvals:create`                                                                    |   ✓   |    ✓     |   ✓    |   –    |
 | `/notifications`                                                                           | `notifications:read`                                                                  |   ✓   |    ✓     |   ✓    |   ✓    |

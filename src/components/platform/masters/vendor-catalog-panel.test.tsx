@@ -87,7 +87,9 @@ describe("VendorCatalogPanel", () => {
     expect(screen.getByText("Per seat")).toBeInTheDocument();
     expect(screen.getByText("15 AED")).toBeInTheDocument();
     expect(screen.getByText("1–20 of 41")).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: /Add vendor/ })).toBeNull();
+    expect(
+      screen.queryByRole("button", { name: /Add catalog entry/ })
+    ).toBeNull();
   });
 
   it("searches server-side after the debounce", async () => {
@@ -128,9 +130,9 @@ describe("VendorCatalogPanel", () => {
     await waitFor(() =>
       expect(setCatalogEntryActive).toHaveBeenCalledWith("z", false)
     );
-    fireEvent.click(screen.getByRole("button", { name: /Add vendor/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Add catalog entry/ }));
     expect(
-      await screen.findByRole("heading", { name: "New catalog entry" })
+      await screen.findByRole("heading", { name: "New app catalog entry" })
     ).toBeInTheDocument();
   });
 });

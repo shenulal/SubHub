@@ -14,6 +14,8 @@ export interface AppListItem {
   category: string | null;
   customLogoUrl: string | null;
   catalogLogoUrl?: string | null;
+  /** Name of the linked App catalog entry, when linked. */
+  catalogName?: string | null;
   ownerName: string | null;
   ownerEmail: string | null;
   subscriptionCount: number;

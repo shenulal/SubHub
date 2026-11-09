@@ -89,6 +89,7 @@ const MASTER_DATA_READ: PermissionKey[] = [
   "categories:read",
   "tags:read",
   "custom_fields:read",
+  "apps:read",
 ];
 
 // Menu structure (including submenus), ordered after the reference UI

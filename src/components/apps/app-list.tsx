@@ -323,7 +323,7 @@ export function AppList({
         <p className="text-muted-foreground mb-4 text-[0.9375rem]">
           {t("apps.list.empty")}
         </p>
-        <Link href="/apps/new">
+        <Link href="/apps?create=1">
           <Button>{t("apps.list.emptyAction")}</Button>
         </Link>
       </div>

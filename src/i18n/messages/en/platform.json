@@ -53,7 +53,8 @@
         "categories": "Categories",
         "tags": "Tags",
         "custom-fields": "Custom fields",
-        "vendor-catalog": "Vendor catalog",
+        "apps": "Apps",
+        "app-catalog": "App catalog",
         "rejection-reasons": "Rejection reasons"
       },
       "common": {
@@ -184,11 +185,11 @@
         "phoneHint": "For example +971"
       },
       "catalog": {
-        "title": "Vendor catalog",
-        "description": "Platform-wide list of SaaS vendors used for matching, suggestions and cancellation guides.",
-        "add": "Add vendor",
-        "addTitle": "New catalog entry",
-        "editTitle": "Edit catalog entry",
+        "title": "App catalog",
+        "description": "Shared library of known SaaS apps. Your organisation's apps link to an entry here, which fills in their details and lets SubHub recognise them in card payments, receipts and browser activity.",
+        "add": "Add catalog entry",
+        "addTitle": "New app catalog entry",
+        "editTitle": "Edit app catalog entry",
         "search": "Search name, vendor, category or alias",
         "vendor": "Vendor",
         "category": "Category",
@@ -231,6 +232,19 @@
         "statusFilter": "Filter by status",
         "showing": "Showing {shown} of {total}",
         "noMatches": "No records match your search or filter."
+      },
+      "apps": {
+        "title": "Apps",
+        "description": "The apps your organisation uses or pays for. Link an app to an App catalog entry to fill in its details automatically. Open an app to edit it.",
+        "add": "Add app",
+        "search": "Search apps by name",
+        "allStatuses": "All statuses",
+        "category": "Category",
+        "owner": "Owner",
+        "subscriptions": "Subscriptions",
+        "notLinked": "Not linked",
+        "open": "Open app",
+        "empty": "No apps match."
       }
     },
     "roles": {

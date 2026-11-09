@@ -151,7 +151,7 @@
       "noticePeriod": "Give at least {days, plural, =1 {1 day} other {# days}} notice before the renewal date.",
       "noGuide": "No cancellation guide is available for this service yet.",
       "orgNotes": "Notes for your workspace",
-      "sourceCatalog": "From the SubHub vendor catalog",
+      "sourceCatalog": "From the SubHub app catalog",
       "sourceOverride": "Customised for your workspace",
       "editGuide": "Edit guide",
       "editOverride": "Edit workspace notes",
@@ -166,7 +166,7 @@
     },
     "suggest": {
       "reason": {
-        "catalog": "Matched the vendor catalog",
+        "catalog": "Matched the app catalog",
         "keyword": "Matched keyword “{keyword}”",
         "fallback": "No match — defaulted to Uncategorised",
         "no-match": "No suggestion"

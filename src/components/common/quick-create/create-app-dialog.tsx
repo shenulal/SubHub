@@ -2,9 +2,11 @@
 "use client";
 
 /**
- * Compact "Create app" dialog used by every app/vendor picker and by the global
- * "+ New" menu. Wraps the existing `createApp` server action (which enforces
- * `apps:manage`), shows field errors under their inputs and blocks double submit.
+ * The one "Create app" dialog, used by every app picker, the global "+ New"
+ * menu, Apps → Add app and Master data → Apps. Two-column layout matching the
+ * App catalog entry dialog, with every field an app needs at creation. Wraps
+ * the `createApp` server action (which enforces `apps:manage`), shows field
+ * errors under their inputs and blocks double submit.
  */
 import { createApp } from "@/actions/apps";
 import { useAppFormOptions } from "@/components/apps/use-app-form-options";
@@ -20,8 +22,17 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { getAppStatusOptions } from "@/lib/app-status";
 import type { CatalogItemDto } from "@/types/taxonomy";
-import { ChevronDown, Loader2 } from "lucide-react";
+import type { AppStatus } from "@prisma/client";
+import { Loader2 } from "lucide-react";
 import { useTranslations } from "next-intl";
 import {
   useEffect,
@@ -67,6 +78,7 @@ interface Draft extends AppDetailsDraft {
   catalog: CatalogItemDto | null;
   /** Uploaded data URL or typed image URL ("" = use the catalog logo). */
   icon: string;
+  status: AppStatus;
 }
 
 type Errors = Partial<Record<"name" | "website" | "icon" | "form", string>>;
@@ -95,6 +107,7 @@ function toFormData(draft: Draft): FormData {
   draft.teamIds.forEach((id) => fd.append("teamIds", id));
   if (draft.tags.trim()) fd.append("tags", draft.tags.trim());
   if (draft.notes.trim()) fd.append("notes", draft.notes.trim());
+  fd.append("status", draft.status);
   return fd;
 }
 
@@ -105,6 +118,7 @@ const emptyDraft = (name = ""): Draft => ({
   website: "",
   catalog: null,
   icon: "",
+  status: "ACTIVE",
 });
 
 export function CreateAppDialog({
@@ -115,10 +129,10 @@ export function CreateAppDialog({
   returnFocusRef,
 }: CreateAppDialogProps) {
   const t = useTranslations("shell.createApp");
+  const tRoot = useTranslations();
   const [draft, setDraft] = useState<Draft>(() => emptyDraft(defaultName));
   const [errors, setErrors] = useState<Errors>({});
   const [isSaving, setIsSaving] = useState(false);
-  const [showDetails, setShowDetails] = useState(false);
   const savingRef = useRef(false);
   const options = useAppFormOptions(open);
 
@@ -126,7 +140,6 @@ export function CreateAppDialog({
     if (open) {
       setDraft(emptyDraft(defaultName));
       setErrors({});
-      setShowDetails(false);
     }
   }, [open, defaultName]);
 
@@ -192,7 +205,7 @@ export function CreateAppDialog({
   return (
     <Dialog open={open} onOpenChange={(o) => !isSaving && onOpenChange(o)}>
       <DialogContent
-        className="max-h-[90vh] overflow-y-auto sm:max-w-xl"
+        className="max-h-[90vh] overflow-y-auto sm:max-w-2xl"
         onCloseAutoFocus={(event) => {
           const target = returnFocusRef?.current;
           if (!target) return;
@@ -206,110 +219,110 @@ export function CreateAppDialog({
             <DialogDescription>{t("description")}</DialogDescription>
           </DialogHeader>
 
-          <div className="grid gap-1.5">
-            <Label htmlFor="create-app-name">
-              {t("name")}
-              <RequiredMark />
-            </Label>
-            <Input
-              id="create-app-name"
-              autoFocus
-              value={draft.name}
-              placeholder={t("namePlaceholder")}
-              aria-invalid={Boolean(errors.name)}
-              aria-describedby={
-                errors.name ? "create-app-name-error" : undefined
-              }
-              onChange={(e) =>
-                setDraft((d) => ({ ...d, name: e.target.value }))
-              }
-              disabled={isSaving}
-            />
-            <FieldError id="create-app-name-error" message={errors.name} />
-          </div>
-
-          <div className="grid gap-1.5">
-            <Label htmlFor="create-app-category">{t("category")}</Label>
-            <CategoryPicker
-              id="create-app-category"
-              value={draft.categoryId}
-              onChange={(id) => setDraft((d) => ({ ...d, categoryId: id }))}
-              disabled={isSaving}
-            />
-          </div>
-
-          <div className="grid gap-1.5">
-            <Label htmlFor="create-app-website">{t("website")}</Label>
-            <Input
-              id="create-app-website"
-              type="url"
-              inputMode="url"
-              value={draft.website}
-              placeholder={t("websitePlaceholder")}
-              aria-invalid={Boolean(errors.website)}
-              aria-describedby={
-                errors.website ? "create-app-website-error" : undefined
-              }
-              onChange={(e) =>
-                setDraft((d) => ({ ...d, website: e.target.value }))
-              }
-              disabled={isSaving}
-            />
-            <FieldError
-              id="create-app-website-error"
-              message={errors.website}
-            />
-          </div>
-
-          <div className="grid gap-1.5">
-            <Label htmlFor="create-app-catalog">{t("catalog")}</Label>
-            <CatalogLinkField
-              id="create-app-catalog"
-              value={draft.catalog}
-              onChange={pickCatalog}
-              initialQuery={defaultName}
-              disabled={isSaving}
-            />
-          </div>
-
-          <div className="grid gap-1.5">
-            <Label htmlFor="create-app-icon">{t("icon")}</Label>
-            <AppIconField
-              id="create-app-icon"
-              name={draft.name}
-              value={draft.icon}
-              onChange={(icon) => setDraft((d) => ({ ...d, icon }))}
-              catalog={draft.catalog}
-              maxSizeKb={options.data?.logoMaxSizeKb}
-              disabled={isSaving}
-              onError={(icon) => setErrors((e) => ({ ...e, icon }))}
-            />
-            <FieldError message={errors.icon} />
-          </div>
-
-          <div className="grid gap-3">
-            <Button
-              type="button"
-              variant="ghost"
-              size="sm"
-              className="text-primary w-fit px-2"
-              aria-expanded={showDetails}
-              onClick={() => setShowDetails((v) => !v)}
-            >
-              <ChevronDown
-                className={`mr-1 size-4 transition-transform ${showDetails ? "rotate-180" : ""}`}
-              />
-              {showDetails ? t("lessDetails") : t("moreDetails")}
-            </Button>
-            {showDetails && (
-              <CreateAppDetails
-                value={draft}
-                onChange={(patch) => setDraft((d) => ({ ...d, ...patch }))}
-                options={options.data}
-                appName={draft.name}
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid min-w-0 gap-1.5">
+              <Label htmlFor="create-app-name">
+                {t("name")}
+                <RequiredMark />
+              </Label>
+              <Input
+                id="create-app-name"
+                autoFocus
+                value={draft.name}
+                placeholder={t("namePlaceholder")}
+                aria-invalid={Boolean(errors.name)}
+                aria-describedby={
+                  errors.name ? "create-app-name-error" : undefined
+                }
+                onChange={(e) =>
+                  setDraft((d) => ({ ...d, name: e.target.value }))
+                }
                 disabled={isSaving}
               />
-            )}
+              <FieldError id="create-app-name-error" message={errors.name} />
+            </div>
+            <div className="grid min-w-0 gap-1.5">
+              <Label htmlFor="create-app-status">{t("status")}</Label>
+              <Select
+                value={draft.status}
+                onValueChange={(v) =>
+                  setDraft((d) => ({ ...d, status: v as AppStatus }))
+                }
+                disabled={isSaving}
+              >
+                <SelectTrigger id="create-app-status" className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {getAppStatusOptions(tRoot).map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid min-w-0 gap-1.5 sm:col-span-2">
+              <Label htmlFor="create-app-category">{t("category")}</Label>
+              <CategoryPicker
+                id="create-app-category"
+                value={draft.categoryId}
+                onChange={(id) => setDraft((d) => ({ ...d, categoryId: id }))}
+                disabled={isSaving}
+              />
+            </div>
+            <div className="grid min-w-0 gap-1.5">
+              <Label htmlFor="create-app-website">{t("website")}</Label>
+              <Input
+                id="create-app-website"
+                type="url"
+                inputMode="url"
+                value={draft.website}
+                placeholder={t("websitePlaceholder")}
+                aria-invalid={Boolean(errors.website)}
+                aria-describedby={
+                  errors.website ? "create-app-website-error" : undefined
+                }
+                onChange={(e) =>
+                  setDraft((d) => ({ ...d, website: e.target.value }))
+                }
+                disabled={isSaving}
+              />
+              <FieldError
+                id="create-app-website-error"
+                message={errors.website}
+              />
+            </div>
+            <div className="grid min-w-0 gap-1.5">
+              <Label htmlFor="create-app-catalog">{t("catalog")}</Label>
+              <CatalogLinkField
+                id="create-app-catalog"
+                value={draft.catalog}
+                onChange={pickCatalog}
+                initialQuery={defaultName}
+                disabled={isSaving}
+              />
+            </div>
+            <CreateAppDetails
+              value={draft}
+              onChange={(patch) => setDraft((d) => ({ ...d, ...patch }))}
+              options={options.data}
+              disabled={isSaving}
+            />
+            <div className="grid min-w-0 gap-1.5 sm:col-span-2">
+              <Label htmlFor="create-app-icon">{t("icon")}</Label>
+              <AppIconField
+                id="create-app-icon"
+                name={draft.name}
+                value={draft.icon}
+                onChange={(icon) => setDraft((d) => ({ ...d, icon }))}
+                catalog={draft.catalog}
+                maxSizeKb={options.data?.logoMaxSizeKb}
+                disabled={isSaving}
+                onError={(icon) => setErrors((e) => ({ ...e, icon }))}
+              />
+              <FieldError message={errors.icon} />
+            </div>
           </div>
 
           <FieldError message={errors.form} />

@@ -27,7 +27,7 @@ sidebar, and is published to clients at `GET /api/v1/system/info`.
 | FleetDM webhook without team    | Falls back to the only active FleetDM integration.                                                                                                                             | Never guesses: the integration must store `credentials.teamId`; otherwise the event is logged and skipped.                                                          |
 | Super-admin console             | Shows the single organisation (create only while none exists), administrators, extension builds, platform masters, platform settings.                                          | Tenant list, create, view/edit, deactivate/reactivate; a tenant selector on overview, administrators and extension builds; platform masters; platform settings.     |
 
-Platform-wide changes made by a SUPER_ADMIN (tenants, currencies, countries, vendor catalog)
+Platform-wide changes made by a SUPER_ADMIN (tenants, currencies, countries, App catalog)
 are recorded in `platform_audit_logs`; changes made inside an organisation stay in its `audit_logs`.
 
 ## 2. On-premise / self-hosted install (single tenant)
@@ -186,7 +186,7 @@ keep the number small.
   organisation and its first Tenant Admin in one step (section 4.3).
 - **Suspension:** **Tenants → (tenant) → Deactivate** keeps all data but signs members out of the
   organisation (they see a "deactivated" notice); **Reactivate** restores access.
-- **Platform masters** (currencies, countries, vendor catalog) are edited only in
+- **Platform masters** (currencies, countries, App catalog) are edited only in
   **Control Panel → Platform masters**; tenants choose which currencies they enable.
 
 ### 3.5 Switching modes

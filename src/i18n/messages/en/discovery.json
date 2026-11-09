@@ -301,7 +301,9 @@
           "masters-categories": "Categories",
           "masters-tags": "Tags",
           "masters-custom-fields": "Custom fields",
-          "masters-vendor-catalog": "Vendor catalog"
+          "masters-rejection-reasons": "Rejection reasons",
+          "masters-apps": "Apps",
+          "masters-app-catalog": "App catalog"
         }
       },
       "createHint": "Opens a form"

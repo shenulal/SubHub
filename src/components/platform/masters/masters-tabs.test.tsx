@@ -1,6 +1,6 @@
 // src/components/platform/masters/masters-tabs.test.tsx
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   MastersTabs,
@@ -8,6 +8,15 @@ import {
   type MastersAccess,
   type MastersData,
 } from "./masters-tabs";
+
+let tabParam: string | null = null;
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ replace: vi.fn(), push: vi.fn() }),
+  useSearchParams: () => new URLSearchParams(tabParam ? { tab: tabParam } : {}),
+}));
+afterEach(() => {
+  tabParam = null;
+});
 
 // Panels are covered by their own tests; stub them to keep this test focused.
 vi.mock("./currencies-panel", () => ({
@@ -18,7 +27,14 @@ vi.mock("./tax-rates-panel", () => ({ TaxRatesPanel: () => null }));
 vi.mock("./cost-centers-panel", () => ({ CostCentersPanel: () => null }));
 vi.mock("./payment-methods-panel", () => ({ PaymentMethodsPanel: () => null }));
 vi.mock("./billing-cycles-panel", () => ({ BillingCyclesPanel: () => null }));
-vi.mock("./vendor-catalog-panel", () => ({ VendorCatalogPanel: () => null }));
+vi.mock("./vendor-catalog-panel", () => ({
+  VendorCatalogPanel: () => <div>app catalog panel</div>,
+}));
+vi.mock("./apps-panel", () => ({
+  AppsPanel: ({ canManage }: { canManage: boolean }) => (
+    <div>apps panel {canManage ? "manage" : "read"}</div>
+  ),
+}));
 vi.mock("./rejection-reasons-panel", () => ({
   RejectionReasonsPanel: () => null,
 }));
@@ -65,6 +81,7 @@ describe("visibleMasterTabs", () => {
         readCategories: true,
         readTags: true,
         readCustomFields: true,
+        readApps: true,
       })
     ).toEqual([
       "currencies",
@@ -77,7 +94,8 @@ describe("visibleMasterTabs", () => {
       "tags",
       "custom-fields",
       "rejection-reasons",
-      "vendor-catalog",
+      "apps",
+      "app-catalog",
     ]);
   });
 
@@ -90,13 +108,20 @@ describe("visibleMasterTabs", () => {
     );
   });
 
-  it("gates the vendor catalog tab on catalog:read", () => {
+  it("gates the App catalog tab on catalog:read", () => {
     expect(visibleMasterTabs({ ...NONE, readMasters: true })).not.toContain(
-      "vendor-catalog"
+      "app-catalog"
     );
     expect(visibleMasterTabs({ ...NONE, readCatalog: true })).toEqual([
-      "vendor-catalog",
+      "app-catalog",
     ]);
+  });
+
+  it("gates the Apps tab on apps:read", () => {
+    expect(visibleMasterTabs({ ...NONE, readMasters: true })).not.toContain(
+      "apps"
+    );
+    expect(visibleMasterTabs({ ...NONE, readApps: true })).toEqual(["apps"]);
   });
 });
 
@@ -116,7 +141,7 @@ describe("MastersTabs", () => {
     expect(screen.getByRole("tab", { name: /Currencies/ })).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /Countries/ })).toBeInTheDocument();
     expect(
-      screen.getByRole("tab", { name: /Vendor catalog/ })
+      screen.getByRole("tab", { name: /App catalog/ })
     ).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: /Categories/ })).toBeInTheDocument();
     expect(screen.queryByRole("tab", { name: /^Tags$/ })).toBeNull();
@@ -137,5 +162,32 @@ describe("MastersTabs", () => {
   it("renders nothing without any read permission", () => {
     const { container } = render(<MastersTabs data={DATA} access={NONE} />);
     expect(container).toBeEmptyDOMElement();
+  });
+
+  it("opens the Apps tab with its manage flag", () => {
+    tabParam = "apps";
+    render(
+      <MastersTabs
+        data={DATA}
+        access={{
+          ...NONE,
+          readApps: true,
+          manageApps: true,
+          readCatalog: true,
+        }}
+      />
+    );
+    expect(screen.getByText("apps panel manage")).toBeInTheDocument();
+  });
+
+  it("sends old vendor-catalog links to the App catalog tab", () => {
+    tabParam = "vendor-catalog";
+    render(
+      <MastersTabs
+        data={DATA}
+        access={{ ...NONE, readMasters: true, readCatalog: true }}
+      />
+    );
+    expect(screen.getByText("app catalog panel")).toBeInTheDocument();
   });
 });

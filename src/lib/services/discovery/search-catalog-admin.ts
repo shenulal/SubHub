@@ -89,9 +89,21 @@ export const MASTER_DATA_PAGES: readonly CatalogEntry[] = [
     "custom_fields:read"
   ),
   masterTab(
-    "vendor-catalog",
-    "Vendor catalog",
-    ["vendors", "apps", "catalogue"],
+    "rejection-reasons",
+    "Rejection reasons",
+    ["approvals", "reject", "reasons"],
+    "masters:read"
+  ),
+  masterTab(
+    "apps",
+    "Apps",
+    ["applications", "software", "tools", "register"],
+    "apps:read"
+  ),
+  masterTab(
+    "app-catalog",
+    "App catalog",
+    ["vendors", "vendor catalog", "catalogue", "library"],
     "catalog:read"
   ),
 ];

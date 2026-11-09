@@ -95,12 +95,12 @@ export const PERMISSIONS = [
     "Masters",
     "Create and edit platform-wide masters: currencies, countries"
   ),
-  p("catalog", "read", "Masters", "View the vendor catalog"),
+  p("catalog", "read", "Masters", "View the App catalog"),
   p(
     "catalog",
     "manage",
     "Masters",
-    "Edit vendor catalog entries and cancellation guides"
+    "Edit App catalog entries and cancellation guides"
   ),
   // Documents
   p("attachments", "read", "Documents", "View and download attachments"),
@@ -298,7 +298,7 @@ export const PERMISSION_ROLLOUTS: readonly PermissionKey[] = [
  * (tables without an organizationId):
  *   masters:manage_global → currencies, countries; in SaaS also the shared
  *                           exchange-rate table (manual rates, provider refresh)
- *   catalog:manage        → vendor catalog (SaaSCatalog), cancellation guides,
+ *   catalog:manage        → App catalog (SaaSCatalog), cancellation guides,
  *                           catalog verification, OS default apps
  * In single-tenant (on-premise) mode the installation belongs to one customer, so
  * its ADMIN keeps them. In SaaS mode they are platform-only: the resolver strips

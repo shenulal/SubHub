@@ -17,12 +17,12 @@
 
 | Area                                 | Capabilities                                                                                                                                                                                                                                                                                                 |
 | ------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Subscription tracking**            | Manual add with vendor catalog autocomplete, edit / pause / archive, duplicate detection, trial tracking, contract terms + notice periods, attachments, notes and activity log, personal vs. workspace subscriptions                                                                                         |
+| **Subscription tracking**            | Manual add with App catalog autocomplete, edit / pause / archive, duplicate detection, trial tracking, contract terms + notice periods, attachments, notes and activity log, personal vs. workspace subscriptions                                                                                            |
 | **Email receipt detection**          | Connect Gmail or Outlook (read-only); recurring charges are parsed into suggestions you can accept, link or dismiss                                                                                                                                                                                          |
 | **Approvals**                        | Policies by cost threshold / category, named approvers, manager → finance chains, approve / reject / request info with comments, reminders and escalation, auto-create the subscription on approval, exportable audit trail                                                                                  |
 | **Reminders & alerts**               | Configurable lead times (1/3/7/14/30 days), trial-ending, price-change, notice-period alerts; approvers copied on renewals; in-app, email and push-ready                                                                                                                                                     |
 | **Insights**                         | Spend dashboard in the organisation base currency, category / subcategory breakdown, trends, pending-approval committed spend, CSV exports                                                                                                                                                                   |
-| **Taxonomy & masters**               | Two-level categories, tags with merge/rename, custom fields, 120+ vendor catalog with logos, default pricing and cancellation guides, auto-categorisation                                                                                                                                                    |
+| **Taxonomy & masters**               | Two-level categories, tags with merge/rename, custom fields, App catalog of 120+ known apps with logos, default pricing and cancellation guides, auto-categorisation                                                                                                                                         |
 | **Discovery**                        | Global Cmd+K search, filters + saved views, sort, calendar, renewal pipeline (this week / this month / later), bulk actions                                                                                                                                                                                  |
 | **Platform**                         | Role-based access control with custom roles, every tunable in a settings registry (no hard-coded thresholds), currency / country / tax / cost-centre / payment-method masters, exchange rates from a configurable provider, notification preferences per user, data export + deletion, dark mode, English UI |
 | **Inherited from the upstream base** | Payment-to-app matching (CSV / ERP / card feeds), Google Workspace SSO discovery, Chrome extension usage capture, FleetDM devices, seat utilisation, offboarding and shadow-IT detection, AI assistant, super-admin console                                                                                  |
@@ -54,7 +54,7 @@ cp .env.example .env.local           # fill DATABASE_URL, NEXTAUTH_SECRET, NEXTA
 
 npx prisma migrate deploy            # creates the schema
 npx prisma generate
-npm run db:seed                      # currencies, countries, permission catalogue, vendor catalog
+npm run db:seed                      # currencies, countries, permission catalogue, App catalog
 npm run db:backfill-defaults         # only when upgrading an existing pre-SubHub database
 
 npm run dev                          # http://localhost:3000
@@ -96,7 +96,7 @@ SubHub has **no hard-coded business values**. Every threshold, default, lead tim
 
 Master data:
 
-- Global (seeded): currencies (ISO 4217), countries (ISO 3166 with default VAT), permission catalogue, vendor catalog.
+- Global (seeded): currencies (ISO 4217), countries (ISO 3166 with default VAT), permission catalogue, App catalog.
 - Per organisation (seeded on creation, admin-editable under **Settings → Masters**): roles, categories / subcategories, payment methods, billing-cycle configuration, tax rates, cost centres, tags, custom fields, notification templates.
 
 Exchange rates are refreshed daily (`/api/cron/exchange-rates`) from the provider chosen in `finance.fxProvider` (Frankfurter / open.er-api / exchangerate.host / Google Finance best-effort / manual).
