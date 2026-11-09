@@ -1,5 +1,4 @@
-// src/app/(dashboard)/users/offboarded/page.tsx
-import { OrgLayout } from "@/components/org/org-layout";
+// src/app/(dashboard)/(org)/users/offboarded/page.tsx
 import { TerminatedUsersPageClient } from "@/components/users/terminated-users-page-client";
 import { requirePermissionOrRedirect } from "@/lib/rbac/service";
 import { getTranslations } from "next-intl/server";
@@ -14,9 +13,5 @@ export async function generateMetadata() {
 
 export default async function TerminatedUsersPage() {
   await requirePermissionOrRedirect("members:read", "/users");
-  return (
-    <OrgLayout>
-      <TerminatedUsersPageClient />
-    </OrgLayout>
-  );
+  return <TerminatedUsersPageClient />;
 }

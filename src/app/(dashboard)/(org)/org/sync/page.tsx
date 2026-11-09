@@ -1,6 +1,5 @@
-// src/app/(dashboard)/org/sync/page.tsx
+// src/app/(dashboard)/(org)/org/sync/page.tsx
 
-import { OrgLayout } from "@/components/org/org-layout";
 import { OrgSyncForm } from "@/components/org/org-sync-form";
 import { requirePermissionOrRedirect } from "@/lib/rbac/service";
 
@@ -18,9 +17,5 @@ export default async function OrgSyncPage() {
     "/teams"
   );
 
-  return (
-    <OrgLayout>
-      <OrgSyncForm />
-    </OrgLayout>
-  );
+  return <OrgSyncForm />;
 }

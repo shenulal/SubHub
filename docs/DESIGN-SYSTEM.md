@@ -7,18 +7,20 @@ design language onto it, so no form, table or workflow had to be rewritten.
 
 ## Where things live
 
-| Layer                                                                                             | File(s)                                                |
-| ------------------------------------------------------------------------------------------------- | ------------------------------------------------------ |
-| Tokens (palette, text-opacity scale, dividers, shadows, radius, dark theme)                       | `src/app/globals.css`                                  |
-| Helper utilities: `tonal-primary/success/warning/info/error/neutral`, `nav-active`, `kpi-value`   | `src/app/globals.css` (`@utility`)                     |
-| Primitives (Button, Card, Badge, Input, Select, Tabs, Table, Dialog, Menu, Switch, Tooltip, OTP)  | `packages/ui-registry/src/components/ui/*`             |
-| Shell: 260px vertical nav, floating navbar, 1440px content column, footer                         | `src/components/layouts/*`                             |
-| Brand mark                                                                                        | `src/components/brand/subhub-logo.tsx`                 |
-| Auth screens (centred 450px card, mask wave, trees)                                               | `src/app/(auth)/layout.tsx`, `public/images/materio/*` |
-| Module sub-navigation (pill bar below 1280px, left column from 1280px; Subscriptions from 1536px) | `*-sidebar.tsx` + module `layout.tsx` files            |
+| Layer                                                                                                                                          | File(s)                                                                      |
+| ---------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
+| Tokens (palette, text-opacity scale, dividers, shadows, radius, dark theme)                                                                    | `src/app/globals.css`                                                        |
+| Helper utilities: `tonal-primary/success/warning/info/error/neutral`, `nav-active`, `kpi-value`                                                | `src/app/globals.css` (`@utility`)                                           |
+| Primitives (Button, Card, Badge, Input, Select, Tabs, Table, Dialog, Menu, Switch, Tooltip, OTP)                                               | `packages/ui-registry/src/components/ui/*`                                   |
+| Shell: 260px vertical nav, floating navbar, 1440px content column, footer                                                                      | `src/components/layouts/*`                                                   |
+| Brand mark                                                                                                                                     | `src/components/brand/subhub-logo.tsx`                                       |
+| Auth screens (centred 450px card, mask wave, trees)                                                                                            | `src/app/(auth)/layout.tsx`, `public/images/materio/*`                       |
+| Module sub-navigation (pill bar below 1280px, left column from 1280px; Subscriptions from 1536px)                                              | `*-sidebar.tsx` + module `layout.tsx` files                                  |
+| Module section frame (title + sub-menu + content; sticky menu capped to the viewport with its own scroll; keeps the page still on menu clicks) | `src/components/layouts/section-layout.tsx` used by each module `layout.tsx` |
 
 ## Rules for new UI
 
+- **Module sub-menus:** wrap the module in `SectionLayout` from a route `layout.tsx` (never inside each page, or the menu remounts and loses its place) and spread `SECTION_NAV_LINK_PROPS` on every sub-menu `<Link>` together with `aria-current="page"` on the active one. Group sibling URLs that share a menu with a route group, as `(dashboard)/(org)` does.
 - **Colour:** primary `#8C57FF`; semantic `success #56CA00`, `warning #FFB400`, `info #16B1FF`, `error #FF4C51`. Use tokens (`bg-primary`, `text-muted-foreground`, `tonal-*`), never hex or Tailwind palette classes, so dark mode keeps working.
 - **Type:** Inter (Google Fonts, variable font with optical sizing, loaded by `next/font` in `src/app/layout.tsx`). One family, several roles:
 

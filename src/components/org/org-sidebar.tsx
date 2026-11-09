@@ -6,6 +6,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMemo } from "react";
 
+import { SECTION_NAV_LINK_PROPS } from "@/components/layouts/section-layout";
 import { useSafePermissions } from "@/hooks/use-permission-flag";
 import type { PermissionKey } from "@/lib/rbac/permissions";
 import { cn } from "@/lib/utils";
@@ -92,6 +93,8 @@ export function OrgSidebar() {
           <Link
             key={item.href}
             href={item.href}
+            aria-current={isActive ? "page" : undefined}
+            {...SECTION_NAV_LINK_PROPS}
             className={cn(
               "group flex shrink-0 items-start gap-3 rounded-md px-3 py-2.5 text-[0.9375rem] leading-snug font-medium transition-colors xl:min-w-0 xl:shrink",
               isActive

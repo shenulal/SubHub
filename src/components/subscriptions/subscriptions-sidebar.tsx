@@ -6,6 +6,7 @@
  * Suggestions, Archived (list preset). Active state is URL-aware so the
  * Archived preset does not light up "List" and vice versa.
  */
+import { SECTION_NAV_LINK_PROPS } from "@/components/layouts/section-layout";
 import {
   ARCHIVED_PRESET,
   serializeListQuery,
@@ -109,6 +110,7 @@ export function SubscriptionsSidebar() {
             key={item.key}
             href={item.href}
             aria-current={active ? "page" : undefined}
+            {...SECTION_NAV_LINK_PROPS}
             className={cn(
               "group flex shrink-0 items-start gap-3 rounded-md px-3 py-2.5 text-[0.9375rem] leading-snug font-medium transition-colors 2xl:min-w-0 2xl:shrink",
               active

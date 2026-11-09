@@ -1,5 +1,6 @@
 "use client";
 
+import { SECTION_NAV_LINK_PROPS } from "@/components/layouts/section-layout";
 import { cn } from "@/lib/utils";
 import type { SettingsGroupMeta } from "@/types/platform";
 import Link from "next/link";
@@ -27,6 +28,7 @@ export function SettingsGroupTabs({
               <Link
                 href={href}
                 aria-current={active ? "page" : undefined}
+                {...SECTION_NAV_LINK_PROPS}
                 title={group.description}
                 className={cn(
                   "focus-visible:ring-ring/50 inline-flex h-[38px] items-center rounded-md px-4 text-[0.9375rem] font-medium whitespace-nowrap transition-colors outline-none focus-visible:ring-[3px]",
