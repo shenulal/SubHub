@@ -105,6 +105,9 @@ function Header({ detail, saas, timeZone }: Props) {
           </CardDescription>
         </div>
         <div className="flex flex-wrap gap-2">
+          <Button asChild size="sm">
+            <Link href={`/super-admin${query}`}>View analytics</Link>
+          </Button>
           <Button asChild size="sm" variant="outline">
             <Link href={`/super-admin/extension-builds${query}`}>
               Extension builds

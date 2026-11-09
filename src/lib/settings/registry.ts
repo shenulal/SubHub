@@ -116,6 +116,8 @@ const ISO_COUNTRY = z
   .string()
   .regex(/^[A-Z]{2}$/, "ISO 3166-1 alpha-2 expected");
 const HHMM = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, "HH:MM expected");
+/** Analytics period token: 1–999 days (d) or months (m), e.g. "90d", "12m". */
+export const ANALYTICS_PERIOD = /^[1-9]\d{0,2}[dm]$/;
 
 export const FX_PROVIDERS: SettingOption[] = [
   { value: "manual", label: "Manual rates only" },
@@ -1141,10 +1143,13 @@ export const SETTING_DEFINITIONS = {
     group: "system",
     scope: "system",
     schema: z.boolean(),
-    defaultValue: true,
+    // Off by default: tenants are created in the Control Panel and users join by
+    // invitation from their tenant admin. Single-tenant first-run setup (no
+    // organisation yet) stays open regardless (see isSignupOpen).
+    defaultValue: false,
     label: "Allow public sign-up",
     description:
-      "SaaS: new customers sign up and create their own organisation; users join an organisation by invitation or by its claimed email domain. Single-tenant: after first-run setup, users whose email domain belongs to the organisation join it automatically; everyone else needs an invitation.",
+      "Off (default): the sign-in page has no sign-up link; tenants are created in the Control Panel and users join by invitation. On — SaaS: new customers sign up and create their own organisation, and users can join an organisation by its claimed email domain. On — single-tenant: users whose email domain belongs to the organisation join it automatically.",
     input: "boolean",
   }),
   "system.supportEmail": define({
@@ -1200,6 +1205,67 @@ export const SETTING_DEFINITIONS = {
     input: "number",
     min: 10,
     max: 200,
+  }),
+  "system.analyticsPeriods": define({
+    key: "system.analyticsPeriods",
+    group: "system",
+    scope: "system",
+    schema: z
+      .array(z.string().regex(ANALYTICS_PERIOD, "Use e.g. 30d, 90d or 12m"))
+      .min(1)
+      .max(8),
+    defaultValue: ["30d", "90d", "12m"],
+    label: "Control Panel analytics: selectable periods",
+    description:
+      "Number of days (d) or months (m), e.g. 30d, 90d, 12m. Shown as the period filter on Analytics.",
+    input: "string-list",
+  }),
+  "system.analyticsDefaultPeriod": define({
+    key: "system.analyticsDefaultPeriod",
+    group: "system",
+    scope: "system",
+    schema: z.string().regex(ANALYTICS_PERIOD, "Use e.g. 30d, 90d or 12m"),
+    defaultValue: "90d",
+    label: "Control Panel analytics: default period",
+    description:
+      "Used when no period is chosen. Falls back to the first selectable period if it is not in that list.",
+    input: "text",
+  }),
+  "system.analyticsRenewalWindowDays": define({
+    key: "system.analyticsRenewalWindowDays",
+    group: "system",
+    scope: "system",
+    schema: z.coerce.number().int().min(1).max(365),
+    defaultValue: 30,
+    label: "Control Panel analytics: renewals window",
+    description: "Renewals due within this many days are counted on Analytics",
+    input: "number",
+    unit: "days",
+    min: 1,
+    max: 365,
+  }),
+  "system.reportingCurrency": define({
+    key: "system.reportingCurrency",
+    group: "system",
+    scope: "system",
+    schema: ISO_CURRENCY,
+    defaultValue: "AED",
+    label: "Platform reporting currency",
+    description:
+      "Control Panel analytics across all organisations convert every amount to this currency. Each organisation's own analytics use its base currency.",
+    input: "select",
+  }),
+  "system.analyticsTopListSize": define({
+    key: "system.analyticsTopListSize",
+    group: "system",
+    scope: "system",
+    schema: z.coerce.number().int().min(3).max(50),
+    defaultValue: 8,
+    label: "Control Panel analytics: rows in top lists",
+    description: "How many apps, categories and teams the ranked charts show",
+    input: "number",
+    min: 3,
+    max: 50,
   }),
 } as const;
 

@@ -25,6 +25,7 @@ import type { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { ActionError, diffRecords, toActionError } from "./_shared";
+import { loadCurrencyOptions } from "./settings-options";
 
 const SYSTEM_PATH = "/super-admin/settings";
 const valuesSchema = z.record(z.string(), z.unknown());
@@ -52,6 +53,7 @@ async function _getSystemSettings(): Promise<
         })
       ).map((r) => r.key)
     );
+    const currencyOptions = await loadCurrencyOptions();
     const definitions: SerializedSettingDefinition[] = [];
     for (const key of keys) {
       const def = SETTING_DEFINITIONS[key];
@@ -63,7 +65,8 @@ async function _getSystemSettings(): Promise<
         label: def.label,
         description: def.description,
         input: def.input,
-        options: def.options,
+        options:
+          key === "system.reportingCurrency" ? currencyOptions : def.options,
         unit: def.unit,
         min: def.min,
         max: def.max,

@@ -1,11 +1,11 @@
 // src/components/super-admin/shell/platform-nav.ts
 /** Control Panel navigation (platform areas only — no tenant workspace links). */
 import {
+  BarChart3,
   Box,
   Building2,
   Database,
   KeyRound,
-  LayoutDashboard,
   ScrollText,
   Server,
   Settings,
@@ -41,8 +41,8 @@ export function platformNavGroups(multiTenant: boolean): PlatformNavGroup[] {
       items: [
         {
           href: "/super-admin",
-          label: "Usage overview",
-          icon: LayoutDashboard,
+          label: "Analytics",
+          icon: BarChart3,
           tenantScoped: true,
         },
       ],

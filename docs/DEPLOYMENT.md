@@ -19,7 +19,7 @@ sidebar, and is published to clients at `GET /api/v1/system/info`.
 | ------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Organisations                   | Exactly one. The first user to finish onboarding creates it and becomes ADMIN (first-run setup). Creating another is refused server-side (onboarding and super-admin console). | Many. With `system.allowSelfSignup` a new customer creates their own organisation through onboarding; the platform operator can also create tenants in the console. |
 | Joining                         | By invitation, or automatically into the organisation when the email domain is one of its domains and `system.allowSelfSignup` is on.                                          | By invitation, or by email domain only into the organisation that claimed that domain as its primary domain (and only while self-signup is on).                     |
-| Public sign-up form             | Open during first-run setup; afterwards follows `system.allowSelfSignup`.                                                                                                      | Follows `system.allowSelfSignup`.                                                                                                                                   |
+| Public sign-up form             | Open during first-run setup; afterwards follows `system.allowSelfSignup` (off by default, so the sign-in page shows no sign-up link).                                          | Follows `system.allowSelfSignup` (off by default: tenants are created in the Control Panel).                                                                        |
 | Platform-wide permissions       | `masters:manage_global` and `catalog:manage` stay with the organisation ADMIN (it is their installation).                                                                      | Platform-only: stripped from every tenant role (system and custom) by the permission resolver and hidden in the role editor. Only SUPER_ADMIN holds them.           |
 | Shared exchange-rate table      | Manual rates / provider refresh need `masters:manage`.                                                                                                                         | Additionally need `masters:manage_global` (platform-only); the daily `exchange-rates` job keeps rates current.                                                      |
 | OS default apps, catalog verify | Organisation ADMIN maintains the shared lists.                                                                                                                                 | Tenants cannot change shared lists; approving an app does not mark the shared catalog entry verified.                                                               |
@@ -178,11 +178,11 @@ keep the number small.
 
 ### 3.4 Tenant onboarding
 
-- **Self-service** (`system.allowSelfSignup` on, in **Control Panel → Platform settings**): a new
+- **Self-service** (`system.allowSelfSignup` on — it is **off by default** — in **Control Panel → Platform settings**): a new
   customer signs up, verifies the email, and creates their own organisation in onboarding
   (they become its ADMIN). Colleagues join by invitation, or by email domain when it matches the
   organisation's primary domain.
-- **Operator-led** (self-signup off): **Control Panel → Tenants → Create tenant** creates the
+- **Operator-led** (self-signup off, the default): **Control Panel → Tenants → Create tenant** creates the
   organisation and its first Tenant Admin in one step (section 4.3).
 - **Suspension:** **Tenants → (tenant) → Deactivate** keeps all data but signs members out of the
   organisation (they see a "deactivated" notice); **Reactivate** restores access.
@@ -206,7 +206,7 @@ organisation; they are not members of any tenant and never see tenant navigation
 | URL                                                      | Purpose                                                                         |
 | -------------------------------------------------------- | ------------------------------------------------------------------------------- |
 | `/super-admin/login`                                     | Control Panel sign-in (email or user name + password; optional emailed code)    |
-| `/super-admin`                                           | Usage overview                                                                  |
+| `/super-admin`                                           | Analytics (all organisations, or one with `?org=`; `?period=`)                  |
 | `/super-admin/tenants`                                   | SaaS: tenant list, create (`/new`), detail (`/<id>`)                            |
 | `/super-admin/installation`                              | Single-tenant: the installation's organisation (first-run setup if none exists) |
 | `/super-admin/admins`                                    | Tenant admins and invitation history (per tenant)                               |

@@ -9,6 +9,7 @@ import type { SettingOption } from "@/lib/settings/registry";
 const CURRENCY_KEYS = new Set([
   "finance.baseCurrency",
   "finance.enabledCurrencies",
+  "system.reportingCurrency",
 ]);
 const COUNTRY_KEYS = new Set(["general.countryCode"]);
 const ROLE_KEYS = new Set([

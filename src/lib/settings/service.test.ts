@@ -147,3 +147,15 @@ describe("settings service", () => {
     expect(masked["finance.fxApiKey"]).toBe("••••3456");
   });
 });
+
+describe("public sign-up default", () => {
+  it("is off when the platform has not stored a value", async () => {
+    db.systemSetting.findMany.mockResolvedValue([]);
+    expect(SETTING_DEFINITIONS["system.allowSelfSignup"].defaultValue).toBe(
+      false
+    );
+    await expect(getSystemSetting("system.allowSelfSignup")).resolves.toBe(
+      false
+    );
+  });
+});
